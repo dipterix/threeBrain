@@ -1,0 +1,52 @@
+.hidden {
+  display: none!important;
+}
+
+.threejs-scene-aside {
+  width: 100%;
+  /* max-width: 400px;
+  min-width: 150px; */
+  float: left;
+  background-color: transparent;
+  z-index: 10;
+  overflow-x: hidden;
+  overflow-y:scroll;
+  /*resize: horizontal;*/
+  pointer-events: none;
+  position: relative;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  opacity: 0.9;
+  display: block;
+  margin-bottom: -100%;
+  overflow: hidden;
+}
+
+
+.threejs-scene-aside .threejs-scene-info,
+.threejs-scene-aside .threejs-scene-control {
+  pointer-events: all;
+}
+
+
+.threejs-scene-info {
+  margin-top: 20px;
+  padding-top: 15px;
+}
+
+.threejs-scene-control,
+.threejs-scene-customized,
+.threejs-scene-info{
+  width: 245px;
+}
+
+.threejs-scene-control .dg .c input[type=text] {
+  line-height: normal;
+}
+
+.threejs-scene-control .dg .c select{
+  color: cornflowerblue;
+}
+
+

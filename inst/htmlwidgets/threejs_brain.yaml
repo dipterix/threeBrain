@@ -1,0 +1,31 @@
+dependencies:
+  - name: bootstrap
+    version: 4.1.1
+    src: htmlwidgets/lib/bootstrap-4.1.1
+    style:
+      - bootstrap.min.css
+  - name: jquery
+    version: 3.3.1
+    src: htmlwidgets/lib/jQuery-3.3.1
+    script:
+      - jquery.min.js
+  - name: threejs
+    version: 0.101.1
+    src: htmlwidgets/lib/threejs-0.101.1
+    script:
+      - js/three.min.js
+      - js/Detector.js
+      - js/libs/stats.min.js
+      - js/libs/dat.gui.min.js
+      - js/controls/OrbitControls.js
+      - js/controls/TrackballControls.js
+      - js/controls/OrthographicTrackballControls.js
+    style:
+      - css/dat.gui.css
+  - name: dipterix
+    version: 0.0.1
+    src: htmlwidgets/lib/dipterix-0.0.1
+    style:
+      - dipterix.css
+    script:
+      - shiny_tools.js
