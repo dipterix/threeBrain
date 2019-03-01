@@ -4,16 +4,21 @@ This file defines shiny callback functions (js to shiny)
 */
 
 class THREE_BRAIN_SHINY {
-  constructor(outputId) {
+  constructor(outputId, shiny_mode = true) {
 
     // Check ID, must be a string
-    if(typeof(outputId) === 'string'){
-      this.outputId = outputId;
-      this.valid = true;
+    if(shiny_mode){
+      if(typeof(outputId) === 'string'){
+        this.outputId = outputId;
+        this.valid = true;
+      }else{
+        this.valid = false;
+        console.error('Constructor param outputId is not a string. Cannot initialize THREE_BRAIN_SHINY instance.');
+      }
     }else{
       this.valid = false;
-      console.error('Constructor param outputId is not a string. Cannot initialize THREE_BRAIN_SHINY instance.');
     }
+
 
   }
 

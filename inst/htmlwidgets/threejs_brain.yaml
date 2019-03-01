@@ -13,13 +13,13 @@ dependencies:
     version: 0.101.1
     src: htmlwidgets/lib/threejs-0.101.1
     script:
+      - js/WebGL.js
       - js/three.min.js
-      - js/Detector.js
-      - js/libs/stats.min.js
       - js/libs/dat.gui.min.js
-      - js/controls/OrbitControls.js
-      - js/controls/TrackballControls.js
+      - js/libs/stats.min.js
       - js/controls/OrthographicTrackballControls.js
+      - js/threeoctree.min.js
+      - js/Math/Lut.js
     style:
       - css/dat.gui.css
   - name: dipterix
@@ -28,4 +28,8 @@ dependencies:
     style:
       - dipterix.css
     script:
+      - utils.js
       - shiny_tools.js
+      - threejs_scene.js
+      - data_controls.js
+
