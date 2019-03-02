@@ -115,6 +115,7 @@ HTMLWidgets.widget({
     let canvas = new THREEBRAIN_CANVAS(el, width, height, side_width = 250, DEBUG = DEBUG);
     if(DEBUG){
       window.canvas = canvas;
+      window.scene = canvas.scene; // chrome debugger seems to need this
     }
 
     // 6. Animation
@@ -161,16 +162,25 @@ HTMLWidgets.widget({
 
 
         // Register groups and geoms
-        groups.forEach( (g) => {canvas.add_group(g)} );
-        geoms.forEach( (g) => {
-          try {
-            canvas.add_object(g);
-          } catch (e) {
-            if(this.DEBUG){
-              console.error(e);
-            }
-          }
+        let loader_promises = [];
+
+        groups.forEach( (g) => {
+          let p = canvas.add_group(g);
+          loader_promises.push(p);
         } );
+
+        Promise.all(loader_promises).then(() => {
+          geoms.forEach( (g) => {
+            try {
+              canvas.add_object(g);
+            } catch (e) {
+              if(this.DEBUG){
+                console.error(e);
+              }
+            }
+          });
+        });
+
 
 
         // Set side camera

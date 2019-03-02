@@ -625,6 +625,7 @@ class THREEBRAIN_CANVAS {
 	  // let target = this.controls.target.toArray();
 		this.controls.reset();
 		this.controls.target.fromArray( this.control_center );
+		// this.main_camera.position.set(0 , 0 , 500);
 	}
   update(){
 
@@ -705,7 +706,7 @@ class THREEBRAIN_CANVAS {
 	  this.has_side_cameras = true;
 	  this.handle_resize();
 	}
-	disableside_cameras(force = false){
+	disable_side_cameras(force = false){
 	  this.side_canvas.style.display = 'none';
 	  this.has_side_cameras = false;
 	  this.handle_resize();
@@ -762,6 +763,29 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  load_file(path, onLoad, onProgress = null, onError = null){
+    if(this.json_loader === undefined){
+      this.json_loader = new THREE.FileLoader();
+    }
+    if(onProgress === null){
+      onProgress = ( xhr ) => {
+    		console.log( (xhr.loaded / xhr.total * 100) + '% loaded - ' +  path);
+    	}
+    }
+
+    if(onError === null){
+      onError = ( err ) => {
+    		console.error( 'An error happened' );
+    	}
+    }
+
+    this.json_loader.load(
+    	// resource URL
+    	path, onLoad, onProgress, onError
+    );
+
+  }
+
   // Add geom groups
   add_group(g){
     var gp = new THREE.Object3D();
@@ -777,12 +801,64 @@ class THREEBRAIN_CANVAS {
     }
 
     gp.userData.construct_params = g;
+
+    // This is now a tricky part, we are going to load from dependencies!
+    // This is experimental and might disable standalone widget!
+
+    let cached_items = to_array( g.cached_items ),
+        item_size = cached_items.length;
+    if(item_size > 0){
+      cached_items.forEach((nm) => {
+        let cache_info = g.group_data[nm];
+
+        if(cache_info === undefined || cache_info === null || Array.isArray(cache_info)){
+          // Already cached
+          console.log('Loaded - ' + nm);
+          item_size -= 1;
+        }else{
+
+          if(this.DEBUG){
+            console.log('Loading - ' + nm);
+          }
+
+          let path = 'lib/threebrain_data-0/' + g.cache_name + '/' + cache_info.file_name
+
+
+          this.load_file(
+            path, ( data ) => {
+          	  const v = JSON.parse(data);
+          	  Object.keys(v).forEach((k) => {
+                g.group_data[k] = v[k];
+              });
+
+              item_size -= 1;
+          	}
+          );
+
+        }
+
+      });
+    }
+
     gp.userData.group_data = g.group_data;
     this.group[g.name] = gp;
 
     this.scene.add(gp);
 
-    return(gp);
+
+    let promise = new Promise((resolve) => {
+      // TODO: What if failed?
+      let check = () => {
+        if(item_size > 0){
+          setTimeout(check, 100);
+        }else{
+          resolve(true);
+        }
+      }
+      check();
+    })
+
+    return(promise);
   }
 
   // Get data from some geometry. Try to get from geom first, then get from group

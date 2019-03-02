@@ -6,6 +6,7 @@ threejs_brain <- function(
   side_camera = FALSE, control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,30),
   color_ramp = c('navyblue', '#e2e2e2', 'red'), n_color = 100,
   show_legend = TRUE, legend_title = 'Value', legend_expr, at = NULL,
+  tmp_dirname = NULL,
   width = NULL, height = NULL,
   .list = list()){
 
@@ -18,6 +19,29 @@ threejs_brain <- function(
 
   # Check elements
   geoms = lapply(geoms, function(g){ g$to_list() })
+
+  # Check cached json files
+  if(length(tmp_dirname) != 1){
+    tmp_dirname = paste(sample(c(letters, LETTERS, 0:9), 10), collapse = '')
+  }
+  tmp_dir = file.path(tempdir(), 'threebrain_cache', tmp_dirname)
+  dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
+
+  lapply(groups, function(g){
+    if(length(g$cached_items)){
+      dir.create(file.path(tmp_dir, g$cache_name()), recursive = TRUE, showWarnings = FALSE)
+      for(f in g$cached_items){
+        re = g$group_data[[f]]
+        file.copy(re$absolute_path, to = file.path(tmp_dir, g$cache_name(), re$file_name))
+      }
+    }
+  })
+  dependencies = htmltools::htmlDependency(
+    name = 'threebrain_data',
+    version = '0',
+    src = tmp_dir,
+    all_files = TRUE
+  )
 
   # Get groups
   groups = lapply(groups, function(g){ g$to_list() })
@@ -97,7 +121,7 @@ threejs_brain <- function(
   }
   dev.off()
 
-  legend_img = base64enc::dataURI(file = legend_file)
+  legend_img = data_uri(file = legend_file)
 
 
 
@@ -117,6 +141,11 @@ threejs_brain <- function(
     control_presets = control_presets
   )
 
+  # Generate external file
+  # sapply(names(external_files) , function(nm){
+  #   data_uri(file = external_files[[nm]]);
+  # }, simplify = F, USE.NAMES = T)
+
 
   x = list(
     groups = groups,
@@ -134,7 +163,7 @@ threejs_brain <- function(
       viewer.suppress = TRUE,
       viewer.fill = TRUE,
       padding = '0px',
-    ))
+    ), dependencies = dependencies)
 }
 
 

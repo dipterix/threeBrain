@@ -9,7 +9,7 @@ threejs_brain(..., time_range = NULL, value_range = NULL,
   control_presets = NULL, camera_center = c(0, 0, 30),
   color_ramp = c("navyblue", "#e2e2e2", "red"), n_color = 100,
   show_legend = TRUE, legend_title = "Value", legend_expr, at = NULL,
-  width = NULL, height = NULL, .list = list())
+  tmp_dirname = NULL, width = NULL, height = NULL, .list = list())
 }
 \description{
 Create a Threejs Brain

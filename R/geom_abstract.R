@@ -20,6 +20,10 @@ GeomGroup <- R6::R6Class(
     position = c(0,0,0),
     group_data = NULL,
     trans_mat = NULL,
+    cached_items = NULL,
+    cache_name = function(){
+      stringr::str_replace_all(self$name, '[^a-zA-Z0-9]', '_')
+    },
     set_transform = function(mat = NULL){
       if(!length(mat)){
         self$trans_mat = NULL
@@ -38,11 +42,14 @@ GeomGroup <- R6::R6Class(
       stopifnot2(length(position) == 3, msg = 'position must have length of 3.')
       self$position = position
     },
-    set_group_data = function(name, value){
+    set_group_data = function(name, value, is_cached = FALSE){
       if(is.null(self$group_data)){
         self$group_data = list()
       }
       self$group_data[[name]] = value
+      if(is_cached){
+        self$cached_items = c(self$cached_items, name)
+      }
     },
     to_list = function(){
       if(!is.null(self$trans_mat)){
@@ -55,7 +62,9 @@ GeomGroup <- R6::R6Class(
         layer = unique(as.integer(self$layer)),
         position = as.numeric(self$position),
         group_data = self$group_data,
-        trans_mat = trans_mat
+        trans_mat = trans_mat,
+        cached_items = self$cached_items,
+        cache_name = self$cache_name()
       )
     }
   )
@@ -74,6 +83,7 @@ AbstractGeom <- R6::R6Class(
     group = NULL,
     clickable = TRUE,
     layer = 0,
+    use_cache = FALSE,
     initialize = function(name, position = c(0,0,0), time_stamp = NULL, group = NULL, layer = 0, ...){
       self$name = name
       self$time_stamp = time_stamp
@@ -107,7 +117,8 @@ AbstractGeom <- R6::R6Class(
         value = as.vector(self$value),
         clickable = self$clickable,
         layer = as.integer(self$layer),
-        group = group_info
+        group = group_info,
+        use_cache = self$use_cache
       )
     },
     get_data = function(key = 'value', ifnotfound = NULL){
