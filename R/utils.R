@@ -42,7 +42,7 @@ json_cache <- function(path, data, recache=FALSE, ...){
   if(recache || !file.exists(path)){
     cat2('Creating cache data to -', path)
 
-    s = jsonlite::toJSON(data, ...)
+    s = to_json(data, ...)
 
     dir = dirname(path)
     dir.create(dir, showWarnings = F, recursive = T)
@@ -60,4 +60,30 @@ json_cache <- function(path, data, recache=FALSE, ...){
   )
 
 
+}
+
+
+# Define a package-verse standard to serialize and de-seialize jsons
+to_json <- function(x, dataframe = 'rows', matrix = 'rowmajor', null = 'null', na = 'null', ..., to_file = NULL){
+  s = jsonlite::toJSON(x, dataframe = dataframe, matrix = matrix, null = null, na = na, ...)
+  if(length(to_file) == 1){
+    dir.create(dirname(to_file), showWarnings = FALSE, recursive = TRUE)
+    writeLines(s, con = to_file)
+  }
+  s
+}
+
+from_json <- function(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVector,
+                      simplifyMatrix = simplifyVector, flatten = FALSE, ..., from_file = NULL){
+  if(length(from_file) == 1){
+    stopifnot2(missing(txt) && file.exists(from_file), msg = 'If you want to load json from a file, do not specify txt, and make sure from_file exists')
+    txt = readLines(from_file)
+  }
+  jsonlite::fromJSON(txt, simplifyVector = simplifyVector, simplifyDataFrame = simplifyDataFrame,
+                     simplifyMatrix = simplifyMatrix, flatten = flatten, ...,)
+}
+
+
+read_fs_asc <- function(file){
+  threejsr::read.freesurf.asc(file)
 }

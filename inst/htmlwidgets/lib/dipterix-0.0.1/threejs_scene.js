@@ -75,6 +75,7 @@ class THREEBRAIN_CANVAS {
     this.group = {};
     this.clickable = {}
     this.render_flag = true;
+    this.disable_raycast = true;
 
 
     // General scene. Two scenes for double-buffer (depth information)
@@ -301,6 +302,18 @@ class THREEBRAIN_CANVAS {
   }
 
   register_main_canvas_events(){
+    this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
+      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
+        return(null);
+      }
+      this.mouse_event = {
+        'action' : 'dblclick',
+        'event' : event,
+        'dispose' : false,
+        'level' : 1
+      };
+    }, false );
+
     this.main_canvas.addEventListener( 'click', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 1){
         return(null);
@@ -352,19 +365,43 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _fast_raycast(use_octree = true){
+  _fast_raycast(clickable_only){
+
+    this.use_octree = true;
 
     // Use octree to speed up
-    var items;
+    var items = [];
 
     this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
 
-    if(use_octree){
+    if(clickable_only){
       let raycaster = this.mouse_raycaster;
       let octreeObjects = this.octree.search( raycaster.ray.origin, raycaster.ray.far, true, raycaster.ray.direction );
       items = raycaster.intersectOctreeObjects( octreeObjects );
     }else{
-      items = this.mouse_raycaster.intersectObjects( to_array(this.clickable) );
+      if(this.DEBUG){
+        console.log('Searching for all intersections - Partial searching')
+      }
+      // I'll only search for 500 ms
+      let layer = new THREE.Layers();
+
+      layer.mask = 16383;
+
+      let t_start = new Date();
+      for( var name in this.mesh ){
+        if(new Date() - t_start > 500){
+          break;
+        }
+        let m = this.mesh[name];
+        if(m.visible && m.isMesh && m.layers.test(layer)){
+          item = this.mouse_raycaster.intersectObject( m );
+          if(item.length > 0){
+            if(items.length == 0 || (item[0].distance < items[0].distance)){
+              items = item;
+            }
+          }
+        }
+      }
     }
 
     if(this.DEBUG){
@@ -387,7 +424,23 @@ class THREEBRAIN_CANVAS {
     }else{
       this._mouse_helper_sleep_count = 0
     }
-    let items = this._fast_raycast();
+
+    if(this.disable_raycast && (
+      this.mouse_event.action != 'dblclick' &&
+      this.mouse_event.action != 'click'
+    )){
+      return(null);
+    }
+
+    const clickable_only = this.mouse_event.action != 'dblclick';
+
+    this.mouse_event.dispose = true;
+    if(this.mouse_event.level < 2){
+      this.mouse_event.level = 0;
+    }
+
+
+    let items = this._fast_raycast(clickable_only);
     if(items.length > 0){
       // Has intersects!
       let first_item = items[0],
@@ -405,10 +458,10 @@ class THREEBRAIN_CANVAS {
       }
 
 
-      if(this.DEBUG && this.mouse_event.action == 'click'){
+      if(this.DEBUG && ['dblclick', 'click'].includes(this.mouse_event.action)){
         console.log('object selected ' + target_object.name);
       }
-      if(this.mouse_event.action == 'click'){
+      if(['dblclick', 'click'].includes(this.mouse_event.action)){
         this.object_chosen = target_object;
         if(this._mouse_click_callback !== undefined){
           this._mouse_click_callback(target_object);
@@ -420,11 +473,6 @@ class THREEBRAIN_CANVAS {
       this.mouse_helper.visible = true;
     }else{
       this.mouse_helper.visible = false;
-    }
-
-    this.mouse_event.dispose = true;
-    if(this.mouse_event.level < 2){
-      this.mouse_event.level = 0;
     }
 
   }
@@ -548,6 +596,17 @@ class THREEBRAIN_CANVAS {
       this.side_canvas.style.display = 'none';
     }else{
       this.side_canvas.style.display = 'inline-flex';
+
+      this.side_scene = 'vertical';
+      side_width = Math.floor(height / 4);
+      main_width = width - side_width - 1;
+
+      this.side_canvas.style.height = height + 'px';
+      this.side_canvas.style.width = side_width + 'px';
+
+      this.side_renderer.setSize( side_width , 4 * side_width );
+
+      /* Dipterix thinks this is a good idea but not for science
       if(width / 16 * 9 >= height){
         this.side_scene = 'square';
 
@@ -583,10 +642,11 @@ class THREEBRAIN_CANVAS {
         this.side_renderer.setSize( 4 * side_width , side_width );
 
       }
+      */
 
       this.side_width = side_width;
 
-      let half_width = side_width / 2;
+      // let half_width = side_width / 2;
 
       /*
       for(var ii = 0; ii < 4; ii++ ){
@@ -635,8 +695,10 @@ class THREEBRAIN_CANVAS {
 
     this.render();
 
+    if(this.use_octree){
+      this.octree.update();
+    }
 
-    this.octree.update();
 
     this.get_mouse();
     this.controls.update();
@@ -733,12 +795,25 @@ class THREEBRAIN_CANVAS {
       console.log('Generating geometry '+g.type);
     }
     var gen_f = eval('gen_' + g.type),
-        m = gen_f(g, canvas = this);
+        m = gen_f(g, canvas = this),
+        layers = to_array(g.layer);
 
     m.layers.set(31);
-    to_array(g.layer).forEach((ii) => {
-      m.layers.enable(ii);
-    })
+    if(layers.length > 1){
+      layers.forEach((ii) => {
+        m.layers.enable(ii);
+      })
+      console.log(g.name + ' is enabled layer ' + ii);
+    }else if(layers.length == 0 || layers[0] > 20){
+      if(this.DEBUG){
+        console.log(g.name + ' is set invisible.');
+      }
+      m.layers.set(1);
+      m.visible = false;
+    }else{
+      m.layers.set(layers[0]);
+    }
+
 
     if(typeof(m) !== 'object' || m === null){
       return(null);
@@ -768,8 +843,8 @@ class THREEBRAIN_CANVAS {
       this.json_loader = new THREE.FileLoader();
     }
     if(onProgress === null){
-      onProgress = ( xhr ) => {
-    		console.log( (xhr.loaded / xhr.total * 100) + '% loaded - ' +  path);
+      onProgress = ( xhr, p ) => {
+    		console.log( (xhr.loaded / xhr.total * 100) + '% loaded - ' +  p);
     	}
     }
 
@@ -781,20 +856,25 @@ class THREEBRAIN_CANVAS {
 
     this.json_loader.load(
     	// resource URL
-    	path, onLoad, onProgress, onError
+    	path, onLoad, (xhr) => {
+
+        let fname = /[^\/]+$/.exec(path)[0];
+    	  onProgress(xhr, fname);
+
+    	}, onError
     );
 
   }
 
   // Add geom groups
-  add_group(g){
+  add_group(g, cache_folder = 'threebrain_data', onProgress = null){
     var gp = new THREE.Object3D();
 
     gp.name = 'group_' + g.name;
     to_array(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
     gp.position.fromArray( g.position );
 
-    if(g.trans_mat !== null){
+    if(!g.disable_trans_mat && g.trans_mat !== null){
       let trans = new THREE.Matrix4();
       trans.set(...g.trans_mat);
       gp.applyMatrix(trans);
@@ -821,18 +901,31 @@ class THREEBRAIN_CANVAS {
             console.log('Loading - ' + nm);
           }
 
-          let path = 'lib/threebrain_data-0/' + g.cache_name + '/' + cache_info.file_name
+          // Need to check shiny mode
+          let path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
+          if(HTMLWidgets.shinyMode){
+            path = cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
+          }
+
 
 
           this.load_file(
             path, ( data ) => {
-          	  const v = JSON.parse(data);
-          	  Object.keys(v).forEach((k) => {
+          	  const v = JSON.parse(data),
+          	        keys = Object.keys(v);
+
+          	  if(this.DEBUG){
+          	    console.log('DONE - ' +  path);
+          	    console.log(keys);
+          	  }
+
+          	  keys.forEach((k) => {
                 g.group_data[k] = v[k];
               });
 
               item_size -= 1;
-          	}
+          	},
+          	onProgress
           );
 
         }
@@ -897,8 +990,6 @@ class THREEBRAIN_CANVAS {
 
 
 
-
-
 function gen_sphere(g, canvas){
   var gb = new THREE.SphereBufferGeometry(
         radius = g.radius,
@@ -920,7 +1011,24 @@ function gen_sphere(g, canvas){
   let mesh = new THREE.Mesh(gb, material);
   mesh.name = 'mesh_sphere_' + g.name;
 
-  mesh.position.fromArray(g.position);
+  let linked = false
+  if(g.use_link){
+    // This is a linkedSphereGeom which should be attached to a surface mesh
+    let vertex_ind = Math.floor(g.vertex_number - 1),
+        target_name = g.linked_geom,
+        target_mesh = canvas.mesh[target_name];
+
+    if(target_mesh && target_mesh.isMesh){
+      let target_pos = target_mesh.geometry.attributes.position.array;
+      mesh.position.set(target_pos[vertex_ind * 3], target_pos[vertex_ind * 3+1], target_pos[vertex_ind * 3+2]);
+      linked = true;
+    }
+  }
+
+  if(!linked){
+    mesh.position.fromArray(g.position);
+  }
+
 
   mesh.userData.ani_value = values;
   mesh.userData.ani_time = to_array(g.time_stamp);

@@ -1,8 +1,55 @@
 
 // Some presets for gui and canvas
 
-var THREEBRAIN_PRESETS = {
-  "lh-pial": function(canvas, gui){
+class THREEBRAIN_PRESETS{
+  pial_type(canvas, gui){
+    // This function controls which pial to be visible
+    const pial_group = canvas.group["Left Hemisphere"],
+          folder_name = 'Geometry';
+
+    if(pial_group === undefined){
+      return(null);
+    }
+
+    let gui_data = canvas.group["Left Hemisphere"].userData.group_data['.gui_params'],
+        pial_name = Object.keys( gui_data ),
+        default_pial = canvas.group["Left Hemisphere"].userData.group_data['.__template__'];
+
+    this.current_pial = default_pial;
+
+    let obj_names = to_array( gui_data[this.current_pial] );
+
+    if(pial_name.length > 0){
+      gui.add_item('Pial Name', default_pial, {
+        args : pial_name,
+        folder_name : folder_name
+      })
+      .onChange((pn) => {
+        if(this.current_pial != pn){
+          obj_names = to_array( gui_data[this.current_pial] );
+
+          obj_names.forEach((nm) => {
+            canvas.mesh[nm].visible = false;
+          });
+
+          obj_names = to_array( gui_data[pn] );
+
+          obj_names.forEach((nm) => {
+            canvas.mesh[nm].visible = true;
+          });
+
+          this.current_pial = pn;
+        }
+
+
+
+
+      });
+    }
+
+  }
+
+  lh_material(canvas, gui){
     // Add controls on showing and hiding meshes
     let folder_name = 'Geometry';
     gui.add_item('Left Hemisphere', 'normal', options = {
@@ -28,8 +75,8 @@ var THREEBRAIN_PRESETS = {
         }
       });
     gui.open_folder(folder_name);
-  },
-  "rh-pial": function(canvas, gui){
+  }
+  rh_material(canvas, gui){
     let folder_name = 'Geometry';
     gui.add_item('Right Hemisphere', 'normal', options = {
       args : ['normal', 'wireframe', 'hidden'],
@@ -54,8 +101,8 @@ var THREEBRAIN_PRESETS = {
         }
       });
     gui.open_folder(folder_name);
-  },
-  'electrodes' : function(canvas, gui){
+  }
+  electrodes(canvas, gui){
 
     let group_names = Object.keys( canvas.group ),
         regex = RegExp('^electrodes-(.+)$'),
@@ -70,7 +117,7 @@ var THREEBRAIN_PRESETS = {
     });
 
     li.forEach((gname) => {
-      gui.add_item('E-' + gname, 7, options = {
+      gui.add_item('E-' + gname, 7, {
         args : { 'all cameras' : 7, 'main camera' : 8, 'hidden': 30 },
         folder_name : folder_name
       })
@@ -79,14 +126,19 @@ var THREEBRAIN_PRESETS = {
         if(group){
           group.children.forEach((m) =>{
             m.layers.set(v);
+            if(v > 20){
+              m.visible=false;
+            }else{
+              m.visible=true;
+            }
           });
         }
       } );
     });
 
     gui.open_folder(folder_name);
-  },
-};
+  }
+}
 
 
 

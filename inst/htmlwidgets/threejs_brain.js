@@ -165,16 +165,33 @@ HTMLWidgets.widget({
         let loader_promises = [];
 
         groups.forEach( (g) => {
-          let p = canvas.add_group(g);
+
+          // Copy current count
+          //let lc = loader_counts;
+          let p = canvas.add_group(g, cache_folder = settings.cache_folder,
+              ( xhr, path ) => {
+
+                let percentage = xhr.loaded / xhr.total * 100;
+                    msg = `${percentage.toFixed(0)}% loaded - ${path}`;
+
+                if(DEBUG){
+                  window.xhr = xhr;
+                  console.log(msg);
+                }
+
+                el_text.innerHTML = msg;
+
+            	});
           loader_promises.push(p);
         } );
 
         Promise.all(loader_promises).then(() => {
+          el_text.innerHTML = 'Loading Completed!';
           geoms.forEach( (g) => {
             try {
               canvas.add_object(g);
             } catch (e) {
-              if(this.DEBUG){
+              if(DEBUG){
                 console.error(e);
               }
             }
@@ -218,9 +235,15 @@ HTMLWidgets.widget({
         }
 
         let control_presets = settings.control_presets;
+            presets = new THREEBRAIN_PRESETS();
+
         to_array( control_presets ).forEach((control_preset) => {
-          if(THREEBRAIN_PRESETS.hasOwnProperty(control_preset)){
-            THREEBRAIN_PRESETS[control_preset](canvas, gui);
+          if(DEBUG){
+            presets[control_preset](canvas, gui);
+          }else{
+            try {
+              presets[control_preset](canvas, gui);
+            } catch (e) {}
           }
         });
 
@@ -251,6 +274,11 @@ HTMLWidgets.widget({
           .onChange((v) => {
             let d = v? 'block' : 'none';
             el_legend_img.style.display = d;
+          });
+
+        gui.add_item('Enable Raycast', false, {folder_name: 'Misc'})
+          .onChange((v) =>{
+            canvas.disable_raycast = !v;
           });
 
         canvas.set_mouse_click_callback((obj) => {

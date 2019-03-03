@@ -73,14 +73,8 @@ ParticleGeom <- R6::R6Class(
         }
         re
       },
-      get_data = function(key = 'paricle_value', ifnotfound = NULL){
-        if(!is.null(self[[key]])){
-          return(self[[key]])
-        }
-        if(!is.null(self$group) && is.list(self$group$group_data) && !is.null(self$group$group_data[[key]])){
-          return(self$group$group_data[[key]])
-        }
-        return(ifnotfound)
+      get_data = function(key = 'paricle_value', force_reload = FALSE, ifnotfound = NULL){
+        super$get_data(key = key, force_reload = force_reload, ifnotfound = ifnotfound)
       }
     )
   )

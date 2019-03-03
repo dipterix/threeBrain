@@ -21,6 +21,8 @@ GeomGroup <- R6::R6Class(
     group_data = NULL,
     trans_mat = NULL,
     cached_items = NULL,
+    cache_env = NULL,
+    disable_trans_mat = FALSE,
     cache_name = function(){
       stringr::str_replace_all(self$name, '[^a-zA-Z0-9]', '_')
     },
@@ -41,6 +43,8 @@ GeomGroup <- R6::R6Class(
 
       stopifnot2(length(position) == 3, msg = 'position must have length of 3.')
       self$position = position
+
+      self$cache_env = new.env(parent = emptyenv())
     },
     set_group_data = function(name, value, is_cached = FALSE){
       if(is.null(self$group_data)){
@@ -50,6 +54,37 @@ GeomGroup <- R6::R6Class(
       if(is_cached){
         self$cached_items = c(self$cached_items, name)
       }
+    },
+    get_data = function(key, force_reload = FALSE, ifnotfound = NULL){
+      re = self$group_data[[key]]
+
+      if(is.null(re)){
+        return(ifnotfound)
+      }
+
+      if(is.list(re) && isTRUE(re$is_cache)){
+        # this is a cache, load from cache!
+        if(!force_reload && exists(key, envir = self$cache_env, inherits = FALSE)){
+          # search for already cached repo
+          return(self$cache_env[[key]])
+        }
+
+        # load cache
+        cat2('Loading from cache')
+        d = from_json(from_file = re$absolute_path)
+
+        for(nm in names(d)){
+          self$cache_env[[nm]] = d[[nm]]
+        }
+
+        # This is a very special case which shouldn't happen
+        stopifnot2(key %in% names(d), msg = paste0('Cannot find key in the cache - ', key, '. Is the cache file correupted?'))
+
+        return(self$cache_env[[key]])
+
+      }
+
+      return(re)
     },
     to_list = function(){
       if(!is.null(self$trans_mat)){
@@ -64,7 +99,8 @@ GeomGroup <- R6::R6Class(
         group_data = self$group_data,
         trans_mat = trans_mat,
         cached_items = self$cached_items,
-        cache_name = self$cache_name()
+        cache_name = self$cache_name(),
+        disable_trans_mat = self$disable_trans_mat
       )
     }
   )
@@ -121,12 +157,12 @@ AbstractGeom <- R6::R6Class(
         use_cache = self$use_cache
       )
     },
-    get_data = function(key = 'value', ifnotfound = NULL){
+    get_data = function(key = 'value', force_reload = FALSE, ifnotfound = NULL){
       if(!is.null(self[[key]])){
         return(self[[key]])
       }
       if(!is.null(self$group) && is.list(self$group$group_data) && !is.null(self$group$group_data[[key]])){
-        return(self$group$group_data[[key]])
+        return(self$group$get_data(key, force_reload = force_reload, ifnotfound = ifnotfound))
       }
       return(ifnotfound)
     }

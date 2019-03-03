@@ -9,6 +9,8 @@ FreeGeom <- R6::R6Class(
     # not yet implemented
     value = NULL,
 
+    clickable = FALSE,
+
     set_value = function(...){
       # ignored
     },
@@ -32,10 +34,16 @@ FreeGeom <- R6::R6Class(
             path = cache_file,
             absolute_path = normalizePath(cache_file),
             file_name = filename(cache_file),
-            is_new_cache = FALSE
+            is_new_cache = FALSE,
+            is_cache = TRUE
           )
 
         }else{
+
+          # Still need to check data
+          stopifnot2(ncol(vertex) == 3, msg = 'vertex must have 3 columns')
+          stopifnot2(ncol(face) == 3, msg = 'face must have 3 columns')
+
           data = list( vertex = vertex, face = face )
           names(data) = sprintf(c('free_vertices_%s', 'free_faces_%s'), name)
 

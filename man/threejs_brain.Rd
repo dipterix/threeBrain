@@ -4,10 +4,10 @@
 \alias{threejs_brain}
 \title{Create a Threejs Brain}
 \usage{
-threejs_brain(..., time_range = NULL, value_range = NULL,
-  symmetric = 0, side_camera = FALSE, control_panel = TRUE,
-  control_presets = NULL, camera_center = c(0, 0, 30),
-  color_ramp = c("navyblue", "#e2e2e2", "red"), n_color = 100,
+threejs_brain(..., widget_id = "threebrain_data", time_range = NULL,
+  value_range = NULL, symmetric = 0, side_camera = FALSE,
+  control_panel = TRUE, control_presets = NULL, camera_center = c(0,
+  0, 0), color_ramp = c("navyblue", "#e2e2e2", "red"), n_color = 64,
   show_legend = TRUE, legend_title = "Value", legend_expr, at = NULL,
   tmp_dirname = NULL, width = NULL, height = NULL, .list = list())
 }

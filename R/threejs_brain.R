@@ -2,9 +2,9 @@
 #' @import htmlwidgets
 #' @export
 threejs_brain <- function(
-  ..., time_range = NULL, value_range = NULL, symmetric = 0,
-  side_camera = FALSE, control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,30),
-  color_ramp = c('navyblue', '#e2e2e2', 'red'), n_color = 100,
+  ..., widget_id = 'threebrain_data', time_range = NULL, value_range = NULL, symmetric = 0,
+  side_camera = FALSE, control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
+  color_ramp = c('navyblue', '#e2e2e2', 'red'), n_color = 64,
   show_legend = TRUE, legend_title = 'Value', legend_expr, at = NULL,
   tmp_dirname = NULL,
   width = NULL, height = NULL,
@@ -36,8 +36,13 @@ threejs_brain <- function(
       }
     }
   })
+
+  # This is a tricky part, if the widget is created from shiny, there might be multiple instance running and we cannot have any cross talk
+  # TODO: Need to think on how to resolve conflicts.
+  widget_id = stringr::str_replace_all(widget_id, '[^a-zA-Z0-9]', '_')
+
   dependencies = htmltools::htmlDependency(
-    name = 'threebrain_data',
+    name = widget_id,
     version = '0',
     src = tmp_dir,
     all_files = TRUE
@@ -138,7 +143,8 @@ threejs_brain <- function(
     show_legend = show_legend,
     legend_at = at,
     legend_img = legend_img,
-    control_presets = control_presets
+    control_presets = control_presets,
+    cache_folder = widget_id
   )
 
   # Generate external file
