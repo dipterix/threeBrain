@@ -1,0 +1,25 @@
+---
+title: "ThreeBrain Developer TODO-list"
+author: "Zhengjia Wang"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Version 0.1.2
+
+* Enable T1 image in side-cameras
+* Rotate side-cameras to certain angles
+* Create variable side-cameras
+* Enable caches for Brain class
+  - T1 image data cube
+
+## Version 0.1.1 (Under Development)
+
+* Enable caches for Brain class
+  - Transform matrix for groups
+  - Locations for linkedsphere geom
+* Intergrate with `RAVE`
+

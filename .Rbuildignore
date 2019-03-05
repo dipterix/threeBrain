@@ -10,3 +10,4 @@
 .git
 .Rprofile
 .Rhistory
+^todos\.rmd$
