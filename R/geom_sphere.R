@@ -1,3 +1,9 @@
+#' R6 Class - Generate Sphere Geometry
+#'
+#' @name SphereGeom
+NULL
+
+
 #' @export
 SphereGeom <- R6::R6Class(
   classname = 'SphereGeom',

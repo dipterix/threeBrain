@@ -10,6 +10,12 @@
 # - 12 all side-cameras, system reserved
 # - 13~31 invisible
 
+
+#' R6 Class - Generate Group of Geometries
+#'
+#' @name GeomGroup
+NULL
+
 #' @export
 GeomGroup <- R6::R6Class(
   classname = 'GeomGroup',
@@ -107,6 +113,12 @@ GeomGroup <- R6::R6Class(
 )
 
 
+#' R6 Class - Abstract Class of Geometries
+#'
+#' @name AbstractGeom
+NULL
+
+#' @export
 AbstractGeom <- R6::R6Class(
   classname = 'AbstractGeom',
   portable = TRUE,

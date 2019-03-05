@@ -1,3 +1,14 @@
+#' R6 Class - Generate Geometry from Vertices and Face Indices
+#'
+#' @name FreeGeom
+NULL
+
+
+
+
+
+
+
 #' @export
 FreeGeom <- R6::R6Class(
   classname = 'FreeGeom',

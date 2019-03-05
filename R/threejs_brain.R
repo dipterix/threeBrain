@@ -1,5 +1,27 @@
 #' Create a Threejs Brain
-#' @import htmlwidgets
+#' @name threejs_brain
+#' @param ...,.list geometries inherit from AbstractGeom
+#' @param widget_id unique identifier for the widget. Use it when you have
+#'   multiple widgets in one website (shiny for example)
+#' @param time_range used to calculate animation time (not yet implemented)
+#' @param value_range used to generate colors
+#' @param symmetric default 0, color center will be mapped to this value
+#' @param side_camera enable side cameras to view objects from fixed perspective
+#' @param control_panel enable control panels for the widget
+#' @param camera_center position where camera should focus at
+#' @param color_ramp used to generate color ramps
+#' @param n_color how many colors in the color ramp (used  when generating legend)
+#' @param show_legend show legend in control panel?
+#' @param legend_title legend title
+#' @param at legen ticks
+#' @param legend_expr R expression to generate legend if you don't like the
+#'   default ones
+#' @param tmp_dirname internally used
+#' @param width,height width and height of the widget. By default width="100%",
+#'   and height varies.
+NULL
+
+
 #' @export
 threejs_brain <- function(
   ..., widget_id = 'threebrain_data', time_range = NULL, value_range = NULL, symmetric = 0,
@@ -172,12 +194,25 @@ threejs_brain <- function(
     ), dependencies = dependencies)
 }
 
-
+#' Shiny Output for threeBrain Widgets
+#' @name threejsBrainOutput
+#' @param outputId unique identifier for the widget
+#' @param width,height width and height of the widget. By default width="100%",
+#'   and height="500px".
+NULL
 
 #' @export
 threejsBrainOutput <- function(outputId, width = '100%', height = '500px'){
   htmlwidgets::shinyWidgetOutput(outputId, "threejs_brain", width, height, package = "threeBrain")
 }
+
+
+#' Shiny Renderer for threeBrain Widgets
+#' @name renderBrain
+#' @param expr R expression that calls three_brain function or Brain object
+#' @param env environment of expression to be evaluated
+#' @param quoted is expr quoted? Default is false.
+NULL
 
 
 #' @export

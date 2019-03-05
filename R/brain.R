@@ -1,4 +1,9 @@
-# TODO: Might need to migrate to rave
+#' R6 Class - Generate Brain Object
+#'
+#' @name Brain
+NULL
+
+
 #' @export
 Brain <- R6::R6Class(
   classname = 'Brain',

@@ -1,4 +1,3 @@
-#' @export
 ParticleGeom <- R6::R6Class(
     classname = 'ParticleGeom',
     inherit = AbstractGeom,
