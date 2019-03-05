@@ -14,11 +14,11 @@ dependencies:
     src: htmlwidgets/lib/threejs-0.101.1
     script:
       - js/WebGL.js
-      - js/three.min.js
+      - js/three.js
       - js/libs/dat.gui.min.js
       - js/libs/stats.min.js
       - js/controls/OrthographicTrackballControls.js
-      - js/threeoctree.min.js
+      - js/threeoctree.js
       - js/Math/Lut.js
     style:
       - css/dat.gui.css

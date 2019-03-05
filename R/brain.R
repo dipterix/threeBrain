@@ -41,83 +41,83 @@ Brain <- R6::R6Class(
         `.__template__` = NULL,
         electrodes = list(),
         group_name = group_name,
-        pial = list()
+        surface = list()
       )
     },
 
 
     # subject_name will be used to diff other subs
-    # pial_name can be anything like normal, inflated, std141...
+    # surface_name can be anything like normal, inflated, std141...
     # If as_template, then I assume this is a 141 brain surface and all electrodes
     # will be mapped to according to this surface
-    add_pial = function(
-      subject_name, pial_name = 'normal', is_standard = FALSE,
-      lh_pial = NULL, rh_pial = NULL,
-      lh_pial_cache = NULL, rh_pial_cache = NULL
+    add_surface = function(
+      subject_name, surface_name = 'normal', is_standard = FALSE,
+      lh_surface = NULL, rh_surface = NULL,
+      lh_surface_cache = NULL, rh_surface_cache = NULL
     ){
       # subject_name = 'Complete/YAB'
-      # pial_name = 'std.141'
+      # surface_name = 'std.141'
       # as_template = T
-      # lh_pial = '~/rave_data/data_dir/Complete/YAB/rave/suma/lh.pial.asc'
-      # rh_pial = '~/rave_data/data_dir/Complete/YAB/rave/suma/rh.pial.asc'
-      # lh_pial_cache = sprintf('~/rave_data/data_dir/Complete/YAB/rave/viewer/lh_pial_%s.json', pial_name)
-      # rh_pial_cache = sprintf('~/rave_data/data_dir/Complete/YAB/rave/viewer/rh_pial_%s.json', pial_name)
+      # lh_surface = '~/rave_data/data_dir/Complete/YAB/rave/suma/lh.pial.asc'
+      # rh_surface = '~/rave_data/data_dir/Complete/YAB/rave/suma/rh.pial.asc'
+      # lh_surface_cache = sprintf('~/rave_data/data_dir/Complete/YAB/rave/viewer/lh_surface_%s.json', surface_name)
+      # rh_surface_cache = sprintf('~/rave_data/data_dir/Complete/YAB/rave/viewer/rh_surface_%s.json', surface_name)
 
-      self$subjects[[subject_name]][['pial']][[pial_name]] = list()
+      self$subjects[[subject_name]][['surface']][[surface_name]] = list()
       gui_params = c()
 
       # ----- First, check left hemisphere ------
       load_data = TRUE
-      name = sprintf('lh - %s (%s)', pial_name, subject_name)
-      if(length(lh_pial_cache)==1){
-        if(file.exists(lh_pial_cache)){
-          g = FreeGeom$new(name = name, cache_file = lh_pial_cache, group = self$groups[['Left Hemisphere']])
+      name = sprintf('lh - %s (%s)', surface_name, subject_name)
+      if(length(lh_surface_cache)==1){
+        if(file.exists(lh_surface_cache)){
+          g = FreeGeom$new(name = name, cache_file = lh_surface_cache, group = self$groups[['Left Hemisphere']])
           load_data = FALSE
         }
       }
       if(load_data){
-        dat = read_fs_asc(lh_pial)
-        g = FreeGeom$new(name = name, cache_file = lh_pial_cache,
+        dat = read_fs_asc(lh_surface)
+        g = FreeGeom$new(name = name, cache_file = lh_surface_cache,
                          vertex = dat$vertices[,1:3],
                          face = dat$faces[, 1:3], group = self$groups[['Left Hemisphere']])
       }
 
       g$layer = 29
       # Add this geom to subject
-      self$subjects[[subject_name]][['pial']][[pial_name]][['left']] = g
+      self$subjects[[subject_name]][['surface']][[surface_name]][['left']] = g
       gui_params = c(gui_params, g$name)
 
       # ----- Next, check right hemisphere ------
       load_data = TRUE
-      name = sprintf('rh - %s (%s)', pial_name, subject_name)
-      if(length(rh_pial_cache)==1){
-        if(file.exists(rh_pial_cache)){
-          g = FreeGeom$new(name = name, cache_file = rh_pial_cache, group = self$groups[['Right Hemisphere']])
+      name = sprintf('rh - %s (%s)', surface_name, subject_name)
+      if(length(rh_surface_cache)==1){
+        if(file.exists(rh_surface_cache)){
+          g = FreeGeom$new(name = name, cache_file = rh_surface_cache, group = self$groups[['Right Hemisphere']])
           load_data = FALSE
         }
       }
       if(load_data){
-        dat = read_fs_asc(rh_pial)
-        g = FreeGeom$new(name = name, cache_file = rh_pial_cache,
+        dat = read_fs_asc(rh_surface)
+        g = FreeGeom$new(name = name, cache_file = rh_surface_cache,
                          vertex = dat$vertices[,1:3],
                          face = dat$faces[, 1:3], group = self$groups[['Right Hemisphere']])
       }
 
       g$layer = 29
       # Add this geom to subject
-      self$subjects[[subject_name]][['pial']][[pial_name]][['right']] = g
+      self$subjects[[subject_name]][['surface']][[surface_name]][['right']] = g
       gui_params = c(gui_params, g$name)
 
       if(is_standard){
-        self$subjects[[subject_name]]$.__template__ = pial_name
-        brain$groups[['Left Hemisphere']]$group_data$.__template__ = pial_name
-        brain$groups[['Right Hemisphere']]$group_data$.__template__ = pial_name
+        self$subjects[[subject_name]]$.__template__ = surface_name
+        brain$groups[['Left Hemisphere']]$group_data$.__template__ = surface_name
+        brain$groups[['Right Hemisphere']]$group_data$.__template__ = surface_name
       }
 
 
       # Add registration to gui controls
-      brain$groups[['Left Hemisphere']]$group_data$.gui_params[[pial_name]] = gui_params
-      brain$groups[['Right Hemisphere']]$group_data$.gui_params[[pial_name]] = gui_params
+      brain$groups[['Left Hemisphere']]$group_data$.gui_params[[surface_name]] = gui_params
+      brain$groups[['Right Hemisphere']]$group_data$.gui_params[[surface_name]] = gui_params
 
 
     },
@@ -146,17 +146,17 @@ Brain <- R6::R6Class(
 
       for(sub in subjects){
         sub_data = self$subjects[[sub]]
-        template_pial = sub_data$.__template__
-        stopifnot2(length(template_pial) == 1 && template_pial %in% names(sub_data$pial), msg = sprintf('Subject %s standard 141 brain is not set. Please use brain$add_pial(..., is_standard=TRUE) when adding 141 brain.'))
+        template_surface = sub_data$.__template__
+        stopifnot2(length(template_surface) == 1 && template_surface %in% names(sub_data$surface), msg = sprintf('Subject %s standard 141 brain is not set. Please use brain$add_surface(..., is_standard=TRUE) when adding 141 brain.'))
 
         # Get electrode locations
 
         # get 141 brain
-        pial_141 = sub_data$pial[[template_pial]]
+        surface_141 = sub_data$surface[[template_surface]]
 
-        g = pial_141$left
+        g = surface_141$left
         vert_left = t(g$get_data(sprintf('free_vertices_%s', g$name)))
-        g = pial_141$right
+        g = surface_141$right
         vert_right = t(g$get_data(sprintf('free_vertices_%s', g$name)))
 
         sapply(sub_data$electrodes, function(e){
@@ -179,14 +179,13 @@ Brain <- R6::R6Class(
           if(dist_left[ind_l] > dist_right[ind_r]) { ind = ind_r; linked_geom = 'right' }
 
           e$vertex_number = ind
-          e$linked_geom = pial_141[[linked_geom]]
+          e$linked_geom = surface_141[[linked_geom]]
         })
 
       }
     },
 
-
-    print = function(template_subject, ...){
+    view = function(template_subject, control_presets = c('surface_type', 'electrodes'), ...){
 
       subject_names = names(self$subjects)
 
@@ -197,20 +196,20 @@ Brain <- R6::R6Class(
       if(self$multiple_subject){
         # TODO if multiple subjects
 
-        pials = self$subjects[[template_subject]]$pial
+        surfaces = self$subjects[[template_subject]]$surface
         template = self$subjects[[template_subject]]$.__template__
-        pial_left = pials[[template]]$left
-        pial_right = pials[[template]]$right
+        surface_left = surfaces[[template]]$left
+        surface_right = surfaces[[template]]$right
 
         electrodes = lapply(self$subjects, function(s){
           lapply(s$electrodes, function(e){
             e$layer = 1;
             e$use_link = TRUE
 
-            if(e$linked_geom$group$name == pial_left$group$name){
-              e$linked_geom = pial_left
+            if(e$linked_geom$group$name == surface_left$group$name){
+              e$linked_geom = surface_left
             }else{
-              e$linked_geom = pial_right
+              e$linked_geom = surface_right
             }
 
             e$group$disable_trans_mat = TRUE
@@ -235,34 +234,30 @@ Brain <- R6::R6Class(
 
       }
 
-      # template pials
+      # template surfaces
       template = self$subjects[[template_subject]]$.__template__
-      pials = self$subjects[[template_subject]][['pial']]
+      surfaces = self$subjects[[template_subject]][['surface']]
 
-      lapply(unlist(pials), function(p){
+      lapply(unlist(surfaces), function(p){
         p$layer = 29;
       })
 
-      if(length( template ) && template %in% names(pials)){
-        lapply(pials[[template]], function(g){
+      if(length( template ) && template %in% names(surfaces)){
+        lapply(surfaces[[template]], function(g){
           g$layer = 1;
         })
       }
 
-      pials = unlist(pials)
-      names(pials) = NULL
+      surfaces = unlist(surfaces)
+      names(surfaces) = NULL
+
+      threejs_brain(.list = unlist(c(surfaces, electrodes)), control_presets = control_presets, ...)
+    },
 
 
-      base::print(threejs_brain(.list = unlist(c(pials, electrodes)), ...))
-
-      # threejs_brain(.list = unlist(c(pials[1:2], electrodes)), control_presets = c('pial_type', 'electrodes'))
-
-      # self$subjects$`congruency/YAH`$electrodes[[1]]$use_link
-
+    print = function(...){
+      return(self$view(...))
     }
-
-
-
 
   )
 )

@@ -2,31 +2,31 @@
 // Some presets for gui and canvas
 
 class THREEBRAIN_PRESETS{
-  pial_type(canvas, gui){
-    // This function controls which pial to be visible
-    const pial_group = canvas.group["Left Hemisphere"],
+  surface_type(canvas, gui){
+    // This function controls which surface to be visible
+    const surface_group = canvas.group["Left Hemisphere"],
           folder_name = 'Geometry';
 
-    if(pial_group === undefined){
+    if(surface_group === undefined){
       return(null);
     }
 
     let gui_data = canvas.group["Left Hemisphere"].userData.group_data['.gui_params'],
-        pial_name = Object.keys( gui_data ),
-        default_pial = canvas.group["Left Hemisphere"].userData.group_data['.__template__'];
+        surface_name = Object.keys( gui_data ),
+        default_surface = canvas.group["Left Hemisphere"].userData.group_data['.__template__'];
 
-    this.current_pial = default_pial;
+    this.current_surface = default_surface;
 
-    let obj_names = to_array( gui_data[this.current_pial] );
+    let obj_names = to_array( gui_data[this.current_surface] );
 
-    if(pial_name.length > 0){
-      gui.add_item('Pial Name', default_pial, {
-        args : pial_name,
+    if(surface_name.length > 0){
+      gui.add_item('Surface Name', default_surface, {
+        args : surface_name,
         folder_name : folder_name
       })
       .onChange((pn) => {
-        if(this.current_pial != pn){
-          obj_names = to_array( gui_data[this.current_pial] );
+        if(this.current_surface != pn){
+          obj_names = to_array( gui_data[this.current_surface] );
 
           obj_names.forEach((nm) => {
             canvas.mesh[nm].visible = false;
@@ -38,7 +38,7 @@ class THREEBRAIN_PRESETS{
             canvas.mesh[nm].visible = true;
           });
 
-          this.current_pial = pn;
+          this.current_surface = pn;
         }
 
 

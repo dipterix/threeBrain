@@ -65,7 +65,7 @@ class THREEBRAIN_CANVAS {
   constructor(el, width, height, side_width = 250, DEBUG = false) {
 
     if(DEBUG){
-      console.log('Debug Mode: ON.');
+      console.debug('Debug Mode: ON.');
       this.DEBUG = true;
     }else{
       this.DEBUG = false;
@@ -155,8 +155,19 @@ class THREEBRAIN_CANVAS {
     this.side_canvas.style.margin = '0px';
     this.side_canvas.style.padding = '0px';
     this.side_canvas.style.display = 'none';
+    this.side_canvas.style.overflowY = 'scroll';
     this.side_renderer.domElement.style.margin = 'auto';
     this.side_canvas.appendChild( this.side_renderer.domElement );
+
+    this.side_divider = document.createElement('div');
+    this.side_divider.className = 'THREEBRAIN-SIDE-DIVIDER';
+    this.side_divider.innerHTML = '<span style="width:5px;">.</span>';
+    this.side_divider.draggable=true;
+    this.side_divider.ondragend = (evt) => {
+      this.side_width_fixed =  evt.clientX + 5;
+      this.handle_resize();
+    };
+    this.side_canvas.appendChild( this.side_divider );
 
     this.main_canvas = document.createElement('div');
     this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
@@ -291,12 +302,12 @@ class THREEBRAIN_CANVAS {
 			// this may decrease performance as it forces a matrix update
 			undeferred: false,
 			// set the max depth of tree
-			depthMax: Infinity,
+			depthMax: 5,
 			// max number of objects before nodes split or merge
-			objectsThreshold: 8,
+			objectsThreshold: 200000,
 			// percent between 0 and 1 that nodes will overlap each other
 			// helps insert objects that lie over more than one node
-			overlapPct: 0.15
+			overlapPct: 1
 		} );
 
   }
@@ -365,7 +376,7 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _fast_raycast(clickable_only){
+  _fast_raycast(clickable_only, max_search = 500){
 
     this.use_octree = true;
 
@@ -380,28 +391,49 @@ class THREEBRAIN_CANVAS {
       items = raycaster.intersectOctreeObjects( octreeObjects );
     }else{
       if(this.DEBUG){
-        console.log('Searching for all intersections - Partial searching')
+        console.debug('Searching for all intersections - Partial searching')
       }
-      // I'll only search for 500 ms
-      let layer = new THREE.Layers();
 
-      layer.mask = 16383;
+      // We need to filter out meshes
+      // 1. invisible
+      // 2. layers > 20
+      // 3. not intersect with ray on the boxes
 
-      let t_start = new Date();
-      for( var name in this.mesh ){
-        if(new Date() - t_start > 500){
-          break;
-        }
-        let m = this.mesh[name];
-        if(m.visible && m.isMesh && m.layers.test(layer)){
-          item = this.mouse_raycaster.intersectObject( m );
-          if(item.length > 0){
-            if(items.length == 0 || (item[0].distance < items[0].distance)){
-              items = item;
+      // First step, intersect with boxes
+      let target_object = undefined,
+          test_layer = new THREE.Layers(),
+          p1 = new THREE.Vector3(),
+          p2 = new THREE.Vector3();
+
+      test_layer.mask = 16383;
+
+      for( var mesh_name in this.mesh ){
+        let m = this.mesh[mesh_name];
+        if(m.isMesh && m.visible && m.layers.test(test_layer)){
+          let geom = m.geometry;
+
+          if(!geom.boundingBox){
+            geom.computeBoundingBox();
+          }
+
+          let box_item = this.mouse_raycaster.ray.intersectBox(geom.boundingBox, p2);
+          if(box_item !== null){
+            if(target_object === undefined || (p1.distanceTo( this.main_camera.position ) > p2.distanceTo( this.main_camera.position ) )){
+              target_object = m;
+              p1.set( p2.x, p2.y, p2.z );
             }
           }
         }
+
       }
+
+      console.log(target_object.name);
+
+      if(target_object !== undefined){
+        console.log(target_object.name);
+        items = this.mouse_raycaster.intersectObject( target_object, false );
+      }
+
     }
 
     if(this.DEBUG){
@@ -459,7 +491,7 @@ class THREEBRAIN_CANVAS {
 
 
       if(this.DEBUG && ['dblclick', 'click'].includes(this.mouse_event.action)){
-        console.log('object selected ' + target_object.name);
+        console.debug('object selected ' + target_object.name);
       }
       if(['dblclick', 'click'].includes(this.mouse_event.action)){
         this.object_chosen = target_object;
@@ -571,7 +603,7 @@ class THREEBRAIN_CANVAS {
 
   handle_resize(width, height){
 
-    // console.log('width: ' + width + '; height: ' + height);
+    // console.debug('width: ' + width + '; height: ' + height);
     if(width === undefined){
       width = this.client_width;
       height = this.client_height;
@@ -598,11 +630,13 @@ class THREEBRAIN_CANVAS {
       this.side_canvas.style.display = 'inline-flex';
 
       this.side_scene = 'vertical';
-      side_width = Math.floor(height / 4);
-      main_width = width - side_width - 1;
+      side_width = this.side_width_fixed || Math.floor(height / 4);
+      main_width = width - side_width - 6;
 
       this.side_canvas.style.height = height + 'px';
-      this.side_canvas.style.width = side_width + 'px';
+      this.side_divider.style.minHeight = height + 'px';
+      this.side_divider.style.height = side_width * 4 + 'px';
+      this.side_canvas.style.width = (side_width+5) + 'px';
 
       this.side_renderer.setSize( side_width , 4 * side_width );
 
@@ -708,6 +742,9 @@ class THREEBRAIN_CANVAS {
     try {
       this.target_mouse_helper();
     } catch (e) {
+      if(this.DEBUG){
+        console.error(e);
+      }
     }
 
   }
@@ -792,7 +829,7 @@ class THREEBRAIN_CANVAS {
   add_object(g){
     //
     if(this.DEBUG){
-      console.log('Generating geometry '+g.type);
+      console.debug('Generating geometry '+g.type);
     }
     var gen_f = eval('gen_' + g.type),
         m = gen_f(g, canvas = this),
@@ -803,10 +840,10 @@ class THREEBRAIN_CANVAS {
       layers.forEach((ii) => {
         m.layers.enable(ii);
       })
-      console.log(g.name + ' is enabled layer ' + ii);
+      console.debug(g.name + ' is enabled layer ' + ii);
     }else if(layers.length == 0 || layers[0] > 20){
       if(this.DEBUG){
-        console.log(g.name + ' is set invisible.');
+        console.debug(g.name + ' is set invisible.');
       }
       m.layers.set(1);
       m.visible = false;
@@ -836,33 +873,64 @@ class THREEBRAIN_CANVAS {
       gp.add(m);
     }
 
+    if(m.isMesh){
+      m.updateMatrixWorld();
+    }
+
   }
 
-  load_file(path, onLoad, onProgress = null, onError = null){
+  _loader_finishied(){
+    if(this.json_load_finished === undefined){
+      this.json_load_finished = true;
+      return(true);
+    }
+    if(this.json_load_queue.length > 0){
+      this.json_load_finished = false;
+    }
+    return(this.json_load_finished);
+  }
+
+  _file_manager(){
+    if(this.loader_manager !== undefined){
+      return(this.loader_manager)
+    }
+
+    const manager = new THREE.LoadingManager();
+    this.loader_manager = manager
+
+    manager.onLoad =  () => {
+
+    	console.log( 'Loading complete!');
+
+    };
+
+
+    manager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+
+    	console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+
+    };
+
+    manager.onError = function ( url ) {
+
+    	console.log( 'There was an error loading ' + url );
+
+    };
+
+    return(this.loader_manager)
+
+
+  }
+
+  load_file(path, onLoad){
     if(this.json_loader === undefined){
-      this.json_loader = new THREE.FileLoader();
-    }
-    if(onProgress === null){
-      onProgress = ( xhr, p ) => {
-    		console.log( (xhr.loaded / xhr.total * 100) + '% loaded - ' +  p);
-    	}
+      this.json_loader = new THREE.FileLoader( this._file_manager() );
     }
 
-    if(onError === null){
-      onError = ( err ) => {
-    		console.error( 'An error happened' );
-    	}
-    }
 
-    this.json_loader.load(
-    	// resource URL
-    	path, onLoad, (xhr) => {
+    this.json_loader.load( path, onLoad );
 
-        let fname = /[^\/]+$/.exec(path)[0];
-    	  onProgress(xhr, fname);
 
-    	}, onError
-    );
 
   }
 
@@ -893,13 +961,8 @@ class THREEBRAIN_CANVAS {
 
         if(cache_info === undefined || cache_info === null || Array.isArray(cache_info)){
           // Already cached
-          console.log('Loaded - ' + nm);
           item_size -= 1;
         }else{
-
-          if(this.DEBUG){
-            console.log('Loading - ' + nm);
-          }
 
           // Need to check shiny mode
           let path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
@@ -910,14 +973,12 @@ class THREEBRAIN_CANVAS {
 
 
           this.load_file(
-            path, ( data ) => {
-          	  const v = JSON.parse(data),
-          	        keys = Object.keys(v);
+            path, ( v ) => {
 
-          	  if(this.DEBUG){
-          	    console.log('DONE - ' +  path);
-          	    console.log(keys);
-          	  }
+              if(typeof(v) === 'string'){
+                v = JSON.parse(v);
+              }
+          	  const keys = Object.keys(v);
 
           	  keys.forEach((k) => {
                 g.group_data[k] = v[k];
@@ -938,20 +999,12 @@ class THREEBRAIN_CANVAS {
 
     this.scene.add(gp);
 
+    const check = function(){
+      return(item_size == 0);
+    }
 
-    let promise = new Promise((resolve) => {
-      // TODO: What if failed?
-      let check = () => {
-        if(item_size > 0){
-          setTimeout(check, 100);
-        }else{
-          resolve(true);
-        }
-      }
-      check();
-    })
+    return(check);
 
-    return(promise);
   }
 
   // Get data from some geometry. Try to get from geom first, then get from group
@@ -1037,17 +1090,17 @@ function gen_sphere(g, canvas){
 }
 
 function gen_free(g, canvas){
-  var gb = new THREE.BufferGeometry(),
+  const gb = new THREE.BufferGeometry(),
       vertices = canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name),
       faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name);
 
-  var vertex_positions = [],
-      face_orders = [],
-      normals = [];
+  const vertex_positions = [],
+      face_orders = [];
+      //normals = [];
 
   vertices.forEach((v) => {
     vertex_positions.push(v[0], v[1], v[2]);
-    normals.push(0,0,1);
+    // normals.push(0,0,1);
   })
 
   faces.forEach((v) => {
@@ -1056,8 +1109,13 @@ function gen_free(g, canvas){
 
   gb.setIndex( face_orders );
   gb.addAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
-  gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+  // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
   gb.computeVertexNormals();
+  gb.computeBoundingBox();
+  gb.computeBoundingSphere();
+  //gb.computeFaceNormals();
+  //gb.faces = faces;
+
 
   gb.name = 'geom_free_' + g.name;
 
@@ -1148,7 +1206,7 @@ function gen_particle(g, canvas){
 		// mesh = new THREE.Points( geometry, material );
 
   }else{
-    console.log('TODO: particle system with no cube data');
+    console.debug('TODO: particle system with no cube data');
   }
 
   var shaderMaterial = new THREE.RawShaderMaterial({

@@ -54,3 +54,14 @@
 .threejs-control .dg.main:hover {
     opacity: 1;
 }
+
+
+.THREEBRAIN-SIDE-DIVIDER {
+  width: 5px;
+  background-color: black;
+  cursor: col-resize;
+}
+
+.THREEBRAIN-SIDE-DIVIDER::before {
+  content: ' ';
+}

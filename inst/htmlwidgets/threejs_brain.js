@@ -56,7 +56,7 @@ HTMLWidgets.widget({
 
     var resize_widget = function(width, height){
       if(DEBUG){
-        console.log('TODO: Resizing (resize_widget)');
+        console.debug('TODO: Resizing (resize_widget)');
       }
 
       canvas.handle_resize(width - 300, height);
@@ -121,21 +121,6 @@ HTMLWidgets.widget({
     // 6. Animation
     canvas.animate();
 
-    // 7. Set flag to stop render if mouse leaves element
-    el.addEventListener( 'onmouseenter', (event) => {
-      if(DEBUG){
-        console.log('Mouse entered canvas, render...');
-      }
-      canvas.render_flag = true;
-    }, false );
-
-    el.addEventListener( 'onmouseleave', (event) => {
-      if(DEBUG){
-        console.log('Mouse left canvas, stop render...');
-      }
-      canvas.render_flag = false;
-    }, false );
-
     return {
       // "find", "renderError", "clearError", "sizing", "name", "type", "initialize", "renderValue", "resize"
 
@@ -156,47 +141,52 @@ HTMLWidgets.widget({
 
         // Clear scene so that elements get removed
         canvas.clear_all();
+        canvas.render_flag = false;
 
         canvas.set_colormap(map = settings.colors, settings.value_range[0], settings.value_range[1], outputId);
 
 
+        const canvas_loader_manager = canvas._file_manager();
 
-        // Register groups and geoms
-        let loader_promises = [];
-
-        groups.forEach( (g) => {
-
-          // Copy current count
-          //let lc = loader_counts;
-          let p = canvas.add_group(g, cache_folder = settings.cache_folder,
-              ( xhr, path ) => {
-
-                let percentage = xhr.loaded / xhr.total * 100;
-                    msg = `${percentage.toFixed(0)}% loaded - ${path}`;
-
-                if(DEBUG){
-                  window.xhr = xhr;
-                  console.log(msg);
-                }
-
-                el_text.innerHTML = msg;
-
-            	});
-          loader_promises.push(p);
-        } );
-
-        Promise.all(loader_promises).then(() => {
-          el_text.innerHTML = 'Loading Completed!';
+        canvas_loader_manager.onLoad = () => {
+          el_text.innerHTML = '<p><small>Loading Completed!</small></p>';
           geoms.forEach( (g) => {
-            try {
+            if(DEBUG){
               canvas.add_object(g);
-            } catch (e) {
-              if(DEBUG){
-                console.error(e);
+            }else{
+              try {
+                canvas.add_object(g);
+              } catch (e) {
               }
             }
           });
-        });
+
+          canvas.render_flag = true;
+        };
+
+
+        canvas_loader_manager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+
+        	let path = /\/([^/]*)$/.exec(url)[1],
+        	    msg = '<p><small>Loading file: ' + itemsLoaded + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
+
+          if(DEBUG){
+            console.debug(msg);
+          }
+
+          el_text.innerHTML = msg;
+
+        };
+
+        // Register groups and geoms
+
+        groups.forEach( (g) => {
+
+          canvas.add_group(g, cache_folder = settings.cache_folder);
+
+        } );
+
+
 
 
 
