@@ -29,7 +29,7 @@ threejs_brain <- function(
   color_ramp = c('navyblue', '#e2e2e2', 'red'), n_color = 64,
   show_legend = TRUE, legend_title = 'Value', legend_expr, at = NULL,
   tmp_dirname = NULL,
-  width = NULL, height = NULL,
+  width = NULL, height = NULL, optionals = list(),
   .list = list()){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
@@ -166,7 +166,8 @@ threejs_brain <- function(
     legend_at = at,
     legend_img = legend_img,
     control_presets = control_presets,
-    cache_folder = widget_id
+    cache_folder = widget_id,
+    optionals = optionals
   )
 
   # Generate external file

@@ -132,6 +132,7 @@ AbstractGeom <- R6::R6Class(
     clickable = TRUE,
     layer = 0,
     use_cache = FALSE,
+    custom_info = '',
     initialize = function(name, position = c(0,0,0), time_stamp = NULL, group = NULL, layer = 0, ...){
       self$name = name
       self$time_stamp = time_stamp
@@ -166,7 +167,8 @@ AbstractGeom <- R6::R6Class(
         clickable = self$clickable,
         layer = as.integer(self$layer),
         group = group_info,
-        use_cache = self$use_cache
+        use_cache = self$use_cache,
+        custom_info = self$custom_info
       )
     },
     get_data = function(key = 'value', force_reload = FALSE, ifnotfound = NULL){

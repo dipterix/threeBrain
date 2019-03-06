@@ -310,6 +310,19 @@ class THREEBRAIN_CANVAS {
 			overlapPct: 1
 		} );
 
+
+		// File loader
+    this.loader_triggered = false;
+    this.loader_manager = new THREE.LoadingManager();
+    this.loader_manager.onStart = () => { this.loader_triggered = true };
+    this.loader_manager.onLoad = () => { console.log( 'Loading complete!') };
+    this.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
+    	console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+    };
+    this.loader_manager.onError = function ( url ) { console.log( 'There was an error loading ' + url ) };
+
+    this.json_loader = new THREE.FileLoader( this.loader_manager );
+
   }
 
   register_main_canvas_events(){
@@ -707,7 +720,9 @@ class THREEBRAIN_CANVAS {
 
     this.controls.handleResize();
 
-    this.render();
+    // this.render();
+
+
   }
 
   update_control_center( v ){
@@ -835,6 +850,10 @@ class THREEBRAIN_CANVAS {
         m = gen_f(g, canvas = this),
         layers = to_array(g.layer);
 
+    if(typeof(m) !== 'object' || m === null){
+      return(null);
+    }
+
     m.layers.set(31);
     if(layers.length > 1){
       layers.forEach((ii) => {
@@ -849,11 +868,6 @@ class THREEBRAIN_CANVAS {
       m.visible = false;
     }else{
       m.layers.set(layers[0]);
-    }
-
-
-    if(typeof(m) !== 'object' || m === null){
-      return(null);
     }
 
     m.userData.construct_params = g;
@@ -890,48 +904,9 @@ class THREEBRAIN_CANVAS {
     return(this.json_load_finished);
   }
 
-  _file_manager(){
-    if(this.loader_manager !== undefined){
-      return(this.loader_manager)
-    }
-
-    const manager = new THREE.LoadingManager();
-    this.loader_manager = manager
-
-    manager.onLoad =  () => {
-
-    	console.log( 'Loading complete!');
-
-    };
-
-
-    manager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
-
-    	console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
-
-    };
-
-    manager.onError = function ( url ) {
-
-    	console.log( 'There was an error loading ' + url );
-
-    };
-
-    return(this.loader_manager)
-
-
-  }
-
   load_file(path, onLoad){
-    if(this.json_loader === undefined){
-      this.json_loader = new THREE.FileLoader( this._file_manager() );
-    }
-
-
+    this.loader_triggered = true;
     this.json_loader.load( path, onLoad );
-
-
-
   }
 
   // Add geom groups
@@ -942,10 +917,17 @@ class THREEBRAIN_CANVAS {
     to_array(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
     gp.position.fromArray( g.position );
 
-    if(!g.disable_trans_mat && g.trans_mat !== null){
+    if(g.trans_mat !== null){
       let trans = new THREE.Matrix4();
       trans.set(...g.trans_mat);
-      gp.applyMatrix(trans);
+      let inverse_trans = new THREE.Matrix4().getInverse( trans );
+
+      gp.userData.trans_mat = trans;
+      gp.userData.inv_trans_mat = inverse_trans;
+
+      if(!g.disable_trans_mat){
+        gp.applyMatrix(trans);
+      }
     }
 
     gp.userData.construct_params = g;
@@ -1087,6 +1069,10 @@ function gen_sphere(g, canvas){
   mesh.userData.ani_time = to_array(g.time_stamp);
 
   return(mesh);
+}
+
+function gen_blank(g, canvas){
+  return(null);
 }
 
 function gen_free(g, canvas){

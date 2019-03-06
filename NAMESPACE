@@ -2,6 +2,7 @@
 
 S3method(as.list,AbstractGeom)
 export(AbstractGeom)
+export(BlankGeom)
 export(Brain)
 export(FreeGeom)
 export(GeomGroup)

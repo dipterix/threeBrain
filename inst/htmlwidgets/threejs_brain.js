@@ -128,6 +128,7 @@ HTMLWidgets.widget({
         // geoms, settings
         let geoms = x.geoms,
             settings = x.settings,
+            optionals = settings.optionals || {},
             groups = x.groups;
         let gui = new THREEBRAIN_CONTROL(args = { autoPlace: false }, DEBUG = DEBUG);
         // let gui = new dat.GUI({ autoPlace: false });
@@ -146,9 +147,9 @@ HTMLWidgets.widget({
         canvas.set_colormap(map = settings.colors, settings.value_range[0], settings.value_range[1], outputId);
 
 
-        const canvas_loader_manager = canvas._file_manager();
+        canvas.loader_triggered = false;
 
-        canvas_loader_manager.onLoad = () => {
+        canvas.loader_manager.onLoad = () => {
           el_text.innerHTML = '<p><small>Loading Completed!</small></p>';
           geoms.forEach( (g) => {
             if(DEBUG){
@@ -161,11 +162,79 @@ HTMLWidgets.widget({
             }
           });
 
+          // --------------- Register GUI controller ---------------
+          // Add legends
+          el_legend_img.setAttribute('src', settings.legend_img);
+
+          // Set side bar
+          if(settings.hide_controls || false){
+            gui.domElement.style.display = 'none';
+          }else{
+            gui.domElement.style.display = 'block';
+
+            let placeholder = el_control.firstChild;
+            el_control.replaceChild( gui.domElement, placeholder);
+
+          }
+
+          let control_presets = settings.control_presets;
+              presets = new THREEBRAIN_PRESETS(canvas, gui, optionals.map_to_template || false);
+
+          to_array( control_presets ).forEach((control_preset) => {
+            try {
+              presets[control_preset]();
+
+              let callback = presets[control_preset + '_callback'];
+              if(typeof(callback) === 'function'){
+                callback();
+              }
+            } catch (e) {
+              if(DEBUG){
+                console.warn(e);
+              }
+            }
+          });
+
+
+
+          // GUI folders to keep them in order
+          gui.add_folder('Graphics');
+          gui.add_folder('Misc');
+
+
+          // Add listeners
+          gui
+            .add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
+            .onChange((v) => {
+              let inversedColor = invertColor(v);
+              canvas.main_renderer.setClearColor(v);
+              canvas.side_renderer.setClearColor(v);
+              el_text.style.color=inversedColor;
+              el.style.backgroundColor = v;
+            });
+
+          gui.add_item('Reset Control', () => {canvas.reset_controls()}, {folder_name: 'Misc'});
+          gui.add_item('Lock Control', false, {folder_name: 'Misc'})
+            .onChange((v) => {
+              canvas.controls.enabled = !v;
+            });
+          gui.add_item('Show Legend', settings.show_legend, {folder_name: 'Graphics'})
+            .onChange((v) => {
+              let d = v? 'block' : 'none';
+              el_legend_img.style.display = d;
+            });
+
+          gui.add_item('Enable Raycast', false, {folder_name: 'Misc'})
+            .onChange((v) =>{
+              canvas.disable_raycast = !v;
+            });
+
+
           canvas.render_flag = true;
         };
 
 
-        canvas_loader_manager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+        canvas.loader_manager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
 
         	let path = /\/([^/]*)$/.exec(url)[1],
         	    msg = '<p><small>Loading file: ' + itemsLoaded + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
@@ -186,6 +255,10 @@ HTMLWidgets.widget({
 
         } );
 
+        if(!canvas.loader_triggered){
+          canvas.loader_manager.onLoad();
+        }
+
 
 
 
@@ -204,72 +277,7 @@ HTMLWidgets.widget({
         canvas.handle_resize(width - 300, height);
         canvas.render();
 
-        // Add legends
-        el_legend_img.setAttribute('src', settings.legend_img);
 
-        // Set side bar
-        if(settings.hide_controls || false){
-          gui.domElement.style.display = 'none';
-        }else{
-          gui.domElement.style.display = 'block';
-
-          let placeholder = el_control.firstChild;
-          el_control.replaceChild( gui.domElement, placeholder);
-
-
-
-          if(DEBUG){
-            gui.add_item('message', 'this is a message');
-            gui.add_item('color', "#ffae23", {is_color : true});
-          }
-        }
-
-        let control_presets = settings.control_presets;
-            presets = new THREEBRAIN_PRESETS();
-
-        to_array( control_presets ).forEach((control_preset) => {
-          if(DEBUG){
-            presets[control_preset](canvas, gui);
-          }else{
-            try {
-              presets[control_preset](canvas, gui);
-            } catch (e) {}
-          }
-        });
-
-
-
-        // GUI folders to keep them in order
-        gui.add_folder('Graphics');
-        gui.add_folder('Misc');
-
-
-        // Add listeners
-        gui
-          .add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
-          .onChange((v) => {
-            let inversedColor = invertColor(v);
-            canvas.main_renderer.setClearColor(v);
-            canvas.side_renderer.setClearColor(v);
-            el_text.style.color=inversedColor;
-            el.style.backgroundColor = v;
-          });
-
-        gui.add_item('Reset Control', () => {canvas.reset_controls()}, {folder_name: 'Misc'});
-        gui.add_item('Lock Control', false, {folder_name: 'Misc'})
-          .onChange((v) => {
-            canvas.controls.enabled = !v;
-          });
-        gui.add_item('Show Legend', settings.show_legend, {folder_name: 'Graphics'})
-          .onChange((v) => {
-            let d = v? 'block' : 'none';
-            el_legend_img.style.display = d;
-          });
-
-        gui.add_item('Enable Raycast', false, {folder_name: 'Misc'})
-          .onChange((v) =>{
-            canvas.disable_raycast = !v;
-          });
 
         canvas.set_mouse_click_callback((obj) => {
           if(obj.userData){

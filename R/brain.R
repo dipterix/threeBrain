@@ -13,12 +13,12 @@ Brain <- R6::R6Class(
     groups = NULL,
     subjects = NULL,
     multiple_subject = FALSE,
-
-
+    .blankgeom = NULL,
 
     initialize = function(multiple_subject = FALSE){
 
       self$multiple_subject = multiple_subject
+      self$.blankgeom = list()
 
       # Create environment for groups
       self$groups = new.env(parent = emptyenv())
@@ -26,13 +26,17 @@ Brain <- R6::R6Class(
       g = GeomGroup$new(name = 'Left Hemisphere', layer = 0)
       g$group_data$.gui_params = list()
       self$groups[['Left Hemisphere']] = g
+      self$.blankgeom[[1]] = BlankGeom$new(group = g)
 
       g = GeomGroup$new(name = 'Right Hemisphere', layer = 0)
       g$group_data$.gui_params = list()
       self$groups[['Right Hemisphere']] = g
+      self$.blankgeom[[2]] = BlankGeom$new(group = g)
 
       # Create storage to load subject information
       self$subjects = new.env(parent = emptyenv())
+
+
 
     },
 
@@ -48,6 +52,10 @@ Brain <- R6::R6Class(
         group_name = group_name,
         surface = list()
       )
+      self$groups[['Left Hemisphere']]$group_data$.gui_params[[subject_name]] = list()
+      self$groups[['Right Hemisphere']]$group_data$.gui_params[[subject_name]] = list()
+      self$groups[['Left Hemisphere']]$group_data$.subjects = names(self$subjects)
+      self$groups[['Right Hemisphere']]$group_data$.subjects = names(self$subjects)
     },
 
 
@@ -115,28 +123,47 @@ Brain <- R6::R6Class(
 
       if(is_standard){
         self$subjects[[subject_name]]$.__template__ = surface_name
-        brain$groups[['Left Hemisphere']]$group_data$.__template__ = surface_name
-        brain$groups[['Right Hemisphere']]$group_data$.__template__ = surface_name
+        self$groups[['Left Hemisphere']]$group_data$.__template__ = surface_name
+        self$groups[['Right Hemisphere']]$group_data$.__template__ = surface_name
       }
 
 
       # Add registration to gui controls
-      brain$groups[['Left Hemisphere']]$group_data$.gui_params[[surface_name]] = gui_params
-      brain$groups[['Right Hemisphere']]$group_data$.gui_params[[surface_name]] = gui_params
+      self$groups[['Left Hemisphere']]$group_data$.gui_params[[subject_name]][[surface_name]] = gui_params
+      self$groups[['Right Hemisphere']]$group_data$.gui_params[[subject_name]][[surface_name]] = gui_params
 
 
     },
 
 
 
-    add_electrode = function(subject_name, name, x, y, z, ...){
+    add_electrode = function(subject_name, name, x, y, z, sub_cortical = FALSE,
+                             surface_type = 'pial', hemisphere = NULL, vertex_number = -1,...){
 
       group_name = self$subjects[[subject_name]]$group_name
 
-      g = LinkedSphereGeom$new(name = name, position = c(x,y,z), group = self$groups[[group_name]], ...)
+      g = ElectrodeGeom$new(name = name, position = c(x,y,z), group = self$groups[[group_name]], ...)
       g$layer = 29
+      g$sub_cortical = sub_cortical
 
-      self$subjects[[subject_name]][['electrodes']][[1+length(self$subjects[[subject_name]][['electrodes']])]] = g
+      # Check hemisphere and vertex_number
+      if(!length(hemisphere) || vertex_number < 0 || !hemisphere %in% c('left', 'right')){
+        surfaces = self$subjects[[subject_name]]$surface[[surface_type]]
+        if(length(surfaces) == 2){
+          g$search_geoms = sapply(surfaces, function(s){ s$name }, USE.NAMES = T, simplify = F)
+        }else{
+          # stopifnot2(length(surfaces) == 2, msg = paste('Cannot find surface type -', surface_type))
+          cat2('Cannot find surface ', surface_type, '. Cannot map to template brain.', level = 'WARNING', sep = '')
+        }
+
+      }else{
+        g$hemisphere = hemisphere
+        g$vertex_number = vertex_number
+      }
+
+      g$surface_type = surface_type
+
+      self$subjects[[subject_name]][['electrodes']][[name]] = g
     },
 
     set_tranform = function(subject_name, mat){
@@ -145,6 +172,76 @@ Brain <- R6::R6Class(
     },
 
 
+
+
+    view = function(template_subject, control_presets = c('surface_type', 'electrodes'), optionals = list(), ...){
+
+      optionals$map_to_template = env$brain$multiple_subject
+
+      subject_names = names(self$subjects)
+
+      if(missing(template_subject)){
+        template_subject = subject_names[1]
+      }
+
+      if(self$multiple_subject){
+        # TODO if multiple subjects
+
+        surfaces = self$subjects[[template_subject]]$surface
+        # template = self$subjects[[template_subject]]$.__template__
+        # if(!length(template)){
+        #   if(self$multiple_subject && 'N27_pial' %in% names(surfaces)){
+        #     template = 'N27_pial'
+        #   }else if{
+        #
+        #   }
+        #   if()
+        # }
+
+        electrodes = lapply(self$subjects, function(s){
+          lapply(s$electrodes, function(e){
+            e$layer = 1;
+            e$use_template = TRUE
+            e$group$disable_trans_mat = TRUE
+            e
+          })
+        })
+
+        electrodes = unlist(electrodes)
+        names(electrodes) = NULL
+
+      }else{
+        # case if single subject
+
+        electrodes = self$subjects[[template_subject]]$electrodes
+        electrodes = unlist(electrodes)
+        names(electrodes) = NULL
+        lapply(electrodes, function(e){
+          e$layer = 1; e$use_template = FALSE
+          e$group$disable_trans_mat = FALSE
+        })
+
+      }
+
+      # template surfaces
+      surfaces = lapply(names(self$subjects), function(subj){
+        self$subjects[[subj]][['surface']]
+      })
+      surfaces = unlist(surfaces)
+
+      lapply(unlist(surfaces), function(p){
+        p$layer = 29;
+      })
+
+      names(surfaces) = NULL
+
+      threejs_brain(.list = unlist(c(self$.blankgeom, surfaces, electrodes)), control_presets = control_presets, optionals = optionals, ...)
+    },
+
+
+    print = function(...){
+      return(self$view(...))
+    },
     map_to_template = function(){
       # For each subjects, calculate electrode location link to the nearest mesh node
       subjects = names(self$subjects)
@@ -188,80 +285,6 @@ Brain <- R6::R6Class(
         })
 
       }
-    },
-
-    view = function(template_subject, control_presets = c('surface_type', 'electrodes'), ...){
-
-      subject_names = names(self$subjects)
-
-      if(missing(template_subject)){
-        template_subject = subject_names[1]
-      }
-
-      if(self$multiple_subject){
-        # TODO if multiple subjects
-
-        surfaces = self$subjects[[template_subject]]$surface
-        template = self$subjects[[template_subject]]$.__template__
-        surface_left = surfaces[[template]]$left
-        surface_right = surfaces[[template]]$right
-
-        electrodes = lapply(self$subjects, function(s){
-          lapply(s$electrodes, function(e){
-            e$layer = 1;
-            e$use_link = TRUE
-
-            if(e$linked_geom$group$name == surface_left$group$name){
-              e$linked_geom = surface_left
-            }else{
-              e$linked_geom = surface_right
-            }
-
-            e$group$disable_trans_mat = TRUE
-
-            e
-          })
-        })
-
-        electrodes = unlist(electrodes)
-        names(electrodes) = NULL
-
-      }else{
-        # case if single subject
-
-        electrodes = self$subjects[[template_subject]]$electrodes
-        electrodes = unlist(electrodes)
-        names(electrodes) = NULL
-        lapply(electrodes, function(e){
-          e$layer = 1; e$use_link = FALSE
-          e$group$disable_trans_mat = FALSE
-        })
-
-      }
-
-      # template surfaces
-      template = self$subjects[[template_subject]]$.__template__
-      surfaces = self$subjects[[template_subject]][['surface']]
-
-      lapply(unlist(surfaces), function(p){
-        p$layer = 29;
-      })
-
-      if(length( template ) && template %in% names(surfaces)){
-        lapply(surfaces[[template]], function(g){
-          g$layer = 1;
-        })
-      }
-
-      surfaces = unlist(surfaces)
-      names(surfaces) = NULL
-
-      threejs_brain(.list = unlist(c(surfaces, electrodes)), control_presets = control_presets, ...)
-    },
-
-
-    print = function(...){
-      return(self$view(...))
     }
 
   )
