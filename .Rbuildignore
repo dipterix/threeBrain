@@ -11,4 +11,4 @@
 .Rprofile
 .Rhistory
 ^todos\.rmd$
-^inst/N27/
+^inst/js_raws/
