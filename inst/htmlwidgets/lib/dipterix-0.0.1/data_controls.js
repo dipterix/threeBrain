@@ -3,7 +3,7 @@
 
 class THREEBRAIN_PRESETS{
 
-  constructor(canvas, gui, map_to_template = false, initial_subject = 'congruency/YAB'){
+  constructor(canvas, gui, map_to_template = false, initial_subject = 'N27'){
     this.canvas = canvas;
     this.gui = gui;
     this.map_to_template = map_to_template;
@@ -31,7 +31,7 @@ class THREEBRAIN_PRESETS{
   }
 
   _surfaces(){
-    return(canvas.group["Left Hemisphere"].userData.group_data['.gui_params']);
+    return(this.canvas.group["Left Hemisphere"].userData.group_data['.gui_params']);
   }
 
   _current_surfaces( subj ){
@@ -40,7 +40,7 @@ class THREEBRAIN_PRESETS{
   }
 
   _all_group_names(){
-    return( Object.keys( canvas.group ) );
+    return( Object.keys( this.canvas.group ) );
   }
 
   _electrode_group_names(filtered_result = false){
@@ -62,14 +62,52 @@ class THREEBRAIN_PRESETS{
   }
 
   _get_group_by_name( group_name ){
-    return( canvas.group[group_name] );
+    return( this.canvas.group[group_name] );
+  }
+
+  _is_electrode(e){
+    if(e && e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
+      return(true);
+    }else{
+      return(false);
+    }
   }
 
   _get_subjects(){
-    if(canvas.group["Left Hemisphere"]){
-      return(to_array( canvas.group["Left Hemisphere"].userData.group_data['.subjects'] ));
+    if( this.canvas.group["Left Hemisphere"]){
+      return(to_array( this.canvas.group["Left Hemisphere"].userData.group_data['.subjects'] ));
     }
     return([]);
+  }
+
+  color_group(item_name = 'Show Groups', folder_name = 'Graphics'){
+    const group_names = this._electrode_group_names();
+    // check how many groups
+    const col_pal = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9", "#000000"];
+    const col = new THREE.Color();
+
+
+    this.gui.add_item(item_name, false, {
+        folder_name : folder_name
+      }).onChange((v) => {
+        for(let ii in group_names){
+          if(v){
+            col.set( col_pal[ ii % col_pal.length ] );
+          }else{
+            col.set("#ffffff");
+          }
+
+          let gnm = group_names[ii];
+          if(this.canvas.group.hasOwnProperty( gnm )){
+            this.canvas.group[ gnm ].children.forEach((e) => {
+              if(this._is_electrode(e)){
+                e.material.color.setRGB( col.r, col.g, col.b );
+              }
+            });
+          }
+
+        }
+      });
   }
 
   // Preset 1: Select subject
@@ -95,6 +133,10 @@ class THREEBRAIN_PRESETS{
         args : subjects,
         folder_name : folder_name
       }).onChange(this.subject_callback);
+
+    if(this.map_to_template){
+      gui.open_folder(folder_name);
+    }
 
   }
 
@@ -275,27 +317,37 @@ class THREEBRAIN_PRESETS{
 
   }
 
-  lh_material(){
+  lh_material(item_name = 'Left Hemisphere', folder_name = 'Geometry'){
     const canvas = this.canvas;
     const gui = this.gui;
 
     // Add controls on showing and hiding meshes
-    let folder_name = 'Geometry';
-    gui.add_item('Left Hemisphere', 'normal', options = {
+    gui.add_item(item_name, 'normal', {
       args : ['normal', 'wireframe', 'hidden'],
       folder_name : folder_name
     })
       .onChange((v) => {
-        let m = canvas.mesh["Left Hemisphere"];
-        if(m && m.isMesh){
+        let m = canvas.group["Left Hemisphere"];
+        if(m && m.isObject3D){
           switch (v) {
             case 'normal':
-              m.material.wireframe = false;
+
+              m.children.forEach( (h) => {
+                if(h.isMesh){
+                  h.material.wireframe = false;
+                }
+              });
               m.visible = true;
+
               break;
             case 'wireframe':
-              m.material.wireframe = true;
+              m.children.forEach( (h) => {
+                if(h.isMesh){
+                  h.material.wireframe = true;
+                }
+              });
               m.visible = true;
+
               break;
             default:
               m.visible = false;
@@ -305,26 +357,37 @@ class THREEBRAIN_PRESETS{
       });
     gui.open_folder(folder_name);
   }
-  rh_material(){
+  rh_material(item_name = 'Right Hemisphere', folder_name = 'Geometry'){
     const canvas = this.canvas;
     const gui = this.gui;
 
-    let folder_name = 'Geometry';
-    gui.add_item('Right Hemisphere', 'normal', options = {
+    // Add controls on showing and hiding meshes
+    gui.add_item(item_name, 'normal', {
       args : ['normal', 'wireframe', 'hidden'],
       folder_name : folder_name
     })
       .onChange((v) => {
-        let m = canvas.mesh["Right Hemisphere"];
-        if(m && m.isMesh){
+        let m = canvas.group["Right Hemisphere"];
+        if(m && m.isObject3D){
           switch (v) {
             case 'normal':
-              m.material.wireframe = false;
+
+              m.children.forEach( (h) => {
+                if(h.isMesh){
+                  h.material.wireframe = false;
+                }
+              });
               m.visible = true;
+
               break;
             case 'wireframe':
-              m.material.wireframe = true;
+              m.children.forEach( (h) => {
+                if(h.isMesh){
+                  h.material.wireframe = true;
+                }
+              });
               m.visible = true;
+
               break;
             default:
               m.visible = false;

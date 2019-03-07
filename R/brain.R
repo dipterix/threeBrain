@@ -12,12 +12,13 @@ Brain <- R6::R6Class(
   public = list(
     groups = NULL,
     subjects = NULL,
+    default_surfaces = NULL,
     multiple_subject = FALSE,
     .blankgeom = NULL,
 
-    initialize = function(multiple_subject = FALSE){
+    initialize = function(multiple_subject = FALSE, default_surfaces = 'pial'){
 
-      self$multiple_subject = multiple_subject
+      self$default_surfaces = default_surfaces
       self$.blankgeom = list()
 
       # Create environment for groups
@@ -36,8 +37,36 @@ Brain <- R6::R6Class(
       # Create storage to load subject information
       self$subjects = new.env(parent = emptyenv())
 
+      self$set_multiple_subject( multiple_subject )
 
 
+    },
+
+    set_multiple_subject = function(is_multiple){
+      self$multiple_subject = is_multiple
+      if(is_multiple && !'N27' %in% names(self$subjects)){
+        # Check N27 Surface is there
+        self$add_subject('N27')
+
+        for(s in n27_surfaces[n27_surfaces %in% self$default_surfaces]){
+
+          g = get_n27_surface(
+            group_left = self$groups[['Left Hemisphere']],
+            group_right = self$groups[['Right Hemisphere']],
+            surface = s
+          )
+          self$subjects$N27$surface[[s]] = g
+
+          self$groups[['Left Hemisphere']]$group_data$.gui_params$N27[[s]] = c(g$left$name, g$right$name)
+          self$groups[['Right Hemisphere']]$group_data$.gui_params$N27[[s]] = c(g$left$name, g$right$name)
+
+        }
+
+      }
+
+      if(!is_multiple && 'N27' %in% names(self$subjects)){
+        rm('N27', envir = self$subjects)
+      }
     },
 
     add_subject = function(subject_name){
@@ -64,7 +93,7 @@ Brain <- R6::R6Class(
     # If as_template, then I assume this is a 141 brain surface and all electrodes
     # will be mapped to according to this surface
     add_surface = function(
-      subject_name, surface_name = 'normal', is_standard = FALSE,
+      subject_name, surface_name = 'pial', is_standard = FALSE,
       lh_surface = NULL, rh_surface = NULL,
       lh_surface_cache = NULL, rh_surface_cache = NULL
     ){
@@ -174,7 +203,11 @@ Brain <- R6::R6Class(
 
 
 
-    view = function(template_subject, control_presets = c('surface_type', 'electrodes'), optionals = list(), ...){
+    view = function(
+      template_subject,
+      control_presets = c('subject', 'surface_type', 'lh_material', 'rh_material',
+                          'electrodes', 'attach_to_surface', 'color_group'),
+      optionals = list(), ...){
 
       optionals$map_to_template = env$brain$multiple_subject
 

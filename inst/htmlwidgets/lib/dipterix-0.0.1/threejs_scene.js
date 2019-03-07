@@ -314,12 +314,15 @@ class THREEBRAIN_CANVAS {
 		// File loader
     this.loader_triggered = false;
     this.loader_manager = new THREE.LoadingManager();
-    this.loader_manager.onStart = () => { this.loader_triggered = true };
-    this.loader_manager.onLoad = () => { console.log( 'Loading complete!') };
-    this.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
-    	console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+    this.loader_manager.onStart = () => {
+      this.loader_triggered = true
+      console.debug( 'Loading start!')
     };
-    this.loader_manager.onError = function ( url ) { console.log( 'There was an error loading ' + url ) };
+    this.loader_manager.onLoad = () => { console.debug( 'Loading complete!') };
+    this.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
+    	console.debug( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+    };
+    this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
 
     this.json_loader = new THREE.FileLoader( this.loader_manager );
 
@@ -847,7 +850,7 @@ class THREEBRAIN_CANVAS {
       console.debug('Generating geometry '+g.type);
     }
     var gen_f = eval('gen_' + g.type),
-        m = gen_f(g, canvas = this),
+        m = gen_f(g, this),
         layers = to_array(g.layer);
 
     if(typeof(m) !== 'object' || m === null){

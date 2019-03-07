@@ -16,7 +16,7 @@ HTMLWidgets.widget({
 
   factory: function(el, width, height) {
 
-    DEBUG = true;
+    DEBUG = false;
 
     /*
     This part controls the initialization of a HTMLWidget.
@@ -113,10 +113,6 @@ HTMLWidgets.widget({
 
     // 5. initialize threejs scene
     let canvas = new THREEBRAIN_CANVAS(el, width, height, side_width = 250, DEBUG = DEBUG);
-    if(DEBUG){
-      window.canvas = canvas;
-      window.scene = canvas.scene; // chrome debugger seems to need this
-    }
 
     // 6. Animation
     canvas.animate();
@@ -133,12 +129,23 @@ HTMLWidgets.widget({
         let gui = new THREEBRAIN_CONTROL(args = { autoPlace: false }, DEBUG = DEBUG);
         // let gui = new dat.GUI({ autoPlace: false });
 
+        DEBUG = settings.debug;
         if(DEBUG){
           window.groups = groups;
           window.geoms = geoms;
           window.settings = settings;
           window.gui = gui;
+          window.canvas = canvas;
+          canvas.DEBUG = true;
+          window.scene = canvas.scene; // chrome debugger seems to need this
+        }else{
+          window.__groups = groups;
+          window.__geoms = geoms;
+          window.__settings = settings;
+          window.__gui = gui;
+          window.__canvas = canvas;
         }
+        DEBUG = true;
 
         // Clear scene so that elements get removed
         canvas.clear_all();

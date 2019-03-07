@@ -11,3 +11,4 @@
 .Rprofile
 .Rhistory
 ^todos\.rmd$
+^inst/N27/
