@@ -1,0 +1,19 @@
+package_name: threeBrain
+dev_subject:
+  project_name: demo
+  subject_code: sub_large
+  electrodes: '14,15'
+  epoch: Auditory
+  time_range:
+    pre: 1.0
+    post: 2.0
+  reference: default
+  frequency_range: ~
+  data_types: ~
+  load_brain: yes
+  download_url: https://s3-us-west-2.amazonaws.com/rave-demo-subject/sfn-demo/data-large.zip
+modules:
+- module_id: rave_threebrain_viewer
+  module_label: 3D Viewer
+  group_name: Overview
+

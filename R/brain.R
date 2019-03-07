@@ -209,7 +209,7 @@ Brain <- R6::R6Class(
                           'electrodes', 'attach_to_surface', 'color_group'),
       optionals = list(), ...){
 
-      optionals$map_to_template = env$brain$multiple_subject
+      optionals$map_to_template = self$multiple_subject
 
       subject_names = names(self$subjects)
 

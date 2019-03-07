@@ -1,14 +1,4 @@
 dependencies:
-  - name: bootstrap
-    version: 4.1.1
-    src: htmlwidgets/lib/bootstrap-4.1.1
-    style:
-      - bootstrap.min.css
-  - name: jquery
-    version: 3.3.1
-    src: htmlwidgets/lib/jQuery-3.3.1
-    script:
-      - jquery.min.js
   - name: threejs
     version: 0.101.1
     src: htmlwidgets/lib/threejs-0.101.1
@@ -22,9 +12,9 @@ dependencies:
       - js/Math/Lut.js
     style:
       - css/dat.gui.css
-  - name: dipterix
-    version: 0.0.1
-    src: htmlwidgets/lib/dipterix-0.0.1
+  - name: dipterixThreeBrain
+    version: 1.0.1
+    src: htmlwidgets/lib/dipterixThreeBrain-1.0.1
     style:
       - dipterix.css
     script:
@@ -32,4 +22,15 @@ dependencies:
       - shiny_tools.js
       - threejs_scene.js
       - data_controls.js
+  - name: bootstrap
+    version: 4.1.1
+    src: htmlwidgets/lib/bootstrap-4.1.1
+    style:
+      - bootstrap.min.css
+  - name: jquery
+    version: 3.3.1
+    src: htmlwidgets/lib/jQuery-3.3.1
+    script:
+      - jquery.min.js
+
 

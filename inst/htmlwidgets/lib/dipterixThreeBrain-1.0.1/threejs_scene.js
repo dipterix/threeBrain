@@ -1258,3 +1258,5 @@ function gen_particle(g, canvas){
 
 }
 
+
+window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;

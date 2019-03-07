@@ -6,8 +6,6 @@
 
 
 
-
-
 HTMLWidgets.widget({
 
   name: "threejs_brain",
@@ -309,5 +307,3 @@ HTMLWidgets.widget({
     };
   }
 });
-
-
