@@ -25,7 +25,11 @@ three_viewer_ui = function(){
 
   local_data$render_brain = Sys.time()
 
-  threejsBrainOutput(ns('viewer_output'))
+  tagList(
+    threejsBrainOutput(ns('viewer_output'), height = '80vh'),
+    actionButton(ns('asd'), 'asd'),
+    threejsBrainOutput(ns('viewer_output2'), height = '80vh')
+  )
 
 }
 
@@ -41,6 +45,10 @@ observeEvent(input$cache, {
   local_data$refresh = Sys.time()
 })
 
+observeEvent(input$asd, {
+  local_data$render_brain2 = Sys.time()
+})
+
 
 output$viewer_output <- renderBrain({
   local_data$render_brain
@@ -49,4 +57,13 @@ output$viewer_output <- renderBrain({
   brain$add_subject(subject = subject, surfaces = c('pial', 'white', 'smoothwm'))
 
   brain$brain$view()
+})
+
+output$viewer_output2 <- renderBrain({
+  local_data$render_brain2
+  brain = rave:::rave_brain2()
+  brain$add_subject(subject = subject, surfaces = c('pial', 'white', 'smoothwm')[1: min(3, max(1, local_data$render_brain2))])
+
+  brain$brain$view()
+
 })
