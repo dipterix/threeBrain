@@ -56,7 +56,7 @@ output$viewer_output <- renderBrain({
   brain = rave:::rave_brain2()
   brain$add_subject(subject = subject, surfaces = c('pial', 'white', 'smoothwm'))
 
-  brain$brain$view()
+  brain$brain$view(tmp_dirname = 'rave_viewer')
 })
 
 output$viewer_output2 <- renderBrain({
@@ -64,6 +64,6 @@ output$viewer_output2 <- renderBrain({
   brain = rave:::rave_brain2()
   brain$add_subject(subject = subject, surfaces = c('pial', 'white', 'smoothwm')[1: min(3, max(1, local_data$render_brain2))])
 
-  brain$brain$view()
+  brain$brain$view(tmp_dirname = 'rave_viewer')
 
 })

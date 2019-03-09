@@ -3,6 +3,7 @@
 })();
 // This is a global cache that is shared across the widgets.
 const global_cache = new THREEBRAIN_STORAGE();
+window.global_cache = window.global_cache || global_cache;
 
 HTMLWidgets.widget({
 
@@ -17,8 +18,9 @@ HTMLWidgets.widget({
       cache = global_cache;
     }
 
-
-    this.handlers = new BrainCanvas(
+    // handlers should never be "this.handlers" since HTMLWidgets is a class,
+    // this.handlers will have crosstalk with other widgets
+    let handlers = new BrainCanvas(
 
       // Element to store 3D viewer
       el,
@@ -35,17 +37,18 @@ HTMLWidgets.widget({
       // DEBUG mode?
       false
     );
-    window.hh = this.handlers;
+
+    global_cache.set_item('__' + el.getAttribute('id'), handlers);
 
     return {
       // "find", "renderError", "clearError", "sizing", "name", "type", "initialize", "renderValue", "resize"
 
       renderValue: (x) => {
-        this.handlers.render_value( x );
+        handlers.render_value( x );
       },
 
-      resize: (w, h) => {
-        this.handlers.resize_widget( w, h );
+      resize: (width, height) => {
+        handlers.resize_widget( width, height );
       }
     };
   }

@@ -52267,7 +52267,7 @@ class THREEBRAIN_CANVAS {
 
     // if DEBUG, add stats information
     // Stats
-    if(DEBUG){
+    if(this.DEBUG){
       this.has_stats = true;
       this.stats = new _libs_stats_min_js__WEBPACK_IMPORTED_MODULE_1__[/* Stats */ "a"]();
       this.stats.domElement.style.display = 'block';
@@ -52988,7 +52988,7 @@ class THREEBRAIN_CANVAS {
   }
 
   load_file(path, onLoad){
-    this.loader_triggered = true;
+
 
     if( this.use_cache ){
 
@@ -52996,6 +52996,7 @@ class THREEBRAIN_CANVAS {
       if( this.cache.check_item( path ) ){
         onLoad( this.cache.get_item( path ) );
       }else{
+        this.loader_triggered = true;
         this.json_loader.load( path, (v) => {
           if(typeof(v) === 'string'){
             v = JSON.parse(v);
@@ -53005,7 +53006,7 @@ class THREEBRAIN_CANVAS {
         });
       }
     }else{
-
+      this.loader_triggered = true;
       this.json_loader.load( path , (v) => {
         if(typeof(v) === 'string'){
           v = JSON.parse(v);
@@ -56753,8 +56754,8 @@ class src_BrainCanvas{
     // Make sure to resize widget in the viewer model because its parent element is absolute in position and setting height, width to 100% won't work.
     this.el = el;
     if(viewer_mode){
-      el.style.height = '100vh';
-      el.style.width = '100vw';
+      this.el.style.height = '100vh';
+      this.el.style.width = '100vw';
     }
 
     // --------------------- Assign class attribute ----------------------
@@ -56774,7 +56775,7 @@ class src_BrainCanvas{
     this.el_side.style.maxHeight = height + 'px';
     // this.el_side.style.height = height + 'px';
     this.el_side.setAttribute('class', 'threejs-control');
-    el.appendChild( this.el_side );
+    this.el.appendChild( this.el_side );
 
     // Control panel has three parts:
     // 1. data gui - auto
@@ -56826,9 +56827,7 @@ class src_BrainCanvas{
   }
 
   resize_widget(width, height){
-    if( this.DEBUG ){
-      console.debug( 'Resize to ' + width + ' x ' + height );
-    }
+    console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
     this.canvas.handle_resize(width - 300, height);
     this.el_side.style.maxHeight = height + 'px';
   }
@@ -56860,7 +56859,7 @@ class src_BrainCanvas{
           callback();
         }
       } catch (e) {
-        if(DEBUG){
+        if(this.DEBUG){
           console.warn(e);
         }
       }
@@ -56901,7 +56900,8 @@ class src_BrainCanvas{
 
   _set_loader_callbacks(){
     this.canvas.loader_manager.onLoad = () => {
-      this.el_text.innerHTML = '<p><small>Loading Completed!</small></p>';
+      console.debug(this.outputId + ' - Loading complete. Adding object');
+      this.el_text.innerHTML = '<p><small>Loading Complete!</small></p>';
       this.geoms.forEach((g) => {
         if( this.DEBUG ){
           this.canvas.add_object( g );
