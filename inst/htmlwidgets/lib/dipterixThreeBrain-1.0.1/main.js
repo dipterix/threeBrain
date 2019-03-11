@@ -52152,6 +52152,11 @@ class THREEBRAIN_CANVAS {
     this.render_flag = true;
     this.disable_raycast = true;
 
+    // If there exists animations, this will control the flow;
+    this.animation_controls = {};
+    this.animation_mixers = {};
+    this.clock = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Clock();
+
 
     // General scene. Two scenes for double-buffer (depth information)
     this.scene = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Scene();
@@ -52539,6 +52544,10 @@ class THREEBRAIN_CANVAS {
     this._mouse_click_callback = callback;
   }
 
+  set_animation_callback(callback){
+    this._animation_callback = callback;
+  }
+
   // method to target object with mouse pointed at
   target_mouse_helper(){
 
@@ -52677,17 +52686,10 @@ class THREEBRAIN_CANVAS {
   }
 
   get_color(v){
-    if(this._colormap === undefined){
+    if(this.lut === undefined){
       return('#e2e2e2');
     }else{
-      let color_index = Math.floor((v - this._colorshift) * this._colorscale);
-      if(color_index < 0) {
-        color_index = 0;
-      }
-      if(color_index > this._colormap.length-1){
-        color_index = this._colormap.length-1;
-      }
-      return(this._colormap[color_index]);
+      return(this.lut.getColor(v));
     }
   }
 
@@ -52883,6 +52885,65 @@ class THREEBRAIN_CANVAS {
 
   animate(once = false){
 		requestAnimationFrame( this.animate.bind(this) );
+
+		// this.animation_controls = {};
+    // this.clock = new THREE.Clock();
+    if( typeof( this.animation_controls.get_params ) === 'function' ){
+
+      // animation is enabled
+
+      let params = this.animation_controls.get_params(),
+          is_playing = params.play,
+          last_time = params.time,
+          speed = params.speed,
+          time_start = params.min,
+          time_end = params.max,
+          clock_time_delta = this.clock.getDelta();
+
+      // next_time =
+      //  1. if not is_playing, last_time
+      //  2. if is_playing, last_time + time_delta * speed
+      let current_time = is_playing ? (last_time + clock_time_delta * speed) : last_time;
+
+      if( current_time > time_end ){
+        current_time = time_start;
+      }
+
+      // Change animation
+      // this.animation_mixer.update( mixerUpdateDelta );
+      for( let g_name in this.animation_mixers ){
+        this.animation_mixers[ g_name ].update(
+          current_time - this.time_range_min - this.animation_mixers[ g_name ].time
+        );
+      }
+
+      // set timer
+      this.animation_controls.set_time( current_time );
+
+      // show mesh value info
+      if( typeof(this._animation_callback) === 'function'){
+        if(this.object_chosen !== undefined &&
+          this.object_chosen.userData &&
+          this.object_chosen.userData.ani_value &&
+          this.object_chosen.userData.ani_value.length > 0 ){
+
+            let current_value;
+            const time_stamp = this.object_chosen.userData.ani_time;
+            const values = this.object_chosen.userData.ani_value;
+            for( let ii in time_stamp ){
+              if(time_stamp[ ii ] <= current_time){
+                current_value = values[ ii ];
+              }
+            }
+            this._animation_callback(this.object_chosen, current_value, current_time);
+        }else{
+          this._animation_callback();
+        }
+      }
+
+    }
+
+
 
 		if(once || this.render_flag === true){
       this.render();
@@ -53123,7 +53184,62 @@ class THREEBRAIN_CANVAS {
   }
 
 
+  // Generate animation clips and mixes
+  generate_animation_clips(){
+    for(let k in this.mesh){
+      let m = this.mesh[k];
+      if(m.isMesh && typeof(m.userData.generate_keyframe_tracks) === 'function'){
+        let g_name = m.userData.construct_params.name;
 
+        if(m.userData.animation_objects === undefined){
+          m.userData.animation_objects = {};
+        }
+
+        // Obtain keyframe tracks
+        let keyframes = m.userData.generate_keyframe_tracks();
+
+        // Generate animation clip
+        // TODO: Edit so that we can find clips (array)
+        let clip = m.userData.animation_objects.animation_clip;
+        if( clip === undefined ){
+          clip = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].AnimationClip(
+            'action_' + m.name ,
+            this.time_range_max - this.time_range_min,
+            keyframes
+          );
+          m.userData.animation_objects.animation_clip = clip;
+        }else{
+          clip.tracks = keyframes;
+          clip.duration = this.time_range_max - this.time_range_min;
+        }
+
+        // setup the AnimationMixer
+        let mixer = m.userData.animation_objects.animation_mixer;
+				if( mixer === undefined ){
+				  mixer = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].AnimationMixer( m );
+				  m.userData.animation_objects.animation_mixer = mixer;
+				}
+				mixer.stopAllAction();
+				this.animation_mixers[ g_name ] = mixer;
+
+        // setup animations
+        let animation_actions = m.userData.animation_objects.clip_action;
+        if(animation_actions === undefined){
+  				// bind clip to mixer
+  				animation_actions = mixer.clipAction( clip );
+				  m.userData.animation_objects.clip_action = animation_actions;
+        }
+        // TODO: Do we need to check stop clip first?
+				animation_actions.play();
+
+      }
+    }
+  }
+
+  set_time_range( min, max ){
+    this.time_range_min = min;
+    this.time_range_max = max;
+  }
 }
 
 
@@ -53167,6 +53283,26 @@ function gen_sphere(g, canvas){
 
   mesh.userData.ani_value = values;
   mesh.userData.ani_time = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(g.time_stamp);
+
+  if(values.length > 0){
+    // Set animation keyframes, will set material color
+    mesh.userData.generate_keyframe_tracks = () => {
+      let cols = [], time_stamp = [];
+      mesh.userData.ani_value.forEach((v) => {
+        let c = canvas.get_color(v);
+        cols.push( c.r, c.g, c.b );
+      });
+      mesh.userData.ani_time.forEach((v) => {
+        time_stamp.push( v - canvas.time_range_min );
+      });
+      return([new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ColorKeyframeTrack(
+        '.material.color',
+        time_stamp, cols, _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].InterpolateDiscrete
+      )]);
+
+    };
+
+  }
 
   return(mesh);
 }
@@ -56256,6 +56392,63 @@ class data_controls_THREEBRAIN_PRESETS{
     return([]);
   }
 
+
+  animation(folder_name = 'Timeline', step = 0.001){
+    // this.canvas.animation_controls = {};
+    const min = this.canvas.time_range_min || 0;
+    const max = this.canvas.time_range_max || 1;
+
+    this.set_animation_time = (v) => {
+      if(this._ani_time){
+        if(typeof(v) !== 'number'){
+          v = this._ani_time.min;
+        }
+        this._ani_time.setValue( v );
+      }
+    };
+
+    this.get_animation_params = () => {
+      if(this._ani_time && this._ani_speed && this._ani_status){
+        return({
+          play : this._ani_status.getValue(),
+          time : this._ani_time.getValue(),
+          speed : this._ani_speed.getValue(),
+          min : min,
+          max : max
+        });
+      }else{
+        return({
+          play : false,
+          time : 0,
+          speed : 0,
+          min : min,
+          max : max
+        });
+      }
+    };
+
+    this.canvas.animation_controls.set_time = this.set_animation_time;
+    this.canvas.animation_controls.get_params = this.get_animation_params;
+
+    this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
+
+    this.gui.add_item('Reset', () => {
+      this.set_animation_time( min );
+    }, { folder_name : folder_name });
+
+    this._ani_speed = this.gui.add_item('Speed', 1, {
+      args : { 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2},
+      folder_name : folder_name
+    });
+
+    this.gui.add_item('Time', min, { folder_name : folder_name })
+        .min(min).max(max).step(step);
+    this._ani_time = this.gui.get_controller('Time', 'Timeline');
+
+
+  }
+
+
   color_group(item_name = 'Show Groups', folder_name = 'Graphics'){
     const group_names = this._electrode_group_names();
     // check how many groups
@@ -56277,6 +56470,8 @@ class data_controls_THREEBRAIN_PRESETS{
           if(this.canvas.group.hasOwnProperty( gnm )){
             this.canvas.group[ gnm ].children.forEach((e) => {
               if(this._is_electrode(e)){
+                // supress animation
+                e.userData._color_supressed = v;
                 e.material.color.setRGB( col.r, col.g, col.b );
               }
             });
@@ -56807,7 +57002,13 @@ class src_BrainCanvas{
     this.el_text = document.createElement('div');
     this.el_text.style.width = '100%';
     this.el_text.style.padding = '10px';
+
+    this.el_text2 = document.createElement('div');
+    this.el_text2.style.width = '100%';
+    this.el_text2.style.padding = '10px';
     this.el_side.appendChild( this.el_text );
+    this.el_side.appendChild( this.el_text2 );
+
 
     // 2. initialize threejs scene
     this.canvas = new threejs_scene["a" /* THREEBRAIN_CANVAS */](this.el, width, height, 250, this.shiny_mode, cache, this.DEBUG);
@@ -56834,6 +57035,9 @@ class src_BrainCanvas{
 
   _register_gui_control(){
     const gui = new data_controls_THREEBRAIN_CONTROL({ autoPlace: false }, this.DEBUG);
+    if(this.DEBUG){
+      window.gui = gui;
+    }
     // --------------- Register GUI controller ---------------
     // Add legends
     this.el_legend_img.setAttribute( 'src', this.settings.legend_img );
@@ -56849,6 +57053,9 @@ class src_BrainCanvas{
 
     const control_presets = this.settings.control_presets;
     const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, gui, this.optionals.map_to_template || false);
+    if(this.DEBUG){
+      window.presets = presets;
+    }
 
     Object(utils["b" /* to_array */])( control_presets ).forEach((control_preset) => {
       try {
@@ -56877,6 +57084,7 @@ class src_BrainCanvas{
         this.canvas.main_renderer.setClearColor(v);
         this.canvas.side_renderer.setClearColor(v);
         this.el_text.style.color=inversedColor;
+        this.el_text2.style.color=inversedColor;
         this.el.style.backgroundColor = v;
       });
 
@@ -56915,7 +57123,11 @@ class src_BrainCanvas{
 
       this._register_gui_control();
 
+      // Generate animations
+      this.canvas.generate_animation_clips();
+
       this.canvas.render_flag = true;
+
     };
 
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
@@ -56934,7 +57146,7 @@ class src_BrainCanvas{
 
   }
 
-  _set_click_callback(){
+  _set_info_callback(){
     this.canvas.set_mouse_click_callback((obj) => {
       if(obj.userData){
         const g = obj.userData.construct_params,
@@ -56951,6 +57163,18 @@ class src_BrainCanvas{
 
         this.el_text.innerHTML = text;
       }
+    });
+
+    this.canvas.set_animation_callback((obj, v, t) => {
+      if( obj === undefined ){
+        this.el_text2.innerHTML = '';
+      }else{
+        if( !v ){
+          v = 'NA';
+        }
+        this.el_text2.innerHTML = `<p>Time: ${t.toFixed(2)}<br />Value: ${v.toFixed(2)}</p>`;
+      }
+
     });
   }
 
@@ -56979,6 +57203,11 @@ class src_BrainCanvas{
     this.canvas.clear_all();
     this.canvas.render_flag = false;
 
+    this.canvas.set_time_range(
+      this.settings.time_range[0],
+      this.settings.time_range[1]
+    );
+
     this.canvas.set_colormap(
       this.settings.colors,
       this.settings.value_range[0],
@@ -56991,7 +57220,7 @@ class src_BrainCanvas{
 
     // Register some callbacks
     this._set_loader_callbacks();
-    this._set_click_callback();
+    this._set_info_callback();
 
     this.groups.forEach((g) => {
 
@@ -57023,6 +57252,7 @@ class src_BrainCanvas{
 
 window.BrainCanvas = src_BrainCanvas;
 window.THREEBRAIN_STORAGE = threebrain_cache["a" /* THREEBRAIN_STORAGE */];
+window.THREE = threeplugins["a" /* THREE */];
 
 
 

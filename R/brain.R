@@ -64,9 +64,27 @@ Brain <- R6::R6Class(
 
       }
 
-      if(!is_multiple && 'N27' %in% names(self$subjects)){
-        rm('N27', envir = self$subjects)
+      if(!is_multiple){
+        self$remove_subject('N27')
       }
+    },
+
+    remove_subject = function(subject_name){
+      if(!is.list(self$subjects[[subject_name]])){
+        return(TRUE)
+      }
+      group_name = sprintf('electrodes-%s', subject_name)
+      self$groups[[group_name]] = NULL
+
+      rm(subject_name, envir = self$subjects)
+
+      self$groups[['Left Hemisphere']]$group_data$.gui_params[[subject_name]] = NULL
+      self$groups[['Right Hemisphere']]$group_data$.gui_params[[subject_name]] = NULL
+      subs = self$groups[['Left Hemisphere']]$group_data$.subjects
+      subs = subs[!subs %in% subject_name]
+      self$groups[['Left Hemisphere']]$group_data$.subjects = subs
+      self$groups[['Right Hemisphere']]$group_data$.subjects = subs
+      return(TRUE)
     },
 
     add_subject = function(subject_name){
@@ -177,12 +195,17 @@ Brain <- R6::R6Class(
 
       # Check hemisphere and vertex_number
       if(!length(hemisphere) || vertex_number < 0 || !hemisphere %in% c('left', 'right')){
+        # My idea was to calculate nearest vertex to the electrodes using js
+        # however, that will cause problems and really JS is not the place to handle logic
+        # stuff. It's required to calculate the results and send it here
+        # otherwise electrodes won't be mapped to template brain!
+
         surfaces = self$subjects[[subject_name]]$surface[[surface_type]]
         if(length(surfaces) == 2){
           g$search_geoms = sapply(surfaces, function(s){ s$name }, USE.NAMES = T, simplify = F)
         }else{
           # stopifnot2(length(surfaces) == 2, msg = paste('Cannot find surface type -', surface_type))
-          cat2('Cannot find surface ', surface_type, '. Cannot map to template brain.', level = 'WARNING', sep = '')
+          # cat2('Cannot find surface ', surface_type, '. Cannot map to template brain.', level = 'WARNING', sep = '')
         }
 
       }else{
