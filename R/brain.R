@@ -76,7 +76,8 @@ Brain <- R6::R6Class(
       group_name = sprintf('electrodes-%s', subject_name)
       self$groups[[group_name]] = NULL
 
-      rm(subject_name, envir = self$subjects)
+
+      rm(list = subject_name, envir = self$subjects)
 
       self$groups[['Left Hemisphere']]$group_data$.gui_params[[subject_name]] = NULL
       self$groups[['Right Hemisphere']]$group_data$.gui_params[[subject_name]] = NULL
