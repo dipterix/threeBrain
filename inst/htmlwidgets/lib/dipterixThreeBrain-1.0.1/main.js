@@ -52411,14 +52411,14 @@ class THREEBRAIN_CANVAS {
 
   register_main_canvas_events(){
     this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
-      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
+      if(this.mouse_event !== undefined && this.mouse_event.level > 2){
         return(null);
       }
       this.mouse_event = {
         'action' : 'dblclick',
         'event' : event,
         'dispose' : false,
-        'level' : 1
+        'level' : 2
       };
     }, false );
 
@@ -52428,6 +52428,7 @@ class THREEBRAIN_CANVAS {
       }
       this.mouse_event = {
         'action' : 'click',
+        'button' : event.button,
         'event' : event,
         'dispose' : false,
         'level' : 1
@@ -52566,10 +52567,10 @@ class THREEBRAIN_CANVAS {
       return(null);
     }
 
-    const clickable_only = this.mouse_event.action != 'dblclick';
+    const clickable_only = !(this.mouse_event.action == 'click' && this.mouse_event.button == 2);
 
     this.mouse_event.dispose = true;
-    if(this.mouse_event.level < 2){
+    if(this.mouse_event.level <= 2){
       this.mouse_event.level = 0;
     }
 
@@ -52598,7 +52599,7 @@ class THREEBRAIN_CANVAS {
       if(['dblclick', 'click'].includes(this.mouse_event.action)){
         this.object_chosen = target_object;
         if(this._mouse_click_callback !== undefined){
-          this._mouse_click_callback(target_object);
+          this._mouse_click_callback(target_object, this.mouse_event);
         }
       }
 
@@ -56922,9 +56923,12 @@ class THREE_BRAIN_SHINY {
     // method won't be checked, assuming string
     // Callback ID will be outputId_callbackname
     if(this.valid){
-      let callback_id = outputId + '_' + method,
-          re = {...data, '.__timestamp__.': new Date()};
+
+      let time_stamp = new Date();
+      let callback_id = this.outputId + '_' + method,
+          re = {...data, '.__timestamp__.': time_stamp};
       Shiny.onInputChange(callback_id, re);
+
     }
   }
 
@@ -57159,7 +57163,7 @@ class src_BrainCanvas{
   }
 
   _set_info_callback(){
-    this.canvas.set_mouse_click_callback((obj) => {
+    this.canvas.set_mouse_click_callback((obj, evt) => {
       if(obj.userData){
         let g = obj.userData.construct_params,
             pos = obj.getWorldPosition( new threeplugins["a" /* THREE */].Vector3() );
@@ -57171,15 +57175,19 @@ class src_BrainCanvas{
                     <p>
                     Group: ${group_name}<br>
                     Global Position: <br>(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
-        console.log(text);
         // Add customized information
         if( g.custom_info ){
           text = text + `<br>${g.custom_info}`;
         }
         text = text + '</p><hr />';
-        console.log(text);
 
         this.el_text.innerHTML = text;
+
+        let shiny_data = {
+          object: g,
+          event: evt
+        };
+        this.shiny.to_shiny(shiny_data, '_mouse_event');
       }
     });
 
