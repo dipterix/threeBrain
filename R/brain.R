@@ -230,7 +230,7 @@ Brain <- R6::R6Class(
     view = function(
       template_subject,
       control_presets = c('subject', 'surface_type', 'lh_material', 'rh_material',
-                          'electrodes', 'attach_to_surface', 'color_group'),
+                          'electrodes', 'attach_to_surface', 'color_group', 'animation'),
       optionals = list(), ...){
 
       optionals$map_to_template = self$multiple_subject

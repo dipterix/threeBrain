@@ -57029,7 +57029,11 @@ class src_BrainCanvas{
 
   resize_widget(width, height){
     console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
-    this.canvas.handle_resize(width - 300, height);
+    if(this.hide_controls){
+      this.canvas.handle_resize(width, height);
+    }else{
+      this.canvas.handle_resize(width - 300, height);
+    }
     this.el_side.style.maxHeight = height + 'px';
   }
 
@@ -57045,10 +57049,12 @@ class src_BrainCanvas{
     // Set side bar
     if(this.settings.hide_controls || false){
       gui.domElement.style.display = 'none';
+      this.hide_controls = true;
     }else{
       gui.domElement.style.display = 'block';
       let placeholder = this.el_control.firstChild;
       this.el_control.replaceChild( gui.domElement, placeholder );
+      this.hide_controls = false;
     }
 
     const control_presets = this.settings.control_presets;
@@ -57244,7 +57250,8 @@ class src_BrainCanvas{
     this.canvas.update_control_center(this.settings.control_center);
 
     // Force render canvas
-    // TODO: check if this is necessary
+    // Resize widget in case control panel is hidden
+    this.hide_controls = this.settings.hide_controls || false;
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     this.canvas.render();
   }
