@@ -57172,7 +57172,7 @@ class src_BrainCanvas{
     });
 
     this.canvas.set_animation_callback((obj, v, t) => {
-      if( obj === undefined ){
+      if( obj === undefined || this.hide_controls ){
         this.el_text2.innerHTML = '';
       }else{
         if( !v ){
@@ -57182,6 +57182,7 @@ class src_BrainCanvas{
       }
 
     });
+
   }
 
   render_value( x ){
