@@ -52373,8 +52373,9 @@ class THREEBRAIN_CANVAS {
 
     this.scene.add(mouse_helper);
 
+    /*
     // octree for fast raycasting
-    this.octree = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Octree( {
+    this.octree = new THREE.Octree( {
 			// uncomment below to see the octree (may kill the fps)
 			//scene: scene,
 			// when undeferred = true, objects are inserted immediately
@@ -52388,7 +52389,7 @@ class THREEBRAIN_CANVAS {
 			// percent between 0 and 1 that nodes will overlap each other
 			// helps insert objects that lie over more than one node
 			overlapPct: 1
-		} );
+		} );*/
 
 
 		// File loader
@@ -52474,7 +52475,7 @@ class THREEBRAIN_CANVAS {
 
   _fast_raycast(clickable_only, max_search = 500){
 
-    this.use_octree = true;
+    /* this.use_octree = true; */
 
     // Use octree to speed up
     var items = [];
@@ -52483,8 +52484,9 @@ class THREEBRAIN_CANVAS {
 
     if(clickable_only){
       let raycaster = this.mouse_raycaster;
-      let octreeObjects = this.octree.search( raycaster.ray.origin, raycaster.ray.far, true, raycaster.ray.direction );
-      items = raycaster.intersectOctreeObjects( octreeObjects );
+      //let octreeObjects = this.octree.search( raycaster.ray.origin, raycaster.ray.far, true, raycaster.ray.direction );
+      // items = raycaster.intersectOctreeObjects( octreeObjects );
+      items = raycaster.intersectObjects( Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])( this.clickable ) );
     }else{
       if(this.DEBUG){
         console.debug('Searching for all intersections - Partial searching');
@@ -52818,9 +52820,11 @@ class THREEBRAIN_CANVAS {
 	}
   update(){
 
+    /*
     if(this.use_octree){
       this.octree.update();
     }
+    */
 
 
     this.get_mouse();
@@ -52982,6 +52986,7 @@ class THREEBRAIN_CANVAS {
     }
     this.mesh = {};
     this.group = {};
+    this.clickable = {};
   }
 
   // Generic method to add objects
@@ -53019,9 +53024,9 @@ class THREEBRAIN_CANVAS {
 
     if(g.clickable){
       this.clickable[g.name] = m;
-      if(m.isMesh || false){
+      /*if(m.isMesh || false){
         this.octree.add( m, { useFaces: false } );
-      }
+      }*/
     }
 
     if(g.group === null){
@@ -57128,6 +57133,7 @@ class src_BrainCanvas{
       });
 
       this._register_gui_control();
+      this._set_info_callback();
 
       // Generate animations
       this.canvas.generate_animation_clips();
@@ -57155,17 +57161,23 @@ class src_BrainCanvas{
   _set_info_callback(){
     this.canvas.set_mouse_click_callback((obj) => {
       if(obj.userData){
-        const g = obj.userData.construct_params,
-              pos = obj.getWorldPosition( new threeplugins["a" /* THREE */].Vector3() );
+        let g = obj.userData.construct_params,
+            pos = obj.getWorldPosition( new threeplugins["a" /* THREE */].Vector3() );
 
         // Get information and show them on screen
         let group_name = g.group ? g.group.group_name : '(No Group)';
 
-        let text = `<h4>${g.name}</h4><hr>
+        let text = `<h4>${g.name}</h4><hr />
                     <p>
                     Group: ${group_name}<br>
-                    Global Position: <br>(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})<br>
-                    </p>`;
+                    Global Position: <br>(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
+        console.log(text);
+        // Add customized information
+        if( g.custom_info ){
+          text = text + `<br>${g.custom_info}`;
+        }
+        text = text + '</p><hr />';
+        console.log(text);
 
         this.el_text.innerHTML = text;
       }
@@ -57227,7 +57239,6 @@ class src_BrainCanvas{
 
     // Register some callbacks
     this._set_loader_callbacks();
-    this._set_info_callback();
 
     this.groups.forEach((g) => {
 

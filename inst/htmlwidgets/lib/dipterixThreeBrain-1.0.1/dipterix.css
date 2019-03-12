@@ -33,7 +33,7 @@
 
 
 .threejs-control .dg.main {
-  opacity: 0.4;
+  /* opacity: 0.4; */
   padding-bottom: 70px;
   width: 100% !important;
 }
