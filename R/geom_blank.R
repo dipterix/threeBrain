@@ -1,3 +1,6 @@
+#' A geomery that renders nothing
+#'
+#' This is mainly used when you want to upload group data only
 #' @export
 BlankGeom <- R6::R6Class(
   classname = 'BlankGeom',

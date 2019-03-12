@@ -115,7 +115,7 @@ debug_module <- function(module_id, interactive = FALSE, check_dependencies = TR
 
     if(!!async){
       ..tmp[['..async']] = TRUE
-      pkgs = str_match(search(), '^package:(.+)$')[,2]
+      pkgs = stringr::str_match(search(), '^package:(.+)$')[,2]
       pkgs = unique(pkgs[!is.na(pkgs)])
       ..tmp[['..rave_future_obj']] = future::future({
         eval(quote({!!async_quo}))

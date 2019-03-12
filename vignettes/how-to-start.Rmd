@@ -1,0 +1,72 @@
+---
+title: "ThreeBrain 101"
+author: "Zhengjia Wang"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{how-to-start}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+
+### Build a simple example
+
+```{r}
+library(threeBrain)
+s1 = SphereGeom$new(name = 's1', position = c(100,0,0), radius = 2)
+threejs_brain(s1)
+```
+
+### Create a group
+
+```{r}
+# Set up group position to be -100,0,0
+g = GeomGroup$new(name = 'g1', position = c(-100,0,0))
+
+# Relative to g$position
+s1 = SphereGeom$new(name = 's1', position = c(100,0,0), radius = 2, group = g)
+s2 = SphereGeom$new(name = 's2', position = c(50,50,0), radius = 5, group = g)
+threejs_brain(s1, s2)
+```
+
+### Build from freesurfer .asc file
+
+```{r}
+# Download N27 pial
+download_N27_surface(surfaces = 'pial')
+
+
+dat = threeBrain:::read_fs_asc('~/rave_data/others/three_brain/N27/std.141.lh.pial.asc')
+v = dat$vertices[,1:3]
+f = dat$faces[,1:3]
+
+g = GeomGroup$new(name = 'Left Hemisphere', position = c(0,0,0))
+lh = FreeGeom$new(name = 'lh', vertex = v, face = f, group = g)
+threejs_brain(lh)
+```
+
+### Show colors on spheres
+
+The animation is not played automatically, you need to go to the control panel > 
+Timeline to start animation.
+
+```{r}
+# Set up group position to be -100,0,0
+g = GeomGroup$new(name = 'g1', position = c(0,0,0))
+
+# Relative to g$position
+s1 = SphereGeom$new(name = 's1', position = c(100,0,0), radius = 2, group = g)
+
+s1$set_value(value = -100:100, time_stamp = (-100:100) / 50)
+
+threejs_brain(s1, value_range = c(-100,100), control_presets = 'animation')
+```
