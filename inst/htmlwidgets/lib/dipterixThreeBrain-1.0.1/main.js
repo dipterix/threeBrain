@@ -57124,7 +57124,13 @@ class src_BrainCanvas{
   _set_loader_callbacks(){
     this.canvas.loader_manager.onLoad = () => {
       console.debug(this.outputId + ' - Loading complete. Adding object');
-      this.el_text.innerHTML = '<p><small>Loading Complete!</small></p>';
+      this.el_text2.innerHTML = '';
+      if( this.hide_controls ){
+        this.el_text.innerHTML = '';
+      }else{
+        this.el_text.innerHTML = '<p><small>Loading Complete!</small></p>';
+      }
+
       this.geoms.forEach((g) => {
         if( this.DEBUG ){
           this.canvas.add_object( g );
@@ -57198,7 +57204,12 @@ class src_BrainCanvas{
         if( !v ){
           v = 'NA';
         }
-        this.el_text2.innerHTML = `<p>Time: ${t.toFixed(2)}<br />Value: ${v.toFixed(2)}</p>`;
+        if(this.has_animation){
+          this.el_text2.innerHTML = `<p>Time: ${t.toFixed(2)}<br />Value: ${v.toFixed(2)}</p>`;
+        }else{
+          this.el_text2.innerHTML = `<p>Value: ${v.toFixed(2)}</p>`;
+        }
+
       }
 
     });
@@ -57210,6 +57221,7 @@ class src_BrainCanvas{
     this.settings = x.settings;
     this.optionals = x.settings.optionals || {},
     this.groups = x.groups,
+    this.has_animation = x.settings.has_animation,
     this.DEBUG = x.settings.debug || false;
 
     this.canvas.DEBUG = this.DEBUG;
@@ -57229,6 +57241,8 @@ class src_BrainCanvas{
 
     this.canvas.clear_all();
     this.canvas.render_flag = false;
+    // Stop showing information of any selected objects
+    this.canvas.object_chosen=undefined;
 
     this.canvas.set_time_range(
       this.settings.time_range[0],

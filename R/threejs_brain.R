@@ -90,8 +90,14 @@ threejs_brain <- function(
   }
 
   # Extract value range
+  v_count = unlist(lapply(geoms, function(g){ length(g$value )}))
+  if(length(v_count)){
+    v_count = max(v_count)
+  }else{
+    v_count = 0
+  }
   if(length(value_range) < 2){
-    value_range = unlist(lapply(geoms, '[[', 'value'))
+    value_ranges = unlist(lapply(geoms, '[[', 'value'))
     if(length(value_range) != 0){
       value_range = range(value_range)
     }else{
@@ -168,7 +174,8 @@ threejs_brain <- function(
     control_presets = control_presets,
     cache_folder = widget_id,
     optionals = optionals,
-    debug = debug
+    debug = debug,
+    has_animation = v_count > 1
   )
 
   # Generate external file
