@@ -1,15 +1,24 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 0.1.0.001
+Version: 0.1.1
 Authors@R: c(
     person("Zhengjia", "Wang", email = "zhengjia.wang@rice.edu", role = c("aut", "cre"))
     )
-Description: This package is an html widget that uses WebGL engine called Three.js 
-    to display brain surfaces on webpage interactively. It translates R objects 
-    to JavaScript objects via JSON format. This package is mainly designed to 
-    enhance AFNI/SUMA, and FreeSurfer and to provide a cross-platform 
-    easy-to-share 3D viewer.
+Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain. 
+    However, it takes efforts to interact and share the viewer to others. In 
+    addition, 'AFNI/SUMA' doesn't support Windows platform. In the 'EEG/iEEG' 
+    field, it's hard to have multiple cortical electrodes mapped to a template 
+    brain for group analysis. Therefore this package is written aimed at 
+    providing a fast, stable, interactive and easy to share tool based on 'Three.js', 
+    a 'WebGL' engine to render 3D objects in the web browser such that we can 
+    display brain surfaces on webpage interactively. This package translates R 
+    objects to JavaScript objects via 'JSON' format, and provides 'R-Shiny' interface
+    to manipulate geometries interactively. The visualizations can also serve as 
+    standalone widgets that can be easily shared across different platforms. 
+    Along with 'rave', another package developed by Beauchamp's lab at Baylor 
+    College Medicine, this package provides solutions to easily map surface 
+    electrodes from multiple subjects to one template 141 brain.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
