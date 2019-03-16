@@ -201,6 +201,7 @@ threejs_brain <- function(
       viewer.fill = TRUE,
       padding = '0px',
     ), dependencies = dependencies)
+
 }
 
 #' Shiny Output for threeBrain Widgets
@@ -228,4 +229,68 @@ NULL
 renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) { expr <- substitute(expr) }
   htmlwidgets::shinyRenderWidget(expr, threejsBrainOutput, env, quoted = TRUE)
+}
+
+
+#' Save threeBrain widgets to local file system
+#' @param widget generated from function 'threejs_brain'
+#' @param directory directory to save the widget
+#' @param filename default is 'index.html', filename of the widget index file
+#' @param title widget title
+#' @param as_zip whether to create zip file "compressed.zip"
+#' @export
+save_brain <- function(widget, directory, filename = 'index.html', title = '3D Viewer', as_zip = FALSE){
+  dir.create(directory, showWarnings = F, recursive = T)
+  cat2('Generating 3D Viewer...')
+
+  htmlwidgets::saveWidget(
+    widget,
+    file = file.path(directory, filename),
+    selfcontained = F,
+    title = title,
+    libdir = 'lib'
+  )
+
+  # cat2('Copying data...')
+  # dependencies = attr(widget, 'threeBrain_dependency')
+  # if("html_dependency" %in% class(dependencies)){
+  #   lib_name = sprintf('%s-%s', dependencies$name, dependencies$version)
+  #   file.copy(dependencies$src$file, file.path(directory, 'lib', lib_name), overwrite = T, recursive = T)
+  #   dependencies$
+  # }
+
+  s = c(
+    '#!/bin/bash',
+    'DIRECTORY=`dirname $0`',
+    'cd $DIRECTORY',
+    "Rscript -e '{if(system.file(\"\",package=\"servr\")==\"\"){install.packages(\"servr\",repos=\"https://cloud.r-project.org\")};servr::httd(browser=TRUE)}'"
+  )
+  sh_file = file.path(directory, 'launch.sh')
+  writeLines(s, sh_file)
+  sh_file = normalizePath(sh_file)
+  system(sprintf('chmod a+x "%s"', sh_file), wait = F)
+
+  sh_file = file.path(directory, 'launch.command')
+  writeLines(s, sh_file)
+  sh_file = normalizePath(sh_file)
+  system(sprintf('chmod a+x "%s"', sh_file), wait = F)
+
+  if(as_zip){
+    wd = getwd()
+    on.exit({
+      setwd(wd)
+    })
+    setwd(directory)
+    directory = normalizePath(directory)
+    zipfile = 'compressed.zip'
+    utils::zip(zipfile, files = c('./lib', filename, 'launch.sh', 'launch.command'))
+  }
+  directory = normalizePath(directory, mustWork = F)
+  return(invisible(list(
+    directory = directory,
+    index = file.path(directory, filename),
+    zipfile = file.path(directory, 'compressed.zip'),
+    has_zip = as_zip
+  )))
+
 }
