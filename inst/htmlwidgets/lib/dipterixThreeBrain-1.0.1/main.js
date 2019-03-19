@@ -56900,36 +56900,73 @@ class data_controls_THREEBRAIN_CONTROL{
 This file defines shiny callback functions (js to shiny)
 */
 
+function storageAvailable(type) {
+  try {
+    var storage = window[type],
+        x = '__storage_test__';
+    storage.setItem(x, x);
+    storage.removeItem(x);
+    return true;
+  }
+  catch(e) {
+    return e instanceof DOMException && (
+        // everything except Firefox
+        e.code === 22 ||
+        // Firefox
+        e.code === 1014 ||
+        // test name field too, because code might not be present
+        // everything except Firefox
+        e.name === 'QuotaExceededError' ||
+        // Firefox
+        e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+        // acknowledge QuotaExceededError only if there's something already stored
+        storage.length !== 0;
+  }
+}
+
 class THREE_BRAIN_SHINY {
   constructor(outputId, shiny_mode = true) {
 
-    // Check ID, must be a string
-    if(shiny_mode){
-      if(typeof(outputId) === 'string'){
-        this.outputId = outputId;
-        this.valid = true;
-      }else{
-        this.valid = false;
-        console.error('Constructor param outputId is not a string. Cannot initialize THREE_BRAIN_SHINY instance.');
-      }
-    }else{
-      this.valid = false;
+    this.outputId = outputId;
+    this.shiny_mode = shiny_mode;
+  }
+
+  set_token( token ){
+    if(storageAvailable('localStorage') && typeof(token) === 'string'){
+      this.token = token;
     }
-
-
   }
 
   to_shiny(data, method = 'callback'){
     // method won't be checked, assuming string
     // Callback ID will be outputId_callbackname
-    if(this.valid){
 
-      let time_stamp = new Date();
-      let callback_id = this.outputId + '_' + method,
-          re = {...data, '.__timestamp__.': time_stamp};
+    let time_stamp = new Date();
+    let re = {...data, '.__timestamp__.': time_stamp};
+    let callback_id = this.outputId + '_' + method;
+
+    if(this.shiny_mode){
       Shiny.onInputChange(callback_id, re);
-
     }
+
+    // Add RAVE support
+    if(typeof(this.token) === 'string'){
+      // Get item and set back
+      // let rave_msg = window.localStorage.getItem('rave-messages');
+      let msg = {
+        'token' : this.token,           // Used by RAVE to tell differences
+        'item_id' : this.outputId,      // UI output ID
+        'message_type' : 'threeBrain',               // potentially used by session to communicate (not yet supported)
+        'method' : method,
+        'callback_id' : callback_id,
+        'time_stamp' : Date.now(),      //
+        'content' : re                  // Actuall data
+      };
+
+      window.localStorage.setItem('rave-messages', JSON.stringify(msg));
+    }
+
+
   }
 
 }
@@ -57225,6 +57262,7 @@ class src_BrainCanvas{
     this.DEBUG = x.settings.debug || false;
 
     this.canvas.DEBUG = this.DEBUG;
+    this.shiny.set_token( this.settings.token );
 
     if(this.DEBUG){
       window.groups = this.groups;

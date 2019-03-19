@@ -18,7 +18,8 @@
   max-width: 300px;
   margin-bottom: -100%;
   width: 300px;
-  overflow-x: scroll;
+  overflow-y: scroll;
+  overflow-x: hidden;
   /* pointer-events: none; */
 }
 

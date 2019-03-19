@@ -36,6 +36,8 @@ default ones}
 
 \item{tmp_dirname}{internally used}
 
+\item{token}{used to identify widgets in JS localStorage}
+
 \item{width, height}{width and height of the widget. By default width="100%",
 and height varies.}
 }

@@ -17,6 +17,7 @@
 #' @param legend_expr R expression to generate legend if you don't like the
 #'   default ones
 #' @param tmp_dirname internally used
+#' @param token used to identify widgets in JS localStorage
 #' @param width,height width and height of the widget. By default width="100%",
 #'   and height varies.
 NULL
@@ -24,12 +25,13 @@ NULL
 
 #' @export
 threejs_brain <- function(
-  ..., widget_id = 'threebrain_data', time_range = NULL, value_range = NULL, symmetric = 0,
-  side_camera = FALSE, control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
+  ..., widget_id = 'threebrain_data', time_range = NULL,
+  value_range = NULL, symmetric = 0, side_camera = FALSE,
+  control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
   color_ramp = c('navyblue', '#e2e2e2', 'red'), n_color = 64,
   show_legend = TRUE, legend_title = 'Value', legend_expr, at = NULL,
-  tmp_dirname = NULL,
-  width = NULL, height = NULL, optionals = list(), debug = FALSE,
+  tmp_dirname = NULL, width = NULL, height = NULL, optionals = list(),
+  debug = FALSE, token = NULL,
   .list = list()){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
@@ -156,6 +158,10 @@ threejs_brain <- function(
 
   legend_img = data_uri(file = legend_file)
 
+  if(is.null(token)){
+    session = shiny::getDefaultReactiveDomain()
+    token = session$userData$rave_id
+  }
 
 
   # Generate settings
@@ -175,7 +181,8 @@ threejs_brain <- function(
     cache_folder = widget_id,
     optionals = optionals,
     debug = debug,
-    has_animation = v_count > 1
+    has_animation = v_count > 1,
+    token = token
   )
 
   # Generate external file
