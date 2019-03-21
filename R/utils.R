@@ -122,7 +122,10 @@ from_json <- function(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVe
                      simplifyMatrix = simplifyMatrix, flatten = flatten, ...,)
 }
 
-
+#' Read `FreeSurfer` ascii file
+#' @param file file location
+#' @return a list of vertices and face indices
+#' @export
 read_fs_asc <- function(file){
   src = readLines(file)
   src = src[!stringr::str_detect(src, '^[\\ ]*#')]

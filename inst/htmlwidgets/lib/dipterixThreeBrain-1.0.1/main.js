@@ -52933,8 +52933,8 @@ class THREEBRAIN_CANVAS {
           this.object_chosen.userData.ani_value.length > 0 ){
 
             let current_value;
-            const time_stamp = this.object_chosen.userData.ani_time;
-            const values = this.object_chosen.userData.ani_value;
+            const time_stamp = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(this.object_chosen.userData.ani_time);
+            const values = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(this.object_chosen.userData.ani_value);
             for( let ii in time_stamp ){
               if(time_stamp[ ii ] <= current_time){
                 current_value = values[ ii ];
@@ -57238,13 +57238,16 @@ class src_BrainCanvas{
       if( obj === undefined || this.hide_controls ){
         this.el_text2.innerHTML = '';
       }else{
-        if( !v ){
+        if( typeof(v) !== 'number' ){
           v = 'NA';
-        }
-        if(this.has_animation){
-          this.el_text2.innerHTML = `<p>Time: ${t.toFixed(2)}<br />Value: ${v.toFixed(2)}</p>`;
         }else{
-          this.el_text2.innerHTML = `<p>Value: ${v.toFixed(2)}</p>`;
+          v = v.toFixed(2);
+        }
+
+        if(this.has_animation && typeof(t) === 'number'){
+          this.el_text2.innerHTML = `<p>Time: ${t.toFixed(2)}<br />Value: ${v}</p>`;
+        }else{
+          this.el_text2.innerHTML = `<p>Value: ${v}</p>`;
         }
 
       }
