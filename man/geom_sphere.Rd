@@ -24,7 +24,6 @@ geom_sphere(name, radius, position = c(0, 0, 0), layer = 1,
 Create sphere geometry
 }
 \examples{
-\dontrun{
 # Create a sphere with animation
 g = lapply(1:10, function(ii){
   v = rep(ii, 10)
@@ -33,5 +32,4 @@ g = lapply(1:10, function(ii){
 })
 threejs_brain(.list = g, control_presets = 'animation',
               value_range = c(0, 10), time_range = c(0.1, 1))
-}
 }

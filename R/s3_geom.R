@@ -27,7 +27,6 @@
 #' large datasets repeatedly. And this allows you to load multiple subjects'
 #' brain in a short time.
 #' @examples
-#' \dontrun{
 #' # Example 1: relative position
 #'
 #' # create group
@@ -43,13 +42,13 @@
 #'   1,0,0,0,
 #'   0,0,1,0,
 #'   0,0,0,1
-#' ), byrow = T, ncol = 4))
+#' ), byrow = TRUE, ncol = 4))
 #'
 #' # global position for s2 is 0,10,0
 #' threejs_brain(s1, s2)
 #'
 #' # Example 2: cache
-#'
+#' \dontrun{
 #' # download N27 brain
 #' download_N27_surface(surfaces = 'pial')
 #'
@@ -85,7 +84,6 @@ create_group <- function(name, position = c(0,0,0), layer = 1){
 #' @param group a GeomGroup object
 #' @param value,time_stamp color of the sphere, used for animation/color rendering
 #' @examples
-#' \dontrun{
 #' # Create a sphere with animation
 #' g = lapply(1:10, function(ii){
 #'   v = rep(ii, 10)
@@ -94,7 +92,6 @@ create_group <- function(name, position = c(0,0,0), layer = 1){
 #' })
 #' threejs_brain(.list = g, control_presets = 'animation',
 #'               value_range = c(0, 10), time_range = c(0.1, 1))
-#' }
 #' @export
 geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL, value = NULL, time_stamp = NULL){
   SphereGeom$new(name = name, position = position, radius = radius, group = group, value = value, time_stamp = time_stamp, layer = layer)

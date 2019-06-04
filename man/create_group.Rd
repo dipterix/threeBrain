@@ -41,7 +41,6 @@ large datasets repeatedly. And this allows you to load multiple subjects'
 brain in a short time.
 }
 \examples{
-\dontrun{
 # Example 1: relative position
 
 # create group
@@ -57,13 +56,13 @@ g$set_transform(matrix(c(
   1,0,0,0,
   0,0,1,0,
   0,0,0,1
-), byrow = T, ncol = 4))
+), byrow = TRUE, ncol = 4))
 
 # global position for s2 is 0,10,0
 threejs_brain(s1, s2)
 
 # Example 2: cache
-
+\dontrun{
 # download N27 brain
 download_N27_surface(surfaces = 'pial')
 

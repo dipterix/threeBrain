@@ -38,7 +38,7 @@ HTMLWidgets.widget({
       false
     );
 
-    global_cache.set_item('__' + el.getAttribute('id'), handlers);
+    // global_cache.set_item('__' + el.getAttribute('id'), handlers);
 
     return {
       // "find", "renderError", "clearError", "sizing", "name", "type", "initialize", "renderValue", "resize"
