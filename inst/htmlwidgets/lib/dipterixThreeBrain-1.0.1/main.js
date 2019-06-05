@@ -72540,6 +72540,8 @@ class THREEBRAIN_CANVAS {
   	this.main_renderer.autoClear = false; // Manual update so that it can render two scenes
   	this.main_renderer.localClippingEnabled=true; // Enable clipping
   	this.main_renderer.setClearColor("#ffffff"); // white background
+  	this.background_color = '#ffffff';
+    this.foreground_color = '#000000';
 
   	// sidebar renderer (multiple renderers)
   	this.side_renderer = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].WebGLRenderer( { antialias: false, alpha: true } );
@@ -73313,6 +73315,7 @@ class THREEBRAIN_CANVAS {
   text_ani(){
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
+    let results = {};
     if( typeof( this.animation_controls.get_params ) === 'function' ){
 
       // animation is enabled
@@ -73360,15 +73363,22 @@ class THREEBRAIN_CANVAS {
                 current_value = values[ ii ];
               }
             }
-            this._animation_callback(this.object_chosen, current_value, current_time);
+            let txt = this._animation_callback(this.object_chosen, current_value, current_time);
+            if( txt ){
+              results.txt = txt;
+            }
         }else{
-          this._animation_callback();
+          let txt = this._animation_callback();
+          if( txt ){
+            results.txt = txt;
+          }
         }
       }
 
     }
 
 
+    return(results);
 
   }
 
@@ -73399,18 +73409,22 @@ class THREEBRAIN_CANVAS {
         this.stats.update();
       }
 
-  		this.text_ani();
+  		let results = this.text_ani();
   		this.render();
+
+  		// check if capturer is working
+      if( this.capturer_recording && this.capturer ){
+
+        const text = `${this.title || ''} \n\n ${results.txt || ''}`;
+        this.capturer.add( this.main_renderer.domElement, text, this.background_color, this.foreground_color );
+      }
     }
 
     if(this.render_flag === 0){
       this.render_flag = -1;
     }
 
-    // check if capturer is working
-    if( this.capturer_recording && this.capturer ){
-      this.capturer.add( this.main_renderer.domElement );
-    }
+
 
 	}
 
@@ -74870,7 +74884,7 @@ var d3 = __webpack_require__(2);
 
 
 
-function download_download(data, strFileName, strMimeType) {
+function download(data, strFileName, strMimeType) {
 
 	var self = window, // this script is only for browsers anyway...
 		u = "application/octet-stream", // this default mime also triggers iframe downloads
@@ -77754,8 +77768,10 @@ class data_controls_THREEBRAIN_PRESETS{
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
     this._ani_status.onChange((v) => {
       if(v){
+        this.canvas.clock.start();
         this._update_canvas(2);
       }else{
+        this.canvas.clock.stop();
         this._update_canvas(-2);
       }
     });
@@ -78379,117 +78395,120 @@ CCFrameEncoder.prototype.step = function() {  };
 
 
 
-// CONCATENATED MODULE: ./src/js/capture/CCWebMEncoder.js
+// CONCATENATED MODULE: ./src/js/capture/CCanvasRecorder.js
+
 
 // import { ArrayBufferDataStream, BlobBuffer, WebMWriter } from './webm-writer-0.2.0.js';
 
 
 /*
-
 	WebM Encoder
-
 */
 
-class CCWebMEncoder_CCWebMEncoder extends CCFrameEncoder{
+class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
   constructor( settings ){
-
     super( settings );
-
-    this.canvas = document.createElement( 'canvas' );
-  	if( this.canvas.toDataURL( 'image/webp' ).substr(5,10) !== 'image/webp' ){
-  		console.log( "WebP not supported - try another export format" );
-  	}
-
-  	this.quality = ( settings.quality / 100 ) || 0.4;
-
   	this.extension = '.webm';
-  	this.mimeType = 'video/webm';
+  	this.mimeType = 'video/webm;codecs=vp8,opus';
   	this.baseFilename = this.filename;
     this.framerate = settings.framerate;
+  	this.chunks = [];
 
-  	this.frames = 0;
-  	this.part = 1;
+  	this.canvas = document.createElement('canvas');
+  	// this.canvas.height = settings.main_height || 608;
+  	this.ratio = settings.pixel_ratio || 1;
+  	this.sidebar_width = (settings.sidebar_width || 0) * this.ratio;
+  	// this.canvas.width = (settings.main_width || 1080) + this.sidebar_width;
+  	this.context = this.canvas.getContext("2d");
 
-    this.videoWriter = new window.WebMWriter({
-      quality: this.quality,
-      fileWriter: null,
-      fd: null,
-      frameRate: this.framerate
-    });
+  	// Create stream object
+    this.stream = this.canvas.captureStream( this.framerate );
+    // create a recorder fed with our canvas' stream
+    this.recorder = new MediaRecorder(this.stream, {mimeType : 'video/webm;codecs=vp8,opus'});
 
+    // save the chunks
+    this.recorder.ondataavailable = (e) => {
+      this.chunks.push(e.data);
+    };
+
+    // On stop, save data
+    this.recorder.onstop = (e) => {
+      this.save((blob) => {
+        console.log('Start to download...');
+        download( blob, this.filename + this.extension );
+      });
+      this.chunks.length = 0;
+    };
   }
 
   stop(){
-    this.recording = false;
+    if(this.recorder && this.recorder.state === 'recording'){
+      this.recorder.stop();
+    }
   }
 
-  start(){
+  set_dim( canvas ){
+    if( this.canvas.width  != canvas.width + this.sidebar_width ){
+      this.canvas.width = canvas.width + this.sidebar_width;
+      this.canvas.innerWidth = this.canvas.width / this.ratio;
+    }
+    if( this.canvas.height != canvas.height ){
+      this.canvas.height = canvas.height;
+      this.canvas.innerHeight = this.canvas.height / this.ratio;
+    }
+  }
+
+  start( canvas ){
     this.dispose();
+    this.set_dim( canvas );
+    this.recorder.start();
   }
 
-  save( callback ) {
-    try {
-      this.videoWriter.complete().then(callback);
-    } catch (e) {
-      console.warn(e);
+  save( callback = null ) {
+    if( !callback ){
+      return(null);
+    }
+
+    if( this.chunks.length > 0 ){
+      let result = new Blob(this.chunks);
+      callback( result );
     }
 
   }
 
-  dispose( canvas ) {
-    this.canvas = document.createElement("canvas");
-    this.height = undefined;
-  	this.frames = 0;
-    this.videoWriter = new window.WebMWriter({
-      quality: this.quality,
-      fileWriter: null,
-      fd: null,
-      frameRate: this.framerate
-    });
-
+  dispose() {
+    if(this.recorder){
+      this.stop();
+    }
+    this.chunks.length = 0;
   }
 
-  add( canvas ) {
-    try {
-      if(!this.height || !this.context){
-        this.height = parseInt(1080 / canvas.width * canvas.height);
-        this.canvas.width = '1080';
-        this.canvas.height = String(this.height);
-        this.context = this.canvas.getContext("2d");
+  add( canvas, addInfo = '', background = '#ffffff', foreground = '#000000' ) {
+    this.set_dim( canvas );
+    this.context = this.canvas.getContext('2d');
+    this.context.fillStyle = background;
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    //resize
+    this.context.drawImage(canvas, this.sidebar_width, 0);
+
+    // Add additional messages
+    if( addInfo && addInfo !== '' ){
+      // Add additional information
+      const font_size = this.ratio * 20;
+      this.context.font = `${font_size}px Georgia`;
+      this.context.fillStyle = foreground;
+      const ss = addInfo.split('\n');
+      for (let ii in ss ){
+        this.context.fillText(ss[ii], 10, 50 + 1.4 * font_size * ii);
       }
-      //resize
-      this.context.drawImage(canvas, 0, 0, 1080, this.height);
 
-      const datauri = this.canvas.toDataURL('image/webp', {quality: this.quality});
-
-      this.videoWriter.addFrame(datauri, 1080, this.height, true);
-
-
-    	if( this.settings.autoSaveTime > 0 && ( this.frames / this.settings.framerate ) >= this.settings.autoSaveTime ) {
-    		this.save( function( blob ) {
-    			this.filename = this.baseFilename + '-part-' + pad( this.part );
-    			download( blob, this.filename + this.extension, this.mimeType );
-    			this.dispose();
-    			this.part++;
-    			this.filename = this.baseFilename + '-part-' + pad( this.part );
-    			this.step();
-    		}.bind( this ) );
-    	} else {
-        this.frames++;
-    		this.step();
-    	}
-    } catch (e) {
-      console.warn(e);
     }
-
-
   }
 }
 
 
 // CCWebMEncoder.prototype = Object.create( CCFrameEncoder.prototype );
 
-window.CCWebMEncoder = CCWebMEncoder_CCWebMEncoder;
 
 
 // CONCATENATED MODULE: ./src/index.js
@@ -78504,6 +78523,7 @@ window.CCWebMEncoder = CCWebMEncoder_CCWebMEncoder;
 
 
 
+// import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
 
 
 class src_BrainCanvas{
@@ -78713,7 +78733,10 @@ class src_BrainCanvas{
 
         this.canvas.render_legend(inversedColor);
         this.canvas.start_animation(0);
+        this.canvas.background_color = v;
+        this.canvas.foreground_color = inversedColor;
       });
+
 
     gui.add_item('Reset Camera', () => {this.canvas.reset_controls()}, {folder_name: 'Misc'});
     gui.add_item('Lock Camera', false, {folder_name: 'Misc'})
@@ -78752,43 +78775,46 @@ class src_BrainCanvas{
       */
 
     // check if it's chome browser
-    const is_chrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    gui.add_item('Viewer Title', '', {folder_name: 'Default'})
+      .onChange((v) => {
+        this.canvas.title = v.replace('\\n', '\n');
+      });
 
-    gui.add_item('Record Video', false, {folder_name: 'Misc'})
+    gui.add_item('Record Video', false, {folder_name: 'Default'})
       .onChange((v) =>{
 
         if(v){
-          let capturer = window.global_cache.get_item('3dCCapture', null);
-
           // create capture object
-          if( !capturer ){
-            //const format = is_chrome? 'webm' : 'gif';
-            window.global_cache.set_item( '3dCCapture', new CCWebMEncoder_CCWebMEncoder({
+          if( !this.canvas.capturer ){
+
+            this.canvas.capturer = new CCanvasRecorder_CCanvasRecorder({
               // FPS = 15
-              framerate: 15,
+              framerate: 24,
               // Capture as webm
               format: 'webm',
               // workersPath: 'lib/',
               // verbose results?
               verbose: true,
-              autoSaveTime : 0
-            }));
-            capturer = window.global_cache.get_item('3dCCapture', null);
+              autoSaveTime : 0,
+
+              main_width: this.canvas.main_renderer.domElement.width,
+              main_height: this.canvas.main_renderer.domElement.height,
+              sidebar_width: 300,
+              pixel_ratio : this.canvas.main_renderer.domElement.width / this.canvas.main_renderer.domElement.clientWidth
+
+
+            });
+
           }
 
-          capturer.baseFilename = capturer.filename = new Date().toGMTString();
-
-          this.canvas.capturer = capturer;
-          capturer.start();
-
+          this.canvas.capturer.baseFilename = this.canvas.capturer.filename = new Date().toGMTString();
+          this.canvas.capturer.start( this.canvas.main_renderer.domElement );
           this.canvas.capturer_recording = true;
         }else{
           this.canvas.capturer_recording = false;
           if(this.canvas.capturer){
             this.canvas.capturer.stop();
-            this.canvas.capturer.save((blob) => {
-              download_download( blob, this.canvas.capturer.filename + this.canvas.capturer.extension, this.canvas.capturer.mimeType );
-            });
+            this.canvas.capturer.save();
             this.canvas.capturer.incoming = false;
           }
         }
@@ -78898,6 +78924,7 @@ class src_BrainCanvas{
     });
 
     this.canvas.set_animation_callback((obj, v, t) => {
+      let txt = '';
       if( obj === undefined || this.hide_controls ){
         this.set_legend_value(
           [0],[0], ''
@@ -78909,7 +78936,7 @@ class src_BrainCanvas{
           v = v.toFixed(2);
         }
 
-        let txt = `Value: ${v}`;
+        txt = `Value: ${v}`;
 
         if(this.has_animation && typeof(t) === 'number'){
           txt = `Time: ${t.toFixed(2)} \nValue: ${v}`;
@@ -78928,6 +78955,18 @@ class src_BrainCanvas{
         */
 
       }
+
+      // Purely for video export only
+      if( obj && obj.userData ){
+        let g = obj.userData.construct_params,
+            pos = obj.getWorldPosition( new threeplugins["a" /* THREE */].Vector3() );
+        // Get information and show them on screen
+        let group_name = g.group ? g.group.group_name : '(No Group)';
+
+        txt = `${g.name} \n Group: ${group_name} \n Global Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}) \n ${g.custom_info || ''} \n ${txt}`;
+      }
+
+      return(txt);
 
     });
 
@@ -79049,7 +79088,7 @@ window.BrainCanvas = src_BrainCanvas;
 window.THREEBRAIN_STORAGE = threebrain_cache["a" /* THREEBRAIN_STORAGE */];
 window.THREE = threeplugins["a" /* THREE */];
 window.d3 = d3;
-window.download = download_download;
+window.download = download;
 
 
 
