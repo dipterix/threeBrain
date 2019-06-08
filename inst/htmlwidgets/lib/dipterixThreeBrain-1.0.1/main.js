@@ -72470,7 +72470,7 @@ window.requestAnimationFrame =
 const cached_storage = new _threebrain_cache_js__WEBPACK_IMPORTED_MODULE_3__[/* THREEBRAIN_STORAGE */ "a"]();
 
 class THREEBRAIN_CANVAS {
-  constructor(el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, set_legend_value = undefined) {
+  constructor(el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false) {
     this.el = el;
     if(DEBUG){
       console.debug('Debug Mode: ON.');
@@ -72494,11 +72494,21 @@ class THREEBRAIN_CANVAS {
     this.shiny_mode = shiny_mode;
     this.render_flag = 0;
     this.disable_raycast = true;
+    this.render_legend = false;
+    this.color_type = 'continuous';
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
     this.animation_mixers = {};
     this.clock = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Clock();
+
+    // Generate a canvas domElement using 2d context to put all renderers together
+    // Since it's 2d canvas, we might also add customized information onto it
+    this.domElement = document.createElement('canvas');
+    this.domContext = this.domElement.getContext('2d');
+    this.background_color = '#ffffff'; // white background
+    this.foreground_color = '#000000';
+    this.domContext.fillStyle = this.background_color;
 
 
     // General scene. Two scenes for double-buffer (depth information)
@@ -72539,9 +72549,8 @@ class THREEBRAIN_CANVAS {
   	this.main_renderer.setSize( width, height );
   	this.main_renderer.autoClear = false; // Manual update so that it can render two scenes
   	this.main_renderer.localClippingEnabled=true; // Enable clipping
-  	this.main_renderer.setClearColor("#ffffff"); // white background
-  	this.background_color = '#ffffff';
-    this.foreground_color = '#000000';
+  	this.main_renderer.setClearColor( this.background_color );
+
 
   	// sidebar renderer (multiple renderers)
   	this.side_renderer = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].WebGLRenderer( { antialias: false, alpha: true } );
@@ -72599,7 +72608,8 @@ class THREEBRAIN_CANVAS {
     // register mouse events to save time from fetching from DOM elements
     this.register_main_canvas_events();
 
-    this.main_canvas.appendChild( this.main_renderer.domElement );
+    // this.main_canvas.appendChild( this.main_renderer.domElement );
+    this.main_canvas.appendChild( this.domElement );
 
     let wrapper_canvas = document.createElement('div');
     this.wrapper_canvas = wrapper_canvas;
@@ -72924,9 +72934,11 @@ class THREEBRAIN_CANVAS {
     this._mouse_click_callback = callback;
   }
 
+  /*
   set_animation_callback(callback){
     this._animation_callback = callback;
   }
+  */
 
   // method to target object with mouse pointed at
   target_mouse_helper(){
@@ -72989,10 +73001,6 @@ class THREEBRAIN_CANVAS {
 
     this.start_animation(0);
 
-  }
-
-  render_legend(text_color = '#ffffff'){
-    // use D3
   }
 
   render_legend_old(text_color = '#ffffff'){
@@ -73225,10 +73233,21 @@ class THREEBRAIN_CANVAS {
 
     this.main_renderer.setSize( main_width, main_height );
 
+    const pixelRatio = this.main_renderer.getPixelRatio();
+
+    if( this.domElement.width != main_width * pixelRatio ){
+      this.domElement.width = main_width * pixelRatio;
+      this.domElement.style.width = main_width + 'px';
+    }
+
+    if( this.domElement.height != main_height * pixelRatio ){
+      this.domElement.height = main_height * pixelRatio;
+      this.domElement.style.height = main_height + 'px';
+    }
+
     this.controls.handleResize();
 
     this.start_animation(0);
-
 
   }
 
@@ -73264,6 +73283,21 @@ class THREEBRAIN_CANVAS {
         console.error(e);
       }
     }
+
+  }
+
+  mapToCanvas(){
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
+    // Clear the whole canvas
+    this.domContext.fillStyle = this.background_color;
+    this.domContext.fillRect(0, 0, _width, _height);
+
+    // copy the main_renderer context
+    this.domContext.drawImage( this.main_renderer.domElement, 0, 0, _width, _height);
+
+    // TODO: side cameras
 
   }
 
@@ -73316,6 +73350,21 @@ class THREEBRAIN_CANVAS {
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
     let results = {};
+
+
+    // show mesh value info
+    if(this.object_chosen !== undefined &&
+        this.object_chosen.userData ){
+
+        results.selected_object = {
+          name : this.object_chosen.userData.construct_params.name,
+          position : this.object_chosen.getWorldPosition( new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3() ),
+          custom_info : this.object_chosen.userData.construct_params.custom_info
+        };
+
+      }
+
+
     if( typeof( this.animation_controls.get_params ) === 'function' ){
 
       // animation is enabled
@@ -73332,6 +73381,7 @@ class THREEBRAIN_CANVAS {
       //  1. if not is_playing, last_time
       //  2. if is_playing, last_time + time_delta * speed
       let current_time = is_playing ? (last_time + clock_time_delta * speed) : last_time;
+      results.current_time = current_time;
 
       if( current_time > time_end ){
         current_time = time_start;
@@ -73349,28 +73399,18 @@ class THREEBRAIN_CANVAS {
       this.animation_controls.set_time( current_time );
 
       // show mesh value info
-      if( typeof(this._animation_callback) === 'function'){
-        if(this.object_chosen !== undefined &&
-          this.object_chosen.userData &&
-          this.object_chosen.userData.ani_value &&
-          this.object_chosen.userData.ani_value.length > 0 ){
+      if( results.selected_object &&
+        this.object_chosen.userData.ani_value &&
+        this.object_chosen.userData.ani_value.length > 0
+      ){
 
-            let current_value;
-            const time_stamp = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(this.object_chosen.userData.ani_time);
-            const values = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(this.object_chosen.userData.ani_value);
-            for( let ii in time_stamp ){
-              if(time_stamp[ ii ] <= current_time){
-                current_value = values[ ii ];
-              }
-            }
-            let txt = this._animation_callback(this.object_chosen, current_value, current_time);
-            if( txt ){
-              results.txt = txt;
-            }
-        }else{
-          let txt = this._animation_callback();
-          if( txt ){
-            results.txt = txt;
+        const time_stamp = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(this.object_chosen.userData.ani_time);
+        const values = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(this.object_chosen.userData.ani_value);
+        let _tmp = - Infinity;
+        for( let ii in time_stamp ){
+          if(time_stamp[ ii ] <= current_time && time_stamp[ ii ] > _tmp){
+            results.current_value = values[ ii ];
+            _tmp = time_stamp[ ii ];
           }
         }
       }
@@ -73397,9 +73437,15 @@ class THREEBRAIN_CANVAS {
     }
   }
 
+  // Do not call this function directly after the initial call
+  // use "this.start_animation(0);" to render once
+  // use "this.start_animation(1);" to keep rendering
+  // this.pause_animation(1); to stop rendering
+  // Only use 0 or 1
   animate(){
 
     requestAnimationFrame( this.animate.bind(this) );
+
 
     this.update();
 
@@ -73409,14 +73455,206 @@ class THREEBRAIN_CANVAS {
         this.stats.update();
       }
 
-  		let results = this.text_ani();
+  		const results = this.text_ani();
+
   		this.render();
+
+  		// draw main and side rendered images to this.domElement (2d context)
+  		this.mapToCanvas();
+
+  		// Add additional information
+      const _pixelRatio = this.main_renderer.getPixelRatio();
+      const _fontType = 'Courier New, monospace';
+      const _width = this.domElement.width;
+      const _height = this.domElement.height;
+
+      this.domContext.fillStyle = this.foreground_color;
+
+      // Add title
+      let line_y = 50, ii = 0, ss = [];
+      if( this.title && this.title !== '' ){
+        this.domContext.font = `${_pixelRatio * 20}px ${_fontType}`;
+        ss = this.title.split('\\n');
+        for( ii in ss ){
+          this.domContext.fillText(ss[ii], 10, line_y);
+          line_y = line_y + 28 * _pixelRatio;
+        }
+      }
+
+      // Add animation message
+      /*
+      if( results.txt && results.txt !== '' ){
+        this.domContext.font = `${_pixelRatio * 20}px ${_fontType}`;
+        ss = results.txt.split('\n');
+        for( ii in ss ){
+          this.domContext.fillText(ss[ii], 10, line_y);
+          line_y = line_y + 28 * _pixelRatio;
+        }
+      }
+      */
+
+      // Add current time to bottom right corner
+      if( typeof(results.current_time) === 'number' ){
+        this.domContext.font = `${_pixelRatio * 15}px ${_fontType}`;
+        this.domContext.fillText(
+          `${results.current_time.toFixed(3)} s`,
+          _width - 200, _height - 50);
+
+      }
+
+      // Add legend
+      let legend_height = 0.6,  // 60% heights
+            legend_start = (1 - legend_height) / 2,
+            has_color_map = this.render_legend && this.lut && (this.lut.n !== undefined),
+            continuous_cmap = has_color_map && this.lut.color_type === 'continuous' && this.lut.n > 1,
+            discrete_cmap = has_color_map && this.lut.color_type === 'discrete' && this.lut.n > 0 && Array.isArray(this.lut.color_names);
+      if( continuous_cmap ){
+        // Determine legend coordinates
+        let grd = this.domContext.createLinearGradient(0,0,0,_height),
+            legend_step = legend_height / ( this.lut.n - 1 );
+        // Starts from 20% height
+        grd.addColorStop( 0, this.background_color );
+        grd.addColorStop( legend_start - 4 / _height, this.background_color );
+        for( let ii in this.lut.lut ){
+          grd.addColorStop(legend_start + legend_step * ii,
+              '#' + this.lut.lut[this.lut.n - 1 - ii].getHexString());
+        }
+        grd.addColorStop( 1 - legend_start + 4 / _height, this.background_color );
+
+        // Fill with gradient
+        this.domContext.fillStyle = grd;
+        this.domContext.fillRect( _width - 200 , legend_start * _height , 50 , legend_height * _height );
+
+        // Add value labels
+        let legent_ticks = [];
+        let zero_height = ( legend_start + this.lut.maxV * legend_height /
+                            (this.lut.maxV - this.lut.minV)) * _height,
+            minV_height = (1 - legend_start) * _height,
+            maxV_height = legend_start * _height;
+
+        let draw_zero = this.lut.minV < 0 && this.lut.maxV > 0;
+
+        if( typeof( results.current_value ) === 'number' ){
+          // There is a colored object rendered, display it
+          let value_height = ( legend_start + (this.lut.maxV - results.current_value) * legend_height / (this.lut.maxV - this.lut.minV)) * _height;
+          legent_ticks.push([
+            results.current_value.toPrecision(4), value_height, 1 ]);
+
+          if( Math.abs( zero_height - value_height ) <= 10 ){
+            draw_zero = false;
+          }
+          if(Math.abs( value_height - minV_height) > 10){
+            legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
+          }
+          if(Math.abs( value_height - maxV_height) > 10){
+            legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
+          }
+        }else{
+          legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
+          legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
+        }
+
+        if( draw_zero ){
+          legent_ticks.push(['0', zero_height, 0]);
+        }
+
+        this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
+        this.domContext.fillStyle = this.foreground_color;
+
+        // Fill text
+        legent_ticks.forEach((tick) => {
+          this.domContext.fillText( tick[0], _width - 130, tick[1] + 5 );
+        });
+
+        // Fill ticks
+        this.domContext.strokeStyle = this.foreground_color;
+        this.domContext.beginPath();
+        legent_ticks.forEach((tick) => {
+          if( tick[2] === 0 ){
+            this.domContext.moveTo( _width - 150 , tick[1] );
+            this.domContext.lineTo( _width - 145 , tick[1] );
+          }else if( tick[2] === 1 ){
+            this.domContext.moveTo( _width - 150 , tick[1] );
+            this.domContext.lineTo( _width - 145 , tick[1] - 2 );
+            this.domContext.lineTo( _width - 145 , tick[1] + 2 );
+            this.domContext.lineTo( _width - 150 , tick[1] );
+          }
+        });
+        this.domContext.stroke();
+
+      }else if( discrete_cmap ){
+        // this.lut.color_names must exists and length must be
+        let n_factors = this.lut.color_names.length;
+        legend_height = ( ( n_factors - 1 ) * 60 ) / _height;
+        legend_height = legend_height > 0.8 ? 0.8: legend_height;
+        legend_start = (1 - legend_height) / 2;
+        let legend_step = n_factors == 1 ? 52 : (legend_height / ( n_factors - 1 ));
+        let square_height = legend_step * _height;
+        square_height = square_height >= 52 ? 50 : Math.max(square_height - 2, 4);
+        console.log(square_height);
+
+        for(let ii = 0; ii < n_factors; ii++ ){
+          let square_center = (legend_start + legend_step * ii) * _height;
+          this.domContext.fillStyle = '#' + this.lut.getColor(ii + 1).getHexString();
+          this.domContext.fillRect(
+            _width - 200 , square_center - square_height / 2 ,
+            50 , square_height
+          );
+
+          this.domContext.strokeStyle = this.foreground_color;
+          this.domContext.beginPath();
+          this.domContext.moveTo( _width - 150 , square_center );
+          this.domContext.lineTo( _width - 145 , square_center );
+          this.domContext.stroke();
+
+          this.domContext.fillStyle = this.foreground_color;
+          this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
+          this.domContext.fillText(this.lut.color_names[ii],
+            _width - 140, square_center + 5, 139
+          );
+        }
+
+      }
+
+      // Add selected object information
+      if( results.selected_object ){
+        this.domContext.font = `${_pixelRatio * 15}px ${_fontType}`;
+        this.domContext.fillStyle = this.foreground_color;
+
+        let legend_title_width = results.selected_object.name.length * 18;
+        if( legend_title_width < 330 ){
+          legend_title_width = legend_title_width / 2 + 175;
+        }
+        this.domContext.fillText(
+          results.selected_object.name,
+          _width - 10 - legend_title_width, 50 //legend_start * _height - 63
+        );
+
+        const pos = results.selected_object.position;
+        this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
+        this.domContext.fillText(
+          `(${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+          _width - 300, 108 //legend_start * _height - 34
+        );
+
+        if( typeof(results.selected_object.custom_info) === 'string' ){
+          legend_title_width = results.selected_object.custom_info.length * 12;
+          if( legend_title_width < 330 ){
+            legend_title_width = legend_title_width / 2 + 175;
+          }
+          this.domContext.fillText(
+            results.selected_object.custom_info,
+            _width - 10 - legend_title_width, 79 //legend_start * _height - 34
+          );
+        }
+
+      }
+
 
   		// check if capturer is working
       if( this.capturer_recording && this.capturer ){
-
-        const text = `${this.title || ''} \n\n ${results.txt || ''}`;
-        this.capturer.add( this.main_renderer.domElement, text, this.background_color, this.foreground_color );
+        // Not really used but just keep it in case for future capturer
+        this.capturer.add();
       }
     }
 
@@ -74151,7 +74389,7 @@ Stats.Panel = function ( name, fg, bg ) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return D3Canvas; });
+/* unused harmony export D3Canvas */
 /* harmony import */ var d3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 // !preview r2d3 data=list(id = "canvas", width = "100%", height = "100%", layout = list( list(name = "plot1", x = 0, y = 0, w = "width - 70", h = "height",  xlim = c(1, 10), ylim = c(0.0805062756408006, 0.759302743244916 ), zlim = c(1L, 4L), margin = c(50, 60, 80, 50)), list( name = "plot2", x = "width - 70", y = 0, w = 70, h = "height",  xlim = c(1, 10), ylim = c(0, 1), margin = c(50, 0, 80,  50))), plot_data = list(x = 1, y = c(0.0805062756408006, 0.385681423824281, 0.684253938030452, 0.759302743244916), z = structure(1:4, .Dim = c(1L, 4L))), content = list(plot1 = list(main = "Title", data = NULL,  geom_traces = list(heatmap = list(type = "geom_heatmap",  data = NULL, x = "x", y = "y", z = "z", x_scale = "linear",  y_scale = "linear")), axis = list(list(side = 1, text = "Label X",  at = NULL, labels = NULL, las = 1, cex_axis = 1.3, cex_lab = 1.6,  line = 1.6), list(side = 2, text = "Label Y", at = NULL,  labels = NULL, las = 2, cex_axis = 1, cex_lab = 1.2,  line = 0))), plot2 = list(main = "Legend", data = NULL,  geom_traces = list(lines = list(type = "geom_line", data = NULL,  x = "x", y = "y")), axis = list(list(side = 4, text = "",  at = c(-1, 0, 1), las = 1, cex_axis = 1.3, cex_lab = 1.6,  line = 1.6)))))
 //
@@ -77739,7 +77977,6 @@ class data_controls_THREEBRAIN_PRESETS{
         }
         this._ani_time.setValue( v );
       }
-      this._update_canvas();
     };
 
     this.get_animation_params = () => {
@@ -77787,7 +78024,7 @@ class data_controls_THREEBRAIN_PRESETS{
     });
 
     this.gui.add_item('Time', min, { folder_name : folder_name })
-        .min(min).max(max).step(step);
+        .min(min).max(max).step(step).onChange((v) => {this._update_canvas()});
     this._ani_time = this.gui.get_controller('Time', 'Timeline');
 
 
@@ -77823,6 +78060,8 @@ class data_controls_THREEBRAIN_PRESETS{
           }
 
         }
+
+        this._update_canvas();
       });
   }
 
@@ -78414,15 +78653,11 @@ class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
     this.framerate = settings.framerate;
   	this.chunks = [];
 
-  	this.canvas = document.createElement('canvas');
-  	// this.canvas.height = settings.main_height || 608;
-  	this.ratio = settings.pixel_ratio || 1;
-  	this.sidebar_width = (settings.sidebar_width || 0) * this.ratio;
-  	// this.canvas.width = (settings.main_width || 1080) + this.sidebar_width;
-  	this.context = this.canvas.getContext("2d");
+  	this.canvas = settings.canvas;
 
   	// Create stream object
     this.stream = this.canvas.captureStream( this.framerate );
+
     // create a recorder fed with our canvas' stream
     this.recorder = new MediaRecorder(this.stream, {mimeType : 'video/webm;codecs=vp8,opus'});
 
@@ -78447,20 +78682,8 @@ class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
     }
   }
 
-  set_dim( canvas ){
-    if( this.canvas.width  != canvas.width + this.sidebar_width ){
-      this.canvas.width = canvas.width + this.sidebar_width;
-      this.canvas.innerWidth = this.canvas.width / this.ratio;
-    }
-    if( this.canvas.height != canvas.height ){
-      this.canvas.height = canvas.height;
-      this.canvas.innerHeight = this.canvas.height / this.ratio;
-    }
-  }
-
-  start( canvas ){
+  start(){
     this.dispose();
-    this.set_dim( canvas );
     this.recorder.start();
   }
 
@@ -78483,13 +78706,9 @@ class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
     this.chunks.length = 0;
   }
 
-  add( canvas, addInfo = '', background = '#ffffff', foreground = '#000000' ) {
-    this.set_dim( canvas );
-    this.context = this.canvas.getContext('2d');
-    this.context.fillStyle = background;
-    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    //resize
-    this.context.drawImage(canvas, this.sidebar_width, 0);
+  add() {
+    /*
+    // , addInfo = '', background = '#ffffff', foreground = '#000000'
 
     // Add additional messages
     if( addInfo && addInfo !== '' ){
@@ -78503,6 +78722,7 @@ class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
       }
 
     }
+    */
   }
 }
 
@@ -78583,6 +78803,7 @@ class src_BrainCanvas{
 
 
     // 2. Add legend
+    /*
 
     this.legend_data = {
       "id":"canvas",
@@ -78622,25 +78843,27 @@ class src_BrainCanvas{
         }
       }
     };
+    */
 
     const legend_el = document.createElement('svg');
     this.el_legend.appendChild( legend_el );
     this.el_side.appendChild( this.el_legend );
-    this.legend = new sparkles["a" /* D3Canvas */](this.legend_data, legend_el);
+    // this.legend = new D3Canvas(this.legend_data, legend_el);
 
-    window.legend = this.legend;
-    window.legend_data = this.legend_data;
+    // window.legend = this.legend;
+    // window.legend_data = this.legend_data;
 
 
 
     // 3. initialize threejs scene
-    this.canvas = new threejs_scene["a" /* THREEBRAIN_CANVAS */](this.el, width, height, 250, this.shiny_mode, cache, this.DEBUG, this.set_legend_value);
+    this.canvas = new threejs_scene["a" /* THREEBRAIN_CANVAS */](this.el, width, height, 250, this.shiny_mode, cache, this.DEBUG);
 
     // 4. Animation, but do not render;
     this.canvas.animate();
 
   }
 
+  /*
   set_legend_value(x, y, title = ''){
     if( x && y ){
       this.legend_data.content.sparks.data = {
@@ -78654,6 +78877,7 @@ class src_BrainCanvas{
     }
 
   }
+  */
 
   check_webgl(){
     if ( WEBGL.isWebGLAvailable() === false ) {
@@ -78731,7 +78955,6 @@ class src_BrainCanvas{
         // this.el_text2.style.color=inversedColor;
         this.el.style.backgroundColor = v;
 
-        this.canvas.render_legend(inversedColor);
         this.canvas.start_animation(0);
         this.canvas.background_color = v;
         this.canvas.foreground_color = inversedColor;
@@ -78748,10 +78971,23 @@ class src_BrainCanvas{
       this.show_legend = v;
       let d = v? 'block' : 'none';
       this.el_legend.style.display = d;
+      this.canvas.render_legend = v;
+      if(this.canvas.lut){
+        this.canvas.lut.color_type = this.settings.color_type ? this.settings.color_type : 'continuous';
+        if( this.canvas.lut.color_type === 'discrete' ){
+
+          this.canvas.lut.color_names = Object(utils["b" /* to_array */])(this.settings.color_names);
+
+        }
+      }
+
+      this.canvas.start_animation(0);
+
+      /*
       if(v){
         let c = gui.get_controller('Background Color', 'Misc');
         if ( c && typeof( c.getValue ) === 'function' ){
-          let iv = Object(utils["a" /* invertColor */])( c.getValue() );
+          let iv = invertColor( c.getValue() );
 
           // TODO: change background color
           this.legend.render();
@@ -78761,6 +78997,7 @@ class src_BrainCanvas{
         }
 
       }
+      */
     };
     gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Graphics'})
       .onChange(_legend_callback);
@@ -78777,7 +79014,8 @@ class src_BrainCanvas{
     // check if it's chome browser
     gui.add_item('Viewer Title', '', {folder_name: 'Default'})
       .onChange((v) => {
-        this.canvas.title = v.replace('\\n', '\n');
+        this.canvas.title = v;
+        this.canvas.start_animation(0);
       });
 
     gui.add_item('Record Video', false, {folder_name: 'Default'})
@@ -78788,6 +79026,9 @@ class src_BrainCanvas{
           if( !this.canvas.capturer ){
 
             this.canvas.capturer = new CCanvasRecorder_CCanvasRecorder({
+
+              canvas: this.canvas.domElement,
+
               // FPS = 15
               framerate: 24,
               // Capture as webm
@@ -78808,14 +79049,17 @@ class src_BrainCanvas{
           }
 
           this.canvas.capturer.baseFilename = this.canvas.capturer.filename = new Date().toGMTString();
-          this.canvas.capturer.start( this.canvas.main_renderer.domElement );
+          this.canvas.capturer.start();
           this.canvas.capturer_recording = true;
+          // Force render a frame
+          // Canvas might not render
+          // this.canvas.start_animation(0);
         }else{
           this.canvas.capturer_recording = false;
           if(this.canvas.capturer){
             this.canvas.capturer.stop();
             this.canvas.capturer.save();
-            this.canvas.capturer.incoming = false;
+            // this.canvas.capturer.incoming = false;
           }
         }
 
@@ -78848,7 +79092,7 @@ class src_BrainCanvas{
       });
 
       let gui = this._register_gui_control();
-      this._set_info_callback();
+      // this._set_info_callback();
 
       // Generate animations
       this.canvas.generate_animation_clips();
@@ -78909,21 +79153,23 @@ class src_BrainCanvas{
         this.shiny.to_shiny(shiny_data, '_mouse_event');
 
         // last - update legend
+        /*
         if( obj.userData.ani_value &&
           obj.userData.ani_value.length > 0 ){
 
-            const time_stamp = Object(utils["b" /* to_array */])( obj.userData.ani_time );
-            const values = Object(utils["b" /* to_array */])( obj.userData.ani_value );
+            const time_stamp = to_array( obj.userData.ani_time );
+            const values = to_array( obj.userData.ani_value );
 
             this.set_legend_value( time_stamp, values );
         }
+        */
 
         return(null);
       }
-      this.set_legend_value( [0], [0], '' );
+      // this.set_legend_value( [0], [0], '' );
     });
 
-    this.canvas.set_animation_callback((obj, v, t) => {
+    /* this.canvas.set_animation_callback((obj, v, t) => {
       let txt = '';
       if( obj === undefined || this.hide_controls ){
         this.set_legend_value(
@@ -78944,22 +79190,18 @@ class src_BrainCanvas{
 
         try {
           this.set_legend_value(
-            Object(utils["b" /* to_array */])( obj.userData.ani_time ),
-            Object(utils["b" /* to_array */])( obj.userData.ani_value ),
+            to_array( obj.userData.ani_time ),
+            to_array( obj.userData.ani_value ),
             txt
           );
         } catch (e) {}
-
-        /*
-        this.el_text2.innerHTML = '<p>' + txt + '</p>';
-        */
 
       }
 
       // Purely for video export only
       if( obj && obj.userData ){
         let g = obj.userData.construct_params,
-            pos = obj.getWorldPosition( new threeplugins["a" /* THREE */].Vector3() );
+            pos = obj.getWorldPosition( new THREE.Vector3() );
         // Get information and show them on screen
         let group_name = g.group ? g.group.group_name : '(No Group)';
 
@@ -78968,7 +79210,7 @@ class src_BrainCanvas{
 
       return(txt);
 
-    });
+    }); */
 
   }
 
@@ -79007,6 +79249,7 @@ class src_BrainCanvas{
       return(re);
     };
 
+    /*
     // sparks
     this.legend_data.layout[0].xlim = this.settings.time_range;
     this.legend_data.layout[0].ylim = this.settings.value_range;
@@ -79030,6 +79273,7 @@ class src_BrainCanvas{
       this.legend._render_graph('colorbar');
       this.legend._render_graph('sparks');
     }
+    */
 
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();

@@ -13,9 +13,6 @@
 #' @param n_color how many colors in the color ramp (used  when generating legend)
 #' @param show_legend show legend in control panel?
 #' @param legend_title legend title
-#' @param at legen ticks
-#' @param legend_expr R expression to generate legend if you don't like the
-#'   default ones
 #' @param tmp_dirname internally used
 #' @param token used to identify widgets in JS localStorage
 #' @param width,height width and height of the widget. By default width="100%",
@@ -28,8 +25,10 @@ threejs_brain <- function(
   ..., widget_id = 'threebrain_data', time_range = NULL,
   value_range = NULL, symmetric = 0, side_camera = FALSE,
   control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
-  color_ramp = c('navyblue', '#e2e2e2', 'red'), n_color = 64,
-  show_legend = TRUE, legend_title = 'Value', legend_expr, at = NULL,
+  color_ramp = c('navyblue', '#e2e2e2', 'red'), color_type = 'continuous',
+  n_color = 64,
+  color_names = seq_along(color_ramp),
+  show_legend = TRUE, legend_title = 'Value',
   tmp_dirname = NULL, width = NULL, height = NULL, optionals = list(),
   debug = FALSE, token = NULL,
   .list = list()){
@@ -83,6 +82,7 @@ threejs_brain <- function(
       time_range = range(time_range)
     }else{
       time_range = c(0,1)
+      show_legend = FALSE
     }
     if(time_range[2] == time_range[1]){
       time_range[2] = time_range[1] + 1
@@ -103,30 +103,35 @@ threejs_brain <- function(
     if(length(value_range) != 0){
       value_range = range(value_range)
     }else{
-      show_legend = FALSE
       value_range = c(-1,1) + symmetric
     }
     if(value_range[2] == value_range[1]){
-      show_legend = FALSE
       value_range = c(-1,1) + symmetric
     }
   }else{
     value_range = range(value_range)
   }
 
-  if(!length(at)){
-    at = pretty(value_range)
-    at[at > value_range[2]] = value_range[2]
-    at[at < value_range[1]] = value_range[1]
-    at = unique(at)
-  }
-
   # generate color ramp
-  if(!is.function(color_ramp)){
-    color_ramp = grDevices::colorRampPalette(color_ramp)
-  }
+  if(color_type == 'continuous'){
+    if(!is.function(color_ramp)){
+      color_ramp = grDevices::colorRampPalette(color_ramp)
+    }
+    n_color = 2^ceiling(log2(n_color))
+    hex_colors = color_ramp(n_color)
+  }else{
 
-  hex_colors = color_ramp(n_color)
+    stopifnot2(length(color_names) == length(color_ramp), msg = 'In discrete mode, color_names must be specified and its length must equals to color_ramp')
+    stopifnot2(!is.function(color_ramp), msg = 'In discrete mode, color_ramp must be a vector')
+
+    n_color = length(color_ramp) * 10
+    n_color = 2^ceiling(log2(n_color))
+    value_range = c(1, length(color_ramp))
+
+    color_ramp = grDevices::colorRampPalette(color_ramp)
+    hex_colors = color_ramp(n_color)
+
+  }
 
   colors = gsub('^#', '0x', hex_colors)
   colors = cbind(seq(0, 1, length.out = length(colors)), colors)
@@ -134,29 +139,6 @@ threejs_brain <- function(
   color_scale = (n_color-1) / (value_range[2] - value_range[1]);
   color_shift = value_range[1];
 
-  # generate color map from R and pass it as image
-  legend_file = tempfile(fileext = '.png')
-  png(legend_file, units = 'px', width = 300, height = 150)
-  par(mar = c(4.1, 1.1, 3.1, 1.1), bg=NA)
-  if(missing(legend_expr)){
-    z = seq_len(n_color)
-    image(
-      x = seq(value_range[1], value_range[2], length.out = n_color),
-      y = c(0,1),
-      z = cbind(z, z),
-      col = hex_colors,
-      xlab = '', ylab = '', main = legend_title, asp = 0.1,
-      axes=F)
-
-    axis(1, at, at, pos = -1)
-  }else{
-    legend_expr = substitute(legend_expr)
-    parent_frame = parent.frame()
-    eval(legend_expr, envir = parent_frame)
-  }
-  dev.off()
-
-  legend_img = data_uri(file = legend_file)
 
   if(is.null(token)){
     session = shiny::getDefaultReactiveDomain()
@@ -174,9 +156,9 @@ threejs_brain <- function(
     colors = colors,
     color_scale = color_scale, # color_index = floor((value - color_shift) * color_scale)
     color_shift = color_shift,
+    color_type = color_type,
+    color_names = color_names,
     show_legend = show_legend,
-    legend_at = at,
-    legend_img = legend_img,
     control_presets = control_presets,
     cache_folder = widget_id,
     optionals = optionals,
