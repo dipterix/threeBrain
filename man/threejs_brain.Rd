@@ -3,6 +3,17 @@
 \name{threejs_brain}
 \alias{threejs_brain}
 \title{Create a Threejs Brain}
+\usage{
+threejs_brain(..., widget_id = "threebrain_data", time_range = NULL,
+  value_range = NULL, symmetric = 0, side_camera = FALSE,
+  control_panel = TRUE, control_presets = NULL, camera_center = c(0,
+  0, 0), color_ramp = c("navyblue", "#e2e2e2", "red"),
+  color_type = "continuous", n_color = 64,
+  color_names = seq_along(color_ramp), show_legend = TRUE,
+  legend_title = "Value", tmp_dirname = NULL, width = NULL,
+  height = NULL, optionals = list(), debug = FALSE, token = NULL,
+  .list = list())
+}
 \arguments{
 \item{..., .list}{geometries inherit from AbstractGeom}
 
@@ -19,27 +30,28 @@ multiple widgets in one website (shiny for example)}
 
 \item{control_panel}{enable control panels for the widget}
 
+\item{control_presets}{presets to be shown in control panels}
+
 \item{camera_center}{position where camera should focus at}
 
 \item{color_ramp}{used to generate color ramps}
 
-\item{n_color}{how many colors in the color ramp (used  when generating legend)}
+\item{color_type}{'continuous' or 'discrete'}
+
+\item{n_color}{how many colors in the color ramp (used by continuous legend)}
+
+\item{color_names}{color names (used by discrete legend)}
 
 \item{show_legend}{show legend in control panel?}
 
 \item{legend_title}{legend title}
 
-\item{at}{legen ticks}
-
-\item{legend_expr}{R expression to generate legend if you don't like the
-default ones}
-
 \item{tmp_dirname}{internally used}
-
-\item{token}{used to identify widgets in JS localStorage}
 
 \item{width, height}{width and height of the widget. By default width="100%",
 and height varies.}
+
+\item{token}{used to identify widgets in JS localStorage}
 }
 \description{
 Create a Threejs Brain
