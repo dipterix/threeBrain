@@ -40,4 +40,3 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown
-VignetteBuilder: knitr
