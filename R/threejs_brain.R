@@ -9,6 +9,8 @@
 #' @param control_panel enable control panels for the widget
 #' @param control_presets presets to be shown in control panels
 #' @param camera_center position where camera should focus at
+#' @param camera_pos XYZ position of camera
+#' @param start_zoom numeric, positive number indicating start zoom level
 #' @param color_ramp used to generate color ramps
 #' @param color_type 'continuous' or 'discrete'
 #' @param n_color how many colors in the color ramp (used by continuous legend)
@@ -21,20 +23,25 @@
 #' @param optionals internally used
 #' @param width,height width and height of the widget. By default width="100%",
 #'   and height varies.
+#' @param coords \code{NULL} to hide coordinates or numeric vector of three.
 #' @export
 threejs_brain <- function(
   ..., widget_id = 'threebrain_data', time_range = NULL,
   value_range = NULL, symmetric = 0, side_camera = FALSE,
   control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
+  camera_pos = c(0,0,500), start_zoom = 1,
   color_ramp = c('navyblue', '#e2e2e2', 'red'), color_type = 'continuous',
   n_color = 64,
   color_names = seq_along(color_ramp),
   show_legend = TRUE, legend_title = 'Value',
   tmp_dirname = NULL, width = NULL, height = NULL, optionals = list(),
-  debug = FALSE, token = NULL,
+  debug = FALSE, token = NULL, coords = NULL,
   .list = list()){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
+  stopifnot2(length(coords) == 0 || (length(coords) == 3 && is.numeric(coords)), msg = 'corrds must be NULL or a vector length of 3')
+  stopifnot2(length(camera_pos) == 3 && is.numeric(camera_pos) && sum(abs(camera_pos)) > 0, msg = 'camera_pos must be a vector length of 3 and cannot be origin')
+
 
   # Create element list
   geoms = c(list(...), .list)
@@ -154,6 +161,8 @@ threejs_brain <- function(
     value_range = value_range,
     hide_controls = !control_panel,
     control_center = as.vector(camera_center),
+    camera_pos = camera_pos,
+    start_zoom = ifelse(start_zoom > 0, start_zoom, 1),
     colors = colors,
     color_scale = color_scale, # color_index = floor((value - color_shift) * color_scale)
     color_shift = color_shift,
@@ -165,7 +174,8 @@ threejs_brain <- function(
     optionals = optionals,
     debug = debug,
     has_animation = v_count > 1,
-    token = token
+    token = token,
+    coords = coords
   )
 
   # Generate external file

@@ -72470,7 +72470,9 @@ window.requestAnimationFrame =
 const cached_storage = new _threebrain_cache_js__WEBPACK_IMPORTED_MODULE_3__[/* THREEBRAIN_STORAGE */ "a"]();
 
 class THREEBRAIN_CANVAS {
-  constructor(el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false) {
+  constructor(
+    el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false
+  ) {
     this.el = el;
     if(DEBUG){
       console.debug('Debug Mode: ON.');
@@ -72519,6 +72521,7 @@ class THREEBRAIN_CANVAS {
     // Main camera
     this.main_camera = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
 		this.main_camera.position.z = 500;
+		this.main_camera.userData.pos = [0,0,500];
 		this.main_camera.layers.set(0);
 		this.main_camera.layers.enable(1);
 		this.main_camera.layers.enable(2);
@@ -72540,7 +72543,6 @@ class THREEBRAIN_CANVAS {
     let ambient_light = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].AmbientLight( 0x808080 );
     ambient_light.layers.set(7);
     this.scene.add( ambient_light ); // soft white light
-
 
 
     // Set Main renderer
@@ -72770,10 +72772,56 @@ class THREEBRAIN_CANVAS {
 
   get_main_camera_params(){
     return({
-      'target' : this.main_camera.localToWorld(new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3(0,0,-500)), //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
+      'target' : this.main_camera.localToWorld(new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3(
+        -this.main_camera.userData.pos[0],
+        -this.main_camera.userData.pos[1],
+        -this.main_camera.userData.pos[2]
+      )), //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
       'up' : this.main_camera.up, // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
       'position': this.main_camera.position //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
     });
+  }
+
+  draw_axis( x , y , z ){
+    if( !this._coordinates ){
+      this._coordinates = {};
+      const origin = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( 0, 0, 0 );
+      // x
+      this._coordinates.x = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ArrowHelper( new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( 1, 0, 0 ),
+              origin, x === 0 ? 1: x, 0xff0000 );
+
+      this._coordinates.y = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ArrowHelper( new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( 0, 1, 0 ),
+              origin, y === 0 ? 1: y, 0x00ff00 );
+
+      this._coordinates.z = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ArrowHelper( new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( 0, 0, 1 ),
+              origin, z === 0 ? 1: z, 0x0000ff );
+      this._coordinates.x.layers.set(7);
+      this._coordinates.y.layers.set(7);
+      this._coordinates.z.layers.set(7);
+      this.scene.add( this._coordinates.x );
+      this.scene.add( this._coordinates.y );
+      this.scene.add( this._coordinates.z );
+    }
+    // If ? === 0, then hide this axis
+    if( x === 0 ){
+      this._coordinates.x.visible = false;
+    }else{
+      this._coordinates.x.visible = true;
+    }
+
+    if( y === 0 ){
+      this._coordinates.y.visible = false;
+    }else{
+      this._coordinates.y.visible = true;
+    }
+
+    if( z === 0 ){
+      this._coordinates.z.visible = false;
+    }else{
+      this._coordinates.z.visible = true;
+    }
+
+
   }
 
   register_main_canvas_events(){
@@ -72861,7 +72909,7 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _fast_raycast(clickable_only, max_search = 500){
+  _fast_raycast(clickable_only, max_search = 1000){
 
     /* this.use_octree = true; */
 
@@ -73256,17 +73304,34 @@ class THREEBRAIN_CANVAS {
     this.controls.target.fromArray( v );
     this.control_center = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])( v );
   }
+  reset_main_camera( pos, zoom = 1 ){
+    if( Array.isArray(pos) && pos.length === 3 ){
+      this.main_camera.userData.pos = pos;
+      this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
+      this.main_camera.zoom = zoom;
+
+      this.main_camera.updateProjectionMatrix();
+    }
+
+  }
   reset_controls(){
 	  // reset will erase target, manually reset target
 	  // let target = this.controls.target.toArray();
 		this.controls.reset();
 		this.controls.target.fromArray( this.control_center );
 
-		this.main_camera.position.set(0 , 0 , 500);
-		this.main_camera.up.set(0 , 1 , 0);
-		this.main_camera.zoom = 1;
+		//this.main_camera.position.set(0 , 0 , 500);
+		//this.main_camera.up.set(0 , 1 , 0);
+		//this.main_camera.zoom = 1;
+		//this.main_camera.updateProjectionMatrix();
+    const pos = this.main_camera.userData.pos;
+    this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
 
-		this.main_camera.updateProjectionMatrix();
+    this.main_camera.up.set(0, 1, 0);
+
+    this.main_camera.zoom = 1;
+    this.main_camera.updateProjectionMatrix();
+
 
 		// immediately render once
     this.start_animation(0);
@@ -78856,7 +78921,9 @@ class src_BrainCanvas{
 
 
     // 3. initialize threejs scene
-    this.canvas = new threejs_scene["a" /* THREEBRAIN_CANVAS */](this.el, width, height, 250, this.shiny_mode, cache, this.DEBUG);
+    this.canvas = new threejs_scene["a" /* THREEBRAIN_CANVAS */](
+      this.el, width, height, 250,
+      this.shiny_mode, cache, this.DEBUG);
 
     // 4. Animation, but do not render;
     this.canvas.animate();
@@ -79318,6 +79385,17 @@ class src_BrainCanvas{
 
     // controller center
     this.canvas.update_control_center( this.settings.control_center );
+
+    // Update camera position
+    this.canvas.reset_main_camera( this.settings.camera_pos , this.settings.start_zoom );
+
+    // Add/remove axis
+    let coords = Object(utils["b" /* to_array */])(this.settings.coords);
+    if(coords.length === 3){
+      this.canvas.draw_axis( coords[0], coords[1], coords[2] );
+    }else{
+      this.canvas.draw_axis( 0, 0, 0 );
+    }
 
 
     // Force render canvas

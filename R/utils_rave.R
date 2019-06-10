@@ -1,4 +1,4 @@
-#' Function to load all dev funtions and wrap them within an environment
+#' Function to load all dev functions and wrap them within an environment
 #' @param expose_functions logical indicating whether to expose all dev functions to the global environment
 #' @param reload logical, do you want to fast-reload the package before load the functions?
 #' @export

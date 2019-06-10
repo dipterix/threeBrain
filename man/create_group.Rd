@@ -7,7 +7,7 @@
 create_group(name, position = c(0, 0, 0), layer = 1)
 }
 \arguments{
-\item{name}{string, name of the geomotry}
+\item{name}{string, name of the geometry}
 
 \item{position}{x,y,z location of the group}
 
@@ -20,7 +20,7 @@ a GeomGroup instance
 Create a geometry group containing multiple geometries
 }
 \details{
-A geometry group is a container of multiple geometries. The geomotries
+A geometry group is a container of multiple geometries. The geometries
 within the same group share the same shift and rotations (see example 1).
 In ECoG/iEEG world, you might have 'MRI', 'CT', 'FreeSurfer' that have
 different orientations. For example, if you want to align MRI to FreeSurfer,

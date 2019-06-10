@@ -1,5 +1,12 @@
 # Update logs (for R-cran only)
 
+## 2019-06-09
+
+Version 0.1.2
+
+Update JavaScript library, added scatter plot methods. Removed files in `inst/` 
+that trigger warnings (like `installed.packages`). Await for approval.
+
 
 
 ## 2019-03-08

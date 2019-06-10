@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_rave.R
 \name{dev_threeBrain}
 \alias{dev_threeBrain}
-\title{Function to load all dev funtions and wrap them within an environment}
+\title{Function to load all dev functions and wrap them within an environment}
 \usage{
 dev_threeBrain(expose_functions = FALSE, reload = TRUE)
 }
@@ -12,5 +12,5 @@ dev_threeBrain(expose_functions = FALSE, reload = TRUE)
 \item{reload}{logical, do you want to fast-reload the package before load the functions?}
 }
 \description{
-Function to load all dev funtions and wrap them within an environment
+Function to load all dev functions and wrap them within an environment
 }

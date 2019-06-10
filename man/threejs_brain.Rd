@@ -7,12 +7,13 @@
 threejs_brain(..., widget_id = "threebrain_data", time_range = NULL,
   value_range = NULL, symmetric = 0, side_camera = FALSE,
   control_panel = TRUE, control_presets = NULL, camera_center = c(0,
-  0, 0), color_ramp = c("navyblue", "#e2e2e2", "red"),
+  0, 0), camera_pos = c(0, 0, 500), start_zoom = 1,
+  color_ramp = c("navyblue", "#e2e2e2", "red"),
   color_type = "continuous", n_color = 64,
   color_names = seq_along(color_ramp), show_legend = TRUE,
   legend_title = "Value", tmp_dirname = NULL, width = NULL,
   height = NULL, optionals = list(), debug = FALSE, token = NULL,
-  .list = list())
+  coords = NULL, .list = list())
 }
 \arguments{
 \item{..., .list}{geometries inherit from AbstractGeom}
@@ -34,6 +35,10 @@ multiple widgets in one website (shiny for example)}
 
 \item{camera_center}{position where camera should focus at}
 
+\item{camera_pos}{XYZ position of camera}
+
+\item{start_zoom}{numeric, positive number indicating start zoom level}
+
 \item{color_ramp}{used to generate color ramps}
 
 \item{color_type}{'continuous' or 'discrete'}
@@ -51,7 +56,13 @@ multiple widgets in one website (shiny for example)}
 \item{width, height}{width and height of the widget. By default width="100%",
 and height varies.}
 
+\item{optionals}{internally used}
+
+\item{debug}{internally used for debugging}
+
 \item{token}{used to identify widgets in JS localStorage}
+
+\item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
 }
 \description{
 Create a Threejs Brain

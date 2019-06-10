@@ -3,11 +3,11 @@
 
 
 #' Create a geometry group containing multiple geometries
-#' @param name string, name of the geomotry
+#' @param name string, name of the geometry
 #' @param position x,y,z location of the group
 #' @param layer layer of the group. reserved
 #' @return a GeomGroup instance
-#' @details A geometry group is a container of multiple geometries. The geomotries
+#' @details A geometry group is a container of multiple geometries. The geometries
 #' within the same group share the same shift and rotations (see example 1).
 #' In ECoG/iEEG world, you might have 'MRI', 'CT', 'FreeSurfer' that have
 #' different orientations. For example, if you want to align MRI to FreeSurfer,

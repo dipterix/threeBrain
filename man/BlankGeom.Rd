@@ -3,7 +3,7 @@
 \docType{data}
 \name{BlankGeom}
 \alias{BlankGeom}
-\title{A geomery that renders nothing}
+\title{A geometry that renders nothing}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 BlankGeom
