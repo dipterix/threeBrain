@@ -79159,7 +79159,7 @@ class src_BrainCanvas{
       });
 
       let gui = this._register_gui_control();
-      // this._set_info_callback();
+      this._set_info_callback();
 
       // Generate animations
       this.canvas.generate_animation_clips();
@@ -79201,35 +79201,13 @@ class src_BrainCanvas{
         // Get information and show them on screen
         let group_name = g.group ? g.group.group_name : '(No Group)';
 
-        let text = `<h4>${g.name}</h4><hr />
-                    <p>
-                    Group: ${group_name}<br>
-                    Global Position: <br>(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
-        // Add customized information
-        if( g.custom_info ){
-          text = text + `<br>${g.custom_info}`;
-        }
-        text = text + '</p><hr />';
-
-        this.el_text.innerHTML = text;
-
         let shiny_data = {
           object: g,
+          group: group_name,
+          position: pos,
           event: evt
         };
         this.shiny.to_shiny(shiny_data, '_mouse_event');
-
-        // last - update legend
-        /*
-        if( obj.userData.ani_value &&
-          obj.userData.ani_value.length > 0 ){
-
-            const time_stamp = to_array( obj.userData.ani_time );
-            const values = to_array( obj.userData.ani_value );
-
-            this.set_legend_value( time_stamp, values );
-        }
-        */
 
         return(null);
       }

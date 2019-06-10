@@ -1,12 +1,29 @@
 # Update logs (for R-cran only)
 
+
+## 2019-06-10
+
+Version 0.1.2 (current submission)
+
+
 ## 2019-06-09
 
 Version 0.1.2
 
 Update JavaScript library, added scatter plot methods. Removed files in `inst/` 
-that trigger warnings (like `installed.packages`). Await for approval.
+that trigger warnings (like `installed.packages`). 
 
+#### Rejected in pre-test
+
+Reason:
+```
+Package has a VignetteBuilder field but no prebuilt vignette index.
+```
+
+#### Solution:
+
+I removed old vignette causing this note. Removed VignetteBuilder field in 
+DESCRIPTION.
 
 
 ## 2019-03-08
