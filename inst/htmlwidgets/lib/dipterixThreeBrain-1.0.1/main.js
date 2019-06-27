@@ -73889,10 +73889,12 @@ class THREEBRAIN_CANVAS {
         }else{
 
           // Need to check shiny mode
-          let path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
-          if(this.shiny_mode){
-            path = cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
+          let path = cache_folder + g.cache_name + '/' + cache_info.file_name;
+          /*
+          if(!this.shiny_mode){
+            path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
           }
+          */
 
 
 

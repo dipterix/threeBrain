@@ -148,10 +148,16 @@ threejs_brain <- function(
   color_shift = value_range[1];
 
 
-  if(is.null(token)){
-    session = shiny::getDefaultReactiveDomain()
-    token = session$userData$rave_id
+  if(is.null(shiny::getDefaultReactiveDomain())){
+    lib_path = 'lib/'
+  }else{
+    lib_path = ''
+    if(is.null(token)){
+      session = shiny::getDefaultReactiveDomain()
+      token = session$userData$rave_id
+    }
   }
+
 
 
   # Generate settings
@@ -170,7 +176,7 @@ threejs_brain <- function(
     color_names = color_names,
     show_legend = show_legend,
     control_presets = control_presets,
-    cache_folder = widget_id,
+    cache_folder = paste0(lib_path, widget_id, '-0/'),
     optionals = optionals,
     debug = debug,
     has_animation = v_count > 1,
@@ -233,23 +239,42 @@ renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
 
 
 #' Save threeBrain widgets to local file system
-#' @param widget generated from function 'threejs_brain'
-#' @param directory directory to save the widget
-#' @param filename default is 'index.html', filename of the widget index file
-#' @param title widget title
-#' @param as_zip whether to create zip file "compressed.zip"
+#' @param widget generated from function 'threejs_brain'.
+#' @param directory directory to save the widget.
+#' @param filename default is 'index.html', filename of the widget index file.
+#' @param assetpath where to put \code{css} or \code{JavaScript} to,
+#' must be relative to \code{directory}.
+#' @param datapath where to store data to, must be relative to \code{directory}.
+#' @param title widget title.
+#' @param as_zip whether to create zip file "compressed.zip".
 #' @export
-save_brain <- function(widget, directory, filename = 'index.html', title = '3D Viewer', as_zip = FALSE){
+save_brain <- function(widget, directory, filename = 'index.html', assetpath = 'lib/', datapath = 'lib/threebrain_data-0/', title = '3D Viewer', as_zip = FALSE){
   dir.create(directory, showWarnings = F, recursive = T)
   cat2('Generating 3D Viewer...')
 
+  # Need to save json data to datapath. Must be a relative path
+  dir.create(file.path(directory, datapath), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(directory, assetpath), recursive = TRUE, showWarnings = FALSE)
+  datapath = stringr::str_replace_all(datapath, '[/]{0}$', '/')
+  datapath = stringr::str_replace_all(datapath, '[/\\\\]+', '/')
+  datapath = stringr::str_replace_all(datapath, '^/', '')
+
+  assetpath = stringr::str_replace_all(assetpath, '[/]{0}$', '/')
+  assetpath = stringr::str_replace_all(assetpath, '[/\\\\]+', '/')
+  assetpath = stringr::str_replace_all(assetpath, '^/', '')
+
+  widget$x$settings$cache_folder = datapath
   htmlwidgets::saveWidget(
     widget,
     file = file.path(directory, filename),
     selfcontained = F,
     title = title,
-    libdir = 'lib'
+    libdir = assetpath
   )
+
+  # Copy data to datapath
+  file_move(file.path(directory, assetpath, 'threebrain_data-0/'),
+            file.path(directory, datapath))
 
   # cat2('Copying data...')
   # dependencies = attr(widget, 'threeBrain_dependency')
@@ -286,11 +311,82 @@ save_brain <- function(widget, directory, filename = 'index.html', title = '3D V
     utils::zip(zipfile, files = c('./lib', filename, 'launch.sh', 'launch.command'))
   }
   directory = normalizePath(directory, mustWork = F)
-  return(invisible(list(
+  return(structure(list(
     directory = directory,
     index = file.path(directory, filename),
     zipfile = file.path(directory, 'compressed.zip'),
     has_zip = as_zip
-  )))
+  ), class = 'threeBrain_saved'))
 
+}
+
+
+#' @export
+print.threeBrain_saved <- function(x, ...){
+
+  index = x$index
+
+  grey_col = crayon::make_style('grey60')
+  green_col = crayon::make_style('#1d9f34')
+  red_col = crayon::make_style('#ec942c')
+
+  if(!file.exists(index)){
+    warning('Cannot find index file at: ', index)
+    return(invisible())
+  }
+  s = paste(readLines(index), collapse = '\n')
+  s = stringr::str_replace_all(s, '\\n', '')
+
+  m = stringr::str_match(s, '<head(.*?)</head>')
+  if(length(m)){
+    m = m[1,2]
+    css = unlist(stringr::str_extract_all(m, '<link[^>]*>'))
+    js = unlist(stringr::str_extract_all(m, '<script[^>]*></script>'))
+  }else{
+    css = NULL
+    js = NULL
+  }
+
+  cat(grey_col('<!---------- Instructions to Embed 3D viewer in your own websites --------->\n'))
+
+  cat(grey_col('\n<!-- Step 1: In HTML header (<head>...</head>), add the following lines -->\n'))
+  headers = c(css, js)
+  if(length(headers)){
+    cat(green_col(headers), sep = '\n')
+  }
+
+  json = stringr::str_match(s, '<script type="application/json" data-for=[^>]*>(.*)</script>')
+  if(length(json)){
+    json = json[1,2]
+  }else{
+    json = NULL
+  }
+
+
+  cat(grey_col('\n<!-- Step 2: In HTML body tags where you want to insert widget into, \n\tcopy-paste the following lines. Please change the highlighted parts. \n\tYour "YOUR-WIDGET-ID" Must be unique across the whole document  -->\n'))
+
+  cat(
+    green_col('<div id="htmlwidget_container">\n\t<div id="'),
+    red_col('YOUR-WIDGET-ID'),
+    green_col('" style="'),
+    red_col('width:100%;height:100vh;'),
+    green_col('" class="threejs_brain html-widget">\n\t</div>\n</div>'),
+    '\n',
+    sep = ''
+  )
+
+  cat(grey_col('\n<!-- Step 3: At the end of HTML (before </html>), insert the data script\n\tMake sure "YOUR-WIDGET-ID" matches with the previous step. -->\n'))
+
+  cat(green_col('<script type="application/json" data-for="'),
+      red_col('YOUR-WIDGET-ID'),
+      green_col('">'),
+      green_col(json),
+      green_col('</script>'),
+      '\n',
+      sep = '')
+
+  cat(grey_col('<!---------- End of Instructions --------->\n'))
+
+
+  invisible(x)
 }

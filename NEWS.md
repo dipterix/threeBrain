@@ -13,6 +13,9 @@ threeBrain 0.1.2
 
 ### Improvements
 
+* Support customized datapath when saving widgets.
+* Added instructions on how to embed widgets into websites without R.
+
 threeBrain 0.1.1
 =======
 

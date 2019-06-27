@@ -109,7 +109,7 @@ geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL
 #' therefore if group is \code{NULL} here, then a group will be generated.
 #' However, it's always recommended to pass a group to the free mesh.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Download N27 smoothed white matter
 #' download_N27_surface(surfaces = c('pial', 'white', 'smoothwm'))
 #'
@@ -153,6 +153,7 @@ geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL
 #'
 #'
 #' }
+#' @export
 geom_freemesh <- function(name, vertex = NULL,face = NULL, position = c(0,0,0), layer = 1, cache_file = NULL, group = NULL){
   if(is.null(group)){
     group = create_group(paste(name, '(group)'))

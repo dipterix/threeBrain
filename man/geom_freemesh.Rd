@@ -31,7 +31,7 @@ therefore if group is \code{NULL} here, then a group will be generated.
 However, it's always recommended to pass a group to the free mesh.
 }
 \examples{
-\dontrun{
+\donttest{
 # Download N27 smoothed white matter
 download_N27_surface(surfaces = c('pial', 'white', 'smoothwm'))
 

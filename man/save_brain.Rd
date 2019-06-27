@@ -5,18 +5,24 @@
 \title{Save threeBrain widgets to local file system}
 \usage{
 save_brain(widget, directory, filename = "index.html",
+  assetpath = "lib/", datapath = "lib/threebrain_data-0/",
   title = "3D Viewer", as_zip = FALSE)
 }
 \arguments{
-\item{widget}{generated from function 'threejs_brain'}
+\item{widget}{generated from function 'threejs_brain'.}
 
-\item{directory}{directory to save the widget}
+\item{directory}{directory to save the widget.}
 
-\item{filename}{default is 'index.html', filename of the widget index file}
+\item{filename}{default is 'index.html', filename of the widget index file.}
 
-\item{title}{widget title}
+\item{assetpath}{where to put \code{css} or \code{JavaScript} to,
+must be relative to \code{directory}.}
 
-\item{as_zip}{whether to create zip file "compressed.zip"}
+\item{datapath}{where to store data to, must be relative to \code{directory}.}
+
+\item{title}{widget title.}
+
+\item{as_zip}{whether to create zip file "compressed.zip".}
 }
 \description{
 Save threeBrain widgets to local file system

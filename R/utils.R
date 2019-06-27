@@ -151,3 +151,90 @@ read_fs_asc <- function(file){
     faces = faces
   ))
 }
+
+
+
+file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite = TRUE,
+                      copy_mode = TRUE, copy_date = TRUE, all_files = TRUE,
+                      force_clean = FALSE){
+  if(!file.exists(from)){
+    if(show_warnings)
+      warning('from not exists.')
+    return(FALSE)
+  }
+  from = normalizePath(from, mustWork = TRUE)
+  to = normalizePath(to, mustWork = FALSE)
+  if(from == to){
+    if(show_warnings)
+      warning('Nothing done, from is to.')
+    return(TRUE)
+  }
+
+  if(!dir.exists(from)){
+    # from is a file
+    if(!dir.exists(dirname(to))){
+      dir.create(dirname(to), showWarnings = show_warnings, recursive = TRUE)
+    }
+
+    file.copy(from = from, to = to, overwrite = overwrite, recursive = FALSE,
+              copy.mode = copy_mode, copy.date = copy_date)
+
+    # clean
+    if(clean){
+      # remove original file
+      unlink(from, recursive = FALSE, force = force_clean)
+    }
+
+  }else{
+    # is a dir, move recursively
+    dir.create(to, showWarnings = show_warnings, recursive = TRUE)
+
+    to = normalizePath(to, mustWork = TRUE)
+    if(from == to){
+      if(show_warnings)
+        warning('Nothing done, from is to.')
+      return(TRUE)
+    }
+
+    # Copy file by file
+    files = list.files(from, all.files = all_files, full.names = FALSE,
+                       recursive = TRUE, include.dirs = FALSE, no.. = TRUE)
+
+    for(f in files){
+      file_move(file.path(from, f), file.path(to, f), clean = clean,
+                show_warnings = FALSE, overwrite = overwrite,
+                copy_mode = copy_mode, copy_date = copy_date)
+    }
+
+
+
+    if(clean){
+
+      # everything should be moved, check if folder needs to be removed
+      from_vec = stringr::str_split(from, '/|\\\\')[[1]]
+      from_vec = from_vec[from_vec != '']
+      to = stringr::str_split(to, '/|\\\\')[[1]]
+      to = to[to != '']
+
+      remove_from = FALSE
+      if(length(from_vec) <= length(to)){
+        for(ii in seq_along(from_vec)){
+          if(from_vec[[ii]] != to[[ii]]){
+            remove_from = TRUE
+          }
+        }
+      }else{
+        remove_from = TRUE
+      }
+
+      if(remove_from){
+        unlink(from, recursive = TRUE, force = FALSE)
+      }
+    }
+
+
+  }
+
+
+
+}

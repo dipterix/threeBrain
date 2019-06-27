@@ -1,9 +1,32 @@
 # Update logs (for R-cran only)
 
+## 2019-06-27
+
+Version 0.1.2 (current submission)
 
 ## 2019-06-10
 
-Version 0.1.2 (current submission)
+Version 0.1.2 
+
+#### Rejected in manual screening
+
+Reason:
+
+```
+Thanks, please replace \dontrun{} by \donttest{} or unwap the examples 
+if they can be executed in less than 5 sec per Rd-file.
+
+You have examples for unexported functions which cannot run in this way.
+Please either add threeBrain::: to the function calls in the examples, 
+omit these examples or export these functions.
+
+Please fix and resubmit.
+```
+
+#### Solution:
+
+* exported internal functions needed by exaples
+* changed dontrun to donttest
 
 
 ## 2019-06-09
