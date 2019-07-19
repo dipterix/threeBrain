@@ -78108,11 +78108,14 @@ class data_controls_THREEBRAIN_PRESETS{
     this.gui.add_item(item_name, false, {
         folder_name : folder_name
       }).onChange((v) => {
+
+        if( v ){
+          this._ani_status.setValue(false);
+        }
+
         for(let ii in group_names){
           if(v){
             col.set( col_pal[ ii % col_pal.length ] );
-          }else{
-            col.set("#ffffff");
           }
 
           let gnm = group_names[ii];
@@ -78121,7 +78124,14 @@ class data_controls_THREEBRAIN_PRESETS{
               if(this._is_electrode(e)){
                 // supress animation
                 e.userData._color_supressed = v;
-                e.material.color.setRGB( col.r, col.g, col.b );
+
+                if( v ){
+                  e.userData._original_color = '#' + e.material.color.getHexString();
+                  e.material.color.setRGB( col.r, col.g, col.b );
+                }else{
+                  e.material.color.set( e.userData._original_color || "#ffffff" );
+                }
+
               }
             });
           }

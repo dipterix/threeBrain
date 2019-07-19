@@ -39,4 +39,5 @@ Imports:
     R6 (>= 2.3.0)
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    pryr

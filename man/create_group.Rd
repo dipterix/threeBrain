@@ -62,7 +62,7 @@ g$set_transform(matrix(c(
 threejs_brain(s1, s2)
 
 # Example 2: cache
-\dontrun{
+\donttest{
 # download N27 brain
 download_N27_surface(surfaces = 'pial')
 
