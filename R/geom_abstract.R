@@ -28,6 +28,7 @@ GeomGroup <- R6::R6Class(
     trans_mat = NULL,
     cached_items = NULL,
     cache_env = NULL,
+    cache_path = NULL,
     disable_trans_mat = FALSE,
     cache_name = function(){
       stringr::str_replace_all(self$name, '[^a-zA-Z0-9]', '_')
@@ -40,7 +41,8 @@ GeomGroup <- R6::R6Class(
         self$trans_mat = mat
       }
     },
-    initialize = function(name, layer = 0, position = c(0,0,0)){
+    initialize = function(name, layer = 0, position = c(0,0,0),
+                          cache_path = tempfile()){
       self$name = name
 
       stopifnot2(all(layer %in% 0:13), msg = 'Layer(s) must be from 0 to 12, use 0 for main camera-only, 1 for all cameras, 13 is invisible.')
@@ -51,15 +53,30 @@ GeomGroup <- R6::R6Class(
       self$position = position
 
       self$cache_env = new.env(parent = emptyenv())
+
+      self$cache_path = cache_path
     },
-    set_group_data = function(name, value, is_cached = FALSE){
+    set_group_data = function(name, value, is_cached = FALSE, cache_if_not_exists = FALSE){
       if(is.null(self$group_data)){
         self$group_data = list()
       }
+
+      if(cache_if_not_exists && !is_cached){
+        dir.create(self$cache_path, showWarnings = FALSE, recursive = TRUE)
+        # cache file path
+        path = file.path(self$cache_path, stringr::str_replace_all(name, '[^\\w.]', '_'))
+        if(!file.exists(path)){
+          value = json_cache(path, structure(list(value), names = name))
+          is_cached = TRUE
+        }
+      }
+
       self$group_data[[name]] = value
       if(is_cached){
         self$cached_items = c(self$cached_items, name)
       }
+
+
     },
     get_data = function(key, force_reload = FALSE, ifnotfound = NULL){
       re = self$group_data[[key]]
