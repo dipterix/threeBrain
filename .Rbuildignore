@@ -12,3 +12,4 @@
 .Rhistory
 ^todos\.rmd$
 ^inst/js_raws/
+inst/htmlwidgets/lib/dipterixThreeBrain-1.0.1/main.js.map
