@@ -1,9 +1,11 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: c(
-    person("Zhengjia", "Wang", email = "zhengjia.wang@rice.edu", role = c("aut", "cre"))
+    person("Zhengjia", "Wang", email = "zhengjia.wang@rice.edu", role = c("aut", "cre", "cph")),
+    person("John", "Magnotti", email = "jmagnotti@bcm.edu", role = c("aut")),
+    person("Michael", "Beauchamp", email = "michael.beauchamp@bcm.edu", role = c("aut", "dtc", "fnd"))
     )
 Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain. 
     However, it takes efforts to interact and share the viewer to others. In 
@@ -36,7 +38,9 @@ Imports:
     jsonlite (>= 1.5),
     stringr (>= 1.3.1),
     htmlwidgets (>= 1.3),
-    R6 (>= 2.3.0)
+    R6 (>= 2.3.0),
+    startup (>= 0.12.0),
+    reticulate (>= 1.13)
 Suggests: 
     knitr,
     rmarkdown,

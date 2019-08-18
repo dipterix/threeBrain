@@ -1,78 +1,102 @@
-ParticleGeom <- R6::R6Class(
-    classname = 'ParticleGeom',
+#' R6 Class - Generate Data Cube Geometry
+#'
+#' @name DataCubeGeom
+NULL
+
+#' @export
+DataCubeGeom <- R6::R6Class(
+    classname = 'DataCubeGeom',
     inherit = AbstractGeom,
     public = list(
 
-      type = 'particle',
-
+      type = 'datacube',
       clickable = FALSE,
+      initialize = function(name, value, dim = dim(value),
+                            half_size = c(128,128,128),
+                            group = GeomGroup$new(name = 'default'),
+                            position = c(0,0,0),
+                            cache_file = NULL, ...){
+        super$initialize(name, position = position, ...)
+        self$group = group
 
-      # The data can be stored in group!
-      paricle_location = NULL,
+        if(length(cache_file)){
+          if(isTRUE(cache_file)){
+            cache_file = tempfile(fileext = '.json')
+          }
 
-      # This is special, values will be the same rows as location
-      paricle_value = NULL,
+          if(missing(value)){
+            # Use cache file only
+            stopifnot2(file.exists(cache_file), msg = 'cache_file does not exist!')
 
-      paricle_location_cube = FALSE,
+            re = list(
+              path = cache_file,
+              absolute_path = normalizePath(cache_file),
+              file_name = filename(cache_file),
+              is_new_cache = FALSE,
+              is_cache = TRUE
+            )
 
-      # Ususally paricle system has lots of points, it's recommended to save to a group
-      set_value = function(value = NULL, location = NULL, is_cube = FALSE, to_group = TRUE){
-        if(length(value) == 0 || length(location) == 0){
-          return(invisible())
-        }
+          }else{
 
-        stopifnot2(length(value) <= 64^3, msg = 'Sorry, we do not support a value length greater than 2^18 (or a cube greater than 64 x 64 x 64)')
+            # Still need to check data
+            stopifnot2(
+              length(value) == prod(dim) && length(dim) == 3,
+              msg = 'length(value) must equals to prod(dim) and dim must have length 3.')
 
-        if(is_cube){
-          stopifnot2(is.array(value), msg = 'value must be a cube (is_cube = true)')
-          stopifnot2(is.list(location) && length(location) == 3, msg = 'location must be a list of 3 vectors list(x=,y=,z=...)')
-          d = dim(value)
-          stopifnot2(length(d) == 3, msg = 'value must be a 3 mode array (dim(value) != 3)')
-          stopifnot2(
-            length(location$x) == d[1] &&
-              length(location$y) == d[2] &&
-              length(location$z) == d[3],
-            msg = 'location vector lenths does not match with cube.')
+            value = as.vector(value)
+
+            data = structure(
+              list(value, dim, half_size),
+              names = sprintf(c(
+                'datacube_value_%s', 'datacube_dim_%s', 'datacube_half_size_%s'
+              ), name)
+            )
+
+            re = json_cache(path = cache_file, data = data)
+          }
+
+          group$set_group_data(sprintf('datacube_value_%s', name), value = re, is_cached = TRUE)
+          group$set_group_data(sprintf('datacube_dim_%s', name), value = re, is_cached = TRUE)
+          group$set_group_data(sprintf('datacube_half_size_%s', name), value = re, is_cached = TRUE)
 
         }else{
-          stopifnot2(is.matrix(location), msg = 'location must be a matrix')
-          stopifnot2(ncol(location) == 3, msg = 'location must have 3 columns (x,y,z)')
-          stopifnot2(nrow(location) == length(value), msg = 'length of value must matches with location rows')
+          stopifnot2(length(value) == prod(dim) && length(dim) == 3,
+                     msg = 'length(value) must equals to prod(dim) and dim must have length 3.')
+
+          value = as.vector(value)
+
+          self$group$set_group_data(sprintf('datacube_value_%s', self$name), value)
+          self$group$set_group_data(sprintf('datacube_dim_%s', self$name), dim)
+          self$group$set_group_data(sprintf('datacube_half_size_%s', self$name), half_size)
+
         }
-
-
-
-        if(!is.null(self$group)){
-          self$group$set_group_data('paricle_location', location)
-          self$group$set_group_data('paricle_value', value)
-          self$group$set_group_data('paricle_location_cube', is_cube)
-        }else{
-          self$paricle_location = location
-          self$paricle_value = value
-        }
-        self$paricle_location_cube = is_cube
 
         return(invisible())
       },
+      # Ususally paricle system has lots of points, it's forced to save to a group
+      set_value = function(value = NULL, dim = dim(value),
+                           half_size = c(128,128,128)){
 
-      initialize = function(name, position = c(0,0,0), value = NULL, location = NULL, to_group = TRUE, is_cube = FALSE, ...){
-        super$initialize(name, position = position, ...)
+        .NotYetImplemented()
+        if(length(value) == 0){
+          return(invisible())
+        }
+        stopifnot2(length(value) == prod(dim) && length(dim) == 3,
+                   msg = 'length(value) must equals to prod(dim) and dim must have length 3.')
 
-        self$set_value(value = value, location = location, to_group = to_group, is_cube = is_cube)
 
-        self$clickable = FALSE
+        value = as.vector(value)
+        self$group$set_group_data(sprintf('datacube_value_%s', self$name), value)
+        self$group$set_group_data(sprintf('datacube_dim_%s', self$name), dim)
+        self$group$set_group_data(sprintf('datacube_half_size_%s', self$name), half_size)
+
+        return(invisible())
       },
       to_list = function(){
         re = super$to_list()
-        re$value = NULL
-        re$paricle_location_cube = self$paricle_location_cube
-        if(length(self$paricle_location) && length(self$paricle_value)){
-          re$paricle_location = self$paricle_location
-          re$paricle_value = self$paricle_value
-        }
         re
       },
-      get_data = function(key = 'paricle_value', force_reload = FALSE, ifnotfound = NULL){
+      get_data = function(key, force_reload = FALSE, ifnotfound = NULL){
         super$get_data(key = key, force_reload = force_reload, ifnotfound = ifnotfound)
       }
     )
