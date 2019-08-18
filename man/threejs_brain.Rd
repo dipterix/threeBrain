@@ -13,7 +13,7 @@ threejs_brain(..., widget_id = "threebrain_data", time_range = NULL,
   color_names = seq_along(color_ramp), show_legend = TRUE,
   legend_title = "Value", tmp_dirname = NULL, width = NULL,
   height = NULL, optionals = list(), debug = FALSE, token = NULL,
-  coords = NULL, .list = list())
+  coords = NULL, browser_external = FALSE, .list = list())
 }
 \arguments{
 \item{..., .list}{geometries inherit from AbstractGeom}
@@ -63,6 +63,8 @@ and height varies.}
 \item{token}{used to identify widgets in JS localStorage}
 
 \item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
+
+\item{browser_external}{use system default browser (default) or builtin one.}
 }
 \description{
 Create a Threejs Brain

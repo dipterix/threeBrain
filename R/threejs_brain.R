@@ -24,6 +24,7 @@
 #' @param width,height width and height of the widget. By default width="100%",
 #'   and height varies.
 #' @param coords \code{NULL} to hide coordinates or numeric vector of three.
+#' @param browser_external use system default browser (default) or builtin one.
 #' @export
 threejs_brain <- function(
   ..., widget_id = 'threebrain_data', time_range = NULL,
@@ -36,6 +37,7 @@ threejs_brain <- function(
   show_legend = TRUE, legend_title = 'Value',
   tmp_dirname = NULL, width = NULL, height = NULL, optionals = list(),
   debug = FALSE, token = NULL, coords = NULL,
+  browser_external = FALSE,
   .list = list()){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
@@ -200,7 +202,8 @@ threejs_brain <- function(
 
   htmlwidgets::createWidget(
     name = 'threejs_brain', x = x, width = width, height = height, package = 'threeBrain', sizingPolicy = htmlwidgets::sizingPolicy(
-      defaultWidth = '100%',browser.external = TRUE,
+      defaultWidth = '100%',
+      browser.external = browser_external,
       defaultHeight = '100vh',
       viewer.paneHeight = 500,
       viewer.suppress = TRUE,
