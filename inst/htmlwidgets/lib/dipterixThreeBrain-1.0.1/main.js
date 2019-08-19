@@ -73949,7 +73949,7 @@ class THREEBRAIN_CANVAS {
     	});
     }
 
-    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
+    this.pixel_ratio = [ window.devicePixelRatio, 1 ];
 
   	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
@@ -74009,8 +74009,8 @@ class THREEBRAIN_CANVAS {
     // 3 planes are draggable, resizable with open-close toggles 250x250px initial
 
     ['coronal', 'axial', 'sagittal'].forEach((nm, idx) => {
-      let _width = this.side_width * this.pixel_ratio[1],
-          _height = this.side_width * this.pixel_ratio[1];
+      let _width = this.side_width,
+          _height = this.side_width;
 
       const div = document.createElement('div');
       div.id = this.container_id + '__' + nm;
@@ -74156,15 +74156,17 @@ class THREEBRAIN_CANVAS {
       // Make resizable, keep current width and height
       const resize_div = (w, h) => {
         // cache size
-  			_width = w * this.pixel_ratio[1];
-  			_height = h * this.pixel_ratio[1];
-  			cvs.width = Math.floor( _width );
-        cvs.height = Math.floor( _height );
+  			_width = Math.floor( w );
+  			_height = Math.floor( h );
+  			const _w = _width * this.pixel_ratio[1],
+  			      _h = _height * this.pixel_ratio[1];
+  			cvs.width = Math.floor( _w );
+        cvs.height = Math.floor( _h );
 
-        camera.left = _width / 2;
-  		  camera.right = -_width / 2;
-  		  camera.top = _height / 2;
-  		  camera.bottom = -_height / 2;
+        camera.left = _w / 2;
+  		  camera.right = -_w / 2;
+  		  camera.top = _h / 2;
+  		  camera.bottom = -_h / 2;
 
       };
       Object(_libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__[/* make_resizable */ "a"])( div, true, (w, h) => {}, (w, h) => {
@@ -74183,10 +74185,12 @@ class THREEBRAIN_CANVAS {
         set_zoom_level( 1 );
         cvs.style.top = '0';
         cvs.style.left = '0';
+      };
+      div_header.addEventListener("dblclick", (evt) => {
+        reset( true, false );
         // Resize side canvas
         this.handle_resize( undefined, undefined );
-      };
-      div_header.addEventListener("dblclick", (evt) => { reset( true, false ) });
+      });
 
 
       this.side_canvas[ nm ] = {
@@ -74194,8 +74198,16 @@ class THREEBRAIN_CANVAS {
         'canvas'    : cvs,
         'context'   : cvs.getContext('2d'),
         'camera'    : camera,
-        'get_dimension' : ( zoomed ) => {
-          return({ 'width' : _width , 'height' : _height });
+        'get_dimension' : ( pixel_correlated ) => {
+          if( pixel_correlated ){
+            return({
+              'width' : Math.floor( _width * this.pixel_ratio[1] ) ,
+              'height' : Math.floor( _height * this.pixel_ratio[1] )
+            });
+          }else{
+            return({ 'width' : _width , 'height' : _height });
+          }
+
         },
         'reset'     : reset,
         'get_zoom_level' : () => { return( zoom_level ) },
@@ -74793,9 +74805,10 @@ class THREEBRAIN_CANVAS {
     if(!this.has_side_cameras){
       // this.side_canvas.style.display = 'none';
     }else{
-      let coronal_size = this.side_canvas.coronal.get_dimension( true ),
-          axial_size = this.side_canvas.axial.get_dimension( true ),
-          sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+      // We use actual HTML dimensions to get new pixel ratio as well as side canvas dim
+      let coronal_size = this.side_canvas.coronal.get_dimension( false ),
+          axial_size = this.side_canvas.axial.get_dimension( false ),
+          sagittal_size = this.side_canvas.sagittal.get_dimension( false );
 
       // Originally was set vertically, however, it seems GPU is most efficient when
       // rendering things horizotally
@@ -74803,11 +74816,11 @@ class THREEBRAIN_CANVAS {
       let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
 
       // calculate new pixel ratio
-      let _pr = window.devicePixelRatio *
-                  Math.min( screen.availWidth / side_width * this.pixel_ratio[1],
-                            screen.availHeight / side_height * this.pixel_ratio[1], 4 );
+      /*let _pr = window.devicePixelRatio
+                  Math.min( screen.availWidth / side_width,
+                            screen.availHeight / side_height, 1 );
       this.pixel_ratio[1] = _pr;
-      this.side_renderer.setPixelRatio( _pr );
+      this.side_renderer.setPixelRatio( _pr ); */
       this.side_renderer.setSize( side_width , side_height );
       // side_renderer.setClearColor( renderer_colors[1] );
     }
@@ -74859,6 +74872,8 @@ class THREEBRAIN_CANVAS {
     this.side_canvas.coronal.reset( wrapper, canvas );
     this.side_canvas.axial.reset( wrapper, canvas );
     this.side_canvas.sagittal.reset( wrapper, canvas );
+    // Resize side canvas
+    this.handle_resize( undefined, undefined );
   }
 
   reset_controls(){
@@ -74912,27 +74927,30 @@ class THREEBRAIN_CANVAS {
     // side cameras
     if( this.has_side_cameras ){
       const _p = this.pixel_ratio[1];
-      let coronal_size = this.side_canvas.coronal.get_dimension( true );
+      const coronal_size = this.side_canvas.coronal.get_dimension( true ),
+            axial_size = this.side_canvas.axial.get_dimension( true ),
+            sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+
+      /* Use integer pixels here to avoid sub-pixel antialiasing problem */
+      let c_w = Math.floor( coronal_size.width ),
+          c_h = Math.floor( coronal_size.height );
       this.side_canvas.coronal.context.fillStyle = this.background_color;
-      this.side_canvas.coronal.context.fillRect(0, 0, coronal_size.width, coronal_size.height);
-      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement,
-        0, 0, coronal_size.width * _p, coronal_size.height * _p,
-        0, 0, coronal_size.width, coronal_size.height);
+      this.side_canvas.coronal.context.fillRect(0, 0, c_w, c_h);
+      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement, 0, 0, c_w, c_h, 0, 0, c_w, c_h);
 
-      let axial_size = this.side_canvas.axial.get_dimension( true );
+
+      let a_w = Math.floor( axial_size.width ),
+          a_h = Math.floor( axial_size.height );
       this.side_canvas.axial.context.fillStyle = this.background_color;
-      this.side_canvas.axial.context.fillRect(0, 0, axial_size.width, axial_size.height);
-      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement,
-        coronal_size.width * _p, 0, axial_size.width * _p, axial_size.height * _p,
-        0, 0, axial_size.width, axial_size.height);
+      this.side_canvas.axial.context.fillRect(0, 0, a_w, a_h);
+      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement, c_w, 0, a_w, a_h, 0, 0, a_w, a_w);
 
-      let sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+
+      let s_w = Math.floor( sagittal_size.width ),
+          s_h = Math.floor( sagittal_size.height );
       this.side_canvas.sagittal.context.fillStyle = this.background_color;
-      this.side_canvas.sagittal.context.fillRect(0, 0, sagittal_size.width, sagittal_size.height);
-      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement,
-        (coronal_size.width + axial_size.width) * _p, 0,
-        sagittal_size.width * _p, sagittal_size.height * _p,
-        0, 0, sagittal_size.width, sagittal_size.height);
+      this.side_canvas.sagittal.context.fillRect(0, 0, s_w, s_h);
+      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement, c_w + a_w, 0, s_w, s_h, 0, 0, s_w, s_h);
     }
 
 
@@ -74949,9 +74967,9 @@ class THREEBRAIN_CANVAS {
     this.main_renderer.render( this.scene2, this.main_camera );
 
     if(this.has_side_cameras){
-      let coronal_size = this.side_canvas.coronal.get_dimension( true ),
-          axial_size = this.side_canvas.axial.get_dimension( true ),
-          sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+      let coronal_size = this.side_canvas.coronal.get_dimension( false ),
+          axial_size = this.side_canvas.axial.get_dimension( false ),
+          sagittal_size = this.side_canvas.sagittal.get_dimension( false );
       let side_width = coronal_size.width + axial_size.width + sagittal_size.width;
       let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
 
