@@ -73710,12 +73710,111 @@ class THREEBRAIN_STORAGE {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return make_draggable; });
+
+function get_size(el){
+  const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
+  const height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
+  return([width, height]);
+}
+
+function make_draggable(
+  elmnt, elmnt_header,
+  // top range and left range
+  parent_el = undefined,
+  mousedown_callback = (e)=>{}) {
+  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  var range = [-Infinity, Infinity, -Infinity, Infinity];
+
+  if ( elmnt_header ) {
+    /* if present, the header is where you move the DIV from:*/
+    elmnt_header.onmousedown = dragMouseDown;
+  } else {
+    /* otherwise, move the DIV from anywhere inside the DIV:*/
+    elmnt.onmousedown = dragMouseDown;
+  }
+
+  function dragMouseDown(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // get the mouse cursor position at startup:
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+
+    if( parent_el ){
+      // calculate range
+      // parent size
+      const parent_size = get_size(parent_el);
+      const el_size = get_size(elmnt);
+      if( parent_size[0] > el_size[0] ){
+        range[1] = parent_size[0] - el_size[0];
+        range[0] = 0;
+      }else{
+        range[0] = parent_size[0] - el_size[0];
+        range[1] = 0;
+      }
+
+      if( parent_size[1] > el_size[1] ){
+        range[3] = parent_size[1] - el_size[1];
+        range[2] = 0;
+      }else{
+        range[2] = parent_size[1] - el_size[1];
+        range[3] = 0;
+      }
+    }
+
+
+
+    document.onmouseup = closeDragElement;
+    // call a function whenever the cursor moves:
+    document.onmousemove = elementDrag;
+
+    mousedown_callback(e);
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // calculate the new cursor position:
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    // set the element's new position:
+    let eltop = elmnt.offsetTop - pos2,
+        elleft = elmnt.offsetLeft - pos1;
+
+    if( eltop < range[0] ){ eltop = range[0]; }
+    if( eltop > range[1] ){ eltop = range[1]; }
+    if( elleft < range[2] ){ elleft = range[2]; }
+    if( elleft > range[3] ){ elleft = range[3]; }
+
+    elmnt.style.top = eltop + "px";
+    elmnt.style.left = elleft + "px";
+  }
+
+  function closeDragElement() {
+    /* stop moving when mouse button is released:*/
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
+}
+
+
+
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return THREEBRAIN_CANVAS; });
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
-/* harmony import */ var _libs_stats_min_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(5);
+/* harmony import */ var _libs_stats_min_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(6);
 /* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(0);
 /* harmony import */ var _threebrain_cache_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3);
-/* harmony import */ var _libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(6);
+/* harmony import */ var _libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(4);
 /* harmony import */ var _libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(7);
 
 
@@ -73763,6 +73862,7 @@ class THREEBRAIN_CANVAS {
     this.el = el;
     this.container_id = el.id;
     this.has_webgl2 = has_webgl2;
+    this.side_width = side_width;
     if(DEBUG){
       console.debug('Debug Mode: ON.');
       this.DEBUG = true;
@@ -73849,8 +73949,9 @@ class THREEBRAIN_CANVAS {
     	});
     }
 
+    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
 
-  	this.main_renderer.setPixelRatio( window.devicePixelRatio );
+  	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
   	this.main_renderer.autoClear = false; // Manual update so that it can render two scenes
   	this.main_renderer.localClippingEnabled=true; // Enable clipping
@@ -73859,7 +73960,7 @@ class THREEBRAIN_CANVAS {
 
   	// sidebar renderer (multiple cameras. WebGL1 only)
   	this.side_renderer = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].WebGLRenderer( { antialias: false, alpha: true } );
-  	this.side_renderer.setPixelRatio( window.devicePixelRatio );
+  	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
   	this.side_renderer.autoClear = false; // Manual update so that it can render two scenes
   	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
 
@@ -73900,6 +74001,7 @@ class THREEBRAIN_CANVAS {
     this.wrapper_canvas.style.display = 'flex';
     this.wrapper_canvas.style.flexWrap = 'wrap';
     this.wrapper_canvas.style.width = '100%';
+    this.has_side_cameras = false;
     this.side_canvas = {};
 
     // Generate inner canvas DOM element
@@ -73907,13 +74009,14 @@ class THREEBRAIN_CANVAS {
     // 3 planes are draggable, resizable with open-close toggles 250x250px initial
 
     ['coronal', 'axial', 'sagittal'].forEach((nm, idx) => {
-      const div = document.createElement('div');
-      this.side_canvas[ nm ] = div;
+      let _width = this.side_width * this.pixel_ratio[1],
+          _height = this.side_width * this.pixel_ratio[1];
 
+      const div = document.createElement('div');
       div.id = this.container_id + '__' + nm;
       div.className = 'THREEBRAIN-SIDE resizable';
       div.style.zIndex = idx;
-      div.style.top = ( idx * 252 ) + 'px';
+      div.style.top = ( idx * this.side_width ) + 'px';
 
       // Make header
       const div_header = document.createElement('div');
@@ -73924,12 +74027,99 @@ class THREEBRAIN_CANVAS {
 
       // Add canvas
       const cvs = document.createElement('canvas');
-      const pixel_ratio = this.side_renderer.getPixelRatio();
-      cvs.width = Math.floor( 250 * pixel_ratio );
-      cvs.height = Math.floor( 250 * pixel_ratio );
-      cvs.style.width = '250px';
-			cvs.style.height = '250px';
+      cvs.width = Math.floor( this.side_width * this.pixel_ratio[1]);
+      cvs.height = Math.floor( this.side_width * this.pixel_ratio[1]);
+      cvs.style.width = '100%';
+			cvs.style.height = '100%';
+			cvs.style.position = 'absolute';
 			div.appendChild( cvs );
+
+			// Add zoom tools
+			let zoom_level = 1;
+			const set_zoom_level = (level) => {
+			  if( level ){
+			    zoom_level = level;
+			  }else{
+			    level = zoom_level;
+			  }
+			  cvs.style.width = parseInt(level * 100) + '%';
+			  cvs.style.height = parseInt(level * 100) + '%';
+			};
+			const zoom_in = document.createElement('div');
+			zoom_in.className = 'zoom-tool';
+			zoom_in.style.top = '23px';
+			zoom_in.innerText = '+';
+			div.appendChild( zoom_in );
+			zoom_in.addEventListener('click', (e) => {
+			  zoom_level = zoom_level * 1.2;
+			  zoom_level = zoom_level > 10 ? 10 : zoom_level;
+			  set_zoom_level();
+			});
+
+			const zoom_out = document.createElement('div');
+			zoom_out.className = 'zoom-tool';
+			zoom_out.style.top = '50px';
+			zoom_out.innerText = '-';
+			div.appendChild( zoom_out );
+			zoom_out.addEventListener('click', (e) => {
+			  zoom_level = zoom_level / 1.2;
+			  zoom_level = zoom_level < 1.1 ? 1 : zoom_level;
+			  set_zoom_level();
+			});
+
+			const zoom_reset = document.createElement('div');
+			zoom_reset.className = 'zoom-tool';
+			zoom_reset.style.top = '77px';
+			zoom_reset.innerText = 'o';
+			div.appendChild( zoom_reset );
+			zoom_reset.addEventListener('click', (e) => {
+			  cvs.style.top = '0';
+        cvs.style.left = '0';
+			  set_zoom_level( 1 );
+			});
+
+
+			// Add cameras
+			const camera = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( this.side_width / - 2,
+			                                              this.side_width / 2,
+			                                              this.side_width / 2,
+			                                              this.side_width / - 2, 1, 10000 );
+			// Side light is needed so that side views are visible.
+			const side_light = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DirectionalLight( 0xefefef, 0.5 );
+
+			if( idx === 0 ){
+			  // coronal (FB)
+			  camera.position.fromArray( [0, -500, 0] );
+			  camera.up.set( 0, 0, 1 );
+			  camera.layers.enable(9);
+			  side_light.position.fromArray([0, 1, 0]);
+			  side_light.layers.set(9);
+			}else if( idx === 1 ){
+			  // axial (IS)
+			  camera.position.fromArray( [0, 0, 500] );
+			  camera.up.set( 0, 1, 0 );
+			  camera.layers.enable(10);
+			  side_light.position.fromArray([0, 0, -1]);
+			  side_light.layers.set(10);
+			}else{
+			  // sagittal (LR)
+			  camera.position.fromArray( [-500, 0, 0] );
+			  camera.up.set( 0, 0, 1 );
+			  camera.layers.enable(11);
+			  side_light.position.fromArray([1, 0, 0]);
+			  side_light.layers.set(11);
+			}
+
+			camera.lookAt( new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3(0,0,0) );
+			camera.aspect = 1;
+			camera.updateProjectionMatrix();
+			[1, 4, 5, 6, 7, 13].forEach((ly) => {
+        camera.layers.enable(ly);
+      });
+
+      // light is always following cameras
+      camera.add( side_light );
+      this.scene.add( camera );
 
       // Add resizables
       let tmp = [
@@ -73944,37 +74134,141 @@ class THREEBRAIN_CANVAS {
       this.wrapper_canvas.appendChild( div );
 
       // Make it draggable
-      Object(_libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__[/* make_draggable */ "a"])( div, div_header );
-      Object(_libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__[/* make_resizable */ "a"])( div, true, (w, h) => {
-        cvs.width = Math.floor( w * pixel_ratio );
-        cvs.height = Math.floor( h * pixel_ratio );
-        cvs.style.width = w + 'px';
-  			cvs.style.height = h + 'px';
-      });
+      const raise_top = (e) => {
+        if( this.has_side_cameras ){
+          // reset z-index
+          let z_ind = [
+            [parseInt(this.side_canvas.coronal.container.style.zIndex), 'coronal'],
+            [parseInt(this.side_canvas.axial.container.style.zIndex), 'axial'],
+            [parseInt(this.side_canvas.sagittal.container.style.zIndex), 'sagittal']
+          ];
+          z_ind.sort((v1,v2) => {return(v1[0] - v2[0])});
+          z_ind.forEach((v, ii) => {
+            this.side_canvas[ v[ 1 ] ].container.style.zIndex = ii;
+          });
+          this.side_canvas[ nm ].container.style.zIndex = 4;
+        }
+      };
+      Object(_libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__[/* make_draggable */ "a"])( div, div_header, undefined, raise_top);
+      Object(_libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__[/* make_draggable */ "a"])( cvs, undefined, div, raise_top );
+
+
+      // Make resizable, keep current width and height
+      const resize_div = (w, h) => {
+        // cache size
+  			_width = w * this.pixel_ratio[1];
+  			_height = h * this.pixel_ratio[1];
+  			cvs.width = Math.floor( _width );
+        cvs.height = Math.floor( _height );
+
+        camera.left = _width / 2;
+  		  camera.right = -_width / 2;
+  		  camera.top = _height / 2;
+  		  camera.bottom = -_height / 2;
+
+      };
+      Object(_libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__[/* make_resizable */ "a"])( div, true, (w, h) => {}, (w, h) => {
+        resize_div(w, h);
+        // reset side renderer
+  		  this.handle_resize( undefined, undefined );
+  		});
+
+      // add double click handler
+      const reset = ( reset_wrapper, reset_canvas ) => {
+        div.style.top = ( idx * this.side_width ) + 'px';
+        div.style.left = '0';
+        div.style.width = this.side_width + 'px';
+        div.style.height = this.side_width + 'px';
+        resize_div( this.side_width, this.side_width );
+        set_zoom_level( 1 );
+        cvs.style.top = '0';
+        cvs.style.left = '0';
+        // Resize side canvas
+        this.handle_resize( undefined, undefined );
+      };
+      div_header.addEventListener("dblclick", (evt) => { reset( true, false ) });
+
+
+      this.side_canvas[ nm ] = {
+        'container' : div,
+        'canvas'    : cvs,
+        'context'   : cvs.getContext('2d'),
+        'camera'    : camera,
+        'get_dimension' : ( zoomed ) => {
+          return({ 'width' : _width , 'height' : _height });
+        },
+        'reset'     : reset,
+        'get_zoom_level' : () => { return( zoom_level ) },
+        'set_zoom_level' : set_zoom_level
+      };
 
 
     });
-
-    // this.side_canvas.appendChild( this.side_renderer.domElement );
-
-    /*
-    this.side_divider = document.createElement('div');
-    this.side_divider.className = 'THREEBRAIN-SIDE-DIVIDER';
-    this.side_divider.innerHTML = '<span style="width:5px;">.</span>';
-    this.side_divider.draggable=true;
-    this.side_divider.ondragend = (evt) => {
-      this.side_width_fixed =  evt.clientX + 5;
-      this.handle_resize();
-    };
-    this.side_canvas.appendChild( this.side_divider );
-    */
-
 
 
     // Add main canvas to wrapper element
     // this.wrapper_canvas.appendChild( this.side_canvas );
     this.wrapper_canvas.appendChild( this.main_canvas );
     this.el.appendChild( this.wrapper_canvas );
+
+
+    // Side cameras
+    /*
+
+    this.side_cameras = [
+      // // coronal (FB), position: ( 0 , -500 , 0 )
+      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
+
+      // axial (IS),
+      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
+
+      // sagittal (LR)
+      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
+      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 )
+    ];
+
+    this.side_cameras[0].position.fromArray( [-500, 0, 0] );
+    this.side_cameras[0].up.set( 0, 0, 1 );
+
+    this.side_cameras[1].position.fromArray( [100, 0, 0] );
+    this.side_cameras[1].up.set( 0, 0, 1 );
+
+    this.side_cameras[2].position.fromArray( [0, 100, 0] );
+    this.side_cameras[2].up.set( 0, 0, 1 );
+
+    this.side_cameras[3].position.fromArray( [0, 0, 100] );
+    this.side_cameras[3].up.set( 0, 1, 0 );
+
+    for(var ii = 0; ii < 4; ii++){
+      this.side_cameras[ii].lookAt( new THREE.Vector3(0,0,0) );
+      this.side_cameras[ii].aspect = 1;
+      this.side_cameras[ii].updateProjectionMatrix();
+      this.side_cameras[ii].layers.set(1);
+
+      [1, 4, 5, 6, 7, ii+9, 13].forEach((ly) => {
+        this.side_cameras[ii].layers.enable(ly);
+      });
+
+      let side_light = new THREE.DirectionalLight( 0xefefef, 0.5 ),
+          pos = [0,0,0];
+      if(ii === 0){
+        pos[0] = -1;
+      }else{
+        pos[ii-1] = 1;
+      }
+
+      side_light.position.fromArray(pos);
+      side_light.layers.set(ii + 9);
+      this.scene.add( side_light );
+    }
+    this.has_side_cameras = false;
+    this.side_width = side_width;
+    */
+
+
+
+
+
 
     this.has_stats = false;
 
@@ -74009,53 +74303,6 @@ class THREEBRAIN_CANVAS {
       this.pause_animation(1);
 
     });
-
-
-  	// Side cameras
-
-    this.side_cameras = [
-      new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
-      new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
-      new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
-      new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 )
-    ];
-
-    this.side_cameras[0].position.fromArray( [-500, 0, 0] );
-    this.side_cameras[0].up.set( 0, 0, 1 );
-
-    this.side_cameras[1].position.fromArray( [100, 0, 0] );
-    this.side_cameras[1].up.set( 0, 0, 1 );
-
-    this.side_cameras[2].position.fromArray( [0, 100, 0] );
-    this.side_cameras[2].up.set( 0, 0, 1 );
-
-    this.side_cameras[3].position.fromArray( [0, 0, 100] );
-    this.side_cameras[3].up.set( 0, 1, 0 );
-
-    for(var ii = 0; ii < 4; ii++){
-      this.side_cameras[ii].lookAt( new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3(0,0,0) );
-      this.side_cameras[ii].aspect = 1;
-      this.side_cameras[ii].updateProjectionMatrix();
-      this.side_cameras[ii].layers.set(1);
-
-      [1, 4, 5, 6, 7, ii+9, 13].forEach((ly) => {
-        this.side_cameras[ii].layers.enable(ly);
-      });
-
-      let side_light = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DirectionalLight( 0xefefef, 0.5 ),
-          pos = [0,0,0];
-      if(ii === 0){
-        pos[0] = -1;
-      }else{
-        pos[ii-1] = 1;
-      }
-
-      side_light.position.fromArray(pos);
-      side_light.layers.set(ii + 9);
-      this.scene.add( side_light );
-    }
-    this.has_side_cameras = false;
-    this.side_width = side_width;
 
 
     // Mouse helpers
@@ -74539,86 +74786,30 @@ class THREEBRAIN_CANVAS {
     // console.debug('width: ' + width + '; height: ' + height);
 
     var main_width = width,
-        main_height = height,
-        side_width;
+        main_height = height;
 
-
-    /*
-    this.side_canvas.style.display = 'block';
-    this.main_canvas.style.display = 'block';
-    this.wrapper_canvas.style.display = 'block';
-    */
 
     // Check if side_camera exists
     if(!this.has_side_cameras){
       // this.side_canvas.style.display = 'none';
     }else{
-      // this.side_canvas.style.display = 'inline-flex';
+      let coronal_size = this.side_canvas.coronal.get_dimension( true ),
+          axial_size = this.side_canvas.axial.get_dimension( true ),
+          sagittal_size = this.side_canvas.sagittal.get_dimension( true );
 
-      this.side_scene = 'vertical';
-      side_width = this.side_width_fixed || Math.floor(height / 4);
-      main_width = width - side_width - 6;
-      /*
-      this.side_canvas.style.height = height + 'px';
-      this.side_divider.style.minHeight = height + 'px';
-      this.side_divider.style.height = side_width * 4 + 'px';
-      this.side_canvas.style.width = (side_width+5) + 'px';
-    */
-      this.side_renderer.setSize( side_width , 4 * side_width );
+      // Originally was set vertically, however, it seems GPU is most efficient when
+      // rendering things horizotally
+      let side_width = coronal_size.width + axial_size.width + sagittal_size.width;
+      let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
 
-      /* Dipterix thinks this is a good idea but not for science
-      if(width / 16 * 9 >= height){
-        this.side_scene = 'square';
-
-        side_width = Math.floor(height / 2);
-        main_width = width - 2 * side_width - 1;
-        this.side_canvas.style.height = height + 'px';
-        this.side_canvas.style.width = side_width * 2 + 'px';
-
-        this.side_renderer.setSize( 2 * side_width , 2 * side_width );
-
-      }else if(width / 3 * 2 >= height){
-        // wide screen
-
-        this.side_scene = 'vertical';
-        side_width = Math.floor(height / 4);
-        main_width = width - side_width - 1;
-
-        this.side_canvas.style.height = height + 'px';
-        this.side_canvas.style.width = side_width + 'px';
-
-        this.side_renderer.setSize( side_width , 4 * side_width );
-
-      }else{
-
-        this.side_scene = 'horizontal';
-        side_width = Math.min(height * 0.27, 350, width / 4);
-        side_width = Math.floor(side_width);
-        main_height = height - side_width;
-
-        this.side_canvas.style.height = side_width + 'px';
-        this.side_canvas.style.width = (main_width-1) + 'px';
-
-        this.side_renderer.setSize( 4 * side_width , side_width );
-
-      }
-      */
-
-      this.side_width = side_width;
-
-      // let half_width = side_width / 2;
-
-      /*
-      for(var ii = 0; ii < 4; ii++ ){
-        this.side_cameras[ii].left = half_width;
-        this.side_cameras[ii].right = half_width;
-        this.side_cameras[ii].top = half_width;
-        this.side_cameras[ii].bottom = half_width;
-      }
-      */
-
-
-      //side_renderer.setClearColor( renderer_colors[1] );
+      // calculate new pixel ratio
+      let _pr = window.devicePixelRatio *
+                  Math.min( screen.availWidth / side_width * this.pixel_ratio[1],
+                            screen.availHeight / side_height * this.pixel_ratio[1], 4 );
+      this.pixel_ratio[1] = _pr;
+      this.side_renderer.setPixelRatio( _pr );
+      this.side_renderer.setSize( side_width , side_height );
+      // side_renderer.setClearColor( renderer_colors[1] );
     }
 
     this.main_canvas.style.width = main_width + 'px';
@@ -74631,7 +74822,7 @@ class THREEBRAIN_CANVAS {
 
     this.main_renderer.setSize( main_width, main_height );
 
-    const pixelRatio = this.main_renderer.getPixelRatio();
+    const pixelRatio = this.pixel_ratio[0];
 
     if( this.domElement.width != main_width * pixelRatio ){
       this.domElement.width = main_width * pixelRatio;
@@ -74664,6 +74855,12 @@ class THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
+  reset_side_cameras( wrapper = true, canvas = true ){
+    this.side_canvas.coronal.reset( wrapper, canvas );
+    this.side_canvas.axial.reset( wrapper, canvas );
+    this.side_canvas.sagittal.reset( wrapper, canvas );
+  }
+
   reset_controls(){
 	  // reset will erase target, manually reset target
 	  // let target = this.controls.target.toArray();
@@ -74702,8 +74899,8 @@ class THREEBRAIN_CANVAS {
   }
 
   mapToCanvas(){
-    const _width = this.domElement.width;
-    const _height = this.domElement.height;
+    const _width = this.domElement.width,
+          _height = this.domElement.height;
 
     // Clear the whole canvas
     this.domContext.fillStyle = this.background_color;
@@ -74712,11 +74909,37 @@ class THREEBRAIN_CANVAS {
     // copy the main_renderer context
     this.domContext.drawImage( this.main_renderer.domElement, 0, 0, _width, _height);
 
-    // TODO: side cameras
+    // side cameras
+    if( this.has_side_cameras ){
+      const _p = this.pixel_ratio[1];
+      let coronal_size = this.side_canvas.coronal.get_dimension( true );
+      this.side_canvas.coronal.context.fillStyle = this.background_color;
+      this.side_canvas.coronal.context.fillRect(0, 0, coronal_size.width, coronal_size.height);
+      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement,
+        0, 0, coronal_size.width * _p, coronal_size.height * _p,
+        0, 0, coronal_size.width, coronal_size.height);
+
+      let axial_size = this.side_canvas.axial.get_dimension( true );
+      this.side_canvas.axial.context.fillStyle = this.background_color;
+      this.side_canvas.axial.context.fillRect(0, 0, axial_size.width, axial_size.height);
+      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement,
+        coronal_size.width * _p, 0, axial_size.width * _p, axial_size.height * _p,
+        0, 0, axial_size.width, axial_size.height);
+
+      let sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+      this.side_canvas.sagittal.context.fillStyle = this.background_color;
+      this.side_canvas.sagittal.context.fillRect(0, 0, sagittal_size.width, sagittal_size.height);
+      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement,
+        (coronal_size.width + axial_size.width) * _p, 0,
+        sagittal_size.width * _p, sagittal_size.height * _p,
+        0, 0, sagittal_size.width, sagittal_size.height);
+    }
+
 
   }
 
   render(){
+
 
     // double-buffer to make sure depth renderings
     //this.main_renderer.setClearColor( renderer_colors[0] );
@@ -74726,35 +74949,57 @@ class THREEBRAIN_CANVAS {
     this.main_renderer.render( this.scene2, this.main_camera );
 
     if(this.has_side_cameras){
-      var side_width = this.side_width;
+      let coronal_size = this.side_canvas.coronal.get_dimension( true ),
+          axial_size = this.side_canvas.axial.get_dimension( true ),
+          sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+      let side_width = coronal_size.width + axial_size.width + sagittal_size.width;
+      let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
 
-      if(this.side_scene === undefined){
-        return(null);
-      }
+      // Cut side views
+      // Threejs's origin is at bottom-left, but html is at topleft
+      // Need to adjust for each view
+      // coronal
+      this.side_renderer.setViewport(
+        0, side_height - coronal_size.height,
+        coronal_size.width, coronal_size.height );
+      this.side_renderer.setScissor(
+        0, side_height - coronal_size.height,
+        coronal_size.width, coronal_size.height );
+      this.side_renderer.setScissorTest( true );
+      this.side_renderer.clear();
+      this.side_renderer.render( this.scene, this.side_canvas.coronal.camera );
+      this.side_renderer.clearDepth(); // Ignore depth information and render again
+      this.side_renderer.render( this.scene2, this.side_canvas.coronal.camera );
 
-      for(var ii = 0; ii < 4; ii++ ){
-        var x, y;
-        if(this.side_scene === 'square'){
-          x = ii % 2;
-          y = (ii - x) / 2;
-        }else if(this.side_scene === 'vertical'){
-          x = 0;
-          y = ii;
-        }else{
-          x = ii;
-          y = 0;
-        }
+      // axial
+      this.side_renderer.setViewport(
+        coronal_size.width, side_height - axial_size.height,
+        axial_size.width, axial_size.height
+      );
+      this.side_renderer.setScissor(
+        coronal_size.width, side_height - axial_size.height,
+        axial_size.width, axial_size.height
+      );
+      this.side_renderer.setScissorTest( true );
+      this.side_renderer.clear();
+      this.side_renderer.render( this.scene, this.side_canvas.axial.camera );
+      this.side_renderer.clearDepth(); // Ignore depth information and render again
+      this.side_renderer.render( this.scene2, this.side_canvas.axial.camera );
 
-        this.side_renderer.setViewport( x * side_width, y * side_width, side_width, side_width );
-        this.side_renderer.setScissor( x * side_width, y * side_width, side_width, side_width );
-        this.side_renderer.setScissorTest( true );
-        this.side_renderer.clear();
-        this.side_renderer.render( this.scene, this.side_cameras[ii] );
-        this.side_renderer.clearDepth();
-        this.side_renderer.render( this.scene2, this.side_cameras[ii] );
-
-      }
-
+      // sagittal
+      this.side_renderer.setViewport(
+        coronal_size.width + axial_size.width, side_height - sagittal_size.height,
+        sagittal_size.width, sagittal_size.height
+      );
+      this.side_renderer.setScissor(
+        coronal_size.width + axial_size.width, side_height - sagittal_size.height,
+        sagittal_size.width, sagittal_size.height
+      );
+      this.side_renderer.setScissorTest( true );
+      this.side_renderer.clear();
+      this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
+      this.side_renderer.clearDepth(); // Ignore depth information and render again
+      this.side_renderer.render( this.scene2, this.side_canvas.sagittal.camera );
 
 
     }
@@ -74879,7 +75124,7 @@ class THREEBRAIN_CANVAS {
   		this.mapToCanvas();
 
   		// Add additional information
-      const _pixelRatio = this.main_renderer.getPixelRatio();
+      const _pixelRatio = this.pixel_ratio[0];
       const _fontType = 'Courier New, monospace';
       const _width = this.domElement.width;
       const _height = this.domElement.height;
@@ -75086,12 +75331,15 @@ class THREEBRAIN_CANVAS {
 	enable_side_cameras(){
 	  // Add side renderers to the element
 	  this.has_side_cameras = true;
+	  for( let k in this.side_canvas ){
+	    this.side_canvas[ k ].container.style.display = 'block';
+	  }
 	  this.handle_resize();
 	}
 	disable_side_cameras(force = false){
 	  //this.side_canvas.style.display = 'none';
 	  for( let k in this.side_canvas ){
-	    this.side_canvas[ k ].style.display = 'none';
+	    this.side_canvas[ k ].container.style.display = 'none';
 	  }
 	  this.has_side_cameras = false;
 	  this.handle_resize();
@@ -75705,7 +75953,7 @@ function gen_particle(g, canvas){
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -75885,86 +76133,31 @@ Stats.Panel = function ( name, fg, bg ) {
 
 
 /***/ }),
-/* 6 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return make_draggable; });
-
-function make_draggable(elmnt, elmnt_header) {
-  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-  if ( elmnt_header ) {
-    /* if present, the header is where you move the DIV from:*/
-    elmnt_header.onmousedown = dragMouseDown;
-  } else {
-    console.error('asdasd');
-    /* otherwise, move the DIV from anywhere inside the DIV:*/
-    elmnt.onmousedown = dragMouseDown;
-  }
-
-  function dragMouseDown(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // get the mouse cursor position at startup:
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    // call a function whenever the cursor moves:
-    document.onmousemove = elementDrag;
-  }
-
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // calculate the new cursor position:
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    // set the element's new position:
-    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-  }
-
-  function closeDragElement() {
-    /* stop moving when mouse button is released:*/
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
-}
-
-
-
-
-
-/***/ }),
 /* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return make_resizable; });
 /*Make resizable div by Hung Nguyen*/
-function make_resizable(elem, force_ratio = false, callback = (w, h) => {}) {
+function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_stop = (w, h) => {}) {
   const element = elem; // elem.querySelector('.resizable');
   const resizers = elem.querySelectorAll('.resizable .resizer');
   const minimum_size = 20;
-  let original_width = 0;
-  let original_height = 0;
-  let ratio = -1;
-  let original_x = 0;
-  let original_y = 0;
-  let original_mouse_x = 0;
-  let original_mouse_y = 0;
+  let original_width = 0,
+      original_height = 0,
+      ratio = -1;
+  let original_x = 0,
+      original_y = 0,
+      original_mouse_x = 0,
+      original_mouse_y = 0;
+  let width = 0,
+      height = 0;
   for (let i = 0; i < resizers.length; i++) {
     let currentResizer = resizers[i];
 
     let resize = (e) => {
-      let width = original_width + (e.pageX - original_mouse_x);
-      let height = original_height + (e.pageY - original_mouse_y);
-
-      width = width > minimum_size ? width : minimum_size;
-      height = height > minimum_size ? height : minimum_size;
+      width = original_width + (e.pageX - original_mouse_x);
+      height = original_height + (e.pageY - original_mouse_y);
 
       if( force_ratio ){
         if( original_width > original_height ){
@@ -75973,6 +76166,15 @@ function make_resizable(elem, force_ratio = false, callback = (w, h) => {}) {
           height = width * ratio;
         }
       }
+
+      width = width > minimum_size ? width : minimum_size;
+      if( force_ratio ){
+        height = height > (minimum_size * ratio)? height : (minimum_size*ratio);
+      }else{
+        height = height > minimum_size? height : minimum_size;
+      }
+
+
 
       element.style.width = width + 'px';
       element.style.height = height + 'px';
@@ -75990,11 +76192,12 @@ function make_resizable(elem, force_ratio = false, callback = (w, h) => {}) {
         element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
       }
 
-      callback(width, height);
+      on_resize(width, height);
     };
 
     let stopResize = () => {
       window.removeEventListener('mousemove', resize);
+      on_stop(width, height);
     };
 
 
@@ -76002,6 +76205,8 @@ function make_resizable(elem, force_ratio = false, callback = (w, h) => {}) {
       e.preventDefault();
       original_width = parseFloat(getComputedStyle(element, null).getPropertyValue('width').replace('px', ''));
       original_height = parseFloat(getComputedStyle(element, null).getPropertyValue('height').replace('px', ''));
+      width = original_width;
+      height = original_height;
       if( ratio <= 0 ){
         ratio = original_height / original_width;
       }
@@ -80234,7 +80439,7 @@ class THREE_BRAIN_SHINY {
 // window.THREE_BRAIN_SHINY = THREE_BRAIN_SHINY;
 
 // EXTERNAL MODULE: ./src/js/threejs_scene.js
-var threejs_scene = __webpack_require__(4);
+var threejs_scene = __webpack_require__(5);
 
 // EXTERNAL MODULE: ./src/js/threebrain_cache.js
 var threebrain_cache = __webpack_require__(3);
@@ -80728,7 +80933,20 @@ class src_BrainCanvas{
         this.canvas.start_animation(0);
       });
 
-    gui.add_item('Reset Camera', () => {this.canvas.reset_controls()}, {folder_name: 'Default'});
+    gui.add_item('Reset Camera [M]', () => {this.canvas.reset_controls()}, {folder_name: 'Default'});
+
+    if( this.settings.side_camera ){
+      gui.add_item('Hide Canvas [S]', false, {folder_name: 'Default'})
+        .onChange((v) => {
+          if( v ){
+            this.canvas.disable_side_cameras();
+          }else{
+            this.canvas.enable_side_cameras();
+          }
+        });
+      gui.add_item('Reset Canvas [S]', () => {this.canvas.reset_side_cameras( true, true )},
+                    {folder_name: 'Default'});
+    }
 
     return(gui);
 

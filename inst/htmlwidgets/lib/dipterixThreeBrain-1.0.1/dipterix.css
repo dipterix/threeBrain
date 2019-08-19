@@ -20,13 +20,25 @@
   width: 300px;
   overflow-y: scroll;
   overflow-x: hidden;
+  z-index: 10;
   /* pointer-events: none; */
 }
 
 .threejs-control .dg .c select{
   color: cornflowerblue;
 }
+.threejs-control .dg {
+  font: 11px monospace, 'Lucida Grande', sans-serif;
+}
 
+.threejs-control .dg .property-name {
+    text-overflow: clip;
+    overflow-y: hidden;
+    overflow-x: scroll;
+    white-space: nowrap;
+    /* hide scrollbar */
+    padding-bottom: 17px;
+}
 
 .threejs-control *{
   /* pointer-events: auto; */
@@ -70,12 +82,14 @@
 
 .THREEBRAIN-SIDE {
   position: absolute;
-  height: 252px;
-  width: 252px;
+  height: 250px;
+  width: 250px;
   margin: 0;
   padding: 0;
-  border: 1px solid;
   min-height: 100px;
+  overflow: hidden;
+  outline: 1px solid #2e2e2e;
+  outline-offset: 0;
 }
 .THREEBRAIN-SIDE-HEADER {
   position: absolute;
@@ -89,6 +103,21 @@
   background-color: rgba(100,100,100,0.5);
   color: #fff;
   cursor: move;
+}
+
+.THREEBRAIN-SIDE .zoom-tool {
+  position: absolute;
+  z-index: 9;
+  width: 25px;
+  height: 25px;
+  right: 2px;
+  background-color: rgb(200,200,200);
+  background-color: rgba(200,200,200,0.5);
+  color: #fff;
+  cursor: pointer;
+  line-height: 25px;
+  text-align: center;
+  font-size: 16px;
 }
 
 

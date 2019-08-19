@@ -13,7 +13,7 @@ threejs_brain(..., widget_id = "threebrain_data", time_range = NULL,
   color_names = seq_along(color_ramp), show_legend = TRUE,
   legend_title = "Value", tmp_dirname = NULL, width = NULL,
   height = NULL, optionals = list(), debug = FALSE, token = NULL,
-  coords = NULL, browser_external = FALSE, .list = list())
+  coords = NULL, browser_external = TRUE, .list = list())
 }
 \arguments{
 \item{..., .list}{geometries inherit from AbstractGeom}

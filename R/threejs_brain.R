@@ -37,7 +37,7 @@ threejs_brain <- function(
   show_legend = TRUE, legend_title = 'Value',
   tmp_dirname = NULL, width = NULL, height = NULL, optionals = list(),
   debug = FALSE, token = NULL, coords = NULL,
-  browser_external = FALSE,
+  browser_external = TRUE,
   .list = list()){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
