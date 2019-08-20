@@ -330,12 +330,10 @@ class BrainCanvas{
 
     _legend_callback(this.settings.show_legend);
 
-    /*
     gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
       .onChange((v) =>{
         this.canvas.disable_raycast = !v;
       });
-      */
 
     // check if it's chome browser
     gui.add_item('Viewer Title', '', {folder_name: 'Default'})
@@ -355,8 +353,27 @@ class BrainCanvas{
             this.canvas.enable_side_cameras();
           }
         });
-      gui.add_item('Reset Canvas [S]', () => {this.canvas.reset_side_cameras( true, true )},
+      gui.add_item('Reset Canvas [S]', () => {this.canvas.reset_side_canvas( true, true )},
                     {folder_name: 'Default'});
+
+      // side plane
+      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Default'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_coronal_depth( v );
+        });
+      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Default'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_axial_depth( v );
+        });
+      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Default'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_sagittal_depth( v );
+        });
+      this.canvas.set_side_depth = (c, a, s) => {
+        _controller_coronal.setValue( c );
+        _controller_axial.setValue( a );
+        _controller_sagittal.setValue( s );
+      };
     }
 
     return(gui);
@@ -578,13 +595,6 @@ class BrainCanvas{
       this.canvas.loader_manager.onLoad();
     }
 
-    // Set side camera
-    if(this.settings.side_camera || false){
-      this.canvas.enable_side_cameras();
-    }else{
-      this.canvas.disable_side_cameras();
-    }
-
     // controller center
     this.canvas.update_control_center( this.settings.control_center );
 
@@ -604,6 +614,18 @@ class BrainCanvas{
       this.canvas.draw_axis( 0, 0, 0 );
     }
 
+    // Compile everything
+    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.main_camera );
+
+    // Set side camera
+    if(this.settings.side_camera || false){
+      this.canvas.enable_side_cameras();
+      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.coronal.camera );
+      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.axial.camera );
+      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.sagittal.camera );
+    }else{
+      this.canvas.disable_side_cameras();
+    }
 
     // Force render canvas
     // Resize widget in case control panel is hidden

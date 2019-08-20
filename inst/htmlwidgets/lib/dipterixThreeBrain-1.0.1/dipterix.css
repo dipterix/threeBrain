@@ -38,6 +38,7 @@
     white-space: nowrap;
     /* hide scrollbar */
     padding-bottom: 17px;
+    margin-bottom: -17px;
 }
 
 .threejs-control *{
@@ -118,6 +119,11 @@
   line-height: 25px;
   text-align: center;
   font-size: 16px;
+}
+
+.THREEBRAIN-SIDE .zoom-tool.pan-active {
+  background-color: rgb(250,200,200);
+  background-color: rgba(250,200,200,0.8);
 }
 
 

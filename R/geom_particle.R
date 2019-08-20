@@ -15,8 +15,9 @@ DataCubeGeom <- R6::R6Class(
                             half_size = c(128,128,128),
                             group = GeomGroup$new(name = 'default'),
                             position = c(0,0,0),
-                            cache_file = NULL, ...){
-        super$initialize(name, position = position, ...)
+                            cache_file = NULL,
+                            layer = 13, ...){
+        super$initialize(name, position = position, layer = layer, ...)
         self$group = group
 
         if(length(cache_file)){

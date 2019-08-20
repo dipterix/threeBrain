@@ -4,6 +4,7 @@ import { THREE } from './threeplugins.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
 import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
+import { get_element_size } from './libs/get.element.size.js';
 
 
 /*
@@ -84,9 +85,10 @@ class THREEBRAIN_CANVAS {
     this.domContext.fillStyle = this.background_color;
 
 
-    // General scene. Two scenes for double-buffer (depth information)
+    // General scene.
+    // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another
+    // to set render order
     this.scene = new THREE.Scene();
-    this.scene2 = new THREE.Scene();
     //this.scene_legend = new THREE.Scene();
 
     // Main camera
@@ -131,7 +133,7 @@ class THREEBRAIN_CANVAS {
     	});
     }
 
-    this.pixel_ratio = [ window.devicePixelRatio, 1 ];
+    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
 
   	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
@@ -140,10 +142,24 @@ class THREEBRAIN_CANVAS {
   	this.main_renderer.setClearColor( this.background_color );
 
 
-  	// sidebar renderer (multiple cameras. WebGL1 only)
-  	this.side_renderer = new THREE.WebGLRenderer( { antialias: false, alpha: true } );
+  	// sidebar renderer (multiple cameras.)
+  	if( this.has_webgl2 ){
+      // We need to use webgl2 for VolumeRenderShader1 to work
+      let side_canvas_el = document.createElement('canvas'),
+          side_context = side_canvas_el.getContext( 'webgl2' );
+    	this.side_renderer = new THREE.WebGLRenderer({
+    	  antialias: false, alpha: true,
+    	  canvas: side_canvas_el, context: side_context
+    	});
+    }else{
+    	this.side_renderer = new THREE.WebGLRenderer( { antialias: false, alpha: true } );
+    }
+
   	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
   	this.side_renderer.autoClear = false; // Manual update so that it can render two scenes
+  	let _render_height = Math.max( Math.floor( Math.max( width / 3, height ) / this.pixel_ratio[1] / 2 ), 256 );
+  	this.side_renderer._render_height = _render_height;
+    this.side_renderer.setSize( _render_height * 3 , _render_height );
   	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
 
     /* Use R plots instead
@@ -191,8 +207,8 @@ class THREEBRAIN_CANVAS {
     // 3 planes are draggable, resizable with open-close toggles 250x250px initial
 
     ['coronal', 'axial', 'sagittal'].forEach((nm, idx) => {
-      let _width = this.side_width,
-          _height = this.side_width;
+
+      this['_' + nm + '_depth'] = 0;
 
       const div = document.createElement('div');
       div.id = this.container_id + '__' + nm;
@@ -209,8 +225,8 @@ class THREEBRAIN_CANVAS {
 
       // Add canvas
       const cvs = document.createElement('canvas');
-      cvs.width = Math.floor( this.side_width * this.pixel_ratio[1]);
-      cvs.height = Math.floor( this.side_width * this.pixel_ratio[1]);
+      cvs.width = this.side_renderer._render_height * this.pixel_ratio[1];
+      cvs.height = this.side_renderer._render_height * this.pixel_ratio[1];
       cvs.style.width = '100%';
 			cvs.style.height = '100%';
 			cvs.style.position = 'absolute';
@@ -249,10 +265,20 @@ class THREEBRAIN_CANVAS {
 			  set_zoom_level();
 			});
 
+			const toggle_pan = document.createElement('div');
+			toggle_pan.className = 'zoom-tool';
+			toggle_pan.style.top = '77px';
+			toggle_pan.innerText = 'P';
+			div.appendChild( toggle_pan );
+			toggle_pan.addEventListener('click', (e) => {
+			  toggle_pan.classList.toggle('pan-active');
+			  toggle_pan_canvas( toggle_pan.classList.contains('pan-active') ? 'pan' : 'select' );
+			});
+
 			const zoom_reset = document.createElement('div');
 			zoom_reset.className = 'zoom-tool';
-			zoom_reset.style.top = '77px';
-			zoom_reset.innerText = 'o';
+			zoom_reset.style.top = '104px';
+			zoom_reset.innerText = '0';
 			div.appendChild( zoom_reset );
 			zoom_reset.addEventListener('click', (e) => {
 			  cvs.style.top = '0';
@@ -262,10 +288,7 @@ class THREEBRAIN_CANVAS {
 
 
 			// Add cameras
-			const camera = new THREE.OrthographicCamera( this.side_width / - 2,
-			                                              this.side_width / 2,
-			                                              this.side_width / 2,
-			                                              this.side_width / - 2, 1, 10000 );
+			const camera = new THREE.OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
 			// Side light is needed so that side views are visible.
 			const side_light = new THREE.DirectionalLight( 0xefefef, 0.5 );
 
@@ -316,7 +339,7 @@ class THREEBRAIN_CANVAS {
       this.wrapper_canvas.appendChild( div );
 
       // Make it draggable
-      const raise_top = (e) => {
+      const raise_top = (e, data) => {
         if( this.has_side_cameras ){
           // reset z-index
           let z_ind = [
@@ -332,30 +355,33 @@ class THREEBRAIN_CANVAS {
         }
       };
       make_draggable( div, div_header, undefined, raise_top);
-      make_draggable( cvs, undefined, div, raise_top );
+      const toggle_pan_canvas = make_draggable( cvs, undefined, div, (e, data) => {
+        raise_top(e, data);
 
+        if( data.state === 'select' ){
+          const _size = get_element_size( cvs ),
+                _x = data.x / _size[0] * 256 - 128,
+                _y = data.y / _size[1] * 256 - 128;
+
+          console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
+          if( nm === 'coronal' ){
+            this._sagital_depth = _x;
+            this._axial_depth = -_y;
+          }else if( nm === 'axial' ){
+            this._sagital_depth = _x;
+            this._coronal_depth = -_y;
+          }else if( nm === 'sagittal' ){
+            this._coronal_depth = -_x;
+            this._axial_depth = -_y;
+          }
+          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagital_depth );
+
+        }
+      } );
+      toggle_pan_canvas( 'select' );
 
       // Make resizable, keep current width and height
-      const resize_div = (w, h) => {
-        // cache size
-  			_width = Math.floor( w );
-  			_height = Math.floor( h );
-  			const _w = _width * this.pixel_ratio[1],
-  			      _h = _height * this.pixel_ratio[1];
-  			cvs.width = Math.floor( _w );
-        cvs.height = Math.floor( _h );
-
-        camera.left = _w / 2;
-  		  camera.right = -_w / 2;
-  		  camera.top = _h / 2;
-  		  camera.bottom = -_h / 2;
-
-      };
-      make_resizable( div, true, (w, h) => {}, (w, h) => {
-        resize_div(w, h);
-        // reset side renderer
-  		  this.handle_resize( undefined, undefined );
-  		});
+      make_resizable( div, true );
 
       // add double click handler
       const reset = ( reset_wrapper, reset_canvas ) => {
@@ -363,7 +389,6 @@ class THREEBRAIN_CANVAS {
         div.style.left = '0';
         div.style.width = this.side_width + 'px';
         div.style.height = this.side_width + 'px';
-        resize_div( this.side_width, this.side_width );
         set_zoom_level( 1 );
         cvs.style.top = '0';
         cvs.style.left = '0';
@@ -371,7 +396,7 @@ class THREEBRAIN_CANVAS {
       div_header.addEventListener("dblclick", (evt) => {
         reset( true, false );
         // Resize side canvas
-        this.handle_resize( undefined, undefined );
+        // this.handle_resize( undefined, undefined );
       });
 
 
@@ -380,17 +405,6 @@ class THREEBRAIN_CANVAS {
         'canvas'    : cvs,
         'context'   : cvs.getContext('2d'),
         'camera'    : camera,
-        'get_dimension' : ( pixel_correlated ) => {
-          if( pixel_correlated ){
-            return({
-              'width' : Math.floor( _width * this.pixel_ratio[1] ) ,
-              'height' : Math.floor( _height * this.pixel_ratio[1] )
-            });
-          }else{
-            return({ 'width' : _width , 'height' : _height });
-          }
-
-        },
         'reset'     : reset,
         'get_zoom_level' : () => { return( zoom_level ) },
         'set_zoom_level' : set_zoom_level
@@ -510,7 +524,12 @@ class THREEBRAIN_CANVAS {
 
     // root is a green cube that's only visible in side cameras
     mouse_helper_root.layers.set(13);
-    mouse_helper.layers.set(7);
+    mouse_helper.layers.set(8);
+
+    // In side cameras, always render mouse_helper_root on top
+    mouse_helper_root.renderOrder = 9999999;
+    mouse_helper_root.material.depthTest = false;
+    // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
     mouse_helper.add( mouse_helper_root );
     this.mouse_helper = mouse_helper;
@@ -987,24 +1006,12 @@ class THREEBRAIN_CANVAS {
     if(!this.has_side_cameras){
       // this.side_canvas.style.display = 'none';
     }else{
-      // We use actual HTML dimensions to get new pixel ratio as well as side canvas dim
-      let coronal_size = this.side_canvas.coronal.get_dimension( false ),
-          axial_size = this.side_canvas.axial.get_dimension( false ),
-          sagittal_size = this.side_canvas.sagittal.get_dimension( false );
-
-      // Originally was set vertically, however, it seems GPU is most efficient when
-      // rendering things horizotally
-      let side_width = coronal_size.width + axial_size.width + sagittal_size.width;
-      let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
-
-      // calculate new pixel ratio
-      /*let _pr = window.devicePixelRatio
-                  Math.min( screen.availWidth / side_width,
-                            screen.availHeight / side_height, 1 );
-      this.pixel_ratio[1] = _pr;
-      this.side_renderer.setPixelRatio( _pr ); */
-      this.side_renderer.setSize( side_width , side_height );
-      // side_renderer.setClearColor( renderer_colors[1] );
+      /*
+      let side_width = Math.max( main_width / 3, main_height );
+      side_width = Math.floor( side_width );
+      this.side_renderer._render_height = side_width;
+      this.side_renderer.setSize( side_width * 3 , side_width );
+      */
     }
 
     this.main_canvas.style.width = main_width + 'px';
@@ -1050,12 +1057,46 @@ class THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
-  reset_side_cameras( wrapper = true, canvas = true ){
+  reset_side_canvas( wrapper = true, canvas = true ){
     this.side_canvas.coronal.reset( wrapper, canvas );
     this.side_canvas.axial.reset( wrapper, canvas );
     this.side_canvas.sagittal.reset( wrapper, canvas );
     // Resize side canvas
     this.handle_resize( undefined, undefined );
+  }
+
+  reset_side_cameras( pos, scale = 300, distance = 500 ){
+    this.side_canvas.coronal.camera.position.x = pos.x;
+    this.side_canvas.coronal.camera.position.z = pos.z;
+    this.side_canvas.coronal.camera.position.y = -distance;
+    this.side_canvas.coronal.camera.lookAt( pos.x, pos.y, pos.z );
+    this.side_canvas.coronal.camera.top = scale / 2;
+    this.side_canvas.coronal.camera.bottom = -scale / 2;
+    this.side_canvas.coronal.camera.right = scale / 2;
+    this.side_canvas.coronal.camera.left = -scale / 2;
+    this.side_canvas.coronal.camera.updateProjectionMatrix();
+
+    this.side_canvas.axial.camera.position.x = pos.x;
+    this.side_canvas.axial.camera.position.y = pos.y;
+    this.side_canvas.axial.camera.position.z = distance;
+    this.side_canvas.axial.camera.lookAt( pos.x, pos.y, pos.z );
+    this.side_canvas.axial.camera.top = scale / 2;
+    this.side_canvas.axial.camera.bottom = -scale / 2;
+    this.side_canvas.axial.camera.right = scale / 2;
+    this.side_canvas.axial.camera.left = -scale / 2;
+    this.side_canvas.axial.camera.updateProjectionMatrix();
+
+    this.side_canvas.sagittal.camera.position.y = pos.y;
+    this.side_canvas.sagittal.camera.position.z = pos.z;
+    this.side_canvas.sagittal.camera.position.x = -distance;
+    this.side_canvas.sagittal.camera.lookAt( pos.x, pos.y, pos.z );
+    this.side_canvas.sagittal.camera.top = scale / 2;
+    this.side_canvas.sagittal.camera.bottom = -scale / 2;
+    this.side_canvas.sagittal.camera.right = scale / 2;
+    this.side_canvas.sagittal.camera.left = -scale / 2;
+    this.side_canvas.sagittal.camera.updateProjectionMatrix();
+
+    this.start_animation( 0 );
   }
 
   reset_controls(){
@@ -1108,31 +1149,22 @@ class THREEBRAIN_CANVAS {
 
     // side cameras
     if( this.has_side_cameras ){
-      const _p = this.pixel_ratio[1];
-      const coronal_size = this.side_canvas.coronal.get_dimension( true ),
-            axial_size = this.side_canvas.axial.get_dimension( true ),
-            sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+      const _rh = this.side_renderer._render_height * this.pixel_ratio[1];
 
       /* Use integer pixels here to avoid sub-pixel antialiasing problem */
-      let c_w = Math.floor( coronal_size.width ),
-          c_h = Math.floor( coronal_size.height );
       this.side_canvas.coronal.context.fillStyle = this.background_color;
-      this.side_canvas.coronal.context.fillRect(0, 0, c_w, c_h);
-      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement, 0, 0, c_w, c_h, 0, 0, c_w, c_h);
+      this.side_canvas.coronal.context.fillRect(0, 0, _rh, _rh);
+      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement, 0, 0, _rh, _rh, 0, 0, _rh, _rh);
 
 
-      let a_w = Math.floor( axial_size.width ),
-          a_h = Math.floor( axial_size.height );
       this.side_canvas.axial.context.fillStyle = this.background_color;
-      this.side_canvas.axial.context.fillRect(0, 0, a_w, a_h);
-      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement, c_w, 0, a_w, a_h, 0, 0, a_w, a_w);
+      this.side_canvas.axial.context.fillRect(0, 0, _rh, _rh);
+      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement, _rh, 0, _rh, _rh, 0, 0, _rh, _rh);
 
 
-      let s_w = Math.floor( sagittal_size.width ),
-          s_h = Math.floor( sagittal_size.height );
       this.side_canvas.sagittal.context.fillStyle = this.background_color;
-      this.side_canvas.sagittal.context.fillRect(0, 0, s_w, s_h);
-      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement, c_w + a_w, 0, s_w, s_h, 0, 0, s_w, s_h);
+      this.side_canvas.sagittal.context.fillRect(0, 0, _rh, _rh);
+      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement, _rh * 2, 0, _rh, _rh, 0, 0, _rh, _rh);
     }
 
 
@@ -1145,61 +1177,32 @@ class THREEBRAIN_CANVAS {
     //this.main_renderer.setClearColor( renderer_colors[0] );
     this.main_renderer.clear();
     this.main_renderer.render( this.scene, this.main_camera );
-    this.main_renderer.clearDepth();
-    this.main_renderer.render( this.scene2, this.main_camera );
 
     if(this.has_side_cameras){
-      let coronal_size = this.side_canvas.coronal.get_dimension( false ),
-          axial_size = this.side_canvas.axial.get_dimension( false ),
-          sagittal_size = this.side_canvas.sagittal.get_dimension( false );
-      let side_width = coronal_size.width + axial_size.width + sagittal_size.width;
-      let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
-
+      const _rh = this.side_renderer._render_height;
       // Cut side views
       // Threejs's origin is at bottom-left, but html is at topleft
       // Need to adjust for each view
       // coronal
-      this.side_renderer.setViewport(
-        0, side_height - coronal_size.height,
-        coronal_size.width, coronal_size.height );
-      this.side_renderer.setScissor(
-        0, side_height - coronal_size.height,
-        coronal_size.width, coronal_size.height );
+      this.side_renderer.setViewport( 0, 0, _rh, _rh );
+      this.side_renderer.setScissor( 0, 0, _rh, _rh );
       this.side_renderer.setScissorTest( true );
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.coronal.camera );
-      this.side_renderer.clearDepth(); // Ignore depth information and render again
-      this.side_renderer.render( this.scene2, this.side_canvas.coronal.camera );
 
       // axial
-      this.side_renderer.setViewport(
-        coronal_size.width, side_height - axial_size.height,
-        axial_size.width, axial_size.height
-      );
-      this.side_renderer.setScissor(
-        coronal_size.width, side_height - axial_size.height,
-        axial_size.width, axial_size.height
-      );
+      this.side_renderer.setViewport( _rh, 0, _rh, _rh );
+      this.side_renderer.setScissor( _rh, 0, _rh, _rh );
       this.side_renderer.setScissorTest( true );
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.axial.camera );
-      this.side_renderer.clearDepth(); // Ignore depth information and render again
-      this.side_renderer.render( this.scene2, this.side_canvas.axial.camera );
 
       // sagittal
-      this.side_renderer.setViewport(
-        coronal_size.width + axial_size.width, side_height - sagittal_size.height,
-        sagittal_size.width, sagittal_size.height
-      );
-      this.side_renderer.setScissor(
-        coronal_size.width + axial_size.width, side_height - sagittal_size.height,
-        sagittal_size.width, sagittal_size.height
-      );
+      this.side_renderer.setViewport( _rh * 2, 0, _rh, _rh );
+      this.side_renderer.setScissor( _rh * 2, 0, _rh, _rh );
       this.side_renderer.setScissorTest( true );
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
-      this.side_renderer.clearDepth(); // Ignore depth information and render again
-      this.side_renderer.render( this.scene2, this.side_canvas.sagittal.camera );
 
 
     }
@@ -1563,13 +1566,21 @@ class THREEBRAIN_CANVAS {
     this.object_chosen=undefined;
   }
 
+  // To be implemented (abstract methods)
+  set_coronal_depth( depth ){ console.log('Set coronal depth not implemented') }
+  set_axial_depth( depth ){ console.log('Set axial depth not implemented') }
+  set_sagittal_depth( depth ){ console.log('Set sagittal depth not implemented') }
+  set_side_depth( c_d, a_d, s_d ){
+    console.log('Set side depth not implemented');
+  }
+
   // Generic method to add objects
   add_object(g){
     //
     if(this.DEBUG){
       console.debug('Generating geometry '+g.type);
     }
-    var gen_f = eval('gen_' + g.type),
+    let gen_f = eval('gen_' + g.type),
         m = gen_f(g, this),
         layers = to_array(g.layer);
 
@@ -1577,41 +1588,110 @@ class THREEBRAIN_CANVAS {
       return(null);
     }
 
-    m.layers.set(31);
-    if(layers.length > 1){
-      layers.forEach((ii) => {
-        m.layers.enable(ii);
-      });
-      console.debug(g.name + ' is enabled layer ' + ii);
-    }else if(layers.length === 0 || layers[0] > 20){
-      if(this.DEBUG){
-        console.debug(g.name + ' is set invisible.');
+    let set_layer = (m) => {
+      // Normal 3D object
+      m.layers.set(31);
+      if(layers.length > 1){
+        layers.forEach((ii) => {
+          m.layers.enable(ii);
+          console.debug(g.name + ' is enabled layer ' + ii);
+        });
+      }else if(layers.length === 0 || layers[0] > 20){
+        if(this.DEBUG){
+          console.debug(g.name + ' is set invisible.');
+        }
+        m.layers.set(1);
+        m.visible = false;
+      }else{
+        m.layers.set(layers[0]);
       }
-      m.layers.set(1);
-      m.visible = false;
+    };
+
+    if( g.type === 'datacube' ){
+      // Special, as m is a array of three planes
+      this.mesh['_coronal_' + g.name]   = m[0];
+      this.mesh['_axial_' + g.name]     = m[1];
+      this.mesh['_sagittal_' + g.name]  = m[2];
+
+      if(g.clickable){
+        this.clickable['_coronal_' + g.name]   = m[0];
+        this.clickable['_axial_' + g.name]     = m[1];
+        this.clickable['_sagittal_' + g.name]  = m[2];
+      }
+
+      // data cube must have groups
+      const gp = this.group[g.group.group_name];
+
+      m.forEach((plane) => {
+
+        gp.add( plane );
+
+        set_layer( plane );
+        plane.userData.construct_params = g;
+        plane.updateMatrixWorld();
+      });
+
+      // Register depth functions
+      const cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),           // XYZ slice counts
+            cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),     // XYZ pixel heights (* 0.5)
+            cube_pos = g.position,
+            cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])});
+      this.set_coronal_depth = ( depth ) => {
+        let idx_mid = cube_dimension[1] / 2;
+        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+
+        m[0].position.y = cube_center[1] + (depth + 0.5) / 128 * cube_half_size[1];
+        m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+        m[0].material.needsUpdate = true;
+        // Animate on next refresh
+        this.start_animation( 0 );
+      };
+      this.set_axial_depth = ( depth ) => {
+        let idx_mid = cube_dimension[2] / 2;
+        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+        m[1].position.z = cube_center[2] + (depth + 0.5) / 128 * cube_half_size[2];
+        m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+        m[1].material.needsUpdate = true;
+        // Animate on next refresh
+        this.start_animation( 0 );
+      };
+      this.set_sagittal_depth = ( depth ) => {
+        let idx_mid = cube_dimension[0] / 2;
+        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+        m[2].position.x = cube_center[0] + (depth + 0.5) / 128 * cube_half_size[0];
+        m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+        m[2].material.needsUpdate = true;
+        // Animate on next refresh
+        this.start_animation( 0 );
+      };
+
+      // reset side camera positions
+      this.reset_side_cameras(
+        new THREE.Vector3( cube_center[0], cube_center[1], cube_center[2] ),
+        Math.max(...cube_half_size) * 2
+      );
+
+
     }else{
-      m.layers.set(layers[0]);
-    }
 
-    m.userData.construct_params = g;
-    this.mesh[g.name] = m;
+      set_layer( m );
+      m.userData.construct_params = g;
+      this.mesh[g.name] = m;
 
-    if(g.clickable){
-      this.clickable[g.name] = m;
-      /*if(m.isMesh || false){
-        this.octree.add( m, { useFaces: false } );
-      }*/
-    }
+      if(g.clickable){
+        this.clickable[g.name] = m;
+      }
 
-    if(g.group === null){
-      this.scene.add(m);
-    }else{
-      let gp = this.group[g.group.group_name];
-      gp.add(m);
-    }
+      if(g.group === null){
+        this.scene.add(m);
+      }else{
+        let gp = this.group[g.group.group_name];
+        gp.add(m);
+      }
 
-    if(m.isMesh){
-      m.updateMatrixWorld();
+      if(m.isMesh){
+        m.updateMatrixWorld();
+      }
     }
 
   }
@@ -1941,6 +2021,112 @@ function gen_free(g, canvas){
 function gen_datacube(g, canvas){
   let mesh, group_name;
 
+  let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00 }),
+      line_geometry = new THREE.Geometry();
+  line_material.depthTest = false;
+
+  // Cube values Must be from 0 to 1, float
+  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
+        cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
+        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
+        cube_pos = g.position,
+        cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])}),
+        volume = {
+          'xLength' : cube_half_size[0]*2,
+          'yLength' : cube_half_size[1]*2,
+          'zLength' : cube_half_size[2]*2
+        };
+
+  // Generate texture
+  let texture = new THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
+  texture.format = THREE.RedFormat;
+	texture.type = THREE.UnsignedByteType;
+	texture.needsUpdate = true;
+
+  // Shader - XY plane
+	const shader_xy = THREE.Volume2dArrayShader_xy;
+	let material_xy = new THREE.ShaderMaterial({
+	  uniforms : {
+  		diffuse: { value: texture },
+  		depth: { value: cube_half_size[2] },  // initial in the center of data cube
+  		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) }
+  	},
+  	vertexShader: shader_xy.vertexShader,
+		fragmentShader: shader_xy.fragmentShader,
+		side: THREE.DoubleSide
+	});
+	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
+
+	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
+	mesh_xy.position.fromArray( cube_center );
+	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
+
+	// Shader - XZ plane
+	const shader_xz = THREE.Volume2dArrayShader_xz;
+	let material_xz = new THREE.ShaderMaterial({
+	  uniforms : {
+  		diffuse: { value: texture },
+  		depth: { value: cube_half_size[1] },  // initial in the center of data cube
+  		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) }
+  	},
+  	vertexShader: shader_xz.vertexShader,
+		fragmentShader: shader_xz.fragmentShader,
+		side: THREE.DoubleSide
+	});
+	let geometry_xz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+
+	let mesh_xz = new THREE.Mesh( geometry_xz, material_xz );
+	mesh_xz.rotateX( Math.PI / 2 );
+	mesh_xz.position.fromArray( cube_center );
+	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
+
+	// Shader - YZ plane
+	const shader_yz = THREE.Volume2dArrayShader_yz;
+	let material_yz = new THREE.ShaderMaterial({
+	  uniforms : {
+  		diffuse: { value: texture },
+  		depth: { value: cube_half_size[0] },  // initial in the center of data cube
+  		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) }
+  	},
+  	vertexShader: shader_yz.vertexShader,
+		fragmentShader: shader_yz.fragmentShader,
+		side: THREE.DoubleSide
+	});
+	let geometry_yz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+
+	let mesh_yz = new THREE.Mesh( geometry_yz, material_yz );
+	mesh_yz.rotateY( Math.PI / 2);
+	mesh_yz.rotateZ( Math.PI / 2); // Back side
+	mesh_yz.position.fromArray( cube_center );
+	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
+
+  // coronal (xz), axial (xy), sagittal (yz)
+	mesh = [ mesh_xz, mesh_xy, mesh_yz ];
+
+	// generate diagonal line
+	const _mhw = Math.max( ...cube_half_size );
+
+	line_geometry.vertices.push(
+  	new THREE.Vector3( -_mhw, -_mhw, 0 ),
+  	new THREE.Vector3( _mhw, _mhw, 0 )
+  );
+  let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
+      line_mesh_xy = new THREE.Line( line_geometry, line_material ),
+      line_mesh_yz = new THREE.Line( line_geometry, line_material );
+  line_mesh_xz.renderOrder = 9999998;
+  line_mesh_xy.renderOrder = 9999998;
+  line_mesh_yz.renderOrder = 9999998;
+  line_mesh_xz.layers.set( 10 );
+  line_mesh_xz.layers.enable( 11 );
+  line_mesh_xy.layers.set( 9 );
+  line_mesh_xy.layers.enable( 11 );
+  line_mesh_yz.layers.set( 9 );
+  line_mesh_yz.layers.enable( 10 );
+  mesh_xz.add( line_mesh_xz );
+  mesh_xy.add( line_mesh_xy );
+  mesh_yz.add( line_mesh_yz );
+
+  /*
   // Cube values Must be from 0 to 1, float
   const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
         cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
@@ -2005,6 +2191,7 @@ function gen_datacube(g, canvas){
 
     mesh.position.fromArray(g.position);
   }
+  */
 
 	return(mesh);
 

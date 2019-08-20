@@ -143,7 +143,7 @@ Brain <- R6::R6Class(
                          face = dat$faces[, 1:3], group = self$groups[['Left Hemisphere']])
       }
 
-      g$layer = 29
+      g$layer = 2
       # Add this geom to subject
       self$subjects[[subject_name]][['surface']][[surface_name]][['left']] = g
       gui_params = c(gui_params, g$name)
@@ -164,7 +164,7 @@ Brain <- R6::R6Class(
                          face = dat$faces[, 1:3], group = self$groups[['Right Hemisphere']])
       }
 
-      g$layer = 29
+      g$layer = 2
       # Add this geom to subject
       self$subjects[[subject_name]][['surface']][[surface_name]][['right']] = g
       gui_params = c(gui_params, g$name)
@@ -285,10 +285,6 @@ Brain <- R6::R6Class(
         self$subjects[[subj]][['surface']]
       })
       surfaces = unlist(surfaces)
-
-      lapply(unlist(surfaces), function(p){
-        p$layer = 29;
-      })
 
       names(surfaces) = NULL
 

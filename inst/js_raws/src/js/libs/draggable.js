@@ -9,9 +9,10 @@ function make_draggable(
   elmnt, elmnt_header,
   // top range and left range
   parent_el = undefined,
-  mousedown_callback = (e)=>{}) {
+  mousedown_callback = (e, state)=>{}) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var range = [-Infinity, Infinity, -Infinity, Infinity];
+  var state = 'pan';
 
   if ( elmnt_header ) {
     /* if present, the header is where you move the DIV from:*/
@@ -28,35 +29,50 @@ function make_draggable(
     pos3 = e.clientX;
     pos4 = e.clientY;
 
-    if( parent_el ){
-      // calculate range
-      // parent size
-      const parent_size = get_size(parent_el);
-      const el_size = get_size(elmnt);
-      if( parent_size[0] > el_size[0] ){
-        range[1] = parent_size[0] - el_size[0];
-        range[0] = 0;
-      }else{
-        range[0] = parent_size[0] - el_size[0];
-        range[1] = 0;
+    if( state === 'pan' ){
+      if( parent_el ){
+        // calculate range
+        // parent size
+        const parent_size = get_size(parent_el);
+        const el_size = get_size(elmnt);
+        if( parent_size[0] > el_size[0] ){
+          range[1] = parent_size[0] - el_size[0];
+          range[0] = 0;
+        }else{
+          range[0] = parent_size[0] - el_size[0];
+          range[1] = 0;
+        }
+
+        if( parent_size[1] > el_size[1] ){
+          range[3] = parent_size[1] - el_size[1];
+          range[2] = 0;
+        }else{
+          range[2] = parent_size[1] - el_size[1];
+          range[3] = 0;
+        }
       }
 
-      if( parent_size[1] > el_size[1] ){
-        range[3] = parent_size[1] - el_size[1];
-        range[2] = 0;
-      }else{
-        range[2] = parent_size[1] - el_size[1];
-        range[3] = 0;
-      }
+
+
+      document.onmouseup = closeDragElement;
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+
+      mousedown_callback(e, {
+        state: 'pan'
+      });
+    }else{
+      // get xy location and return
+      let el_x = elmnt.getBoundingClientRect().left,
+          el_y = elmnt.getBoundingClientRect().top;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
     }
 
-
-
-    document.onmouseup = closeDragElement;
-    // call a function whenever the cursor moves:
-    document.onmousemove = elementDrag;
-
-    mousedown_callback(e);
   }
 
   function elementDrag(e) {
@@ -85,6 +101,10 @@ function make_draggable(
     document.onmouseup = null;
     document.onmousemove = null;
   }
+
+  return((s) => {
+    state = s;
+  });
 }
 
 

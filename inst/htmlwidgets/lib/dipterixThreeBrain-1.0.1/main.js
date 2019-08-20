@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 10);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -53233,6 +53233,152 @@ const register_volumeShader1 = function(THREE){
 
 
 
+// CONCATENATED MODULE: ./src/js/shaders/Volume2DShader.js
+/**
+ * @author Almar Klein / http://almarklein.org
+ *
+ * Shaders to render 3D volumes using raycasting.
+ * The applied techniques are based on similar implementations in the Visvis and Vispy projects.
+ * This is not the only approach, therefore it's marked 1.
+ */
+
+const register_volume2DShader1 = function(THREE){
+  THREE.Volume2dArrayShader_xy = {
+    uniforms: {
+      diffuse: { value: null },
+			depth: { value: 0 },
+			size: { value: new THREE.Vector3( 256, 256, 256 ) }
+		},
+		vertexShader: [
+      '#version 300 es',
+      'uniform vec3 size;',
+      'out vec2 vUv;',
+      'void main() {',
+      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+      // Convert position.xy to 1.0-0.0
+      'vUv.xy = position.xy / size.xy + 0.5;',
+      // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+      '}'
+		].join( '\n' ),
+    fragmentShader: [
+      '#version 300 es',
+
+      'precision highp float;',
+      'precision highp int;',
+      'precision highp sampler2DArray;',
+
+      'uniform sampler2DArray diffuse;',
+      'in vec2 vUv;',
+      'uniform int depth;',
+      'out vec4 out_FragColor;',
+
+      'void main() {',
+
+      'vec4 color = texture( diffuse, vec3( vUv, depth ) );',
+
+      // lighten a bit
+      'out_FragColor = vec4( color.rrr * 1.5, 1.0 );',
+
+      '}'
+    ].join( '\n' )
+  };
+
+
+
+
+  THREE.Volume2dArrayShader_xz = {
+    uniforms: {
+      diffuse: { value: null },
+			depth: { value: 0 },
+			size: { value: new THREE.Vector3( 256, 256, 256 ) }
+		},
+		vertexShader: [
+      '#version 300 es',
+      'uniform vec3 size;',
+      'out vec2 vUv;',
+      'void main() {',
+
+      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+      // Convert position.xz to 1.0-0.0
+      'vUv.xy = position.xy / size.xz + 0.5;',
+      // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+      '}'
+		].join( '\n' ),
+    fragmentShader: [
+      '#version 300 es',
+
+      'precision highp float;',
+      'precision highp int;',
+      'precision highp sampler2DArray;',
+
+      'uniform sampler2DArray diffuse;',
+      'uniform vec3 size;',
+      'in vec2 vUv;',
+      'uniform float depth;',
+      'out vec4 out_FragColor;',
+
+      'void main() {',
+
+      'vec4 color = texture( diffuse, vec3( vUv.x, depth / size.y, floor( vUv.y * size.z ) ) );',
+
+      // lighten a bit
+      'out_FragColor = vec4( color.rrr * 1.5, 1.0 );',
+
+      '}'
+    ].join( '\n' )
+  };
+
+  THREE.Volume2dArrayShader_yz = {
+    uniforms: {
+      diffuse: { value: null },
+			depth: { value: 0 },
+			size: { value: new THREE.Vector3( 256, 256, 256 ) }
+		},
+		vertexShader: [
+      '#version 300 es',
+      'uniform vec3 size;',
+      'out vec2 vUv;',
+      'void main() {',
+
+      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+      // Convert position.xz to 1.0-0.0
+      'vUv.xy = position.xy / size.yz + 0.5;',
+      // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+      '}'
+		].join( '\n' ),
+    fragmentShader: [
+      '#version 300 es',
+
+      'precision highp float;',
+      'precision highp int;',
+      'precision highp sampler2DArray;',
+
+      'uniform sampler2DArray diffuse;',
+      'uniform vec3 size;',
+      'in vec2 vUv;',
+      'uniform float depth;',
+      'out vec4 out_FragColor;',
+
+      'void main() {',
+
+      'vec4 color = texture( diffuse, vec3( depth / size.x, vUv.x, floor( vUv.y * size.z ) ) );',
+
+      // lighten a bit
+      'out_FragColor = vec4( color.rrr * 1.5, 1.0 );',
+
+      '}'
+    ].join( '\n' )
+  };
+
+  return(THREE);
+
+};
+
+
+
 // CONCATENATED MODULE: ./src/js/threeplugins.js
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return threeplugins_THREE; });
 
@@ -53246,11 +53392,13 @@ const register_volumeShader1 = function(THREE){
 
 
 
+
 let threeplugins_THREE = register_lut( three_module_namespaceObject );
 
 threeplugins_THREE = register_orthographic_controls( threeplugins_THREE );
 threeplugins_THREE = register_octree( threeplugins_THREE );
 threeplugins_THREE = register_volumeShader1( threeplugins_THREE );
+threeplugins_THREE = register_volume2DShader1( threeplugins_THREE );
 
 
 
@@ -73722,9 +73870,10 @@ function make_draggable(
   elmnt, elmnt_header,
   // top range and left range
   parent_el = undefined,
-  mousedown_callback = (e)=>{}) {
+  mousedown_callback = (e, state)=>{}) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var range = [-Infinity, Infinity, -Infinity, Infinity];
+  var state = 'pan';
 
   if ( elmnt_header ) {
     /* if present, the header is where you move the DIV from:*/
@@ -73741,35 +73890,50 @@ function make_draggable(
     pos3 = e.clientX;
     pos4 = e.clientY;
 
-    if( parent_el ){
-      // calculate range
-      // parent size
-      const parent_size = get_size(parent_el);
-      const el_size = get_size(elmnt);
-      if( parent_size[0] > el_size[0] ){
-        range[1] = parent_size[0] - el_size[0];
-        range[0] = 0;
-      }else{
-        range[0] = parent_size[0] - el_size[0];
-        range[1] = 0;
+    if( state === 'pan' ){
+      if( parent_el ){
+        // calculate range
+        // parent size
+        const parent_size = get_size(parent_el);
+        const el_size = get_size(elmnt);
+        if( parent_size[0] > el_size[0] ){
+          range[1] = parent_size[0] - el_size[0];
+          range[0] = 0;
+        }else{
+          range[0] = parent_size[0] - el_size[0];
+          range[1] = 0;
+        }
+
+        if( parent_size[1] > el_size[1] ){
+          range[3] = parent_size[1] - el_size[1];
+          range[2] = 0;
+        }else{
+          range[2] = parent_size[1] - el_size[1];
+          range[3] = 0;
+        }
       }
 
-      if( parent_size[1] > el_size[1] ){
-        range[3] = parent_size[1] - el_size[1];
-        range[2] = 0;
-      }else{
-        range[2] = parent_size[1] - el_size[1];
-        range[3] = 0;
-      }
+
+
+      document.onmouseup = closeDragElement;
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+
+      mousedown_callback(e, {
+        state: 'pan'
+      });
+    }else{
+      // get xy location and return
+      let el_x = elmnt.getBoundingClientRect().left,
+          el_y = elmnt.getBoundingClientRect().top;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
     }
 
-
-
-    document.onmouseup = closeDragElement;
-    // call a function whenever the cursor moves:
-    document.onmousemove = elementDrag;
-
-    mousedown_callback(e);
   }
 
   function elementDrag(e) {
@@ -73798,6 +73962,10 @@ function make_draggable(
     document.onmouseup = null;
     document.onmousemove = null;
   }
+
+  return((s) => {
+    state = s;
+  });
 }
 
 
@@ -73816,6 +73984,8 @@ function make_draggable(
 /* harmony import */ var _threebrain_cache_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3);
 /* harmony import */ var _libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(4);
 /* harmony import */ var _libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(7);
+/* harmony import */ var _libs_get_element_size_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(8);
+
 
 
 
@@ -73902,9 +74072,10 @@ class THREEBRAIN_CANVAS {
     this.domContext.fillStyle = this.background_color;
 
 
-    // General scene. Two scenes for double-buffer (depth information)
+    // General scene.
+    // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another
+    // to set render order
     this.scene = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Scene();
-    this.scene2 = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Scene();
     //this.scene_legend = new THREE.Scene();
 
     // Main camera
@@ -73949,7 +74120,7 @@ class THREEBRAIN_CANVAS {
     	});
     }
 
-    this.pixel_ratio = [ window.devicePixelRatio, 1 ];
+    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
 
   	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
@@ -73958,10 +74129,24 @@ class THREEBRAIN_CANVAS {
   	this.main_renderer.setClearColor( this.background_color );
 
 
-  	// sidebar renderer (multiple cameras. WebGL1 only)
-  	this.side_renderer = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].WebGLRenderer( { antialias: false, alpha: true } );
+  	// sidebar renderer (multiple cameras.)
+  	if( this.has_webgl2 ){
+      // We need to use webgl2 for VolumeRenderShader1 to work
+      let side_canvas_el = document.createElement('canvas'),
+          side_context = side_canvas_el.getContext( 'webgl2' );
+    	this.side_renderer = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].WebGLRenderer({
+    	  antialias: false, alpha: true,
+    	  canvas: side_canvas_el, context: side_context
+    	});
+    }else{
+    	this.side_renderer = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].WebGLRenderer( { antialias: false, alpha: true } );
+    }
+
   	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
   	this.side_renderer.autoClear = false; // Manual update so that it can render two scenes
+  	let _render_height = Math.max( Math.floor( Math.max( width / 3, height ) / this.pixel_ratio[1] / 2 ), 256 );
+  	this.side_renderer._render_height = _render_height;
+    this.side_renderer.setSize( _render_height * 3 , _render_height );
   	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
 
     /* Use R plots instead
@@ -74009,8 +74194,6 @@ class THREEBRAIN_CANVAS {
     // 3 planes are draggable, resizable with open-close toggles 250x250px initial
 
     ['coronal', 'axial', 'sagittal'].forEach((nm, idx) => {
-      let _width = this.side_width,
-          _height = this.side_width;
 
       const div = document.createElement('div');
       div.id = this.container_id + '__' + nm;
@@ -74027,8 +74210,8 @@ class THREEBRAIN_CANVAS {
 
       // Add canvas
       const cvs = document.createElement('canvas');
-      cvs.width = Math.floor( this.side_width * this.pixel_ratio[1]);
-      cvs.height = Math.floor( this.side_width * this.pixel_ratio[1]);
+      cvs.width = this.side_renderer._render_height * this.pixel_ratio[1];
+      cvs.height = this.side_renderer._render_height * this.pixel_ratio[1];
       cvs.style.width = '100%';
 			cvs.style.height = '100%';
 			cvs.style.position = 'absolute';
@@ -74067,10 +74250,20 @@ class THREEBRAIN_CANVAS {
 			  set_zoom_level();
 			});
 
+			const toggle_pan = document.createElement('div');
+			toggle_pan.className = 'zoom-tool';
+			toggle_pan.style.top = '77px';
+			toggle_pan.innerText = 'P';
+			div.appendChild( toggle_pan );
+			toggle_pan.addEventListener('click', (e) => {
+			  toggle_pan.classList.toggle('pan-active');
+			  toggle_pan_canvas( toggle_pan.classList.contains('pan-active') ? 'pan' : 'select' );
+			});
+
 			const zoom_reset = document.createElement('div');
 			zoom_reset.className = 'zoom-tool';
-			zoom_reset.style.top = '77px';
-			zoom_reset.innerText = 'o';
+			zoom_reset.style.top = '104px';
+			zoom_reset.innerText = '0';
 			div.appendChild( zoom_reset );
 			zoom_reset.addEventListener('click', (e) => {
 			  cvs.style.top = '0';
@@ -74080,10 +74273,7 @@ class THREEBRAIN_CANVAS {
 
 
 			// Add cameras
-			const camera = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( this.side_width / - 2,
-			                                              this.side_width / 2,
-			                                              this.side_width / 2,
-			                                              this.side_width / - 2, 1, 10000 );
+			const camera = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
 			// Side light is needed so that side views are visible.
 			const side_light = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DirectionalLight( 0xefefef, 0.5 );
 
@@ -74134,7 +74324,7 @@ class THREEBRAIN_CANVAS {
       this.wrapper_canvas.appendChild( div );
 
       // Make it draggable
-      const raise_top = (e) => {
+      const raise_top = (e, data) => {
         if( this.has_side_cameras ){
           // reset z-index
           let z_ind = [
@@ -74150,30 +74340,33 @@ class THREEBRAIN_CANVAS {
         }
       };
       Object(_libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__[/* make_draggable */ "a"])( div, div_header, undefined, raise_top);
-      Object(_libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__[/* make_draggable */ "a"])( cvs, undefined, div, raise_top );
+      const toggle_pan_canvas = Object(_libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__[/* make_draggable */ "a"])( cvs, undefined, div, (e, data) => {
+        raise_top(e, data);
 
+        if( data.state === 'select' ){
+          const _size = Object(_libs_get_element_size_js__WEBPACK_IMPORTED_MODULE_6__[/* get_element_size */ "a"])( cvs ),
+                _x = data.x / _size[0] * 256 - 128,
+                _y = data.y / _size[1] * 256 - 128;
+
+          console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
+          if( nm === 'coronal' ){
+            this._sagital_depth = _x;
+            this._axial_depth = -_y;
+          }else if( nm === 'axial' ){
+            this._sagital_depth = _x;
+            this._coronal_depth = -_y;
+          }else if( nm === 'sagittal' ){
+            this._coronal_depth = -_x;
+            this._axial_depth = -_y;
+          }
+          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagital_depth );
+
+        }
+      } );
+      toggle_pan_canvas( 'select' );
 
       // Make resizable, keep current width and height
-      const resize_div = (w, h) => {
-        // cache size
-  			_width = Math.floor( w );
-  			_height = Math.floor( h );
-  			const _w = _width * this.pixel_ratio[1],
-  			      _h = _height * this.pixel_ratio[1];
-  			cvs.width = Math.floor( _w );
-        cvs.height = Math.floor( _h );
-
-        camera.left = _w / 2;
-  		  camera.right = -_w / 2;
-  		  camera.top = _h / 2;
-  		  camera.bottom = -_h / 2;
-
-      };
-      Object(_libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__[/* make_resizable */ "a"])( div, true, (w, h) => {}, (w, h) => {
-        resize_div(w, h);
-        // reset side renderer
-  		  this.handle_resize( undefined, undefined );
-  		});
+      Object(_libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__[/* make_resizable */ "a"])( div, true );
 
       // add double click handler
       const reset = ( reset_wrapper, reset_canvas ) => {
@@ -74181,7 +74374,6 @@ class THREEBRAIN_CANVAS {
         div.style.left = '0';
         div.style.width = this.side_width + 'px';
         div.style.height = this.side_width + 'px';
-        resize_div( this.side_width, this.side_width );
         set_zoom_level( 1 );
         cvs.style.top = '0';
         cvs.style.left = '0';
@@ -74189,7 +74381,7 @@ class THREEBRAIN_CANVAS {
       div_header.addEventListener("dblclick", (evt) => {
         reset( true, false );
         // Resize side canvas
-        this.handle_resize( undefined, undefined );
+        // this.handle_resize( undefined, undefined );
       });
 
 
@@ -74198,17 +74390,6 @@ class THREEBRAIN_CANVAS {
         'canvas'    : cvs,
         'context'   : cvs.getContext('2d'),
         'camera'    : camera,
-        'get_dimension' : ( pixel_correlated ) => {
-          if( pixel_correlated ){
-            return({
-              'width' : Math.floor( _width * this.pixel_ratio[1] ) ,
-              'height' : Math.floor( _height * this.pixel_ratio[1] )
-            });
-          }else{
-            return({ 'width' : _width , 'height' : _height });
-          }
-
-        },
         'reset'     : reset,
         'get_zoom_level' : () => { return( zoom_level ) },
         'set_zoom_level' : set_zoom_level
@@ -74328,7 +74509,12 @@ class THREEBRAIN_CANVAS {
 
     // root is a green cube that's only visible in side cameras
     mouse_helper_root.layers.set(13);
-    mouse_helper.layers.set(7);
+    mouse_helper.layers.set(8);
+
+    // In side cameras, always render mouse_helper_root on top
+    mouse_helper_root.renderOrder = 9999999;
+    mouse_helper_root.material.depthTest = false;
+    // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
     mouse_helper.add( mouse_helper_root );
     this.mouse_helper = mouse_helper;
@@ -74805,24 +74991,12 @@ class THREEBRAIN_CANVAS {
     if(!this.has_side_cameras){
       // this.side_canvas.style.display = 'none';
     }else{
-      // We use actual HTML dimensions to get new pixel ratio as well as side canvas dim
-      let coronal_size = this.side_canvas.coronal.get_dimension( false ),
-          axial_size = this.side_canvas.axial.get_dimension( false ),
-          sagittal_size = this.side_canvas.sagittal.get_dimension( false );
-
-      // Originally was set vertically, however, it seems GPU is most efficient when
-      // rendering things horizotally
-      let side_width = coronal_size.width + axial_size.width + sagittal_size.width;
-      let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
-
-      // calculate new pixel ratio
-      /*let _pr = window.devicePixelRatio
-                  Math.min( screen.availWidth / side_width,
-                            screen.availHeight / side_height, 1 );
-      this.pixel_ratio[1] = _pr;
-      this.side_renderer.setPixelRatio( _pr ); */
-      this.side_renderer.setSize( side_width , side_height );
-      // side_renderer.setClearColor( renderer_colors[1] );
+      /*
+      let side_width = Math.max( main_width / 3, main_height );
+      side_width = Math.floor( side_width );
+      this.side_renderer._render_height = side_width;
+      this.side_renderer.setSize( side_width * 3 , side_width );
+      */
     }
 
     this.main_canvas.style.width = main_width + 'px';
@@ -74868,12 +75042,46 @@ class THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
-  reset_side_cameras( wrapper = true, canvas = true ){
+  reset_side_canvas( wrapper = true, canvas = true ){
     this.side_canvas.coronal.reset( wrapper, canvas );
     this.side_canvas.axial.reset( wrapper, canvas );
     this.side_canvas.sagittal.reset( wrapper, canvas );
     // Resize side canvas
     this.handle_resize( undefined, undefined );
+  }
+
+  reset_side_cameras( pos, scale = 300, distance = 500 ){
+    this.side_canvas.coronal.camera.position.x = pos.x;
+    this.side_canvas.coronal.camera.position.z = pos.z;
+    this.side_canvas.coronal.camera.position.y = -distance;
+    this.side_canvas.coronal.camera.lookAt( pos.x, pos.y, pos.z );
+    this.side_canvas.coronal.camera.top = scale / 2;
+    this.side_canvas.coronal.camera.bottom = -scale / 2;
+    this.side_canvas.coronal.camera.right = scale / 2;
+    this.side_canvas.coronal.camera.left = -scale / 2;
+    this.side_canvas.coronal.camera.updateProjectionMatrix();
+
+    this.side_canvas.axial.camera.position.x = pos.x;
+    this.side_canvas.axial.camera.position.y = pos.y;
+    this.side_canvas.axial.camera.position.z = distance;
+    this.side_canvas.axial.camera.lookAt( pos.x, pos.y, pos.z );
+    this.side_canvas.axial.camera.top = scale / 2;
+    this.side_canvas.axial.camera.bottom = -scale / 2;
+    this.side_canvas.axial.camera.right = scale / 2;
+    this.side_canvas.axial.camera.left = -scale / 2;
+    this.side_canvas.axial.camera.updateProjectionMatrix();
+
+    this.side_canvas.sagittal.camera.position.y = pos.y;
+    this.side_canvas.sagittal.camera.position.z = pos.z;
+    this.side_canvas.sagittal.camera.position.x = -distance;
+    this.side_canvas.sagittal.camera.lookAt( pos.x, pos.y, pos.z );
+    this.side_canvas.sagittal.camera.top = scale / 2;
+    this.side_canvas.sagittal.camera.bottom = -scale / 2;
+    this.side_canvas.sagittal.camera.right = scale / 2;
+    this.side_canvas.sagittal.camera.left = -scale / 2;
+    this.side_canvas.sagittal.camera.updateProjectionMatrix();
+
+    this.start_animation( 0 );
   }
 
   reset_controls(){
@@ -74926,31 +75134,22 @@ class THREEBRAIN_CANVAS {
 
     // side cameras
     if( this.has_side_cameras ){
-      const _p = this.pixel_ratio[1];
-      const coronal_size = this.side_canvas.coronal.get_dimension( true ),
-            axial_size = this.side_canvas.axial.get_dimension( true ),
-            sagittal_size = this.side_canvas.sagittal.get_dimension( true );
+      const _rh = this.side_renderer._render_height * this.pixel_ratio[1];
 
       /* Use integer pixels here to avoid sub-pixel antialiasing problem */
-      let c_w = Math.floor( coronal_size.width ),
-          c_h = Math.floor( coronal_size.height );
       this.side_canvas.coronal.context.fillStyle = this.background_color;
-      this.side_canvas.coronal.context.fillRect(0, 0, c_w, c_h);
-      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement, 0, 0, c_w, c_h, 0, 0, c_w, c_h);
+      this.side_canvas.coronal.context.fillRect(0, 0, _rh, _rh);
+      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement, 0, 0, _rh, _rh, 0, 0, _rh, _rh);
 
 
-      let a_w = Math.floor( axial_size.width ),
-          a_h = Math.floor( axial_size.height );
       this.side_canvas.axial.context.fillStyle = this.background_color;
-      this.side_canvas.axial.context.fillRect(0, 0, a_w, a_h);
-      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement, c_w, 0, a_w, a_h, 0, 0, a_w, a_w);
+      this.side_canvas.axial.context.fillRect(0, 0, _rh, _rh);
+      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement, _rh, 0, _rh, _rh, 0, 0, _rh, _rh);
 
 
-      let s_w = Math.floor( sagittal_size.width ),
-          s_h = Math.floor( sagittal_size.height );
       this.side_canvas.sagittal.context.fillStyle = this.background_color;
-      this.side_canvas.sagittal.context.fillRect(0, 0, s_w, s_h);
-      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement, c_w + a_w, 0, s_w, s_h, 0, 0, s_w, s_h);
+      this.side_canvas.sagittal.context.fillRect(0, 0, _rh, _rh);
+      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement, _rh * 2, 0, _rh, _rh, 0, 0, _rh, _rh);
     }
 
 
@@ -74963,61 +75162,32 @@ class THREEBRAIN_CANVAS {
     //this.main_renderer.setClearColor( renderer_colors[0] );
     this.main_renderer.clear();
     this.main_renderer.render( this.scene, this.main_camera );
-    this.main_renderer.clearDepth();
-    this.main_renderer.render( this.scene2, this.main_camera );
 
     if(this.has_side_cameras){
-      let coronal_size = this.side_canvas.coronal.get_dimension( false ),
-          axial_size = this.side_canvas.axial.get_dimension( false ),
-          sagittal_size = this.side_canvas.sagittal.get_dimension( false );
-      let side_width = coronal_size.width + axial_size.width + sagittal_size.width;
-      let side_height = Math.max( coronal_size.height, axial_size.height, sagittal_size.height );
-
+      const _rh = this.side_renderer._render_height;
       // Cut side views
       // Threejs's origin is at bottom-left, but html is at topleft
       // Need to adjust for each view
       // coronal
-      this.side_renderer.setViewport(
-        0, side_height - coronal_size.height,
-        coronal_size.width, coronal_size.height );
-      this.side_renderer.setScissor(
-        0, side_height - coronal_size.height,
-        coronal_size.width, coronal_size.height );
+      this.side_renderer.setViewport( 0, 0, _rh, _rh );
+      this.side_renderer.setScissor( 0, 0, _rh, _rh );
       this.side_renderer.setScissorTest( true );
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.coronal.camera );
-      this.side_renderer.clearDepth(); // Ignore depth information and render again
-      this.side_renderer.render( this.scene2, this.side_canvas.coronal.camera );
 
       // axial
-      this.side_renderer.setViewport(
-        coronal_size.width, side_height - axial_size.height,
-        axial_size.width, axial_size.height
-      );
-      this.side_renderer.setScissor(
-        coronal_size.width, side_height - axial_size.height,
-        axial_size.width, axial_size.height
-      );
+      this.side_renderer.setViewport( _rh, 0, _rh, _rh );
+      this.side_renderer.setScissor( _rh, 0, _rh, _rh );
       this.side_renderer.setScissorTest( true );
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.axial.camera );
-      this.side_renderer.clearDepth(); // Ignore depth information and render again
-      this.side_renderer.render( this.scene2, this.side_canvas.axial.camera );
 
       // sagittal
-      this.side_renderer.setViewport(
-        coronal_size.width + axial_size.width, side_height - sagittal_size.height,
-        sagittal_size.width, sagittal_size.height
-      );
-      this.side_renderer.setScissor(
-        coronal_size.width + axial_size.width, side_height - sagittal_size.height,
-        sagittal_size.width, sagittal_size.height
-      );
+      this.side_renderer.setViewport( _rh * 2, 0, _rh, _rh );
+      this.side_renderer.setScissor( _rh * 2, 0, _rh, _rh );
       this.side_renderer.setScissorTest( true );
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
-      this.side_renderer.clearDepth(); // Ignore depth information and render again
-      this.side_renderer.render( this.scene2, this.side_canvas.sagittal.camera );
 
 
     }
@@ -75381,13 +75551,21 @@ class THREEBRAIN_CANVAS {
     this.object_chosen=undefined;
   }
 
+  // To be implemented (abstract methods)
+  set_coronal_depth( depth ){ console.log('Set coronal depth not implemented') }
+  set_axial_depth( depth ){ console.log('Set axial depth not implemented') }
+  set_sagittal_depth( depth ){ console.log('Set sagittal depth not implemented') }
+  set_side_depth( c_d, a_d, s_d ){
+    console.log('Set side depth not implemented');
+  }
+
   // Generic method to add objects
   add_object(g){
     //
     if(this.DEBUG){
       console.debug('Generating geometry '+g.type);
     }
-    var gen_f = eval('gen_' + g.type),
+    let gen_f = eval('gen_' + g.type),
         m = gen_f(g, this),
         layers = Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(g.layer);
 
@@ -75395,41 +75573,110 @@ class THREEBRAIN_CANVAS {
       return(null);
     }
 
-    m.layers.set(31);
-    if(layers.length > 1){
-      layers.forEach((ii) => {
-        m.layers.enable(ii);
-      });
-      console.debug(g.name + ' is enabled layer ' + ii);
-    }else if(layers.length === 0 || layers[0] > 20){
-      if(this.DEBUG){
-        console.debug(g.name + ' is set invisible.');
+    let set_layer = (m) => {
+      // Normal 3D object
+      m.layers.set(31);
+      if(layers.length > 1){
+        layers.forEach((ii) => {
+          m.layers.enable(ii);
+          console.debug(g.name + ' is enabled layer ' + ii);
+        });
+      }else if(layers.length === 0 || layers[0] > 20){
+        if(this.DEBUG){
+          console.debug(g.name + ' is set invisible.');
+        }
+        m.layers.set(1);
+        m.visible = false;
+      }else{
+        m.layers.set(layers[0]);
       }
-      m.layers.set(1);
-      m.visible = false;
+    };
+
+    if( g.type === 'datacube' ){
+      // Special, as m is a array of three planes
+      this.mesh['_coronal_' + g.name]   = m[0];
+      this.mesh['_axial_' + g.name]     = m[1];
+      this.mesh['_sagittal_' + g.name]  = m[2];
+
+      if(g.clickable){
+        this.clickable['_coronal_' + g.name]   = m[0];
+        this.clickable['_axial_' + g.name]     = m[1];
+        this.clickable['_sagittal_' + g.name]  = m[2];
+      }
+
+      // data cube must have groups
+      const gp = this.group[g.group.group_name];
+
+      m.forEach((plane) => {
+
+        gp.add( plane );
+
+        set_layer( plane );
+        plane.userData.construct_params = g;
+        plane.updateMatrixWorld();
+      });
+
+      // Register depth functions
+      const cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),           // XYZ slice counts
+            cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),     // XYZ pixel heights (* 0.5)
+            cube_pos = g.position,
+            cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])});
+      this.set_coronal_depth = ( depth ) => {
+        let idx_mid = cube_dimension[1] / 2;
+        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+
+        m[0].position.y = cube_center[1] + (depth + 0.5) / 128 * cube_half_size[1];
+        m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+        m[0].material.needsUpdate = true;
+        // Animate on next refresh
+        this.start_animation( 0 );
+      };
+      this.set_axial_depth = ( depth ) => {
+        let idx_mid = cube_dimension[2] / 2;
+        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+        m[1].position.z = cube_center[2] + (depth + 0.5) / 128 * cube_half_size[2];
+        m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+        m[1].material.needsUpdate = true;
+        // Animate on next refresh
+        this.start_animation( 0 );
+      };
+      this.set_sagittal_depth = ( depth ) => {
+        let idx_mid = cube_dimension[0] / 2;
+        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+        m[2].position.x = cube_center[0] + (depth + 0.5) / 128 * cube_half_size[0];
+        m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+        m[2].material.needsUpdate = true;
+        // Animate on next refresh
+        this.start_animation( 0 );
+      };
+
+      // reset side camera positions
+      this.reset_side_cameras(
+        new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( cube_center[0], cube_center[1], cube_center[2] ),
+        Math.max(...cube_half_size) * 2
+      );
+
+
     }else{
-      m.layers.set(layers[0]);
-    }
 
-    m.userData.construct_params = g;
-    this.mesh[g.name] = m;
+      set_layer( m );
+      m.userData.construct_params = g;
+      this.mesh[g.name] = m;
 
-    if(g.clickable){
-      this.clickable[g.name] = m;
-      /*if(m.isMesh || false){
-        this.octree.add( m, { useFaces: false } );
-      }*/
-    }
+      if(g.clickable){
+        this.clickable[g.name] = m;
+      }
 
-    if(g.group === null){
-      this.scene.add(m);
-    }else{
-      let gp = this.group[g.group.group_name];
-      gp.add(m);
-    }
+      if(g.group === null){
+        this.scene.add(m);
+      }else{
+        let gp = this.group[g.group.group_name];
+        gp.add(m);
+      }
 
-    if(m.isMesh){
-      m.updateMatrixWorld();
+      if(m.isMesh){
+        m.updateMatrixWorld();
+      }
     }
 
   }
@@ -75759,6 +76006,112 @@ function gen_free(g, canvas){
 function gen_datacube(g, canvas){
   let mesh, group_name;
 
+  let line_material = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].LineBasicMaterial({ color: 0x00ff00 }),
+      line_geometry = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Geometry();
+  line_material.depthTest = false;
+
+  // Cube values Must be from 0 to 1, float
+  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
+        cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
+        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
+        cube_pos = g.position,
+        cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])}),
+        volume = {
+          'xLength' : cube_half_size[0]*2,
+          'yLength' : cube_half_size[1]*2,
+          'zLength' : cube_half_size[2]*2
+        };
+
+  // Generate texture
+  let texture = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
+  texture.format = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].RedFormat;
+	texture.type = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].UnsignedByteType;
+	texture.needsUpdate = true;
+
+  // Shader - XY plane
+	const shader_xy = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Volume2dArrayShader_xy;
+	let material_xy = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ShaderMaterial({
+	  uniforms : {
+  		diffuse: { value: texture },
+  		depth: { value: cube_half_size[2] },  // initial in the center of data cube
+  		size: { value: new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) }
+  	},
+  	vertexShader: shader_xy.vertexShader,
+		fragmentShader: shader_xy.fragmentShader,
+		side: _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DoubleSide
+	});
+	let geometry_xy = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].PlaneBufferGeometry( volume.xLength, volume.yLength );
+
+	let mesh_xy = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Mesh( geometry_xy, material_xy );
+	mesh_xy.position.fromArray( cube_center );
+	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
+
+	// Shader - XZ plane
+	const shader_xz = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Volume2dArrayShader_xz;
+	let material_xz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ShaderMaterial({
+	  uniforms : {
+  		diffuse: { value: texture },
+  		depth: { value: cube_half_size[1] },  // initial in the center of data cube
+  		size: { value: new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( volume.xLength, cube_dimension[1], volume.zLength ) }
+  	},
+  	vertexShader: shader_xz.vertexShader,
+		fragmentShader: shader_xz.fragmentShader,
+		side: _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DoubleSide
+	});
+	let geometry_xz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].PlaneBufferGeometry( volume.xLength, volume.zLength );
+
+	let mesh_xz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Mesh( geometry_xz, material_xz );
+	mesh_xz.rotateX( Math.PI / 2 );
+	mesh_xz.position.fromArray( cube_center );
+	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
+
+	// Shader - YZ plane
+	const shader_yz = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Volume2dArrayShader_yz;
+	let material_yz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ShaderMaterial({
+	  uniforms : {
+  		diffuse: { value: texture },
+  		depth: { value: cube_half_size[0] },  // initial in the center of data cube
+  		size: { value: new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( cube_dimension[0], volume.yLength, volume.zLength ) }
+  	},
+  	vertexShader: shader_yz.vertexShader,
+		fragmentShader: shader_yz.fragmentShader,
+		side: _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DoubleSide
+	});
+	let geometry_yz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].PlaneBufferGeometry( volume.xLength, volume.zLength );
+
+	let mesh_yz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Mesh( geometry_yz, material_yz );
+	mesh_yz.rotateY( Math.PI / 2);
+	mesh_yz.rotateZ( Math.PI / 2); // Back side
+	mesh_yz.position.fromArray( cube_center );
+	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
+
+  // coronal (xz), axial (xy), sagittal (yz)
+	mesh = [ mesh_xz, mesh_xy, mesh_yz ];
+
+	// generate diagonal line
+	const _mhw = Math.max( ...cube_half_size );
+
+	line_geometry.vertices.push(
+  	new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( -_mhw, -_mhw, 0 ),
+  	new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3( _mhw, _mhw, 0 )
+  );
+  let line_mesh_xz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Line( line_geometry, line_material ),
+      line_mesh_xy = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Line( line_geometry, line_material ),
+      line_mesh_yz = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Line( line_geometry, line_material );
+  line_mesh_xz.renderOrder = 9999998;
+  line_mesh_xy.renderOrder = 9999998;
+  line_mesh_yz.renderOrder = 9999998;
+  line_mesh_xz.layers.set( 10 );
+  line_mesh_xz.layers.enable( 11 );
+  line_mesh_xy.layers.set( 9 );
+  line_mesh_xy.layers.enable( 11 );
+  line_mesh_yz.layers.set( 9 );
+  line_mesh_yz.layers.enable( 10 );
+  mesh_xz.add( line_mesh_xz );
+  mesh_xy.add( line_mesh_xy );
+  mesh_yz.add( line_mesh_yz );
+
+  /*
   // Cube values Must be from 0 to 1, float
   const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
         cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
@@ -75773,32 +76126,32 @@ function gen_datacube(g, canvas){
     // Generate 3D texture, to do so, we need to customize shaders
 
     // 3D texture
-    let texture = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DataTexture3D(
+    let texture = new THREE.DataTexture3D(
       new Float32Array(cube_values),
       cube_half_size[0]*2,
       cube_half_size[1]*2,
       cube_half_size[2]*2
     );
 
-    texture.minFilter = texture.magFilter = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].LinearFilter;
+    texture.minFilter = texture.magFilter = THREE.LinearFilter;
 
     // Needed to solve error: INVALID_OPERATION: texImage3D: ArrayBufferView not big enough for request
-    texture.format = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].RedFormat;
-    texture.type = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].FloatType;
+    texture.format = THREE.RedFormat;
+    texture.type = THREE.FloatType;
     texture.unpackAlignment = 1;
 
     texture.needsUpdate = true;
 
     // Colormap textures, using datauri hard-coded
   	let cmtextures = {
-  		viridis: new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAtUlEQVR42n2Q0W3FMAzEyNNqHaH7j2L1w3ZenDwUMAwedXKA+MMvSqJiiBoiCWqWxKBEXaMZ8Sqs0zcmIv1p2nKwEvpLZMYOe3R4wku+TO7es/O8H+vHlH/KR9zQT8+z8F4531kRe379MIK4oD3v/SP7iplyHTKB5WNPs4AFH3kzO446Y+y6wA4TxqfMXBmzVrtwREY5ZrMY069dxr28Yb+wVjp02QWhSwKFJcHCaGGwTLBIzB9eyYkORwhbNAAAAABJRU5ErkJggg==" ),
-  		gray: new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAEklEQVR42mNkYGBgHAWjYKQCAH7BAv8WAlmwAAAAAElFTkSuQmCC" )
+  		viridis: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAtUlEQVR42n2Q0W3FMAzEyNNqHaH7j2L1w3ZenDwUMAwedXKA+MMvSqJiiBoiCWqWxKBEXaMZ8Sqs0zcmIv1p2nKwEvpLZMYOe3R4wku+TO7es/O8H+vHlH/KR9zQT8+z8F4531kRe379MIK4oD3v/SP7iplyHTKB5WNPs4AFH3kzO446Y+y6wA4TxqfMXBmzVrtwREY5ZrMY069dxr28Yb+wVjp02QWhSwKFJcHCaGGwTLBIzB9eyYkORwhbNAAAAABJRU5ErkJggg==" ),
+  		gray: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAEklEQVR42mNkYGBgHAWjYKQCAH7BAv8WAlmwAAAAAElFTkSuQmCC" )
   	};
 
   	// Material
-  	const shader = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].VolumeRenderShader1;
+  	const shader = THREE.VolumeRenderShader1;
 
-  	let uniforms = _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].UniformsUtils.clone( shader.uniforms );
+  	let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
   	uniforms.u_data.value = texture;
   	uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
   	uniforms.u_clim.value.set( 0, 1 );
@@ -75806,23 +76159,24 @@ function gen_datacube(g, canvas){
   	uniforms.u_renderthreshold.value = 0.015; // For ISO renderstyle
   	uniforms.u_cmdata.value = cmtextures.gray;
 
-    let material = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].ShaderMaterial( {
+    let material = new THREE.ShaderMaterial( {
   		uniforms: uniforms,
   		vertexShader: shader.vertexShader,
   		fragmentShader: shader.fragmentShader,
-  		side: _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].BackSide // The volume shader uses the backface as its "reference point"
+  		side: THREE.BackSide // The volume shader uses the backface as its "reference point"
   	} );
 
-  	let geometry = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
+  	let geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
 
   	// TODO: Make sure this translate is correct
   	geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
 
-  	mesh = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Mesh( geometry, material );
+  	mesh = new THREE.Mesh( geometry, material );
   	mesh.name = 'mesh_datacube_' + g.name;
 
     mesh.position.fromArray(g.position);
   }
+  */
 
 	return(mesh);
 
@@ -76248,6 +76602,21 @@ function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_
 
 /***/ }),
 /* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return get_element_size; });
+function get_element_size(el){
+  const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
+  const height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
+  return([width, height]);
+}
+
+
+
+
+/***/ }),
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -76964,7 +77333,7 @@ class D3Canvas {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -77207,7 +77576,7 @@ const WEBGL = {
 
 
 
-// EXTERNAL MODULE: ./src/js/threeplugins.js + 5 modules
+// EXTERNAL MODULE: ./src/js/threeplugins.js + 6 modules
 var threeplugins = __webpack_require__(0);
 
 // CONCATENATED MODULE: ./src/js/libs/dat.gui.module.js
@@ -80463,7 +80832,7 @@ var threejs_scene = __webpack_require__(5);
 var threebrain_cache = __webpack_require__(3);
 
 // EXTERNAL MODULE: ./src/js/Math/sparkles.js
-var sparkles = __webpack_require__(8);
+var sparkles = __webpack_require__(9);
 
 // CONCATENATED MODULE: ./src/js/capture/CCFrameEncoder.js
 function CCFrameEncoder( settings ) {
@@ -80937,12 +81306,10 @@ class src_BrainCanvas{
 
     _legend_callback(this.settings.show_legend);
 
-    /*
     gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
       .onChange((v) =>{
         this.canvas.disable_raycast = !v;
       });
-      */
 
     // check if it's chome browser
     gui.add_item('Viewer Title', '', {folder_name: 'Default'})
@@ -80962,8 +81329,27 @@ class src_BrainCanvas{
             this.canvas.enable_side_cameras();
           }
         });
-      gui.add_item('Reset Canvas [S]', () => {this.canvas.reset_side_cameras( true, true )},
+      gui.add_item('Reset Canvas [S]', () => {this.canvas.reset_side_canvas( true, true )},
                     {folder_name: 'Default'});
+
+      // side plane
+      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Default'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_coronal_depth( v );
+        });
+      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Default'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_axial_depth( v );
+        });
+      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Default'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_sagittal_depth( v );
+        });
+      this.canvas.set_side_depth = (c, a, s) => {
+        _controller_coronal.setValue( c );
+        _controller_axial.setValue( a );
+        _controller_sagittal.setValue( s );
+      };
     }
 
     return(gui);
@@ -81185,13 +81571,6 @@ class src_BrainCanvas{
       this.canvas.loader_manager.onLoad();
     }
 
-    // Set side camera
-    if(this.settings.side_camera || false){
-      this.canvas.enable_side_cameras();
-    }else{
-      this.canvas.disable_side_cameras();
-    }
-
     // controller center
     this.canvas.update_control_center( this.settings.control_center );
 
@@ -81211,6 +81590,18 @@ class src_BrainCanvas{
       this.canvas.draw_axis( 0, 0, 0 );
     }
 
+    // Compile everything
+    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.main_camera );
+
+    // Set side camera
+    if(this.settings.side_camera || false){
+      this.canvas.enable_side_cameras();
+      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.coronal.camera );
+      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.axial.camera );
+      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.sagittal.camera );
+    }else{
+      this.canvas.disable_side_cameras();
+    }
 
     // Force render canvas
     // Resize widget in case control panel is hidden
