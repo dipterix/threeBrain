@@ -70,6 +70,7 @@ class THREEBRAIN_CANVAS {
     this.disable_raycast = true;
     this.render_legend = false;
     this.color_type = 'continuous';
+    this._mouse_click_callbacks = [];
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
@@ -207,8 +208,6 @@ class THREEBRAIN_CANVAS {
     // 3 planes are draggable, resizable with open-close toggles 250x250px initial
 
     ['coronal', 'axial', 'sagittal'].forEach((nm, idx) => {
-
-      this['_' + nm + '_depth'] = 0;
 
       const div = document.createElement('div');
       div.id = this.container_id + '__' + nm;
@@ -788,8 +787,11 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  set_mouse_click_callback(callback){
-    this._mouse_click_callback = callback;
+  add_mouse_callback(check, callback, reset = false){
+    if( reset ){
+      this._mouse_click_callbacks.length = 0;
+    }
+    this._mouse_click_callbacks.push( [check, callback] );
   }
 
   /*
@@ -845,9 +847,12 @@ class THREEBRAIN_CANVAS {
       }
       if(['dblclick', 'click'].includes(this.mouse_event.action)){
         this.object_chosen = target_object;
-        if(this._mouse_click_callback !== undefined){
-          this._mouse_click_callback(target_object, this.mouse_event);
-        }
+        this._mouse_click_callbacks.forEach((callback) => {
+          const result = callback[0]( this.mouse_event );
+          if( result ){
+            callback[1]( target_object, this.mouse_event );
+          }
+        });
       }
 
       this.mouse_helper.position.fromArray( to_array(from) );
@@ -1573,6 +1578,9 @@ class THREEBRAIN_CANVAS {
   set_side_depth( c_d, a_d, s_d ){
     console.log('Set side depth not implemented');
   }
+  set_side_visibility( which ){
+    console.log('Set side visibility not implemented');
+  }
 
   // Generic method to add objects
   add_object(g){
@@ -1631,18 +1639,56 @@ class THREEBRAIN_CANVAS {
         plane.updateMatrixWorld();
       });
 
+
       // Register depth functions
       const cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),           // XYZ slice counts
             cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),     // XYZ pixel heights (* 0.5)
             cube_pos = g.position,
             cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])});
+
+      // Add anchors to visualize the intersection
+      const cube_anchor = new THREE.Group();
+      cube_anchor.position.fromArray( cube_center );
+      ['x', 'y', 'z'].forEach( (a, ii) => {
+        const geom = new THREE.Geometry();
+        const p = [ new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0) ];
+        p[1][a] = 3;
+        geom.vertices.push( p[0], p[1] );
+        const line = new THREE.Line( geom, new THREE.LineBasicMaterial({ color: Math.pow(256, ii+1) - Math.pow(256, ii) }) );
+        line.layers.set( 8 );
+        cube_anchor.add( line );
+      } );
+      gp.add( cube_anchor );
+
+      // Add handlers to set plane location when an electrode is clicked
+      this.add_mouse_callback(
+        // Check
+        ( evt ) => {
+          return( evt.action === 'click' && evt.event.button === 0 );
+        },
+        // Callbacks
+        (obj, evt) => {
+        if( obj.isMesh && obj.userData.construct_params ){
+          const pos = obj.position;
+          // calculate depth
+          this.set_side_depth(
+            (pos.y - cube_center[1]) * 128 / cube_half_size[1] - 0.5,
+            (pos.z - cube_center[2]) * 128 / cube_half_size[2] - 0.5,
+            (pos.x - cube_center[0]) * 128 / cube_half_size[0] - 0.5
+          );
+        }
+      });
+
+
       this.set_coronal_depth = ( depth ) => {
         let idx_mid = cube_dimension[1] / 2;
         if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
 
         m[0].position.y = cube_center[1] + (depth + 0.5) / 128 * cube_half_size[1];
+        cube_anchor.position.y = m[0].position.y;
         m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
         m[0].material.needsUpdate = true;
+        this._coronal_depth = depth;
         // Animate on next refresh
         this.start_animation( 0 );
       };
@@ -1650,8 +1696,10 @@ class THREEBRAIN_CANVAS {
         let idx_mid = cube_dimension[2] / 2;
         if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
         m[1].position.z = cube_center[2] + (depth + 0.5) / 128 * cube_half_size[2];
+        cube_anchor.position.z = m[1].position.z;
         m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
         m[1].material.needsUpdate = true;
+        this._axial_depth = depth;
         // Animate on next refresh
         this.start_animation( 0 );
       };
@@ -1659,9 +1707,26 @@ class THREEBRAIN_CANVAS {
         let idx_mid = cube_dimension[0] / 2;
         if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
         m[2].position.x = cube_center[0] + (depth + 0.5) / 128 * cube_half_size[0];
+        cube_anchor.position.x = m[2].position.x;
         m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
         m[2].material.needsUpdate = true;
+        this._sagittal_depth = depth;
         // Animate on next refresh
+        this.start_animation( 0 );
+      };
+
+      this.set_side_visibility = ( which ) => {
+        m.forEach((plane) => {
+          plane.layers.disable(8);
+        });
+        if( which === 'coronal' ){
+          m[0].layers.enable(8);
+        }else if( which === 'axial' ){
+          m[1].layers.enable(8);
+        }else if( which === 'sagittal' ){
+          m[2].layers.enable(8);
+        }
+
         this.start_animation( 0 );
       };
 

@@ -370,10 +370,13 @@ class BrainCanvas{
           this.canvas.set_sagittal_depth( v );
         });
       this.canvas.set_side_depth = (c, a, s) => {
-        _controller_coronal.setValue( c );
-        _controller_axial.setValue( a );
-        _controller_sagittal.setValue( s );
+        _controller_coronal.setValue( c || 0 );
+        _controller_axial.setValue( a || 0 );
+        _controller_sagittal.setValue( s || 0 );
       };
+
+      gui.add_item('Overlay Viewers', 'none', {args: ['none','coronal','axial','sagittal'], folder_name: 'Default'})
+        .onChange( this.canvas.set_side_visibility );
     }
 
     return(gui);
@@ -436,7 +439,9 @@ class BrainCanvas{
   }
 
   _set_info_callback(){
-    this.canvas.set_mouse_click_callback((obj, evt) => {
+    this.canvas.add_mouse_callback(
+      (evt) => { return( true ); },
+      (obj, evt) => {
       if(obj.userData){
         let g = obj.userData.construct_params,
             pos = obj.getWorldPosition( new THREE.Vector3() );
@@ -455,7 +460,7 @@ class BrainCanvas{
         return(null);
       }
       // this.set_legend_value( [0], [0], '' );
-    });
+    }, true);
 
     /* this.canvas.set_animation_callback((obj, v, t) => {
       let txt = '';
