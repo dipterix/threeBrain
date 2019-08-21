@@ -70,7 +70,7 @@ class THREEBRAIN_CANVAS {
     this.disable_raycast = true;
     this.render_legend = false;
     this.color_type = 'continuous';
-    this._mouse_click_callbacks = [];
+    this._mouse_click_callbacks = {};
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
@@ -661,6 +661,20 @@ class THREEBRAIN_CANVAS {
 
     }, false );
 
+    this.main_canvas.addEventListener( 'contextmenu', (event) => { // Use => to create flexible access to this
+      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
+        return(null);
+      }
+      this.mouse_event = {
+        'action' : 'contextmenu',
+        'button' : event.button,
+        'event' : event,
+        'dispose' : false,
+        'level' : 1
+      };
+
+    }, false );
+
     this.main_canvas.addEventListener( 'mousemove', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 0){
         return(null);
@@ -694,6 +708,76 @@ class THREEBRAIN_CANVAS {
       };
 
     }, false );
+
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : ['click', 'dblclick'].includes( evt.action ) || ( evt.action === 'mousedown' && evt.event.button === 2 ),
+          type  : 'clickable'
+        });
+      },
+      (res, evt) => {
+        if( res.target_object ){
+          this.object_chosen = res.target_object;
+          console.debug('object selected ' + res.target_object.name);
+        }else{
+          this.object_chosen = undefined;
+        }
+      },
+      'set_obj_chosen'
+    );
+
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : true,
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const first_item = res.first_item;
+        if( first_item ){
+          const target_object = res.target_object,
+                from = first_item.point,
+                direction = first_item.face.normal.normalize();
+
+          // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
+          direction.transformDirection( target_object.matrixWorld );
+          let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
+          if(back){
+            direction.applyMatrix3(new THREE.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
+          }
+
+          this.mouse_helper.position.fromArray( to_array(from) );
+          this.mouse_helper.setDirection(direction);
+          this.mouse_helper.visible = true;
+
+        }else{
+          this.mouse_helper.visible = false;
+        }
+
+        this.start_animation(0);
+      },
+      'raycaster'
+    );
+
+    if( this.DEBUG ){
+      this.add_mouse_callback(
+        (evt) => {
+          return({
+            pass  : evt.action !== 'mousemove',
+            type  : 'clickable'
+          });
+        },
+        (res, evt) => {
+          console.log( evt );
+          console.debug( `${res.items.length} items found by raycaster.` );
+        },
+        'debug'
+      );
+    }
+
+
   }
 
   get_mouse(){
@@ -787,11 +871,8 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  add_mouse_callback(check, callback, reset = false){
-    if( reset ){
-      this._mouse_click_callbacks.length = 0;
-    }
-    this._mouse_click_callbacks.push( [check, callback] );
+  add_mouse_callback(check, callback, name){
+    this._mouse_click_callbacks[name] = [check, callback];
   }
 
   /*
@@ -809,60 +890,49 @@ class THREEBRAIN_CANVAS {
       this._mouse_helper_sleep_count = 0;
     }
 
-    if(this.disable_raycast && (
-      this.mouse_event.action != 'dblclick' &&
-      this.mouse_event.action != 'click'
-    )){
-      return(null);
-    }
 
-    const clickable_only = !(this.mouse_event.action == 'click' && this.mouse_event.button == 2);
+    // Call callbacks
+    let raycast_result;
+
+    for( let _cb_name in this._mouse_click_callbacks ){
+      let callback = this._mouse_click_callbacks[ _cb_name ];
+      const request = callback[0]( this.mouse_event );
+      if( request.pass ){
+        // raycast object
+        if( raycast_result === undefined ){
+          // Do simple, fast raycast
+          raycast_result = {
+            type  : request.type === 'full' ? 'full' : 'clickable',
+            items : this._fast_raycast( request.type === 'clickable' )
+          };
+        }
+
+        // If clickable was performed, but full is requested
+        if( request.type === 'full' && raycast_result.type === 'clickable' ){
+          raycast_result = {
+            type  : 'full',
+            items : this._fast_raycast( false )
+          };
+        }
+
+        // Find object_chosen
+        if( raycast_result.items.length > 0 ){
+          // Has intersects!
+          const first_item = raycast_result.items[0],
+                target_object = first_item.object;
+
+          raycast_result.first_item = first_item;
+          raycast_result.target_object = target_object;
+        }
+
+        callback[1]( raycast_result, this.mouse_event );
+      }
+    }
 
     this.mouse_event.dispose = true;
     if(this.mouse_event.level <= 2){
       this.mouse_event.level = 0;
     }
-
-
-    let items = this._fast_raycast(clickable_only);
-    if(items.length > 0){
-      // Has intersects!
-      let first_item = items[0],
-          target_object = first_item.object,
-          from = first_item.point,
-          direction = first_item.face.normal.normalize();
-
-      // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
-      direction.transformDirection( target_object.matrixWorld );
-      let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
-
-
-      if(back){
-        direction.applyMatrix3(new THREE.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
-      }
-
-
-      if(this.DEBUG && ['dblclick', 'click'].includes(this.mouse_event.action)){
-        console.debug('object selected ' + target_object.name);
-      }
-      if(['dblclick', 'click'].includes(this.mouse_event.action)){
-        this.object_chosen = target_object;
-        this._mouse_click_callbacks.forEach((callback) => {
-          const result = callback[0]( this.mouse_event );
-          if( result ){
-            callback[1]( target_object, this.mouse_event );
-          }
-        });
-      }
-
-      this.mouse_helper.position.fromArray( to_array(from) );
-      this.mouse_helper.setDirection(direction);
-      this.mouse_helper.visible = true;
-    }else{
-      this.mouse_helper.visible = false;
-    }
-
-    this.start_animation(0);
 
   }
 
@@ -1662,22 +1732,27 @@ class THREEBRAIN_CANVAS {
 
       // Add handlers to set plane location when an electrode is clicked
       this.add_mouse_callback(
-        // Check
-        ( evt ) => {
-          return( evt.action === 'click' && evt.event.button === 0 );
+        (evt) => {
+          return({
+            pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+            type  : 'clickable'
+          });
         },
-        // Callbacks
-        (obj, evt) => {
-        if( obj.isMesh && obj.userData.construct_params ){
-          const pos = obj.position;
-          // calculate depth
-          this.set_side_depth(
-            (pos.y - cube_center[1]) * 128 / cube_half_size[1] - 0.5,
-            (pos.z - cube_center[2]) * 128 / cube_half_size[2] - 0.5,
-            (pos.x - cube_center[0]) * 128 / cube_half_size[0] - 0.5
-          );
-        }
-      });
+        ( res, evt ) => {
+          const obj = res.target_object;
+          if( obj && obj.isMesh && obj.userData.construct_params ){
+            const pos = obj.position;
+            // calculate depth
+            this.set_side_depth(
+              (pos.y - cube_center[1]) * 128 / cube_half_size[1] - 0.5,
+              (pos.z - cube_center[2]) * 128 / cube_half_size[2] - 0.5,
+              (pos.x - cube_center[0]) * 128 / cube_half_size[0] - 0.5
+            );
+
+          }
+        },
+        'side_viewer_depth'
+      );
 
 
       this.set_coronal_depth = ( depth ) => {

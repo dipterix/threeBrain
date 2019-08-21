@@ -440,27 +440,32 @@ class BrainCanvas{
 
   _set_info_callback(){
     this.canvas.add_mouse_callback(
-      (evt) => { return( true ); },
-      (obj, evt) => {
-      if(obj.userData){
-        let g = obj.userData.construct_params,
+      (evt) => {
+        return({
+          pass  : evt.action === 'click' || evt.action === 'dblclick',
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.userData ){
+          let g = obj.userData.construct_params,
             pos = obj.getWorldPosition( new THREE.Vector3() );
 
-        // Get information and show them on screen
-        let group_name = g.group ? g.group.group_name : '(No Group)';
+          // Get information and show them on screen
+          let group_name = g.group ? g.group.group_name : '(No Group)';
 
-        let shiny_data = {
-          object: g,
-          group: group_name,
-          position: pos,
-          event: evt
-        };
-        this.shiny.to_shiny(shiny_data, '_mouse_event');
-
-        return(null);
-      }
-      // this.set_legend_value( [0], [0], '' );
-    }, true);
+          let shiny_data = {
+            object: g,
+            group: group_name,
+            position: pos,
+            event: evt
+          };
+          this.shiny.to_shiny(shiny_data, '_mouse_event');
+        }
+      },
+      'show_info'
+    );
 
     /* this.canvas.set_animation_callback((obj, v, t) => {
       let txt = '';
