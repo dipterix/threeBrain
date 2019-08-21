@@ -179,6 +179,7 @@ threejs_brain <- function(
     show_legend = show_legend,
     control_presets = control_presets,
     cache_folder = paste0(lib_path, widget_id, '-0/'),
+    lib_path = lib_path,
     optionals = optionals,
     debug = debug,
     has_animation = v_count > 1,

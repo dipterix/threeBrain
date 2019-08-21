@@ -196,50 +196,18 @@ class BrainCanvas{
       this.hide_controls = false;
     }
 
+    // Add listeners
     const control_presets = this.settings.control_presets;
     const presets = new THREEBRAIN_PRESETS( this.canvas, gui, this.optionals.map_to_template || false);
     if(this.DEBUG){
       window.presets = presets;
     }
 
-    to_array( control_presets ).forEach((control_preset) => {
-      try {
-        presets[control_preset]();
+    // ---------------------------- Main, side canvas settings is on top
+    gui.add_folder('Main Canvas').open();
 
-        let callback = presets[control_preset + '_callback'];
-        if(typeof(callback) === 'function'){
-          callback();
-        }
-      } catch (e) {
-        if(this.DEBUG){
-          console.warn(e);
-        }
-      }
-    });
-
-    // GUI folders to keep them in order
-    gui.add_folder('Graphics');
-    gui.add_folder('Misc');
-
-
-    // Add listeners
-
-    // Background color
-    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
-      .onChange((v) => {
-        let inversedColor = invertColor(v);
-        this.canvas.main_renderer.setClearColor(v);
-        this.canvas.side_renderer.setClearColor(v);
-        this.el_text.style.color=inversedColor;
-        // this.el_text2.style.color=inversedColor;
-        this.el.style.backgroundColor = v;
-
-        this.canvas.start_animation(0);
-        this.canvas.background_color = v;
-        this.canvas.foreground_color = inversedColor;
-      });
-
-    gui.add_item('Record Video', false, {folder_name: 'Default'})
+    // Record videos on the main scene
+    gui.add_item('Record Video', false, {folder_name: 'Main Canvas'})
       .onChange((v) =>{
 
         if(v){
@@ -287,11 +255,154 @@ class BrainCanvas{
 
       });
 
+    gui.add_item('Reset', () => {
+      this.canvas.reset_controls();
+      this.canvas.controls.enabled = true;
+    }, {folder_name: 'Main Canvas'});
 
-    gui.add_item('Lock Camera', false, {folder_name: 'Misc'})
-      .onChange((v) => {
-        this.canvas.controls.enabled = !v;
+    const _camera_pos = gui.add_item('Camera Position', '[free rotate]', {
+      args : ['[free rotate]', '[lock]', 'right', 'left', 'anterior', 'posterior', 'superior', 'inferior'],
+      folder_name : 'Main Canvas'
+    }).onChange((v) => {
+      this.canvas.controls.enabled = false;
+      switch (v) {
+        case '[free rotate]':
+          this.canvas.controls.enabled = true;
+          break;
+        case '[lock]':
+          this.canvas.controls.enabled = false;
+          break;
+        case 'right':
+          this.canvas.main_camera.position.set( 500, 0, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'left':
+          this.canvas.main_camera.position.set( -500, 0, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'anterior':
+          this.canvas.main_camera.position.set( 0, 500, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'posterior':
+          this.canvas.main_camera.position.set( 0, -500, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'superior':
+          this.canvas.main_camera.position.set( 0, 0, 500 );
+          this.canvas.main_camera.up.set( 0, 1, 0 );
+          break;
+        case 'inferior':
+          this.canvas.main_camera.position.set( 0, 0, -500 );
+          this.canvas.main_camera.up.set( 0, -1, 0 );
+          break;
+      }
+
+      this.canvas.start_animation( 0 );
+    });
+
+    gui.add_item('Free Controls', () => {
+      _camera_pos.setValue( '[free rotate]' );
+      this.canvas.controls.enabled = true;
+    }, {folder_name: 'Main Canvas'});
+
+
+    // ---------------------------- Side cameras
+    if( this.settings.side_camera ){
+
+      gui.add_folder('Side Canvas').open();
+
+      gui.add_item('Show Panels', true, {folder_name: 'Side Canvas'})
+        .onChange((v) => {
+          if( v ){
+            this.canvas.enable_side_cameras();
+          }else{
+            this.canvas.disable_side_cameras();
+          }
+        });
+
+      gui.add_item('Reset Position', () => {this.canvas.reset_side_canvas( true, true )},
+                    {folder_name: 'Side Canvas'});
+
+      // side plane
+      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Side Canvas'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_coronal_depth( v );
+        });
+      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Side Canvas'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_axial_depth( v );
+        });
+      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Side Canvas'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_sagittal_depth( v );
+        });
+      [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c) => {
+        _c.domElement.addEventListener('mousewheel', (evt) => {
+          if( evt.altKey ){
+            evt.preventDefault();
+            const current_val = _c.getValue();
+            _c.setValue( current_val + evt.deltaY );
+          }
+        });
       });
+
+      this.canvas.set_side_depth = (c, a, s) => {
+        if( typeof c === 'number' ){
+          _controller_coronal.setValue( c );
+        }
+        if( typeof a === 'number' ){
+          _controller_axial.setValue( a || 0 );
+        }
+        if( typeof s === 'number' ){
+          _controller_sagittal.setValue( s || 0 );
+        }
+      };
+
+      gui.add_item('Overlay Viewers', 'none', {args: ['none','coronal','axial','sagittal'], folder_name: 'Side Canvas'})
+        .onChange( this.canvas.set_side_visibility );
+
+      gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
+        .onChange( this.canvas.set_cube_anchor_visibility );
+    }
+
+
+
+    // ---------------------------- Presets
+    to_array( control_presets ).forEach((control_preset) => {
+      try {
+        presets[control_preset]();
+
+        let callback = presets[control_preset + '_callback'];
+        if(typeof(callback) === 'function'){
+          callback();
+        }
+      } catch (e) {
+        if(this.DEBUG){
+          console.warn(e);
+        }
+      }
+    });
+
+    // ---------------------------- Misc
+    gui.add_folder('Misc');
+
+    /* Misc settings */
+    // Background color
+    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
+      .onChange((v) => {
+        let inversedColor = invertColor(v);
+        this.canvas.main_renderer.setClearColor(v);
+        this.canvas.side_renderer.setClearColor(v);
+        this.el_text.style.color=inversedColor;
+        // this.el_text2.style.color=inversedColor;
+        this.el.style.backgroundColor = v;
+
+        this.canvas.start_animation(0);
+        this.canvas.background_color = v;
+        this.canvas.foreground_color = inversedColor;
+      });
+
 
     const _legend_callback = (v) => {
       this.show_legend = v;
@@ -309,75 +420,26 @@ class BrainCanvas{
 
       this.canvas.start_animation(0);
 
-      /*
-      if(v){
-        let c = gui.get_controller('Background Color', 'Misc');
-        if ( c && typeof( c.getValue ) === 'function' ){
-          let iv = invertColor( c.getValue() );
-
-          // TODO: change background color
-          this.legend.render();
-
-        }else{
-          this.legend.render();
-        }
-
-      }
-      */
     };
-    gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Graphics'})
+    gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Misc'})
       .onChange(_legend_callback);
 
     _legend_callback(this.settings.show_legend);
 
+    /*
     gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
       .onChange((v) =>{
         this.canvas.disable_raycast = !v;
       });
+    */
 
-    // check if it's chome browser
+    // ---------------------------- Default
+
     gui.add_item('Viewer Title', '', {folder_name: 'Default'})
       .onChange((v) => {
         this.canvas.title = v;
         this.canvas.start_animation(0);
       });
-
-    gui.add_item('Reset Camera [M]', () => {this.canvas.reset_controls()}, {folder_name: 'Default'});
-
-    if( this.settings.side_camera ){
-      gui.add_item('Hide Canvas [S]', false, {folder_name: 'Default'})
-        .onChange((v) => {
-          if( v ){
-            this.canvas.disable_side_cameras();
-          }else{
-            this.canvas.enable_side_cameras();
-          }
-        });
-      gui.add_item('Reset Canvas [S]', () => {this.canvas.reset_side_canvas( true, true )},
-                    {folder_name: 'Default'});
-
-      // side plane
-      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Default'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_coronal_depth( v );
-        });
-      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Default'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_axial_depth( v );
-        });
-      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Default'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_sagittal_depth( v );
-        });
-      this.canvas.set_side_depth = (c, a, s) => {
-        _controller_coronal.setValue( c || 0 );
-        _controller_axial.setValue( a || 0 );
-        _controller_sagittal.setValue( s || 0 );
-      };
-
-      gui.add_item('Overlay Viewers', 'none', {args: ['none','coronal','axial','sagittal'], folder_name: 'Default'})
-        .onChange( this.canvas.set_side_visibility );
-    }
 
     return(gui);
 
@@ -599,6 +661,16 @@ class BrainCanvas{
       this.canvas.add_group(g, this.settings.cache_folder);
 
     });
+
+    // Load fonts
+    /*
+    this.canvas.load_file(
+      this.settings.lib_path + 'threejs-0.101.1/fonts/helvetiker_regular.typeface.json',
+      (v) => {
+        this.canvas.font_library = v;
+      }, 'font_loader'
+    );
+    */
 
     // Make sure the data loading process is on
     if( !this.canvas.loader_triggered ){

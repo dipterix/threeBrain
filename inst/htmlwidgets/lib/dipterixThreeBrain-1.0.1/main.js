@@ -53379,6 +53379,96 @@ const register_volume2DShader1 = function(THREE){
 
 
 
+// CONCATENATED MODULE: ./src/js/ext/text_sprite.js
+/*
+* Sprite fonts, modified from
+* https://github.com/vasturiano/THREE-spritetext/blob/master/src/index.js
+* Thanks vasturiano for providing the source code
+*/
+
+function add_text_sprite(THREE){
+
+  class TextSprite extends THREE.Sprite {
+    constructor(text = '', textHeight = 10, color = 'rgba(255, 255, 255, 1)', font_face = 'Arial') {
+      super(new THREE.SpriteMaterial({ map: new THREE.Texture(), transparent:true, opacity: 0.5 }));
+      this._text = text;
+      this._textHeight = textHeight;
+      this._color = color;
+
+      this._fontFace = font_face;
+      this._fontSize = 90; // defines text resolution
+      this._fontWeight = 'normal';
+
+      this._canvas = document.createElement('canvas');
+      this._texture = this.material.map;
+      this._texture.minFilter = THREE.LinearFilter;
+
+      this._genCanvas();
+    }
+
+    get text() { return this._text; }
+    set text(text) { this._text = text; this._genCanvas(); }
+    get textHeight() { return this._textHeight; }
+    set textHeight(textHeight) { this._textHeight = textHeight; this._genCanvas(); }
+    get color() { return this._color; }
+    set color(color) { this._color = color; this._genCanvas(); }
+    get fontFace() { return this._fontFace; }
+    set fontFace(fontFace) { this._fontFace = fontFace; this._genCanvas(); }
+    get fontSize() { return this._fontSize; }
+    set fontSize(fontSize) { this._fontSize = fontSize; this._genCanvas(); }
+    get fontWeight() { return this._fontWeight; }
+    set fontWeight(fontWeight) { this._fontWeight = fontWeight; this._genCanvas(); }
+
+
+    _genCanvas() {
+      const canvas = this._canvas;
+      const ctx = canvas.getContext('2d');
+
+      const font = `${this.fontWeight} ${this.fontSize}px ${this.fontFace}`;
+
+      ctx.font = font;
+      const textWidth = ctx.measureText(this.text).width;
+      canvas.width = textWidth;
+      canvas.height = this.fontSize;
+
+      ctx.font = font;
+      ctx.fillStyle = this.color;
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(this.text, 0, canvas.height);
+
+      // Inject canvas into sprite
+      this._texture.image = canvas;
+      this._texture.needsUpdate = true;
+
+      this.scale.set(this.textHeight * canvas.width / canvas.height, this.textHeight);
+    }
+
+    clone() {
+      return new this.constructor(this.text, this.textHeight, this.color, this._fontFace).copy(this);
+    }
+
+    copy(source) {
+      THREE.Sprite.prototype.copy.call(this, source);
+
+      this.color = source.color;
+      this.fontFace = source.fontFace;
+      this.fontSize = source.fontSize;
+      this.fontWeight = source.fontWeight;
+
+      return this;
+    }
+
+  }
+
+  THREE.TextSprite = TextSprite;
+
+  return(THREE);
+
+}
+
+
+
+
 // CONCATENATED MODULE: ./src/js/threeplugins.js
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return threeplugins_THREE; });
 
@@ -53393,12 +53483,14 @@ const register_volume2DShader1 = function(THREE){
 
 
 
+
 let threeplugins_THREE = register_lut( three_module_namespaceObject );
 
 threeplugins_THREE = register_orthographic_controls( threeplugins_THREE );
 threeplugins_THREE = register_octree( threeplugins_THREE );
 threeplugins_THREE = register_volumeShader1( threeplugins_THREE );
 threeplugins_THREE = register_volume2DShader1( threeplugins_THREE );
+threeplugins_THREE = add_text_sprite( threeplugins_THREE );
 
 
 
@@ -74024,6 +74116,7 @@ window.requestAnimationFrame =
     };
 
 const cached_storage = new _threebrain_cache_js__WEBPACK_IMPORTED_MODULE_3__[/* THREEBRAIN_STORAGE */ "a"]();
+const MAX_RENDER_ORDER = 9999999;
 
 class THREEBRAIN_CANVAS {
   constructor(
@@ -74057,6 +74150,7 @@ class THREEBRAIN_CANVAS {
     this.disable_raycast = true;
     this.render_legend = false;
     this.color_type = 'continuous';
+    this._mouse_click_callbacks = {};
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
@@ -74350,20 +74444,33 @@ class THREEBRAIN_CANVAS {
 
           console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
           if( nm === 'coronal' ){
-            this._sagital_depth = _x;
+            this._sagittal_depth = _x;
             this._axial_depth = -_y;
           }else if( nm === 'axial' ){
-            this._sagital_depth = _x;
+            this._sagittal_depth = _x;
             this._coronal_depth = -_y;
           }else if( nm === 'sagittal' ){
             this._coronal_depth = -_x;
             this._axial_depth = -_y;
           }
-          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagital_depth );
+          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
 
         }
       } );
       toggle_pan_canvas( 'select' );
+
+      // Make cvs scrollable, but change slices
+      cvs.addEventListener("mousewheel", (evt) => {
+        evt.preventDefault();
+        if( evt.altKey ){
+          if( evt.deltaY > 0 ){
+            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
+          }else if( evt.deltaY < 0 ){
+            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
+          }
+        }
+        this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+      });
 
       // Make resizable, keep current width and height
       Object(_libs_resizable_js__WEBPACK_IMPORTED_MODULE_5__[/* make_resizable */ "a"])( div, true );
@@ -74512,7 +74619,7 @@ class THREEBRAIN_CANVAS {
     mouse_helper.layers.set(8);
 
     // In side cameras, always render mouse_helper_root on top
-    mouse_helper_root.renderOrder = 9999999;
+    mouse_helper_root.renderOrder = MAX_RENDER_ORDER;
     mouse_helper_root.material.depthTest = false;
     // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
@@ -74562,6 +74669,7 @@ class THREEBRAIN_CANVAS {
     this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
 
     this.json_loader = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].FileLoader( this.loader_manager );
+    this.font_loader = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].FontLoader( this.loader_manager );
 
   }
 
@@ -74647,6 +74755,20 @@ class THREEBRAIN_CANVAS {
 
     }, false );
 
+    this.main_canvas.addEventListener( 'contextmenu', (event) => { // Use => to create flexible access to this
+      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
+        return(null);
+      }
+      this.mouse_event = {
+        'action' : 'contextmenu',
+        'button' : event.button,
+        'event' : event,
+        'dispose' : false,
+        'level' : 1
+      };
+
+    }, false );
+
     this.main_canvas.addEventListener( 'mousemove', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 0){
         return(null);
@@ -74680,6 +74802,76 @@ class THREEBRAIN_CANVAS {
       };
 
     }, false );
+
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : ['click', 'dblclick'].includes( evt.action ) || ( evt.action === 'mousedown' && evt.event.button === 2 ),
+          type  : 'clickable'
+        });
+      },
+      (res, evt) => {
+        if( res.target_object ){
+          this.object_chosen = res.target_object;
+          console.debug('object selected ' + res.target_object.name);
+        }else{
+          this.object_chosen = undefined;
+        }
+      },
+      'set_obj_chosen'
+    );
+
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : true,
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const first_item = res.first_item;
+        if( first_item ){
+          const target_object = res.target_object,
+                from = first_item.point,
+                direction = first_item.face.normal.normalize();
+
+          // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
+          direction.transformDirection( target_object.matrixWorld );
+          let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
+          if(back){
+            direction.applyMatrix3(new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
+          }
+
+          this.mouse_helper.position.fromArray( Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(from) );
+          this.mouse_helper.setDirection(direction);
+          this.mouse_helper.visible = true;
+
+        }else{
+          this.mouse_helper.visible = false;
+        }
+
+        this.start_animation(0);
+      },
+      'raycaster'
+    );
+
+    if( this.DEBUG ){
+      this.add_mouse_callback(
+        (evt) => {
+          return({
+            pass  : evt.action !== 'mousemove',
+            type  : 'clickable'
+          });
+        },
+        (res, evt) => {
+          console.log( evt );
+          console.debug( `${res.items.length} items found by raycaster.` );
+        },
+        'debug'
+      );
+    }
+
+
   }
 
   get_mouse(){
@@ -74773,8 +74965,8 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  set_mouse_click_callback(callback){
-    this._mouse_click_callback = callback;
+  add_mouse_callback(check, callback, name){
+    this._mouse_click_callbacks[name] = [check, callback];
   }
 
   /*
@@ -74792,57 +74984,49 @@ class THREEBRAIN_CANVAS {
       this._mouse_helper_sleep_count = 0;
     }
 
-    if(this.disable_raycast && (
-      this.mouse_event.action != 'dblclick' &&
-      this.mouse_event.action != 'click'
-    )){
-      return(null);
-    }
 
-    const clickable_only = !(this.mouse_event.action == 'click' && this.mouse_event.button == 2);
+    // Call callbacks
+    let raycast_result;
+
+    for( let _cb_name in this._mouse_click_callbacks ){
+      let callback = this._mouse_click_callbacks[ _cb_name ];
+      const request = callback[0]( this.mouse_event );
+      if( request.pass ){
+        // raycast object
+        if( raycast_result === undefined ){
+          // Do simple, fast raycast
+          raycast_result = {
+            type  : request.type === 'full' ? 'full' : 'clickable',
+            items : this._fast_raycast( request.type === 'clickable' )
+          };
+        }
+
+        // If clickable was performed, but full is requested
+        if( request.type === 'full' && raycast_result.type === 'clickable' ){
+          raycast_result = {
+            type  : 'full',
+            items : this._fast_raycast( false )
+          };
+        }
+
+        // Find object_chosen
+        if( raycast_result.items.length > 0 ){
+          // Has intersects!
+          const first_item = raycast_result.items[0],
+                target_object = first_item.object;
+
+          raycast_result.first_item = first_item;
+          raycast_result.target_object = target_object;
+        }
+
+        callback[1]( raycast_result, this.mouse_event );
+      }
+    }
 
     this.mouse_event.dispose = true;
     if(this.mouse_event.level <= 2){
       this.mouse_event.level = 0;
     }
-
-
-    let items = this._fast_raycast(clickable_only);
-    if(items.length > 0){
-      // Has intersects!
-      let first_item = items[0],
-          target_object = first_item.object,
-          from = first_item.point,
-          direction = first_item.face.normal.normalize();
-
-      // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
-      direction.transformDirection( target_object.matrixWorld );
-      let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
-
-
-      if(back){
-        direction.applyMatrix3(new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
-      }
-
-
-      if(this.DEBUG && ['dblclick', 'click'].includes(this.mouse_event.action)){
-        console.debug('object selected ' + target_object.name);
-      }
-      if(['dblclick', 'click'].includes(this.mouse_event.action)){
-        this.object_chosen = target_object;
-        if(this._mouse_click_callback !== undefined){
-          this._mouse_click_callback(target_object, this.mouse_event);
-        }
-      }
-
-      this.mouse_helper.position.fromArray( Object(_utils_js__WEBPACK_IMPORTED_MODULE_0__[/* to_array */ "b"])(from) );
-      this.mouse_helper.setDirection(direction);
-      this.mouse_helper.visible = true;
-    }else{
-      this.mouse_helper.visible = false;
-    }
-
-    this.start_animation(0);
 
   }
 
@@ -75558,6 +75742,13 @@ class THREEBRAIN_CANVAS {
   set_side_depth( c_d, a_d, s_d ){
     console.log('Set side depth not implemented');
   }
+  set_side_visibility( which ){
+    console.log('Set side visibility not implemented');
+  }
+  set_cube_anchor_visibility( visible ){
+    console.log('Set cube anchor visibility not implemented');
+  }
+
 
   // Generic method to add objects
   add_object(g){
@@ -75616,18 +75807,84 @@ class THREEBRAIN_CANVAS {
         plane.updateMatrixWorld();
       });
 
+
       // Register depth functions
       const cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),           // XYZ slice counts
             cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),     // XYZ pixel heights (* 0.5)
             cube_pos = g.position,
             cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])});
+
+      // Add anchors to visualize the intersection
+      const cube_anchor = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Group();
+      cube_anchor.renderOrder = MAX_RENDER_ORDER - 100;
+      cube_anchor.position.fromArray( cube_center );
+      ['z', 'y', 'x'].forEach( (a, ii) => {
+        const geom = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].CylinderBufferGeometry( 0.5, 0.5, 3, 8 );
+        const color = Math.pow(256, ii+1) - Math.pow(256, ii);
+        if( a === 'x' ){
+          geom.rotateZ( Math.PI / 2 );
+        }else if ( a === 'z' ){
+          geom.rotateX( Math.PI / 2 );
+        }
+        const line = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Mesh( geom, new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].MeshBasicMaterial({ color: color, depthTest : false, side: _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].DoubleSide }) );
+        line.layers.set( 8 );
+        cube_anchor.add( line );
+      } );
+      // Add fonts
+      const _r = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextSprite('R', 3, 'rgba(255, 0, 0, 1)'); _r.position.set( 5, 0, 0 );
+      const _l = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextSprite('L', 3, 'rgba(255, 0, 0, 1)'); _l.position.set( -5, 0, 0 );
+      const _i = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextSprite('I', 3, 'rgba(0, 0, 255, 1)'); _i.position.set( 0, 0, -5 );
+      const _s = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextSprite('S', 3, 'rgba(0, 0, 255, 1)'); _s.position.set( 0, 0, 5 );
+      const _a = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextSprite('A', 3, 'rgba(0, 255, 0, 1)'); _a.position.set( 0, 5, 0 );
+      const _p = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].TextSprite('P', 3, 'rgba(0, 255, 0, 1)'); _p.position.set( 0, -5, 0 );
+
+      [_r,_l,_a,_p,_i,_s].forEach((_t) => {
+        _t.layers.set( 8 );
+        _t.material.depthTest = false;
+        cube_anchor.add( _t );
+      });
+
+
+      this.set_cube_anchor_visibility = ( visible ) => {
+        cube_anchor.visible = visible;
+        this.start_animation( 0 );
+      };
+      gp.add( cube_anchor );
+
+      // Add handlers to set plane location when an electrode is clicked
+      this.add_mouse_callback(
+        (evt) => {
+          return({
+            pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+            type  : 'clickable'
+          });
+        },
+        ( res, evt ) => {
+          const obj = res.target_object;
+          if( obj && obj.isMesh && obj.userData.construct_params ){
+            const pos = obj.position;
+            // calculate depth
+            this.set_side_depth(
+              (pos.y - cube_center[1]) * 128 / cube_half_size[1] - 0.5,
+              (pos.z - cube_center[2]) * 128 / cube_half_size[2] - 0.5,
+              (pos.x - cube_center[0]) * 128 / cube_half_size[0] - 0.5
+            );
+
+          }
+        },
+        'side_viewer_depth'
+      );
+
+
       this.set_coronal_depth = ( depth ) => {
         let idx_mid = cube_dimension[1] / 2;
         if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
 
         m[0].position.y = cube_center[1] + (depth + 0.5) / 128 * cube_half_size[1];
+        cube_anchor.position.y = m[0].position.y;
         m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
         m[0].material.needsUpdate = true;
+        this._coronal_depth = depth;
         // Animate on next refresh
         this.start_animation( 0 );
       };
@@ -75635,8 +75892,10 @@ class THREEBRAIN_CANVAS {
         let idx_mid = cube_dimension[2] / 2;
         if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
         m[1].position.z = cube_center[2] + (depth + 0.5) / 128 * cube_half_size[2];
+        cube_anchor.position.z = m[1].position.z;
         m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
         m[1].material.needsUpdate = true;
+        this._axial_depth = depth;
         // Animate on next refresh
         this.start_animation( 0 );
       };
@@ -75644,9 +75903,26 @@ class THREEBRAIN_CANVAS {
         let idx_mid = cube_dimension[0] / 2;
         if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
         m[2].position.x = cube_center[0] + (depth + 0.5) / 128 * cube_half_size[0];
+        cube_anchor.position.x = m[2].position.x;
         m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
         m[2].material.needsUpdate = true;
+        this._sagittal_depth = depth;
         // Animate on next refresh
+        this.start_animation( 0 );
+      };
+
+      this.set_side_visibility = ( which ) => {
+        m.forEach((plane) => {
+          plane.layers.disable(8);
+        });
+        if( which === 'coronal' ){
+          m[0].layers.enable(8);
+        }else if( which === 'axial' ){
+          m[1].layers.enable(8);
+        }else if( which === 'sagittal' ){
+          m[2].layers.enable(8);
+        }
+
         this.start_animation( 0 );
       };
 
@@ -75692,7 +75968,12 @@ class THREEBRAIN_CANVAS {
     return(this.json_load_finished);
   }
 
-  load_file(path, onLoad){
+  load_file(path, onLoad, loader = 'json_loader'){
+
+    loader = this[ loader ];
+    if( !loader ){
+      loader = this.json_loader;
+    }
 
 
     if( this.use_cache ){
@@ -75702,7 +75983,7 @@ class THREEBRAIN_CANVAS {
         onLoad( this.cache.get_item( path ) );
       }else{
         this.loader_triggered = true;
-        this.json_loader.load( path, (v) => {
+        loader.load( path, (v) => {
           if(typeof(v) === 'string'){
             v = JSON.parse(v);
           }
@@ -75712,7 +75993,7 @@ class THREEBRAIN_CANVAS {
       }
     }else{
       this.loader_triggered = true;
-      this.json_loader.load( path , (v) => {
+      loader.load( path , (v) => {
         if(typeof(v) === 'string'){
           v = JSON.parse(v);
         }
@@ -77576,7 +77857,7 @@ const WEBGL = {
 
 
 
-// EXTERNAL MODULE: ./src/js/threeplugins.js + 6 modules
+// EXTERNAL MODULE: ./src/js/threeplugins.js + 7 modules
 var threeplugins = __webpack_require__(0);
 
 // CONCATENATED MODULE: ./src/js/libs/dat.gui.module.js
@@ -80258,11 +80539,20 @@ class data_controls_THREEBRAIN_PRESETS{
         .min(min).max(max).step(step).onChange((v) => {this._update_canvas()});
     this._ani_time = this.gui.get_controller('Time', 'Timeline');
 
+    this._ani_time.domElement.addEventListener('mousewheel', (evt) => {
+      if( evt.altKey ){
+        evt.preventDefault();
+        const current_val = this._ani_time.getValue();
+        this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
+      }
+    });
+
+    this.gui.folders[ "Timeline" ].open();
 
   }
 
 
-  color_group(item_name = 'Show Groups', folder_name = 'Graphics'){
+  color_group(item_name = 'Show Groups', folder_name = 'Geometry'){
     const group_names = this._electrode_group_names();
     // check how many groups
     const col_pal = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9", "#000000"];
@@ -81172,50 +81462,18 @@ class src_BrainCanvas{
       this.hide_controls = false;
     }
 
+    // Add listeners
     const control_presets = this.settings.control_presets;
     const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, gui, this.optionals.map_to_template || false);
     if(this.DEBUG){
       window.presets = presets;
     }
 
-    Object(utils["b" /* to_array */])( control_presets ).forEach((control_preset) => {
-      try {
-        presets[control_preset]();
+    // ---------------------------- Main, side canvas settings is on top
+    gui.add_folder('Main Canvas').open();
 
-        let callback = presets[control_preset + '_callback'];
-        if(typeof(callback) === 'function'){
-          callback();
-        }
-      } catch (e) {
-        if(this.DEBUG){
-          console.warn(e);
-        }
-      }
-    });
-
-    // GUI folders to keep them in order
-    gui.add_folder('Graphics');
-    gui.add_folder('Misc');
-
-
-    // Add listeners
-
-    // Background color
-    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
-      .onChange((v) => {
-        let inversedColor = Object(utils["a" /* invertColor */])(v);
-        this.canvas.main_renderer.setClearColor(v);
-        this.canvas.side_renderer.setClearColor(v);
-        this.el_text.style.color=inversedColor;
-        // this.el_text2.style.color=inversedColor;
-        this.el.style.backgroundColor = v;
-
-        this.canvas.start_animation(0);
-        this.canvas.background_color = v;
-        this.canvas.foreground_color = inversedColor;
-      });
-
-    gui.add_item('Record Video', false, {folder_name: 'Default'})
+    // Record videos on the main scene
+    gui.add_item('Record Video', false, {folder_name: 'Main Canvas'})
       .onChange((v) =>{
 
         if(v){
@@ -81263,11 +81521,154 @@ class src_BrainCanvas{
 
       });
 
+    gui.add_item('Reset', () => {
+      this.canvas.reset_controls();
+      this.canvas.controls.enabled = true;
+    }, {folder_name: 'Main Canvas'});
 
-    gui.add_item('Lock Camera', false, {folder_name: 'Misc'})
-      .onChange((v) => {
-        this.canvas.controls.enabled = !v;
+    const _camera_pos = gui.add_item('Camera Position', '[free rotate]', {
+      args : ['[free rotate]', '[lock]', 'right', 'left', 'anterior', 'posterior', 'superior', 'inferior'],
+      folder_name : 'Main Canvas'
+    }).onChange((v) => {
+      this.canvas.controls.enabled = false;
+      switch (v) {
+        case '[free rotate]':
+          this.canvas.controls.enabled = true;
+          break;
+        case '[lock]':
+          this.canvas.controls.enabled = false;
+          break;
+        case 'right':
+          this.canvas.main_camera.position.set( 500, 0, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'left':
+          this.canvas.main_camera.position.set( -500, 0, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'anterior':
+          this.canvas.main_camera.position.set( 0, 500, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'posterior':
+          this.canvas.main_camera.position.set( 0, -500, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'superior':
+          this.canvas.main_camera.position.set( 0, 0, 500 );
+          this.canvas.main_camera.up.set( 0, 1, 0 );
+          break;
+        case 'inferior':
+          this.canvas.main_camera.position.set( 0, 0, -500 );
+          this.canvas.main_camera.up.set( 0, -1, 0 );
+          break;
+      }
+
+      this.canvas.start_animation( 0 );
+    });
+
+    gui.add_item('Free Controls', () => {
+      _camera_pos.setValue( '[free rotate]' );
+      this.canvas.controls.enabled = true;
+    }, {folder_name: 'Main Canvas'});
+
+
+    // ---------------------------- Side cameras
+    if( this.settings.side_camera ){
+
+      gui.add_folder('Side Canvas').open();
+
+      gui.add_item('Show Panels', true, {folder_name: 'Side Canvas'})
+        .onChange((v) => {
+          if( v ){
+            this.canvas.enable_side_cameras();
+          }else{
+            this.canvas.disable_side_cameras();
+          }
+        });
+
+      gui.add_item('Reset Position', () => {this.canvas.reset_side_canvas( true, true )},
+                    {folder_name: 'Side Canvas'});
+
+      // side plane
+      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Side Canvas'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_coronal_depth( v );
+        });
+      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Side Canvas'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_axial_depth( v );
+        });
+      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Side Canvas'})
+        .min(-128).max(128).step(1).onChange((v) => {
+          this.canvas.set_sagittal_depth( v );
+        });
+      [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c) => {
+        _c.domElement.addEventListener('mousewheel', (evt) => {
+          if( evt.altKey ){
+            evt.preventDefault();
+            const current_val = _c.getValue();
+            _c.setValue( current_val + evt.deltaY );
+          }
+        });
       });
+
+      this.canvas.set_side_depth = (c, a, s) => {
+        if( typeof c === 'number' ){
+          _controller_coronal.setValue( c );
+        }
+        if( typeof a === 'number' ){
+          _controller_axial.setValue( a || 0 );
+        }
+        if( typeof s === 'number' ){
+          _controller_sagittal.setValue( s || 0 );
+        }
+      };
+
+      gui.add_item('Overlay Viewers', 'none', {args: ['none','coronal','axial','sagittal'], folder_name: 'Side Canvas'})
+        .onChange( this.canvas.set_side_visibility );
+
+      gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
+        .onChange( this.canvas.set_cube_anchor_visibility );
+    }
+
+
+
+    // ---------------------------- Presets
+    Object(utils["b" /* to_array */])( control_presets ).forEach((control_preset) => {
+      try {
+        presets[control_preset]();
+
+        let callback = presets[control_preset + '_callback'];
+        if(typeof(callback) === 'function'){
+          callback();
+        }
+      } catch (e) {
+        if(this.DEBUG){
+          console.warn(e);
+        }
+      }
+    });
+
+    // ---------------------------- Misc
+    gui.add_folder('Misc');
+
+    /* Misc settings */
+    // Background color
+    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
+      .onChange((v) => {
+        let inversedColor = Object(utils["a" /* invertColor */])(v);
+        this.canvas.main_renderer.setClearColor(v);
+        this.canvas.side_renderer.setClearColor(v);
+        this.el_text.style.color=inversedColor;
+        // this.el_text2.style.color=inversedColor;
+        this.el.style.backgroundColor = v;
+
+        this.canvas.start_animation(0);
+        this.canvas.background_color = v;
+        this.canvas.foreground_color = inversedColor;
+      });
+
 
     const _legend_callback = (v) => {
       this.show_legend = v;
@@ -81285,72 +81686,26 @@ class src_BrainCanvas{
 
       this.canvas.start_animation(0);
 
-      /*
-      if(v){
-        let c = gui.get_controller('Background Color', 'Misc');
-        if ( c && typeof( c.getValue ) === 'function' ){
-          let iv = invertColor( c.getValue() );
-
-          // TODO: change background color
-          this.legend.render();
-
-        }else{
-          this.legend.render();
-        }
-
-      }
-      */
     };
-    gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Graphics'})
+    gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Misc'})
       .onChange(_legend_callback);
 
     _legend_callback(this.settings.show_legend);
 
+    /*
     gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
       .onChange((v) =>{
         this.canvas.disable_raycast = !v;
       });
+    */
 
-    // check if it's chome browser
+    // ---------------------------- Default
+
     gui.add_item('Viewer Title', '', {folder_name: 'Default'})
       .onChange((v) => {
         this.canvas.title = v;
         this.canvas.start_animation(0);
       });
-
-    gui.add_item('Reset Camera [M]', () => {this.canvas.reset_controls()}, {folder_name: 'Default'});
-
-    if( this.settings.side_camera ){
-      gui.add_item('Hide Canvas [S]', false, {folder_name: 'Default'})
-        .onChange((v) => {
-          if( v ){
-            this.canvas.disable_side_cameras();
-          }else{
-            this.canvas.enable_side_cameras();
-          }
-        });
-      gui.add_item('Reset Canvas [S]', () => {this.canvas.reset_side_canvas( true, true )},
-                    {folder_name: 'Default'});
-
-      // side plane
-      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Default'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_coronal_depth( v );
-        });
-      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Default'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_axial_depth( v );
-        });
-      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Default'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_sagittal_depth( v );
-        });
-      this.canvas.set_side_depth = (c, a, s) => {
-        _controller_coronal.setValue( c );
-        _controller_axial.setValue( a );
-        _controller_sagittal.setValue( s );
-      };
-    }
 
     return(gui);
 
@@ -81412,26 +81767,33 @@ class src_BrainCanvas{
   }
 
   _set_info_callback(){
-    this.canvas.set_mouse_click_callback((obj, evt) => {
-      if(obj.userData){
-        let g = obj.userData.construct_params,
+    this.canvas.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'click' || evt.action === 'dblclick',
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.userData ){
+          let g = obj.userData.construct_params,
             pos = obj.getWorldPosition( new threeplugins["a" /* THREE */].Vector3() );
 
-        // Get information and show them on screen
-        let group_name = g.group ? g.group.group_name : '(No Group)';
+          // Get information and show them on screen
+          let group_name = g.group ? g.group.group_name : '(No Group)';
 
-        let shiny_data = {
-          object: g,
-          group: group_name,
-          position: pos,
-          event: evt
-        };
-        this.shiny.to_shiny(shiny_data, '_mouse_event');
-
-        return(null);
-      }
-      // this.set_legend_value( [0], [0], '' );
-    });
+          let shiny_data = {
+            object: g,
+            group: group_name,
+            position: pos,
+            event: evt
+          };
+          this.shiny.to_shiny(shiny_data, '_mouse_event');
+        }
+      },
+      'show_info'
+    );
 
     /* this.canvas.set_animation_callback((obj, v, t) => {
       let txt = '';
@@ -81565,6 +81927,16 @@ class src_BrainCanvas{
       this.canvas.add_group(g, this.settings.cache_folder);
 
     });
+
+    // Load fonts
+    /*
+    this.canvas.load_file(
+      this.settings.lib_path + 'threejs-0.101.1/fonts/helvetiker_regular.typeface.json',
+      (v) => {
+        this.canvas.font_library = v;
+      }, 'font_loader'
+    );
+    */
 
     // Make sure the data loading process is on
     if( !this.canvas.loader_triggered ){

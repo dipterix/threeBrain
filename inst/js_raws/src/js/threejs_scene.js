@@ -37,6 +37,7 @@ window.requestAnimationFrame =
     };
 
 const cached_storage = new THREEBRAIN_STORAGE();
+const MAX_RENDER_ORDER = 9999999;
 
 class THREEBRAIN_CANVAS {
   constructor(
@@ -364,20 +365,33 @@ class THREEBRAIN_CANVAS {
 
           console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
           if( nm === 'coronal' ){
-            this._sagital_depth = _x;
+            this._sagittal_depth = _x;
             this._axial_depth = -_y;
           }else if( nm === 'axial' ){
-            this._sagital_depth = _x;
+            this._sagittal_depth = _x;
             this._coronal_depth = -_y;
           }else if( nm === 'sagittal' ){
             this._coronal_depth = -_x;
             this._axial_depth = -_y;
           }
-          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagital_depth );
+          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
 
         }
       } );
       toggle_pan_canvas( 'select' );
+
+      // Make cvs scrollable, but change slices
+      cvs.addEventListener("mousewheel", (evt) => {
+        evt.preventDefault();
+        if( evt.altKey ){
+          if( evt.deltaY > 0 ){
+            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
+          }else if( evt.deltaY < 0 ){
+            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
+          }
+        }
+        this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+      });
 
       // Make resizable, keep current width and height
       make_resizable( div, true );
@@ -526,7 +540,7 @@ class THREEBRAIN_CANVAS {
     mouse_helper.layers.set(8);
 
     // In side cameras, always render mouse_helper_root on top
-    mouse_helper_root.renderOrder = 9999999;
+    mouse_helper_root.renderOrder = MAX_RENDER_ORDER;
     mouse_helper_root.material.depthTest = false;
     // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
@@ -576,6 +590,7 @@ class THREEBRAIN_CANVAS {
     this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
 
     this.json_loader = new THREE.FileLoader( this.loader_manager );
+    this.font_loader = new THREE.FontLoader( this.loader_manager );
 
   }
 
@@ -1651,6 +1666,10 @@ class THREEBRAIN_CANVAS {
   set_side_visibility( which ){
     console.log('Set side visibility not implemented');
   }
+  set_cube_anchor_visibility( visible ){
+    console.log('Set cube anchor visibility not implemented');
+  }
+
 
   // Generic method to add objects
   add_object(g){
@@ -1718,16 +1737,39 @@ class THREEBRAIN_CANVAS {
 
       // Add anchors to visualize the intersection
       const cube_anchor = new THREE.Group();
+      cube_anchor.renderOrder = MAX_RENDER_ORDER - 100;
       cube_anchor.position.fromArray( cube_center );
-      ['x', 'y', 'z'].forEach( (a, ii) => {
-        const geom = new THREE.Geometry();
-        const p = [ new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0) ];
-        p[1][a] = 3;
-        geom.vertices.push( p[0], p[1] );
-        const line = new THREE.Line( geom, new THREE.LineBasicMaterial({ color: Math.pow(256, ii+1) - Math.pow(256, ii) }) );
+      ['z', 'y', 'x'].forEach( (a, ii) => {
+        const geom = new THREE.CylinderBufferGeometry( 0.5, 0.5, 3, 8 );
+        const color = Math.pow(256, ii+1) - Math.pow(256, ii);
+        if( a === 'x' ){
+          geom.rotateZ( Math.PI / 2 );
+        }else if ( a === 'z' ){
+          geom.rotateX( Math.PI / 2 );
+        }
+        const line = new THREE.Mesh( geom, new THREE.MeshBasicMaterial({ color: color, depthTest : false, side: THREE.DoubleSide }) );
         line.layers.set( 8 );
         cube_anchor.add( line );
       } );
+      // Add fonts
+      const _r = new THREE.TextSprite('R', 3, 'rgba(255, 0, 0, 1)'); _r.position.set( 5, 0, 0 );
+      const _l = new THREE.TextSprite('L', 3, 'rgba(255, 0, 0, 1)'); _l.position.set( -5, 0, 0 );
+      const _i = new THREE.TextSprite('I', 3, 'rgba(0, 0, 255, 1)'); _i.position.set( 0, 0, -5 );
+      const _s = new THREE.TextSprite('S', 3, 'rgba(0, 0, 255, 1)'); _s.position.set( 0, 0, 5 );
+      const _a = new THREE.TextSprite('A', 3, 'rgba(0, 255, 0, 1)'); _a.position.set( 0, 5, 0 );
+      const _p = new THREE.TextSprite('P', 3, 'rgba(0, 255, 0, 1)'); _p.position.set( 0, -5, 0 );
+
+      [_r,_l,_a,_p,_i,_s].forEach((_t) => {
+        _t.layers.set( 8 );
+        _t.material.depthTest = false;
+        cube_anchor.add( _t );
+      });
+
+
+      this.set_cube_anchor_visibility = ( visible ) => {
+        cube_anchor.visible = visible;
+        this.start_animation( 0 );
+      };
       gp.add( cube_anchor );
 
       // Add handlers to set plane location when an electrode is clicked
@@ -1847,7 +1889,12 @@ class THREEBRAIN_CANVAS {
     return(this.json_load_finished);
   }
 
-  load_file(path, onLoad){
+  load_file(path, onLoad, loader = 'json_loader'){
+
+    loader = this[ loader ];
+    if( !loader ){
+      loader = this.json_loader;
+    }
 
 
     if( this.use_cache ){
@@ -1857,7 +1904,7 @@ class THREEBRAIN_CANVAS {
         onLoad( this.cache.get_item( path ) );
       }else{
         this.loader_triggered = true;
-        this.json_loader.load( path, (v) => {
+        loader.load( path, (v) => {
           if(typeof(v) === 'string'){
             v = JSON.parse(v);
           }
@@ -1867,7 +1914,7 @@ class THREEBRAIN_CANVAS {
       }
     }else{
       this.loader_triggered = true;
-      this.json_loader.load( path , (v) => {
+      loader.load( path , (v) => {
         if(typeof(v) === 'string'){
           v = JSON.parse(v);
         }

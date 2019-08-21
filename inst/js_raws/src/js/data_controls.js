@@ -154,11 +154,20 @@ class THREEBRAIN_PRESETS{
         .min(min).max(max).step(step).onChange((v) => {this._update_canvas()});
     this._ani_time = this.gui.get_controller('Time', 'Timeline');
 
+    this._ani_time.domElement.addEventListener('mousewheel', (evt) => {
+      if( evt.altKey ){
+        evt.preventDefault();
+        const current_val = this._ani_time.getValue();
+        this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
+      }
+    });
+
+    this.gui.folders[ "Timeline" ].open();
 
   }
 
 
-  color_group(item_name = 'Show Groups', folder_name = 'Graphics'){
+  color_group(item_name = 'Show Groups', folder_name = 'Geometry'){
     const group_names = this._electrode_group_names();
     // check how many groups
     const col_pal = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9", "#000000"];
