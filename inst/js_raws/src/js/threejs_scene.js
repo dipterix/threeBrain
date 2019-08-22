@@ -242,6 +242,26 @@ class THREEBRAIN_CANVAS {
 			  }
 			  cvs.style.width = parseInt(level * 100) + '%';
 			  cvs.style.height = parseInt(level * 100) + '%';
+			  const cvs_size = get_element_size( cvs );
+			  const div_size = get_element_size( div );
+			  const depths = [this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
+
+			  let _left = 0,
+			      _top = 0;
+			  if( nm === 'coronal' ){
+			    _left = Math.max( Math.min( div_size[0] / 2 - (128 + depths[0]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
+			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[2]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
+			  }else if( nm === 'axial' ){
+			    _left = Math.max( Math.min( div_size[0] / 2 - (128 + depths[0]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
+			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[1]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
+			  }else if( nm === 'sagittal' ){
+			    _left = Math.max( Math.min( div_size[0] / 2 - (128 - depths[1]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
+			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[2]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
+			  }
+
+			  cvs.style.left = _left + 'px';
+			  cvs.style.top = _top + 'px';
+
 			};
 			const zoom_in = document.createElement('div');
 			zoom_in.className = 'zoom-tool';
@@ -355,6 +375,8 @@ class THREEBRAIN_CANVAS {
         }
       };
       make_draggable( div, div_header, undefined, raise_top);
+
+
       const toggle_pan_canvas = make_draggable( cvs, undefined, div, (e, data) => {
         raise_top(e, data);
 
@@ -374,6 +396,19 @@ class THREEBRAIN_CANVAS {
             this._coronal_depth = -_x;
             this._axial_depth = -_y;
           }
+          // Also set main_camera
+          const _d = new THREE.Vector3(
+            this._sagittal_depth || 0,
+            this._coronal_depth || 0,
+            this._axial_depth || 0
+          ).normalize().multiplyScalar(500);
+          if( _d.length() === 0 ){
+            _d.z = 500;
+          }
+          this.main_camera.position.copy( _d );
+
+          // TODO: set camera up
+
           this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
 
         }
@@ -397,17 +432,18 @@ class THREEBRAIN_CANVAS {
       make_resizable( div, true );
 
       // add double click handler
-      const reset = ( reset_wrapper, reset_canvas ) => {
+      const reset = ( _zoom_level ) => {
         div.style.top = ( idx * this.side_width ) + 'px';
         div.style.left = '0';
         div.style.width = this.side_width + 'px';
         div.style.height = this.side_width + 'px';
-        set_zoom_level( 1 );
-        cvs.style.top = '0';
-        cvs.style.left = '0';
+        if( _zoom_level !== undefined ){
+          set_zoom_level( _zoom_level || 1 );
+        }
+
       };
       div_header.addEventListener("dblclick", (evt) => {
-        reset( true, false );
+        reset();
         // Resize side canvas
         // this.handle_resize( undefined, undefined );
       });
@@ -510,7 +546,7 @@ class THREEBRAIN_CANVAS {
     // set control listeners
     this.controls.addEventListener('start', (v) => {
 
-      if(this.render_flag < 0){
+      if(this.render_flag < 0 && !v.no_resize ){
         // adjust controls
         this.handle_resize(undefined, undefined, true);
       }
@@ -732,12 +768,20 @@ class THREEBRAIN_CANVAS {
         });
       },
       (res, evt) => {
+
+        if( this.object_chosen ){
+          this.object_chosen.material.emissive.r = 0;
+        }
+
         if( res.target_object ){
           this.object_chosen = res.target_object;
+          this.object_chosen.material.emissive.r = 1;
           console.debug('object selected ' + res.target_object.name);
         }else{
           this.object_chosen = undefined;
         }
+
+        this.start_animation( 0 );
       },
       'set_obj_chosen'
     );
@@ -1066,20 +1110,12 @@ class THREEBRAIN_CANVAS {
   }
 
 
-  handle_resize(width, height, lazy = false){
+  handle_resize(width, height, lazy = false, center_camera = false){
 
 
     if(width === undefined){
       width = this.client_width;
       height = this.client_height;
-
-      if(lazy){
-        this.controls.handleResize();
-
-        this.start_animation(0);
-
-        return(undefined);
-      }
 
     }else{
       this.client_width = width;
@@ -1088,8 +1124,30 @@ class THREEBRAIN_CANVAS {
 
     // console.debug('width: ' + width + '; height: ' + height);
 
+    if(lazy){
+      this.controls.handleResize();
+
+      this.start_animation(0);
+
+      return(undefined);
+    }
+
     var main_width = width,
         main_height = height;
+
+    // Because when panning controls, we actually set views, hence need to calculate this smartly
+    // Update: might not need change
+	  if( center_camera ){
+      this.main_camera.left = -150;
+  	  this.main_camera.right = 150;
+  	  this.main_camera.top = main_height / main_width * 150;
+  	  this.main_camera.bottom = -main_height / main_width * 150;
+	  }else{
+  	  let _ratio = main_height / main_width * ( this.main_camera.right - this.main_camera.left ) / ( this.main_camera.top - this.main_camera.bottom );
+  	  this.main_camera.top = (this.main_camera.top * _ratio) || (main_height / main_width * 150);
+  	  this.main_camera.bottom = (this.main_camera.bottom * _ratio) || (-main_height / main_width * 150);
+	  }
+    this.main_camera.updateProjectionMatrix();
 
 
     // Check if side_camera exists
@@ -1106,11 +1164,6 @@ class THREEBRAIN_CANVAS {
 
     this.main_canvas.style.width = main_width + 'px';
     this.main_canvas.style.height = main_height + 'px';
-    this.main_camera.left = -150;
-	  this.main_camera.right = 150;
-	  this.main_camera.top = main_height / main_width * 150;
-	  this.main_camera.bottom = -main_height / main_width * 150;
-    this.main_camera.updateProjectionMatrix();
 
     this.main_renderer.setSize( main_width, main_height );
 
@@ -1147,24 +1200,31 @@ class THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
-  reset_side_canvas( wrapper = true, canvas = true ){
-    this.side_canvas.coronal.reset( wrapper, canvas );
-    this.side_canvas.axial.reset( wrapper, canvas );
-    this.side_canvas.sagittal.reset( wrapper, canvas );
+  reset_side_canvas( zoom_level ){
+    this.side_canvas.coronal.reset( zoom_level );
+    this.side_canvas.axial.reset( zoom_level );
+    this.side_canvas.sagittal.reset( zoom_level );
     // Resize side canvas
     this.handle_resize( undefined, undefined );
   }
 
   reset_side_cameras( pos, scale = 300, distance = 500 ){
+
+    if( pos ){
+      this._side_canvas_position = pos;
+    }else{
+      pos = this._side_canvas_position || new THREE.Vector3( 0, 0, 0 );
+    }
+
     this.side_canvas.coronal.camera.position.x = pos.x;
     this.side_canvas.coronal.camera.position.z = pos.z;
     this.side_canvas.coronal.camera.position.y = -distance;
     this.side_canvas.coronal.camera.lookAt( pos.x, pos.y, pos.z );
+
     this.side_canvas.coronal.camera.top = scale / 2;
     this.side_canvas.coronal.camera.bottom = -scale / 2;
     this.side_canvas.coronal.camera.right = scale / 2;
     this.side_canvas.coronal.camera.left = -scale / 2;
-    this.side_canvas.coronal.camera.updateProjectionMatrix();
 
     this.side_canvas.axial.camera.position.x = pos.x;
     this.side_canvas.axial.camera.position.y = pos.y;
@@ -1174,7 +1234,6 @@ class THREEBRAIN_CANVAS {
     this.side_canvas.axial.camera.bottom = -scale / 2;
     this.side_canvas.axial.camera.right = scale / 2;
     this.side_canvas.axial.camera.left = -scale / 2;
-    this.side_canvas.axial.camera.updateProjectionMatrix();
 
     this.side_canvas.sagittal.camera.position.y = pos.y;
     this.side_canvas.sagittal.camera.position.z = pos.z;
@@ -1184,6 +1243,10 @@ class THREEBRAIN_CANVAS {
     this.side_canvas.sagittal.camera.bottom = -scale / 2;
     this.side_canvas.sagittal.camera.right = scale / 2;
     this.side_canvas.sagittal.camera.left = -scale / 2;
+
+
+    this.side_canvas.coronal.camera.updateProjectionMatrix();
+    this.side_canvas.axial.camera.updateProjectionMatrix();
     this.side_canvas.sagittal.camera.updateProjectionMatrix();
 
     this.start_animation( 0 );
@@ -1663,7 +1726,7 @@ class THREEBRAIN_CANVAS {
   set_side_depth( c_d, a_d, s_d ){
     console.log('Set side depth not implemented');
   }
-  set_side_visibility( which ){
+  set_side_visibility( which, visible ){
     console.log('Set side visibility not implemented');
   }
   set_cube_anchor_visibility( visible ){
@@ -1740,14 +1803,14 @@ class THREEBRAIN_CANVAS {
       cube_anchor.renderOrder = MAX_RENDER_ORDER - 100;
       cube_anchor.position.fromArray( cube_center );
       ['z', 'y', 'x'].forEach( (a, ii) => {
-        const geom = new THREE.CylinderBufferGeometry( 0.5, 0.5, 3, 8 );
+        const geom = new THREE.CylinderGeometry( 0.5, 0.5, 3, 8 );
         const color = Math.pow(256, ii+1) - Math.pow(256, ii);
         if( a === 'x' ){
           geom.rotateZ( Math.PI / 2 );
         }else if ( a === 'z' ){
           geom.rotateX( Math.PI / 2 );
         }
-        const line = new THREE.Mesh( geom, new THREE.MeshBasicMaterial({ color: color, depthTest : false, side: THREE.DoubleSide }) );
+        const line = new THREE.Mesh( geom, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }) );
         line.layers.set( 8 );
         cube_anchor.add( line );
       } );
@@ -1832,16 +1895,14 @@ class THREEBRAIN_CANVAS {
         this.start_animation( 0 );
       };
 
-      this.set_side_visibility = ( which ) => {
-        m.forEach((plane) => {
-          plane.layers.disable(8);
-        });
+      this.set_side_visibility = ( which, visible ) => {
+        const fn = visible ? 'enable' : 'disable';
         if( which === 'coronal' ){
-          m[0].layers.enable(8);
+          m[0].layers[fn](8);
         }else if( which === 'axial' ){
-          m[1].layers.enable(8);
+          m[1].layers[fn](8);
         }else if( which === 'sagittal' ){
-          m[2].layers.enable(8);
+          m[2].layers[fn](8);
         }
 
         this.start_animation( 0 );
@@ -2189,7 +2250,8 @@ function gen_free(g, canvas){
 
   gb.name = 'geom_free_' + g.name;
 
-  let material = new THREE.MeshLambertMaterial({ 'transparent' : true });
+  // https://github.com/mrdoob/three.js/issues/3490
+  let material = new THREE.MeshLambertMaterial({ 'transparent' : false });
 
   let mesh = new THREE.Mesh(gb, material);
   mesh.name = 'mesh_free_' + g.name;
@@ -2208,7 +2270,7 @@ function gen_free(g, canvas){
 function gen_datacube(g, canvas){
   let mesh, group_name;
 
-  let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00 }),
+  let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
       line_geometry = new THREE.Geometry();
   line_material.depthTest = false;
 
@@ -2236,11 +2298,13 @@ function gen_datacube(g, canvas){
 	  uniforms : {
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) }
+  		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
+  		threshold: 0.5
   	},
   	vertexShader: shader_xy.vertexShader,
 		fragmentShader: shader_xy.fragmentShader,
-		side: THREE.DoubleSide
+		side: THREE.DoubleSide,
+		transparent: true
 	});
 	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
 
@@ -2254,11 +2318,13 @@ function gen_datacube(g, canvas){
 	  uniforms : {
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) }
+  		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
+  		threshold: 0.5
   	},
   	vertexShader: shader_xz.vertexShader,
 		fragmentShader: shader_xz.fragmentShader,
-		side: THREE.DoubleSide
+		side: THREE.DoubleSide,
+		transparent: true
 	});
 	let geometry_xz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
@@ -2273,11 +2339,13 @@ function gen_datacube(g, canvas){
 	  uniforms : {
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) }
+  		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
+  		threshold: 0.5
   	},
   	vertexShader: shader_yz.vertexShader,
 		fragmentShader: shader_yz.fragmentShader,
-		side: THREE.DoubleSide
+		side: THREE.DoubleSide,
+		transparent: true
 	});
 	let geometry_yz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
@@ -2300,9 +2368,9 @@ function gen_datacube(g, canvas){
   let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
       line_mesh_xy = new THREE.Line( line_geometry, line_material ),
       line_mesh_yz = new THREE.Line( line_geometry, line_material );
-  line_mesh_xz.renderOrder = 9999998;
-  line_mesh_xy.renderOrder = 9999998;
-  line_mesh_yz.renderOrder = 9999998;
+  line_mesh_xz.renderOrder = MAX_RENDER_ORDER - 1;
+  line_mesh_xy.renderOrder = MAX_RENDER_ORDER - 1;
+  line_mesh_yz.renderOrder = MAX_RENDER_ORDER - 1;
   line_mesh_xz.layers.set( 10 );
   line_mesh_xz.layers.enable( 11 );
   line_mesh_xy.layers.set( 9 );
@@ -2384,143 +2452,6 @@ function gen_datacube(g, canvas){
 
 }
 
-
-
-function gen_particle(g, canvas){
-  // har-code texture as base64
-  var image = "data:;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAAZiS0dEAAAAAAAA+UO7fwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sHDgwCEMBJZu0AAAAdaVRYdENvbW1lbnQAAAAAAENyZWF0ZWQgd2l0aCBHSU1QZC5lBwAABM5JREFUWMO1V0tPG2cUPZ4Hxh6DazIOrjFNqJs0FIMqWFgWQkatsmvVbtggKlSVRVf5AWz4AWz4AUSKEChll19QJYSXkECuhFxsHjEhxCYm+DWGMZ5HF72DJq4bAzFXurI0M/I5997v3u9cC65vTJVn2lX/xHINQOYSBLTLEuIuCWw4Z3IGAEvf6ASmVHjNzHCXBG4A0AjACsAOwEbO0nsFQBnAGYASAIl+ZRMR7SolMEdsByD09fV5R0ZGgg8ePPjW5/N1iqLYpuu6RZblciKR2I9Go69evnwZnZ+fjwI4IS8AKBIRzeQfJWCANwKwh0KhtrGxsYehUOin1tbW+zzP23ietzY2NnIAoGmaLsuyUiqVyvl8XtrY2NiamZn589mzZxsAUgCOAeQAnFI2tI+VxIjaAeDzoaGh7xYWFuZOTk6OZVk+12uYqqq6JEnn0Wg0OT4+/geAXwGEAdwDIFJQXC1wO4DWR48e/RCPxxclSSroVzRFUbSDg4P848ePFwH8DuAhkWih83TRQWxFOXgAwvDwcOfo6OhvXV1d39tsNtuVBwTDWBwOh1UUxVsMw1hXVlbSdCgNV43uYSvrHg6H24aHh38eHBz85TrgF9FYLHA4HLzH43FvbW2d7u/vG+dANp8FpqIlbd3d3V8Fg8EfBUFw4BONZVmL3+9vHhkZCQL4AoAHgJPK8G+yzC0XDofdoVAo5PP5vkadTBAEtr+/39ff3x8gAp/RPOEqx2qjx+NpvXv3bk9DQ0NDvQgwDIOWlhZrMBj8kgi0UJdxRgYMArzL5XJ7vd57qLPZ7Xamp6fnNgBXtQxcjFuHw+Hyer3t9SYgCAITCAScAJoBNNEY/08GOFVVrfVMv7kMNDntFD1vjIAPrlRN0xjckOm6biFQ3jwNPwDMZrOnqVTqfb3Bi8Wivru7W/VCYkwPlKOjo0IikXh7EwQikYgE4Nw0CfXKDCipVCoTj8df3QABbW1tLUc6oUgkFPMkVACUNjc337148eKvw8PDbJ2jP1taWkoCyNDVXDSECmNSK4qiKNLq6urW8+fPI/UicHx8rD59+jSVy+WOAKSJhKENwFItLtoxk8mwsixzHR0dHe3t7c5PAU+n09rs7OzJkydPYqVSaQfANoDXALIk31S2smU1TWMPDg7K5XKZ7+3t9TudTut1U7+wsFCcmJiIpdPpbQBxADsAknQWymYCOukBHYCuKApisdhpMpnURFEU79y503TVyKenpzOTk5M7e3t7MQKPV0Zv1gNm+awB0MvlshqLxfLb29uyJElWURSbXC4XXyvqxcXFs6mpqeTc3Nzu3t7e3wQcA7BPZ8Cov1pNlJplmQtAG8MwHV6v95tAINA5MDBwPxAIuLu6upr8fr/VAN3c3JQjkcjZ+vp6fnl5+d2bN29SuVzuNYAEpf01CdRChUL+X1VskHACuA3Ay3Fcu9vt7nA6nZ7m5uYWQRCaNE3jVVW15PP580KhIGUymWw2m00DOAJwSP4WwPtq4LX2Ao6USxNlQyS/RcQcdLGwlNIz6vEMAaZpNzCk2Pll94LK/cDYimxERiBwG10sxjgvEZBE0UpE6vxj+0Ct5bTaXthgEhRmja8QWNkkPGsuIpfdjpkK+cZUWTC0KredVmtD/gdlSl6EG4AMvQAAAABJRU5ErkJggg==";
-
-
-
-  // Usually this is a big particle system
-  var geometry = new THREE.BufferGeometry(),
-      texture = new THREE.Texture(),
-      mesh, group_name;
-
-  texture.image = image;
-  texture.repeat.set(3,3);
-  texture.wrapS = texture.wrapT = texture.MirroredRepeatWrapping;
-  image.onLoad = function(){
-    texture.needsUpdate = true;
-  };
-
-  if(g.group !== null){
-    group_name = g.group.group_name;
-  }else{
-    group_name = undefined;
-  }
-  var paricle_location = canvas.get_data('paricle_location', g.name, group_hint = group_name),
-      paricle_value = canvas.get_data('paricle_value', g.name, group_hint = group_name);
-
-  // For particles, we use special shader
-  var customUniforms = {
-		texture:   { value: texture },
-	};
-	var customAttributes = {
-		customColor:   { type: "c", value: [] },
-	};
-	var colors = [], sizes = [];
-	var positions = [];
-  var v;
-
-
-  if(g.paricle_location_cube){
-    for(var x in paricle_location.x){
-      for(var y in paricle_location.x){
-        for(var z in paricle_location.x){
-          v = paricle_value[x][y][z];
-          let thred = 100;
-          // v = (v+128);
-          if(v > 50 && Math.abs(x-32)<20 && Math.abs(y-32)<20 && Math.abs(z-32)<20){
-            positions.push( paricle_location.x[x], paricle_location.y[y], paricle_location.z[z] );
-            colors.push( 0, 0, 0, v * 2 );
-
-            v = (v - thred) / (128-thred) * 2 - 1;
-            v = Math.exp(v * 2) / ( 1 + Math.exp(v * 2) );
-            v = v * 10;
-            sizes.push(v);
-          }
-
-
-        }
-      }
-    }
-    let colorAttribute = new THREE.Uint8BufferAttribute( colors, 4 );
-    colorAttribute.normalized = true;
-
-    geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
-		geometry.addAttribute( 'color', colorAttribute );
-		geometry.addAttribute( 'size', new THREE.Float32BufferAttribute( sizes, 1 ).setDynamic( true ) );
-		geometry.computeBoundingSphere();
-
-		geometry.name = 'geom_particle_' + g.name;
-
-		// let material = new THREE.PointsMaterial( { size: 15, vertexColors: THREE.VertexColors } );
-		// mesh = new THREE.Points( geometry, material );
-
-  }else{
-    console.debug('TODO: particle system with no cube data');
-  }
-
-  var shaderMaterial = new THREE.RawShaderMaterial({
-		uniforms: customUniforms,
-		// attributes:	customAttributes,
-		vertexShader: `
-
-    //varying vec3 vColor;
-    //void main() {
-    //  vColor = color;
-    //	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-    //	gl_PointSize = size * ( 300.0 / length( mvPosition.z ) );
-    //	gl_Position = projectionMatrix * mvPosition;
-    //}
-
-
-    precision mediump float;
-		precision mediump int;
-		uniform mat4 modelViewMatrix; // optional
-		uniform mat4 projectionMatrix; // optional
-		attribute vec3 position;
-		attribute vec4 color;
-		attribute float size;
-		varying vec4 vColor;
-		void main()	{
-			vColor = color;
-			vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-
-			gl_Position = projectionMatrix * mvPosition;
-			gl_PointSize = size * ( 300.0 / length( mvPosition.z ) );
-		}
-
-
-
-		`,
-		fragmentShader: `
-    precision mediump float;
-		precision mediump int;
-		uniform sampler2D texture;
-		varying vec4 vColor;
-		void main()	{
-			gl_FragColor = vec4( vColor ); // * texture2D( texture, gl_PointCoord );
-		}
-		`,
-		//transparent: true, alphaTest: 0.5,  // if having transparency issues, try including: alphaTest: 0.5,
-		transparent: true,
-		side: THREE.DoubleSide,
-		vertexColors: true,
-	});
-
-	// shaderMaterial = new THREE.PointsMaterial( { size: 5, vertexColors: THREE.VertexColors, transparent: true } );
-
-	mesh = new THREE.Points( geometry, shaderMaterial );
-
-
-  mesh.name = 'mesh_particle_' + g.name;
-
-  mesh.position.fromArray(g.position);
-  return(mesh);
-
-}
 
 export { THREEBRAIN_CANVAS };
 // window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;

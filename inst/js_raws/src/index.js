@@ -256,6 +256,8 @@ class BrainCanvas{
       });
 
     gui.add_item('Reset', () => {
+      // Center camera first.
+      this.canvas.handle_resize( undefined, undefined, false, true );
       this.canvas.reset_controls();
       this.canvas.controls.enabled = true;
     }, {folder_name: 'Main Canvas'});
@@ -264,14 +266,14 @@ class BrainCanvas{
       args : ['[free rotate]', '[lock]', 'right', 'left', 'anterior', 'posterior', 'superior', 'inferior'],
       folder_name : 'Main Canvas'
     }).onChange((v) => {
-      this.canvas.controls.enabled = false;
+
+      if( v === '[lock]' ){
+        this.canvas.controls.enabled = false;
+        return( null );
+      }
+      this.canvas.controls.enabled = true;
+
       switch (v) {
-        case '[free rotate]':
-          this.canvas.controls.enabled = true;
-          break;
-        case '[lock]':
-          this.canvas.controls.enabled = false;
-          break;
         case 'right':
           this.canvas.main_camera.position.set( 500, 0, 0 );
           this.canvas.main_camera.up.set( 0, 0, 1 );
@@ -298,13 +300,17 @@ class BrainCanvas{
           break;
       }
 
+      _camera_pos.__select.value = '[free rotate]';
+
       this.canvas.start_animation( 0 );
     });
 
+    /*
     gui.add_item('Free Controls', () => {
       _camera_pos.setValue( '[free rotate]' );
       this.canvas.controls.enabled = true;
     }, {folder_name: 'Main Canvas'});
+    */
 
 
     // ---------------------------- Side cameras
@@ -321,7 +327,7 @@ class BrainCanvas{
           }
         });
 
-      gui.add_item('Reset Position', () => {this.canvas.reset_side_canvas( true, true )},
+      gui.add_item('Reset Position', () => {this.canvas.reset_side_canvas( this.settings.side_canvas_zoom )},
                     {folder_name: 'Side Canvas'});
 
       // side plane
@@ -359,8 +365,21 @@ class BrainCanvas{
         }
       };
 
-      gui.add_item('Overlay Viewers', 'none', {args: ['none','coronal','axial','sagittal'], folder_name: 'Side Canvas'})
-        .onChange( this.canvas.set_side_visibility );
+
+      gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
+        .onChange((v) => {
+          this.canvas.set_side_visibility('coronal', v);
+        });
+
+      gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
+        .onChange((v) => {
+          this.canvas.set_side_visibility('axial', v);
+        });
+
+      gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
+        .onChange((v) => {
+          this.canvas.set_side_visibility('sagittal', v);
+        });
 
       gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
         .onChange( this.canvas.set_cube_anchor_visibility );
@@ -702,6 +721,12 @@ class BrainCanvas{
     // Set side camera
     if(this.settings.side_camera || false){
       this.canvas.enable_side_cameras();
+
+      // Set canvas zoom-in level
+      this.canvas.side_canvas.coronal.set_zoom_level( this.settings.side_canvas_zoom || 1 );
+      this.canvas.side_canvas.axial.set_zoom_level( this.settings.side_canvas_zoom || 1 );
+      this.canvas.side_canvas.sagittal.set_zoom_level( this.settings.side_canvas_zoom || 1 );
+
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.coronal.camera );
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.axial.camera );
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.sagittal.camera );
