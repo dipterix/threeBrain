@@ -11,7 +11,8 @@ const register_volume2DShader1 = function(THREE){
     uniforms: {
       diffuse: { value: null },
 			depth: { value: 0 },
-			size: { value: new THREE.Vector3( 256, 256, 256 ) }
+			size: { value: new THREE.Vector3( 256, 256, 256 ) },
+			threshold: 0.5
 		},
 		vertexShader: [
       '#version 300 es',
@@ -35,6 +36,7 @@ const register_volume2DShader1 = function(THREE){
       'uniform sampler2DArray diffuse;',
       'in vec2 vUv;',
       'uniform int depth;',
+      'uniform float threshold;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -42,7 +44,7 @@ const register_volume2DShader1 = function(THREE){
       'vec4 color = texture( diffuse, vec3( vUv, depth ) );',
 
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, 1.0 );',
+      'out_FragColor = vec4( color.rrr * 1.5, float( color.r > threshold ) );',
 
       '}'
     ].join( '\n' )
@@ -55,7 +57,8 @@ const register_volume2DShader1 = function(THREE){
     uniforms: {
       diffuse: { value: null },
 			depth: { value: 0 },
-			size: { value: new THREE.Vector3( 256, 256, 256 ) }
+			size: { value: new THREE.Vector3( 256, 256, 256 ) },
+			threshold: 0.5
 		},
 		vertexShader: [
       '#version 300 es',
@@ -81,6 +84,7 @@ const register_volume2DShader1 = function(THREE){
       'uniform vec3 size;',
       'in vec2 vUv;',
       'uniform float depth;',
+      'uniform float threshold;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -88,7 +92,7 @@ const register_volume2DShader1 = function(THREE){
       'vec4 color = texture( diffuse, vec3( vUv.x, depth / size.y, floor( vUv.y * size.z ) ) );',
 
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, 1.0 );',
+      'out_FragColor = vec4( color.rrr * 1.5, float( color.r > threshold ) );',
 
       '}'
     ].join( '\n' )
@@ -98,7 +102,8 @@ const register_volume2DShader1 = function(THREE){
     uniforms: {
       diffuse: { value: null },
 			depth: { value: 0 },
-			size: { value: new THREE.Vector3( 256, 256, 256 ) }
+			size: { value: new THREE.Vector3( 256, 256, 256 ) },
+			threshold: 0.5
 		},
 		vertexShader: [
       '#version 300 es',
@@ -124,6 +129,7 @@ const register_volume2DShader1 = function(THREE){
       'uniform vec3 size;',
       'in vec2 vUv;',
       'uniform float depth;',
+      'uniform float threshold;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -131,7 +137,7 @@ const register_volume2DShader1 = function(THREE){
       'vec4 color = texture( diffuse, vec3( depth / size.x, vUv.x, floor( vUv.y * size.z ) ) );',
 
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, 1.0 );',
+      'out_FragColor = vec4( color.rrr * 1.5, float( color.r > threshold ) );',
 
       '}'
     ].join( '\n' )
