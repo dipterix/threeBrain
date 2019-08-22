@@ -160,7 +160,7 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 				} else {
 
-					mouseOnBall.z = .5 / length;
+					mouseOnBall.z = 0.5 / length;
 
 				}
 
@@ -298,13 +298,17 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 		var mouseChange = new THREE.Vector2(),
 			objectUp = new THREE.Vector3(),
-			pan = new THREE.Vector3();
+			pan = new THREE.Vector3(),
+			running = false;
 
 		return function panCamera() {
 
 			mouseChange.copy( _panEnd ).sub( _panStart );
 
-			if ( mouseChange.lengthSq() ) {
+			if ( mouseChange.lengthSq() > 0.00001 ) {
+			  // start event
+			  running = true;
+			  _this.dispatchEvent( startEvent );
 
 				// Scale movement to keep clicked/dragged position under cursor
 				var scale_x = ( _this.object.right - _this.object.left ) / _this.object.zoom;
@@ -315,8 +319,13 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 				pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
 				pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
 
-				_this.object.position.add( pan );
-				_this.target.add( pan );
+				/*_this.object.position.add( pan );
+				_this.target.add( pan );*/
+
+				_this.object.right = _this.object.right - mouseChange.x / 2;
+				_this.object.left = _this.object.left - mouseChange.x / 2;
+				_this.object.top = _this.object.top + mouseChange.y / 2;
+				_this.object.bottom = _this.object.bottom + mouseChange.y / 2;
 
 				if ( _this.staticMoving ) {
 
@@ -328,8 +337,12 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 				}
 
+
 				_changed = true;
 
+			}else if (running){
+  		  running = false;
+  		  _this.dispatchEvent( endEvent );
 			}
 
 		};
@@ -361,6 +374,12 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 		if ( ! _this.noPan ) {
 
 			_this.panCamera();
+
+			if ( _changed ) {
+
+				_this.object.updateProjectionMatrix();
+
+			}
 
 		}
 
