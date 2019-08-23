@@ -380,7 +380,7 @@ class THREEBRAIN_CANVAS {
       const toggle_pan_canvas = make_draggable( cvs, undefined, div, (e, data) => {
         raise_top(e, data);
 
-        if( data.state === 'select' ){
+        if( data.state === 'select' || data.state === 'move' ){
           const _size = get_element_size( cvs ),
                 _x = data.x / _size[0] * 256 - 128,
                 _y = data.y / _size[1] * 256 - 128;
@@ -405,9 +405,23 @@ class THREEBRAIN_CANVAS {
           if( _d.length() === 0 ){
             _d.z = 500;
           }
-          this.main_camera.position.copy( _d );
 
-          // TODO: set camera up
+          if( e.shiftKey ){
+            const heads_up = new THREE.Vector3(0, 0, 1);
+            // calculate camera up
+            let _cp = this.main_camera.position.clone().cross( heads_up ).cross( _d ).normalize();
+            if( _cp.length() < 0.5 ){
+              _cp.y = 1;
+            }
+
+            // Always try to heads up
+            if( _cp.dot( heads_up ) < 0 ){
+              _cp.multiplyScalar(-1);
+            }
+
+            this.main_camera.position.copy( _d );
+            this.main_camera.up.copy( _cp );
+          }
 
           this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
 
@@ -1846,7 +1860,7 @@ class THREEBRAIN_CANVAS {
         ( res, evt ) => {
           const obj = res.target_object;
           if( obj && obj.isMesh && obj.userData.construct_params ){
-            const pos = obj.position;
+            const pos = obj.getWorldPosition(new THREE.Vector3(0,0,0));
             // calculate depth
             this.set_side_depth(
               (pos.y - cube_center[1]) * 128 / cube_half_size[1] - 0.5,

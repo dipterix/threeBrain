@@ -13,6 +13,7 @@ function make_draggable(
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var range = [-Infinity, Infinity, -Infinity, Infinity];
   var state = 'pan';
+  var el_x, el_y;
 
   if ( elmnt_header ) {
     /* if present, the header is where you move the DIV from:*/
@@ -21,6 +22,7 @@ function make_draggable(
     /* otherwise, move the DIV from anywhere inside the DIV:*/
     elmnt.onmousedown = dragMouseDown;
   }
+
 
   function dragMouseDown(e) {
     e = e || window.event;
@@ -54,7 +56,7 @@ function make_draggable(
 
 
 
-      document.onmouseup = closeDragElement;
+
       // call a function whenever the cursor moves:
       document.onmousemove = elementDrag;
 
@@ -63,8 +65,10 @@ function make_draggable(
       });
     }else{
       // get xy location and return
-      let el_x = elmnt.getBoundingClientRect().left,
-          el_y = elmnt.getBoundingClientRect().top;
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      document.onmousemove = mouseMove;
 
       mousedown_callback(e, {
         state : 'select',
@@ -73,6 +77,23 @@ function make_draggable(
       });
     }
 
+    document.onmouseup = closeDragElement;
+
+  }
+
+  function mouseMove(e) {
+    if( state === 'select' && e.shiftKey ){
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
+    }
   }
 
   function elementDrag(e) {

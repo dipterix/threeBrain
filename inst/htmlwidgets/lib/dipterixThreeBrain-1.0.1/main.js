@@ -50146,7 +50146,7 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 		var objectUp = new THREE.Vector3();
 		var mouseOnBall = new THREE.Vector3();
 
-		return function getMouseProjectionOnBall( pageX, pageY ) {
+		return function getMouseProjectionOnBall( pageX, pageY, fix_axis = 0 ) {
 
 			mouseOnBall.set(
 				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / _this.radius,
@@ -50156,26 +50156,30 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 			var length = mouseOnBall.length();
 
+			if( fix_axis === 1 ){
+			  // Fix x
+			  mouseOnBall.x = 0;
+			  length = Math.abs( mouseOnBall.y );
+			}else if ( fix_axis === 2 ){
+			  mouseOnBall.y = 0;
+			  length = Math.abs( mouseOnBall.x );
+			}else if ( fix_axis === 3 ){
+			  mouseOnBall.normalize();
+			  length = 1;
+			}
+
+
+
 			if ( _this.noRoll ) {
-
 				if ( length < Math.SQRT1_2 ) {
-
 					mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-
 				} else {
-
 					mouseOnBall.z = 0.5 / length;
-
 				}
-
 			} else if ( length > 1.0 ) {
-
 				mouseOnBall.normalize();
-
 			} else {
-
 				mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-
 			}
 
 			_eye.copy( _this.object.position ).sub( _this.target );
@@ -50480,7 +50484,9 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
 
-			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+		  // fix axis? altKey -> 3, ctrl -> 2, shift -> 1
+
+			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
 			_rotateEnd.copy( _rotateStart );
 
 		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
@@ -50511,7 +50517,7 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
 
-			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
 
 		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
 
@@ -74006,6 +74012,7 @@ function make_draggable(
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var range = [-Infinity, Infinity, -Infinity, Infinity];
   var state = 'pan';
+  var el_x, el_y;
 
   if ( elmnt_header ) {
     /* if present, the header is where you move the DIV from:*/
@@ -74014,6 +74021,7 @@ function make_draggable(
     /* otherwise, move the DIV from anywhere inside the DIV:*/
     elmnt.onmousedown = dragMouseDown;
   }
+
 
   function dragMouseDown(e) {
     e = e || window.event;
@@ -74047,7 +74055,7 @@ function make_draggable(
 
 
 
-      document.onmouseup = closeDragElement;
+
       // call a function whenever the cursor moves:
       document.onmousemove = elementDrag;
 
@@ -74056,8 +74064,10 @@ function make_draggable(
       });
     }else{
       // get xy location and return
-      let el_x = elmnt.getBoundingClientRect().left,
-          el_y = elmnt.getBoundingClientRect().top;
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      document.onmousemove = mouseMove;
 
       mousedown_callback(e, {
         state : 'select',
@@ -74066,6 +74076,23 @@ function make_draggable(
       });
     }
 
+    document.onmouseup = closeDragElement;
+
+  }
+
+  function mouseMove(e) {
+    if( state === 'select' && e.shiftKey ){
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
+    }
   }
 
   function elementDrag(e) {
@@ -74499,7 +74526,7 @@ class THREEBRAIN_CANVAS {
       const toggle_pan_canvas = Object(_libs_draggable_js__WEBPACK_IMPORTED_MODULE_4__[/* make_draggable */ "a"])( cvs, undefined, div, (e, data) => {
         raise_top(e, data);
 
-        if( data.state === 'select' ){
+        if( data.state === 'select' || data.state === 'move' ){
           const _size = Object(_libs_get_element_size_js__WEBPACK_IMPORTED_MODULE_6__[/* get_element_size */ "a"])( cvs ),
                 _x = data.x / _size[0] * 256 - 128,
                 _y = data.y / _size[1] * 256 - 128;
@@ -74524,9 +74551,23 @@ class THREEBRAIN_CANVAS {
           if( _d.length() === 0 ){
             _d.z = 500;
           }
-          this.main_camera.position.copy( _d );
 
-          // TODO: set camera up
+          if( e.shiftKey ){
+            const heads_up = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3(0, 0, 1);
+            // calculate camera up
+            let _cp = this.main_camera.position.clone().cross( heads_up ).cross( _d ).normalize();
+            if( _cp.length() < 0.5 ){
+              _cp.y = 1;
+            }
+
+            // Always try to heads up
+            if( _cp.dot( heads_up ) < 0 ){
+              _cp.multiplyScalar(-1);
+            }
+
+            this.main_camera.position.copy( _d );
+            this.main_camera.up.copy( _cp );
+          }
 
           this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
 
@@ -75965,7 +76006,7 @@ class THREEBRAIN_CANVAS {
         ( res, evt ) => {
           const obj = res.target_object;
           if( obj && obj.isMesh && obj.userData.construct_params ){
-            const pos = obj.position;
+            const pos = obj.getWorldPosition(new _threeplugins_js__WEBPACK_IMPORTED_MODULE_2__[/* THREE */ "a"].Vector3(0,0,0));
             // calculate depth
             this.set_side_depth(
               (pos.y - cube_center[1]) * 128 / cube_half_size[1] - 0.5,

@@ -142,7 +142,7 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 		var objectUp = new THREE.Vector3();
 		var mouseOnBall = new THREE.Vector3();
 
-		return function getMouseProjectionOnBall( pageX, pageY ) {
+		return function getMouseProjectionOnBall( pageX, pageY, fix_axis = 0 ) {
 
 			mouseOnBall.set(
 				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / _this.radius,
@@ -152,26 +152,30 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 			var length = mouseOnBall.length();
 
+			if( fix_axis === 1 ){
+			  // Fix x
+			  mouseOnBall.x = 0;
+			  length = Math.abs( mouseOnBall.y );
+			}else if ( fix_axis === 2 ){
+			  mouseOnBall.y = 0;
+			  length = Math.abs( mouseOnBall.x );
+			}else if ( fix_axis === 3 ){
+			  mouseOnBall.normalize();
+			  length = 1;
+			}
+
+
+
 			if ( _this.noRoll ) {
-
 				if ( length < Math.SQRT1_2 ) {
-
 					mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-
 				} else {
-
 					mouseOnBall.z = 0.5 / length;
-
 				}
-
 			} else if ( length > 1.0 ) {
-
 				mouseOnBall.normalize();
-
 			} else {
-
 				mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-
 			}
 
 			_eye.copy( _this.object.position ).sub( _this.target );
@@ -476,7 +480,9 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
 
-			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+		  // fix axis? altKey -> 3, ctrl -> 2, shift -> 1
+
+			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
 			_rotateEnd.copy( _rotateStart );
 
 		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
@@ -507,7 +513,7 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 
 		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
 
-			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY ) );
+			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
 
 		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
 
