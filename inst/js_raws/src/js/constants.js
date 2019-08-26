@@ -45,6 +45,10 @@ CONSTANTS.VEC_ANAT_L = new THREE.Vector3( -1, 0, 0 );
 CONSTANTS.VEC_ANAT_P = new THREE.Vector3( 0, -1, 0 );
 CONSTANTS.VEC_ANAT_I = new THREE.Vector3( 0, 0, -1 );
 
+CONSTANTS.KEY_ZOOM = 90;              // z for zoom out and Z for zoom in
+CONSTANTS.KEY_CYCLE_LEFT = 219;       // [ for cycle through left hemisphere material
+CONSTANTS.KEY_CYCLE_RIGHT = 221;      // [ for cycle through left hemisphere material
+CONSTANTS.KEY_CYCLE_ELECTRODES = 190; // "." for choosing electrodes
 
 // Colors
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects

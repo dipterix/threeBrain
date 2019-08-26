@@ -108,6 +108,7 @@ class THREEBRAIN_CANVAS {
 
     // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
+    this._keyboard_callbacks = {};
 
     /* A render flag that tells renderers whether the canvas needs update.
           Case -1, -2, ... ( < 0 ) : stop rendering
@@ -588,7 +589,6 @@ class THREEBRAIN_CANVAS {
     this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
-    this._mouse_helper_sleep_count = 0;
 
     this.add_to_scene(mouse_helper, true);
 
@@ -756,6 +756,19 @@ class THREEBRAIN_CANVAS {
 
     }, false );
 
+    window.addEventListener( 'keydown', (event) => {
+      if( this.listen_keyboard ){
+        event.preventDefault();
+        this.keyboard_event = {
+          'action' : 'keydown',
+          'event' : event,
+          'dispose' : false,
+          'level' : 0
+        };
+      }
+
+    });
+
     this.add_mouse_callback(
       (evt) => {
         return({
@@ -764,19 +777,7 @@ class THREEBRAIN_CANVAS {
         });
       },
       (res, evt) => {
-
-        if( this.object_chosen ){
-          this.object_chosen.material.emissive.r = 0;
-        }
-
-        if( res.target_object ){
-          this.object_chosen = res.target_object;
-          this.object_chosen.material.emissive.r = 1;
-          console.debug('object selected ' + res.target_object.name);
-        }else{
-          this.object_chosen = undefined;
-        }
-
+        this.focus_object( res.target_object );
         this.start_animation( 0 );
       },
       'set_obj_chosen'
@@ -785,7 +786,8 @@ class THREEBRAIN_CANVAS {
     this.add_mouse_callback(
       (evt) => {
         return({
-          pass  : true,
+          pass  : ['click', 'dblclick'].includes( evt.action ) ||
+                  ( evt.action === 'mousedown' && evt.event.button === 2 ),
           type  : 'clickable'
         });
       },
@@ -816,6 +818,51 @@ class THREEBRAIN_CANVAS {
       'raycaster'
     );
 
+    // zoom-in, zoom-out
+    this.add_keyboard_callabck( CONSTANTS.KEY_ZOOM, (evt) => {
+      if( evt.event.shiftKey ){
+        this.main_camera.zoom = this.main_camera.zoom * 1.2; // zoom in
+      }else{
+        this.main_camera.zoom = this.main_camera.zoom / 1.2; // zoom out
+      }
+      this.main_camera.updateProjectionMatrix();
+      this.start_animation( 0 );
+    }, 'zoom');
+
+    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES, (evt) => {
+      let m = this.object_chosen,
+          last_obj = false,
+          this_obj = false,
+          first_obj = false;
+
+      for( let _nm in this.mesh ){
+        this_obj = this.mesh[ _nm ];
+        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+          if( last_obj && last_obj.name === m.name ){
+            this.focus_object( this_obj, true );
+            return(null);
+          }
+          last_obj = this_obj;
+          if( !first_obj ){
+            first_obj = this_obj;
+          }
+        }
+      }
+      if( last_obj !== false ){
+        // has electrode
+        if( last_obj.name === m.name ){
+        // focus on the first one
+          last_obj = first_obj;
+        }
+        this.focus_object( this_obj, true );
+        return(null);
+      }
+
+      this.start_animation( 0 );
+
+    }, 'electrode_cycling');
+
+
     if( this.DEBUG ){
       this.add_mouse_callback(
         (evt) => {
@@ -830,8 +877,55 @@ class THREEBRAIN_CANVAS {
         },
         'debug'
       );
+
     }
 
+
+  }
+
+  focus_object( m = undefined, helper = false ){
+    if( this.object_chosen ){
+      this.highlight( this.object_chosen, true );
+    }
+    if( m ){
+      this.object_chosen = m;
+      this.highlight( this.object_chosen, false );
+      console.debug('object selected ' + m.name);
+
+      if( helper ){
+        m.getWorldPosition( this.mouse_helper.position );
+      }
+
+
+    }else{
+      this.object_chosen = undefined;
+    }
+  }
+
+  highlight( m, reset = false ){
+    // _child.userData.is_highlight_helper = true;
+    if( !m || !m.userData ){ return(null); }
+
+    let _flag = false;
+
+    // check if there is highlight helper
+    if( m.children.length > 0 ){
+      m.children.forEach((_c) => {
+        if( _c.isMesh && _c.userData.is_highlight_helper ){
+          _c.visible = !reset;
+          _flag = true;
+        }
+      });
+    }
+
+    if( _flag ){ return(null); }
+
+    if( m.isMesh && m.userData.construct_params ){
+      const g = m.userData.construct_params;
+      if( m.material.isMeshLambertMaterial ){
+        m.material.emissive.r = 1 - reset;
+      }
+    }
 
   }
 
@@ -929,20 +1023,42 @@ class THREEBRAIN_CANVAS {
   add_mouse_callback(check, callback, name){
     this._mouse_click_callbacks[name] = [check, callback];
   }
-
-  /*
-  set_animation_callback(callback){
-    this._animation_callback = callback;
+  add_keyboard_callabck(keycode, callback, name){
+    this._keyboard_callbacks[name] = [keycode, callback];
   }
-  */
+
+  keyboard_update(){
+
+    if( !this.keyboard_event || this.keyboard_event.dispose ){
+      return( null );
+    }
+    this.keyboard_event.dispose = true;
+    if(this.keyboard_event.level <= 2){
+      this.keyboard_event.level = 0;
+    }
+
+    // handle
+    for( let _cb_name in this._keyboard_callbacks ){
+
+      if( this._keyboard_callbacks[ _cb_name ] &&
+          this.keyboard_event.event.keyCode === this._keyboard_callbacks[ _cb_name ][0] ){
+        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
+      }
+
+    }
+  }
 
   // method to target object with mouse pointed at
-  target_mouse_helper(){
+  mouse_update(){
 
-    if(this._mouse_helper_sleep_count++ < 2 || this.mouse_event === undefined || this.mouse_event.dispose || false){
+    if( !this.mouse_event || this.mouse_event.dispose ){
       return(null);
-    }else{
-      this._mouse_helper_sleep_count = 0;
+    }
+
+    // dispose first as the callbacks might have error
+    this.mouse_event.dispose = true;
+    if(this.mouse_event.level <= 2){
+      this.mouse_event.level = 0;
     }
 
 
@@ -950,7 +1066,7 @@ class THREEBRAIN_CANVAS {
     let raycast_result;
 
     for( let _cb_name in this._mouse_click_callbacks ){
-      let callback = this._mouse_click_callbacks[ _cb_name ];
+      const callback = this._mouse_click_callbacks[ _cb_name ];
       if( callback === undefined ){
         continue;
       }
@@ -987,10 +1103,7 @@ class THREEBRAIN_CANVAS {
       }
     }
 
-    this.mouse_event.dispose = true;
-    if(this.mouse_event.level <= 2){
-      this.mouse_event.level = 0;
-    }
+
 
   }
 
@@ -1241,7 +1354,8 @@ class THREEBRAIN_CANVAS {
     this.compass.update();
 
     try {
-      this.target_mouse_helper();
+      this.keyboard_update();
+      this.mouse_update();
     } catch (e) {
       if(this.DEBUG){
         console.error(e);
@@ -1334,9 +1448,15 @@ class THREEBRAIN_CANVAS {
         this.object_chosen.userData ){
 
         results.selected_object = {
-          name : this.object_chosen.userData.construct_params.name,
-          position : this.object_chosen.getWorldPosition( new THREE.Vector3() ),
-          custom_info : this.object_chosen.userData.construct_params.custom_info
+          name            : this.object_chosen.userData.construct_params.name,
+          position        : this.object_chosen.getWorldPosition( new THREE.Vector3() ),
+          custom_info     : this.object_chosen.userData.construct_params.custom_info,
+          is_electrode    : this.object_chosen.userData.construct_params.is_electrode || false,
+          template_mapping : {
+            mapped        : this.object_chosen.userData._template_mapped || false,
+            shift         : this.object_chosen.userData._template_shift || 0,
+            space         : this.object_chosen.userData._template_space || 'original'
+          }
         };
 
       }
@@ -1541,7 +1661,16 @@ class THREEBRAIN_CANVAS {
 
         // Fill text
         legent_ticks.forEach((tick) => {
-          this.domContext.fillText( tick[0], _width - 130, tick[1] + 5 );
+
+          if( tick[2] === 1 ){
+            this.domContext.font = `bold ${_pixelRatio * 10}px ${_fontType}`;
+            this.domContext.fillText( tick[0], _width - 130, tick[1] + 5 );
+            this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
+          }else{
+            this.domContext.fillText( tick[0], _width - 130, tick[1] + 5 );
+          }
+
+
         });
 
         // Fill ticks
@@ -1605,14 +1734,23 @@ class THREEBRAIN_CANVAS {
         }
         this.domContext.fillText(
           results.selected_object.name,
-          _width - 10 - legend_title_width, 50 //legend_start * _height - 63
+          _width - Math.max( 10 + legend_title_width, 500 ), 50 //legend_start * _height - 63
         );
 
-        const pos = results.selected_object.position;
+        // Smaller
         this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
+        if( results.selected_object.is_electrode ){
+          let _m = results.selected_object.template_mapping;
+          this.domContext.fillText(
+            `mapping: ${ _m.space }, shift: ${ _m.shift.toFixed(2) }`,
+            _width - 500, 108 //legend_start * _height - 34
+          );
+        }
+
+        const pos = results.selected_object.position;
         this.domContext.fillText(
-          `(${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-          _width - 300, 108 //legend_start * _height - 34
+          `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+          _width - 500, 135 //legend_start * _height - 34
         );
 
         if( typeof(results.selected_object.custom_info) === 'string' ){
@@ -1622,7 +1760,7 @@ class THREEBRAIN_CANVAS {
           }
           this.domContext.fillText(
             results.selected_object.custom_info,
-            _width - 10 - legend_title_width, 79 //legend_start * _height - 34
+            _width - Math.max( 10 + legend_title_width, 500 ), 79 //legend_start * _height - 34
           );
         }
 
@@ -1836,6 +1974,7 @@ class THREEBRAIN_CANVAS {
         if( search_group && search_group.userData ){
           const lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${snap_surface} (${subject_code})`];
           const rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${snap_surface} (${subject_code})`];
+          const mesh_center = search_group.position;
           if( lh_vertices && rh_vertices ){
             // calculate
             let _tmp = new THREE.Vector3(),
@@ -1845,7 +1984,7 @@ class THREEBRAIN_CANVAS {
                 _dist = 0;
 
             lh_vertices.forEach((v, ii) => {
-              _dist = _tmp.fromArray( v ).distanceToSquared( m.position );
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( m.position );
               if( _dist < min_dist ){
                 min_dist = _dist;
                 node_idx = ii;
@@ -1853,7 +1992,7 @@ class THREEBRAIN_CANVAS {
               }
             });
             rh_vertices.forEach((v, ii) => {
-              _dist = _tmp.fromArray( v ).distanceToSquared( m.position );
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( m.position );
               if( _dist < min_dist ){
                 min_dist = _dist;
                 node_idx = ii;
@@ -1906,12 +2045,12 @@ class THREEBRAIN_CANVAS {
         m.updateMatrixWorld();
       }
     }
-
   }
 
   _register_datacube( m ){
 
-    const g = m[0].userData.construct_params;
+    const g = m[0].userData.construct_params,
+          gp = m[0].parent;
 
     // Register depth functions
 
@@ -2422,7 +2561,7 @@ class THREEBRAIN_CANVAS {
         if( !mapped ){
           el.position.fromArray( origin_position );
           el.userData._template_mapped = false;
-          el.userData._template_space = 'current subject';
+          el.userData._template_space = 'original';
           el.userData._template_shift = 0;
         }
       }

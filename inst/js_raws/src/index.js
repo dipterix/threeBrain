@@ -255,6 +255,9 @@ class BrainCanvas{
 
       });
 
+    gui.add_item('Keyboard Event', false, {folder_name: 'Main Canvas'})
+      .onChange((v) => { this.canvas.listen_keyboard = v; });
+
     gui.add_item('Reset', () => {
       // Center camera first.
       this.canvas.handle_resize( undefined, undefined, false, true );
