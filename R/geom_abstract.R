@@ -30,6 +30,8 @@ GeomGroup <- R6::R6Class(
     cache_env = NULL,
     cache_path = NULL,
     disable_trans_mat = FALSE,
+    parent_group = NULL,
+    subject_code = NULL,
     cache_name = function(){
       stringr::str_replace_all(self$name, '[^a-zA-Z0-9]', '_')
     },
@@ -42,11 +44,18 @@ GeomGroup <- R6::R6Class(
       }
     },
     initialize = function(name, layer = 0, position = c(0,0,0),
-                          cache_path = tempfile()){
+                          cache_path = tempfile(), parent = NULL){
       self$name = name
 
       stopifnot2(all(layer %in% 0:13), msg = 'Layer(s) must be from 0 to 12, use 0 for main camera-only, 1 for all cameras, 13 is invisible.')
       self$layer = layer
+
+      if( !is.null(parent) ){
+        if(R6::is.R6(parent)){
+          parent = parent$name
+        }
+        self$parent_group = parent
+      }
 
 
       stopifnot2(length(position) == 3, msg = 'position must have length of 3.')
@@ -123,7 +132,9 @@ GeomGroup <- R6::R6Class(
         trans_mat = trans_mat,
         cached_items = self$cached_items,
         cache_name = self$cache_name(),
-        disable_trans_mat = self$disable_trans_mat
+        disable_trans_mat = self$disable_trans_mat,
+        parent_group = self$parent_group,
+        subject_code = self$subject_code
       )
     }
   )
@@ -150,6 +161,7 @@ AbstractGeom <- R6::R6Class(
     layer = 0,
     use_cache = FALSE,
     custom_info = '',
+    subject_code = NULL,
     initialize = function(name, position = c(0,0,0), time_stamp = NULL, group = NULL, layer = 0, ...){
       self$name = name
       self$time_stamp = time_stamp
@@ -168,13 +180,19 @@ AbstractGeom <- R6::R6Class(
     },
     to_list = function(){
       group_info = NULL
+      subject_code = self$subject_code
       if(!is.null(self$group)){
         group_info = list(
           group_name = self$group$name,
           group_layer = self$group$layer,
           group_position = as.numeric(self$group$position)
         )
+        if(is.null( subject_code )){
+          subject_code = self$group$subject_code
+        }
       }
+
+
       list(
         name = self$name,
         type = self$type,
@@ -185,7 +203,8 @@ AbstractGeom <- R6::R6Class(
         layer = as.integer(self$layer),
         group = group_info,
         use_cache = self$use_cache,
-        custom_info = self$custom_info
+        custom_info = self$custom_info,
+        subject_code = subject_code
       )
     },
     get_data = function(key = 'value', force_reload = FALSE, ifnotfound = NULL){

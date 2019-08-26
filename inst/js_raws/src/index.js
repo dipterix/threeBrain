@@ -382,7 +382,9 @@ class BrainCanvas{
         });
 
       gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
-        .onChange( this.canvas.set_cube_anchor_visibility );
+        .onChange((v) => {
+          this.canvas.set_cube_anchor_visibility(v);
+        });
     }
 
 
@@ -391,11 +393,13 @@ class BrainCanvas{
     to_array( control_presets ).forEach((control_preset) => {
       try {
         presets[control_preset]();
+        // console.log(control_preset);
 
-        let callback = presets[control_preset + '_callback'];
-        if(typeof(callback) === 'function'){
-          callback();
+        const _ctrl_callback = presets[control_preset + '_callback'];
+        if(typeof(_ctrl_callback) === 'function'){
+          _ctrl_callback();
         }
+        // console.log(control_preset);
       } catch (e) {
         if(this.DEBUG){
           console.warn(e);
@@ -484,6 +488,9 @@ class BrainCanvas{
           }
         }
       });
+
+      // Set subject, TODO: use N27 as default?
+      this.canvas.switch_subject();
 
       let gui = this._register_gui_control();
       this._set_info_callback();

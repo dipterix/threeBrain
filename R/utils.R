@@ -153,6 +153,88 @@ read_fs_asc <- function(file){
 }
 
 
+#' Read 'FreeSurfer` m3z file
+#' @param filename file location, usually located at `mri/transforms/talairach.m3z`
+#' @return registration data
+#' @details An `m3z` file is a gzipped binary file containing a dense vector
+#' field that describes a 3D registration between two volumes/images.
+#' This implementation follows the `Matlab` implementation from the `FreeSurfer`.
+#' This function is released under the Freesurfer license:
+#' \url{https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense}.
+#' @export
+read_fs_m3z <- function(filename){
+  fp = gzfile(filename, open = 'rb')
+
+  # fdata = readBin(fp, 'raw', 24, endian = 'big')
+  version = readBin(fp, 'numeric', 1, size = 4, endian = 'big');
+
+  if( version != 1 ){
+    stop( 'm3z veresion is not 1.' )
+  }
+
+  width = readBin(fp, 'integer', 1, endian = 'big');
+  height = readBin(fp, 'integer', 1, endian = 'big');
+  depth = readBin(fp, 'integer', 1, endian = 'big');
+  spacing = readBin(fp, 'integer', 1, endian = 'big');
+  exp_k = readBin(fp, 'numeric', 1, size = 4, endian = 'big');
+
+  #==--------------------------------------------------------------------==#
+
+  # vectorized data read. read all data into a buffer that can be
+  # typecast into the appropriate data type all at once.
+
+  # read all the data (9 numbers per voxel, each at 32 bits, unsigned)
+  buf = readBin(fp, 'integer', width * height * depth * 9 * 4, size = 1, signed = FALSE, endian = 'big');
+
+  inds = outer(c(4:1, 8:5, 12:9), 9 * 4 * (seq_len(width * height * depth) - 1), '+')
+
+  # extract the three interleaved volumes and permute the result to match the
+  # original looped read. the double conversion isn't necessary, but is
+  # included to maintain backward compatibility.
+
+  con = rawConnection(raw(0), "r+")
+  writeBin(as.raw(as.vector(buf[inds])), con)
+  seek(con,0)
+  vol_orig = readBin(con, "numeric", n = prod(c(3, width, height, depth)), size = 4)
+  dim(vol_orig) = c(3, depth, height, width)
+  vol_orig = aperm(vol_orig, c(4,3,2,1))
+
+  inds = inds + 12
+  seek(con,0)
+  writeBin(as.raw(as.vector(buf[inds])), con)
+  seek(con,0)
+  vol_dest = readBin(con, "numeric", n = prod(c(3, width, height, depth)), size = 4)
+  dim(vol_dest) = c(3, depth, height, width)
+  vol_dest = aperm(vol_dest, c(4,3,2,1))
+
+  inds = inds + 12
+  seek(con,0)
+  writeBin(as.raw(as.vector(buf[inds])), con)
+  seek(con,0)
+  vol_ind0 = readBin(con, "integer", n = prod(c(3, width, height, depth)), size = 4)
+  dim(vol_ind0) = c(3, depth, height, width)
+  vol_ind0 = aperm(vol_ind0, c(4,3,2,1))
+
+  close(con)
+  fpos_dataend = seek(fp, NA)
+
+  tag = readBin(fp, 'integer', 1, endian = 'big');
+
+  close(fp)
+
+  return(list(
+    version = version,
+    dimension = c(width, height, depth, 3),
+    spacing = spacing,
+    exp_k = exp_k,
+    vol_orig = vol_orig,
+    vol_dest = vol_dest,
+    vol_ind0 = vol_ind0,
+    morph_tag = tag
+  ))
+}
+
+
 
 file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite = TRUE,
                       copy_mode = TRUE, copy_date = TRUE, all_files = TRUE,

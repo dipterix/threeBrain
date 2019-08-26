@@ -331,6 +331,11 @@ THREE.OrthographicTrackballControls = function ( object, domElement ) {
 				_this.object.top = _this.object.top + mouseChange.y / 2;
 				_this.object.bottom = _this.object.bottom + mouseChange.y / 2;
 
+				_this.left0 = _this.object.left;
+    		_this.right0 = _this.object.right;
+    		_this.top0 = _this.object.top;
+    		_this.bottom0 = _this.object.bottom;
+
 				if ( _this.staticMoving ) {
 
 					_panStart.copy( _panEnd );

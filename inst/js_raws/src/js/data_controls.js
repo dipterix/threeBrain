@@ -31,6 +31,8 @@ class THREEBRAIN_PRESETS{
 
     // Create alias for compatibility issue
     this.initial_subject = this.default_subject = this.current_subject;
+    this.__left_hemisphere = 'normal';
+    this.__right_hemisphere = 'normal';
   }
 
   _update_canvas(level = 0){
@@ -447,6 +449,7 @@ class THREEBRAIN_PRESETS{
 
   }
 
+  // TODO deprecate this item
   lh_material(item_name = 'Left Hemisphere', folder_name = 'Geometry'){
     const canvas = this.canvas;
     const gui = this.gui;
@@ -558,6 +561,96 @@ class THREEBRAIN_PRESETS{
 
     gui.open_folder(folder_name);
   }
+
+
+
+  // -------------------------- New version --------------------------
+  // which subject
+  subject2(item_name = 'Subject', folder_name = 'Geometry'){
+    // Get subjects
+    let subject_ids = this.canvas.subject_codes;
+
+
+    if( subject_ids.length > 0 ){
+      const _s = this.canvas.state_data.target_subject || subject_ids[0];
+      this.gui.add_item(item_name, _s, {
+        folder_name : folder_name,
+        args : subject_ids
+      }).onChange((v) => {
+        this.canvas.switch_subject( v );
+      });
+    }
+  }
+
+
+  // which surface
+  surface_type2(item_name = 'Surface Type', folder_name = 'Geometry'){
+
+    const _s = this.canvas.state_data.surface_type || 'pial',
+          _c = this.canvas.get_surface_types();
+
+    if( _c.length === 0 ){
+      return(null);
+    }
+    this.gui.add_item(item_name, _s, {
+        args : _c,
+        folder_name : folder_name
+      }).onChange((v) => {
+        this.canvas.switch_subject( '/', {
+          'surface_type': v
+        });
+      });
+
+  }
+
+
+  hemisphere_material(folder_name = 'Geometry'){
+    this.gui.add_item('Left Hemisphere', 'normal', { args : ['normal', 'wireframe', 'hidden'],
+      folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', {
+          'material_type_left': v
+        });
+      });
+
+    this.gui.add_item('Right Hemisphere', 'normal', { args : ['normal', 'wireframe', 'hidden'],
+      folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', {
+          'material_type_right': v
+        });
+      });
+  }
+
+
+  map_template(folder_name = 'Electrode Mapping'){
+
+    const subject_codes = ['[no mapping]', ...this.canvas.subject_codes];
+
+    this.gui.add_item('Map Electrodes', false, { folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', { 'map_template': v });
+      });
+
+    this.gui.add_item('Surface', 'std.141', {
+      args : ['std.141', 'mni305', 'no mapping'],
+      folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', { 'map_type_surface': v });
+      });
+
+    this.gui.add_item('Volume', 'mni305', {
+      args : ['mni305', 'no mapping'],
+      folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', { 'map_type_volume': v });
+      });
+  }
+
+
+
+
+
 }
 
 

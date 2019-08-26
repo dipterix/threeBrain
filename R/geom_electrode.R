@@ -5,7 +5,7 @@ ElectrodeGeom <- R6::R6Class(
   public = list(
 
     # Is subcortical electrode?
-    sub_cortical = FALSE,
+    is_surface_electrode = FALSE,
 
     # Do you want to map to the template electrode? for initialization-only
     use_template = FALSE,
@@ -20,6 +20,7 @@ ElectrodeGeom <- R6::R6Class(
     surface_type = 'pial',
     hemisphere = NULL,
     vertex_number = -1,
+    MNI305_position = c(0,0,0),
 
     # ------------ for sub cortical electrodes only ------------
 
@@ -31,12 +32,13 @@ ElectrodeGeom <- R6::R6Class(
         super$to_list(),
         list(
           is_electrode = TRUE,
-          sub_cortical = self$sub_cortical,
+          is_surface_electrode = self$is_surface_electrode,
           use_template = self$use_template,
           search_geoms = self$search_geoms,
           surface_type = self$surface_type,
           hemisphere = self$hemisphere,
-          vertex_number = self$vertex_number
+          vertex_number = self$vertex_number,
+          MNI305_position = self$MNI305_position
         )
       )
     }
