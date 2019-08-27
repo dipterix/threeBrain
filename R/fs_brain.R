@@ -317,8 +317,8 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     if( length(tbl$SurfaceElectrode) && is.character(tbl$SurfaceElectrode) ){
       tbl$SurfaceElectrode = stringr::str_to_upper(tbl$SurfaceElectrode) == 'TRUE'
     }
-    if( length( row$Hemisphere ) ){
-      row$Hemisphere = stringr::str_to_lower(row$Hemisphere)
+    if( length( tbl$Hemisphere ) ){
+      tbl$Hemisphere = stringr::str_to_lower(tbl$Hemisphere)
     }
 
     env$electrode_table = tbl
@@ -341,7 +341,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
                      position = c(row$Coord_x, row$Coord_y, row$Coord_z),
                      radius = radius, group = electrode_container)
       el$is_surface_electrode = isTRUE( row$SurfaceElectrode )
-      el$search_geoms = which_side
+      el$hemisphere = which_side
       el$surface_type = surf_type
       el$vertex_number = nearest_vertex
       el$subject_code = subject_name
