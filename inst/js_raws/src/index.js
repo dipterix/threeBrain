@@ -2,7 +2,6 @@
  * @Author: Zhengjia Wang
  * Adapter of model (threejs_scene) and viewer (htmlwidgets)
  */
-import * as d3 from "d3";
 import { download } from './js/download.js';
 import { WEBGL } from './js/WebGL.js';
 import { THREE } from './js/threeplugins.js';
@@ -10,8 +9,8 @@ import { THREEBRAIN_PRESETS, THREEBRAIN_CONTROL } from './js/data_controls.js';
 import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
 import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
 import { THREEBRAIN_STORAGE } from './js/threebrain_cache.js';
-import { invertColor, padZero, to_dict, to_array } from './js/utils.js';
-import { D3Canvas } from './js/Math/sparkles.js';
+import { invertColor, padZero, to_array } from './js/utils.js';
+// import { D3Canvas } from './js/Math/sparkles.js';
 // import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
 import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 
@@ -255,8 +254,9 @@ class BrainCanvas{
 
       });
 
-    gui.add_item('Keyboard Event', false, {folder_name: 'Main Canvas'})
-      .onChange((v) => { this.canvas.listen_keyboard = v; });
+    /* gui.add_item('Keyboard Event', false, {folder_name: 'Main Canvas'})
+      .onChange((v) => { this.canvas.listen_keyboard = v; }); */
+
 
     gui.add_item('Reset', () => {
       // Center camera first.
@@ -755,6 +755,5 @@ class BrainCanvas{
 window.BrainCanvas = BrainCanvas;
 window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 window.THREE = THREE;
-window.d3 = d3;
 window.download = download;
 export { BrainCanvas };

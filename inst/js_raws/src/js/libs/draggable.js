@@ -12,15 +12,26 @@ function make_draggable(
   mousedown_callback = (e, state)=>{}) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var range = [-Infinity, Infinity, -Infinity, Infinity];
-  var state = 'pan';
+  var state = 'pan', state_old;
   var el_x, el_y;
 
   if ( elmnt_header ) {
     /* if present, the header is where you move the DIV from:*/
     elmnt_header.onmousedown = dragMouseDown;
+    elmnt_header.oncontextmenu = right_clicked;
   } else {
     /* otherwise, move the DIV from anywhere inside the DIV:*/
     elmnt.onmousedown = dragMouseDown;
+    elmnt.oncontextmenu = right_clicked;
+  }
+
+
+  function right_clicked ( e ){
+    const state_old = state;
+    state = 'pan';
+    dragMouseDown(e);
+    state = state_old;
+    return(false);
   }
 
 

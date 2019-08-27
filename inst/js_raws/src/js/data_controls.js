@@ -1,7 +1,7 @@
 import { THREE } from './threeplugins.js';
 import * as dat from './libs/dat.gui.module.js';
-import { to_dict, to_array } from './utils.js';
-
+import { to_array } from './utils.js';
+import { CONSTANTS } from './constants.js';
 // Some presets for gui and canvas
 
 class THREEBRAIN_PRESETS{
@@ -44,7 +44,7 @@ class THREEBRAIN_PRESETS{
   }
 
   _surfaces(){
-    return(this.canvas.group["Left Hemisphere"].userData.group_data['.gui_params']);
+    return(this.canvas.group.get( "Left Hemisphere" ).userData.group_data['.gui_params']);
   }
 
   _current_surfaces( subj ){
@@ -53,7 +53,7 @@ class THREEBRAIN_PRESETS{
   }
 
   _all_group_names(){
-    return( Object.keys( this.canvas.group ) );
+    return( [...this.canvas.group.keys()] );
   }
 
   _electrode_group_names(filtered_result = false){
@@ -75,7 +75,7 @@ class THREEBRAIN_PRESETS{
   }
 
   _get_group_by_name( group_name ){
-    return( this.canvas.group[group_name] );
+    return( this.canvas.group.get( group_name ) );
   }
 
   _is_electrode(e){
@@ -87,8 +87,8 @@ class THREEBRAIN_PRESETS{
   }
 
   _get_subjects(){
-    if( this.canvas.group["Left Hemisphere"]){
-      return(to_array( this.canvas.group["Left Hemisphere"].userData.group_data['.subjects'] ));
+    if( this.canvas.group.has( "Left Hemisphere" ) ){
+      return(to_array( this.canvas.group.get( "Left Hemisphere" ).userData.group_data['.subjects'] ));
     }
     return([]);
   }
@@ -190,8 +190,8 @@ class THREEBRAIN_PRESETS{
           }
 
           let gnm = group_names[ii];
-          if(this.canvas.group.hasOwnProperty( gnm )){
-            this.canvas.group[ gnm ].children.forEach((e) => {
+          if(this.canvas.group.has( gnm )){
+            this.canvas.group.get( gnm ).children.forEach((e) => {
               if(this._is_electrode(e)){
                 // supress animation
                 e.userData._color_supressed = v;
@@ -253,8 +253,8 @@ class THREEBRAIN_PRESETS{
     const group_names = this._electrode_group_names();
     const surfaces = this._surfaces();
     let current_sf = this._current_surfaces( this.initial_subject );
-    const left_surface_group = canvas.group["Left Hemisphere"],
-          right_surface_group = canvas.group["Right Hemisphere"];
+    const left_surface_group = canvas.group.get( "Left Hemisphere" ),
+          right_surface_group = canvas.group.get( "Right Hemisphere" );
 
     let surface_names = Object.keys( current_sf );
     surface_names.push('original');
@@ -339,7 +339,7 @@ class THREEBRAIN_PRESETS{
               if(!e.userData.construct_params.sub_cortical){
                 // Mat to the cortical surface
                 let which_h = e.userData.construct_params.hemisphere == 'left'? 0 : 1;
-                let surf = canvas.mesh[template_surface_names[which_h]];
+                let surf = canvas.mesh.get( template_surface_names[which_h] );
                 if(surf && surf.isMesh){
                   let position = surf.geometry.getAttribute('position'),
                     vertex_number = e.userData.construct_params.vertex_number,
@@ -400,8 +400,9 @@ class THREEBRAIN_PRESETS{
         let sf = to_array( surfaces[sub][this.main_surface_type] );
 
         sf.forEach((nm) => {
-          if( canvas.mesh[nm] ){
-            canvas.mesh[nm].visible = false;
+          let m = canvas.mesh.get( nm );
+          if( m ){
+            m.visible = false;
           }
         });
 
@@ -413,7 +414,7 @@ class THREEBRAIN_PRESETS{
       let center = [0, 0, 0];
 
       sf_show.forEach((nm) => {
-        let m = canvas.mesh[nm];
+        let m = canvas.mesh.get( nm );
 
         if(m && m.isMesh){
           m.visible = true;
@@ -460,7 +461,7 @@ class THREEBRAIN_PRESETS{
       folder_name : folder_name
     })
       .onChange((v) => {
-        let m = canvas.group["Left Hemisphere"];
+        let m = canvas.group.get( "Left Hemisphere" );
         if(m && m.isObject3D){
           switch (v) {
             case 'normal':
@@ -501,7 +502,7 @@ class THREEBRAIN_PRESETS{
       folder_name : folder_name
     })
       .onChange((v) => {
-        let m = canvas.group["Right Hemisphere"];
+        let m = canvas.group.get( "Right Hemisphere" );
         if(m && m.isObject3D){
           switch (v) {
             case 'normal':
@@ -544,7 +545,7 @@ class THREEBRAIN_PRESETS{
         folder_name : folder_name
       })
       .onChange( (v) => {
-        let group = canvas.group['electrodes-' + gname];
+        let group = canvas.group.get( 'electrodes-' + gname );
         if(group){
           group.children.forEach((m) =>{
             m.layers.set(v);
@@ -572,7 +573,7 @@ class THREEBRAIN_PRESETS{
 
 
     if( subject_ids.length > 0 ){
-      const _s = this.canvas.state_data.target_subject || subject_ids[0];
+      const _s = this.canvas.state_data.get( 'target_subject' ) || subject_ids[0];
       this.gui.add_item(item_name, _s, {
         folder_name : folder_name,
         args : subject_ids
@@ -586,7 +587,7 @@ class THREEBRAIN_PRESETS{
   // which surface
   surface_type2(item_name = 'Surface Type', folder_name = 'Geometry'){
 
-    const _s = this.canvas.state_data.surface_type || 'pial',
+    const _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
           _c = this.canvas.get_surface_types();
 
     if( _c.length === 0 ){
@@ -605,21 +606,37 @@ class THREEBRAIN_PRESETS{
 
 
   hemisphere_material(folder_name = 'Geometry'){
-    this.gui.add_item('Left Hemisphere', 'normal', { args : ['normal', 'wireframe', 'hidden'],
-      folder_name : folder_name })
+
+    const options = ['normal', 'wireframe', 'hidden'];
+
+    const lh_ctrl = this.gui.add_item('Left Hemisphere', 'normal', { args : options, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', {
           'material_type_left': v
         });
       });
 
-    this.gui.add_item('Right Hemisphere', 'normal', { args : ['normal', 'wireframe', 'hidden'],
-      folder_name : folder_name })
+    const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', {
           'material_type_right': v
         });
       });
+
+    // add keyboard shortcut
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_LEFT, (evt) => {
+      let current_idx = (options.indexOf( lh_ctrl.getValue() ) + 1) % options.length;
+      if( current_idx >= 0 ){
+        lh_ctrl.setValue( options[ current_idx ] );
+      }
+    }, 'gui_left_cycle');
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_RIGHT, (evt) => {
+      let current_idx = (options.indexOf( rh_ctrl.getValue() ) + 1) % options.length;
+      if( current_idx >= 0 ){
+        rh_ctrl.setValue( options[ current_idx ] );
+      }
+    }, 'gui_right_cycle');
   }
 
 
@@ -645,6 +662,7 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_type_volume': v });
       });
+
   }
 
 

@@ -25,6 +25,7 @@ const padZero = function(str, len) {
 };
 
 const to_dict = function(x, keys){
+
   if(typeof(x) !== 'object'){
     x = [x];
   }
@@ -45,21 +46,33 @@ const to_dict = function(x, keys){
 };
 
 const to_array = function(x){
-  if(typeof(x) !== 'object'){
-    x = [x];
-  }else{
-    if(x === null){
-      return([]);
-    }
-    if(!Array.isArray(x)){
-      x = Object.values(x);
-    }
+  if( x === undefined || x === null ){
+    return([]);
   }
-  return(x);
+
+  if( Array.isArray(x) ){
+    return( x );
+  }
+
+  if(typeof(x) !== 'object'){
+    return( [x] );
+  }
+
+
+  if( x instanceof Map ){
+    return( [...x.values()] );
+  }
+
+  return( Object.values(x) );
 }
 
 
+function get_element_size(el){
+  const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
+  const height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
+  return([width, height]);
+}
 
-export { invertColor, padZero, to_dict, to_array };
+export { invertColor, padZero, to_dict, to_array, get_element_size };
 
 

@@ -1,15 +1,27 @@
-import { to_dict, to_array } from './utils.js';
+import { to_array, get_element_size } from './utils.js';
 import { Stats } from './libs/stats.min.js';
 import { THREE } from './threeplugins.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
 import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
-import { get_element_size } from './libs/get.element.size.js';
 import { CONSTANTS } from './constants.js';
 import { gen_sphere } from './geometry/sphere.js';
 import { gen_datacube } from './geometry/datacube.js';
 import { gen_free } from './geometry/free.js';
 import { Compass } from './geometry/compass.js';
+import { json2csv } from 'json-2-csv';
+import * as download from 'downloadjs';
+
+
+function get_or_default(map, key, _default = undefined){
+  if( map.has( key ) ){
+    return( map.get(key) );
+  }else{
+    map.set( key, _default );
+    return( _default );
+  }
+}
+
 
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
@@ -91,20 +103,22 @@ class THREEBRAIN_CANVAS {
     this.shiny_mode = shiny_mode;
 
     // Container that stores mesh objects from inputs (user defined) for each inquery
-    this.mesh = {};
+    this.mesh = new Map();
 
     // Stores all electrodes
     this.subject_codes = [];
-    this.electrodes = {};
-    this.volumes = {};
-    this.surfaces = {};
-    this.state_data = {};
+    this.electrodes = new Map();
+    this.volumes = new Map();
+    this.surfaces = new Map();
+    this.state_data = new Map();
+    // for global usage
+    this.shared_data = new Map();
 
     // Stores all groups
-    this.group = {};
+    this.group = new Map();
 
     // All mesh/geoms in this store will be calculated when raycasting
-    this.clickable = {};
+    this.clickable = new Map();
 
     // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
@@ -568,7 +582,7 @@ class THREEBRAIN_CANVAS {
 
 
     // Mouse helpers
-    let mouse_pointer = new THREE.Vector2(),
+    const mouse_pointer = new THREE.Vector2(),
         mouse_raycaster = new THREE.Raycaster(),
         mouse_helper = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
         mouse_helper_root = new THREE.Mesh(
@@ -591,6 +605,10 @@ class THREEBRAIN_CANVAS {
     this.mouse_pointer = mouse_pointer;
 
     this.add_to_scene(mouse_helper, true);
+
+    this.focus_box = new THREE.BoxHelper();
+    this.focus_box.material.color.setRGB( 1, 0, 0 );
+    this.focus_box.userData.added = false;
 
 
 
@@ -681,6 +699,10 @@ class THREEBRAIN_CANVAS {
   }
 
   register_main_canvas_events(){
+
+    this.main_canvas.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    this.main_canvas.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+
     this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 2){
         return(null);
@@ -829,15 +851,22 @@ class THREEBRAIN_CANVAS {
       this.start_animation( 0 );
     }, 'zoom');
 
-    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES, (evt) => {
-      let m = this.object_chosen,
+    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
+      let m = this.object_chosen || this._last_object_chosen,
           last_obj = false,
           this_obj = false,
           first_obj = false;
 
-      for( let _nm in this.mesh ){
-        this_obj = this.mesh[ _nm ];
+      // place flag first as the function might ends early
+      this.start_animation( 0 );
+
+      for( let _nm of this.mesh.keys() ){
+        this_obj = this.mesh.get( _nm );
         if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+          if( !m ){
+            this.focus_object( this_obj, true );
+            return(null);
+          }
           if( last_obj && last_obj.name === m.name ){
             this.focus_object( this_obj, true );
             return(null);
@@ -854,13 +883,35 @@ class THREEBRAIN_CANVAS {
         // focus on the first one
           last_obj = first_obj;
         }
-        this.focus_object( this_obj, true );
+        this.focus_object( last_obj, true );
         return(null);
       }
 
+    }, 'electrode_cycling_next');
+
+    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES_PREV, (evt) => {
+      let m = this.object_chosen || this._last_object_chosen,
+          last_obj = false,
+          this_obj = false,
+          first_obj = false;
+
+      // place flag first as the function might ends early
       this.start_animation( 0 );
 
-    }, 'electrode_cycling');
+      for( let _nm of this.mesh.keys() ){
+        this_obj = this.mesh.get( _nm );
+        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+          if( m && last_obj && m.name == this_obj.name ){
+            this.focus_object( last_obj, true );
+            return(null);
+          }
+          last_obj = this_obj;
+        }
+      }
+      if( last_obj ){
+        this.focus_object( last_obj, true );
+      }
+    }, 'electrode_cycling_prev');
 
 
     if( this.DEBUG ){
@@ -889,11 +940,13 @@ class THREEBRAIN_CANVAS {
     }
     if( m ){
       this.object_chosen = m;
+      this._last_object_chosen = m;
       this.highlight( this.object_chosen, false );
       console.debug('object selected ' + m.name);
 
       if( helper ){
         m.getWorldPosition( this.mouse_helper.position );
+        this.mouse_helper.visible = true;
       }
 
 
@@ -903,28 +956,24 @@ class THREEBRAIN_CANVAS {
   }
 
   highlight( m, reset = false ){
-    // _child.userData.is_highlight_helper = true;
-    if( !m || !m.userData ){ return(null); }
 
-    let _flag = false;
+    // use bounding box with this.focus_box
+    if( !m || !m.isObject3D ){ return(null); }
+
+    this.focus_box.setFromObject( m );
+    if( !this.focus_box.userData.added ){
+      this.add_to_scene( this.focus_box, true );
+    }
+
+    this.focus_box.visible = !reset;
 
     // check if there is highlight helper
     if( m.children.length > 0 ){
       m.children.forEach((_c) => {
         if( _c.isMesh && _c.userData.is_highlight_helper ){
           _c.visible = !reset;
-          _flag = true;
         }
       });
-    }
-
-    if( _flag ){ return(null); }
-
-    if( m.isMesh && m.userData.construct_params ){
-      const g = m.userData.construct_params;
-      if( m.material.isMeshLambertMaterial ){
-        m.material.emissive.r = 1 - reset;
-      }
     }
 
   }
@@ -983,8 +1032,7 @@ class THREEBRAIN_CANVAS {
 
       test_layer.mask = 16383;
 
-      for( var mesh_name in this.mesh ){
-        let m = this.mesh[mesh_name];
+      this.mesh.forEach( (m, mesh_name) => {
         if(m.isMesh && m.visible && m.layers.test(test_layer)){
           let geom = m.geometry;
 
@@ -1000,8 +1048,7 @@ class THREEBRAIN_CANVAS {
             }
           }
         }
-
-      }
+      });
 
       console.log(target_object.name);
 
@@ -1105,50 +1152,6 @@ class THREEBRAIN_CANVAS {
 
 
 
-  }
-
-  render_legend_old(text_color = '#ffffff'){
-
-
-    let text_color_fmt = text_color.replace(/^[^0-9a-f]*/, '0x');
-    let lut = this.lut,
-        labels = this.lut.legend.labels;
-
-    // canvas.legend_labels[ 'title' ]
-    let c = this.legend_labels.title.material.map.image.getContext( '2d' );
-    // c.clearRect(0,0,0,0);
-    c.fillStyle = text_color;
-    c.fillText(
-      labels.title.toString() + labels.um.toString(), 4, labels.fontsize + 4 // borderThickness = 4
-    );
-
-    this.legend_labels.title.material.map.needsUpdate=true;
-    // this.legend_labels.title.material.color.setHex( text_color );
-
-    for ( let i = 0; i < labels.ticks; i++ ){
-
-      let t = this.legend_labels.ticks[ i ].material.map.image.getContext( '2d' );
-
-      var value = ( lut.maxV - lut.minV ) / ( labels.ticks - 1 ) * i + lut.minV;
-
-			if ( labels.notation == 'scientific' ) {
-				value = value.toExponential( labels.decimal );
-			} else {
-				value = value.toFixed( labels.decimal );
-			}
-
-      t.fillStyle = text_color;
-      t.fillText( value.toString(), 4, labels.fontsize + 4 );
-
-      this.legend_labels.ticks[ i ].material.map.needsUpdate=true;
-
-      this.legend_labels.lines[ i ].material.color.setHex( text_color_fmt );
-      this.legend_labels.lines[ i ].material.needsUpdate = true;
-    }
-
-
-    this.legend_camera.updateProjectionMatrix();
-    this.legend_renderer.render( this.scene_legend, this.legend_camera );
   }
 
 
@@ -1455,7 +1458,9 @@ class THREEBRAIN_CANVAS {
           template_mapping : {
             mapped        : this.object_chosen.userData._template_mapped || false,
             shift         : this.object_chosen.userData._template_shift || 0,
-            space         : this.object_chosen.userData._template_space || 'original'
+            space         : this.object_chosen.userData._template_space || 'original',
+            surface       : this.object_chosen.userData._template_surface || 'NA',
+            hemisphere    : this.object_chosen.userData._template_hemisphere || 'NA',
           }
         };
 
@@ -1739,19 +1744,30 @@ class THREEBRAIN_CANVAS {
 
         // Smaller
         this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
+        const pos = results.selected_object.position;
+
         if( results.selected_object.is_electrode ){
           let _m = results.selected_object.template_mapping;
           this.domContext.fillText(
             `mapping: ${ _m.space }, shift: ${ _m.shift.toFixed(2) }`,
-            _width - 500, 108 //legend_start * _height - 34
+            _width - 500, 108 // space: 27
+          );
+          this.domContext.fillText(
+            `surface : ${ _m.surface }, hemisphere: ${ _m.hemisphere }`,
+            _width - 500, 135 // space: 27
+          );
+          this.domContext.fillText(
+            `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+            _width - 500, 162  // space: 27
+          );
+        }else{
+          this.domContext.fillText(
+            `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+            _width - 500, 108  // space: 27
           );
         }
 
-        const pos = results.selected_object.position;
-        this.domContext.fillText(
-          `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-          _width - 500, 135 //legend_start * _height - 34
-        );
+
 
         if( typeof(results.selected_object.custom_info) === 'string' ){
           legend_title_width = results.selected_object.custom_info.length * 12;
@@ -1804,20 +1820,21 @@ class THREEBRAIN_CANVAS {
 
   // Function to clear all meshes
   clear_all(){
-    for(var i in this.mesh){
-      this.scene.remove(this.mesh[i]);
-    }
-    for(var ii in this.group){
-      this.scene.remove(this.group[ii]);
-    }
-    this.mesh = {};
-    this.group = {};
-    this.clickable = {};
+    this.mesh.forEach((m) => {
+      this.scene.remove( m );
+    });
+    this.group.forEach((g) => {
+      this.scene.remove( g );
+    });
+    this.mesh.clear();
+    this.group.clear();
+    this.clickable.clear();
     this.subject_codes.length = 0;
-    this.electrodes = {};
-    this.volumes = {};
-    this.surfaces = {};
-    this.state_data = {};
+    this.electrodes.clear();
+    this.volumes.clear();
+    this.surfaces.clear();
+    this.state_data.clear();
+    this.shared_data.clear();
     this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
     // Stop showing information of any selected objects
@@ -1899,27 +1916,27 @@ class THREEBRAIN_CANVAS {
 
     if( ! this.subject_codes.includes( subject_code ) ){
       this.subject_codes.push( subject_code );
-      this.electrodes[ subject_code ] = {};
-      this.volumes[ subject_code ] = {};
-      this.surfaces[ subject_code ] = {};
+      this.electrodes.set( subject_code, {});
+      this.volumes.set( subject_code, {} );
+      this.surfaces.set(subject_code, {} );
     }
 
 
     if( g.type === 'datacube' ){
       // Special, as m is a array of three planes
-      this.mesh['_coronal_' + g.name]   = m[0];
-      this.mesh['_axial_' + g.name]     = m[1];
-      this.mesh['_sagittal_' + g.name]  = m[2];
+      this.mesh.set( '_coronal_' + g.name, m[0] );
+      this.mesh.set( '_axial_' + g.name, m[1] );
+      this.mesh.set( '_sagittal_' + g.name, m[2] );
 
       if(g.clickable){
-        this.clickable['_coronal_' + g.name]   = m[0];
-        this.clickable['_axial_' + g.name]     = m[1];
-        this.clickable['_sagittal_' + g.name]  = m[2];
+        this.clickable.set( '_coronal_' + g.name, m[0] );
+        this.clickable.set( '_axial_' + g.name, m[1] );
+        this.clickable.set( '_sagittal_' + g.name, m[2] );
       }
 
 
       // data cube must have groups
-      let gp = this.group[g.group.group_name];
+      let gp = this.group.get( g.group.group_name );
       // Move gp to global scene as its center is always 0,0,0
       this.origin.remove( gp );
       this.scene.add( gp );
@@ -1934,7 +1951,7 @@ class THREEBRAIN_CANVAS {
         plane.updateMatrixWorld();
       });
 
-      this.volumes[ subject_code ][ g.name ] = m;
+      get_or_default( this.volumes, subject_code, {} )[ g.name ] = m;
 
       // flaw there, if volume has no subject, then subject_code is '',
       // if two volumes with '' exists, we lose track of the first volume
@@ -1950,25 +1967,28 @@ class THREEBRAIN_CANVAS {
     }else if( g.type === 'sphere' && g.is_electrode ){
       set_layer( m );
       m.userData.construct_params = g;
-      this.mesh[g.name] = m;
-      this.electrodes[ subject_code ][g.name] = m;
+      this.mesh.set( g.name, m );
+      get_or_default( this.electrodes, subject_code, {} )[g.name] = m;
 
       // electrodes must be clickable, ignore the default settings
-      this.clickable[g.name] = m;
+      this.clickable.set( g.name, m );
       if(g.group === null){
         this.add_to_scene(m);
       }else{
-        let gp = this.group[g.group.group_name];
+        let gp = this.group.get( g.group.group_name );
         gp.add(m);
       }
       m.updateMatrixWorld();
 
       // For electrode, there needs some calculation
       // g = m.userData.construct_params
-      if( g.vertex_number < 0 && g.is_surface_electrode ){
+      if( (
+            !g.vertex_number || g.vertex_number < 0 ||
+            !g.hemisphere || !['left', 'right'].includes( g.hemisphere )
+          ) && g.is_surface_electrode ){
         // surface electrode, need to calculate nearest node
         const snap_surface = g.surface_type,
-              search_group = this.group[`Surface - ${snap_surface} (${subject_code})`];
+              search_group = this.group.get( `Surface - ${snap_surface} (${subject_code})` );
 
         // Search 141 only
         if( search_group && search_group.userData ){
@@ -2014,30 +2034,30 @@ class THREEBRAIN_CANVAS {
     }else if( g.type === 'free' ){
       set_layer( m );
       m.userData.construct_params = g;
-      this.mesh[g.name] = m;
-      if(g.clickable){ this.clickable[g.name] = m; }
+      this.mesh.set( g.name, m );
+      if(g.clickable){ this.clickable.set( g.name, m ); }
       // freemesh must have group
-      let gp = this.group[g.group.group_name]; gp.add(m);
+      let gp = this.group.get( g.group.group_name ); gp.add(m);
       m.updateMatrixWorld();
 
       // Need to registr surface
       // instead of using surface name, use
-      this.surfaces[ subject_code ][ g.name ] = m;
+      get_or_default( this.surfaces, subject_code, {} )[ g.name ] = m;
 
     }else{
 
       set_layer( m );
       m.userData.construct_params = g;
-      this.mesh[g.name] = m;
+      this.mesh.set( g.name, m );
 
       if(g.clickable){
-        this.clickable[g.name] = m;
+        this.clickable.set( g.name, m );
       }
 
       if(g.group === null){
         this.add_to_scene(m);
       }else{
-        let gp = this.group[g.group.group_name];
+        let gp = this.group.get( g.group.group_name );
         gp.add(m);
       }
 
@@ -2253,9 +2273,16 @@ class THREEBRAIN_CANVAS {
     }
 
     gp.userData.group_data = g.group_data;
-    this.group[g.name] = gp;
+    this.group.set( g.name, gp );
 
     this.add_to_scene(gp);
+
+    // special case, if group name is "__global_data", then set group variable
+    if( g.name === '__global_data' && g.group_data ){
+      for( let _n in g.group_data ){
+        this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
+      }
+    }
 
     const check = function(){
       return(item_size === 0);
@@ -2267,15 +2294,17 @@ class THREEBRAIN_CANVAS {
 
   // Get data from some geometry. Try to get from geom first, then get from group
   get_data(data_name, from_geom, group_hint){
-    if(this.mesh.hasOwnProperty(from_geom)){
-      let m = this.mesh[from_geom];
+
+    const m = this.mesh.get( from_geom );
+
+    if( m ){
       if(m.userData.hasOwnProperty(data_name)){
         return(m.userData[data_name]);
       }else{
         let g = m.userData.construct_params.group;
         if(g !== null){
           let group_name = g.group_name;
-          let gp = this.group[group_name];
+          let gp = this.group.get( group_name );
           if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
             return(gp.userData.group_data[data_name]);
           }
@@ -2283,7 +2312,7 @@ class THREEBRAIN_CANVAS {
       }
     }else if(group_hint !== undefined){
       let group_name = group_hint;
-      let gp = this.group[group_name];
+      let gp = this.group.get( group_name );
       if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
         return(gp.userData.group_data[data_name]);
       }
@@ -2297,8 +2326,8 @@ class THREEBRAIN_CANVAS {
 
   // Generate animation clips and mixes
   generate_animation_clips(){
-    for(let k in this.mesh){
-      let m = this.mesh[k];
+
+    this.mesh.forEach( (m, k) => {
       if(m.isMesh && typeof(m.userData.generate_keyframe_tracks) === 'function'){
         let g_name = m.userData.construct_params.name;
 
@@ -2344,7 +2373,7 @@ class THREEBRAIN_CANVAS {
 				animation_actions.play();
 
       }
-    }
+    });
   }
 
   set_time_range( min, max ){
@@ -2359,9 +2388,9 @@ class THREEBRAIN_CANVAS {
   // -------- Especially designed for brain viewer
 
   get_surface_types(){
-    const group_names = Object.keys( this.group ),
-          re = [];
-    group_names.forEach((g) => {
+    const re = [];
+
+    this.group.forEach( (gp, g) => {
       let res = new RegExp('^Surface - ([a-z]+) \\((.*)\\)$').exec(g);
       if( res && res.length === 3 ){
         re.push( res[1] );
@@ -2372,11 +2401,10 @@ class THREEBRAIN_CANVAS {
   }
 
   get_volume_types(){
-    const group_names = Object.keys( this.group ),
-          re = [];
+    const re = [];
 
-    this.subject_codes.forEach((s) => {
-      let volume_names = Object.keys( this.volumes[ s ] ),
+    this.volumes.forEach( (vol, s) => {
+      let volume_names = Object.keys( vol ),
           //  brain.finalsurfs (YAB)
           res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
 
@@ -2396,31 +2424,38 @@ class THREEBRAIN_CANVAS {
     const state = this.state_data;
 
     if( !this.subject_codes.includes( target_subject ) ){
-      target_subject = state.target_subject || this.subject_codes[0];
+      target_subject = state.get('target_subject') || this.subject_codes[0];
     }
-    state.target_subject = target_subject;
+    state.set( 'target_subject', target_subject );
 
-    state.surface_type = args.surface_type || state.surface_type || 'pial';
-    state.material_type_left = args.material_type_left || state.material_type_left || 'normal';
-    state.material_type_right = args.material_type_right || state.material_type_right || 'normal';
-    state.volume_type = args.volume_type || state.volume_type || 'brain.finalsurfs';
+    let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
+    let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
+    let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
+    let volume_type = args.volume_type || state.get( 'volume_type' ) || 'brain.finalsurfs';
+    let map_template = state.get( 'map_template' ) || false;
 
     if( args.map_template !== undefined ){
-      state.map_template = args.map_template;
-    }else{
-      state.map_template = state.map_template || false;
+      map_template = args.map_template;
     }
-    state.map_type_surface = args.map_type_surface || state.map_type_surface || 'std.141';
-    state.map_type_volume = args.map_type_volume || state.map_type_volume || 'mni305';
+    let map_type_surface = args.map_type_surface || state.get( 'map_type_surface' ) || 'std.141';
+    let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
 
-    this.switch_volume( target_subject, state.volume_type );
-    this.switch_surface( target_subject, state.surface_type, [state.material_type_left, state.material_type_right] );
+    this.switch_volume( target_subject, volume_type );
+    this.switch_surface( target_subject, surface_type, [material_type_left, material_type_right] );
 
-    if( state.map_template ){
-      this.map_electrodes( target_subject, state.map_type_surface, state.map_type_volume );
+    if( map_template ){
+      this.map_electrodes( target_subject, map_type_surface, map_type_volume );
     }else{
       this.map_electrodes( target_subject, 'reset', 'reset' );
     }
+
+    state.set( 'surface_type', surface_type );
+    state.set( 'material_type_left', material_type_left );
+    state.set( 'material_type_right', material_type_right );
+    state.set( 'volume_type', volume_type );
+    state.set( 'map_template', map_template );
+    state.set( 'map_type_surface', map_type_surface );
+    state.set( 'map_type_volume', map_type_volume );
 
     this.start_animation( 0 );
 
@@ -2430,9 +2465,9 @@ class THREEBRAIN_CANVAS {
     // this.surfaces[ subject_code ][ g.name ] = m;
     // Naming - Surface         Standard 141 Right Hemisphere - pial (YAB)
     // or FreeSurfer Right Hemisphere - pial (YAB)
-    for( let subject_code in this.surfaces ){
-      for( let surface_name in this.surfaces[ subject_code ] ){
-        const m = this.surfaces[ subject_code ][ surface_name ];
+    this.surfaces.forEach( (sf, subject_code) => {
+      for( let surface_name in sf ){
+        const m = sf[ surface_name ];
         m.visible = false;
         if( subject_code === target_subject ){
 
@@ -2460,14 +2495,15 @@ class THREEBRAIN_CANVAS {
 
         }
       }
-    }
+    });
     this.start_animation( 0 );
   }
 
   switch_volume( target_subject, volume_type = 'brain.finalsurfs' ){
-    for( let subject_code in this.volumes ){
-      for( let volume_name in this.volumes[ subject_code ] ){
-        const m = this.volumes[ subject_code ][ volume_name ];
+
+    this.volumes.forEach( (vol, subject_code) => {
+      for( let volume_name in vol ){
+        const m = vol[ volume_name ];
         if( subject_code === target_subject && volume_name === `${volume_type} (${subject_code})`){
           m[0].parent.visible = true;
           this._register_datacube( m );
@@ -2475,36 +2511,58 @@ class THREEBRAIN_CANVAS {
           m[0].parent.visible = false;
         }
       }
-    }
+    });
+
     this.start_animation( 0 );
   }
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
+    /* DEBUG code
+    target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
+    pos_targ = new THREE.Vector3(),
+          pos_orig = new THREE.Vector3(),
+          mat1 = new THREE.Matrix4(),
+          mat2 = new THREE.Matrix4();
+    el = canvas.electrodes.get(origin_subject)["YAB, 29 - aTMP6"];
+    g = el.userData.construct_params,
+              is_surf = g.is_surface_electrode,
+              vert_num = g.vertex_number,
+              surf_type = g.surface_type,
+              mni305 = g.MNI305_position,
+              origin_position = g.position,
+              target_group = canvas.group.get( `Surface - ${surf_type} (${target_subject})` ),
+              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
+              pos_orig.fromArray( origin_position );
+mapped = false,
+            side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
+    */
+
 
     const pos_targ = new THREE.Vector3(),
           pos_orig = new THREE.Vector3(),
           mat1 = new THREE.Matrix4(),
           mat2 = new THREE.Matrix4();
 
-    for( let origin_subject in this.electrodes ){
-      for( let el_name in this.electrodes[ origin_subject ] ){
-        const el = this.electrodes[ origin_subject][ el_name ],
+    this.electrodes.forEach( (els, origin_subject) => {
+      for( let el_name in els ){
+        const el = els[ el_name ],
               g = el.userData.construct_params,
               is_surf = g.is_surface_electrode,
               vert_num = g.vertex_number,
               surf_type = g.surface_type,
               mni305 = g.MNI305_position,
               origin_position = g.position,
-              target_group = this.group[`Surface - ${surf_type} (${target_subject})`],
-              origin_volume = this.group[`Volume (${origin_subject})`],
-              target_volume = this.group[`Volume (${target_subject})`];
+              target_group = this.group.get( `Surface - ${surf_type} (${target_subject})` ),
+              // origin_volume = this.group.get( `Volume (${origin_subject})` ),
+              // target_volume = this.group.get( `Volume (${target_subject})` ),
+              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
 
         pos_orig.fromArray( origin_position );
 
         let mapped = false,
             side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
 
-        if( surface === 'std.141' && is_surf && vert_num >= 0 &&
+        if( !hide_electrode && surface === 'std.141' && is_surf && vert_num >= 0 &&
             target_group && target_group.isObject3D && target_group.children.length === 2 ){
           // User choose std.141, electrode is surface electrode, and
           // vert_num >= 0, meaning original surface is loaded, and target_surface exists
@@ -2524,36 +2582,56 @@ class THREEBRAIN_CANVAS {
             el.userData._template_mapped = true;
             el.userData._template_space = 'std.141';
             el.userData._template_shift = pos_targ.distanceTo( pos_orig );
+            el.userData._template_surface = g.surface_type;
+            el.userData._template_hemisphere = g.hemisphere;
             mapped = true;
           }
 
         }
 
-        if( !mapped && volume === 'mni305' && origin_volume && target_volume ){
+        if( !hide_electrode && !mapped && volume === 'mni305' ){
           // apply MNI 305 transformation
-          const v2v_orig = origin_volume.userData.group_data.vox2vox_MNI305;
-          const v2v_targ = target_volume.userData.group_data.vox2vox_MNI305;
+          const v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
+          const v2v_targ = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
 
-          mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
-                    v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
-                    v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
-                    v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
+          if( v2v_targ ){
+            mat2.set( v2v_targ[0][0], v2v_targ[0][1], v2v_targ[0][2], v2v_targ[0][3],
+                      v2v_targ[1][0], v2v_targ[1][1], v2v_targ[1][2], v2v_targ[1][3],
+                      v2v_targ[2][0], v2v_targ[2][1], v2v_targ[2][2], v2v_targ[2][3],
+                      v2v_targ[3][0], v2v_targ[3][1], v2v_targ[3][2], v2v_targ[3][3] );
 
-          mat2.set( v2v_targ[0][0], v2v_targ[0][1], v2v_targ[0][2], v2v_targ[0][3],
-                    v2v_targ[1][0], v2v_targ[1][1], v2v_targ[1][2], v2v_targ[1][3],
-                    v2v_targ[2][0], v2v_targ[2][1], v2v_targ[2][2], v2v_targ[2][3],
-                    v2v_targ[3][0], v2v_targ[3][1], v2v_targ[3][2], v2v_targ[3][3] );
+            mat2.getInverse( mat2 );
 
-          // target position = inv(mat2) * mat1 * origin_position
-          mat2.getInverse( mat2 );
-          mat2.multiplyMatrices( mat2, mat1 );
-          pos_targ.fromArray( origin_position ).applyMatrix4(mat2);
+            if( Array.isArray( mni305 ) && mni305.length === 3 && !(
+              // not origin
+              mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0
+            ) ){
+              pos_targ.fromArray( mni305 ).applyMatrix4(mat2);
+              mapped = true;
+            }
 
-          el.position.copy( pos_targ );
-          el.userData._template_mapped = true;
-          el.userData._template_space = 'mni305';
-          el.userData._template_shift = pos_targ.distanceTo( pos_orig );
-          mapped = true;
+            if( !mapped && v2v_orig ){
+              mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
+                        v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
+                        v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
+                        v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
+
+              // target position = inv(mat2) * mat1 * origin_position
+              mat2.multiplyMatrices( mat2, mat1 );
+              pos_targ.fromArray( origin_position ).applyMatrix4(mat2);
+              mapped = true;
+            }
+
+            if( mapped ){
+              el.position.copy( pos_targ );
+              el.userData._template_mapped = true;
+              el.userData._template_space = 'mni305';
+              el.userData._template_shift = pos_targ.distanceTo( pos_orig );
+              el.userData._template_surface = g.surface_type;
+              el.userData._template_hemisphere = g.hemisphere;
+            }
+          }
+
         }
 
 
@@ -2563,10 +2641,127 @@ class THREEBRAIN_CANVAS {
           el.userData._template_mapped = false;
           el.userData._template_space = 'original';
           el.userData._template_shift = 0;
+          el.userData._template_surface = g.surface_type;
+          el.userData._template_hemisphere = g.hemisphere;
+        }
+        if( hide_electrode ){
+          el.visible = false;
         }
       }
-    }
+    });
+
     this.start_animation( 0 );
+  }
+
+
+  // export electrodes
+  electrodes_info(){
+
+    const res = {};
+
+    // Electrode Coord_x Coord_y Coord_z Label MNI305_x MNI305_y MNI305_z
+    // SurfaceElectrode SurfaceType Radius VertexNumber
+    this.electrodes.forEach( ( collection , subject_code ) => {
+      const _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
+            _v2v = get_or_default( this.shared_data, subject_code, {} ).vox2vox_MNI305,
+            re = [],
+            mat = new THREE.Matrix4(),
+            pos = new THREE.Vector3();
+      let row = {};
+      let parsed, e, g;
+
+      if( _v2v ){
+        mat.set( _v2v[0][0], _v2v[0][1], _v2v[0][2], _v2v[0][3],
+                 _v2v[1][0], _v2v[1][1], _v2v[1][2], _v2v[1][3],
+                 _v2v[2][0], _v2v[2][1], _v2v[2][2], _v2v[2][3],
+                 _v2v[3][0], _v2v[3][1], _v2v[3][2], _v2v[3][3] );
+
+      }
+
+      for( let k in collection ){
+        parsed = _regexp.exec( k );
+        // just incase
+        if( parsed.length === 3 ){
+          row = {};
+          e = collection[ k ];
+          g = e.userData.construct_params;
+          pos.fromArray( g.position );
+
+          // Electrode Coord_x Coord_y Coord_z Label Hemisphere
+          row.Electrode = parseInt( parsed[1] );
+          row.Coord_x = pos.x;
+          row.Coord_y = pos.y;
+          row.Coord_z = pos.z;
+          row.Label = parsed[2];
+
+          //  MNI305_x MNI305_y MNI305_z
+          pos.applyMatrix4( mat );
+          row.MNI305_x = pos.x;
+          row.MNI305_y = pos.y;
+          row.MNI305_z = pos.z;
+
+          // SurfaceElectrode SurfaceType Radius VertexNumber
+          row.SurfaceElectrode = g.is_surface_electrode? 'TRUE' : 'FALSE';
+          row.SurfaceType = g.surface_type;
+          row.Radius = g.radius;
+          row.VertexNumber = g.vertex_number;     // vertex_number is already changed
+          row.Hemisphere = g.hemisphere;
+
+        }
+        re[ row.Electrode - 1 ] = row;
+      }
+      row = {};
+      // re set row to default
+      row.Coord_x = 0;
+      row.Coord_y = 0;
+      row.Coord_z = 0;
+      row.Label = 'NA';
+
+      //  MNI305_x MNI305_y MNI305_z
+      row.MNI305_x = 0;
+      row.MNI305_y = 0;
+      row.MNI305_z = 0;
+
+      // SurfaceElectrode SurfaceType Radius VertexNumber
+      row.SurfaceElectrode = 'TRUE';
+      row.SurfaceType = 'NA';
+      row.Radius = 1;
+      row.VertexNumber = -1;
+      row.Hemisphere = 'NA';
+      for( let ii = 0; ii < re.length; ii++ ){
+        if( re[ ii ] === undefined ){
+          // missing one electrode, fill that in
+          row.Electrode = ii + 1;
+          re[ ii ] = row;
+        }
+      }
+
+      res[ subject_code ] = re;
+    });
+
+    return( res );
+  }
+
+  download_electrodes( format = 'json' ){
+    const res = this.electrodes_info();
+
+
+    // convert to csv
+    for( let subcode in res ){
+      const electrode_data = res[ subcode ];
+      if( electrode_data.length > 0 ){
+        if( format === 'json' ){
+          download( JSON.stringify(electrode_data) , subcode + '_electrodes.json', 'application/json');
+        }else if( format === 'csv' ){
+          json2csv(electrode_data, (err, csv) => {
+            download( csv , subcode + '_electrodes.csv', 'plan/csv');
+          });
+        }
+
+      }
+    }
+
+
   }
 }
 
@@ -2574,3 +2769,55 @@ class THREEBRAIN_CANVAS {
 
 export { THREEBRAIN_CANVAS };
 // window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;
+
+
+
+
+
+/* Some code that was old
+
+  render_legend_old(text_color = '#ffffff'){
+
+*/
+//    let text_color_fmt = text_color.replace(/^[^0-9a-f]*/, '0x');
+/*    let lut = this.lut,
+        labels = this.lut.legend.labels;
+
+    // canvas.legend_labels[ 'title' ]
+    let c = this.legend_labels.title.material.map.image.getContext( '2d' );
+    // c.clearRect(0,0,0,0);
+    c.fillStyle = text_color;
+    c.fillText(
+      labels.title.toString() + labels.um.toString(), 4, labels.fontsize + 4 // borderThickness = 4
+    );
+
+    this.legend_labels.title.material.map.needsUpdate=true;
+    // this.legend_labels.title.material.color.setHex( text_color );
+
+    for ( let i = 0; i < labels.ticks; i++ ){
+
+      let t = this.legend_labels.ticks[ i ].material.map.image.getContext( '2d' );
+
+      var value = ( lut.maxV - lut.minV ) / ( labels.ticks - 1 ) * i + lut.minV;
+
+			if ( labels.notation == 'scientific' ) {
+				value = value.toExponential( labels.decimal );
+			} else {
+				value = value.toFixed( labels.decimal );
+			}
+
+      t.fillStyle = text_color;
+      t.fillText( value.toString(), 4, labels.fontsize + 4 );
+
+      this.legend_labels.ticks[ i ].material.map.needsUpdate=true;
+
+      this.legend_labels.lines[ i ].material.color.setHex( text_color_fmt );
+      this.legend_labels.lines[ i ].material.needsUpdate = true;
+    }
+
+
+    this.legend_camera.updateProjectionMatrix();
+    this.legend_renderer.render( this.scene_legend, this.legend_camera );
+  }
+
+*/

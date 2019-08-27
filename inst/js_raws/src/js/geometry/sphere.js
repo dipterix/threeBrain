@@ -1,5 +1,5 @@
 import { THREE } from '../threeplugins.js';
-import { to_dict, to_array } from '../utils.js';
+import { to_array } from '../utils.js';
 
 function gen_sphere(g, canvas){
   const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
@@ -23,7 +23,7 @@ function gen_sphere(g, canvas){
     // This is a linkedSphereGeom which should be attached to a surface mesh
     let vertex_ind = Math.floor(g.vertex_number - 1),
         target_name = g.linked_geom,
-        target_mesh = canvas.mesh[target_name];
+        target_mesh = canvas.mesh.get( target_name );
 
     if(target_mesh && target_mesh.isMesh){
       let target_pos = target_mesh.geometry.attributes.position.array;
@@ -59,16 +59,6 @@ function gen_sphere(g, canvas){
     };
 
   }
-
-  // for focus purpose
-  const _child = new THREE.Mesh(
-    new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
-    new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.4 }));
-  _child.scale.set( 1.1, 1.1, 1.1 );
-  _child.material.emissive.r = 1;
-  _child.visible = false;
-  _child.userData.is_highlight_helper = true;
-  mesh.add( _child );
 
   return(mesh);
 }

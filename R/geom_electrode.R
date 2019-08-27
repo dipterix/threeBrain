@@ -43,6 +43,12 @@ ElectrodeGeom <- R6::R6Class(
       )
     }
 
+  ),
+  active = list(
+    sub_cortical = function(v){
+      cat2('sub_cortical is deprecated, use is_surface_electrode instead.', level = 'WARNING')
+      self$is_surface_electrode = !isTRUE(sub_cortical)
+    }
   )
 )
 

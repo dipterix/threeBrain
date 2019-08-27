@@ -157,13 +157,6 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   geom_brain_finalsurfs$subject_code = subject_name
   rm(volume)
 
-
-  group_volume$set_group_data('vox2vox_MNI305', vox2vox_MNI305, is_cached = FALSE)
-  group_volume$set_group_data('mesh_center', mesh_center, is_cached = FALSE)
-  group_volume$set_group_data('xfm', xfm, is_cached = FALSE)
-  group_volume$set_group_data('Norig', Norig, is_cached = FALSE)
-  group_volume$set_group_data('Torig', Torig, is_cached = FALSE)
-
   #### Read surface files ####
   surface_type = unique(c('pial', additional_surface_type))
   surfaces = list(); surf = NULL
@@ -320,6 +313,14 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     if( !nrow(tbl) ){
       return(invisible())
     }
+
+    if( length(tbl$SurfaceElectrode) && is.character(tbl$SurfaceElectrode) ){
+      tbl$SurfaceElectrode = stringr::str_to_upper(tbl$SurfaceElectrode) == 'TRUE'
+    }
+    if( length( row$Hemisphere ) ){
+      row$Hemisphere = stringr::str_to_lower(row$Hemisphere)
+    }
+
     env$electrode_table = tbl
 
     # Coord_x Coord_y  Coord_z are required - in fs space
@@ -331,7 +332,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
         which_side = ifelse( which_side == 'left', 'left', 'right' )
       }
       nearest_vertex = c(row$VertexNumber, -1)[1]
-      mni_305 = c( row$MNI_x, row$MNI_y, row$MNI_z ); if(length(mni_305)!=3){ mni_305 = c(0,0,0) }
+      mni_305 = c( row$MNI305_x, row$MNI305_y, row$MNI305_z ); if(length(mni_305)!=3){ mni_305 = c(0,0,0) }
       surf_type = c(row$SurfaceType, 'pial')[1]
       if( is.na(surf_type) ){ surf_type = 'NA' }
 
@@ -376,6 +377,9 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     }, FALSE)
     geoms = geoms[is_r6]
     names(geoms) = NULL
+
+    global_data = structure(list(env$transforms), names = env$subject)
+
     threejs_brain(
       .list = geoms,
       time_range = time_range, value_range = value_range, symmetric = symmetric,
@@ -385,10 +389,38 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
       color_ramp = color_ramp, color_type = color_type, n_color = n_color,
       color_names = color_names, show_legend = show_legend, legend_title = legend_title,
       tmp_dirname = tmp_dirname, width = width, height = height, optionals = optionals,
-      debug = debug, token = token, coords = coords, browser_external = browser_external, ...)
+      debug = debug, token = token, coords = coords, browser_external = browser_external,
+      global_data = global_data, ...)
   }
   return(env)
 
+}
+
+
+check_freesurfer_path <- function(fs_subject_folder, autoinstall = TRUE){
+  if( dir.exists(fs_subject_folder) ){
+    return(TRUE)
+  }
+}
+
+electrode_mapped_141 <- function(position = c(0,0,0), is_surface, vertex_number, surf_type, hemisphere){
+  surface_mapping = FALSE
+
+  if( sum(position^2) == 0 ){
+    return(TRUE)
+  }
+
+  if( isTRUE(is_surface) &&
+      length(vertex_number) == 1 && vertex_number >= 0 &&
+      length(surf_type) == 1 &&!is.na(surf_type) &&
+      length(hemisphere) == 1 && hemisphere %in% c('right', 'left')){
+    surface_mapping = TRUE
+  }
+  if( length(surf_type) == 1 && (is.na(surf_type) || surf_type == 'NA') ){
+    # No need to map to surface as there is no surface
+    surface_mapping = TRUE
+  }
+  return(surface_mapping)
 }
 
 
@@ -411,9 +443,18 @@ merge_freesurfer_brain <- function(..., .list = NULL){
   # TODO: Check whether N27 is present
 
   merged_env = new.env(parent = baseenv())
+  merged_env$envs = envs
+  merged_env$subject_names = subject_names
+  merged_env$get_surface_types = function(){
+    s = unlist(lapply(merged_env$envs, function(e){
+      e$surface_types
+    }))
+    unique(s)
+  }
 
   merged_env$view = function(
-    template_subject = 'N27',
+    template_subject = 'N27', template_subject_path = NULL,
+    trim_memory = TRUE, force_trim = FALSE,
     time_range = NULL, value_range = NULL, symmetric = 0, side_camera = TRUE,
     control_panel = TRUE, show_legend = TRUE, legend_title = 'Value',
     color_ramp = c('navyblue', '#e2e2e2', 'red'),
@@ -431,17 +472,82 @@ merge_freesurfer_brain <- function(..., .list = NULL){
     side_camera_zoom = 1, tmp_dirname = NULL, coords = NULL,
     ...
   ){
-    if( template_subject %in% subject_names ){
-      subject_names = unique(c(template_subject, subject_names))
+    if( template_subject %in% merged_env$subject_names ){
+      subject_names = unique(c(template_subject, merged_env$subject_names))
+    }else{
+      # load template subject
+      if( is.null(template_subject_path) ){
+        # try to load from ~/rave_data/others/threeBrain
+        template_subject_path = file.path('~/rave_data/others/three_brain/test/', template_subject)
+      }
+
+      has_template = check_freesurfer_path( template_subject_path );
+
+      if( !has_template ){
+        cat2('Cannot find template subject - ', template_subject, level = 'WARNING')
+        template_subject = subject_names[0]
+      }else{
+        template_env = freesurfer_brain(template_subject_path, template_subject,
+                                        additional_surface_type = merged_env$get_surface_types(),
+                                        use_cache = TRUE, use_141 = TRUE)
+        merged_env$envs[[ template_subject ]] = template_env
+        merged_env$subject_names = c(template_subject, merged_env$subject_names)
+      }
+
     }
+    envs = merged_env$envs
+    subject_names = merged_env$subject_names
     # collect volume information
     geoms = lapply(subject_names, function(sub){
-      c(unlist(envs[[sub]]$volume), unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes))
+
+      if( isFALSE( trim_memory ) || sub == template_subject || (is.character(trim_memory) && !sub %in% trim_memory) ){
+        return(c(unlist(envs[[sub]]$volume), unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes)))
+      }else if(force_trim){
+        return(unlist(envs[[sub]]$electrodes))
+      }else{
+        # check if electrodes has mappings
+        tbl = envs[[sub]]$electrode_table
+        if( is.data.frame(tbl) ){
+          res = sapply(1:nrow(tbl), function(ii){
+            row = tbl[ii,]
+            re = TRUE
+            if( isTRUE(row$SurfaceElectrode) ){
+              re = electrode_mapped_141(position = c(row$Coord_x, row$Coord_y, row$Coord_z),
+                                        is_surface = row$SurfaceElectrode,
+                                        vertex_number = row$VertexNumber,
+                                        surf_type = row$SurfaceType,
+                                        hemisphere = row$Hemisphere)
+            }
+            re
+          })
+          if( all(res) ){
+            return(unlist(envs[[sub]]$electrodes))
+          }
+        }
+        # Only get ride of volume
+        return(c(unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes)))
+      }
     })
+
+    if( trim_memory ){
+
+    }else{
+      # collect volume information
+      geoms = lapply(subject_names, function(sub){
+        c(unlist(envs[[sub]]$volume), unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes))
+      })
+    }
+
+
     geoms = unlist(geoms)
     is_r6 = vapply(geoms, function(x){ !is.null(x) && R6::is.R6(x) }, FALSE)
     geoms = geoms[is_r6]
     names(geoms) = NULL
+
+    global_data = sapply(subject_names, function(subcode){
+      envs[[ subcode ]]$transforms
+    }, simplify = FALSE, USE.NAMES = TRUE);
+
     threejs_brain(
       .list = geoms,
       time_range = time_range, value_range = value_range, symmetric = symmetric,
@@ -451,7 +557,8 @@ merge_freesurfer_brain <- function(..., .list = NULL){
       color_ramp = color_ramp, color_type = color_type, n_color = n_color,
       color_names = color_names, show_legend = show_legend, legend_title = legend_title,
       tmp_dirname = tmp_dirname, width = width, height = height, optionals = optionals,
-      debug = debug, token = token, coords = coords, browser_external = browser_external, ...)
+      debug = debug, token = token, coords = coords, browser_external = browser_external,
+      global_data = global_data, ...)
   }
   return(merged_env)
 }
@@ -537,3 +644,6 @@ load_141_surface <- function(dir, surf_t = 'pial', quiet = FALSE){
 
 }
 
+# env = threeBrain:::freesurfer_brain(fs_subject_folder = '~/rave_data/data_dir/congruency/YAB','YAB', additional_surface_type = 'white');env$set_electrodes('~/Downloads/YAB_electrodes (1).csv')
+# merged_env = threeBrain:::merge_freesurfer_brain(env)
+# merged_env$view(debug = TRUE)
