@@ -221,6 +221,10 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
                                position = c(0,0,0), cache_file = cache_rh, group = surf_group, layer = 8)
         surf_lh$subject_code = subject_name; surf_lh$hemisphere = 'left'; surf_lh$surface_type = surf_t;
         surf_rh$subject_code = subject_name; surf_rh$hemisphere = 'right'; surf_rh$surface_type = surf_t;
+        # Important! The volume and mesh share the same center for freesurfer output
+        # I might need to have more research into why AFNI/SUMA re-center the mesh. My guess
+        # is AFNI/SUMA is trying to match with the scanner center
+        surf_group$position = c(0,0,0)
         surfaces[[surf_t]] = list(
           type = surf_t,
           sub_type = 'fs',
@@ -242,6 +246,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
                                cache_file = cache_rh, group = surf_group, layer = 8)
         surf_lh$subject_code = subject_name; surf_lh$hemisphere = 'left'; surf_lh$surface_type = surf_t;
         surf_rh$subject_code = subject_name; surf_rh$hemisphere = 'right'; surf_rh$surface_type = surf_t;
+        surf_group$position = c(0,0,0)
         surfaces[[surf_t]] = list(
           type = surf$type,
           sub_type = surf$sub_type,

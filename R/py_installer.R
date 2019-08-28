@@ -194,7 +194,7 @@ ravepy_virtualenv_install <- function(python_path = NULL){
 
   # Install pacakges
   cat2('[RAVEPy] Installing packages', level = 'INFO')
-  pypkgs = c('numpy', 'pandas', 'h5py', 'jupyter', 'mkl_fft', 'pyfftw', 'nibabel', 'matplotlib')
+  pypkgs = c('numpy', 'pandas', 'h5py', 'jupyter', 'pyfftw', 'nibabel', 'matplotlib')
   reticulate::virtualenv_install('RAVEPy', pypkgs, ignore_installed = FALSE)
 
   # reticulate::virtualenv_install('RAVEPy', 'openmpi', ignore_installed = FALSE)
@@ -227,7 +227,7 @@ ravepy_conda_install <- function(){
   try({
     reticulate::conda_install('RAVEPy', 'accelerate')
   })
-  pypkgs = c('mkl_fft', 'pyfftw', 'numpy', 'pandas', 'h5py', 'jupyter', 'nibabel', 'matplotlib')
+  pypkgs = c('pyfftw', 'numpy', 'pandas', 'h5py', 'jupyter', 'nibabel', 'matplotlib')
   reticulate::conda_install('RAVEPy', pypkgs)
 
 

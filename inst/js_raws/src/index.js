@@ -389,21 +389,21 @@ class BrainCanvas{
       this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
         if( evt.event.shiftKey ){
           const _v = overlay_coronal.getValue();
-          overlay_coronal.setValue( _v );
+          overlay_coronal.setValue( !_v );
         }
       }, 'overlay_coronal');
 
       this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
         if( evt.event.shiftKey ){
           const _v = overlay_axial.getValue();
-          overlay_axial.setValue( _v );
+          overlay_axial.setValue( !_v );
         }
       }, 'overlay_axial');
 
       this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
         if( evt.event.shiftKey ){
           const _v = overlay_sagittal.getValue();
-          overlay_sagittal.setValue( _v );
+          overlay_sagittal.setValue( !_v );
         }
       }, 'overlay_sagittal');
 
