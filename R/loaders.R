@@ -117,3 +117,11 @@ download_N27_surface <- function(
   }
 
 }
+
+
+download_N27 <- function(
+  url_root = 'https://s3.amazonaws.com/rave-data/sample-data/N27/',
+  reset = FALSE, n27_dir = getOption('threeBrain.n27_dir', '~/rave_data/others/three_brain/N27'), ...
+){
+
+}

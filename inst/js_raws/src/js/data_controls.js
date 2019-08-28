@@ -573,7 +573,7 @@ class THREEBRAIN_PRESETS{
 
 
     if( subject_ids.length > 0 ){
-      const _s = this.canvas.state_data.get( 'target_subject' ) || subject_ids[0];
+      let _s = this.canvas.state_data.get( 'target_subject' ) || subject_ids[0];
       this.gui.add_item(item_name, _s, {
         folder_name : folder_name,
         args : subject_ids
@@ -593,7 +593,7 @@ class THREEBRAIN_PRESETS{
     if( _c.length === 0 ){
       return(null);
     }
-    this.gui.add_item(item_name, _s, {
+    const surf_type = this.gui.add_item(item_name, _s, {
         args : _c,
         folder_name : folder_name
       }).onChange((v) => {
@@ -602,6 +602,12 @@ class THREEBRAIN_PRESETS{
         });
       });
 
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE, (evt) => {
+      let current_idx = (_c.indexOf( surf_type.getValue() ) + 1) % _c.length;
+      if( current_idx >= 0 ){
+        surf_type.setValue( _c[ current_idx ] );
+      }
+    }, 'gui_surf_type2');
   }
 
 
@@ -644,7 +650,7 @@ class THREEBRAIN_PRESETS{
 
     const subject_codes = ['[no mapping]', ...this.canvas.subject_codes];
 
-    this.gui.add_item('Map Electrodes', false, { folder_name : folder_name })
+    const do_mapping = this.gui.add_item('Map Electrodes', false, { folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_template': v });
       });
@@ -662,6 +668,12 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_type_volume': v });
       });
+
+    // need to check if this is multiple subject case
+    if( this.canvas.shared_data.get("multiple_subjects") ){
+      // Do mapping by default
+      do_mapping.setValue( true );
+    }
 
   }
 
@@ -721,9 +733,7 @@ class THREEBRAIN_CONTROL{
       }
     }
 
-    return({
-      'onChange': (callback) => {}
-    });
+    return({ 'onChange': (callback) => {} });
   }
 
 

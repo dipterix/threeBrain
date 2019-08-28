@@ -9,6 +9,7 @@ import { THREEBRAIN_PRESETS, THREEBRAIN_CONTROL } from './js/data_controls.js';
 import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
 import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
 import { THREEBRAIN_STORAGE } from './js/threebrain_cache.js';
+import { CONSTANTS } from './js/constants.js';
 import { invertColor, padZero, to_array } from './js/utils.js';
 // import { D3Canvas } from './js/Math/sparkles.js';
 // import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
@@ -369,25 +370,50 @@ class BrainCanvas{
       };
 
 
-      gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
+      const overlay_coronal = gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
         .onChange((v) => {
           this.canvas.set_side_visibility('coronal', v);
         });
 
-      gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
+      const overlay_axial = gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
         .onChange((v) => {
           this.canvas.set_side_visibility('axial', v);
         });
 
-      gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
+      const overlay_sagittal = gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
         .onChange((v) => {
           this.canvas.set_side_visibility('sagittal', v);
         });
+
+      // register overlay keyboard shortcuts
+      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
+        if( evt.event.shiftKey ){
+          const _v = overlay_coronal.getValue();
+          overlay_coronal.setValue( _v );
+        }
+      }, 'overlay_coronal');
+
+      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
+        if( evt.event.shiftKey ){
+          const _v = overlay_axial.getValue();
+          overlay_axial.setValue( _v );
+        }
+      }, 'overlay_axial');
+
+      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
+        if( evt.event.shiftKey ){
+          const _v = overlay_sagittal.getValue();
+          overlay_sagittal.setValue( _v );
+        }
+      }, 'overlay_sagittal');
+
+
 
       gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
         .onChange((v) => {
           this.canvas.set_cube_anchor_visibility(v);
         });
+
     }
 
 

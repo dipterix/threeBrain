@@ -2143,12 +2143,23 @@ class THREEBRAIN_CANVAS {
     };
 
     this.set_side_visibility = ( which, visible ) => {
-      const fn = visible ? 'enable' : 'disable';
+      let fn = visible ? 'enable' : 'disable';
       if( which === 'coronal' ){
         m[0].layers[fn](8);
+        this.state_data.set( 'coronal_overlay', visible );
       }else if( which === 'axial' ){
         m[1].layers[fn](8);
+        this.state_data.set( 'axial_overlay', visible );
       }else if( which === 'sagittal' ){
+        m[2].layers[fn](8);
+        this.state_data.set( 'sagittal_overlay', visible );
+      }else{
+        // reset, using cached
+        fn = get_or_default( this.state_data, 'coronal_overlay', false ) ? 'enable' : 'disable';
+        m[0].layers[fn](8);
+        fn = get_or_default( this.state_data, 'axial_overlay', false ) ? 'enable' : 'disable';
+        m[1].layers[fn](8);
+        fn = get_or_default( this.state_data, 'sagittal_overlay', false ) ? 'enable' : 'disable';
         m[2].layers[fn](8);
       }
 
@@ -2388,20 +2399,20 @@ class THREEBRAIN_CANVAS {
   // -------- Especially designed for brain viewer
 
   get_surface_types(){
-    const re = [];
+    const re = { 'pial' : 1 }; // always put pials to the first one
 
     this.group.forEach( (gp, g) => {
-      let res = new RegExp('^Surface - ([a-z]+) \\((.*)\\)$').exec(g);
+      let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
       if( res && res.length === 3 ){
-        re.push( res[1] );
+        re[ res[1] ] = 1;
       }
     });
 
-    return( re );
+    return( Object.keys( re ) );
   }
 
   get_volume_types(){
-    const re = [];
+    const re = {};
 
     this.volumes.forEach( (vol, s) => {
       let volume_names = Object.keys( vol ),
@@ -2409,10 +2420,10 @@ class THREEBRAIN_CANVAS {
           res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
 
       if( res && res.length === 2 ){
-        re.push( res[1] );
+        re[ res[1] ] = 1;
       }
     });
-    return( re );
+    return( Object.keys( re ) );
   }
 
   switch_subject( target_subject = '/', args = {}){
@@ -2424,7 +2435,22 @@ class THREEBRAIN_CANVAS {
     const state = this.state_data;
 
     if( !this.subject_codes.includes( target_subject ) ){
-      target_subject = state.get('target_subject') || this.subject_codes[0];
+
+      target_subject = state.get('target_subject');
+
+      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
+        // This happends when subjects are just loaded
+        if( this.shared_data.get("multiple_subjects") ){
+          target_subject = this.shared_data.get("template_subjects");
+        }
+      }
+
+      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
+        target_subject = this.subject_codes[0];
+      }
+
+
+
     }
     state.set( 'target_subject', target_subject );
 
@@ -2448,6 +2474,9 @@ class THREEBRAIN_CANVAS {
     }else{
       this.map_electrodes( target_subject, 'reset', 'reset' );
     }
+
+    // reset overlay
+    this.set_side_visibility();
 
     state.set( 'surface_type', surface_type );
     state.set( 'material_type_left', material_type_left );
@@ -2491,6 +2520,14 @@ class THREEBRAIN_CANVAS {
               m.material.wireframe = ( material_type[1] === 'wireframe' );
               m.visible = true;
             }
+
+            // Re-calculate controls center so that rotation center is the center of mesh bounding box
+            this.focus_box.setFromObject( m.parent );
+            this.focus_box.geometry.computeBoundingBox();
+            const _b = this.focus_box.geometry.boundingBox;
+            this.controls.target.copy( _b.min.clone() ).add( _b.max ).multiplyScalar( 0.5 );
+            this.control_center = this.controls.target.toArray();
+            this.controls.update();
           }
 
         }

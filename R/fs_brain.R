@@ -86,14 +86,12 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   # Find target files
   path_brainfinal = normalizePath(file.path(path_subject, 'mri', 'brain.finalsurfs.mgz'), mustWork = mustWork)
-  path_rawavg = normalizePath(file.path(path_subject, 'mri', 'rawavg.mgz'), mustWork = mustWork)
   path_xform = normalizePath(file.path(path_subject, 'mri', 'transforms', 'talairach.xfm'), mustWork = mustWork)
   path_suma = normalizePath(file.path(path_subject, 'SUMA'), mustWork = FALSE)
   path_surf = normalizePath(file.path(path_subject, 'surf'), mustWork = FALSE)
 
   # Get general information from fs output
   brain_finalsurf = nibabel$load(path_brainfinal)
-  rawavg = nibabel$load(path_rawavg)
   # get Norig
   Norig = brain_finalsurf$header$get_vox2ras()
   Torig = brain_finalsurf$header$get_vox2ras_tkr()
@@ -268,7 +266,6 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     path_subject = path_subject,
     path_cache = path_cache,
     path_brainfinal = path_brainfinal,
-    path_rawavg = path_rawavg,
     path_xform = path_xform,
     path_suma = path_suma,
     path_surf = path_surf
@@ -322,6 +319,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     }
 
     env$electrode_table = tbl
+    env$electrodes = list()
 
     # Coord_x Coord_y  Coord_z are required - in fs space
     for( ii in seq_len(nrow(tbl)) ){
@@ -359,9 +357,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     color_ramp = c('navyblue', '#e2e2e2', 'red'),
     color_type = 'continuous', n_color = 64, color_names = seq_along(color_ramp),
 
-    control_presets = c(
-      'subject2', 'surface_type2', 'hemisphere_material', 'map_template',
-      'animation' ),
+    control_presets = NULL,
       # 'electrodes', 'attach_to_surface', 'color_group', 'animation'),
     optionals = list(),
     width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE,
@@ -379,6 +375,8 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     names(geoms) = NULL
 
     global_data = structure(list(env$transforms), names = env$subject)
+    control_presets = unique(c( 'subject2', 'surface_type2', 'hemisphere_material',
+                                'map_template', 'animation' ), control_presets)
 
     threejs_brain(
       .list = geoms,
@@ -397,10 +395,32 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 }
 
 
-check_freesurfer_path <- function(fs_subject_folder, autoinstall = TRUE){
+check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE){
   if( dir.exists(fs_subject_folder) ){
-    return(TRUE)
+
+    if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
+      path_subject = file.path(fs_subject_folder, 'rave', 'fs')
+    }else{
+      path_subject = fs_subject_folder
+    }
+    path_brainfinal = file.path(path_subject, 'mri', 'brain.finalsurfs.mgz')
+    path_xform = file.path(path_subject, 'mri', 'transforms', 'talairach.xfm')
+    path_surf = file.path(path_subject, 'surf')
+
+    if( file.exists(path_brainfinal) && file.exists(path_xform) && file.exists(path_surf) ){
+      return(TRUE)
+    }
+
   }
+
+
+  # check if this is N27 subject
+  subject_code = unlist(stringr::str_split(fs_subject_folder, '/|\\\\'))
+  if( subject_code[length(subject_code)] == 'N27' ){
+    download_N27()
+  }
+
+  return(FALSE)
 }
 
 electrode_mapped_141 <- function(position = c(0,0,0), is_surface, vertex_number, surf_type, hemisphere){
@@ -460,9 +480,7 @@ merge_freesurfer_brain <- function(..., .list = NULL){
     color_ramp = c('navyblue', '#e2e2e2', 'red'),
     color_type = 'continuous', n_color = 64, color_names = seq_along(color_ramp),
 
-    control_presets = c(
-      'subject2', 'surface_type2', 'hemisphere_material', 'map_template',
-      'animation' ),
+    control_presets = NULL,
     # 'electrodes', 'attach_to_surface', 'color_group', 'animation'),
     optionals = list(),
     width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE,
@@ -478,14 +496,15 @@ merge_freesurfer_brain <- function(..., .list = NULL){
       # load template subject
       if( is.null(template_subject_path) ){
         # try to load from ~/rave_data/others/threeBrain
-        template_subject_path = file.path('~/rave_data/others/three_brain/test/', template_subject)
+        n27_path = getOption('threeBrain.n27_dir', '~/rave_data/others/three_brain/N27')
+        template_subject_path = file.path(dirname(n27_path), template_subject)
       }
 
       has_template = check_freesurfer_path( template_subject_path );
 
       if( !has_template ){
         cat2('Cannot find template subject - ', template_subject, level = 'WARNING')
-        template_subject = subject_names[0]
+        template_subject = subject_names[1]
       }else{
         template_env = freesurfer_brain(template_subject_path, template_subject,
                                         additional_surface_type = merged_env$get_surface_types(),
@@ -546,8 +565,12 @@ merge_freesurfer_brain <- function(..., .list = NULL){
 
     global_data = sapply(subject_names, function(subcode){
       envs[[ subcode ]]$transforms
-    }, simplify = FALSE, USE.NAMES = TRUE);
+    }, simplify = FALSE, USE.NAMES = TRUE); # // shit I did too much js programming and now I'm confusing myself :/
+    global_data$multiple_subjects = TRUE
+    global_data$template_subjects = template_subject
 
+    control_presets = unique(c('subject2', 'surface_type2', 'hemisphere_material',
+                               'map_template', 'animation', control_presets ))
     threejs_brain(
       .list = geoms,
       time_range = time_range, value_range = value_range, symmetric = symmetric,

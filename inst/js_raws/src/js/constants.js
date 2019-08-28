@@ -45,11 +45,17 @@ CONSTANTS.VEC_ANAT_L = new THREE.Vector3( -1, 0, 0 );
 CONSTANTS.VEC_ANAT_P = new THREE.Vector3( 0, -1, 0 );
 CONSTANTS.VEC_ANAT_I = new THREE.Vector3( 0, 0, -1 );
 
-CONSTANTS.KEY_ZOOM = 90;              // z for zoom out and Z for zoom in
-CONSTANTS.KEY_CYCLE_LEFT = 219;       // [ for cycle through left hemisphere material
-CONSTANTS.KEY_CYCLE_RIGHT = 221;      // [ for cycle through left hemisphere material
-CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT = 190; // "." for choosing next electrodes
-CONSTANTS.KEY_CYCLE_ELECTRODES_PREV = 188; // "," for choosing previous electrodes
+// You can only change which key is pressed. However, you cannot change shift & ctrl or alt
+// To do that you must go into the code
+CONSTANTS.KEY_ZOOM                    = 90;   // z for zoom out and Z for zoom in
+CONSTANTS.KEY_CYCLE_LEFT              = 219;  // [ for cycle through left hemisphere material
+CONSTANTS.KEY_CYCLE_RIGHT             = 221;  // [ for cycle through left hemisphere material
+CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 190;  // "." for choosing next electrodes
+CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 188;  // "," for choosing previous electrodes
+CONSTANTS.KEY_CYCLE_SURFACE           = 80;   // "p" for cycle through surfaces
+CONSTANTS.KEY_OVERLAY_CORONAL         = 67;   // 'C' for coronal
+CONSTANTS.KEY_OVERLAY_AXIAL           = 65;   // 'A' for coronal
+CONSTANTS.KEY_OVERLAY_SAGITTAL        = 83;   // 'S' for coronal
 
 // Colors
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects
