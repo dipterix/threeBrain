@@ -43,8 +43,13 @@ const register_volume2DShader1 = function(THREE){
 
       'vec4 color = texture( diffuse, vec3( vUv, depth ) );',
 
+      'float is_opaque = float( color.r > threshold );',
+
+      // calculating z-depth, if transparent, make depth 1 (far)
+      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, float( color.r > threshold ) );',
+      'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
 
       '}'
     ].join( '\n' )
@@ -91,8 +96,12 @@ const register_volume2DShader1 = function(THREE){
 
       'vec4 color = texture( diffuse, vec3( vUv.x, depth / size.y, floor( vUv.y * size.z ) ) );',
 
+      'float is_opaque = float( color.r > threshold );',
+
+      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, float( color.r > threshold ) );',
+      'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
 
       '}'
     ].join( '\n' )
@@ -136,8 +145,12 @@ const register_volume2DShader1 = function(THREE){
 
       'vec4 color = texture( diffuse, vec3( depth / size.x, vUv.x, floor( vUv.y * size.z ) ) );',
 
+      'float is_opaque = float( color.r > threshold );',
+
+      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, float( color.r > threshold ) );',
+      'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
 
       '}'
     ].join( '\n' )

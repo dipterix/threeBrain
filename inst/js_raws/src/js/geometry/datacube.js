@@ -1,6 +1,13 @@
 import { THREE } from '../threeplugins.js';
 import { CONSTANTS } from '../constants.js';
 
+/* WebGL doesn't take transparency into consideration when calculating depth
+https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
+
+The hack is to set render order to be -1, which means always render first, then transparent
+part won't hide brain
+*/
+
 function gen_datacube(g, canvas){
   let mesh, group_name;
 
@@ -42,6 +49,8 @@ function gen_datacube(g, canvas){
 	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
 
 	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
+	let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
+	// mesh_xy.renderOrder = -1;
 	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
 
@@ -63,6 +72,7 @@ function gen_datacube(g, canvas){
 
 	let mesh_xz = new THREE.Mesh( geometry_xz, material_xz );
 	mesh_xz.rotateX( Math.PI / 2 );
+	// mesh_xz.renderOrder = -1;
 	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
 
@@ -85,6 +95,7 @@ function gen_datacube(g, canvas){
 	let mesh_yz = new THREE.Mesh( geometry_yz, material_yz );
 	mesh_yz.rotateY( Math.PI / 2);
 	mesh_yz.rotateZ( Math.PI / 2); // Back side
+	// mesh_yz.renderOrder = -1;
 	mesh_yz.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
 
