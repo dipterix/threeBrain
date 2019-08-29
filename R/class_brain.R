@@ -377,7 +377,7 @@ BrainElectrodes <- R6::R6Class(
         table = table[table$Subject %in% self$subject_code, ]
       }
       table$Electrode = as.integer(table$Electrode)
-      table = table[!is.na(table$Electrode) && !is.na(table$Value), ]
+      table = table[!is.na(table$Electrode) & !is.na(table$Value), ]
       if( length(table$Time) ){
         table = table[!is.na(table$Time), ]
       }else{
@@ -580,7 +580,7 @@ Brain2 <- R6::R6Class(
       self$electrodes$set_values(table_or_path = table_or_path)
     },
 
-    calculate_template_coordinates = function(save_to = NULL){
+    calculate_template_coordinates = function(save_to = 'auto'){
       table = self$electrodes$raw_table
       if( !is.data.frame(table) || !nrow(table) ){
         return(invisible())
@@ -588,6 +588,9 @@ Brain2 <- R6::R6Class(
       # Electrode   Coord_x   Coord_y  Coord_z Label are guaranteed
       n = nrow(table)
       surface_types = self$surface_types
+
+      tempenv = new.env(parent = emptyenv())
+      tempenv$has_change = FALSE
 
       rows = lapply(seq_len(n), function(ii){
         row = table[ii, ]
@@ -631,6 +634,7 @@ Brain2 <- R6::R6Class(
 
             row$VertexNumber = node
             row$Hemisphere = hemisphere
+            tempenv$has_change = TRUE
           }
         }
 
@@ -642,6 +646,7 @@ Brain2 <- R6::R6Class(
           row$MNI305_x = mni_position[1]
           row$MNI305_y = mni_position[2]
           row$MNI305_z = mni_position[3]
+          tempenv$has_change = TRUE
         }
         row
       })
@@ -650,11 +655,23 @@ Brain2 <- R6::R6Class(
       nms = unique(c("Electrode","Coord_x","Coord_y","Coord_z","Label","MNI305_x","MNI305_y","MNI305_z",
                      "SurfaceElectrode","SurfaceType","Radius","VertexNumber","Hemisphere", names(rows)))
       rows = rows[, nms]
-      if(length(save_to) == 1 && is.character(save_to)){
-        safe_write_csv(rows, save_to)
+
+      raw_path = self$electrodes$raw_table_path
+      if( isTRUE( save_to == 'auto' ) ){
+        save_to = raw_path
+      }
+
+      if(tempenv$has_change && length(save_to) == 1 && is.character(save_to)){
+        threeBrain:::safe_write_csv(rows, save_to)
+
+        self$electrodes$set_electrodes(save_to)
         return(invisible(rows))
       }
-      rows
+
+      self$electrodes$set_electrodes(rows)
+      self$electrodes$raw_table_path = raw_path
+
+      invisible(rows)
     },
 
     get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE){

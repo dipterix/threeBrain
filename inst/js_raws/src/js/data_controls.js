@@ -673,6 +673,8 @@ class THREEBRAIN_PRESETS{
     if( this.canvas.shared_data.get(".multiple_subjects") ){
       // Do mapping by default
       do_mapping.setValue( true );
+      // and open gui
+      this.gui.folders[ folder_name ].open();
     }
 
   }

@@ -58064,9 +58064,11 @@ class data_controls_THREEBRAIN_PRESETS{
       });
 
     // need to check if this is multiple subject case
-    if( this.canvas.shared_data.get("multiple_subjects") ){
+    if( this.canvas.shared_data.get(".multiple_subjects") ){
       // Do mapping by default
       do_mapping.setValue( true );
+      // and open gui
+      this.gui.folders[ folder_name ].open();
     }
 
   }
@@ -61545,8 +61547,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       if( !target_subject || !this.subject_codes.includes( target_subject ) ){
         // This happends when subjects are just loaded
-        if( this.shared_data.get("multiple_subjects") ){
-          target_subject = this.shared_data.get("template_subjects");
+        if( this.shared_data.get(".multiple_subjects") ){
+          target_subject = this.shared_data.get(".template_subjects");
         }
       }
 
