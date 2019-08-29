@@ -117,16 +117,17 @@ MultiBrain2 <- R6::R6Class(
         x$electrodes$.inject_value(factor_level = color_names)
       })
 
-
       if(length(time_range) != 2){
         time_range = self$electrode_time_range
-        if( time_range[1] == time_range[2] ){
+        if( length(time_range) == 2 && time_range[1] == time_range[2] ){
           time_range[2] = time_range[1] + 1
         }
       }
       if( length(value_range) != 2 ){
-        value_range = self$electrode_value_range - symmetric
-        value_range = max(abs(value_range)) * c(-1,1) + symmetric
+        value_range = self$electrode_value_range
+        if(length(value_range) == 2){
+          value_range = max(abs(value_range - symmetric)) * c(-1,1) + symmetric
+        }
       }
 
       geoms = self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
