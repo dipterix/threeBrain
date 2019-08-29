@@ -10,19 +10,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="3D Brain Visualization">
-<meta property="og:description" content="In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain. 
-    However, it takes efforts to interact and share the viewer to others. In 
-    addition, 'AFNI/SUMA' doesn't support Windows platform. In the 'EEG/iEEG' 
-    field, it's hard to have multiple cortical electrodes mapped to a template 
-    brain for group analysis. Therefore this package is written aimed at 
-    providing a fast, stable, interactive and easy to share tool based on 'Three.js', 
-    a 'WebGL' engine to render 3D objects in the web browser such that we can 
-    display brain surfaces on webpage interactively. This package translates R 
+<meta property="og:description" content="In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain.
+    However, it takes efforts to interact and share the viewer to others. In
+    addition, 'AFNI/SUMA' doesn't support Windows platform. In the 'EEG/iEEG'
+    field, it's hard to have multiple cortical electrodes mapped to a template
+    brain for group analysis. Therefore this package is written aimed at
+    providing a fast, stable, interactive and easy to share tool based on 'Three.js',
+    a 'WebGL' engine to render 3D objects in the web browser such that we can
+    display brain surfaces on webpage interactively. This package translates R
     objects to JavaScript objects via 'JSON' format, and provides 'R-Shiny' interface
-    to manipulate geometries interactively. The visualizations can also serve as 
-    standalone widgets that can be easily shared across different platforms. 
-    Along with 'rave', another package developed by Beauchamp's lab at Baylor 
-    College Medicine, this package provides solutions to easily map surface 
+    to manipulate geometries interactively. The visualizations can also serve as
+    standalone widgets that can be easily shared across different platforms.
+    Along with 'rave', another package developed by Beauchamp's lab at Baylor
+    College Medicine, this package provides solutions to easily map surface
     electrodes from multiple subjects to one template 141 brain.">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -52,7 +52,7 @@
 <li>
   <a href="index.html">
     <span class="fa fa-home fa-lg"></span>
-     
+
   </a>
 </li>
 <li>
@@ -70,13 +70,14 @@
 </div>
 <!--/.navbar -->
 
-      
+
       </header><div class="row">
   <div class="contents col-md-9">
 <div id="threebrain---html-webgl-based-3d-viewer" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#threebrain---html-webgl-based-3d-viewer" class="anchor"></a>threeBrain - HTML, WebGL based 3D Viewer</h1></div>
-<p>A live <a href="">demo</a> is available!</p>
+<p><img src="demo.gif"></p>
+<p>A live <a href="">demo</a> is under construction!</p>
 <div id="a-installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#a-installation" class="anchor"></a>A. Installation</h2>
@@ -119,11 +120,11 @@ devtools::install_github("dipterix/threeBrain@dev")</a></code></pre>
 <p>Here is an example of electrode csv file. Only the first five columns (<strong>case-sensitive</strong>) are mandatory: <code>Electrode (integer)</code>, <code>Coord_x</code>, <code>Coord_y</code>, <code>Coord_z</code>, and <code>Label (character)</code>. <code>Coord_*</code> is <code>RAS</code> location from <code>FreeSurfer</code> coordinates.</p>
 <pre><code>| Electrode| Coord_x| Coord_y| Coord_z|Label  | MNI305_x|  MNI305_y|  MNI305_z|SurfaceElectrode |SurfaceType | Radius| VertexNumber|Hemisphere |
 |---------:|-------:|-------:|-------:|:------|--------:|---------:|---------:|:----------------|:-----------|------:|------------:|:----------|
-|         1|    29.0|    -7.8|   -34.6|RMHCH1 | 30.46817| -17.98119| -23.40022|FALSE            |NA          |    0.5|           -1|right      |
-|         2|    33.8|    -8.0|   -34.2|RMHCH2 | 35.57109| -17.76624| -22.80131|FALSE            |NA          |    0.5|           -1|right      |
-|         3|    38.0|    -7.5|   -33.5|RMHCH3 | 39.97102| -16.81249| -22.17986|FALSE            |NA          |    0.5|           -1|right      |
-|         4|    42.6|    -6.8|   -33.0|RMHCH4 | 44.79092| -15.73442| -21.82591|FALSE            |NA          |    0.5|           -1|right      |
-|         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |NA          |    0.5|           -1|right      |
+|         1|    29.0|    -7.8|   -34.6|RMHCH1 | 30.46817| -17.98119| -23.40022|FALSE            |pial          |    0.5|           -1|right      |
+|         2|    33.8|    -8.0|   -34.2|RMHCH2 | 35.57109| -17.76624| -22.80131|FALSE            |pial          |    0.5|           -1|right      |
+|         3|    38.0|    -7.5|   -33.5|RMHCH3 | 39.97102| -16.81249| -22.17986|FALSE            |white          |    0.5|           -1|right      |
+|         4|    42.6|    -6.8|   -33.0|RMHCH4 | 44.79092| -15.73442| -21.82591|FALSE            |smoothwm          |    0.5|           -1|right      |
+|         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |pial          |    0.5|           -1|right      |
 |         ...</code></pre>
 </div>
 <div id="c-merge-subjects-and-template-mapping" class="section level2">
@@ -144,7 +145,7 @@ plot( template_n27 )</code></pre>
     <div class="links">
 <h2>Links</h2>
 <ul class="list-unstyled">
-<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=threeBrain">https://​cloud.r-project.org/​package=threeBrain</a>
+<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=threeBrain">https://cloud.r-project.org/package=threeBrain</a>
 </li>
 </ul>
 </div>
@@ -176,7 +177,7 @@ plot( template_n27 )</code></pre>
       </footer>
 </div>
 
-  
+
 
   </body>
 </html>

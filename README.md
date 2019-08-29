@@ -1,5 +1,7 @@
 # threeBrain - HTML, WebGL based 3D Viewer
 
+![](docs/demo.gif)
+
 A live [demo]() is under construction!
 
 ## A. Installation
