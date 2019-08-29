@@ -5,14 +5,14 @@
 \title{Read `FreeSurfer` surface and volume files}
 \usage{
 freesurfer_brain(fs_subject_folder, subject_name,
-  additional_surface_type = NULL, use_cache = TRUE, use_141 = TRUE)
+  additional_surfaces = NULL, use_cache = TRUE, use_141 = TRUE)
 }
 \arguments{
 \item{fs_subject_folder}{character, `FreeSurfer` subject folder, or `RAVE` subject folder}
 
 \item{subject_name}{character, subject code to display with only letters and digits}
 
-\item{additional_surface_type}{character array, additional surface types to load, such as `white`, `smoothwm`}
+\item{additional_surfaces}{character array, additional surface types to load, such as `white`, `smoothwm`}
 
 \item{use_cache}{logical, whether to use cached json files or from raw `FreeSurfer` files}
 

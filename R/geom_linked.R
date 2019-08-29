@@ -1,4 +1,4 @@
-# Linked to a freegeom
+# Linked to a freegeom, to be removed
 LinkedSphereGeom <- R6::R6Class(
   classname = 'LinkedSphereGeom',
   inherit = SphereGeom,

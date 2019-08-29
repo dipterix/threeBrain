@@ -58782,8 +58782,15 @@ function gen_sphere(g, canvas){
 /* WebGL doesn't take transparency into consideration when calculating depth
 https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
 
-The hack is to set render order to be -1, which means always render first, then transparent
-part won't hide brain
+The hack is to rewrite shader, force transparent fragments to have depth of 1, which means transparent parts
+always hide behind other objects.
+
+However, is we set brain mesh to be transparent, the volume is still hidden behind the mesh and invisible.
+This is because when the renderer calculate depth first, and the mesh is in the front, then volume gets
+not rendered.
+What we need to do is to set render order to be -1, which means always render volume first, then the opaque
+parts will show.
+
 */
 
 function gen_datacube(g, canvas){
@@ -58828,7 +58835,7 @@ function gen_datacube(g, canvas){
 
 	let mesh_xy = new threeplugins_THREE.Mesh( geometry_xy, material_xy );
 	let mesh_xy2 = new threeplugins_THREE.Mesh( geometry_xy, material_xy );
-	// mesh_xy.renderOrder = -1;
+	mesh_xy.renderOrder = -1;
 	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
 
@@ -58850,7 +58857,7 @@ function gen_datacube(g, canvas){
 
 	let mesh_xz = new threeplugins_THREE.Mesh( geometry_xz, material_xz );
 	mesh_xz.rotateX( Math.PI / 2 );
-	// mesh_xz.renderOrder = -1;
+	mesh_xz.renderOrder = -1;
 	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
 
@@ -58873,7 +58880,7 @@ function gen_datacube(g, canvas){
 	let mesh_yz = new threeplugins_THREE.Mesh( geometry_yz, material_yz );
 	mesh_yz.rotateY( Math.PI / 2);
 	mesh_yz.rotateZ( Math.PI / 2); // Back side
-	// mesh_yz.renderOrder = -1;
+	mesh_yz.renderOrder = -1;
 	mesh_yz.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
 

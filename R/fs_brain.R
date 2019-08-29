@@ -45,13 +45,13 @@
 #'
 #' @param fs_subject_folder character, `FreeSurfer` subject folder, or `RAVE` subject folder
 #' @param subject_name character, subject code to display with only letters and digits
-#' @param additional_surface_type character array, additional surface types to load, such as `white`, `smoothwm`
+#' @param additional_surfaces character array, additional surface types to load, such as `white`, `smoothwm`
 #' @param use_cache logical, whether to use cached json files or from raw `FreeSurfer` files
 #' @param use_141 logical, whether to use standard 141 brain for surface file
 #' @name freesurfer_brain
 #' @export
 freesurfer_brain <- function(fs_subject_folder, subject_name,
-                             additional_surface_type = NULL,
+                             additional_surfaces = NULL,
                              use_cache = TRUE, use_141 = TRUE){
   # Naming conventions
   #
@@ -110,22 +110,26 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   dim(xfm) = c(3,4)
   xfm = rbind(xfm, c(0,0,0,1))
 
-  # Tranforms
-  # 1. For volume mapping
-  # I have an RAS point on the surface (tkrR tkrA tkrS) ("Vertex RAS" from tksurfer) and want to compute the MNI305 RAS that corresponds to this point:
-  #     MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
-  # TalXFM: subject/orig/transforms/talairach.xfm Norig: mri_info --vox2ras orig.mgz Torig: mri_info --vox2ras-tkr orig.mgz
-  vox2vox_MNI305 = xfm %*% Norig %*% solve(Torig)
-  # 2. mesh center, freesurfer origin is at [-128,-128,-128], therefore, 0,0,0 is c(128, 128, 128, 1) for fs CRS
-  # and Norig %*% c(128, 128, 128, 1) is volume center relative to mesh center.
-  mesh_center = -(Norig %*% c(128, 128, 128, 1))[1:3]
+
+
+  # Generate brain object to return
+  brain = Brain2$new(subject_code = subject_name, xfm = xfm, Norig = Norig, Torig = Torig)
+  brain$meta$path = list(
+    path_subject = path_subject,
+    path_cache = path_cache,
+    path_brainfinal = path_brainfinal,
+    path_xform = path_xform,
+    path_suma = path_suma,
+    path_surf = path_surf
+  )
 
 
   ##### get volume 256x256x256 ####
   dir.create(path_cache, recursive = TRUE, showWarnings = FALSE)
-  volume = NULL
+
+  geom_brain_finalsurfs = NULL
   volume_shape = as.integer(brain_finalsurf$get_shape())
-  group_volume = GeomGroup$new(name = sprintf('Volume (%s)', subject_name))
+  group_volume = GeomGroup$new(name = sprintf('Volume - brain.finalsurfs (%s)', subject_name))
   group_volume$subject_code = subject_name
   cache_volume = file.path(path_cache, sprintf('%s_brain_finalsurfs.json', subject_name))
   # Read from cache
@@ -139,7 +143,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     unlink(cache_volume)
   }
 
-  if(is.null(volume)){
+  if(is.null(geom_brain_finalsurfs)){
     volume = brain_finalsurf$get_data()
     # Re-order the data according to Norig, map voxels to RAS coord - anatomical
     order_index = (Norig %*% c(1,2,3,0))[1:3]
@@ -151,19 +155,27 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
       name = sprintf('brain.finalsurfs (%s)', subject_name), value = volume, dim = volume_shape,
       half_size = volume_shape / 2, group = group_volume, position = c(0,0,0),
       cache_file = cache_volume)
+    rm(volume)
   }
   geom_brain_finalsurfs$subject_code = subject_name
-  rm(volume)
+
+  geom_brain_finalsurfs = BrainVolume$new(
+    subject_code = subject_name, volume_type = 'brain.finalsurfs',
+    volume = geom_brain_finalsurfs, position = c(0, 0, 0 ))
+
+  brain$add_volume( volume = geom_brain_finalsurfs )
 
   #### Read surface files ####
-  surface_type = unique(c('pial', additional_surface_type))
-  surfaces = list(); surf = NULL
+  surface_type = unique(c('pial', additional_surfaces))
 
   for( surf_t in surface_type ){
     surf_lh = NULL; surf_rh = NULL
     surf_group = GeomGroup$new(name = sprintf('Surface - %s (%s)', surf_t, subject_name),
-                               position = mesh_center)
+                               position = c( 0, 0, 0 ))
     surf_group$subject_code = subject_name
+    surface = NULL
+    loaded = FALSE
+
     if( use_141 ){
       # Load surface from 141 cache
       cache_lh = file.path(path_cache, sprintf('%s_std_141_lh_%s.json', subject_name, surf_t))
@@ -173,19 +185,14 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
                                position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
         surf_rh = FreeGeom$new(name = sprintf('Standard 141 Right Hemisphere - %s (%s)', surf_t, subject_name),
                                position = c(0,0,0), cache_file = cache_rh, group = surf_group, layer = 8)
-        surf_lh$subject_code = subject_name; surf_lh$hemisphere = 'left'; surf_lh$surface_type = surf_t;
-        surf_rh$subject_code = subject_name; surf_rh$hemisphere = 'right'; surf_rh$surface_type = surf_t;
-        surfaces[[surf_t]] = list(
-          type = surf_t,
-          sub_type = 'std.141',
-          left = surf_lh,
-          right = surf_rh
-        )
+        surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'std.141',
+                                   left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+        loaded = TRUE
       }else{
         unlink(cache_lh)
         unlink(cache_rh)
       }
-      if(is.null(surf_lh)){
+      if( !loaded ){
         # try to locate std.141.lh.xxx in SUMA folder
         surf = load_141_surface( path_suma, surf_t = surf_t, quiet = TRUE )
         if( is.null(surf) ){
@@ -198,15 +205,11 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
           surf_rh = FreeGeom$new(name = sprintf('Standard 141 Right Hemisphere - %s (%s)', surf_t, subject_name),
                                  position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
                                  cache_file = cache_rh, group = surf_group, layer = 8)
-          surf_lh$subject_code = subject_name; surf_lh$hemisphere = 'left'; surf_lh$surface_type = surf_t;
-          surf_rh$subject_code = subject_name; surf_rh$hemisphere = 'right'; surf_rh$surface_type = surf_t;
-          surfaces[[surf_t]] = list(
-            type = surf$type,
-            sub_type = surf$sub_type,
-            left = surf_lh,
-            right = surf_rh
-          )
+          surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'std.141',
+                                     left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+          loaded = TRUE
         }
+        rm(surf)
       }
 
     }
@@ -219,23 +222,15 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
                                position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
         surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
                                position = c(0,0,0), cache_file = cache_rh, group = surf_group, layer = 8)
-        surf_lh$subject_code = subject_name; surf_lh$hemisphere = 'left'; surf_lh$surface_type = surf_t;
-        surf_rh$subject_code = subject_name; surf_rh$hemisphere = 'right'; surf_rh$surface_type = surf_t;
-        # Important! The volume and mesh share the same center for freesurfer output
-        # I might need to have more research into why AFNI/SUMA re-center the mesh. My guess
-        # is AFNI/SUMA is trying to match with the scanner center
-        surf_group$position = c(0,0,0)
-        surfaces[[surf_t]] = list(
-          type = surf_t,
-          sub_type = 'fs',
-          left = surf_lh,
-          right = surf_rh
-        )
+
+        surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
+                                   left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+        loaded = TRUE
       }else{
         unlink(cache_lh)
         unlink(cache_rh)
       }
-      if(is.null(surf_lh)){
+      if( !loaded ){
         # load from fs
         surf = load_fs_surface( path_surf, surf_t = surf_t, quiet = TRUE )
         surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
@@ -244,158 +239,30 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
         surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
                                position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
                                cache_file = cache_rh, group = surf_group, layer = 8)
-        surf_lh$subject_code = subject_name; surf_lh$hemisphere = 'left'; surf_lh$surface_type = surf_t;
-        surf_rh$subject_code = subject_name; surf_rh$hemisphere = 'right'; surf_rh$surface_type = surf_t;
-        surf_group$position = c(0,0,0)
-        surfaces[[surf_t]] = list(
-          type = surf$type,
-          sub_type = surf$sub_type,
-          left = surf_lh,
-          right = surf_rh
-        )
+        surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
+                                   left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+        loaded = TRUE
+        rm(surf)
       }
+    }
+
+    if( 'brain-surface' %in% class(surface) ){
+
+      # This step will automatically adjust position for std.141 mesh
+      brain$add_surface( surface = surface )
     }
 
   }
 
-  rm(surf)
 
-  surface_type = names(surfaces)
+
+  surface_type = brain$surface_types
   if( !'pial' %in% surface_type ){
     cat2('Cannot find pial surface. Please make sure fs/SUMA/std.141.[lr]h.pial.asc or fs/surf/[lr]h.pial.asc exists', level = 'FATAL')
   }
 
   ##### return an environment ####
-  env = new.env(parent = baseenv())
-  env$path = list(
-    path_subject = path_subject,
-    path_cache = path_cache,
-    path_brainfinal = path_brainfinal,
-    path_xform = path_xform,
-    path_suma = path_suma,
-    path_surf = path_surf
-  )
-  env$transforms = list(
-    vox2vox_MNI305 = vox2vox_MNI305,
-    xfm = xfm,
-    Norig = Norig,
-    Torig = Torig,
-    mesh_center = mesh_center
-  )
-  env$volume = geom_brain_finalsurfs
-  env$surface_types = surface_type
-  env$surfaces = surfaces
-  env$subject = subject_name
-
-  electrode_container = GeomGroup$new(name = sprintf('Electrodes (%s)', subject_name), position = c(0,0,0))
-  electrode_container$subject_code = subject_name
-  env$electrode_container = electrode_container
-  env$electrodes = list()
-  env$electrode_table = NULL
-
-  # Function to add electrodes
-  # Volume group:   Volume (YAB)
-  # Volume:         brain.finalsurfs
-  #
-  # Surface group:  Surface - pial (YAB)
-  # Surface         Standard 141 Right Hemisphere - pial
-  #
-  # Electrode container: Electrodes (YAB)
-  # Electrode          : YAB, 1 - NA
-  env$set_electrodes = function(tbl){
-    if( missing(tbl) ){
-      tbl = file.path(path_subject, '../meta/electrodes.csv')
-    }
-    if( !is.data.frame(tbl) ){
-      # tbl is data path to electrode.csv
-
-      # tbl = '~/rave_data/data_dir/congruency/YAB/rave/meta/electrodes.csv'
-      tbl = read.csv(tbl, stringsAsFactors = FALSE)
-    }
-    if( !nrow(tbl) ){
-      return(invisible())
-    }
-
-    if( length(tbl$SurfaceElectrode) && is.character(tbl$SurfaceElectrode) ){
-      tbl$SurfaceElectrode = stringr::str_to_upper(tbl$SurfaceElectrode) == 'TRUE'
-    }
-    if( length( tbl$Hemisphere ) ){
-      tbl$Hemisphere = stringr::str_to_lower(tbl$Hemisphere)
-    }
-
-    env$electrode_table = tbl
-    env$electrodes = list()
-
-    # Coord_x Coord_y  Coord_z are required - in fs space
-    for( ii in seq_len(nrow(tbl)) ){
-      row = tbl[ii, ]
-      radius = c(row$Radius, 2)[1]; if( isTRUE(row$isMini) ){ radius = radius * 0.5 }
-      which_side = row$Hemisphere
-      if( !is.null(which_side) && !is.na(which_side)){
-        which_side = ifelse( which_side == 'left', 'left', 'right' )
-      }
-      nearest_vertex = c(row$VertexNumber, -1)[1]
-      mni_305 = c( row$MNI305_x, row$MNI305_y, row$MNI305_z ); if(length(mni_305)!=3){ mni_305 = c(0,0,0) }
-      surf_type = c(row$SurfaceType, 'pial')[1]
-      if( is.na(surf_type) ){ surf_type = 'NA' }
-
-
-      el = ElectrodeGeom$new(name = sprintf('%s, %d - %s', subject_name, row$Electrode, row$Label),
-                     position = c(row$Coord_x, row$Coord_y, row$Coord_z),
-                     radius = radius, group = electrode_container)
-      el$is_surface_electrode = isTRUE( row$SurfaceElectrode )
-      el$hemisphere = which_side
-      el$surface_type = surf_type
-      el$vertex_number = nearest_vertex
-      el$subject_code = subject_name
-      el$MNI305_position = mni_305
-      env$electrodes[[ row$Electrode ]] = el
-    }
-
-  }
-
-
-  # function to render
-  env$view = function(
-    time_range = NULL, value_range = NULL, symmetric = 0, side_camera = TRUE,
-    control_panel = TRUE, show_legend = TRUE, legend_title = 'Value',
-    color_ramp = c('navyblue', '#e2e2e2', 'red'),
-    color_type = 'continuous', n_color = 64, color_names = seq_along(color_ramp),
-
-    control_presets = NULL,
-      # 'electrodes', 'attach_to_surface', 'color_group', 'animation'),
-    optionals = list(),
-    width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE,
-
-    # Might not need these
-    camera_center = c(0, 0, 0), camera_pos = c(0, 0, 500), start_zoom = 1,
-    side_camera_zoom = 1, tmp_dirname = NULL, coords = NULL, ...
-  ){
-    # collect volume information
-    geoms = c(unlist(env$volume), unlist(env$surfaces), unlist(env$electrodes))
-    is_r6 = vapply(geoms, function(x){
-      !is.null(x) && R6::is.R6(x)
-    }, FALSE)
-    geoms = geoms[is_r6]
-    names(geoms) = NULL
-
-    global_data = structure(list(env$transforms), names = env$subject)
-    control_presets = unique(c( 'subject2', 'surface_type2', 'hemisphere_material',
-                                'map_template', 'animation' ), control_presets)
-
-    threejs_brain(
-      .list = geoms,
-      time_range = time_range, value_range = value_range, symmetric = symmetric,
-      side_camera = side_camera, side_camera_zoom = side_camera_zoom,
-      control_panel = control_panel, control_presets = control_presets,
-      camera_center = camera_center, camera_pos = camera_pos, start_zoom = start_zoom,
-      color_ramp = color_ramp, color_type = color_type, n_color = n_color,
-      color_names = color_names, show_legend = show_legend, legend_title = legend_title,
-      tmp_dirname = tmp_dirname, width = width, height = height, optionals = optionals,
-      debug = debug, token = token, coords = coords, browser_external = browser_external,
-      global_data = global_data, ...)
-  }
-  return(env)
+  return(brain)
 
 }
 
@@ -448,150 +315,150 @@ electrode_mapped_141 <- function(position = c(0,0,0), is_surface, vertex_number,
   return(surface_mapping)
 }
 
-
-merge_freesurfer_brain <- function(..., .list = NULL){
-
-  # env = threeBrain:::freesurfer_brain(fs_subject_folder = '~/rave_data/data_dir/congruency/YAB','YAB', additional_surface_type = 'white');env$set_electrodes()
-  # envn27 = threeBrain:::freesurfer_brain(fs_subject_folder = '~/rave_data/others/three_brain/test/N27/','N27')
-  # envs = c(env, envn27)
-  # merged_env = threeBrain:::merge_freesurfer_brain(env, envn27)
-  envs = c(list(...), .list)
-
-  subject_names = sapply(envs, '[[', 'subject')
-
-  sel = !duplicated(subject_names)
-
-  envs = envs[ sel ]
-  subject_names = subject_names[ sel ]
-  names(envs) = subject_names
-
-  # TODO: Check whether N27 is present
-
-  merged_env = new.env(parent = baseenv())
-  merged_env$envs = envs
-  merged_env$subject_names = subject_names
-  merged_env$get_surface_types = function(){
-    s = unlist(lapply(merged_env$envs, function(e){
-      e$surface_types
-    }))
-    unique(s)
-  }
-
-  merged_env$view = function(
-    template_subject = 'N27', template_subject_path = NULL,
-    trim_memory = TRUE, force_trim = FALSE,
-    time_range = NULL, value_range = NULL, symmetric = 0, side_camera = TRUE,
-    control_panel = TRUE, show_legend = TRUE, legend_title = 'Value',
-    color_ramp = c('navyblue', '#e2e2e2', 'red'),
-    color_type = 'continuous', n_color = 64, color_names = seq_along(color_ramp),
-
-    control_presets = NULL,
-    # 'electrodes', 'attach_to_surface', 'color_group', 'animation'),
-    optionals = list(),
-    width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE,
-
-    # Might not need these
-    camera_center = c(0, 0, 0), camera_pos = c(0, 0, 500), start_zoom = 1,
-    side_camera_zoom = 1, tmp_dirname = NULL, coords = NULL,
-    ...
-  ){
-    if( template_subject %in% merged_env$subject_names ){
-      subject_names = unique(c(template_subject, merged_env$subject_names))
-    }else{
-      # load template subject
-      if( is.null(template_subject_path) ){
-        # try to load from ~/rave_data/others/threeBrain
-        n27_path = getOption('threeBrain.n27_dir', '~/rave_data/others/three_brain/N27')
-        template_subject_path = file.path(dirname(n27_path), template_subject)
-      }
-
-      has_template = check_freesurfer_path( template_subject_path );
-
-      if( !has_template ){
-        cat2('Cannot find template subject - ', template_subject, level = 'WARNING')
-        template_subject = subject_names[1]
-      }else{
-        template_env = freesurfer_brain(template_subject_path, template_subject,
-                                        additional_surface_type = merged_env$get_surface_types(),
-                                        use_cache = TRUE, use_141 = TRUE)
-        merged_env$envs[[ template_subject ]] = template_env
-        merged_env$subject_names = c(template_subject, merged_env$subject_names)
-      }
-
-    }
-    envs = merged_env$envs
-    subject_names = merged_env$subject_names
-    # collect volume information
-    geoms = lapply(subject_names, function(sub){
-
-      if( isFALSE( trim_memory ) || sub == template_subject || (is.character(trim_memory) && !sub %in% trim_memory) ){
-        return(c(unlist(envs[[sub]]$volume), unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes)))
-      }else if(force_trim){
-        return(unlist(envs[[sub]]$electrodes))
-      }else{
-        # check if electrodes has mappings
-        tbl = envs[[sub]]$electrode_table
-        if( is.data.frame(tbl) ){
-          res = sapply(1:nrow(tbl), function(ii){
-            row = tbl[ii,]
-            re = TRUE
-            if( isTRUE(row$SurfaceElectrode) ){
-              re = electrode_mapped_141(position = c(row$Coord_x, row$Coord_y, row$Coord_z),
-                                        is_surface = row$SurfaceElectrode,
-                                        vertex_number = row$VertexNumber,
-                                        surf_type = row$SurfaceType,
-                                        hemisphere = row$Hemisphere)
-            }
-            re
-          })
-          if( all(res) ){
-            return(unlist(envs[[sub]]$electrodes))
-          }
-        }
-        # Only get ride of volume
-        return(c(unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes)))
-      }
-    })
-
-    if( trim_memory ){
-
-    }else{
-      # collect volume information
-      geoms = lapply(subject_names, function(sub){
-        c(unlist(envs[[sub]]$volume), unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes))
-      })
-    }
-
-
-    geoms = unlist(geoms)
-    is_r6 = vapply(geoms, function(x){ !is.null(x) && R6::is.R6(x) }, FALSE)
-    geoms = geoms[is_r6]
-    names(geoms) = NULL
-
-    global_data = sapply(subject_names, function(subcode){
-      envs[[ subcode ]]$transforms
-    }, simplify = FALSE, USE.NAMES = TRUE); # // shit I did too much js programming and now I'm confusing myself :/
-    global_data$multiple_subjects = TRUE
-    global_data$template_subjects = template_subject
-
-    control_presets = unique(c('subject2', 'surface_type2', 'hemisphere_material',
-                               'map_template', 'animation', control_presets ))
-    threejs_brain(
-      .list = geoms,
-      time_range = time_range, value_range = value_range, symmetric = symmetric,
-      side_camera = side_camera, side_camera_zoom = side_camera_zoom,
-      control_panel = control_panel, control_presets = control_presets,
-      camera_center = camera_center, camera_pos = camera_pos, start_zoom = start_zoom,
-      color_ramp = color_ramp, color_type = color_type, n_color = n_color,
-      color_names = color_names, show_legend = show_legend, legend_title = legend_title,
-      tmp_dirname = tmp_dirname, width = width, height = height, optionals = optionals,
-      debug = debug, token = token, coords = coords, browser_external = browser_external,
-      global_data = global_data, ...)
-  }
-  return(merged_env)
-}
-
-
+#
+# merge_freesurfer_brain <- function(..., .list = NULL){
+#
+#   # env = threeBrain:::freesurfer_brain(fs_subject_folder = '~/rave_data/data_dir/congruency/YAB','YAB', additional_surface_type = 'white');env$set_electrodes()
+#   # envn27 = threeBrain:::freesurfer_brain(fs_subject_folder = '~/rave_data/others/three_brain/test/N27/','N27')
+#   # envs = c(env, envn27)
+#   # merged_env = threeBrain:::merge_freesurfer_brain(env, envn27)
+#   envs = c(list(...), .list)
+#
+#   subject_names = sapply(envs, '[[', 'subject')
+#
+#   sel = !duplicated(subject_names)
+#
+#   envs = envs[ sel ]
+#   subject_names = subject_names[ sel ]
+#   names(envs) = subject_names
+#
+#   # TODO: Check whether N27 is present
+#
+#   merged_env = new.env(parent = baseenv())
+#   merged_env$envs = envs
+#   merged_env$subject_names = subject_names
+#   merged_env$get_surface_types = function(){
+#     s = unlist(lapply(merged_env$envs, function(e){
+#       e$surface_types
+#     }))
+#     unique(s)
+#   }
+#
+#   merged_env$view = function(
+#     template_subject = 'N27', template_subject_path = NULL,
+#     trim_memory = TRUE, force_trim = FALSE,
+#     time_range = NULL, value_range = NULL, symmetric = 0, side_camera = TRUE,
+#     control_panel = TRUE, show_legend = TRUE, legend_title = 'Value',
+#     color_ramp = c('navyblue', '#e2e2e2', 'red'),
+#     color_type = 'continuous', n_color = 64, color_names = seq_along(color_ramp),
+#
+#     control_presets = NULL,
+#     # 'electrodes', 'attach_to_surface', 'color_group', 'animation'),
+#     optionals = list(),
+#     width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE,
+#
+#     # Might not need these
+#     camera_center = c(0, 0, 0), camera_pos = c(0, 0, 500), start_zoom = 1,
+#     side_camera_zoom = 1, tmp_dirname = NULL, coords = NULL,
+#     ...
+#   ){
+#     if( template_subject %in% merged_env$subject_names ){
+#       subject_names = unique(c(template_subject, merged_env$subject_names))
+#     }else{
+#       # load template subject
+#       if( is.null(template_subject_path) ){
+#         # try to load from ~/rave_data/others/threeBrain
+#         n27_path = getOption('threeBrain.n27_dir', '~/rave_data/others/three_brain/N27')
+#         template_subject_path = file.path(dirname(n27_path), template_subject)
+#       }
+#
+#       has_template = check_freesurfer_path( template_subject_path );
+#
+#       if( !has_template ){
+#         cat2('Cannot find template subject - ', template_subject, level = 'WARNING')
+#         template_subject = subject_names[1]
+#       }else{
+#         template_env = freesurfer_brain(template_subject_path, template_subject,
+#                                         additional_surface_type = merged_env$get_surface_types(),
+#                                         use_cache = TRUE, use_141 = TRUE)
+#         merged_env$envs[[ template_subject ]] = template_env
+#         merged_env$subject_names = c(template_subject, merged_env$subject_names)
+#       }
+#
+#     }
+#     envs = merged_env$envs
+#     subject_names = merged_env$subject_names
+#     # collect volume information
+#     geoms = lapply(subject_names, function(sub){
+#
+#       if( isFALSE( trim_memory ) || sub == template_subject || (is.character(trim_memory) && !sub %in% trim_memory) ){
+#         return(c(unlist(envs[[sub]]$volume), unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes)))
+#       }else if(force_trim){
+#         return(unlist(envs[[sub]]$electrodes))
+#       }else{
+#         # check if electrodes has mappings
+#         tbl = envs[[sub]]$electrode_table
+#         if( is.data.frame(tbl) ){
+#           res = sapply(1:nrow(tbl), function(ii){
+#             row = tbl[ii,]
+#             re = TRUE
+#             if( isTRUE(row$SurfaceElectrode) ){
+#               re = electrode_mapped_141(position = c(row$Coord_x, row$Coord_y, row$Coord_z),
+#                                         is_surface = row$SurfaceElectrode,
+#                                         vertex_number = row$VertexNumber,
+#                                         surf_type = row$SurfaceType,
+#                                         hemisphere = row$Hemisphere)
+#             }
+#             re
+#           })
+#           if( all(res) ){
+#             return(unlist(envs[[sub]]$electrodes))
+#           }
+#         }
+#         # Only get ride of volume
+#         return(c(unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes)))
+#       }
+#     })
+#
+#     if( trim_memory ){
+#
+#     }else{
+#       # collect volume information
+#       geoms = lapply(subject_names, function(sub){
+#         c(unlist(envs[[sub]]$volume), unlist(envs[[sub]]$surfaces), unlist(envs[[sub]]$electrodes))
+#       })
+#     }
+#
+#
+#     geoms = unlist(geoms)
+#     is_r6 = vapply(geoms, function(x){ !is.null(x) && R6::is.R6(x) }, FALSE)
+#     geoms = geoms[is_r6]
+#     names(geoms) = NULL
+#
+#     global_data = sapply(subject_names, function(subcode){
+#       envs[[ subcode ]]$transforms
+#     }, simplify = FALSE, USE.NAMES = TRUE); # // shit I did too much js programming and now I'm confusing myself :/
+#     global_data$multiple_subjects = TRUE
+#     global_data$template_subjects = template_subject
+#
+#     control_presets = unique(c('subject2', 'surface_type2', 'hemisphere_material',
+#                                'map_template', 'animation', control_presets ))
+#     threejs_brain(
+#       .list = geoms,
+#       time_range = time_range, value_range = value_range, symmetric = symmetric,
+#       side_camera = side_camera, side_camera_zoom = side_camera_zoom,
+#       control_panel = control_panel, control_presets = control_presets,
+#       camera_center = camera_center, camera_pos = camera_pos, start_zoom = start_zoom,
+#       color_ramp = color_ramp, color_type = color_type, n_color = n_color,
+#       color_names = color_names, show_legend = show_legend, legend_title = legend_title,
+#       tmp_dirname = tmp_dirname, width = width, height = height, optionals = optionals,
+#       debug = debug, token = token, coords = coords, browser_external = browser_external,
+#       global_data = global_data, ...)
+#   }
+#   return(merged_env)
+# }
+#
+#
 
 
 

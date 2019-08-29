@@ -13,6 +13,9 @@ NULL
 
 
 #' @title Setup Package, Install Environment
+#' @param continued logical, there are two phases of setting up environment. You
+#' probably need to restart R session after the first phase and continue setting up.
+#' @param show_example whether to show example of `N27` subject at the end.
 #' @export
 brain_setup <- function(continued = FALSE, show_example = TRUE){
   if( !continued ){
@@ -60,12 +63,12 @@ brain_setup <- function(continued = FALSE, show_example = TRUE){
       if( in_rsession ){
         # restart
         restarted = TRUE
-        eval(parse(text = "rstudioapi::restartSession('threeBrain:::ravepy_info();threeBrain:::cat2(\"Please check if all packages are installed :)\", level = \"INFO\")')"))
+        eval(parse(text = "rstudioapi::restartSession('threeBrain:::ravepy_info();threeBrain:::cat2(\"Please check if all packages are installed :)\", level = \"INFO\");threeBrain::brain_setup(TRUE, TRUE)')"))
       }
     }
 
     if( !restarted ){
-      cat2('Please manually restart R. Go to "Session" > "Restart R", \nthen, enter \n\tthreeBrain::brain_setup(TRUE)', level = 'WARNING')
+      cat2('Please manually restart R. Go to "Session" > "Restart R", \nthen, enter \n\tthreeBrain::brain_setup(TRUE, TRUE)', level = 'WARNING')
     }
   }else{
     cat2('Wrapping up installation...', level = 'INFO')
@@ -73,17 +76,18 @@ brain_setup <- function(continued = FALSE, show_example = TRUE){
 
     template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
     freesurfer_brain(fs_subject_folder = file.path(template_dir, 'N27'),
-                           subject_name = 'N27', additional_surface_type = c(
+                           subject_name = 'N27', additional_surfaces = c(
                              'white', 'smoothwm', 'inflated', 'pial-outer-smoothed'), use_141 = FALSE)
     env = freesurfer_brain(fs_subject_folder = file.path(template_dir, 'N27'),
-                           subject_name = 'N27', additional_surface_type = c(
+                           subject_name = 'N27', additional_surfaces = c(
                              'white', 'smoothwm', 'inflated', 'inf_200', 'pial-outer-smoothed'))
 
     if( show_example ){
-      env$view()
+      plot(env)
     }
 
   }
 
 
 }
+
