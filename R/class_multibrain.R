@@ -70,18 +70,64 @@ MultiBrain2 <- R6::R6Class(
       return(invisible())
     },
 
+    apply_all = function(fun, ...){
+      lapply(c(self$template_object, self$objects), fun, ...)
+    },
+
     plot = function(
       additional_subjects = NULL, volumes = TRUE, surfaces = TRUE,
       time_range = NULL, value_range = NULL, symmetric = 0, side_camera = TRUE,
       control_panel = TRUE, show_legend = TRUE, legend_title = 'Value',
-      color_ramp = c('navyblue', '#e2e2e2', 'red'),
-      color_type = 'continuous', n_color = 64, color_names = seq_along(color_ramp),
+      color_ramp = NULL,color_names = NULL,
+      color_type = 'auto', n_color = 64,
 
       control_presets = NULL,
       optionals = list(),
       width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE, ...
     ){
 
+      if( color_type == 'auto' ){
+        color_type = self$electrode_value_type
+      }
+
+      if( !length(color_ramp) ){
+        # we need to decide the color_ramps by ourselves
+        if( color_type == 'continuous' ){
+          color_ramp = c('navyblue', '#e2e2e2', 'red')
+        }else{
+          color_ramp = grDevices::palette()
+        }
+      }
+      if( !length(color_names) ){
+        color_names = self$electrode_value_names
+      }
+      n_ramp = length(color_ramp)
+      n_name = max(1, length(color_names))
+
+      if( color_type == 'discrete' && (n_ramp != n_name) ){
+        if( n_ramp >= n_name ){
+          color_ramp = color_ramp[seq_len(n_name)]
+        }else{
+          color_ramp = grDevices::colorRampPalette(color_ramp)(n_name)
+        }
+
+      }
+
+      self$apply_all(function(x){
+        x$electrodes$.inject_value(factor_level = color_names)
+      })
+
+
+      if(length(time_range) != 2){
+        time_range = self$electrode_time_range
+        if( time_range[1] == time_range[2] ){
+          time_range[2] = time_range[1] + 1
+        }
+      }
+      if( length(value_range) != 2 ){
+        value_range = self$electrode_value_range - symmetric
+        value_range = max(abs(value_range)) * c(-1,1) + symmetric
+      }
 
       geoms = self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
 
@@ -140,7 +186,50 @@ MultiBrain2 <- R6::R6Class(
         re[[ s ]] = self$objects[[ s ]]$global_data[[ s ]]
       }
       re[[ self$template_subject ]] = self$template_object$global_data[[ self$template_subject ]]
+      re$.multiple_subjects = TRUE
+      re$.template_subjects = self$template_subject
       re
+    },
+    electrode_value_type = function(){
+      vy = sapply(c(self$template_object, self$objects), function(x){
+        x$electrodes$value_type
+      })
+      if( 'discrete' %in% vy ){
+        return('discrete')
+      }else{
+        return('continuous')
+      }
+    },
+    electrode_value_names = function(){
+      if(self$electrode_value_type == 'continuous'){
+        return(NULL)
+      }
+      v_name = lapply(c(self$template_object, self$objects), function(x){
+        x$electrodes$value_names
+      })
+      v_name = unique(unlist(v_name))
+      names(v_name) = NULL
+      v_name
+    },
+    electrode_value_range = function(){
+      re = sapply(c(self$template_object, self$objects), function(x){
+        x$electrode_value_range
+      })
+      re = unlist(re)
+      if(length(re) == 0){
+        return(NULL)
+      }
+      return(range(re))
+    },
+    electrode_time_range = function(){
+      re = sapply(c(self$template_object, self$objects), function(x){
+        x$electrodes$time_range
+      })
+      re = unlist(re)
+      if(length(re) == 0){
+        return(NULL)
+      }
+      return(range(re))
     }
   )
 )

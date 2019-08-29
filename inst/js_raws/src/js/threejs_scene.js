@@ -2440,8 +2440,8 @@ class THREEBRAIN_CANVAS {
 
       if( !target_subject || !this.subject_codes.includes( target_subject ) ){
         // This happends when subjects are just loaded
-        if( this.shared_data.get("multiple_subjects") ){
-          target_subject = this.shared_data.get("template_subjects");
+        if( this.shared_data.get(".multiple_subjects") ){
+          target_subject = this.shared_data.get(".template_subjects");
         }
       }
 

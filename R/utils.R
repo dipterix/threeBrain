@@ -320,3 +320,16 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
 
 
 }
+
+
+
+safe_write_csv <- function(data, file, ..., quiet = F){
+  if(file.exists(file)){
+    oldfile = stringr::str_replace(file, '\\.[cC][sS][vV]$', strftime(Sys.time(), '_[%Y%m%d_%H%M%S].csv'))
+    if(!quiet){
+      cat2('Renaming file ', file, ' >> ', oldfile)
+    }
+    file.rename(file, oldfile)
+  }
+  utils::write.csv(data, file, ...)
+}

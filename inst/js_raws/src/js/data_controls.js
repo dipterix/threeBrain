@@ -670,7 +670,7 @@ class THREEBRAIN_PRESETS{
       });
 
     // need to check if this is multiple subject case
-    if( this.canvas.shared_data.get("multiple_subjects") ){
+    if( this.canvas.shared_data.get(".multiple_subjects") ){
       // Do mapping by default
       do_mapping.setValue( true );
     }

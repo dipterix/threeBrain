@@ -208,9 +208,14 @@ BrainElectrodes <- R6::R6Class(
 
     # used to store electrode data frame, do not call directly, use set_electrodes
     raw_table = NULL,
+    raw_table_path = NULL,
 
     # A list that stores electrodes
     objects = NULL,
+
+    # a list storing values
+    values = NULL,
+    value_names = NULL,
 
     # electrode group
     group = NULL,
@@ -225,6 +230,7 @@ BrainElectrodes <- R6::R6Class(
 
     initialize = function(subject_code){
       self$group = GeomGroup$new(name = sprintf('Electrodes (%s)', subject_code), position = c(0,0,0))
+      self$values = list()
       self$set_subject_code( subject_code )
     },
 
@@ -236,14 +242,18 @@ BrainElectrodes <- R6::R6Class(
                  msg = 'table_or_path must be either data.frame or path to electrodes.csv')
       if(!is.data.frame(table_or_path)){
         # table_or_path = '~/Downloads/YAB_electrodes.csv'
+        self$raw_table_path = table_or_path
         table = read.csv(table_or_path, stringsAsFactors = FALSE)
       }else{
+        self$raw_table_path = NULL
         table = table_or_path
       }
 
       stopifnot2(all(c('Electrode', 'Coord_x', 'Coord_y', 'Coord_z') %in% names(table)),
                  msg = 'electrode table must contains Electrode (integer), Coord_x,Coord_y,Coord_z in FreeSurfer RAS coordinates')
 
+      table$Electrode = as.integer(table$Electrode)
+      table = table[!is.na(table$Electrode), ]
       n = nrow(table)
 
       if( n == 0 ){
@@ -337,6 +347,114 @@ BrainElectrodes <- R6::R6Class(
         el$subject_code = subject_code
         el$MNI305_position = mni_305
         self$objects[[ row$Electrode ]] = el
+      }
+    },
+
+    # function to set values to electrodes
+    set_values = function(table_or_path){
+      if( is.null(table_or_path) ){
+        return(invisible())
+      }
+      stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
+                 msg = 'table_or_path must be either data.frame or path to a csv file')
+      if(!is.data.frame(table_or_path)){
+        table = read.csv(table_or_path, stringsAsFactors = FALSE)
+      }else{
+        table = table_or_path
+      }
+      # an example, electrode and value are mandatory
+      # Subject Electrode Value Time
+      # 1     YAB         1     1  0.5
+      # 2     YAB         2     2  0.5
+      # 3     YAB         3     3  0.5
+      # 4     YAB         4     4  0.5
+      # 5     YAB         5     5  0.5
+      # 6     YAB         6     6  0.5
+      stopifnot2(all(c('Electrode', 'Value') %in% names(table)),
+                 msg = 'value table must contains Electrode (integer), and Value (number or character)')
+
+      if( length(table$Subject) ){
+        table = table[table$Subject %in% self$subject_code, ]
+      }
+      table$Electrode = as.integer(table$Electrode)
+      table = table[!is.na(table$Electrode) && !is.na(table$Value), ]
+      if( length(table$Time) ){
+        table = table[!is.na(table$Time), ]
+      }else{
+        table$Time = 0
+      }
+
+      if( !is.numeric(table$Value) && !is.factor(table$Value) ){
+        table$Value = factor(table$Value)
+      }
+      if( is.factor(table$Value) ){
+        self$value_names = levels(table$Value)
+      }else{
+        self$value_names = NULL
+      }
+
+      ne = sort(unique(table$Electrode))
+
+      if( !length(ne) ){
+        return(NULL)
+      }
+      # Set values
+      self$values = list()
+      for(e in ne){
+        sub = table[table$Electrode == e, ]
+        order = order(sub$Time)
+        self$values[[ e ]] = list(time = sub$Time[ order ], value = sub$Value[ order ])
+      }
+
+    },
+
+    .inject_value = function(factor_level = NULL){
+      for( ii in seq_along(self$objects) ){
+        if( is.null( self$objects[[ ii ]] ) ){
+          next;
+        }
+        dat = self$values[[ ii ]]
+        if( is.list( dat ) ){
+          time = dat$time
+          value = dat$value
+          if( is.factor(value) ){
+            if( !is.null( factor_level ) ){
+              value = factor(dat$value, levels = factor_level)
+              self$values[[ ii ]]$value = value
+            }
+            value = as.integer(value)
+          }
+          names(value) = NULL
+          names(time) = NULL
+          self$objects[[ ii ]]$set_value(value = value, time_stamp = time)
+        }else{
+          # Remove value
+          self$objects[[ ii ]]$set_value(value = NULL)
+        }
+      }
+    }
+
+  ),
+  active = list(
+    time_range = function(){
+      re = sapply(self$values, function(x){ x$time })
+      if(length(re)){
+        return(range(re))
+      }
+      NULL
+    },
+    value_range = function(){
+      re = sapply(self$values, function(x){ as.numeric(x$value) })
+      if(length(re) ){
+        return(range(re))
+      }
+      NULL
+    },
+    value_type = function(){
+      if(is.null(self$value_names)){
+        return('continuous')
+      }else{
+        return('discrete')
       }
     }
   )
@@ -458,6 +576,87 @@ Brain2 <- R6::R6Class(
       }
     },
 
+    set_electrode_values = function(table_or_path){
+      self$electrodes$set_values(table_or_path = table_or_path)
+    },
+
+    calculate_template_coordinates = function(save_to = NULL){
+      table = self$electrodes$raw_table
+      if( !is.data.frame(table) || !nrow(table) ){
+        return(invisible())
+      }
+      # Electrode   Coord_x   Coord_y  Coord_z Label are guaranteed
+      n = nrow(table)
+      surface_types = self$surface_types
+
+      rows = lapply(seq_len(n), function(ii){
+        row = table[ii, ]
+        fs_position = c(row$Coord_x, row$Coord_y, row$Coord_z)
+
+        if( all(fs_position == 0) ){
+          # this electrode is supposed to be hidden
+          return(row)
+        }
+
+        is_surface_electrode = row$SurfaceElectrode
+        surf_t = row$SurfaceType
+
+        if( isTRUE(is_surface_electrode) ){
+
+          if( is.na(surf_t) || surf_t == 'NA' ){
+            surf_t = 'pial'
+          }
+
+          # Check if mapped to 141
+          mapped = electrode_mapped_141(position = fs_position, is_surface = TRUE,
+                                        vertex_number = row$VertexNumber, surf_type = surf_t,
+                                        hemisphere = row$Hemisphere)
+          if( !mapped && surf_t %in% surface_types ){
+            # load vertices
+            lh_vert = self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Left Hemisphere - %s (%s)', surf_t, self$subject_code))
+            rh_vert = self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Right Hemisphere - %s (%s)', surf_t, self$subject_code))
+            lh_dist = colSums((t(lh_vert) - fs_position)^2)
+            rh_dist = colSums((t(rh_vert) - fs_position)^2)
+
+            lh_node = which.min(lh_dist); lh_dist = lh_dist[ lh_node ]
+            rh_node = which.min(rh_dist); rh_dist = rh_dist[ rh_node ]
+
+            # default is right
+            node = rh_node - 1; hemisphere = 'right'
+
+            if( lh_dist < rh_dist ){
+              # left
+              node = lh_node - 1; hemisphere = 'left'
+            }
+
+            row$VertexNumber = node
+            row$Hemisphere = hemisphere
+          }
+        }
+
+        # calculate MNI305 position
+        mni_position = c(row$MNI305_x, row$MNI305_y, row$MNI305_z)
+        if( all(mni_position == 0) ){
+          # need to calculate MNI position
+          mni_position = self$vox2vox_MNI305 %*% c(fs_position, 1)
+          row$MNI305_x = mni_position[1]
+          row$MNI305_y = mni_position[2]
+          row$MNI305_z = mni_position[3]
+        }
+        row
+      })
+
+      rows = do.call(rbind, rows)
+      nms = unique(c("Electrode","Coord_x","Coord_y","Coord_z","Label","MNI305_x","MNI305_y","MNI305_z",
+                     "SurfaceElectrode","SurfaceType","Radius","VertexNumber","Hemisphere", names(rows)))
+      rows = rows[, nms]
+      if(length(save_to) == 1 && is.character(save_to)){
+        safe_write_csv(rows, save_to)
+        return(invisible(rows))
+      }
+      rows
+    },
+
     get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE){
 
       geoms = list()
@@ -541,9 +740,9 @@ Brain2 <- R6::R6Class(
 
       # Legend and color
       show_legend = TRUE, legend_title = 'Value',
-      color_ramp = c('navyblue', '#e2e2e2', 'red'),   # Palette
-      color_type = 'continuous',                      # variable type
-      color_names = seq_along(color_ramp),            # For discrete
+      color_type = 'auto',                      # variable type
+      color_ramp = NULL,   # Palette
+      color_names = NULL,            # For discrete
       n_color = 64,
 
       # For control panels = TRUE
@@ -553,12 +752,42 @@ Brain2 <- R6::R6Class(
 
       width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE, ... ){
 
-      # camera_pos = c(0, 0, 500)
-      # start_zoom = 1
-      # camera_center = c(0, 0, 0)
-      # side_camera_zoom = 1
-      # coords = NULL
-      # tmp_dirname = NULL
+      if( color_type == 'auto' ){
+        color_type = self$electrodes$value_type
+      }
+
+      if( !length(color_ramp) ){
+        # we need to decide the color_ramps by ourselves
+        if( color_type == 'continuous' ){
+          color_ramp = c('navyblue', '#e2e2e2', 'red')
+        }else{
+          color_ramp = grDevices::palette()
+        }
+      }
+      if( !length(color_names) ){
+        color_names = self$electrodes$value_names
+      }
+      n_ramp = length(color_ramp)
+      n_name = length(color_names)
+
+      if( color_type == 'discrete' && (n_ramp != n_name) ){
+        if( n_ramp >= n_name ){
+          color_ramp = color_ramp[seq_len(n_name)]
+        }else{
+          color_ramp = grDevices::colorRampPalette(color_ramp)(n_name)
+        }
+      }
+      self$electrodes$.inject_value(factor_level = color_names)
+      if(length(time_range) != 2){
+        time_range = self$electrodes$time_range
+        if( time_range[1] == time_range[2] ){
+          time_range[2] = time_range[1] + 1
+        }
+      }
+      if( length(value_range) != 2 ){
+        value_range = self$electrodes$value_range - symmetric
+        value_range = max(abs(value_range)) * c(-1,1) + symmetric
+      }
 
       # collect volume information
       geoms = self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
@@ -622,6 +851,23 @@ Brain2 <- R6::R6Class(
         vox2vox_MNI305 = self$vox2vox_MNI305,
         scanner_center = self$scanner_center
       )), names = self$subject_code)
+    },
+    electrode_value_type = function(){
+      self$electrodes$value_type
+    },
+    electrode_value_names = function(){
+      if(self$electrode_value_type == 'continuous'){
+        return(NULL)
+      }
+      v_name = unique(unlist(self$electrodes$value_names))
+      names(v_name) = NULL
+      v_name
+    },
+    electrode_time_range = function(){
+      self$electrodes$time_range
+    },
+    electrode_value_range = function(){
+      self$electrodes$value_range
     }
   )
 )
