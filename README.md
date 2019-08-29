@@ -1,6 +1,6 @@
 # threeBrain - HTML, WebGL based 3D Viewer
 
-A live [demo]() is available!
+A live [demo]() is under construction!
 
 ## A. Installation
 
@@ -51,11 +51,11 @@ Here is an example of electrode csv file. Only the first five columns (**case-se
 ```
 | Electrode| Coord_x| Coord_y| Coord_z|Label  | MNI305_x|  MNI305_y|  MNI305_z|SurfaceElectrode |SurfaceType | Radius| VertexNumber|Hemisphere |
 |---------:|-------:|-------:|-------:|:------|--------:|---------:|---------:|:----------------|:-----------|------:|------------:|:----------|
-|         1|    29.0|    -7.8|   -34.6|RMHCH1 | 30.46817| -17.98119| -23.40022|FALSE            |NA          |    0.5|           -1|right      |
-|         2|    33.8|    -8.0|   -34.2|RMHCH2 | 35.57109| -17.76624| -22.80131|FALSE            |NA          |    0.5|           -1|right      |
-|         3|    38.0|    -7.5|   -33.5|RMHCH3 | 39.97102| -16.81249| -22.17986|FALSE            |NA          |    0.5|           -1|right      |
-|         4|    42.6|    -6.8|   -33.0|RMHCH4 | 44.79092| -15.73442| -21.82591|FALSE            |NA          |    0.5|           -1|right      |
-|         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |NA          |    0.5|           -1|right      |
+|         1|    29.0|    -7.8|   -34.6|RMHCH1 | 30.46817| -17.98119| -23.40022|FALSE            |pial          |    0.5|           -1|right      |
+|         2|    33.8|    -8.0|   -34.2|RMHCH2 | 35.57109| -17.76624| -22.80131|FALSE            |pial          |    0.5|           -1|right      |
+|         3|    38.0|    -7.5|   -33.5|RMHCH3 | 39.97102| -16.81249| -22.17986|FALSE            |white          |    0.5|           -1|right      |
+|         4|    42.6|    -6.8|   -33.0|RMHCH4 | 44.79092| -15.73442| -21.82591|FALSE            |smoothwm          |    0.5|           -1|right      |
+|         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |pial          |    0.5|           -1|right      |
 |         ...
 ```
 

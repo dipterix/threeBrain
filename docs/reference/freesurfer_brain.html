@@ -8,11 +8,13 @@
 
 <title>Read `FreeSurfer` surface and volume files — freesurfer_brain • threeBrain</title>
 
+
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
@@ -30,10 +32,11 @@
 
 
 
-<meta property="og:title" content="Read `FreeSurfer` surface and volume files — freesurfer_brain" />
 
+<meta property="og:title" content="Read `FreeSurfer` surface and volume files — freesurfer_brain" />
 <meta property="og:description" content="Read `FreeSurfer` surface and volume files" />
 <meta name="twitter:card" content="summary" />
+
 
 
 
@@ -82,7 +85,6 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
-      
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
@@ -103,14 +105,12 @@
     </div>
 
     <div class="ref-description">
-    
     <p>Read `FreeSurfer` surface and volume files</p>
-    
     </div>
 
     <pre class="usage"><span class='fu'>freesurfer_brain</span>(<span class='no'>fs_subject_folder</span>, <span class='no'>subject_name</span>,
   <span class='kw'>additional_surfaces</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>use_cache</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>use_141</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
-    
+
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
@@ -135,7 +135,7 @@
       <td><p>logical, whether to use standard 141 brain for surface file</p></td>
     </tr>
     </table>
-    
+
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function is under FreeSurfer license.
@@ -158,11 +158,11 @@ and the `AFNI/SUMA` command related is `SurfToSurf`. Please generate the files
 to `[FREESURFER SUBJECT DIR]/SUMA/`. The file name follows the convention of
 `std.141.[lr]h.[SURFACE TYPE].[POSTFIX]`, where `lh` means left hemisphere and
 `rh` means right hemisphere; `SURFACE TYPE` can be `pial`, `white`, `smoothwm`,
-and `POSTFIX` can be `asc`, `gii`, `nii`. If multiple files for the same surface
-type exists, the search order will be `asc &gt; gii &gt; nii`.
+and `POSTFIX` can be `asc`, `gii`. If multiple files for the same surface
+type exists, the search order will be `asc &gt; gii`.
 The other option is to use mesh files directly from freesurfer output located
 at `[FREESURFER SUBJECT DIR]/surf`. If you want to use these surface, make sure
-they are converted to `asc`, `gii` or `nii` format.</p>
+they are converted to `asc` or `gii` format.</p>
 <p>3. Electrode registration and transforms
 This package provides two ways to map electrodes to standard space. For surface
 electrodes, if standard 141 brain is provided, then the first option is to snap
@@ -177,16 +177,14 @@ Currently, only linear `Talairach` transform matrix is supported (located at
 `talairach.xfm`).</p>
 <p>4. Coordinates
 The 3D viewer in this package uses the center of volume as the origin (0, 0, 0).</p>
-    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
       <li><a href="#details">Details</a></li>
-          </ul>
+    </ul>
 
     <h2>Author</h2>
     <p>Zhengjia Wang</p>

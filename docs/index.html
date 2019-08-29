@@ -73,20 +73,71 @@
       
       </header><div class="row">
   <div class="contents col-md-9">
-In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain. 
-    However, it takes efforts to interact and share the viewer to others. In 
-    addition, 'AFNI/SUMA' doesn't support Windows platform. In the 'EEG/iEEG' 
-    field, it's hard to have multiple cortical electrodes mapped to a template 
-    brain for group analysis. Therefore this package is written aimed at 
-    providing a fast, stable, interactive and easy to share tool based on 'Three.js', 
-    a 'WebGL' engine to render 3D objects in the web browser such that we can 
-    display brain surfaces on webpage interactively. This package translates R 
-    objects to JavaScript objects via 'JSON' format, and provides 'R-Shiny' interface
-    to manipulate geometries interactively. The visualizations can also serve as 
-    standalone widgets that can be easily shared across different platforms. 
-    Along with 'rave', another package developed by Beauchamp's lab at Baylor 
-    College Medicine, this package provides solutions to easily map surface 
-    electrodes from multiple subjects to one template 141 brain.
+<div id="threebrain---html-webgl-based-3d-viewer" class="section level1">
+<div class="page-header"><h1 class="hasAnchor">
+<a href="#threebrain---html-webgl-based-3d-viewer" class="anchor"></a>threeBrain - HTML, WebGL based 3D Viewer</h1></div>
+<p>A live <a href="">demo</a> is available!</p>
+<div id="a-installation" class="section level2">
+<h2 class="hasAnchor">
+<a href="#a-installation" class="anchor"></a>A. Installation</h2>
+<ol>
+<li>Install <a href="https://www.python.org/downloads/"><code>Python3</code></a>, <a href="https://cran.r-project.org/"><code>R</code></a> and <a href="https://www.rstudio.com/products/rstudio/download/"><code>RStudio Desktop (Free Version)</code></a>
+</li>
+<li>Open <code>RStudio</code>, enter from its console:</li>
+</ol>
+<pre class="{r}"><code><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages("threeBrain")</a></code></pre>
+<p>If you want to install <code>dev</code> version from <em>Github</em>, then use:</p>
+<pre class="{r}"><code><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages("devtools")
+devtools::install_github("dipterix/threeBrain@dev")</a></code></pre>
+<ol>
+<li>Setups: after installation, in <code>RStudio</code> console, type the following command</li>
+</ol>
+<pre class="{r}"><code><a href="reference/brain_setup.html">threeBrain::brain_setup()</a></code></pre>
+<p>and follow the instructions.</p>
+</div>
+<div id="b-basic-brain-viewer" class="section level2">
+<h2 class="hasAnchor">
+<a href="#b-basic-brain-viewer" class="anchor"></a>B. Basic Brain Viewer</h2>
+<p>Once finishing setting up of <code>threeBrain</code>, there will be a template subject <code>N27</code> (Collin’s 27) created at</p>
+<pre><code>~/rave_data/others/three_brain/N27</code></pre>
+<p><code>~</code> is your home directory. For example on my laptop, it’s <code>/Users/zhengjia/rave_data/others/three_brain/N27</code>. On Windows, it’s <code>C:\Users\zhengjia\rave_data\others\three_brain\N27</code>.</p>
+<p>Let’s view this subject. The following commands all go to <code>RStudio</code> console.</p>
+<ol>
+<li>Import subject</li>
+</ol>
+<pre class="{r}"><code>n27 = freesurfer_brain(
+    fs_subject_folder = '~/rave_data/others/three_brain/N27',
+    subject_name = 'N27',
+    additional_surfaces = c('white', 'smoothwm')
+)</code></pre>
+<ol>
+<li>Visualize</li>
+</ol>
+<pre class="{r}"><code><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot(x)       # alternatively, you can use `x$plot()`</a></code></pre>
+<p>If you have electrode file, you can import it before calling <code>plot</code> function. Please make sure it’s in <code>csv</code> format.</p>
+<pre class="{r}"><code>x$set_electrodes(electrodes = "[PATH to ELECTRODE FILE]")</code></pre>
+<p>Here is an example of electrode csv file. Only the first five columns (<strong>case-sensitive</strong>) are mandatory: <code>Electrode (integer)</code>, <code>Coord_x</code>, <code>Coord_y</code>, <code>Coord_z</code>, and <code>Label (character)</code>. <code>Coord_*</code> is <code>RAS</code> location from <code>FreeSurfer</code> coordinates.</p>
+<pre><code>| Electrode| Coord_x| Coord_y| Coord_z|Label  | MNI305_x|  MNI305_y|  MNI305_z|SurfaceElectrode |SurfaceType | Radius| VertexNumber|Hemisphere |
+|---------:|-------:|-------:|-------:|:------|--------:|---------:|---------:|:----------------|:-----------|------:|------------:|:----------|
+|         1|    29.0|    -7.8|   -34.6|RMHCH1 | 30.46817| -17.98119| -23.40022|FALSE            |NA          |    0.5|           -1|right      |
+|         2|    33.8|    -8.0|   -34.2|RMHCH2 | 35.57109| -17.76624| -22.80131|FALSE            |NA          |    0.5|           -1|right      |
+|         3|    38.0|    -7.5|   -33.5|RMHCH3 | 39.97102| -16.81249| -22.17986|FALSE            |NA          |    0.5|           -1|right      |
+|         4|    42.6|    -6.8|   -33.0|RMHCH4 | 44.79092| -15.73442| -21.82591|FALSE            |NA          |    0.5|           -1|right      |
+|         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |NA          |    0.5|           -1|right      |
+|         ...</code></pre>
+</div>
+<div id="c-merge-subjects-and-template-mapping" class="section level2">
+<h2 class="hasAnchor">
+<a href="#c-merge-subjects-and-template-mapping" class="anchor"></a>C. Merge Subjects and Template mapping</h2>
+<p>If you have your own subjects with <code>FreeSurfer</code> output, for example, I have two subjects <code>YAB</code> and <code>YCQ</code>. To merge these two subjects and show them on <code>N27</code> template,</p>
+<pre class="{r}"><code># yab = ... (see section B for import a single subject)
+# ycq = ...
+template_n27 = threeBrain::merge_brain(yab, ycq, template_subject = 'N27')
+
+plot( template_n27 )</code></pre>
+<p>The viewer will be in <code>N27</code> template, and electrodes of these two subjects can be mapped via <code>MNI305</code> (for surface and stereo EEG) or <code>std.141</code> (for surface-only).</p>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
