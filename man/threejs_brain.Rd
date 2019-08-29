@@ -74,3 +74,6 @@ and height varies.}
 \description{
 Create a Threejs Brain
 }
+\author{
+Zhengjia Wang
+}

@@ -6,3 +6,6 @@
 \description{
 R6 Class - Generate Group of Geometries
 }
+\author{
+Zhengjia Wang
+}

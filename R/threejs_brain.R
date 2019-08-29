@@ -1,4 +1,5 @@
 #' Create a Threejs Brain
+#' @author Zhengjia Wang
 #' @param ...,.list geometries inherit from AbstractGeom
 #' @param widget_id unique identifier for the widget. Use it when you have
 #'   multiple widgets in one website (shiny for example)
@@ -227,6 +228,7 @@ threejs_brain <- function(
 }
 
 #' Shiny Output for threeBrain Widgets
+#' @author Zhengjia Wang
 #' @name threejsBrainOutput
 #' @param outputId unique identifier for the widget
 #' @param width,height width and height of the widget. By default width="100%",
@@ -240,6 +242,7 @@ threejsBrainOutput <- function(outputId, width = '100%', height = '500px'){
 
 
 #' Shiny Renderer for threeBrain Widgets
+#' @author Zhengjia Wang
 #' @name renderBrain
 #' @param expr R expression that calls three_brain function or Brain object
 #' @param env environment of expression to be evaluated
@@ -255,6 +258,7 @@ renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
 
 
 #' Save threeBrain widgets to local file system
+#' @author Zhengjia Wang
 #' @param widget generated from function 'threejs_brain'.
 #' @param directory directory to save the widget.
 #' @param filename default is 'index.html', filename of the widget index file.

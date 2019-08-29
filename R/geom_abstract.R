@@ -12,7 +12,7 @@
 
 
 #' R6 Class - Generate Group of Geometries
-#'
+#' @author Zhengjia Wang
 #' @name GeomGroup
 NULL
 
@@ -142,7 +142,7 @@ GeomGroup <- R6::R6Class(
 
 
 #' R6 Class - Abstract Class of Geometries
-#'
+#' @author Zhengjia Wang
 #' @name AbstractGeom
 NULL
 

@@ -1,7 +1,8 @@
 # Normal usage of 3D plots
 
 
-#' 3D Scatter Plot
+#' @title 3D Scatter Plot
+#' @author Zhengjia Wang
 #' @param x,y,z numeric vectors with the same length \code{n}.
 #' @param size size for each point.
 #' @param col color vector/matrix, can be either numeric or factor.

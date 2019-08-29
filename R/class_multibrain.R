@@ -1,5 +1,6 @@
 
 #' @title Create Multi-subject Template
+#' @author Zhengjia Wang
 #' @param ...,.list \code{Brain2} objects
 #' @param template_subject character, subject code to be treated as template, default is `N27`
 #' @param template_dir the parent directory where template subject is stored in

@@ -1,18 +1,16 @@
 #' @import grDevices
-#' @import graphics
+#' @importFrom graphics plot
 #' @import R6
 #' @import htmlwidgets
 #' @import htmltools
 #' @import shiny
-#' @import rlang
-#' @import future
 #' @import stringr
-#' @importFrom methods is
-#' @importFrom utils download.file
+#' @import utils
 NULL
 
 
 #' @title Setup Package, Install Environment
+#' @author Zhengjia Wang
 #' @param continued logical, there are two phases of setting up environment. You
 #' probably need to restart R session after the first phase and continue setting up.
 #' @param show_example whether to show example of `N27` subject at the end.

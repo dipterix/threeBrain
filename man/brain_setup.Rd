@@ -15,3 +15,6 @@ probably need to restart R session after the first phase and continue setting up
 \description{
 Setup Package, Install Environment
 }
+\author{
+Zhengjia Wang
+}

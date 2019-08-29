@@ -33,3 +33,6 @@ g = lapply(1:10, function(ii){
 threejs_brain(.list = g, control_presets = 'animation',
               value_range = c(0, 10), time_range = c(0.1, 1))
 }
+\author{
+Zhengjia Wang
+}

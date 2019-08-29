@@ -19,3 +19,6 @@ merge_brain(..., .list = NULL,
 \description{
 Create Multi-subject Template
 }
+\author{
+Zhengjia Wang
+}

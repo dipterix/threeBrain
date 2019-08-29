@@ -1,5 +1,5 @@
 #' R6 Class - Generate Sphere Geometry
-#'
+#' @author Zhengjia Wang
 #' @name SphereGeom
 NULL
 

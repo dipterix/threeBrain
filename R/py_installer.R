@@ -1,4 +1,5 @@
 #' @name ravepy
+#' @author Zhengjia Wang
 #' @title Manage Python Environment from RAVE
 NULL
 

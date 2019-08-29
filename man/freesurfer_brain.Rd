@@ -43,11 +43,11 @@ and the `AFNI/SUMA` command related is `SurfToSurf`. Please generate the files
 to `[FREESURFER SUBJECT DIR]/SUMA/`. The file name follows the convention of
 `std.141.[lr]h.[SURFACE TYPE].[POSTFIX]`, where `lh` means left hemisphere and
 `rh` means right hemisphere; `SURFACE TYPE` can be `pial`, `white`, `smoothwm`,
-and `POSTFIX` can be `asc`, `gii`, `nii`. If multiple files for the same surface
-type exists, the search order will be `asc > gii > nii`.
+and `POSTFIX` can be `asc`, `gii`. If multiple files for the same surface
+type exists, the search order will be `asc > gii`.
 The other option is to use mesh files directly from freesurfer output located
 at `[FREESURFER SUBJECT DIR]/surf`. If you want to use these surface, make sure
-they are converted to `asc`, `gii` or `nii` format.
+they are converted to `asc` or `gii` format.
 
 3. Electrode registration and transforms
 This package provides two ways to map electrodes to standard space. For surface

@@ -3,6 +3,7 @@
 
 
 #' Create a geometry group containing multiple geometries
+#' @author Zhengjia Wang
 #' @param name string, name of the geometry
 #' @param position x,y,z location of the group
 #' @param layer layer of the group. reserved
@@ -77,6 +78,7 @@ create_group <- function(name, position = c(0,0,0), layer = 1){
 
 
 #' Create sphere geometry
+#' @author Zhengjia Wang
 #' @param name unique string in a scene to tell apart from different objects
 #' @param radius size of sphere
 #' @param position x,y,z location of the sphere
@@ -98,6 +100,7 @@ geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL
 }
 
 #' Creates any mesh geometry given vertices and face indices
+#' @author Zhengjia Wang
 #' @param name unique string in a scene to tell apart from different objects
 #' @param vertex position of each vertices (3 columns)
 #' @param face face indices indicating which 3 vertices to be linked (3 columns)

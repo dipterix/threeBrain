@@ -50,3 +50,6 @@ If you have any other ideas about template brain, you can use function
 your choice. If your template brain is a `Zip` file on the Internet, we
 provide function \code{download_template_subject} to automatically install it.
 }
+\author{
+Zhengjia Wang
+}

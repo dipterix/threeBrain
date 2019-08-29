@@ -34,3 +34,6 @@ ravepy_info(quiet = FALSE, return_libs = FALSE)
 \description{
 Manage Python Environment from RAVE
 }
+\author{
+Zhengjia Wang
+}

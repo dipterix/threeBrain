@@ -63,3 +63,6 @@ three_scatter(x = rnorm(26, c(20, 50, -20)), y = rnorm(26, c(30, -60, 30)),
               pal = c('orange', 'blue3', 'darkgreen'))
 
 }
+\author{
+Zhengjia Wang
+}

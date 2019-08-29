@@ -12,3 +12,6 @@ and height="500px".}
 \description{
 Shiny Output for threeBrain Widgets
 }
+\author{
+Zhengjia Wang
+}

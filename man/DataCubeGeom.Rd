@@ -6,3 +6,6 @@
 \description{
 R6 Class - Generate Data Cube Geometry
 }
+\author{
+Zhengjia Wang
+}

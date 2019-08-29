@@ -1,6 +1,7 @@
 ^appveyor\.yml$
 ^Meta$
 ^doc$
+^docs/
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.travis.yml$

@@ -1,4 +1,5 @@
 #' @name template_subject
+#' @author Zhengjia Wang
 #' @title Download and Manage Template Subjects
 #' @aliases N27
 #' @details To view electrodes implanted in multiple subjects, it's highly

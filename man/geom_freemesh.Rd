@@ -76,3 +76,6 @@ threejs_brain(.list = g[[1]], control_presets = c('lh_material', 'rh_material'))
 
 }
 }
+\author{
+Zhengjia Wang
+}

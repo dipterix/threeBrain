@@ -85,3 +85,6 @@ threejs_brain(mesh) # serialize at once, load in browser
 
 }
 }
+\author{
+Zhengjia Wang
+}
