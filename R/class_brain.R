@@ -410,7 +410,7 @@ BrainElectrodes <- R6::R6Class(
 
     .inject_value = function(factor_level = NULL){
       for( ii in seq_along(self$objects) ){
-        if( is.null( self$objects[[ ii ]] ) ){
+        if( is.null( self$objects[[ ii ]] ) || ii > length( self$values ) ){
           next;
         }
         dat = self$values[[ ii ]]
