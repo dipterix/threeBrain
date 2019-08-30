@@ -146,7 +146,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   if(is.null(geom_brain_finalsurfs)){
     volume = brain_finalsurf$get_data()
     # Re-order the data according to Norig, map voxels to RAS coord - anatomical
-    order_index = (Norig %*% c(1,2,3,0))[1:3]
+    order_index = round((Norig %*% c(1,2,3,0))[1:3])
     volume = aperm(volume, abs(order_index))
     sub = sprintf(c('%d:1', '1:%d')[(sign(order_index) + 3) / 2], dim(volume))
     volume = eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
