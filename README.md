@@ -1,6 +1,6 @@
 # threeBrain - HTML, WebGL based 3D Viewer
 
-![](docs/demo.gif)
+<img src="https://github.com/dipterix/threeBrain/blob/dev/docs/demo.gif?raw=true" width="100%">
 
 A live [demo]() is under construction!
 
