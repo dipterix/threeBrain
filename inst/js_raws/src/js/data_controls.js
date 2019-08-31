@@ -132,15 +132,7 @@ class THREEBRAIN_PRESETS{
     this.canvas.animation_controls.get_params = this.get_animation_params;
 
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
-    this._ani_status.onChange((v) => {
-      if(v){
-        this.canvas.clock.start();
-        this._update_canvas(2);
-      }else{
-        this.canvas.clock.stop();
-        this._update_canvas(-2);
-      }
-    });
+    this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
 
     this.gui.add_item('Reset', () => {
       this.set_animation_time( min );
@@ -165,6 +157,14 @@ class THREEBRAIN_PRESETS{
     });
 
     this.gui.folders[ "Timeline" ].open();
+
+    // Add keyboard shortcut
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
+      if( !evt.event.shiftKey ){
+        const is_playing = this._ani_status.getValue();
+        this._ani_status.setValue( !is_playing );
+      }
+    }, 'gui_toggle_animation');
 
   }
 
@@ -534,33 +534,85 @@ class THREEBRAIN_PRESETS{
     gui.open_folder(folder_name);
   }
   electrodes(folder_name = 'Geometry'){
-    const canvas = this.canvas;
-    const gui = this.gui;
 
-    const li = this._electrode_group_names(true);
+    const li = this.canvas.subject_codes;
 
-    li.forEach((gname) => {
-      gui.add_item('E-' + gname, 7, {
-        args : { 'all cameras' : 7, 'main camera' : 8, 'hidden': 30 },
+    const col_pal = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9", "#000000"];
+    const col = new THREE.Color();
+    let sidx = 0;
+
+
+    this.gui.add_item('Electrodes', 'default', {
+      args : ['default', 'group by subjects', 'all cameras', 'main camera', 'hidden'],
+      folder_name : folder_name
+    }).onChange((v) => {
+
+      if( v === 'group by subjects' ){
+
+        // Stop animation
+        this._ani_status.setValue( false );
+
+        // render electrode colors by subjects
+        li.forEach((subject_code, ii) => {
+          col.set( col_pal[ ii % col_pal.length ] );
+          to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
+            e.userData._original_color = e.material.color.clone();
+            e.material.color.copy( col );
+          });
+        });
+      }else{
+        // recover original color
+        col.setRGB( 1 , 1 , 1 );
+        li.forEach((subject_code, ii) => {
+          to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
+            e.material.color.copy( e.userData._original_color || col );
+          });
+        });
+
+        if( v === 'default' ){
+          return(null);
+        }
+
+
+        if(['all cameras', 'main camera', 'hidden'].includes( v )){
+          li.forEach(( subject_code ) => {
+            this.gui.get_controller( 'E-' + subject_code, folder_name ).setValue( v );
+          });
+        }
+      }
+
+      this._update_canvas();
+    });
+
+
+
+    li.map((subject_code) => {
+      this.gui.add_item('E-' + subject_code, 'all cameras', {
+        args : ['all cameras', 'main camera', 'hidden'],
         folder_name : folder_name
-      })
-      .onChange( (v) => {
-        let group = canvas.group.get( 'electrodes-' + gname );
-        if(group){
-          group.children.forEach((m) =>{
-            m.layers.set(v);
-            if(v > 20){
+      }).onChange( (v) => {
+        let group = this.canvas.electrodes.get( subject_code );
+        if( group ){
+          Object.values( group ).forEach((m) => {
+            if( v === 'hidden' ){
               m.visible=false;
             }else{
               m.visible=true;
+              if( v === 'all cameras' ){
+                m.layers.set(7);
+              }else{
+                m.layers.set(8);
+              }
             }
           });
+          this._update_canvas();
         }
-        this._update_canvas();
-      } );
+
+      });
     });
 
-    gui.open_folder(folder_name);
+
+
   }
 
 
@@ -674,7 +726,7 @@ class THREEBRAIN_PRESETS{
       // Do mapping by default
       do_mapping.setValue( true );
       // and open gui
-      this.gui.folders[ folder_name ].open();
+      this.gui.open_folder( folder_name );
     }
 
   }
@@ -735,7 +787,11 @@ class THREEBRAIN_CONTROL{
       }
     }
 
-    return({ 'onChange': (callback) => {} });
+    const re = {};
+    re.onChange = (callback) => {};
+    re.setValue = (v) => {};
+
+    return( re );
   }
 
 

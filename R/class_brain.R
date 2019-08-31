@@ -618,8 +618,12 @@ Brain2 <- R6::R6Class(
             # load vertices
             lh_vert = self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Left Hemisphere - %s (%s)', surf_t, self$subject_code))
             rh_vert = self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Right Hemisphere - %s (%s)', surf_t, self$subject_code))
-            lh_dist = colSums((t(lh_vert) - fs_position)^2)
-            rh_dist = colSums((t(rh_vert) - fs_position)^2)
+
+            # Needs to get mesh center from hemisphere group. This step is critical as we need to calculate
+            # nearest node from global position
+            mesh_center = self$surfaces[[ surf_t ]]$group$position
+            lh_dist = colSums((t(lh_vert) - (fs_position - mesh_center))^2)
+            rh_dist = colSums((t(rh_vert) - (fs_position - mesh_center))^2)
 
             lh_node = which.min(lh_dist); lh_dist = lh_dist[ lh_node ]
             rh_node = which.min(rh_dist); rh_dist = rh_dist[ rh_node ]
@@ -753,7 +757,8 @@ Brain2 <- R6::R6Class(
       volumes = TRUE, surfaces = TRUE,
 
       # Layouts
-      side_camera = TRUE, control_panel = TRUE,
+      side_canvas = TRUE, side_width = 250, side_shift = c(0, 0),
+      control_panel = TRUE,
 
       # Legend and color
       show_legend = TRUE, legend_title = 'Value',
@@ -818,12 +823,13 @@ Brain2 <- R6::R6Class(
       global_data = self$global_data
 
       control_presets = unique(c( 'subject2', 'surface_type2', 'hemisphere_material',
-                                  'map_template', 'animation' ), control_presets)
+                                  'map_template', 'animation', 'electrodes' ), control_presets)
 
       threejs_brain(
         .list = geoms,
         time_range = time_range, value_range = value_range, symmetric = symmetric,
-        side_camera = side_camera,  control_panel = control_panel, control_presets = control_presets,
+        side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
+        control_panel = control_panel, control_presets = control_presets,
         color_ramp = color_ramp, color_type = color_type, n_color = n_color,
         color_names = color_names, show_legend = show_legend, legend_title = legend_title,
         width = width, height = height, debug = debug, token = token,

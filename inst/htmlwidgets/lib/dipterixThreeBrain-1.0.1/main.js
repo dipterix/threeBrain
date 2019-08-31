@@ -57384,6 +57384,7 @@ CONSTANTS.KEY_CYCLE_SURFACE           = 80;   // "p" for cycle through surfaces
 CONSTANTS.KEY_OVERLAY_CORONAL         = 67;   // 'C' for coronal
 CONSTANTS.KEY_OVERLAY_AXIAL           = 65;   // 'A' for coronal
 CONSTANTS.KEY_OVERLAY_SAGITTAL        = 83;   // 'S' for coronal
+CONSTANTS.KEY_TOGGLE_ANIMATION        = 83;   // 's' for play/paus animation
 
 // Colors
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects
@@ -57526,15 +57527,7 @@ class data_controls_THREEBRAIN_PRESETS{
     this.canvas.animation_controls.get_params = this.get_animation_params;
 
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
-    this._ani_status.onChange((v) => {
-      if(v){
-        this.canvas.clock.start();
-        this._update_canvas(2);
-      }else{
-        this.canvas.clock.stop();
-        this._update_canvas(-2);
-      }
-    });
+    this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
 
     this.gui.add_item('Reset', () => {
       this.set_animation_time( min );
@@ -57559,6 +57552,14 @@ class data_controls_THREEBRAIN_PRESETS{
     });
 
     this.gui.folders[ "Timeline" ].open();
+
+    // Add keyboard shortcut
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
+      if( !evt.event.shiftKey ){
+        const is_playing = this._ani_status.getValue();
+        this._ani_status.setValue( !is_playing );
+      }
+    }, 'gui_toggle_animation');
 
   }
 
@@ -57928,33 +57929,85 @@ class data_controls_THREEBRAIN_PRESETS{
     gui.open_folder(folder_name);
   }
   electrodes(folder_name = 'Geometry'){
-    const canvas = this.canvas;
-    const gui = this.gui;
 
-    const li = this._electrode_group_names(true);
+    const li = this.canvas.subject_codes;
 
-    li.forEach((gname) => {
-      gui.add_item('E-' + gname, 7, {
-        args : { 'all cameras' : 7, 'main camera' : 8, 'hidden': 30 },
+    const col_pal = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9", "#000000"];
+    const col = new threeplugins_THREE.Color();
+    let sidx = 0;
+
+
+    this.gui.add_item('Electrodes', 'default', {
+      args : ['default', 'group by subjects', 'all cameras', 'main camera', 'hidden'],
+      folder_name : folder_name
+    }).onChange((v) => {
+
+      if( v === 'group by subjects' ){
+
+        // Stop animation
+        this._ani_status.setValue( false );
+
+        // render electrode colors by subjects
+        li.forEach((subject_code, ii) => {
+          col.set( col_pal[ ii % col_pal.length ] );
+          to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
+            e.userData._original_color = e.material.color.clone();
+            e.material.color.copy( col );
+          });
+        });
+      }else{
+        // recover original color
+        col.setRGB( 1 , 1 , 1 );
+        li.forEach((subject_code, ii) => {
+          to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
+            e.material.color.copy( e.userData._original_color || col );
+          });
+        });
+
+        if( v === 'default' ){
+          return(null);
+        }
+
+
+        if(['all cameras', 'main camera', 'hidden'].includes( v )){
+          li.forEach(( subject_code ) => {
+            this.gui.get_controller( 'E-' + subject_code, folder_name ).setValue( v );
+          });
+        }
+      }
+
+      this._update_canvas();
+    });
+
+
+
+    li.map((subject_code) => {
+      this.gui.add_item('E-' + subject_code, 'all cameras', {
+        args : ['all cameras', 'main camera', 'hidden'],
         folder_name : folder_name
-      })
-      .onChange( (v) => {
-        let group = canvas.group.get( 'electrodes-' + gname );
-        if(group){
-          group.children.forEach((m) =>{
-            m.layers.set(v);
-            if(v > 20){
+      }).onChange( (v) => {
+        let group = this.canvas.electrodes.get( subject_code );
+        if( group ){
+          Object.values( group ).forEach((m) => {
+            if( v === 'hidden' ){
               m.visible=false;
             }else{
               m.visible=true;
+              if( v === 'all cameras' ){
+                m.layers.set(7);
+              }else{
+                m.layers.set(8);
+              }
             }
           });
+          this._update_canvas();
         }
-        this._update_canvas();
-      } );
+
+      });
     });
 
-    gui.open_folder(folder_name);
+
+
   }
 
 
@@ -58068,7 +58121,7 @@ class data_controls_THREEBRAIN_PRESETS{
       // Do mapping by default
       do_mapping.setValue( true );
       // and open gui
-      this.gui.folders[ folder_name ].open();
+      this.gui.open_folder( folder_name );
     }
 
   }
@@ -58129,7 +58182,11 @@ class data_controls_THREEBRAIN_CONTROL{
       }
     }
 
-    return({ 'onChange': (callback) => {} });
+    const re = {};
+    re.onChange = (callback) => {};
+    re.setValue = (v) => {};
+
+    return( re );
   }
 
 
@@ -59684,6 +59741,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // Follower that fixed at bottom-left
     this.compass = new compass_Compass( this.main_camera, this.controls );
+    // Hide the anchor first
+    this.compass.set_visibility( false );
     this.add_to_scene(this.compass.container, true);
 
 
@@ -60383,10 +60442,32 @@ class threejs_scene_THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
-  reset_side_canvas( zoom_level ){
+  reset_side_canvas( zoom_level, side_width, side_position ){
+    if( side_width ){
+      this.side_width = side_width;
+    }else{
+      side_width = this.side_width;
+    }
     this.side_canvas.coronal.reset( zoom_level );
     this.side_canvas.axial.reset( zoom_level );
     this.side_canvas.sagittal.reset( zoom_level );
+
+    side_position = to_array( side_position );
+    if( side_position.length == 2 ){
+      const el_pos = this.el.getBoundingClientRect();
+      side_position[0] = Math.max( side_position[0], -el_pos.x );
+      side_position[1] = Math.max( side_position[1], -el_pos.y );
+
+      this.side_canvas.coronal.container.style.top = side_position[1] + 'px';
+      this.side_canvas.axial.container.style.top = (side_position[1] + side_width) + 'px';
+      this.side_canvas.sagittal.container.style.top = (side_position[1] + side_width * 2) + 'px';
+
+      this.side_canvas.coronal.container.style.left = side_position[0] + 'px';
+      this.side_canvas.axial.container.style.left = side_position[0] + 'px';
+      this.side_canvas.sagittal.container.style.left = side_position[0] + 'px';
+    }
+
+
     // Resize side canvas
     this.handle_resize( undefined, undefined );
   }
@@ -60568,6 +60649,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
             space         : this.object_chosen.userData._template_space || 'original',
             surface       : this.object_chosen.userData._template_surface || 'NA',
             hemisphere    : this.object_chosen.userData._template_hemisphere || 'NA',
+            mni305        : this.object_chosen.userData._template_mni305
           }
         };
 
@@ -60631,20 +60713,315 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   }
 
-  start_animation(persist = 0){
+  start_animation( persist = 0 ){
     // persist 0, render once
     // persist > 0, loop
-    if(persist >= this.render_flag){
+
+    const _flag = this.render_flag;
+    if(persist >= _flag){
       this.render_flag = persist;
     }
-
-  }
-
-  pause_animation(level = 1){
-    if(this.render_flag <= level){
-      this.render_flag = -1;
+    if( persist >= 2 && _flag < 2 ){
+      // _flag < 2 means prior state only renders the scene, but animation is paused
+      // if _flag >= 2, then clock was running, then there is no need to start clock
+      // persist >= 2 is a flag for animation to run
+      // animation clips need a clock
+      this.clock.start();
     }
   }
+
+  pause_animation( level = 1 ){
+    const _flag = this.render_flag;
+    if(_flag <= level){
+      this.render_flag = -1;
+
+      // When animation is stopped, we need to check if clock is running, if so, stop it
+      if( _flag >= 2 ){
+        this.clock.stop();
+      }
+    }
+  }
+
+
+
+  _draw_title( results, x = 10, y = 10, w = 100, h = 100 ){
+
+    this._fontType = 'Courier New, monospace';
+    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * this.pixel_ratio[0] );
+    this._fontSize_title = this._fontSize_title || Math.round( 20 * this.pixel_ratio[0] );
+
+
+    this.domContext.fillStyle = this.foreground_color;
+    this.domContext.font = `${ this._fontSize_title }px ${ this._fontType }`;
+
+    // Add title
+    let ii = 0, ss = [];
+    ( this.title || results.title || '' )
+      .split('\\n')
+      .forEach( (ss, ii) => {
+        this.domContext.fillText( ss , x, y + this._lineHeight_title * (ii + 1) );
+      });
+  }
+
+  _draw_ani( results, x = 10, y = 10, w = 100, h = 100  ){
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+
+    // Add current time to bottom right corner
+    if( typeof(results.current_time) === 'number' ){
+      this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
+      this.domContext.fillText(
+
+        // Current clock time
+        `${results.current_time.toFixed(3)} s`,
+
+        // offset
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
+    }
+  }
+
+  _draw_legend( results, x = 10, y = 10, w = 100, h = 100 ){
+
+    // whether to draw legend
+    const has_color_map = this.render_legend && this.lut && (this.lut.n !== undefined);
+
+    // If no legend is needed, discard
+    if( !has_color_map ){
+      return( null );
+    }
+
+    this._lineHeight_legend = this._lineHeight_legend || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_legend = this._fontSize_legend || Math.round( 10 * this.pixel_ratio[0] );
+
+    let legend_width = 25 * this.pixel_ratio[0],
+        legend_offset = this._fontSize_legend * 7 + legend_width; // '__-1.231e+5__', more than 16 chars
+
+    // Get color map from lut
+    const continuous_cmap = has_color_map && this.lut.color_type === 'continuous' && this.lut.n > 1;
+    const discrete_cmap = has_color_map && this.lut.color_type === 'discrete' && this.lut.n > 0 && Array.isArray(this.lut.color_names);
+
+    let legend_height = 0.60,                  // Legend takes 60% of the total heights
+        legend_start = 0.25;                  // Legend starts at 20% of the height
+
+    if( continuous_cmap ){
+      // Create a linear gradient map
+      const grd = this.domContext.createLinearGradient( 0 , 0 , 0 , h );
+
+      // Determine legend coordinates and steps
+      let legend_step = legend_height / ( this.lut.n - 1 );
+
+      // Starts from legend_start of total height (h)
+      grd.addColorStop( 0, this.background_color );
+      grd.addColorStop( legend_start - 4 / h, this.background_color );
+      for( let ii in this.lut.lut ){
+        grd.addColorStop( legend_start + legend_step * ii,
+            '#' + this.lut.lut[this.lut.n - 1 - ii].getHexString());
+      }
+      grd.addColorStop( legend_height + legend_start + 4 / h, this.background_color );
+
+      // Fill with gradient
+      this.domContext.fillStyle = grd;
+      this.domContext.fillRect( w - legend_offset , legend_start * h , legend_width , legend_height * h );
+
+      // Add value labels
+      let legent_ticks = [];
+      let zero_height = ( legend_start + this.lut.maxV * legend_height /
+                          (this.lut.maxV - this.lut.minV)) * h,
+          minV_height = (legend_height + legend_start) * h,
+          maxV_height = legend_start * h;
+
+      let draw_zero = this.lut.minV < 0 && this.lut.maxV > 0;
+
+      if( typeof( results.current_value ) === 'number' ){
+        // There is a colored object rendered, display it
+        let value_height = ( legend_start + (this.lut.maxV - results.current_value) * legend_height / (this.lut.maxV - this.lut.minV)) * h;
+
+        legent_ticks.push([
+          results.current_value.toPrecision(4), value_height, 1 ]);
+
+        // Decide whether to draw 0 and current object value
+        // When max and min is too close, hide 0, otherwise it'll be jittered
+        if( Math.abs( zero_height - value_height ) <= this._fontSize_legend ){
+          draw_zero = false;
+        }
+        if(Math.abs( value_height - minV_height) > this._fontSize_legend){
+          legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
+        }
+        if(Math.abs( value_height - maxV_height) > this._fontSize_legend){
+          legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
+        }
+      } else {
+        legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
+        legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
+      }
+
+      if( draw_zero ){
+        legent_ticks.push(['0', zero_height, 0]);
+      }
+
+
+      // Draw ticks
+      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+      this.domContext.fillStyle = this.foreground_color;
+
+      // Fill text
+      //  150 = 200 - 50
+      let text_offset = Math.round( legend_offset - legend_width ),
+          text_start = Math.round( w - text_offset + this._fontSize_legend ),
+          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
+      legent_ticks.forEach((tick) => {
+
+        if( tick[2] === 1 ){
+          this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
+          this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
+          this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+        }else{
+          this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
+        }
+
+      });
+
+      // Fill ticks
+      // this.domContext.strokeStyle = this.foreground_color;  // do not set state of stroke if color not changed
+      this.domContext.beginPath();
+      legent_ticks.forEach((tick) => {
+        if( tick[2] === 0 ){
+          this.domContext.moveTo( w - text_offset , tick[1] );
+          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] );
+        }else if( tick[2] === 1 ){
+          this.domContext.moveTo( w - text_offset , tick[1] );
+          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] - 2 );
+          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] + 2 );
+          this.domContext.lineTo( w - text_offset , tick[1] );
+        }
+      });
+      this.domContext.stroke();
+
+    }else if( discrete_cmap ){
+      // this.lut.color_names must exists and length must be
+      const n_factors = this.lut.color_names.length;
+      let _text_length = 1;
+
+      this.lut.color_names.forEach((_n)=>{
+        if( _text_length < _n.length ){
+          _text_length = _n.length;
+        }
+      });
+
+      legend_offset = Math.ceil( this._fontSize_legend * 0.42 * ( _text_length + 7 ) + legend_width );
+
+      // this._lineHeight_legend * 2 = 60 px, this is the default block size
+      legend_height = ( ( n_factors - 1 ) * this._lineHeight_legend * 2 ) / h;
+      legend_height = legend_height > 0.60 ? 0.60: legend_height;
+
+      let legend_step = n_factors == 1 ? 52 : (legend_height / ( n_factors - 1 ));
+      let square_height = Math.floor( legend_step * h ) - 2;
+      square_height = square_height >= 50 ? 50 : Math.max(square_height, 4);
+
+
+      let text_offset = Math.round( legend_offset - legend_width ),
+          text_start = Math.round( w - text_offset + this._fontSize_legend ),
+          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
+
+      for(let ii = 0; ii < n_factors; ii++ ){
+        let square_center = (legend_start + legend_step * ii) * h;
+        this.domContext.fillStyle = '#' + this.lut.getColor(ii + 1).getHexString();
+        this.domContext.fillRect(
+          w - legend_offset , square_center - square_height / 2 ,
+          legend_width , square_height
+        );
+
+        this.domContext.strokeStyle = this.foreground_color;
+        this.domContext.beginPath();
+        this.domContext.moveTo( w - text_offset , square_center );
+        this.domContext.lineTo( w - text_offset + text_halfheight , square_center );
+        this.domContext.stroke();
+
+        this.domContext.fillStyle = this.foreground_color;
+        this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+        this.domContext.fillText(this.lut.color_names[ii],
+          text_start, square_center + text_halfheight, w - text_start - 1
+        );
+      }
+
+
+    }
+  }
+
+  _draw_focused_info( results, x = 10, y = 10, w = 100, h = 100 ){
+    // Add selected object information
+    if( !results.selected_object ){
+      // no object selected, discard
+      return( null );
+    }
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._lineHeight_small = this._lineHeight_small || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_small = this._fontSize_small || Math.round( 10 * this.pixel_ratio[0] );
+
+    this.domContext.fillStyle = this.foreground_color;
+
+    this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
+
+    let text_position = [
+      w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
+      this._lineHeight_normal
+    ];
+
+    // Line 1: object name
+    this.domContext.fillText( results.selected_object.name, text_position[ 0 ], text_position[ 1 ] );
+
+    // Smaller
+    this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
+
+    // Line 2: customized message
+    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+    this.domContext.fillText(
+      results.selected_object.custom_info || '',
+      text_position[ 0 ], text_position[ 1 ]
+    );
+
+    // Line 3: Global position
+    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+    const pos = results.selected_object.position;
+    this.domContext.fillText(
+      `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+      text_position[ 0 ], text_position[ 1 ]
+    );
+
+    // More information:
+
+    // For electrodes
+
+
+    if( results.selected_object.is_electrode ){
+      const _m = results.selected_object.template_mapping;
+
+      // Line 4: mapping method & surface type
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+      this.domContext.fillText(
+        `mapping: ${ _m.space }, surface: ${ _m.surface }`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+
+      // Line 5:
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+      this.domContext.fillText(
+        `hemisphere: ${ _m.hemisphere }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+
+    }
+
+
+  }
+
 
   // Do not call this function directly after the initial call
   // use "this.start_animation(0);" to render once
@@ -60672,6 +61049,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
   		// draw main and side rendered images to this.domElement (2d context)
   		this.mapToCanvas();
 
+
+
   		// Add additional information
       const _pixelRatio = this.pixel_ratio[0];
       const _fontType = 'Courier New, monospace';
@@ -60680,214 +61059,17 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       this.domContext.fillStyle = this.foreground_color;
 
-      // Add title
-      let line_y = 50, ii = 0, ss = [];
-      if( this.title && this.title !== '' ){
-        this.domContext.font = `${_pixelRatio * 20}px ${_fontType}`;
-        ss = this.title.split('\\n');
-        for( ii in ss ){
-          this.domContext.fillText(ss[ii], 10, line_y);
-          line_y = line_y + 28 * _pixelRatio;
-        }
-      }
+      // Draw title on the top left corner
+      this._draw_title( results, 0, 0, _width, _height );
 
-      // Add animation message
-      /*
-      if( results.txt && results.txt !== '' ){
-        this.domContext.font = `${_pixelRatio * 20}px ${_fontType}`;
-        ss = results.txt.split('\n');
-        for( ii in ss ){
-          this.domContext.fillText(ss[ii], 10, line_y);
-          line_y = line_y + 28 * _pixelRatio;
-        }
-      }
-      */
+      // Draw timestamp on the bottom right corner
+      this._draw_ani( results, 0, 0, _width, _height );
 
-      // Add current time to bottom right corner
-      if( typeof(results.current_time) === 'number' ){
-        this.domContext.font = `${_pixelRatio * 15}px ${_fontType}`;
-        this.domContext.fillText(
-          `${results.current_time.toFixed(3)} s`,
-          _width - 200, _height - 50);
+      // Draw legend on the right side
+      this._draw_legend( results, 0, 0, _width, _height );
 
-      }
-
-      // Add legend
-      let legend_height = 0.6,  // 60% heights
-            legend_start = (1 - legend_height) / 2,
-            has_color_map = this.render_legend && this.lut && (this.lut.n !== undefined),
-            continuous_cmap = has_color_map && this.lut.color_type === 'continuous' && this.lut.n > 1,
-            discrete_cmap = has_color_map && this.lut.color_type === 'discrete' && this.lut.n > 0 && Array.isArray(this.lut.color_names);
-      if( continuous_cmap ){
-        // Determine legend coordinates
-        let grd = this.domContext.createLinearGradient(0,0,0,_height),
-            legend_step = legend_height / ( this.lut.n - 1 );
-        // Starts from 20% height
-        grd.addColorStop( 0, this.background_color );
-        grd.addColorStop( legend_start - 4 / _height, this.background_color );
-        for( let ii in this.lut.lut ){
-          grd.addColorStop(legend_start + legend_step * ii,
-              '#' + this.lut.lut[this.lut.n - 1 - ii].getHexString());
-        }
-        grd.addColorStop( 1 - legend_start + 4 / _height, this.background_color );
-
-        // Fill with gradient
-        this.domContext.fillStyle = grd;
-        this.domContext.fillRect( _width - 200 , legend_start * _height , 50 , legend_height * _height );
-
-        // Add value labels
-        let legent_ticks = [];
-        let zero_height = ( legend_start + this.lut.maxV * legend_height /
-                            (this.lut.maxV - this.lut.minV)) * _height,
-            minV_height = (1 - legend_start) * _height,
-            maxV_height = legend_start * _height;
-
-        let draw_zero = this.lut.minV < 0 && this.lut.maxV > 0;
-
-        if( typeof( results.current_value ) === 'number' ){
-          // There is a colored object rendered, display it
-          let value_height = ( legend_start + (this.lut.maxV - results.current_value) * legend_height / (this.lut.maxV - this.lut.minV)) * _height;
-          legent_ticks.push([
-            results.current_value.toPrecision(4), value_height, 1 ]);
-
-          if( Math.abs( zero_height - value_height ) <= 10 ){
-            draw_zero = false;
-          }
-          if(Math.abs( value_height - minV_height) > 10){
-            legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
-          }
-          if(Math.abs( value_height - maxV_height) > 10){
-            legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
-          }
-        }else{
-          legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
-          legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
-        }
-
-        if( draw_zero ){
-          legent_ticks.push(['0', zero_height, 0]);
-        }
-
-        this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
-        this.domContext.fillStyle = this.foreground_color;
-
-        // Fill text
-        legent_ticks.forEach((tick) => {
-
-          if( tick[2] === 1 ){
-            this.domContext.font = `bold ${_pixelRatio * 10}px ${_fontType}`;
-            this.domContext.fillText( tick[0], _width - 130, tick[1] + 5 );
-            this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
-          }else{
-            this.domContext.fillText( tick[0], _width - 130, tick[1] + 5 );
-          }
-
-
-        });
-
-        // Fill ticks
-        this.domContext.strokeStyle = this.foreground_color;
-        this.domContext.beginPath();
-        legent_ticks.forEach((tick) => {
-          if( tick[2] === 0 ){
-            this.domContext.moveTo( _width - 150 , tick[1] );
-            this.domContext.lineTo( _width - 145 , tick[1] );
-          }else if( tick[2] === 1 ){
-            this.domContext.moveTo( _width - 150 , tick[1] );
-            this.domContext.lineTo( _width - 145 , tick[1] - 2 );
-            this.domContext.lineTo( _width - 145 , tick[1] + 2 );
-            this.domContext.lineTo( _width - 150 , tick[1] );
-          }
-        });
-        this.domContext.stroke();
-
-      }else if( discrete_cmap ){
-        // this.lut.color_names must exists and length must be
-        let n_factors = this.lut.color_names.length;
-        legend_height = ( ( n_factors - 1 ) * 60 ) / _height;
-        legend_height = legend_height > 0.8 ? 0.8: legend_height;
-        legend_start = (1 - legend_height) / 2;
-        let legend_step = n_factors == 1 ? 52 : (legend_height / ( n_factors - 1 ));
-        let square_height = legend_step * _height;
-        square_height = square_height >= 52 ? 50 : Math.max(square_height - 2, 4);
-        console.log(square_height);
-
-        for(let ii = 0; ii < n_factors; ii++ ){
-          let square_center = (legend_start + legend_step * ii) * _height;
-          this.domContext.fillStyle = '#' + this.lut.getColor(ii + 1).getHexString();
-          this.domContext.fillRect(
-            _width - 200 , square_center - square_height / 2 ,
-            50 , square_height
-          );
-
-          this.domContext.strokeStyle = this.foreground_color;
-          this.domContext.beginPath();
-          this.domContext.moveTo( _width - 150 , square_center );
-          this.domContext.lineTo( _width - 145 , square_center );
-          this.domContext.stroke();
-
-          this.domContext.fillStyle = this.foreground_color;
-          this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
-          this.domContext.fillText(this.lut.color_names[ii],
-            _width - 140, square_center + 5, 139
-          );
-        }
-
-      }
-
-      // Add selected object information
-      if( results.selected_object ){
-        this.domContext.font = `${_pixelRatio * 15}px ${_fontType}`;
-        this.domContext.fillStyle = this.foreground_color;
-
-        let legend_title_width = results.selected_object.name.length * 18;
-        if( legend_title_width < 330 ){
-          legend_title_width = legend_title_width / 2 + 175;
-        }
-        this.domContext.fillText(
-          results.selected_object.name,
-          _width - Math.max( 10 + legend_title_width, 500 ), 50 //legend_start * _height - 63
-        );
-
-        // Smaller
-        this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
-        const pos = results.selected_object.position;
-
-        if( results.selected_object.is_electrode ){
-          let _m = results.selected_object.template_mapping;
-          this.domContext.fillText(
-            `mapping: ${ _m.space }, shift: ${ _m.shift.toFixed(2) }`,
-            _width - 500, 108 // space: 27
-          );
-          this.domContext.fillText(
-            `surface : ${ _m.surface }, hemisphere: ${ _m.hemisphere }`,
-            _width - 500, 135 // space: 27
-          );
-          this.domContext.fillText(
-            `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-            _width - 500, 162  // space: 27
-          );
-        }else{
-          this.domContext.fillText(
-            `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-            _width - 500, 108  // space: 27
-          );
-        }
-
-
-
-        if( typeof(results.selected_object.custom_info) === 'string' ){
-          legend_title_width = results.selected_object.custom_info.length * 12;
-          if( legend_title_width < 330 ){
-            legend_title_width = legend_title_width / 2 + 175;
-          }
-          this.domContext.fillText(
-            results.selected_object.custom_info,
-            _width - Math.max( 10 + legend_title_width, 500 ), 79 //legend_start * _height - 34
-          );
-        }
-
-      }
+      // Draw focused target information on the top right corner
+      this._draw_focused_info( results, 0, 0, _width, _height );
 
 
   		// check if capturer is working
@@ -60928,10 +61110,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
   // Function to clear all meshes
   clear_all(){
     this.mesh.forEach((m) => {
-      this.scene.remove( m );
+      m.parent.remove( m );
+      // this.scene.remove( m );
     });
     this.group.forEach((g) => {
-      this.scene.remove( g );
+      // this.scene.remove( g );
+      g.parent.remove( g );
     });
     this.mesh.clear();
     this.group.clear();
@@ -61079,11 +61263,13 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       // electrodes must be clickable, ignore the default settings
       this.clickable.set( g.name, m );
+      let gp_position;
       if(g.group === null){
         this.add_to_scene(m);
       }else{
         let gp = this.group.get( g.group.group_name );
         gp.add(m);
+        gp_position = gp.position.clone();
       }
       m.updateMatrixWorld();
 
@@ -61101,7 +61287,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
         if( search_group && search_group.userData ){
           const lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${snap_surface} (${subject_code})`];
           const rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${snap_surface} (${subject_code})`];
-          const mesh_center = search_group.position;
+          const mesh_center = search_group.getWorldPosition( gp_position );
           if( lh_vertices && rh_vertices ){
             // calculate
             let _tmp = new threeplugins_THREE.Vector3(),
@@ -61131,6 +61317,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
               g.vertex_number = node_idx;
               g.hemisphere = side;
             }
+            console.log(`Electrode ${m.name}: ${node_idx}, ${side}`);
           }
         }
 
@@ -61706,34 +61893,8 @@ mapped = false,
         let mapped = false,
             side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
 
-        if( !hide_electrode && surface === 'std.141' && is_surf && vert_num >= 0 &&
-            target_group && target_group.isObject3D && target_group.children.length === 2 ){
-          // User choose std.141, electrode is surface electrode, and
-          // vert_num >= 0, meaning original surface is loaded, and target_surface exists
-          // meaning template surface is loaded
-          //
-          // check if target surface is std 141
-          let target_surface = target_group.children.filter((_t) => {
-            return( _t.name === `mesh_free_Standard 141 ${side} Hemisphere - ${surf_type} (${target_subject})`);
-          });
-
-          if( target_surface.length === 1 ){
-            // Find vert_num at target_surface[0]
-            const vertices = target_surface[0].geometry.getAttribute('position');
-            const shift = target_surface[0].getWorldPosition( el.parent.position.clone() );
-            pos_targ.set( vertices.getX( vert_num ), vertices.getY( vert_num ), vertices.getZ( vert_num ) ).add(shift);
-            el.position.copy( pos_targ );
-            el.userData._template_mapped = true;
-            el.userData._template_space = 'std.141';
-            el.userData._template_shift = pos_targ.distanceTo( pos_orig );
-            el.userData._template_surface = g.surface_type;
-            el.userData._template_hemisphere = g.hemisphere;
-            mapped = true;
-          }
-
-        }
-
-        if( !hide_electrode && !mapped && volume === 'mni305' ){
+        // always do MNI305 mapping first as calibration
+        if( !hide_electrode && volume === 'mni305' ){
           // apply MNI 305 transformation
           const v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
           const v2v_targ = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
@@ -61768,12 +61929,44 @@ mapped = false,
 
             if( mapped ){
               el.position.copy( pos_targ );
+              el.userData._template_mni305 = pos_targ.clone();
               el.userData._template_mapped = true;
               el.userData._template_space = 'mni305';
-              el.userData._template_shift = pos_targ.distanceTo( pos_orig );
+              el.userData._template_shift = 0;
               el.userData._template_surface = g.surface_type;
               el.userData._template_hemisphere = g.hemisphere;
+            }else{
+              el.userData._template_mni305 = undefined;
             }
+          }
+
+        }
+
+        if( !hide_electrode && surface === 'std.141' && is_surf && vert_num >= 0 &&
+            target_group && target_group.isObject3D && target_group.children.length === 2 ){
+          // User choose std.141, electrode is surface electrode, and
+          // vert_num >= 0, meaning original surface is loaded, and target_surface exists
+          // meaning template surface is loaded
+          //
+          // check if target surface is std 141
+          let target_surface = target_group.children.filter((_t) => {
+            return( _t.name === `mesh_free_Standard 141 ${side} Hemisphere - ${surf_type} (${target_subject})`);
+          });
+
+          if( target_surface.length === 1 ){
+            // Find vert_num at target_surface[0]
+            const vertices = target_surface[0].geometry.getAttribute('position');
+            const shift = target_surface[0].getWorldPosition( el.parent.position.clone() );
+            pos_targ.set( vertices.getX( vert_num ), vertices.getY( vert_num ), vertices.getZ( vert_num ) ).add(shift);
+            el.position.copy( pos_targ );
+            el.userData._template_mapped = true;
+            el.userData._template_space = 'std.141';
+            el.userData._template_surface = g.surface_type;
+            el.userData._template_hemisphere = g.hemisphere;
+            if( el.userData._template_mni305 ){
+              el.userData._template_shift = pos_targ.distanceTo( el.userData._template_mni305 );
+            }
+            mapped = true;
           }
 
         }
@@ -61784,6 +61977,7 @@ mapped = false,
           el.position.fromArray( origin_position );
           el.userData._template_mapped = false;
           el.userData._template_space = 'original';
+          el.userData._template_mni305 = undefined;
           el.userData._template_shift = 0;
           el.userData._template_surface = g.surface_type;
           el.userData._template_hemisphere = g.hemisphere;
@@ -62439,8 +62633,15 @@ class src_BrainCanvas{
           }
         });
 
-      gui.add_item('Reset Position', () => {this.canvas.reset_side_canvas( this.settings.side_canvas_zoom )},
-                    {folder_name: 'Side Canvas'});
+      gui.add_item('Reset Position', () => {
+        this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
+                                       this.settings.side_canvas_width,
+                                       this.settings.side_canvas_shift );
+      }, {folder_name: 'Side Canvas'});
+      // reset first
+      this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
+                                     this.settings.side_canvas_width,
+                                     this.settings.side_canvas_shift );
 
       // side plane
       const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Side Canvas'})
@@ -62517,7 +62718,7 @@ class src_BrainCanvas{
 
 
 
-      gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
+      gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
         .onChange((v) => {
           this.canvas.set_cube_anchor_visibility(v);
         });
@@ -62637,6 +62838,8 @@ class src_BrainCanvas{
 
       this.canvas.start_animation(0);
 
+      /**
+       * This might cause problem In RAVE as 3D rendering takes
       // If has animation, then enable it
       if( this.has_animation ){
         let c = gui.get_controller('Play/Pause', 'Timeline');
@@ -62644,6 +62847,7 @@ class src_BrainCanvas{
           c.setValue(true);
         }
       }
+      */
 
     };
 

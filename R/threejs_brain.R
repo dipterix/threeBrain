@@ -6,8 +6,8 @@
 #' @param time_range used to calculate animation time (not yet implemented)
 #' @param value_range used to generate colors
 #' @param symmetric default 0, color center will be mapped to this value
-#' @param side_camera enable side cameras to view objects from fixed perspective
-#' @param side_camera_zoom if side camera is enabled, zoom-in level, from 1 to 5
+#' @param side_canvas enable side cameras to view objects from fixed perspective
+#' @param side_zoom if side camera is enabled, zoom-in level, from 1 to 5
 #' @param control_panel enable control panels for the widget
 #' @param control_presets presets to be shown in control panels
 #' @param camera_center position where camera should focus at
@@ -31,7 +31,9 @@
 #' @export
 threejs_brain <- function(
   ..., widget_id = 'threebrain_data', time_range = NULL,
-  value_range = NULL, symmetric = 0, side_camera = FALSE, side_camera_zoom = 1,
+  value_range = NULL, symmetric = 0,
+  side_canvas = FALSE, side_zoom = 1,
+  side_width = 250, side_shift = c(0, 0),
   control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
   camera_pos = c(0,0,500), start_zoom = 1,
   color_ramp = c('navyblue', '#e2e2e2', 'red'), color_type = 'continuous',
@@ -176,8 +178,10 @@ threejs_brain <- function(
 
   # Generate settings
   settings = list(
-    side_camera = side_camera,
-    side_canvas_zoom = side_camera_zoom,
+    side_camera = side_canvas,
+    side_canvas_zoom = side_zoom,
+    side_canvas_width = side_width,
+    side_canvas_shift = side_shift,
     time_range = time_range,
     value_range = value_range,
     hide_controls = !control_panel,

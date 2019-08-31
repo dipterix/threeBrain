@@ -331,8 +331,15 @@ class BrainCanvas{
           }
         });
 
-      gui.add_item('Reset Position', () => {this.canvas.reset_side_canvas( this.settings.side_canvas_zoom )},
-                    {folder_name: 'Side Canvas'});
+      gui.add_item('Reset Position', () => {
+        this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
+                                       this.settings.side_canvas_width,
+                                       this.settings.side_canvas_shift );
+      }, {folder_name: 'Side Canvas'});
+      // reset first
+      this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
+                                     this.settings.side_canvas_width,
+                                     this.settings.side_canvas_shift );
 
       // side plane
       const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Side Canvas'})
@@ -409,7 +416,7 @@ class BrainCanvas{
 
 
 
-      gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
+      gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
         .onChange((v) => {
           this.canvas.set_cube_anchor_visibility(v);
         });
@@ -529,6 +536,8 @@ class BrainCanvas{
 
       this.canvas.start_animation(0);
 
+      /**
+       * This might cause problem In RAVE as 3D rendering takes
       // If has animation, then enable it
       if( this.has_animation ){
         let c = gui.get_controller('Play/Pause', 'Timeline');
@@ -536,6 +545,7 @@ class BrainCanvas{
           c.setValue(true);
         }
       }
+      */
 
     };
 

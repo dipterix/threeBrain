@@ -76,7 +76,8 @@ MultiBrain2 <- R6::R6Class(
 
     plot = function(
       additional_subjects = NULL, volumes = TRUE, surfaces = TRUE,
-      time_range = NULL, value_range = NULL, symmetric = 0, side_camera = TRUE,
+      time_range = NULL, value_range = NULL, symmetric = 0,
+      side_canvas = TRUE, side_width = 250, side_shift = c(0, 0),
       control_panel = TRUE, show_legend = TRUE, legend_title = 'Value',
       color_ramp = NULL,color_names = NULL,
       color_type = 'auto', n_color = 64,
@@ -152,12 +153,12 @@ MultiBrain2 <- R6::R6Class(
 
       global_data = self$global_data
       control_presets = unique(c('subject2', 'surface_type2', 'hemisphere_material',
-                                 'map_template', 'animation', control_presets ))
+                                 'map_template', 'animation', 'electrodes', control_presets ))
 
       threejs_brain(
         .list = geoms,
         time_range = time_range, value_range = value_range, symmetric = symmetric,
-        side_camera = side_camera,
+        side_canvas = side_canvas, side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
         color_ramp = color_ramp, color_type = color_type, n_color = n_color,
         color_names = color_names, show_legend = show_legend, legend_title = legend_title,

@@ -1,6 +1,6 @@
 # threeBrain - HTML, WebGL based 3D Viewer
 
-<img src="https://github.com/dipterix/threeBrain/blob/dev/docs/demo.gif?raw=true" width="100%">
+<img src="https://github.com/dipterix/threeBrain/blob/dev/docs/demo.gif?raw=true" width="100%" />
 
 A live [demo]() is under construction!
 
@@ -8,16 +8,16 @@ A live [demo]() is under construction!
 
 1. Install [`Python3`](https://www.python.org/downloads/), [`R`](https://cran.r-project.org/) and [`RStudio Desktop (Free Version)`](https://www.rstudio.com/products/rstudio/download/)
 2. Open `RStudio`, enter from its console:
-```{r}
+```r
 install.packages("threeBrain")
 ```
 If you want to install `dev` version from *Github*, then use:
-```{r}
+```r
 install.packages("devtools")
 devtools::install_github("dipterix/threeBrain@dev")
 ```
 3. Setups: after installation, in `RStudio` console, type the following command
-```{r}
+```r
 threeBrain::brain_setup()
 ```
 and follow the instructions.
@@ -33,7 +33,7 @@ Once finishing setting up of `threeBrain`, there will be a template subject `N27
 Let's view this subject. The following commands all go to `RStudio` console.
 
 1. Import subject
-```{r}
+```r
 n27 = freesurfer_brain(
     fs_subject_folder = '~/rave_data/others/three_brain/N27',
     subject_name = 'N27',
@@ -41,12 +41,12 @@ n27 = freesurfer_brain(
 )
 ```
 2. Visualize
-```{r}
+```r
 plot(x)       # alternatively, you can use `x$plot()`
 ```
 
 If you have electrode file, you can import it before calling `plot` function. Please make sure it's in `csv` format.
-```{r}
+```r
 x$set_electrodes(electrodes = "[PATH to ELECTRODE FILE]")
 ```
 Here is an example of electrode csv file. Only the first five columns (**case-sensitive**) are mandatory: `Electrode (integer)`, `Coord_x`, `Coord_y`, `Coord_z`, and `Label (character)`. `Coord_*` is `RAS` location from `FreeSurfer` coordinates.
@@ -64,7 +64,7 @@ Here is an example of electrode csv file. Only the first five columns (**case-se
 ## C. Merge Subjects and Template mapping
 
 If you have your own subjects with `FreeSurfer` output, for example, I have two subjects `YAB` and `YCQ`. To merge these two subjects and show them on `N27` template,
-```{r}
+```r
 # yab = ... (see section B for import a single subject)
 # ycq = ...
 template_n27 = threeBrain::merge_brain(yab, ycq, template_subject = 'N27')

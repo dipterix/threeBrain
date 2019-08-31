@@ -56,6 +56,7 @@ CONSTANTS.KEY_CYCLE_SURFACE           = 80;   // "p" for cycle through surfaces
 CONSTANTS.KEY_OVERLAY_CORONAL         = 67;   // 'C' for coronal
 CONSTANTS.KEY_OVERLAY_AXIAL           = 65;   // 'A' for coronal
 CONSTANTS.KEY_OVERLAY_SAGITTAL        = 83;   // 'S' for coronal
+CONSTANTS.KEY_TOGGLE_ANIMATION        = 83;   // 's' for play/paus animation
 
 // Colors
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects

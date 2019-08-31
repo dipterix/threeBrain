@@ -5,10 +5,11 @@
 \title{Create a Threejs Brain}
 \usage{
 threejs_brain(..., widget_id = "threebrain_data", time_range = NULL,
-  value_range = NULL, symmetric = 0, side_camera = FALSE,
-  side_camera_zoom = 1, control_panel = TRUE, control_presets = NULL,
-  camera_center = c(0, 0, 0), camera_pos = c(0, 0, 500),
-  start_zoom = 1, color_ramp = c("navyblue", "#e2e2e2", "red"),
+  value_range = NULL, symmetric = 0, side_canvas = FALSE,
+  side_zoom = 1, side_width = 250, side_shift = c(0, 0),
+  control_panel = TRUE, control_presets = NULL, camera_center = c(0,
+  0, 0), camera_pos = c(0, 0, 500), start_zoom = 1,
+  color_ramp = c("navyblue", "#e2e2e2", "red"),
   color_type = "continuous", n_color = 64,
   color_names = seq_along(color_ramp), show_legend = TRUE,
   legend_title = "Value", tmp_dirname = NULL, width = NULL,
@@ -28,9 +29,9 @@ multiple widgets in one website (shiny for example)}
 
 \item{symmetric}{default 0, color center will be mapped to this value}
 
-\item{side_camera}{enable side cameras to view objects from fixed perspective}
+\item{side_canvas}{enable side cameras to view objects from fixed perspective}
 
-\item{side_camera_zoom}{if side camera is enabled, zoom-in level, from 1 to 5}
+\item{side_zoom}{if side camera is enabled, zoom-in level, from 1 to 5}
 
 \item{control_panel}{enable control panels for the widget}
 
