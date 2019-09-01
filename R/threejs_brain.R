@@ -1,49 +1,61 @@
-#' Create a Threejs Brain
+#' @title Create a Threejs Brain and View it in Browsers
 #' @author Zhengjia Wang
 #' @param ...,.list geometries inherit from AbstractGeom
-#' @param widget_id unique identifier for the widget. Use it when you have
-#'   multiple widgets in one website (shiny for example)
-#' @param time_range used to calculate animation time (not yet implemented)
-#' @param value_range used to generate colors
-#' @param symmetric default 0, color center will be mapped to this value
-#' @param side_canvas enable side cameras to view objects from fixed perspective
-#' @param side_zoom if side camera is enabled, zoom-in level, from 1 to 5
-#' @param control_panel enable control panels for the widget
-#' @param control_presets presets to be shown in control panels
-#' @param camera_center position where camera should focus at
-#' @param camera_pos XYZ position of camera
-#' @param start_zoom numeric, positive number indicating start zoom level
-#' @param color_ramp used to generate color ramps
-#' @param color_type 'continuous' or 'discrete'
-#' @param n_color how many colors in the color ramp (used by continuous legend)
-#' @param color_names color names (used by discrete legend)
-#' @param show_legend show legend in control panel?
-#' @param legend_title legend title
-#' @param tmp_dirname internally used
-#' @param token used to identify widgets in JS localStorage
-#' @param debug internally used for debugging
-#' @param optionals internally used
-#' @param width,height width and height of the widget. By default width="100%",
-#'   and height varies.
+#' @param width,height positive integers. Width and height of the widget.
+#'   By default width=`100\%`, and height varies.
+#' @param side_canvas logical, enable side cameras to view objects from fixed perspective
+#' @param side_zoom numerical, if side camera is enabled, zoom-in level, from 1 to 5
+#' @param side_width positive integer, side panel size in pixels
+#' @param side_shift integer of length two, side panel shift in pixels (`CSS style`: top, left)
+#' @param control_panel logical, enable control panels for the widget
+#' @param control_presets characters, presets to be shown in control panels
+#' @param camera_center numerical, length of three, XYZ position where camera should focus at
+#' @param camera_pos XYZ position of camera itself, default (0, 0, 500)
+#' @param start_zoom numerical, positive number indicating camera zoom level
 #' @param coords \code{NULL} to hide coordinates or numeric vector of three.
-#' @param browser_external use system default browser (default) or builtin one.
+#' @param time_range numerical, length two, ascending. Used to specify animation time range
+#' @param color_type character, either 'continuous' or 'discrete'
+#' @param color_ramp characters, used to generate color ramps
+#' @param value_range numerical, length two, ascending. Used to generate continuous colors
+#' @param symmetric numerical, default 0, color center will be mapped to this value
+#' @param n_color positive integer. How many colors in the color ramp (used by continuous legend)
+#' @param color_names characters, color names, should share the same length as
+#'   color_ramp (used by discrete legend)
+#' @param show_legend logical, show legend in control panel?
+#' @param legend_title character, legend title (not used)
+#' @param tmp_dirname character path, internally used, where to store temporary files
+#' @param token unique character, internally used to identify widgets in JS localStorage
+#' @param debug logical, internally used for debugging
+#' @param optionals internally used, to be deprecated
+#' @param browser_external logical, use system default browser (default) or builtin one.
 #' @param global_data internally use, mainly to store orientation matrices.
+#' @param widget_id character, internally used as unique identifiers for widgets.
+#'   Only use it when you have multiple widgets in one website
 #' @export
 threejs_brain <- function(
-  ..., widget_id = 'threebrain_data', time_range = NULL,
-  value_range = NULL, symmetric = 0,
-  side_canvas = FALSE, side_zoom = 1,
-  side_width = 250, side_shift = c(0, 0),
-  control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
-  camera_pos = c(0,0,500), start_zoom = 1,
-  color_ramp = c('navyblue', '#e2e2e2', 'red'), color_type = 'continuous',
-  n_color = 64,
-  color_names = seq_along(color_ramp),
+  ..., .list = list(), width = NULL, height = NULL,
+
+  # Args for the side panels
+  side_canvas = FALSE, side_zoom = 1, side_width = 250, side_shift = c(0, 0),
+
+  # for controls GUI
+  control_panel = TRUE, control_presets = NULL,
+
+  # Main camera and scene center
+  camera_center = c(0,0,0), camera_pos = c(0,0,500), start_zoom = 1, coords = NULL,
+
+  # For colors and animation
+  time_range = NULL, color_type = 'continuous', color_ramp = c('navyblue', '#e2e2e2', 'red'),
+  value_range = NULL, symmetric = 0, n_color = 64, color_names = seq_along(color_ramp),
+
+  # Legends
   show_legend = TRUE, legend_title = 'Value',
-  tmp_dirname = NULL, width = NULL, height = NULL, optionals = list(),
-  debug = FALSE, token = NULL, coords = NULL,
-  browser_external = TRUE, global_data = list(),
-  .list = list()){
+
+  # Builds, additional data, etc (misc)
+  widget_id = 'threebrain_data', tmp_dirname = NULL,
+  debug = FALSE, token = NULL, optionals = list(),
+  browser_external = TRUE, global_data = list()
+){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
   stopifnot2(length(coords) == 0 || (length(coords) == 3 && is.numeric(coords)), msg = 'corrds must be NULL or a vector length of 3')
