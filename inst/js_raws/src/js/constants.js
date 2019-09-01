@@ -47,16 +47,20 @@ CONSTANTS.VEC_ANAT_I = new THREE.Vector3( 0, 0, -1 );
 
 // You can only change which key is pressed. However, you cannot change shift & ctrl or alt
 // To do that you must go into the code
-CONSTANTS.KEY_ZOOM                    = 90;   // z for zoom out and Z for zoom in
-CONSTANTS.KEY_CYCLE_LEFT              = 219;  // [ for cycle through left hemisphere material
-CONSTANTS.KEY_CYCLE_RIGHT             = 221;  // [ for cycle through left hemisphere material
-CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 190;  // "." for choosing next electrodes
-CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 188;  // "," for choosing previous electrodes
-CONSTANTS.KEY_CYCLE_SURFACE           = 80;   // "p" for cycle through surfaces
-CONSTANTS.KEY_OVERLAY_CORONAL         = 67;   // 'C' for coronal
-CONSTANTS.KEY_OVERLAY_AXIAL           = 65;   // 'A' for coronal
-CONSTANTS.KEY_OVERLAY_SAGITTAL        = 83;   // 'S' for coronal
-CONSTANTS.KEY_TOGGLE_ANIMATION        = 83;   // 's' for play/paus animation
+CONSTANTS.KEY_ZOOM                    = 'KeyZ';         // z for zoom out and Z for zoom in
+CONSTANTS.KEY_CYCLE_LEFT              = 'BracketLeft';  // [ for cycle through left hemisphere material
+CONSTANTS.KEY_CYCLE_RIGHT             = 'BracketRight'; // ] for cycle through right hemisphere material
+CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 'Period';       // "." for choosing next electrodes
+CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 'Comma';        // "," for choosing previous electrodes
+CONSTANTS.KEY_CYCLE_SURFACE           = 'KeyP';         // "p" for cycle through surfaces
+CONSTANTS.KEY_OVERLAY_CORONAL         = 'KeyC';         // 'C' for coronal
+CONSTANTS.KEY_OVERLAY_AXIAL           = 'KeyA';         // 'A' for coronal
+CONSTANTS.KEY_OVERLAY_SAGITTAL        = 'KeyS';         // 'S' for coronal
+CONSTANTS.KEY_TOGGLE_ANIMATION        = 'KeyS';         // 's' for play/paus animation
+CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling through electrodes (localization)
+CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electrode type (surface ot iEEG)
+CONSTANTS.KEY_NEW_ELECTRODE_EDITOR    = 'Digit1';       // '1' new electrode
+CONSTANTS.KEY_LABEL_FOCUS_EDITOR      = 'Digit2';       // '2' for quick edit label
 
 // Colors
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects

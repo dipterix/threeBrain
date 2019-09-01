@@ -73,6 +73,15 @@ function get_element_size(el){
   return([width, height]);
 }
 
-export { invertColor, padZero, to_dict, to_array, get_element_size };
+function get_or_default(map, key, _default = undefined){
+  if( map.has( key ) ){
+    return( map.get(key) );
+  }else{
+    map.set( key, _default );
+    return( _default );
+  }
+}
+
+export { invertColor, padZero, to_dict, to_array, get_element_size, get_or_default };
 
 

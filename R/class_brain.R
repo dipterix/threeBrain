@@ -822,8 +822,10 @@ Brain2 <- R6::R6Class(
 
       global_data = self$global_data
 
-      control_presets = unique(c( 'subject2', 'surface_type2', 'hemisphere_material',
-                                  'map_template', 'animation', 'electrodes' ), control_presets)
+      control_presets = unique(
+        c( 'subject2', 'surface_type2', 'hemisphere_material',
+           'map_template', 'animation', 'electrodes', control_presets)
+      )
 
       threejs_brain(
         .list = geoms,

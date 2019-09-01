@@ -569,7 +569,7 @@ class BrainCanvas{
     this.canvas.add_mouse_callback(
       (evt) => {
         return({
-          pass  : evt.action === 'click' || evt.action === 'dblclick',
+          pass  : (evt.action === 'click' || evt.action === 'dblclick') && !this.canvas.edit_mode,
           type  : 'clickable'
         });
       },

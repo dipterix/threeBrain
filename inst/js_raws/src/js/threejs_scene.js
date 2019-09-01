@@ -1,4 +1,4 @@
-import { to_array, get_element_size } from './utils.js';
+import { to_array, get_element_size, get_or_default } from './utils.js';
 import { Stats } from './libs/stats.min.js';
 import { THREE } from './threeplugins.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
@@ -11,16 +11,6 @@ import { gen_free } from './geometry/free.js';
 import { Compass } from './geometry/compass.js';
 import { json2csv } from 'json-2-csv';
 import * as download from 'downloadjs';
-
-
-function get_or_default(map, key, _default = undefined){
-  if( map.has( key ) ){
-    return( map.get(key) );
-  }else{
-    map.set( key, _default );
-    return( _default );
-  }
-}
 
 
 /* Geometry generator */
@@ -611,6 +601,7 @@ class THREEBRAIN_CANVAS {
     this.focus_box = new THREE.BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
+    this.bounding_box = this.focus_box.clone();
 
 
 
@@ -795,8 +786,11 @@ class THREEBRAIN_CANVAS {
 
     this.add_mouse_callback(
       (evt) => {
+
+        // If editing mode enabled, disable this
         return({
-          pass  : ['click', 'dblclick'].includes( evt.action ) || ( evt.action === 'mousedown' && evt.event.button === 2 ),
+          pass  : !this.edit_mode && (['click', 'dblclick'].includes( evt.action ) ||
+                  ( evt.action === 'mousedown' && evt.event.button === 2 )),
           type  : 'clickable'
         });
       },
@@ -1002,21 +996,28 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _fast_raycast(clickable_only, max_search = 1000){
+  _fast_raycast( request_type ){
 
-    /* this.use_octree = true; */
-
-    // Use octree to speed up
-    var items = [];
+    let items;
 
     this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
 
-    if(clickable_only){
+    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
+      // intersect with all clickables
+      items = this.mouse_raycaster.intersectObjects( to_array( this.clickable ) );
+    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
+      items = this.mouse_raycaster.intersectObjects( to_array( request_type ), true );
+    }
+
+    /*
+
+    if(clickable_only === true){
       let raycaster = this.mouse_raycaster;
-      //let octreeObjects = this.octree.search( raycaster.ray.origin, raycaster.ray.far, true, raycaster.ray.direction );
       // items = raycaster.intersectOctreeObjects( octreeObjects );
       items = raycaster.intersectObjects( to_array( this.clickable ) );
     }else{
+
+
       if(this.DEBUG){
         console.debug('Searching for all intersections - Partial searching');
       }
@@ -1059,7 +1060,9 @@ class THREEBRAIN_CANVAS {
         items = this.mouse_raycaster.intersectObject( target_object, false );
       }
 
+
     }
+    */
 
     if(this.DEBUG){
       this._items = items;
@@ -1090,7 +1093,7 @@ class THREEBRAIN_CANVAS {
     for( let _cb_name in this._keyboard_callbacks ){
 
       if( this._keyboard_callbacks[ _cb_name ] &&
-          this.keyboard_event.event.keyCode === this._keyboard_callbacks[ _cb_name ][0] ){
+          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
         this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
       }
 
@@ -1112,29 +1115,25 @@ class THREEBRAIN_CANVAS {
 
 
     // Call callbacks
-    let raycast_result;
+    let raycast_result, request_type, callback, request;
 
     for( let _cb_name in this._mouse_click_callbacks ){
-      const callback = this._mouse_click_callbacks[ _cb_name ];
+      callback = this._mouse_click_callbacks[ _cb_name ];
       if( callback === undefined ){
         continue;
       }
-      const request = callback[0]( this.mouse_event );
-      if( request.pass ){
+      request = callback[0]( this.mouse_event );
+      if( request && request.pass ){
         // raycast object
-        if( raycast_result === undefined ){
-          // Do simple, fast raycast
-          raycast_result = {
-            type  : request.type === 'full' ? 'full' : 'clickable',
-            items : this._fast_raycast( request.type === 'clickable' )
-          };
-        }
+        // check which object(s) to raycast on
+        request_type = request.type || 'clickable';
 
-        // If clickable was performed, but full is requested
-        if( request.type === 'full' && raycast_result.type === 'clickable' ){
+        if( raycast_result === undefined ||
+            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
           raycast_result = {
-            type  : 'full',
-            items : this._fast_raycast( false )
+            type  : request_type,
+            items : this._fast_raycast( request_type ),
+            meta  : request.meta
           };
         }
 
@@ -2652,9 +2651,9 @@ class THREEBRAIN_CANVAS {
             }
 
             // Re-calculate controls center so that rotation center is the center of mesh bounding box
-            this.focus_box.setFromObject( m.parent );
-            this.focus_box.geometry.computeBoundingBox();
-            const _b = this.focus_box.geometry.boundingBox;
+            this.bounding_box.setFromObject( m.parent );
+            this.bounding_box.geometry.computeBoundingBox();
+            const _b = this.bounding_box.geometry.boundingBox;
             this.controls.target.copy( _b.min.clone() ).add( _b.max ).multiplyScalar( 0.5 );
             this.control_center = this.controls.target.toArray();
             this.controls.update();
@@ -2855,7 +2854,7 @@ mapped = false,
       for( let k in collection ){
         parsed = _regexp.exec( k );
         // just incase
-        if( parsed.length === 3 ){
+        if( parsed && parsed.length === 3 ){
           row = {};
           e = collection[ k ];
           g = e.userData.construct_params;
@@ -2881,6 +2880,9 @@ mapped = false,
           row.VertexNumber = g.vertex_number;     // vertex_number is already changed
           row.Hemisphere = g.hemisphere;
 
+          // CustomizedInformation
+          row.Notes = g.custom_info || '';
+
         }
         re[ row.Electrode - 1 ] = row;
       }
@@ -2902,11 +2904,12 @@ mapped = false,
       row.Radius = 1;
       row.VertexNumber = -1;
       row.Hemisphere = 'NA';
+      row.Notes = '';
       for( let ii = 0; ii < re.length; ii++ ){
         if( re[ ii ] === undefined ){
           // missing one electrode, fill that in
           row.Electrode = ii + 1;
-          re[ ii ] = row;
+          re[ ii ] = {...row};
         }
       }
 
@@ -2922,7 +2925,25 @@ mapped = false,
 
     // convert to csv
     for( let subcode in res ){
-      const electrode_data = res[ subcode ];
+      let electrode_data = res[ subcode ];
+
+      if( subcode === '__localization__' ){
+        const template_sub = this.state_data.get('target_subject');
+        electrode_data = electrode_data.map((e) => {
+
+          return({
+            Electrode : e.Electrode,
+            TemplateCoord_x : e.Coord_x,
+            TemplateCoord_y : e.Coord_y,
+            TemplateCoord_z : e.Coord_z,
+            Label : e.Notes,
+            TemplateSubject : template_sub
+          });
+
+        });
+
+      }
+
       if( electrode_data.length > 0 ){
         if( format === 'json' ){
           download( JSON.stringify(electrode_data) , subcode + '_electrodes.json', 'application/json');

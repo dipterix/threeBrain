@@ -1,6 +1,6 @@
 import { THREE } from './threeplugins.js';
 import * as dat from './libs/dat.gui.module.js';
-import { to_array } from './utils.js';
+import { to_array, get_or_default } from './utils.js';
 import { CONSTANTS } from './constants.js';
 // Some presets for gui and canvas
 
@@ -732,8 +732,227 @@ class THREEBRAIN_PRESETS{
   }
 
 
+  electrode_localization(folder_name = 'Electrode Localization (Beta)'){
+
+    this.canvas.electrodes.set( '__localization__', [] );
+
+    /** UI:
+     * 1. edit mode (checkbox)
+     * 2. electrode number (positive integer)
+     * 3. electrode location (string)
+     * 4. electrode label
+     * 5. ECoG or iEEG
+    */
+    // function to get electrode info and update dat.GUI
+    // idx is from 0 - (electrode count -1)
+    const switch_electrode = ( v ) => {
+
+      let _el = get_electrode( v );
+      if( !_el ){
+        // use default settings
+        elec_position.setValue('0, 0, 0');
+        elec_label.setValue('');
+      }else{
+        elec_position.setValue(`${_el.position.x.toFixed(2)}, ${_el.position.y.toFixed(2)}, ${_el.position.z.toFixed(2)}`);
+        elec_label.setValue( _el.userData.construct_params.custom_info || '' );
+
+        let electrode_is_surface = _el.userData.construct_params.is_surface_electrode === true;
+        elec_surface.setValue( electrode_is_surface ? 'ECoG' : 'Stereo-iEEG' );
+
+        this.canvas.focus_object( _el );
+      }
+    };
+    const get_electrode = (el_num) => {
+      const group = this.canvas.electrodes.get('__localization__');
+      if( !group ){
+        return( undefined );
+      }
+
+      return( group[ `__localization__, ${el_num === undefined? Math.max( 1, Math.round( elec_number.getValue() ) ) : el_num} - ` ] );
+    };
+
+    const edit_mode = this.gui.add_item( 'Editing Mode', false, { folder_name: folder_name} )
+      .onChange( (v) => {
+        this.canvas.edit_mode = v;
+        if( v ){
+          this.gui.show_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'object type' ], folder_name);
+        }else{
+          this.gui.hide_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'object type' ], folder_name);
+        }
+      } );
+
+    const elec_number = this.gui.add_item( 'Number', 1, { folder_name: folder_name} ).min( 1 ).step( 1 )
+      .onChange( (v) => {
+        if( this.canvas.edit_mode ){
+          v = Math.max( Math.round( v ) , 1 );
+          switch_electrode( v );
+          this._update_canvas();
+        }
+      } );
+
+    // const st = canvas.get_surface_types().concat( canvas.get_volume_types() );
+    const elec_surface = this.gui.add_item( 'object type', 'ECoG', {
+      folder_name: folder_name, args: ['ECoG', 'Stereo-iEEG']
+    } ).onChange((v) => {
+      if( this.canvas.edit_mode ){
+        let el = get_electrode();
+        if( el ){
+          el.userData.construct_params.is_surface_electrode = (v === 'ECoG');
+        }
+        if( v === 'Stereo-iEEG' ){
+          this.gui.get_controller('Overlay Coronal', 'Side Canvas').setValue( true );
+          this.gui.get_controller('Overlay Axial', 'Side Canvas').setValue( true );
+          this.gui.get_controller('Overlay Sagittal', 'Side Canvas').setValue( true );
+          this.gui.get_controller('Left Hemisphere', 'Geometry').setValue( 'hidden' );
+          this.gui.get_controller('Right Hemisphere', 'Geometry').setValue( 'hidden' );
+        }else if ( v === 'ECoG' ){
+          this.gui.get_controller('Left Hemisphere', 'Geometry').setValue( 'normal' );
+          this.gui.get_controller('Right Hemisphere', 'Geometry').setValue( 'normal' );
+        }
+      }
+    });
+
+    const elec_position = this.gui.add_item( 'Position', '0, 0, 0', { folder_name: folder_name} )
+      .onChange((v) => {
+        if( this.canvas.edit_mode ){
+          let pos = v.split(',').map((s) => {return(parseFloat(s.trim()))});
+          if( pos.length === 3 ){
+            let el = get_electrode();
+            if( el ){
+
+              el.position.fromArray( pos );
+              el.userData.construct_params.position = pos;
+            }
+          }
+          this._update_canvas();
+        }
+
+      } );
+
+    const elec_label = this.gui.add_item( 'Label', '', { folder_name: folder_name} )
+      .onChange((v) => {
+        if( this.canvas.edit_mode ){
+          let el = get_electrode();
+          if( el ){
+            el.userData.construct_params.custom_info = v;
+          }
+          this._update_canvas();
+        }
+      } );
+
+    this.gui.hide_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'object type' ], folder_name);
+
+    this.canvas.add_mouse_callback(
+      (evt) => {
+        if( this.canvas.edit_mode ){
+          if( evt.action === 'dblclick' ){
+            const is_surface = elec_surface.getValue() === 'ECoG',
+                  current_subject = this.canvas.state_data.get("target_subject");
+            if( !current_subject ){
+              return({pass : false});
+            }
+
+            // If ECoG, we only focus on the surfaces
+            let search_objects = [];
+            if( is_surface ){
+              search_objects = to_array( this.canvas.surfaces.get( current_subject ) );
+            }else{
+              search_objects = to_array(
+                get_or_default( this.canvas.volumes, current_subject, {})[`brain.finalsurfs (${current_subject})`]
+              );
+            }
+
+            return({
+              pass  : true,
+              type  : search_objects
+            });
+          }else if( evt.action === 'click' ){
+            if( this.canvas.group.has( '__electrode_editor__' ) ){
+              return({
+                pass  : true,
+                type  : this.canvas.group.get( '__electrode_editor__' ).children
+              });
+            }
+
+          }
+        }
+        return({ pass: false });
+      },
+      ( res, evt ) => {
+        if( evt.action === 'click' ){
+          this.canvas.focus_object( res.target_object );
+          if( res.target_object && res.target_object.isMesh &&
+              typeof res.target_object.userData.electrode_number === 'number' ){
+            elec_number.setValue( res.target_object.userData.electrode_number );
+          }
+        }else if( evt.action === 'dblclick' ){
+          if( res.first_item ){
+            // get current electrode
+            let current_electrode = Math.max(1, Math.round( elec_number.getValue() )),
+                label = elec_label.getValue(),
+                position = res.first_item.point.toArray(),
+                is_surface_electrode = elec_surface.getValue() === 'ECoG';
+
+            let el = add_electrode(this.canvas, current_electrode, `__localization__, ${current_electrode} - ` ,
+                                  position, 'NA', label, is_surface_electrode);
+          }
+        }
+
+        this._update_canvas();
+      },
+      'electrode_editor'
+    );
 
 
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_EDITOR, (evt) => {
+      if( this.canvas.edit_mode ){
+        let delta = 1;
+        if( evt.event.shiftKey ){
+          delta = -1;
+        }
+        // last
+        let el_num = Math.round( elec_number.getValue() + delta );
+        el_num = Math.max( 1, el_num );
+        elec_number.setValue( el_num );
+        this._update_canvas();
+      }
+    }, 'edit-gui_cycle_electrodes');
+
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR, (evt) => {
+      if( this.canvas.edit_mode ){
+        const is_ecog = elec_surface.getValue() === 'ECoG';
+        elec_surface.setValue( is_ecog ? 'Stereo-iEEG' : 'ECoG' );
+        this._update_canvas();
+      }
+    }, 'edit-gui_cycle_surftype');
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_NEW_ELECTRODE_EDITOR, (evt) => {
+      if( this.canvas.edit_mode ){
+        let next_elnum = 1;
+        to_array( this.canvas.electrodes.get("__localization__") ).forEach((el) => {
+          let el_num = el.userData.electrode_number || 1;
+          if( next_elnum <= el_num ){
+            next_elnum = el_num + 1;
+          }
+        });
+        elec_number.setValue( next_elnum );
+        this._update_canvas();
+      }
+    }, 'edit-gui_new_electrodes');
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_LABEL_FOCUS_EDITOR, (evt) => {
+      if( this.canvas.edit_mode ){
+        elec_label.domElement.children[0].click();
+      }
+    }, 'edit-gui_edit_label');
+  }
+
+  export_electrodes(folder_name = 'Default'){
+    this.gui.add_item('Download Electrodes', () => {
+      this.canvas.download_electrodes('csv');
+    });
+  }
 
 }
 
@@ -794,6 +1013,21 @@ class THREEBRAIN_CONTROL{
     return( re );
   }
 
+  hide_item(name, folder_name = 'Default'){
+    to_array( name ).forEach((_n) => {
+      let c = this.get_controller(_n, folder_name);
+      if( c.__li ){ c.__li.style.display='none'; }
+    });
+
+  }
+
+  show_item(name, folder_name = 'Default'){
+    to_array( name ).forEach((_n) => {
+      let c = this.get_controller(_n, folder_name);
+      if( c.__li ){ c.__li.style.display='block'; }
+    });
+  }
+
 
   // Add item
   add_item(name, value, options = {}){
@@ -822,6 +1056,47 @@ class THREEBRAIN_CONTROL{
 
 
 
+}
+
+
+function add_electrode (canvas, number, name, position, surface_type = 'NA',
+                        custom_info = '', is_surface_electrode = false,
+                        group_name = '__electrode_editor__',
+                        subject_code = '__localization__', radius = 2) {
+  let _el;
+
+  if( !canvas.group.has(group_name) ){
+    canvas.add_group( {
+      name : group_name, layer : 0, position : [0,0,0],
+      disable_trans_mat: false, group_data: null,
+      parent_group: null, subject_code: subject_code, trans_mat: null
+    } );
+  }
+
+  // Check if electrode has been added, if so, remove it
+  try {
+    _el = canvas.electrodes.get( subject_code )[ name ];
+    _el.parent.remove( _el );
+  } catch (e) {}
+
+
+  const g = { "name":name, "type":"sphere", "time_stamp":[], "position":position,
+          "value":null, "clickable":true, "layer":0,
+          "group":{"group_name":group_name,"group_layer":0,"group_position":[0,0,0]},
+          "use_cache":false, "custom_info":custom_info,
+          "subject_code":subject_code, "radius":radius,
+          "width_segments":10,"height_segments":6,
+          "is_electrode":true,
+          "is_surface_electrode": is_surface_electrode || (surface_type !== 'NA'),
+          "use_template":false,
+          "surface_type": surface_type,
+          "hemisphere":null,"vertex_number":-1,"sub_cortical":true,"search_geoms":null};
+
+  canvas.add_object( g );
+
+  _el = canvas.electrodes.get( subject_code )[ name ];
+  _el.userData.electrode_number = number;
+  return( _el );
 }
 
 export { THREEBRAIN_PRESETS, THREEBRAIN_CONTROL };
