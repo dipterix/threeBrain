@@ -840,6 +840,18 @@ class THREEBRAIN_PRESETS{
         }
       } );
 
+    const new_electrode = () => {
+      let next_elnum = 1;
+      to_array( this.canvas.electrodes.get("__localization__") ).forEach((el) => {
+        let el_num = el.userData.electrode_number || 1;
+        if( next_elnum <= el_num ){
+          next_elnum = el_num + 1;
+        }
+      });
+      elec_number.setValue( next_elnum );
+      this._update_canvas();
+    };
+
     this.gui.hide_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'object type' ], folder_name);
 
     this.canvas.add_mouse_callback(
@@ -893,8 +905,10 @@ class THREEBRAIN_PRESETS{
                 position = res.first_item.point.toArray(),
                 is_surface_electrode = elec_surface.getValue() === 'ECoG';
 
-            let el = add_electrode(this.canvas, current_electrode, `__localization__, ${current_electrode} - ` ,
+            add_electrode(this.canvas, current_electrode, `__localization__, ${current_electrode} - ` ,
                                   position, 'NA', label, is_surface_electrode);
+
+            new_electrode();
           }
         }
 
@@ -929,15 +943,7 @@ class THREEBRAIN_PRESETS{
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_NEW_ELECTRODE_EDITOR, (evt) => {
       if( this.canvas.edit_mode ){
-        let next_elnum = 1;
-        to_array( this.canvas.electrodes.get("__localization__") ).forEach((el) => {
-          let el_num = el.userData.electrode_number || 1;
-          if( next_elnum <= el_num ){
-            next_elnum = el_num + 1;
-          }
-        });
-        elec_number.setValue( next_elnum );
-        this._update_canvas();
+        new_electrode();
       }
     }, 'edit-gui_new_electrodes');
 

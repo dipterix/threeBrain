@@ -2,15 +2,18 @@
 #' @title Create Multi-subject Template
 #' @author Zhengjia Wang
 #' @param ...,.list \code{Brain2} objects
+#' @param template_surface_types which template surface types to load, default is auto-guess
 #' @param template_subject character, subject code to be treated as template, default is `N27`
 #' @param template_dir the parent directory where template subject is stored in
 #' @export
 merge_brain <- function(
   ..., .list = NULL,
+  template_surface_types = NULL,
   template_subject = getOption('threeBrain.template_subject', 'N27'),
   template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
 ){
-  MultiBrain2$new( ... , .list = .list, template_subject = template_subject, template_dir = template_dir)
+  MultiBrain2$new( ... , .list = .list, template_subject = template_subject,
+                   template_dir = template_dir, template_surface_types = template_surface_types)
 }
 
 
@@ -26,6 +29,7 @@ MultiBrain2 <- R6::R6Class(
     objects = list(),
 
     initialize = function(..., .list = NULL,
+                          template_surface_types = NULL,
                           template_subject = getOption('threeBrain.template_subject', 'N27'),
                           template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
 
@@ -43,20 +47,28 @@ MultiBrain2 <- R6::R6Class(
       }
 
       if( is.null(self$template_object) ){
-        self$alter_template( template_subject, template_dir )
+        self$alter_template( template_subject = template_subject,
+                             surface_types = template_surface_types,
+                             template_dir = template_dir )
       }
     },
 
-    alter_template = function(template_subject, template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
+    alter_template = function(surface_types = NULL,
+                              template_subject = getOption('threeBrain.template_subject', 'N27'),
+                              template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
       # test
       template_path = file.path(template_dir, template_subject)
       stopifnot2(check_freesurfer_path(template_path),
                  msg = paste0('Cannot find template subject - ', template_subject,
-                              '\nTo install template subject, you can enter:\n\n\t',
+                              '\nTo install N27 template subject, you can use:\n\n\t',
                               'threeBrain::download_N27(make_default=TRUE)'))
 
-      surface_types = lapply(self$objects, function(x){ x$surface_types })
-      surface_types = unique(unlist(surface_types))
+      if( !length( surface_types ) ){
+        surface_types = lapply(self$objects, function(x){ x$surface_types })
+        surface_types = unique(unlist(surface_types))
+      }else{
+        surface_types = unique(c('pial', unlist( surface_types )))
+      }
 
       self$template_object = freesurfer_brain(
         fs_subject_folder = template_path, subject_name = template_subject,

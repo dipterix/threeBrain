@@ -58248,6 +58248,18 @@ class data_controls_THREEBRAIN_PRESETS{
         }
       } );
 
+    const new_electrode = () => {
+      let next_elnum = 1;
+      to_array( this.canvas.electrodes.get("__localization__") ).forEach((el) => {
+        let el_num = el.userData.electrode_number || 1;
+        if( next_elnum <= el_num ){
+          next_elnum = el_num + 1;
+        }
+      });
+      elec_number.setValue( next_elnum );
+      this._update_canvas();
+    };
+
     this.gui.hide_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'object type' ], folder_name);
 
     this.canvas.add_mouse_callback(
@@ -58301,8 +58313,10 @@ class data_controls_THREEBRAIN_PRESETS{
                 position = res.first_item.point.toArray(),
                 is_surface_electrode = elec_surface.getValue() === 'ECoG';
 
-            let el = add_electrode(this.canvas, current_electrode, `__localization__, ${current_electrode} - ` ,
+            add_electrode(this.canvas, current_electrode, `__localization__, ${current_electrode} - ` ,
                                   position, 'NA', label, is_surface_electrode);
+
+            new_electrode();
           }
         }
 
@@ -58337,15 +58351,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_NEW_ELECTRODE_EDITOR, (evt) => {
       if( this.canvas.edit_mode ){
-        let next_elnum = 1;
-        to_array( this.canvas.electrodes.get("__localization__") ).forEach((el) => {
-          let el_num = el.userData.electrode_number || 1;
-          if( next_elnum <= el_num ){
-            next_elnum = el_num + 1;
-          }
-        });
-        elec_number.setValue( next_elnum );
-        this._update_canvas();
+        new_electrode();
       }
     }, 'edit-gui_new_electrodes');
 
@@ -59553,8 +59559,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.volumes = new Map();
     this.surfaces = new Map();
     this.state_data = new Map();
+    // set default values
+    this.state_data.set( 'coronal_depth', 0 );
+    this.state_data.set( 'axial_depth', 0 );
+    this.state_data.set( 'sagittal_depth', 0 );
+
     // for global usage
     this.shared_data = new Map();
+
 
     // Stores all groups
     this.group = new Map();
@@ -59745,7 +59757,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
 			  cvs.style.height = parseInt(level * 100) + '%';
 			  const cvs_size = get_element_size( cvs );
 			  const div_size = get_element_size( div );
-			  const depths = [this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
+			  const depths = [
+          this.state_data.get( 'sagittal_depth' ),
+          this.state_data.get( 'coronal_depth' ),
+          this.state_data.get( 'axial_depth' )
+        ];
+			  //  this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
 
 			  let _left = 0,
 			      _top = 0;
@@ -59888,20 +59905,31 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
           console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
           if( nm === 'coronal' ){
-            this._sagittal_depth = _x;
-            this._axial_depth = -_y;
+            this.state_data.set( 'sagittal_depth', _x );
+            this.state_data.set( 'axial_depth', -_y );
+            // this._sagittal_depth = _x;
+            // this._axial_depth = -_y;
           }else if( nm === 'axial' ){
-            this._sagittal_depth = _x;
-            this._coronal_depth = -_y;
+            this.state_data.set( 'sagittal_depth', _x );
+            this.state_data.set( 'coronal_depth', -_y );
+            // this._sagittal_depth = _x;
+            // this._coronal_depth = -_y;
           }else if( nm === 'sagittal' ){
-            this._coronal_depth = -_x;
-            this._axial_depth = -_y;
+            this.state_data.set( 'coronal_depth', -_x );
+            this.state_data.set( 'axial_depth', -_y );
+            // this._coronal_depth = -_x;
+            // this._axial_depth = -_y;
           }
           // Also set main_camera
           const _d = new threeplugins_THREE.Vector3(
-            this._sagittal_depth || 0,
-            this._coronal_depth || 0,
-            this._axial_depth || 0
+            // this._sagittal_depth || 0,
+            this.state_data.get( 'sagittal_depth' ),
+
+            // this._coronal_depth || 0,
+            this.state_data.get( 'coronal_depth' ),
+
+            // this._axial_depth || 0
+            this.state_data.get( 'axial_depth' )
           ).normalize().multiplyScalar(500);
           if( _d.length() === 0 ){
             _d.z = 500;
@@ -59924,7 +59952,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
             this.main_camera.up.copy( _cp );
           }
 
-          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+          this.set_side_depth(
+            this.state_data.get( 'coronal_depth' ),
+            this.state_data.get( 'axial_depth' ),
+            this.state_data.get( 'sagittal_depth' )
+          );
 
         }
       } );
@@ -59935,12 +59967,19 @@ class threejs_scene_THREEBRAIN_CANVAS {
         evt.preventDefault();
         if( evt.altKey ){
           if( evt.deltaY > 0 ){
-            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
+            this.state_data.set( nm + '_depth', 1 + this.state_data.get(nm + '_depth') );
+            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
           }else if( evt.deltaY < 0 ){
-            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
+            this.state_data.set( nm + '_depth', -1 + this.state_data.get(nm + '_depth') );
+            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
           }
         }
-        this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+        // this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+        this.set_side_depth(
+          this.state_data.get( 'coronal_depth' ),
+          this.state_data.get( 'axial_depth' ),
+          this.state_data.get( 'sagittal_depth' )
+        );
       });
 
       // Make resizable, keep current width and height
@@ -61415,6 +61454,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.shared_data.clear();
     this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
+    // set default values
+    this.state_data.set( 'coronal_depth', 0 );
+    this.state_data.set( 'axial_depth', 0 );
+    this.state_data.set( 'sagittal_depth', 0 );
+
     // Stop showing information of any selected objects
     this.object_chosen=undefined;
   }
@@ -61696,7 +61740,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // cube_anchor.position.y = m[0].position.y;
       m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
       m[0].material.needsUpdate = true;
-      this._coronal_depth = depth;
+      // this._coronal_depth = depth;
+      this.state_data.set( 'coronal_depth', depth );
+      this.state_data.set( 'coronal_posy', m[0].position.y );
+      this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
     };
@@ -61707,7 +61754,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // cube_anchor.position.z = m[1].position.z;
       m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
       m[1].material.needsUpdate = true;
-      this._axial_depth = depth;
+      // this._axial_depth = depth;
+      this.state_data.set( 'axial_depth', depth );
+      this.state_data.set( 'axial_posz', m[1].position.z );
+      this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
     };
@@ -61718,7 +61768,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // cube_anchor.position.x = m[2].position.x;
       m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
       m[2].material.needsUpdate = true;
-      this._sagittal_depth = depth;
+      // this._sagittal_depth = depth;
+      this.state_data.set( 'sagittal_depth', depth );
+      this.state_data.set( 'sagittal_posx', m[2].position.x );
+      this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
     };
@@ -62410,6 +62463,46 @@ mapped = false,
 
 
   }
+
+  // Only show electrodes near 3 planes
+  trim_electrodes( distance ){
+    if( typeof distance !== 'number' ){
+      distance = get_or_default( this.state_data, 'threshold_electrode_plane', Infinity);
+    }else{
+      this.state_data.set( 'threshold_electrode_plane', distance );
+    }
+    const _x = get_or_default( this.state_data, 'sagittal_posx', 0);
+    const _y = get_or_default( this.state_data, 'coronal_posy', 0);
+    const _z = get_or_default( this.state_data, 'axial_posz', 0);
+    const plane_pos = new threeplugins_THREE.Vector3().set( _x, _y, _z );
+    const diff = new threeplugins_THREE.Vector3();
+
+    this.electrodes.forEach((li, subcode) => {
+
+      for( let ename in li ){
+        const e = li[ ename ];
+
+        // Make sure layer 8 (main camera can see these electrodes)
+        e.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+
+        // get offsets
+        e.getWorldPosition( diff ).sub( plane_pos );
+
+        // Check visibility
+        if( Math.abs( diff.x ) <= distance ){
+          e.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+        }
+        if( Math.abs( diff.y ) <= distance ){
+          e.layers.enable( CONSTANTS.LAYER_SYS_CORONAL_9 );
+        }
+        if( Math.abs( diff.z ) <= distance ){
+          e.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
+        }
+      }
+
+    });
+
+  }
 }
 
 
@@ -63025,7 +63118,13 @@ class src_BrainCanvas{
         }
       }, 'overlay_sagittal');
 
-
+      // show electrodes trimmed
+      gui.add_item('Dist. Threshold', 200, { folder_name: 'Side Canvas' })
+        .min(0).max(200).step(0.1)
+        .onChange((v) => {
+          this.canvas.trim_electrodes( v );
+          this.canvas.start_animation( 0 );
+        });
 
       gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
         .onChange((v) => {
