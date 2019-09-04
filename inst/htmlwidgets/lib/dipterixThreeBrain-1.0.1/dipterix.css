@@ -31,6 +31,10 @@
   font: 11px monospace, 'Lucida Grande', sans-serif;
 }
 
+.threejs-control .dg .cr.color .property-name {
+  overflow-y: hidden;
+}
+
 .threejs-control .dg .property-name {
     text-overflow: clip;
     overflow-y: hidden;

@@ -12,7 +12,8 @@ const register_volume2DShader1 = function(THREE){
       diffuse: { value: null },
 			depth: { value: 0 },
 			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: 0.5
+			threshold: { value : 0.0 },
+			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
       '#version 300 es',
@@ -37,6 +38,7 @@ const register_volume2DShader1 = function(THREE){
       'in vec2 vUv;',
       'uniform int depth;',
       'uniform float threshold;',
+      'uniform float renderDepth;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -46,7 +48,7 @@ const register_volume2DShader1 = function(THREE){
       'float is_opaque = float( color.r > threshold );',
 
       // calculating z-depth, if transparent, make depth 1 (far)
-      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
       'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
@@ -63,7 +65,8 @@ const register_volume2DShader1 = function(THREE){
       diffuse: { value: null },
 			depth: { value: 0 },
 			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: 0.5
+			threshold: { value : 0.0 },
+			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
       '#version 300 es',
@@ -90,6 +93,7 @@ const register_volume2DShader1 = function(THREE){
       'in vec2 vUv;',
       'uniform float depth;',
       'uniform float threshold;',
+      'uniform float renderDepth;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -98,7 +102,7 @@ const register_volume2DShader1 = function(THREE){
 
       'float is_opaque = float( color.r > threshold );',
 
-      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
       'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
@@ -112,7 +116,8 @@ const register_volume2DShader1 = function(THREE){
       diffuse: { value: null },
 			depth: { value: 0 },
 			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: 0.5
+			threshold: { value : 0.0 },
+			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
       '#version 300 es',
@@ -139,6 +144,7 @@ const register_volume2DShader1 = function(THREE){
       'in vec2 vUv;',
       'uniform float depth;',
       'uniform float threshold;',
+      'uniform float renderDepth;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -147,7 +153,7 @@ const register_volume2DShader1 = function(THREE){
 
       'float is_opaque = float( color.r > threshold );',
 
-      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
       'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',

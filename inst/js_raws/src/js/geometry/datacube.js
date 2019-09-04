@@ -46,7 +46,8 @@ function gen_datacube(g, canvas){
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[2] },  // initial in the center of data cube
   		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
-  		threshold: 0.5
+  		threshold: { value : 0.0 },
+  		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_xy.vertexShader,
 		fragmentShader: shader_xy.fragmentShader,
@@ -68,7 +69,8 @@ function gen_datacube(g, canvas){
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[1] },  // initial in the center of data cube
   		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
-  		threshold: 0.5
+  		threshold: { value : 0.0 },
+  		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_xz.vertexShader,
 		fragmentShader: shader_xz.fragmentShader,
@@ -90,7 +92,8 @@ function gen_datacube(g, canvas){
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[0] },  // initial in the center of data cube
   		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
-  		threshold: 0.5
+  		threshold: { value : 0.0 },
+  		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_yz.vertexShader,
 		fragmentShader: shader_yz.fragmentShader,

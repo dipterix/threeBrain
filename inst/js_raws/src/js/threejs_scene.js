@@ -225,7 +225,8 @@ class THREEBRAIN_CANVAS {
           side_context = side_canvas_el.getContext( 'webgl2' );
     	this.side_renderer = new THREE.WebGLRenderer({
     	  antialias: false, alpha: true,
-    	  canvas: side_canvas_el, context: side_context
+    	  canvas: side_canvas_el, context: side_context,
+    	  depths: false
     	});
     }else{
     	this.side_renderer = new THREE.WebGLRenderer( { antialias: false, alpha: true } );
@@ -1466,6 +1467,10 @@ class THREEBRAIN_CANVAS {
     this.main_renderer.render( this.scene, this.main_camera );
 
     if(this.has_side_cameras){
+
+      // Disable side plane
+      this.side_plane_sendback( true );
+
       const _rh = this.side_renderer._render_height;
       // Cut side views
       // Threejs's origin is at bottom-left, but html is at topleft
@@ -1491,7 +1496,7 @@ class THREEBRAIN_CANVAS {
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
 
-
+      this.side_plane_sendback( false );
     }
 
   }
@@ -2033,6 +2038,12 @@ class THREEBRAIN_CANVAS {
   set_side_visibility( which, visible ){
     console.log('Set side visibility not implemented');
   }
+  side_plane_sendback( is_back ){
+    if( typeof this._side_plane_sendback === 'function' ){
+      this._side_plane_sendback( is_back );
+    }
+  }
+
   set_cube_anchor_visibility( visible ){
     if( this.compass ){
       this.compass.set_visibility( visible, () => {
@@ -2316,6 +2327,12 @@ class THREEBRAIN_CANVAS {
       this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
+    };
+    this._side_plane_sendback = ( sendback ) => {
+      m.forEach( (p) => {
+        p.material.uniforms.renderDepth.value = sendback ? 0.0 : 1.0;
+        p.material.needsUpdate = true;
+      });
     };
 
     this.set_side_visibility = ( which, visible ) => {

@@ -54462,7 +54462,8 @@ const register_volume2DShader1 = function(THREE){
       diffuse: { value: null },
 			depth: { value: 0 },
 			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: 0.5
+			threshold: { value : 0.0 },
+			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
       '#version 300 es',
@@ -54487,6 +54488,7 @@ const register_volume2DShader1 = function(THREE){
       'in vec2 vUv;',
       'uniform int depth;',
       'uniform float threshold;',
+      'uniform float renderDepth;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -54496,7 +54498,7 @@ const register_volume2DShader1 = function(THREE){
       'float is_opaque = float( color.r > threshold );',
 
       // calculating z-depth, if transparent, make depth 1 (far)
-      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
       'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
@@ -54513,7 +54515,8 @@ const register_volume2DShader1 = function(THREE){
       diffuse: { value: null },
 			depth: { value: 0 },
 			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: 0.5
+			threshold: { value : 0.0 },
+			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
       '#version 300 es',
@@ -54540,6 +54543,7 @@ const register_volume2DShader1 = function(THREE){
       'in vec2 vUv;',
       'uniform float depth;',
       'uniform float threshold;',
+      'uniform float renderDepth;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -54548,7 +54552,7 @@ const register_volume2DShader1 = function(THREE){
 
       'float is_opaque = float( color.r > threshold );',
 
-      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
       'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
@@ -54562,7 +54566,8 @@ const register_volume2DShader1 = function(THREE){
       diffuse: { value: null },
 			depth: { value: 0 },
 			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: 0.5
+			threshold: { value : 0.0 },
+			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
       '#version 300 es',
@@ -54589,6 +54594,7 @@ const register_volume2DShader1 = function(THREE){
       'in vec2 vUv;',
       'uniform float depth;',
       'uniform float threshold;',
+      'uniform float renderDepth;',
       'out vec4 out_FragColor;',
 
       'void main() {',
@@ -54597,7 +54603,7 @@ const register_volume2DShader1 = function(THREE){
 
       'float is_opaque = float( color.r > threshold );',
 
-      'gl_FragDepth = (1.0 - is_opaque) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
       'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
@@ -59177,7 +59183,8 @@ function gen_datacube(g, canvas){
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[2] },  // initial in the center of data cube
   		size: { value: new threeplugins_THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
-  		threshold: 0.5
+  		threshold: { value : 0.0 },
+  		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_xy.vertexShader,
 		fragmentShader: shader_xy.fragmentShader,
@@ -59199,7 +59206,8 @@ function gen_datacube(g, canvas){
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[1] },  // initial in the center of data cube
   		size: { value: new threeplugins_THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
-  		threshold: 0.5
+  		threshold: { value : 0.0 },
+  		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_xz.vertexShader,
 		fragmentShader: shader_xz.fragmentShader,
@@ -59221,7 +59229,8 @@ function gen_datacube(g, canvas){
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[0] },  // initial in the center of data cube
   		size: { value: new threeplugins_THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
-  		threshold: 0.5
+  		threshold: { value : 0.0 },
+  		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_yz.vertexShader,
 		fragmentShader: shader_yz.fragmentShader,
@@ -59683,7 +59692,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
           side_context = side_canvas_el.getContext( 'webgl2' );
     	this.side_renderer = new threeplugins_THREE.WebGLRenderer({
     	  antialias: false, alpha: true,
-    	  canvas: side_canvas_el, context: side_context
+    	  canvas: side_canvas_el, context: side_context,
+    	  depths: false
     	});
     }else{
     	this.side_renderer = new threeplugins_THREE.WebGLRenderer( { antialias: false, alpha: true } );
@@ -60924,6 +60934,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.main_renderer.render( this.scene, this.main_camera );
 
     if(this.has_side_cameras){
+
+      // Disable side plane
+      this.side_plane_sendback( true );
+
       const _rh = this.side_renderer._render_height;
       // Cut side views
       // Threejs's origin is at bottom-left, but html is at topleft
@@ -60949,7 +60963,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
 
-
+      this.side_plane_sendback( false );
     }
 
   }
@@ -61491,6 +61505,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
   set_side_visibility( which, visible ){
     console.log('Set side visibility not implemented');
   }
+  side_plane_sendback( is_back ){
+    if( typeof this._side_plane_sendback === 'function' ){
+      this._side_plane_sendback( is_back );
+    }
+  }
+
   set_cube_anchor_visibility( visible ){
     if( this.compass ){
       this.compass.set_visibility( visible, () => {
@@ -61774,6 +61794,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
+    };
+    this._side_plane_sendback = ( sendback ) => {
+      m.forEach( (p) => {
+        p.material.uniforms.renderDepth.value = sendback ? 0.0 : 1.0;
+        p.material.needsUpdate = true;
+      });
     };
 
     this.set_side_visibility = ( which, visible ) => {
@@ -62858,8 +62884,8 @@ class src_BrainCanvas{
     this.has_webgl = false;
     this.has_webgl2 = false;
 
-    if ( WEBGL.isWebGLAvailable() === false ) {
-			this.el.appendChild( WEBGL.getWebGLErrorMessage() );
+    if ( WEBGL.isWebGL2Available() === false ) {
+			this.el.appendChild( WEBGL.getWebGL2ErrorMessage() );
 		}else{
 		  this.has_webgl = true;
 		  // Check webgl2
@@ -63119,12 +63145,13 @@ class src_BrainCanvas{
       }, 'overlay_sagittal');
 
       // show electrodes trimmed
-      gui.add_item('Dist. Threshold', 200, { folder_name: 'Side Canvas' })
-        .min(0).max(200).step(0.1)
+      gui.add_item('Dist. Threshold', 2, { folder_name: 'Side Canvas' })
+        .min(0).max(64).step(0.1)
         .onChange((v) => {
           this.canvas.trim_electrodes( v );
           this.canvas.start_animation( 0 );
         });
+      this.canvas.trim_electrodes( 2 );
 
       gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
         .onChange((v) => {

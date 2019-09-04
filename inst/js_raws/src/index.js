@@ -415,12 +415,13 @@ class BrainCanvas{
       }, 'overlay_sagittal');
 
       // show electrodes trimmed
-      gui.add_item('Dist. Threshold', 200, { folder_name: 'Side Canvas' })
-        .min(0).max(200).step(0.1)
+      gui.add_item('Dist. Threshold', 2, { folder_name: 'Side Canvas' })
+        .min(0).max(64).step(0.1)
         .onChange((v) => {
           this.canvas.trim_electrodes( v );
           this.canvas.start_animation( 0 );
         });
+      this.canvas.trim_electrodes( 2 );
 
       gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
         .onChange((v) => {
