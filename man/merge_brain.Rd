@@ -4,13 +4,15 @@
 \alias{merge_brain}
 \title{Create Multi-subject Template}
 \usage{
-merge_brain(..., .list = NULL,
+merge_brain(..., .list = NULL, template_surface_types = NULL,
   template_subject = getOption("threeBrain.template_subject", "N27"),
   template_dir = getOption("threeBrain.template_dir",
   "~/rave_data/others/three_brain"))
 }
 \arguments{
 \item{..., .list}{\code{Brain2} objects}
+
+\item{template_surface_types}{which template surface types to load, default is auto-guess}
 
 \item{template_subject}{character, subject code to be treated as template, default is `N27`}
 

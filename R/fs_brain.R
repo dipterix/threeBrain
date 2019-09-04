@@ -76,8 +76,9 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   nibabel = reticulate::import('nibabel')
 
   # Find folders
-
-  if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
+  if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
+    path_subject = normalizePath(file.path(fs_subject_folder, 'fs'), mustWork = mustWork)
+  }else if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
     path_subject = normalizePath(file.path(fs_subject_folder, 'rave', 'fs'), mustWork = mustWork)
   }else{
     path_subject = normalizePath(fs_subject_folder, mustWork = mustWork)

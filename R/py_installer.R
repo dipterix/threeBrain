@@ -220,7 +220,10 @@ ravepy_conda_install <- function(){
   reticulate::conda_create('RAVEPy', 'python=3')
 
   cat2('Looking for latest OpenMPI library', level = 'INFO')
-  reticulate::conda_install('RAVEPy', packages = 'mpi4py', forge = TRUE)
+  try({
+    reticulate::conda_install('RAVEPy', packages = 'mpi4py', forge = TRUE)
+  })
+
 
   # reticulate::conda_install('RAVEPy', packages = 'h5py', forge = TRUE)
 

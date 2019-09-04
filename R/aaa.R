@@ -49,9 +49,6 @@ brain_setup <- function(continued = FALSE, show_example = TRUE){
       ravepy_virtualenv_install()
     }
 
-    cat2('Step 3: Downloading N27 brain from the Internet.', level = 'INFO')
-    download_N27()
-
     # Try to restart
     restarted = FALSE
 
@@ -69,6 +66,10 @@ brain_setup <- function(continued = FALSE, show_example = TRUE){
       cat2('Please manually restart R. Go to "Session" > "Restart R", \nthen, enter \n\tthreeBrain::brain_setup(TRUE, TRUE)', level = 'WARNING')
     }
   }else{
+
+    cat2('Step 3: Downloading N27 brain from the Internet.', level = 'INFO')
+    download_N27()
+
     cat2('Wrapping up installation...', level = 'INFO')
     reticulate::import('nibabel')
 
