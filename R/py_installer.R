@@ -47,7 +47,7 @@ ravepy_check <- function(quiet = FALSE){
          Install Miniconda Python 3.x at
          \thttps://docs.conda.io/en/latest/miniconda.html\n
          first, and run
-         \trave::ravepy_conda_install()')
+         \tthreeBrain:::ravepy_conda_install()')
   }
 
 
@@ -67,7 +67,7 @@ ravepy_check <- function(quiet = FALSE){
   }, silent = TRUE)
 
   if(!using_ravepy){
-    stop('Please run \n\n\trave::ravepy_register() \n\nand restart R.')
+    stop('Please run \n\n\tthreeBrain:::ravepy_register() \n\nand restart R.')
   }
 
   h5py = reticulate::import('h5py')
@@ -83,11 +83,12 @@ ravepy_check <- function(quiet = FALSE){
 #' @usage ravepy_register()
 ravepy_register <- function(){
   # Create startup file
-  if(!length(startup::find_rprofile())){
-    startup::install()
-  }
+  startup::install(overwrite = TRUE, backup = TRUE)
+  # Find .Rprofile.d
+  profile_d = startup::find_rprofile_d()
+  dir.create(profile_d, recursive = TRUE, showWarnings = FALSE)
+  p = normalizePath(file.path(profile_d, 'rave_python.R'), mustWork = FALSE)
 
-  p = normalizePath(startup::find_rprofile(all = FALSE), mustWork = FALSE)
   if(file.exists(p)){
     s = readLines(p)
     if(length(s)){
