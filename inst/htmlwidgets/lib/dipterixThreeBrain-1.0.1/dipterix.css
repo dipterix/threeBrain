@@ -2,6 +2,10 @@
   display: none!important;
 }
 
+#webglmessage {
+  position: absolute;
+}
+
 .threejs-control .dg .c,
 .threejs-control .dg button,
 .threejs-control .dg input,

@@ -258,12 +258,21 @@ ravepy_download_miniconda_windows <- function(){
   url = 'https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe'
   dest_file = file.path(tempdir(check = TRUE), 'Miniconda3-latest-Windows-x86_64.exe')
   utils::download.file(url, dest_file, cacheOK = TRUE, mode = 'wb')
+  on.exit({ unlink(dest_file) })
   system(sprintf('"%s"', dest_file), minimized = FALSE, invisible = FALSE, wait = TRUE)
 }
 ravepy_download_miniconda_osx <- function(){
   url = 'https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh'
-  dest_file = '~/Downloads/Miniconda3-latest-MacOSX-x86_64.sh'
+  dest_file = file.path(tempdir(check = TRUE), 'Miniconda3-latest-MacOSX-x86_64.sh')
   utils::download.file(url, dest_file, cacheOK = TRUE)
+  on.exit({ unlink(dest_file) })
+  system(sprintf('sh "%s" -b -u', normalizePath(dest_file)), wait = TRUE)
+}
+ravepy_download_miniconda_linux <- function(){
+  url = 'https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh'
+  dest_file = file.path(tempdir(check = TRUE), 'Miniconda3-latest-Linux-x86_64.sh')
+  utils::download.file(url, dest_file, cacheOK = TRUE)
+  on.exit({ unlink(dest_file) })
   system(sprintf('sh "%s" -b -u', normalizePath(dest_file)), wait = TRUE)
 }
 
