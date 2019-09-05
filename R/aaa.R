@@ -14,9 +14,9 @@ NULL
 #' @param continued logical, there are two phases of setting up environment. You
 #' probably need to restart R session after the first phase and continue setting up.
 #' @param show_example whether to show example of `N27` subject at the end.
-#' @param use_conda use conda to create RAVEPy environment
+#' @param try_conda try to use conda to create RAVEPy environment
 #' @export
-brain_setup <- function(continued = FALSE, show_example = TRUE, use_conda = FALSE){
+brain_setup <- function(continued = FALSE, show_example = TRUE, try_conda = TRUE){
   if( !continued ){
     cat2('Step 1: checking python environment', level = 'INFO')
     info = ravepy_info()
@@ -47,7 +47,7 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, use_conda = FALS
 
     if( !length(installed) || !installed %in% c('conda', 'virtualenv') ){
       cat2('Configure environment RAVEPy.', level = 'INFO')
-      if( use_conda ){
+      if( try_conda && length( ravepy_find_conda_path(add_to_path = FALSE) ) ){
         ravepy_conda_install()
       }else{
         ravepy_virtualenv_install()

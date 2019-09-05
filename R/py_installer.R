@@ -295,7 +295,7 @@ ravepy_find_conda_path <- function(add_to_path = TRUE){
       conda_path = '~/../miniconda3/condabin/'
     }
   }
-  if( !length(conda_path) ){
+  if( !length(conda_path) || !dir.exists(conda_path) ){
     return(invisible())
   }
   conda_path = normalizePath(conda_path)
