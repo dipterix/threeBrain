@@ -532,8 +532,11 @@ class BrainCanvas{
         }
       });
 
-      // Set subject, TODO: use N27 as default?
-      this.canvas.switch_subject();
+      // If this is a brain viewer
+      if( to_array( this.settings.control_presets ).includes('subject2') ){
+        // Set subject, TODO: use N27 as default?
+        this.canvas.switch_subject();
+      }
 
       let gui = this._register_gui_control();
       this._set_info_callback();

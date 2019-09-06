@@ -31,7 +31,7 @@ function gen_free(g, canvas){
   gb.name = 'geom_free_' + g.name;
 
   // https://github.com/mrdoob/three.js/issues/3490
-  let material = new THREE.MeshLambertMaterial({ 'transparent' : false });
+  let material = new THREE.MeshLambertMaterial({ 'transparent' : true });
 
   let mesh = new THREE.Mesh(gb, material);
   mesh.name = 'mesh_free_' + g.name;

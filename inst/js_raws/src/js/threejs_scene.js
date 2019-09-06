@@ -727,8 +727,8 @@ class THREEBRAIN_CANVAS {
 
   register_main_canvas_events(){
 
-    this.main_canvas.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    this.main_canvas.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
 
     this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 2){
@@ -2648,6 +2648,7 @@ class THREEBRAIN_CANVAS {
     state.set( 'target_subject', target_subject );
 
     let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
+
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
     let volume_type = args.volume_type || state.get( 'volume_type' ) || 'brain.finalsurfs';
@@ -2658,9 +2659,13 @@ class THREEBRAIN_CANVAS {
     }
     let map_type_surface = args.map_type_surface || state.get( 'map_type_surface' ) || 'std.141';
     let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
+    let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
+    let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
 
     this.switch_volume( target_subject, volume_type );
-    this.switch_surface( target_subject, surface_type, [material_type_left, material_type_right] );
+    this.switch_surface( target_subject, surface_type,
+                          [surface_opacity_left, surface_opacity_right],
+                          [material_type_left, material_type_right] );
 
     if( map_template ){
       this.map_electrodes( target_subject, map_type_surface, map_type_volume );
@@ -2678,12 +2683,14 @@ class THREEBRAIN_CANVAS {
     state.set( 'map_template', map_template );
     state.set( 'map_type_surface', map_type_surface );
     state.set( 'map_type_volume', map_type_volume );
+    state.set( 'surface_opacity_left', surface_opacity_left );
+    state.set( 'surface_opacity_right', surface_opacity_right );
 
     this.start_animation( 0 );
 
   }
 
-  switch_surface( target_subject, surface_type = 'pial', material_type = ['normal', 'normal'] ){
+  switch_surface( target_subject, surface_type = 'pial', opacity = [1, 1], material_type = ['normal', 'normal'] ){
     // this.surfaces[ subject_code ][ g.name ] = m;
     // Naming - Surface         Standard 141 Right Hemisphere - pial (YAB)
     // or FreeSurfer Right Hemisphere - pial (YAB)
@@ -2702,6 +2709,8 @@ class THREEBRAIN_CANVAS {
             }else{
               m.material.wireframe = ( material_type[0] === 'wireframe' );
               m.visible = true;
+              m.material.opacity = opacity[0];
+              m.material.transparent = opacity[0] < 0.99;
             }
           }else if(
             surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
@@ -2712,6 +2721,8 @@ class THREEBRAIN_CANVAS {
             }else{
               m.material.wireframe = ( material_type[1] === 'wireframe' );
               m.visible = true;
+              m.material.opacity = opacity[1];
+              m.material.transparent = opacity[1] < 0.99;
             }
 
             // Re-calculate controls center so that rotation center is the center of mesh bounding box

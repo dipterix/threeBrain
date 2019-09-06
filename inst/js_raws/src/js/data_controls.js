@@ -669,30 +669,50 @@ class THREEBRAIN_PRESETS{
 
     const lh_ctrl = this.gui.add_item('Left Hemisphere', 'normal', { args : options, folder_name : folder_name })
       .onChange((v) => {
-        this.canvas.switch_subject( '/', {
-          'material_type_left': v
-        });
+        this.canvas.switch_subject( '/', { 'material_type_left': v });
+      });
+
+    const lh_trans = this.gui.add_item('Left Opacity', 1.0, { folder_name : folder_name })
+    .min( 0.1 ).max( 1 ).step( 0.1 )
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
       });
 
     const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
       .onChange((v) => {
-        this.canvas.switch_subject( '/', {
-          'material_type_right': v
-        });
+        this.canvas.switch_subject( '/', { 'material_type_right': v });
+      });
+
+    const rh_trans = this.gui.add_item('Right Opacity', 1.0, { folder_name : folder_name })
+    .min( 0.1 ).max( 1 ).step( 0.1 )
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
       });
 
     // add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_LEFT, (evt) => {
-      let current_idx = (options.indexOf( lh_ctrl.getValue() ) + 1) % options.length;
-      if( current_idx >= 0 ){
-        lh_ctrl.setValue( options[ current_idx ] );
+      if( evt.event.shiftKey ){
+        let current_opacity = lh_trans.getValue() - 0.3;
+        if( current_opacity < 0 ){ current_opacity = 1; }
+        lh_trans.setValue( current_opacity );
+      }else{
+        let current_idx = (options.indexOf( lh_ctrl.getValue() ) + 1) % options.length;
+        if( current_idx >= 0 ){
+          lh_ctrl.setValue( options[ current_idx ] );
+        }
       }
     }, 'gui_left_cycle');
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_RIGHT, (evt) => {
-      let current_idx = (options.indexOf( rh_ctrl.getValue() ) + 1) % options.length;
-      if( current_idx >= 0 ){
-        rh_ctrl.setValue( options[ current_idx ] );
+      if( evt.event.shiftKey ){
+        let current_opacity = rh_trans.getValue() - 0.3;
+        if( current_opacity < 0 ){ current_opacity = 1; }
+        rh_trans.setValue( current_opacity );
+      }else{
+        let current_idx = (options.indexOf( rh_ctrl.getValue() ) + 1) % options.length;
+        if( current_idx >= 0 ){
+          rh_ctrl.setValue( options[ current_idx ] );
+        }
       }
     }, 'gui_right_cycle');
   }

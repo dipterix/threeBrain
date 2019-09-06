@@ -48,6 +48,20 @@
 #' @param additional_surfaces character array, additional surface types to load, such as `white`, `smoothwm`
 #' @param use_cache logical, whether to use cached json files or from raw `FreeSurfer` files
 #' @param use_141 logical, whether to use standard 141 brain for surface file
+#'
+#' @examples
+#' \donttest{
+#' # Please run `download_N27()` if `N27` is not at '~/rave_data/others/three_brain/'
+#'
+#' # Import from `FreeSurfer` subject folder
+#' brain = threeBrain::freesurfer_brain(
+#'   fs_subject_folder = '~/rave_data/others/three_brain/N27/', subject_name = 'N27',
+#'   additional_surfaces = c('white', 'smoothwm')
+#' )
+#'
+#' # Visualize. Alternatively, you can use brain$plot(...)
+#' plot( brain )
+#' }
 #' @name freesurfer_brain
 #' @export
 freesurfer_brain <- function(fs_subject_folder, subject_name,
@@ -72,8 +86,13 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   mustWork = TRUE
 
 
-  # Main
-  nibabel = reticulate::import('nibabel')
+  # Main get mgz loader
+  mgz_loader = tryCatch({
+    nibabel = reticulate::import('nibabel')
+    nibabel$load
+  }, error = function(e){
+    read_fs_mgh_mgz
+  })
 
   # Find folders
   if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
@@ -92,7 +111,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   path_surf = normalizePath(file.path(path_subject, 'surf'), mustWork = FALSE)
 
   # Get general information from fs output
-  brain_finalsurf = nibabel$load(path_brainfinal)
+  brain_finalsurf = mgz_loader(path_brainfinal)
   # get Norig
   Norig = brain_finalsurf$header$get_vox2ras()
   Torig = brain_finalsurf$header$get_vox2ras_tkr()
@@ -464,20 +483,38 @@ electrode_mapped_141 <- function(position = c(0,0,0), is_surface, vertex_number,
 
 
 load_surface_asc_gii_nii <- function(file){
-  nibabel = reticulate::import('nibabel')
+
   if( stringr::str_ends(stringr::str_to_lower(file), '\\.asc') ){
     surf = read_fs_asc(file)
     surf$vertices = surf$vertices[,1:3]
     surf$faces = surf$faces[,1:3]
   }else if( stringr::str_ends(stringr::str_to_lower(file), '\\.gii') ){
-    tmp = nibabel$load(file)
-    vertices = tmp$darrays[[1]]$data[,1:3]
-    faces = tmp$darrays[[2]]$data[,1:3]
-    surf = list(
-      header = c(nrow(vertices), nrow(faces)),
-      vertices = vertices,
-      faces = faces
-    )
+    # Check if python version is available
+    surf = tryCatch({
+      # Use python nibabel to load
+      nibabel = reticulate::import('nibabel')
+      tmp = nibabel$load(file)
+      vertices = tmp$darrays[[1]]$data[,1:3]
+      faces = tmp$darrays[[2]]$data[,1:3]
+      surf = list(
+        header = c(nrow(vertices), nrow(faces)),
+        vertices = vertices,
+        faces = faces
+      )
+      surf
+    }, error = function(e){
+      # Use gifti R package to load
+      tmp = gifti::readgii(file)
+      vertices = tmp$data$pointset[,1:3]
+      faces = tmp$data$triangle[,1:3]
+      surf = list(
+        header = c(nrow(vertices), nrow(faces)),
+        vertices = vertices,
+        faces = faces
+      )
+      surf
+    })
+
   }else if( stringr::str_ends(stringr::str_to_lower(file), '\\.nii') ){
     stop('Support for Nifti file has not been implemented')
   }else{

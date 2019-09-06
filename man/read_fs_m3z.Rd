@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{read_fs_m3z}
 \alias{read_fs_m3z}
-\title{Read 'FreeSurfer` m3z file}
+\title{Read `FreeSurfer` m3z file}
 \usage{
 read_fs_m3z(filename)
 }
@@ -13,7 +13,7 @@ read_fs_m3z(filename)
 registration data
 }
 \description{
-Read 'FreeSurfer` m3z file
+Read `FreeSurfer` m3z file
 }
 \details{
 An `m3z` file is a gzipped binary file containing a dense vector

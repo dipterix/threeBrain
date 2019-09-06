@@ -64,18 +64,20 @@ threejs_brain(s1, s2)
 # Example 2: cache
 \donttest{
 # download N27 brain
-download_N27_surface(surfaces = 'pial')
+# Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
+# download_N27()
 
-dat = threeBrain:::read_fs_asc('~/rave_data/others/three_brain/N27/std.141.lh.pial.asc')
+dat = threeBrain::read_fs_asc('~/rave_data/others/three_brain/N27/surf/lh.pial.asc')
 vertex = dat$vertices[,1:3]
 face = dat$faces[,1:3]
 
 # 1. dynamically serialize
-mesh = geom_freemesh('Left Hemisphere', vertex = vertex, face = face)
+mesh = geom_freemesh('lh', vertex = vertex, face = face, layer = 1)
 pryr::object_size(mesh) # ~10 MB
 threejs_brain(mesh) # ~3 seconds to serialize
 
 # 2. cache
+Create group, all geometries in this group are relatively positioned
 tmp_file = tempfile()
 mesh = geom_freemesh('Left Hemisphere cached', vertex = vertex,
                      face = face, cache_file = tmp_file)

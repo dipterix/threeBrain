@@ -32,46 +32,37 @@ However, it's always recommended to pass a group to the free mesh.
 }
 \examples{
 \donttest{
-# Download N27 smoothed white matter
-download_N27_surface(surfaces = c('pial', 'white', 'smoothwm'))
+# Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
+# threeBrain::download_N27()
 
+n27_dir = '~/rave_data/others/three_brain/N27/'
+surf_type = 'pial'
 
-# Load different types of hemispheres
-surfaces = c('pial')
+# Locate mesh files
+lh = read_fs_asc(file.path(n27_dir, sprintf('surf/lh.\%s.asc', surf_type)))
+rh = read_fs_asc(file.path(n27_dir, sprintf('surf/rh.\%s.asc', surf_type)))
 
-# Generate N27 group
-groups = list(
-  create_group('Left Hemisphere'),
-  create_group('Right Hemisphere')
+# Create groups
+group = create_group(name = sprintf('Surface - \%s (N27)', surf_type))
+
+# create mesh
+lh_mesh = geom_freemesh(
+  name = sprintf('FreeSurfer Left Hemisphere - \%s (N27)', surf_type),
+  vertex = lh$vertices[,1:3],
+  face = lh$faces[,1:3],
+  group = group
+)
+rh_mesh = geom_freemesh(
+  name = sprintf('FreeSurfer Right Hemisphere - \%s (N27)', surf_type),
+  vertex = rh$vertices[,1:3],
+  face = rh$faces[,1:3],
+  group = group
 )
 
-g = lapply(surfaces, function(s){
-  path = sprintf(
-    '~/rave_data/others/three_brain/N27/std.141.\%sh.\%s.asc',
-    c('l', 'r'), s)
-  cache = sprintf(
-    '~/rave_data/others/three_brain/N27/N27_std_141_\%sh_\%s.json',
-    c('l', 'r'), s)
-  lapply(1:2, function(ii){
-    side = c('l', 'r')[ii]
-    name = sprintf('\%sh - \%s (Template N27)', side, s)
-
-    if(file.exists(cache[[ii]])){
-
-      # For Hemispheres, the name should be fixed: l/rh - surf_type (subject)
-      geom_freemesh(name, group = groups[[ii]], cache_file = cache[[ii]])
-    }else{
-      dat = threeBrain:::read_fs_asc(path[[ii]])
-      vertex = dat$vertices[,1:3]
-      face = dat$faces[,1:3]
-      geom_freemesh(name, vertex = vertex, face = face,
-                    group = groups[[ii]], cache_file = cache[[ii]])
-    }
-  })
-})
 
 # Render
-threejs_brain(.list = g[[1]], control_presets = c('lh_material', 'rh_material'))
+threejs_brain(lh_mesh, rh_mesh)
+
 
 
 }

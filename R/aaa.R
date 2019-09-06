@@ -14,10 +14,11 @@ NULL
 #' @param continued logical, there are two phases of setting up environment. You
 #' probably need to restart R session after the first phase and continue setting up.
 #' @param show_example whether to show example of `N27` subject at the end.
+#' @param use_python whether to install python toolbox (recommended)
 #' @param try_conda try to use conda to create RAVEPy environment
 #' @export
-brain_setup <- function(continued = FALSE, show_example = TRUE, try_conda = TRUE){
-  if( !continued ){
+brain_setup <- function(continued = FALSE, show_example = TRUE, use_python=TRUE, try_conda = TRUE){
+  if( use_python && !continued ){
     cat2('Step 1: checking python environment', level = 'INFO')
     info = ravepy_info()
 
@@ -72,11 +73,14 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, try_conda = TRUE
     }
   }else{
 
+    if( !use_python ){
+      cat2('Skipping step 1-2...', level = 'INFO')
+    }
+
     cat2('Step 3: Downloading N27 brain from the Internet.', level = 'INFO')
     download_N27()
 
     cat2('Wrapping up installation...', level = 'INFO')
-    reticulate::import('nibabel')
 
     template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
     freesurfer_brain(fs_subject_folder = file.path(template_dir, 'N27'),

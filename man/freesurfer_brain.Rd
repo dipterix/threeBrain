@@ -65,6 +65,20 @@ Currently, only linear `Talairach` transform matrix is supported (located at
 4. Coordinates
 The 3D viewer in this package uses the center of volume as the origin (0, 0, 0).
 }
+\examples{
+\donttest{
+# Please run `download_N27()` if `N27` is not at '~/rave_data/others/three_brain/'
+
+# Import from `FreeSurfer` subject folder
+brain = threeBrain::freesurfer_brain(
+  fs_subject_folder = '~/rave_data/others/three_brain/N27/', subject_name = 'N27',
+  additional_surfaces = c('white', 'smoothwm')
+)
+
+# Visualize. Alternatively, you can use brain$plot(...)
+plot( brain )
+}
+}
 \author{
 Zhengjia Wang
 }
