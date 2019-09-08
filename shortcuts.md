@@ -1,0 +1,27 @@
+# 3D Brain Viewer Shortcuts
+
+
+|Target     |Key                         |Function                                                      |Mode                                  |
+|:----------|:---------------------------|:-------------------------------------------------------------|:-------------------------------------|
+|Camera     |z                           |Zoom out                                                      |                                      |
+|Camera     |Shift + z                   |Zoom in                                                       |                                      |
+|Animation  |s                           |Play/pause animation                                          |                                      |
+|Surface    |[                           |Cycle through [Mesh]/[Wireframe]/[Hidden], (Left hemisphere)  |                                      |
+|Surface    |]                           |Cycle through [Mesh]/[Wireframe]/[Hidden], (Right hemisphere) |                                      |
+|Surface    |Shift + [                   |Left hemisphere transparency                                  |                                      |
+|Surface    |Shift + ]                   |Right hemisphere transparency                                 |                                      |
+|Surface    |p                           |Cycle through different surface types                         |                                      |
+|3 Plane    |Shift + A                   |Show/hide Axial plane in main view                            |                                      |
+|3 Plane    |Shift + S                   |Show/hide Sagittal plane in main view                         |                                      |
+|3 Plane    |Shift + C                   |Show/hide Coronal plane in main view                          |                                      |
+|Electrodes |,                           |Previous electrode                                            |                                      |
+|Electrodes |.                           |Next electrode                                                |                                      |
+|3 Plane    |Alt (Option ⌥) + Mouse Scroll |Change volume slice number (mouse must be on 3 planes)        |                                      |
+|Electrodes |Right Click on Electrodes   |Align Axial,Sagittal,Coronal planes to selected electrode     |                                      |
+|Camera     |Control (⌃) + Mouse Drag           |Move camera [Left <-> Right]                                  |                                      |
+|Camera     |Shift + Mouse Drag          |Move camera [Up <-> Down]                                     |                                      |
+|Camera     |Alt (Option ⌥) + Mouse Drag   |Move camera [Clockwise <-> Counter-Clockwise]                 |                                      |
+|Electrodes |1                           |New electrode                                                 |Electrode localization (Experimental) |
+|Electrodes |4                           |Toggle electrode type (surface/depth)                         |Electrode localization (Experimental) |
+|Electrodes |`                           |Edit next electrode                                           |Electrode localization (Experimental) |
+|Electrodes |Shift + `                   |Edit previous electrode                                       |Electrode localization (Experimental) |

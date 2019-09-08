@@ -14,7 +14,6 @@
 #' @param scale 'auto', \code{NULL}, or numeric, rescale the final coordinates.
 #'              Default 1, no re-scale.
 #' @param axis logical, draw axis.
-#' @param show_legend logical, show legend.
 #' @param control_panel logical, show sidebar (control panel).
 #' @param control_presets if control_panel is true, which widgets to show.
 #' @param camera_pos initial camera position, auto assign if missing.
@@ -42,8 +41,7 @@
 #' @export
 three_scatter <- function(
   x, y, z, size = 1, col = 1, label = NULL, group = 1, timestamp = NULL, pal = NULL,
-  scale = 1, axis = TRUE, control_panel = TRUE,
-  control_presets = NULL, camera_pos, ...
+  scale = 1, axis = TRUE, control_panel = TRUE, control_presets = NULL, camera_pos, ...
 ){
   maxl = max(length(x),length(y),length(z))
   rec = function(d, max_len = maxl){

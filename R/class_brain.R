@@ -767,7 +767,7 @@ Brain2 <- R6::R6Class(
         symmetric = symmetric,
         side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
-        show_legend = show_legend, default_colormap = default_colormap,
+        default_colormap = default_colormap,
         width = width, height = height, debug = debug, token = token,
         browser_external = browser_external, global_data = global_data, ...)
     }

@@ -36,8 +36,6 @@ Default 1, no re-scale.}
 \item{camera_pos}{initial camera position, auto assign if missing.}
 
 \item{...}{other arguments passing to \code{threejs_brain}.}
-
-\item{show_legend}{logical, show legend.}
 }
 \description{
 3D Scatter Plot

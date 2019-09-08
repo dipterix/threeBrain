@@ -6,6 +6,7 @@
 ^\.Rproj\.user$
 ^\.travis.yml$
 ^cran-comments\.md$
+^shortcuts\.md$
 ^README\.md$
 ^adhoc/
 .git
