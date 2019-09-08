@@ -64,7 +64,7 @@
 #' threejs_brain(mesh) # ~3 seconds to serialize
 #'
 #' # 2. cache
-#' Create group, all geometries in this group are relatively positioned
+#' # Create group, all geometries in this group are relatively positioned
 #' tmp_file = tempfile()
 #' mesh = geom_freemesh('Left Hemisphere cached', vertex = vertex,
 #'                      face = face, cache_file = tmp_file)
@@ -94,8 +94,7 @@ create_group <- function(name, position = c(0,0,0), layer = 1){
 #'   v[1:ii] = 1:ii
 #'   geom_sphere(paste0('s', ii), ii, value = v, position = c(11 * ii, 0,0), time_stamp = (1:10)/10)
 #' })
-#' threejs_brain(.list = g, control_presets = 'animation',
-#'               value_range = c(0, 10), time_range = c(0.1, 1))
+#' threejs_brain(.list = g)
 #' @export
 geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL, value = NULL, time_stamp = NULL){
   SphereGeom$new(name = name, position = position, radius = radius, group = group, value = value, time_stamp = time_stamp, layer = layer)

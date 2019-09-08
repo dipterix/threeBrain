@@ -8,13 +8,11 @@ threejs_brain(..., .list = list(), width = NULL, height = NULL,
   side_canvas = FALSE, side_zoom = 1, side_width = 250,
   side_shift = c(0, 0), control_panel = TRUE, control_presets = NULL,
   camera_center = c(0, 0, 0), camera_pos = c(0, 0, 500),
-  start_zoom = 1, coords = NULL, time_range = NULL,
-  color_type = "continuous", color_ramp = c("navyblue", "#e2e2e2",
-  "red"), value_range = NULL, symmetric = 0, n_color = 64,
-  color_names = seq_along(color_ramp), show_legend = TRUE,
-  legend_title = "Value", widget_id = "threebrain_data",
-  tmp_dirname = NULL, debug = FALSE, token = NULL,
-  optionals = list(), browser_external = TRUE, global_data = list())
+  start_zoom = 1, coords = NULL, symmetric = 0,
+  default_colormap = "Value", palettes = NULL,
+  widget_id = "threebrain_data", tmp_dirname = NULL, debug = FALSE,
+  token = NULL, optionals = list(), browser_external = TRUE,
+  global_data = list())
 }
 \arguments{
 \item{..., .list}{geometries inherit from AbstractGeom}
@@ -42,24 +40,11 @@ By default width=`100\%`, and height varies.}
 
 \item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
 
-\item{time_range}{numerical, length two, ascending. Used to specify animation time range}
-
-\item{color_type}{character, either 'continuous' or 'discrete'}
-
-\item{color_ramp}{characters, used to generate color ramps}
-
-\item{value_range}{numerical, length two, ascending. Used to generate continuous colors}
-
 \item{symmetric}{numerical, default 0, color center will be mapped to this value}
 
-\item{n_color}{positive integer. How many colors in the color ramp (used by continuous legend)}
+\item{default_colormap}{character, which colormap name to display at startup}
 
-\item{color_names}{characters, color names, should share the same length as
-color_ramp (used by discrete legend)}
-
-\item{show_legend}{logical, show legend in control panel?}
-
-\item{legend_title}{character, legend title (not used)}
+\item{palettes}{named list, names corresponds to colormap names if you want to change color palettes}
 
 \item{widget_id}{character, internally used as unique identifiers for widgets.
 Only use it when you have multiple widgets in one website}

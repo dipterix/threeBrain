@@ -30,8 +30,7 @@ g = lapply(1:10, function(ii){
   v[1:ii] = 1:ii
   geom_sphere(paste0('s', ii), ii, value = v, position = c(11 * ii, 0,0), time_stamp = (1:10)/10)
 })
-threejs_brain(.list = g, control_presets = 'animation',
-              value_range = c(0, 10), time_range = c(0.1, 1))
+threejs_brain(.list = g)
 }
 \author{
 Zhengjia Wang

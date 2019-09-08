@@ -3,16 +3,19 @@ import { to_array } from '../utils.js';
 
 function gen_sphere(g, canvas){
   const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
-      values = to_array(g.value);
-  let material;
+      values = g.keyframes,
+      n_keyframes = to_array( g.keyframes ).length;
+  let material_basic = new THREE.MeshBasicMaterial({ 'transparent' : false }),
+      material_lambert = new THREE.MeshLambertMaterial({ 'transparent' : false }),
+      material;
   gb.name = 'geom_sphere_' + g.name;
 
   // Make material based on value
-  if(values.length === 0){
-    material = new THREE.MeshLambertMaterial({ 'transparent' : false });
-  }else{
+  if( n_keyframes > 0 ){
     // Use the first value
-    material = new THREE.MeshBasicMaterial({ 'transparent' : false });
+    material = material_basic;
+  }else{
+    material = material_lambert;
   }
 
   const mesh = new THREE.Mesh(gb, material);
@@ -36,29 +39,67 @@ function gen_sphere(g, canvas){
     mesh.position.fromArray(g.position);
   }
 
+  if( n_keyframes > 0 ){
+    mesh.userData.ani_exists = true;
+  }
+  mesh.userData.ani_params = {...values};
+  mesh.userData.ani_name = 'default';
+  mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
 
-  mesh.userData.ani_value = values;
-  mesh.userData.ani_time = to_array(g.time_stamp);
+  mesh.userData.get_track_data = ( track_name, reset_material ) => {
+    let re;
 
-  if(values.length > 0){
-    // Set animation keyframes, will set material color
-    mesh.userData.generate_keyframe_tracks = () => {
-      let cols = [], time_stamp = [];
-      mesh.userData.ani_value.forEach((v) => {
+    if( mesh.userData.ani_exists ){
+      if( track_name === undefined ){ track_name = mesh.userData.ani_name; }
+      re = values[ track_name ];
+    }
+
+    if( reset_material ){
+      if( re ){
+        mesh.material = material_basic;
+      }else{
+        mesh.material = material_lambert;
+      }
+    }
+
+    return( re );
+  };
+
+
+  // Set animation keyframes, will set material color
+  // Not used. to be deleted
+  mesh.userData.generate_keyframe_tracks = ( track_name ) => {
+    if( !values ){ return( undefined ); }
+    if( track_name === undefined ){
+      track_name = mesh.userData.ani_name;
+    }else{
+      mesh.userData.ani_name = track_name;
+    }
+    const cols = [], time_stamp = [];
+    const ani_data = values[ track_name ];
+
+    if( ani_data ){
+
+      mesh.material = material_basic;
+
+      to_array( ani_data.value ).forEach((v) => {
         let c = canvas.get_color(v);
         cols.push( c.r, c.g, c.b );
       });
-      mesh.userData.ani_time.forEach((v) => {
+      to_array( ani_data.key_frame ).forEach((v) => {
         time_stamp.push( v - canvas.time_range_min );
       });
       return([new THREE.ColorKeyframeTrack(
         '.material.color',
         time_stamp, cols, THREE.InterpolateDiscrete
       )]);
+    }else{
+      // No animation for current mesh, set to MeshLambertMaterial
+      mesh.material = material_lambert;
+      return( undefined );
+    }
 
-    };
-
-  }
+  };
 
   return(mesh);
 }

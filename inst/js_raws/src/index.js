@@ -53,10 +53,10 @@ class BrainCanvas{
     this.el_control.appendChild( this.gui_placeholder );
     this.el_side.appendChild( this.el_control );
 
-    this.el_legend = document.createElement('div');
-    //this.el_legend_img = document.createElement('img');
-    this.el_legend.style.width = '100px';
-    this.el_legend.style.display = 'none';
+    // this.el_legend = document.createElement('div');
+    // this.el_legend_img = document.createElement('img');
+    // this.el_legend.style.width = '100px';
+    // this.el_legend.style.display = 'none';
     // this.el_legend.style.pointerEvents = 'none';
     // this.el_legend.style.padding = '10px';
     // this.el_legend.style.backgroundColor = 'rgba(255,255,255,0.2)';
@@ -134,21 +134,6 @@ class BrainCanvas{
 
   }
 
-  /*
-  set_legend_value(x, y, title = ''){
-    if( x && y ){
-      this.legend_data.content.sparks.data = {
-        'x' : x,
-        'y' : y
-      };
-    }
-
-    if( this.show_legend ){
-      this.legend._render_graph('sparks', title);
-    }
-
-  }
-  */
 
   check_webgl(){
     this.has_webgl = false;
@@ -434,6 +419,9 @@ class BrainCanvas{
 
     // ---------------------------- Presets
     to_array( control_presets ).forEach((control_preset) => {
+      if( control_preset === 'animation' ){
+        return(null);
+      }
       try {
         presets[control_preset]();
         // console.log(control_preset);
@@ -449,6 +437,18 @@ class BrainCanvas{
         }
       }
     });
+
+    if( to_array( this.settings.color_maps ).length > 0 ){
+      // Add animation
+      let _ani_names = Object.keys( this.settings.color_maps ),
+          _ani_init = this.settings.default_colormap;
+      if( !_ani_init || !_ani_names.includes( _ani_init )){
+        _ani_init = _ani_names[0];
+      }
+      presets.animation('Timeline', 0.001, _ani_names, _ani_init);
+      gui.open_folder('Timeline');
+    }
+
 
     // ---------------------------- Misc
     gui.add_folder('Misc');
@@ -470,27 +470,7 @@ class BrainCanvas{
       });
 
 
-    const _legend_callback = (v) => {
-      this.show_legend = v;
-      let d = v? 'block' : 'none';
-      this.el_legend.style.display = d;
-      this.canvas.render_legend = v;
-      if(this.canvas.lut){
-        this.canvas.lut.color_type = this.settings.color_type ? this.settings.color_type : 'continuous';
-        if( this.canvas.lut.color_type === 'discrete' ){
-
-          this.canvas.lut.color_names = to_array(this.settings.color_names);
-
-        }
-      }
-
-      this.canvas.start_animation(0);
-
-    };
-    gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Misc'})
-      .onChange(_legend_callback);
-
-    _legend_callback(this.settings.show_legend);
+    this.canvas.render_legend = this.settings.show_legend;
 
     /*
     gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
@@ -541,8 +521,6 @@ class BrainCanvas{
       let gui = this._register_gui_control();
       this._set_info_callback();
 
-      // Generate animations
-      this.canvas.generate_animation_clips();
 
       this.canvas.start_animation(0);
 
@@ -684,46 +662,22 @@ class BrainCanvas{
       return(re);
     };
 
-    /*
-    // sparks
-    this.legend_data.layout[0].xlim = this.settings.time_range;
-    this.legend_data.layout[0].ylim = this.settings.value_range;
-    this.legend_data.content.sparks.axis[0].at = make_sequence(this.settings.time_range, 4, true);
-    this.legend_data.content.sparks.axis[1].at = make_sequence(this.settings.value_range, 4, true);
-
-    // colorbar
-    this.legend_data.layout[1].xlim = [1,1];
-    this.legend_data.layout[1].ylim = this.settings.value_range;
-    this.legend_data.layout[1].zlim = this.settings.value_range;
-    this.legend_data.content.colorbar.axis[0].at = make_sequence(this.settings.value_range, 4, true);
-    this.legend_data.content.colorbar.data = {
-      'x' : [1], 'y' : make_sequence(this.settings.value_range, 100, false),
-      'z' : [make_sequence(this.settings.value_range, 100, false)]
-    };
-
-    this.legend_data.content.colorbar.geom_traces.heatmap.palette = this.settings.colors.map((v) => { return(v[1].replace(/^0x/, '#')) });
-
-    // render legend
-    if( this.show_legend ){
-      this.legend._render_graph('colorbar');
-      this.legend._render_graph('sparks');
-    }
-    */
-
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();
 
-    this.canvas.set_time_range(
-      this.settings.time_range[0],
-      this.settings.time_range[1]
-    );
+    to_array( this.settings.color_maps ).forEach((v) => {
+      this.canvas.add_colormap(
+        v.name,
+        v.value_type,
+        v.value_names,
+        v.value_range,
+        v.time_range,
+        v.color_keys,
+        v.color_vals,
+        v.color_levels
+      );
+    });
 
-    this.canvas.set_colormap(
-      this.settings.colors,
-      this.settings.value_range[0],
-      this.settings.value_range[1],
-      this.outputId
-    );
 
     // load data
     this.canvas.loader_triggered = false;

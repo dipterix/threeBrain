@@ -214,8 +214,7 @@ BrainElectrodes <- R6::R6Class(
     objects = NULL,
 
     # a list storing values
-    values = NULL,
-    value_names = NULL,
+    value_table = NULL,
 
     # electrode group
     group = NULL,
@@ -230,8 +229,22 @@ BrainElectrodes <- R6::R6Class(
 
     initialize = function(subject_code){
       self$group = GeomGroup$new(name = sprintf('Electrodes (%s)', subject_code), position = c(0,0,0))
-      self$values = list()
       self$set_subject_code( subject_code )
+    },
+
+    apply_electrodes = function(fun, check_valid = TRUE){
+      n_elec = length(self$objects)
+      if(!n_elec){
+        return(list())
+      }
+      lapply(seq_len( n_elec ), function( ii ){
+        el = self$objects[[ii]]
+        if( !is.null(el) || !check_valid ){
+          return(fun(el, ii))
+        }else{
+          return(NULL)
+        }
+      })
     },
 
     set_electrodes = function(table_or_path){
@@ -352,110 +365,73 @@ BrainElectrodes <- R6::R6Class(
 
     # function to set values to electrodes
     set_values = function(table_or_path){
-      if( is.null(table_or_path) ){
-        return(invisible())
-      }
-      stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
-                 msg = 'table_or_path must be either data.frame or path to a csv file')
-      if(!is.data.frame(table_or_path)){
-        table = read.csv(table_or_path, stringsAsFactors = FALSE)
+      if( missing(table_or_path) ){
+        table = self$value_table
       }else{
-        table = table_or_path
+        stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
+                   msg = 'table_or_path must be either data.frame or path to a csv file')
+        if(!is.data.frame(table_or_path)){
+          table = read.csv(table_or_path, stringsAsFactors = FALSE)
+        }else{
+          table = table_or_path
+        }
       }
+      if( !is.data.frame(table) ){
+        return(NULL)
+      }
+
+
       # an example, electrode and value are mandatory
-      # Subject Electrode Value Time
+      # Subject Electrode xxx Time
       # 1     YAB         1     1  0.5
       # 2     YAB         2     2  0.5
       # 3     YAB         3     3  0.5
       # 4     YAB         4     4  0.5
       # 5     YAB         5     5  0.5
       # 6     YAB         6     6  0.5
-      stopifnot2(all(c('Electrode', 'Value') %in% names(table)),
-                 msg = 'value table must contains Electrode (integer), and Value (number or character)')
+      stopifnot2(all(c('Electrode') %in% names(table)),
+                 msg = 'value table must contains Electrode (integer)')
 
       if( length(table$Subject) ){
         table = table[table$Subject %in% self$subject_code, ]
       }
       table$Electrode = as.integer(table$Electrode)
-      table = table[!is.na(table$Electrode) & !is.na(table$Value), ]
-      if( length(table$Time) ){
+      table = table[!is.na(table$Electrode), ]
+      var_names = names(table)
+
+      if( 'Time' %in% var_names ){
+        # Sort by time
         table = table[!is.na(table$Time), ]
-      }else{
+        table = table[order( table$Time ), ]
+      }else if( nrow(table) ){
         table$Time = 0
       }
+      # Backup table
+      self$value_table = table
 
-      if( !is.numeric(table$Value) && !is.factor(table$Value) ){
-        table$Value = factor(table$Value)
-      }
-      if( is.factor(table$Value) ){
-        self$value_names = levels(table$Value)
-      }else{
-        self$value_names = NULL
-      }
+      # Need to figure out what variables to be put into electrodes
 
-      ne = sort(unique(table$Electrode))
+      var_names = var_names[ !var_names %in% c('Electrode', 'Time') ]
 
-      if( !length(ne) ){
-        return(NULL)
-      }
-      # Set values
-      self$values = list()
-      for(e in ne){
-        sub = table[table$Electrode == e, ]
-        order = order(sub$Time)
-        self$values[[ e ]] = list(time = sub$Time[ order ], value = sub$Value[ order ])
-      }
-
-    },
-
-    .inject_value = function(factor_level = NULL){
-      for( ii in seq_along(self$objects) ){
-        if( is.null( self$objects[[ ii ]] ) || ii > length( self$values ) ){
-          next;
-        }
-        dat = self$values[[ ii ]]
-        if( is.list( dat ) ){
-          time = dat$time
-          value = dat$value
-          if( is.factor(value) ){
-            if( !is.null( factor_level ) ){
-              value = factor(dat$value, levels = factor_level)
-              self$values[[ ii ]]$value = value
-            }
-            value = as.integer(value)
-          }
-          names(value) = NULL
-          names(time) = NULL
-          self$objects[[ ii ]]$set_value(value = value, time_stamp = time)
-        }else{
-          # Remove value
-          self$objects[[ ii ]]$set_value(value = NULL)
+      # Check values
+      for( vn in var_names ){
+        if( !is.numeric(table[[vn]]) && !is.factor(table[[vn]]) ){
+          table[[vn]] = as.factor(table[[vn]])
         }
       }
-    }
 
-  ),
-  active = list(
-    time_range = function(){
-      re = sapply(self$values, function(x){ x$time })
-      if(length(re)){
-        return(range(re))
-      }
-      NULL
-    },
-    value_range = function(){
-      re = sapply(self$values, function(x){ as.numeric(x$value) })
-      if(length(re) ){
-        return(range(re))
-      }
-      NULL
-    },
-    value_type = function(){
-      if(is.null(self$value_names)){
-        return('continuous')
-      }else{
-        return('discrete')
-      }
+      self$apply_electrodes(function(el, ii){
+        # set values
+        sub = table[table$Electrode == ii, ]
+        lapply(var_names, function(vn){
+          # if no subset, then remove keyframes, else set keyframes
+          el$set_value(value = sub[[vn]], time_stamp = sub$Time,
+                       name = vn, target = '.material.color')
+        })
+        NULL
+      })
+
+      return(invisible())
     }
   )
 )
@@ -700,7 +676,8 @@ Brain2 <- R6::R6Class(
         geoms = c( geoms , self$surfaces[[ s ]]$left_hemisphere, self$surfaces[[ s ]]$right_hemisphere )
       }
 
-      if( isTRUE(electrodes) ){
+      if( isTRUE(electrodes) && !is.null(self$electrodes) ){
+        # self$electrodes$set_values()
         geoms = c(geoms, self$electrodes$objects)
       }
 
@@ -758,14 +735,10 @@ Brain2 <- R6::R6Class(
 
       # Layouts
       side_canvas = TRUE, side_width = 250, side_shift = c(0, 0),
-      control_panel = TRUE,
+      control_panel = TRUE, default_colormap = NULL,
 
       # Legend and color
-      show_legend = TRUE, legend_title = 'Value',
-      color_type = 'auto',                      # variable type
-      color_ramp = NULL,   # Palette
-      color_names = NULL,            # For discrete
-      n_color = 64,
+      palettes = NULL,
 
       # For control panels = TRUE
       control_presets = NULL,
@@ -774,44 +747,6 @@ Brain2 <- R6::R6Class(
 
       width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE, ... ){
 
-      if( color_type == 'auto' ){
-        color_type = self$electrodes$value_type
-      }
-
-      if( !length(color_ramp) ){
-        # we need to decide the color_ramps by ourselves
-        if( color_type == 'continuous' ){
-          color_ramp = c('navyblue', '#e2e2e2', 'red')
-        }else{
-          color_ramp = grDevices::palette()
-        }
-      }
-      if( !length(color_names) ){
-        color_names = self$electrodes$value_names
-      }
-      n_ramp = length(color_ramp)
-      n_name = length(color_names)
-
-      if( color_type == 'discrete' && (n_ramp != n_name) ){
-        if( n_ramp >= n_name ){
-          color_ramp = color_ramp[seq_len(n_name)]
-        }else{
-          color_ramp = grDevices::colorRampPalette(color_ramp)(n_name)
-        }
-      }
-      self$electrodes$.inject_value(factor_level = color_names)
-      if(length(time_range) != 2){
-        time_range = self$electrode_time_range
-        if( length(time_range) == 2 && time_range[1] == time_range[2] ){
-          time_range[2] = time_range[1] + 1
-        }
-      }
-      if( length(value_range) != 2 ){
-        value_range = self$electrode_value_range
-        if(length(value_range) == 2){
-          value_range = max(abs(value_range - symmetric)) * c(-1,1) + symmetric
-        }
-      }
 
       # collect volume information
       geoms = self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
@@ -824,16 +759,15 @@ Brain2 <- R6::R6Class(
 
       control_presets = unique(
         c( 'subject2', 'surface_type2', 'hemisphere_material',
-           'map_template', 'animation', 'electrodes', control_presets)
+           'map_template', 'electrodes', control_presets)
       )
 
       threejs_brain(
         .list = geoms,
-        time_range = time_range, value_range = value_range, symmetric = symmetric,
+        symmetric = symmetric,
         side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
-        color_ramp = color_ramp, color_type = color_type, n_color = n_color,
-        color_names = color_names, show_legend = show_legend, legend_title = legend_title,
+        show_legend = show_legend, default_colormap = default_colormap,
         width = width, height = height, debug = debug, token = token,
         browser_external = browser_external, global_data = global_data, ...)
     }
@@ -878,23 +812,6 @@ Brain2 <- R6::R6Class(
         vox2vox_MNI305 = self$vox2vox_MNI305,
         scanner_center = self$scanner_center
       )), names = self$subject_code)
-    },
-    electrode_value_type = function(){
-      self$electrodes$value_type
-    },
-    electrode_value_names = function(){
-      if(self$electrode_value_type == 'continuous'){
-        return(NULL)
-      }
-      v_name = unique(unlist(self$electrodes$value_names))
-      names(v_name) = NULL
-      v_name
-    },
-    electrode_time_range = function(){
-      self$electrodes$time_range
-    },
-    electrode_value_range = function(){
-      self$electrodes$value_range
     }
   )
 )

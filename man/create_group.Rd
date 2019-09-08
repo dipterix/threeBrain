@@ -77,7 +77,7 @@ pryr::object_size(mesh) # ~10 MB
 threejs_brain(mesh) # ~3 seconds to serialize
 
 # 2. cache
-Create group, all geometries in this group are relatively positioned
+# Create group, all geometries in this group are relatively positioned
 tmp_file = tempfile()
 mesh = geom_freemesh('Left Hemisphere cached', vertex = vertex,
                      face = face, cache_file = tmp_file)

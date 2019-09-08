@@ -3,6 +3,8 @@
 #' @param ...,.list geometries inherit from AbstractGeom
 #' @param width,height positive integers. Width and height of the widget.
 #'   By default width=`100\%`, and height varies.
+#' @param default_colormap character, which colormap name to display at startup
+#' @param palettes named list, names corresponds to colormap names if you want to change color palettes
 #' @param side_canvas logical, enable side cameras to view objects from fixed perspective
 #' @param side_zoom numerical, if side camera is enabled, zoom-in level, from 1 to 5
 #' @param side_width positive integer, side panel size in pixels
@@ -13,16 +15,7 @@
 #' @param camera_pos XYZ position of camera itself, default (0, 0, 500)
 #' @param start_zoom numerical, positive number indicating camera zoom level
 #' @param coords \code{NULL} to hide coordinates or numeric vector of three.
-#' @param time_range numerical, length two, ascending. Used to specify animation time range
-#' @param color_type character, either 'continuous' or 'discrete'
-#' @param color_ramp characters, used to generate color ramps
-#' @param value_range numerical, length two, ascending. Used to generate continuous colors
 #' @param symmetric numerical, default 0, color center will be mapped to this value
-#' @param n_color positive integer. How many colors in the color ramp (used by continuous legend)
-#' @param color_names characters, color names, should share the same length as
-#'   color_ramp (used by discrete legend)
-#' @param show_legend logical, show legend in control panel?
-#' @param legend_title character, legend title (not used)
 #' @param tmp_dirname character path, internally used, where to store temporary files
 #' @param token unique character, internally used to identify widgets in JS localStorage
 #' @param debug logical, internally used for debugging
@@ -45,11 +38,8 @@ threejs_brain <- function(
   camera_center = c(0,0,0), camera_pos = c(0,0,500), start_zoom = 1, coords = NULL,
 
   # For colors and animation
-  time_range = NULL, color_type = 'continuous', color_ramp = c('navyblue', '#e2e2e2', 'red'),
-  value_range = NULL, symmetric = 0, n_color = 64, color_names = seq_along(color_ramp),
-
-  # Legends
-  show_legend = TRUE, legend_title = 'Value',
+  symmetric = 0, default_colormap = 'Value',
+  palettes = NULL,
 
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
@@ -72,9 +62,35 @@ threejs_brain <- function(
 
 
   # Create element list
-  geoms = c(global_container, list(...), .list)
+  geoms = unlist(c(global_container, list(...), .list))
+  # Remove illegal geoms
+  is_geom = vapply(geoms, function(x){ R6::is.R6(x) && ('AbstractGeom' %in% class(x)) }, FUN.VALUE = FALSE)
+  geoms = geoms[is_geom]
+
   groups = unique(lapply(geoms, '[[', 'group'))
   groups = groups[!vapply(groups, is.null, FUN.VALUE = FALSE)]
+
+  # get color schema
+  animation_types = unique(unlist( lapply(geoms, function(g){ g$animation_types }) ))
+  if(!is.list(palettes)){ palettes = list() }
+  pnames = names(palettes)
+  color_maps = sapply(animation_types, function(atype){
+    c = ColorMap$new(name = atype, .list = geoms, symmetric = symmetric)
+    if( atype %in% pnames ){
+      c$set_colors( palettes[[atype]] )
+    }
+    c$to_list()
+  }, USE.NAMES = TRUE, simplify = FALSE)
+
+  if( length(animation_types) ){
+    if( !length(default_colormap) || !default_colormap %in% animation_types){
+      default_colormap = animation_types[1]
+    }
+  }else{
+    default_colormap = NULL
+  }
+
+
 
   # Check elements
   geoms = lapply(geoms, function(g){ g$to_list() })
@@ -110,72 +126,6 @@ threejs_brain <- function(
   # Get groups
   groups = lapply(groups, function(g){ g$to_list() })
 
-
-  # Extract timestamp
-  if(length(time_range) < 2){
-    time_range = unlist(lapply(geoms, '[[', 'time_stamp'))
-    if(length(time_range) != 0){
-      time_range = range(time_range)
-    }else{
-      time_range = c(0,1)
-      show_legend = FALSE
-    }
-    if(time_range[2] == time_range[1]){
-      time_range[2] = time_range[1] + 1
-    }
-  }else{
-    time_range = range(time_range)
-  }
-
-  # Extract value range
-  v_count = unlist(lapply(geoms, function(g){ length(g$value )}))
-  if(length(v_count)){
-    v_count = max(v_count)
-  }else{
-    v_count = 0
-  }
-  if(length(value_range) < 2){
-    value_ranges = unlist(lapply(geoms, '[[', 'value'))
-    if(length(value_range) != 0){
-      value_range = range(value_range)
-    }else{
-      value_range = c(-1,1) + symmetric
-    }
-    if(value_range[2] == value_range[1]){
-      value_range = c(-1,1) + symmetric
-    }
-  }else{
-    value_range = range(value_range)
-  }
-
-  # generate color ramp
-  if(color_type == 'continuous'){
-    if(!is.function(color_ramp)){
-      color_ramp = grDevices::colorRampPalette(color_ramp)
-    }
-    n_color = 2^ceiling(log2(n_color))
-    hex_colors = color_ramp(n_color)
-  }else{
-
-    stopifnot2(length(color_names) == length(color_ramp), msg = 'In discrete mode, color_names must be specified and its length must equals to color_ramp')
-    stopifnot2(!is.function(color_ramp), msg = 'In discrete mode, color_ramp must be a vector')
-
-    n_color = length(color_ramp) * 10
-    n_color = 2^ceiling(log2(n_color))
-    value_range = c(1, length(color_ramp))
-
-    color_ramp = grDevices::colorRampPalette(color_ramp)
-    hex_colors = color_ramp(n_color)
-
-  }
-
-  colors = gsub('^#', '0x', hex_colors)
-  colors = cbind(seq(0, 1, length.out = length(colors)), colors)
-
-  color_scale = (n_color-1) / (value_range[2] - value_range[1]);
-  color_shift = value_range[1];
-
-
   if(is.null(shiny::getDefaultReactiveDomain())){
     lib_path = 'lib/'
   }else{
@@ -194,24 +144,19 @@ threejs_brain <- function(
     side_canvas_zoom = side_zoom,
     side_canvas_width = side_width,
     side_canvas_shift = side_shift,
-    time_range = time_range,
-    value_range = value_range,
+    color_maps = color_maps,
+    default_colormap = default_colormap,
     hide_controls = !control_panel,
     control_center = as.vector(camera_center),
     camera_pos = camera_pos,
     start_zoom = ifelse(start_zoom > 0, start_zoom, 1),
-    colors = colors,
-    color_scale = color_scale, # color_index = floor((value - color_shift) * color_scale)
-    color_shift = color_shift,
-    color_type = color_type,
-    color_names = color_names,
-    show_legend = show_legend,
+    show_legend = TRUE,
     control_presets = control_presets,
     cache_folder = paste0(lib_path, widget_id, '-0/'),
     lib_path = lib_path,
     optionals = optionals,
     debug = debug,
-    has_animation = v_count > 1,
+    # has_animation = v_count > 1,
     token = token,
     coords = coords
   )

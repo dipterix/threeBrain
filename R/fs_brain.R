@@ -164,7 +164,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   }
 
   if(is.null(geom_brain_finalsurfs)){
-    volume = brain_finalsurf$get_data()
+    volume = fill_blanks(brain_finalsurf$get_data(), niter=2)
     # Re-order the data according to Norig, map voxels to RAS coord - anatomical
     order_index = round((Norig %*% c(1,2,3,0))[1:3])
     volume = aperm(volume, abs(order_index))

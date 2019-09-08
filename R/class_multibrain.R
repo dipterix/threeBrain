@@ -88,60 +88,13 @@ MultiBrain2 <- R6::R6Class(
 
     plot = function(
       additional_subjects = NULL, volumes = TRUE, surfaces = TRUE,
-      time_range = NULL, value_range = NULL, symmetric = 0,
+      symmetric = 0, palettes = NULL,
       side_canvas = TRUE, side_width = 250, side_shift = c(0, 0),
-      control_panel = TRUE, show_legend = TRUE, legend_title = 'Value',
-      color_ramp = NULL,color_names = NULL,
-      color_type = 'auto', n_color = 64,
-
-      control_presets = NULL,
-      optionals = list(),
-      width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE, ...
+      control_presets = NULL, control_panel = TRUE,
+      width = NULL, height = NULL,
+      optionals = list(), debug = FALSE, token = NULL, browser_external = TRUE, ...
     ){
 
-      if( color_type == 'auto' ){
-        color_type = self$electrode_value_type
-      }
-
-      if( !length(color_ramp) ){
-        # we need to decide the color_ramps by ourselves
-        if( color_type == 'continuous' ){
-          color_ramp = c('navyblue', '#e2e2e2', 'red')
-        }else{
-          color_ramp = grDevices::palette()
-        }
-      }
-      if( !length(color_names) ){
-        color_names = self$electrode_value_names
-      }
-      n_ramp = length(color_ramp)
-      n_name = max(1, length(color_names))
-
-      if( color_type == 'discrete' && (n_ramp != n_name) ){
-        if( n_ramp >= n_name ){
-          color_ramp = color_ramp[seq_len(n_name)]
-        }else{
-          color_ramp = grDevices::colorRampPalette(color_ramp)(n_name)
-        }
-
-      }
-
-      self$apply_all(function(x){
-        x$electrodes$.inject_value(factor_level = color_names)
-      })
-
-      if(length(time_range) != 2){
-        time_range = self$electrode_time_range
-        if( length(time_range) == 2 && time_range[1] == time_range[2] ){
-          time_range[2] = time_range[1] + 1
-        }
-      }
-      if( length(value_range) != 2 ){
-        value_range = self$electrode_value_range
-        if(length(value_range) == 2){
-          value_range = max(abs(value_range - symmetric)) * c(-1,1) + symmetric
-        }
-      }
 
       geoms = self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
 
@@ -165,17 +118,52 @@ MultiBrain2 <- R6::R6Class(
 
       global_data = self$global_data
       control_presets = unique(c('subject2', 'surface_type2', 'hemisphere_material',
-                                 'map_template', 'animation', 'electrodes', control_presets ))
+                                 'map_template', 'electrodes', control_presets ))
 
       threejs_brain(
         .list = geoms,
-        time_range = time_range, value_range = value_range, symmetric = symmetric,
+        symmetric = symmetric,
         side_canvas = side_canvas, side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
-        color_ramp = color_ramp, color_type = color_type, n_color = n_color,
-        color_names = color_names, show_legend = show_legend, legend_title = legend_title,
         width = width, height = height, debug = debug, token = token,
         browser_external = browser_external, global_data = global_data, ...)
+
+    },
+
+    set_electrode_values = function(table_or_path){
+      stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
+                 msg = 'table_or_path must be either data.frame or path to a csv file')
+      if(!is.data.frame(table_or_path)){
+        table = read.csv(table_or_path, stringsAsFactors = FALSE)
+      }else{
+        table = table_or_path
+      }
+      stopifnot2(all(c('Electrode', 'Subject') %in% names(table)),
+                 msg = 'value table must contains Electrode (integer), Subject (character)')
+
+      table$Electrode = as.integer(table$Electrode)
+      table = table[!is.na(table$Electrode), ]
+      if( length(table$Time) ){
+        table = table[!is.na(table$Time), ]
+      }else{
+        table$Time = 0
+      }
+
+      # Make factor or numeric
+      var_names = names(table)
+      var_names = var_names[ !var_names %in% c('Electrode', 'Time') ]
+
+      # Check values
+      for( vn in var_names ){
+        if( !is.numeric(table[[vn]]) && !is.factor(table[[vn]]) ){
+          table[[vn]] = as.factor(table[[vn]])
+        }
+      }
+
+      self$apply(function(x){
+        x$set_electrode_values(table[table$Subject == self$subject_code, ])
+      })
+
 
     }
 
@@ -203,47 +191,6 @@ MultiBrain2 <- R6::R6Class(
       re$.multiple_subjects = TRUE
       re$.template_subjects = self$template_subject
       re
-    },
-    electrode_value_type = function(){
-      vy = sapply(c(self$template_object, self$objects), function(x){
-        x$electrodes$value_type
-      })
-      if( 'discrete' %in% vy ){
-        return('discrete')
-      }else{
-        return('continuous')
-      }
-    },
-    electrode_value_names = function(){
-      if(self$electrode_value_type == 'continuous'){
-        return(NULL)
-      }
-      v_name = lapply(c(self$template_object, self$objects), function(x){
-        x$electrodes$value_names
-      })
-      v_name = unique(unlist(v_name))
-      names(v_name) = NULL
-      v_name
-    },
-    electrode_value_range = function(){
-      re = sapply(c(self$template_object, self$objects), function(x){
-        x$electrode_value_range
-      })
-      re = unlist(re)
-      if(length(re) == 0){
-        return(NULL)
-      }
-      return(range(re))
-    },
-    electrode_time_range = function(){
-      re = sapply(c(self$template_object, self$objects), function(x){
-        x$electrodes$time_range
-      })
-      re = unlist(re)
-      if(length(re) == 0){
-        return(NULL)
-      }
-      return(range(re))
     }
   )
 )

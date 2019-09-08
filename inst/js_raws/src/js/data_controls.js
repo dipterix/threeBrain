@@ -94,10 +94,15 @@ class THREEBRAIN_PRESETS{
   }
 
 
-  animation(folder_name = 'Timeline', step = 0.001){
+  animation(folder_name = 'Timeline', step = 0.001, names = ['default', 'Value'], initial = 'Value'){
+
+    if( !names.includes('[No Color]') ){
+      names.push('[No Color]');
+    }
+
     // this.canvas.animation_controls = {};
-    const min = this.canvas.time_range_min || 0;
-    const max = this.canvas.time_range_max || 1;
+    let min = 0;
+    let max = 1;
 
     this.set_animation_time = (v) => {
       if(this._ani_time){
@@ -131,16 +136,36 @@ class THREEBRAIN_PRESETS{
     this.canvas.animation_controls.set_time = this.set_animation_time;
     this.canvas.animation_controls.get_params = this.get_animation_params;
 
+
+    const _ani_name_onchange = (v) => {
+      // Generate animations
+      this.canvas.generate_animation_clips( v, true, (cmap) => {
+        if( !cmap ){
+          legend_visible.setValue(false);
+        }else{
+          this._ani_time.min( cmap.time_range[0] ).max( cmap.time_range[1] );
+          min = cmap.time_range[0];
+          max = cmap.time_range[1];
+          this.set_animation_time( min );
+        }
+        this._update_canvas();
+      });
+    };
+
+    this._ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
+      .onChange((v) => { _ani_name_onchange( v ); });
+
+
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
     this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
 
-    this.gui.add_item('Reset', () => {
+    /*this.gui.add_item('Reset', () => {
       this.set_animation_time( min );
       this._update_canvas();
-    }, { folder_name : folder_name });
+    }, { folder_name : folder_name }); */
 
     this._ani_speed = this.gui.add_item('Speed', 1, {
-      args : { 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2},
+      args : { 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2, 'x 5':5},
       folder_name : folder_name
     });
 
@@ -156,8 +181,6 @@ class THREEBRAIN_PRESETS{
       }
     });
 
-    this.gui.folders[ "Timeline" ].open();
-
     // Add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
       if( !evt.event.shiftKey ){
@@ -165,6 +188,17 @@ class THREEBRAIN_PRESETS{
         this._ani_status.setValue( !is_playing );
       }
     }, 'gui_toggle_animation');
+
+    const legend_visible = this.gui.add_item('Show Legend', true, {folder_name: 'Timeline'})
+      .onChange((v) => {
+        this.canvas.render_legend = v;
+        this._update_canvas(0);
+      });
+
+    this.canvas.render_legend = true;
+
+
+    _ani_name_onchange( initial );
 
   }
 
@@ -672,15 +706,15 @@ class THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'material_type_left': v });
       });
 
+    const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', { 'material_type_right': v });
+      });
+
     const lh_trans = this.gui.add_item('Left Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
-      });
-
-    const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
-      .onChange((v) => {
-        this.canvas.switch_subject( '/', { 'material_type_right': v });
       });
 
     const rh_trans = this.gui.add_item('Right Opacity', 1.0, { folder_name : folder_name })

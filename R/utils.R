@@ -483,3 +483,28 @@ safe_write_csv <- function(data, file, ..., quiet = F){
   }
   utils::write.csv(data, file, ...)
 }
+
+
+
+
+
+fill_blanks <- function(volume, replace = 1, threshold = 0, niter=1){
+  if( niter <= 0 ){
+    return(volume)
+  }
+  # find 0 value voxels within brain
+  dim = dim(volume)
+
+  mask = volume > threshold
+
+  mask1 = (mask[-1,-1,-1] + mask[-dim[1], -1, -1] + mask[-1, -dim[2], -1] + mask[-1, -1, -dim[3]] +
+    mask[-dim[1], -dim[2], -1] + mask[-1, -dim[2], -dim[3]] + mask[-dim[1], -1, -dim[3]] +
+    mask[-dim[1], -dim[2], -dim[3]]) > 0
+
+  mask[-dim[1], -dim[2], -dim[3]] = mask1
+  mask[-1,-1,-1] = mask[-1,-1,-1] | mask1
+
+  volume[(volume <= threshold) & mask] = replace
+
+  fill_blanks(volume, replace, threshold, niter-1)
+}

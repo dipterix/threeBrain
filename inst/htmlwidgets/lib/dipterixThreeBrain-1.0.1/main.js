@@ -55911,7 +55911,7 @@ var NumberControllerBox = function (_NumberController) {
   return NumberControllerBox;
 }(NumberController);
 
-function dat_gui_module_map(v, i1, i2, o1, o2) {
+function map(v, i1, i2, o1, o2) {
   return o1 + (o2 - o1) * ((v - i1) / (i2 - i1));
 }
 var NumberControllerSlider = function (_NumberController) {
@@ -55935,7 +55935,7 @@ var NumberControllerSlider = function (_NumberController) {
     function onMouseDrag(e) {
       e.preventDefault();
       var bgRect = _this.__background.getBoundingClientRect();
-      _this.setValue(dat_gui_module_map(e.clientX, bgRect.left, bgRect.right, _this.__min, _this.__max));
+      _this.setValue(map(e.clientX, bgRect.left, bgRect.right, _this.__min, _this.__max));
       return false;
     }
     function onMouseUp() {
@@ -55956,7 +55956,7 @@ var NumberControllerSlider = function (_NumberController) {
     function onTouchMove(e) {
       var clientX = e.touches[0].clientX;
       var bgRect = _this.__background.getBoundingClientRect();
-      _this.setValue(dat_gui_module_map(clientX, bgRect.left, bgRect.right, _this.__min, _this.__max));
+      _this.setValue(map(clientX, bgRect.left, bgRect.right, _this.__min, _this.__max));
     }
     function onTouchEnd() {
       dom.unbind(window, 'touchmove', onTouchMove);
@@ -57508,10 +57508,15 @@ class data_controls_THREEBRAIN_PRESETS{
   }
 
 
-  animation(folder_name = 'Timeline', step = 0.001){
+  animation(folder_name = 'Timeline', step = 0.001, names = ['default', 'Value'], initial = 'Value'){
+
+    if( !names.includes('[No Color]') ){
+      names.push('[No Color]');
+    }
+
     // this.canvas.animation_controls = {};
-    const min = this.canvas.time_range_min || 0;
-    const max = this.canvas.time_range_max || 1;
+    let min = 0;
+    let max = 1;
 
     this.set_animation_time = (v) => {
       if(this._ani_time){
@@ -57545,16 +57550,36 @@ class data_controls_THREEBRAIN_PRESETS{
     this.canvas.animation_controls.set_time = this.set_animation_time;
     this.canvas.animation_controls.get_params = this.get_animation_params;
 
+
+    const _ani_name_onchange = (v) => {
+      // Generate animations
+      this.canvas.generate_animation_clips( v, true, (cmap) => {
+        if( !cmap ){
+          legend_visible.setValue(false);
+        }else{
+          this._ani_time.min( cmap.time_range[0] ).max( cmap.time_range[1] );
+          min = cmap.time_range[0];
+          max = cmap.time_range[1];
+          this.set_animation_time( min );
+        }
+        this._update_canvas();
+      });
+    };
+
+    this._ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
+      .onChange((v) => { _ani_name_onchange( v ); });
+
+
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
     this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
 
-    this.gui.add_item('Reset', () => {
+    /*this.gui.add_item('Reset', () => {
       this.set_animation_time( min );
       this._update_canvas();
-    }, { folder_name : folder_name });
+    }, { folder_name : folder_name }); */
 
     this._ani_speed = this.gui.add_item('Speed', 1, {
-      args : { 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2},
+      args : { 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2, 'x 5':5},
       folder_name : folder_name
     });
 
@@ -57570,8 +57595,6 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     });
 
-    this.gui.folders[ "Timeline" ].open();
-
     // Add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
       if( !evt.event.shiftKey ){
@@ -57579,6 +57602,17 @@ class data_controls_THREEBRAIN_PRESETS{
         this._ani_status.setValue( !is_playing );
       }
     }, 'gui_toggle_animation');
+
+    const legend_visible = this.gui.add_item('Show Legend', true, {folder_name: 'Timeline'})
+      .onChange((v) => {
+        this.canvas.render_legend = v;
+        this._update_canvas(0);
+      });
+
+    this.canvas.render_legend = true;
+
+
+    _ani_name_onchange( initial );
 
   }
 
@@ -58086,15 +58120,15 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'material_type_left': v });
       });
 
+    const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', { 'material_type_right': v });
+      });
+
     const lh_trans = this.gui.add_item('Left Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
-      });
-
-    const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
-      .onChange((v) => {
-        this.canvas.switch_subject( '/', { 'material_type_right': v });
       });
 
     const rh_trans = this.gui.add_item('Right Opacity', 1.0, { folder_name : folder_name })
@@ -59092,16 +59126,19 @@ function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_
 
 function gen_sphere(g, canvas){
   const gb = new threeplugins_THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
-      values = to_array(g.value);
-  let material;
+      values = g.keyframes,
+      n_keyframes = to_array( g.keyframes ).length;
+  let material_basic = new threeplugins_THREE.MeshBasicMaterial({ 'transparent' : false }),
+      material_lambert = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : false }),
+      material;
   gb.name = 'geom_sphere_' + g.name;
 
   // Make material based on value
-  if(values.length === 0){
-    material = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : false });
-  }else{
+  if( n_keyframes > 0 ){
     // Use the first value
-    material = new threeplugins_THREE.MeshBasicMaterial({ 'transparent' : false });
+    material = material_basic;
+  }else{
+    material = material_lambert;
   }
 
   const mesh = new threeplugins_THREE.Mesh(gb, material);
@@ -59125,29 +59162,67 @@ function gen_sphere(g, canvas){
     mesh.position.fromArray(g.position);
   }
 
+  if( n_keyframes > 0 ){
+    mesh.userData.ani_exists = true;
+  }
+  mesh.userData.ani_params = {...values};
+  mesh.userData.ani_name = 'default';
+  mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
 
-  mesh.userData.ani_value = values;
-  mesh.userData.ani_time = to_array(g.time_stamp);
+  mesh.userData.get_track_data = ( track_name, reset_material ) => {
+    let re;
 
-  if(values.length > 0){
-    // Set animation keyframes, will set material color
-    mesh.userData.generate_keyframe_tracks = () => {
-      let cols = [], time_stamp = [];
-      mesh.userData.ani_value.forEach((v) => {
+    if( mesh.userData.ani_exists ){
+      if( track_name === undefined ){ track_name = mesh.userData.ani_name; }
+      re = values[ track_name ];
+    }
+
+    if( reset_material ){
+      if( re ){
+        mesh.material = material_basic;
+      }else{
+        mesh.material = material_lambert;
+      }
+    }
+
+    return( re );
+  };
+
+
+  // Set animation keyframes, will set material color
+  // Not used. to be deleted
+  mesh.userData.generate_keyframe_tracks = ( track_name ) => {
+    if( !values ){ return( undefined ); }
+    if( track_name === undefined ){
+      track_name = mesh.userData.ani_name;
+    }else{
+      mesh.userData.ani_name = track_name;
+    }
+    const cols = [], time_stamp = [];
+    const ani_data = values[ track_name ];
+
+    if( ani_data ){
+
+      mesh.material = material_basic;
+
+      to_array( ani_data.value ).forEach((v) => {
         let c = canvas.get_color(v);
         cols.push( c.r, c.g, c.b );
       });
-      mesh.userData.ani_time.forEach((v) => {
+      to_array( ani_data.key_frame ).forEach((v) => {
         time_stamp.push( v - canvas.time_range_min );
       });
       return([new threeplugins_THREE.ColorKeyframeTrack(
         '.material.color',
         time_stamp, cols, threeplugins_THREE.InterpolateDiscrete
       )]);
+    }else{
+      // No animation for current mesh, set to MeshLambertMaterial
+      mesh.material = material_lambert;
+      return( undefined );
+    }
 
-    };
-
-  }
+  };
 
   return(mesh);
 }
@@ -59596,7 +59671,6 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // for global usage
     this.shared_data = new Map();
 
-
     // Stores all groups
     this.group = new Map();
 
@@ -59627,7 +59701,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
-    this.animation_mixers = {};
+    this.animation_mixers = new Map();
+    this.animation_clips = new Map();
+    this.color_maps = new Map();
     // Important, this keeps animation clock aligned with real-time PC clock.
     this.clock = new threeplugins_THREE.Clock();
 
@@ -60451,11 +60527,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   }
 
-  focus_object( m = undefined, helper = false ){
-    if( this.object_chosen ){
-      this.highlight( this.object_chosen, true );
-    }
+  focus_object( m = undefined, helper = false, auto_unfocus = false ){
+
     if( m ){
+      if( this.object_chosen ){
+        this.highlight( this.object_chosen, true );
+      }
       this.object_chosen = m;
       this._last_object_chosen = m;
       this.highlight( this.object_chosen, false );
@@ -60468,7 +60545,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 
     }else{
-      this.object_chosen = undefined;
+      if( auto_unfocus && this.object_chosen ){
+        this.highlight( this.object_chosen, true );
+        this.object_chosen = undefined;
+      }
     }
   }
 
@@ -60676,34 +60756,77 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   }
 
+  add_colormap( name, value_type, value_names, value_range, time_range,
+                color_keys, color_vals, n_levels ){
 
-  set_colormap(map, min, max, color_name = 'threebrain_default', label_args = {
-    'title': 'Value', 'ticks': 5, 'fontsize': 36
-  }){
+    const color_name = name + '--'  + this.el.id;
+
+    // Step 1: register to THREE.ColorMapKeywords
     if(threeplugins_THREE.ColorMapKeywords[color_name] === undefined){
       threeplugins_THREE.ColorMapKeywords[color_name] = [];
     }else{
       threeplugins_THREE.ColorMapKeywords[color_name].length = 0;
     }
 
-    let n_color = map.length;
-    map.forEach((v) => {
-      threeplugins_THREE.ColorMapKeywords[color_name].push([parseFloat(v[0]), v[1]]);
+    // n_color is number of colors in Lut, not the true levels of colors
+    const n_color = Math.max( 2 , to_array( color_keys ).length );
+
+    // Step 2:
+    for( let ii=0; ii < n_color; ii++ ){
+      threeplugins_THREE.ColorMapKeywords[color_name].push([ ii / (n_color-1) , color_vals[ii] ]);
+    }
+    const lut = new threeplugins_THREE.Lut( color_name , n_color );
+
+    if( value_type === 'continuous' ){
+      lut.setMin( value_range[0] );
+      lut.setMax( value_range[1] );
+    }else{
+      lut.setMin( 0 );
+      lut.setMax( n_levels - 1 );
+    }
+
+    this.color_maps.set( name, {
+      lut: lut,
+      value_type: value_type,
+      value_names: to_array( value_names ),
+      time_range: time_range,
+      n_levels: n_levels
     });
-
-    // Create lut object
-    this.lut = new threeplugins_THREE.Lut(color_name, n_color);
-
-    this.lut.setMin(min);
-    this.lut.setMax(max);
 
   }
 
-  get_color(v){
-    if(this.lut === undefined){
+  switch_colormap( name ){
+    if( name ){
+      this.state_data.set( 'color_map', name );
+
+      const cmap = this.color_maps.get( name );
+      if( cmap ){
+        this.state_data.set( 'time_range_min', cmap.time_range[0] );
+        this.state_data.set( 'time_range_max', cmap.time_range[1] );
+      }else{
+        this.state_data.set( 'time_range_min', 0 );
+        this.state_data.set( 'time_range_max', 1 );
+      }
+      return(cmap);
+
+    }else{
+      name = get_or_default( this.state_data, 'color_map', '' );
+      return( this.color_maps.get( name ) );
+    }
+  }
+
+  get_color(v, name){
+    let cmap;
+    if( name ){
+      cmap = this.color_maps.get( name );
+    }else{
+      cmap = this.color_maps.get( get_or_default( this.state_data, 'color_map', '' ) );
+    }
+
+    if(cmap === undefined){
       return('#e2e2e2');
     }else{
-      return(this.lut.getColor(v));
+      return(cmap.lut.getColor(v));
     }
   }
 
@@ -60993,6 +61116,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // this.clock = new THREE.Clock();
     let results = {};
 
+    const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
 
     // show mesh value info
     if(this.object_chosen !== undefined &&
@@ -61039,29 +61163,29 @@ class threejs_scene_THREEBRAIN_CANVAS {
       }
 
       // Change animation
-      // this.animation_mixer.update( mixerUpdateDelta );
-      for( let g_name in this.animation_mixers ){
-        this.animation_mixers[ g_name ].update(
-          current_time - this.time_range_min - this.animation_mixers[ g_name ].time
-        );
-      }
+      this.animation_mixers.forEach( (mixer) => {
+        mixer.update( current_time - time_range_min - mixer.time );
+      });
 
       // set timer
       this.animation_controls.set_time( current_time );
 
       // show mesh value info
-      if( results.selected_object &&
-        this.object_chosen.userData.ani_value &&
-        this.object_chosen.userData.ani_value.length > 0
-      ){
+      if( results.selected_object && this.object_chosen.userData.ani_exists ){
 
-        const time_stamp = to_array(this.object_chosen.userData.ani_time);
-        const values = to_array(this.object_chosen.userData.ani_value);
-        let _tmp = - Infinity;
-        for( let ii in time_stamp ){
-          if(time_stamp[ ii ] <= current_time && time_stamp[ ii ] > _tmp){
-            results.current_value = values[ ii ];
-            _tmp = time_stamp[ ii ];
+        const track_type = this.state_data.get("color_map");
+
+        const track_data = this.object_chosen.userData.get_track_data(track_type);
+
+        if( track_data ){
+          const time_stamp = to_array( track_data.time );
+          const values = to_array( track_data.value );
+          let _tmp = - Infinity;
+          for( let ii in time_stamp ){
+            if(time_stamp[ ii ] <= current_time && time_stamp[ ii ] > _tmp){
+              results.current_value = values[ ii ];
+              _tmp = time_stamp[ ii ];
+            }
           }
         }
       }
@@ -61143,13 +61267,18 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   _draw_legend( results, x = 10, y = 10, w = 100, h = 100 ){
 
+    const cmap = this.switch_colormap();
+
     // whether to draw legend
-    const has_color_map = this.render_legend && this.lut && (this.lut.n !== undefined);
+    const has_color_map = this.render_legend && cmap && (cmap.lut.n !== undefined);
 
     // If no legend is needed, discard
     if( !has_color_map ){
       return( null );
     }
+    const lut = cmap.lut,
+          color_type = cmap.value_type,
+          color_names = cmap.value_names;
 
     this._lineHeight_legend = this._lineHeight_legend || Math.round( 15 * this.pixel_ratio[0] );
     this._fontSize_legend = this._fontSize_legend || Math.round( 10 * this.pixel_ratio[0] );
@@ -61158,8 +61287,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
         legend_offset = this._fontSize_legend * 7 + legend_width; // '__-1.231e+5__', more than 16 chars
 
     // Get color map from lut
-    const continuous_cmap = has_color_map && this.lut.color_type === 'continuous' && this.lut.n > 1;
-    const discrete_cmap = has_color_map && this.lut.color_type === 'discrete' && this.lut.n > 0 && Array.isArray(this.lut.color_names);
+    const continuous_cmap = has_color_map && color_type === 'continuous' && lut.n > 1;
+    const discrete_cmap = has_color_map && color_type === 'discrete' && lut.n > 0 && Array.isArray(color_names);
 
     let legend_height = 0.60,                  // Legend takes 60% of the total heights
         legend_start = 0.25;                  // Legend starts at 20% of the height
@@ -61169,14 +61298,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
       const grd = this.domContext.createLinearGradient( 0 , 0 , 0 , h );
 
       // Determine legend coordinates and steps
-      let legend_step = legend_height / ( this.lut.n - 1 );
+      let legend_step = legend_height / ( lut.n - 1 );
 
       // Starts from legend_start of total height (h)
       grd.addColorStop( 0, this.background_color );
       grd.addColorStop( legend_start - 4 / h, this.background_color );
-      for( let ii in this.lut.lut ){
+      for( let ii in lut.lut ){
         grd.addColorStop( legend_start + legend_step * ii,
-            '#' + this.lut.lut[this.lut.n - 1 - ii].getHexString());
+            '#' + lut.lut[lut.n - 1 - ii].getHexString());
       }
       grd.addColorStop( legend_height + legend_start + 4 / h, this.background_color );
 
@@ -61186,16 +61315,16 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       // Add value labels
       let legent_ticks = [];
-      let zero_height = ( legend_start + this.lut.maxV * legend_height /
-                          (this.lut.maxV - this.lut.minV)) * h,
+      let zero_height = ( legend_start + lut.maxV * legend_height /
+                          (lut.maxV - lut.minV)) * h,
           minV_height = (legend_height + legend_start) * h,
           maxV_height = legend_start * h;
 
-      let draw_zero = this.lut.minV < 0 && this.lut.maxV > 0;
+      let draw_zero = lut.minV < 0 && lut.maxV > 0;
 
       if( typeof( results.current_value ) === 'number' ){
         // There is a colored object rendered, display it
-        let value_height = ( legend_start + (this.lut.maxV - results.current_value) * legend_height / (this.lut.maxV - this.lut.minV)) * h;
+        let value_height = ( legend_start + (lut.maxV - results.current_value) * legend_height / (lut.maxV - lut.minV)) * h;
 
         legent_ticks.push([
           results.current_value.toPrecision(4), value_height, 1 ]);
@@ -61206,14 +61335,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
           draw_zero = false;
         }
         if(Math.abs( value_height - minV_height) > this._fontSize_legend){
-          legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
+          legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
         }
         if(Math.abs( value_height - maxV_height) > this._fontSize_legend){
-          legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
+          legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
         }
       } else {
-        legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
-        legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
+        legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
+        legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
       }
 
       if( draw_zero ){
@@ -61259,11 +61388,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.domContext.stroke();
 
     }else if( discrete_cmap ){
-      // this.lut.color_names must exists and length must be
-      const n_factors = this.lut.color_names.length;
+      // color_names must exists and length must be
+      const n_factors = cmap.n_levels; // Not color_names.length;
       let _text_length = 1;
 
-      this.lut.color_names.forEach((_n)=>{
+      color_names.forEach((_n)=>{
         if( _text_length < _n.length ){
           _text_length = _n.length;
         }
@@ -61284,25 +61413,37 @@ class threejs_scene_THREEBRAIN_CANVAS {
           text_start = Math.round( w - text_offset + this._fontSize_legend ),
           text_halfheight = Math.round( this._fontSize_legend * 0.21 );
 
+
+      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+      this.domContext.strokeStyle = this.foreground_color;
+
       for(let ii = 0; ii < n_factors; ii++ ){
         let square_center = (legend_start + legend_step * ii) * h;
-        this.domContext.fillStyle = '#' + this.lut.getColor(ii + 1).getHexString();
+        this.domContext.fillStyle = '#' + lut.getColor(ii).getHexString();
         this.domContext.fillRect(
           w - legend_offset , square_center - square_height / 2 ,
           legend_width , square_height
         );
 
-        this.domContext.strokeStyle = this.foreground_color;
         this.domContext.beginPath();
         this.domContext.moveTo( w - text_offset , square_center );
         this.domContext.lineTo( w - text_offset + text_halfheight , square_center );
         this.domContext.stroke();
 
         this.domContext.fillStyle = this.foreground_color;
-        this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
-        this.domContext.fillText(this.lut.color_names[ii],
-          text_start, square_center + text_halfheight, w - text_start - 1
-        );
+
+        if( results.current_value === color_names[ii]){
+          this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
+          this.domContext.fillText(color_names[ii],
+            text_start, square_center + text_halfheight, w - text_start - 1
+          );
+          this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+        }else{
+          this.domContext.fillText(color_names[ii],
+            text_start, square_center + text_halfheight, w - text_start - 1
+          );
+        }
+
       }
 
 
@@ -61486,6 +61627,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.surfaces.clear();
     this.state_data.clear();
     this.shared_data.clear();
+    this.color_maps.clear();
+    this.animation_clips.clear();
+    this.animation_mixers.clear();
     this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
     // set default values
@@ -62016,64 +62160,121 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 
   // Generate animation clips and mixes
-  generate_animation_clips(){
+  generate_animation_clips( animation_name = 'Value', set_current=true, callback = (e) => {} ){
+
+    if( animation_name === undefined ){
+      animation_name = this.shared_data.get('animation_name') || 'Value';
+    }else{
+      this.shared_data.set('animation_name', animation_name);
+    }
+
+    // TODO: make sure cmap exists or use default lut
+    const cmap = this.switch_colormap( animation_name );
+    // this.color_maps
 
     this.mesh.forEach( (m, k) => {
-      if(m.isMesh && typeof(m.userData.generate_keyframe_tracks) === 'function'){
-        let g_name = m.userData.construct_params.name;
 
-        if(m.userData.animation_objects === undefined){
-          m.userData.animation_objects = {};
-        }
+      if(!m.isMesh || !m.userData.ani_exists ){ return( null ); }
 
-        // Obtain keyframe tracks
-        let keyframes = m.userData.generate_keyframe_tracks();
+      // keyframe is not none, generate animation clip(s)
+      /**
+       * Steps to make an animation
+       *
+       * 1. get keyframes, here is "ColorKeyframeTrack"
+       *        new THREE.ColorKeyframeTrack( '.material.color', time_key, color_value, THREE.InterpolateDiscrete )
+       *    keyframe doesn't specify which object, it also can only change one attribute
+       * 2. generate clip via "AnimationClip"
+       *        new THREE.AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
+       *    animation clip combines multiple keyframe, still, doesn't specify which object
+       * 3. mixer via "AnimationMixer"
+       *        new THREE.AnimationMixer( m );
+       *    A mixer specifies an object
+       * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
+       *    action.play() will play the animation clips
+       */
 
-        // Generate animation clip
-        // TODO: Edit so that we can find clips (array)
-        let clip = m.userData.animation_objects.animation_clip;
-        if( clip === undefined ){
-          clip = new threeplugins_THREE.AnimationClip(
-            'action_' + m.name ,
-            this.time_range_max - this.time_range_min,
-            keyframes
-          );
-          m.userData.animation_objects.animation_clip = clip;
-        }else{
-          clip.tracks = keyframes;
-          clip.duration = this.time_range_max - this.time_range_min;
-        }
+      // Step 0: get animation time_stamp start time
+      // lut: lut,
+      // value_type: value_type,
+      // value_names: value_names, time_range: time_range
 
-        // setup the AnimationMixer
-        let mixer = m.userData.animation_objects.animation_mixer;
-				if( mixer === undefined ){
-				  mixer = new threeplugins_THREE.AnimationMixer( m );
-				  m.userData.animation_objects.animation_mixer = mixer;
-				}
-				mixer.stopAllAction();
-				this.animation_mixers[ g_name ] = mixer;
+      // Obtain mixer, which will be used in multiple places
+      let mixer = this.animation_mixers.get( m.name );
 
-        // setup animations
-        let animation_actions = m.userData.animation_objects.clip_action;
-        if(animation_actions === undefined){
-  				// bind clip to mixer
-  				animation_actions = mixer.clipAction( clip );
-				  m.userData.animation_objects.clip_action = animation_actions;
-        }
-        // TODO: Do we need to check stop clip first?
-				animation_actions.play();
+      // Step 1: Obtain keyframe tracks
+      // if animation_name exists, get tracks, otherwise reset to default material
+      const track_data = m.userData.get_track_data( animation_name, true );
+
+      // no keyframe tracks, remove animation
+      if( !track_data ){
+
+        // If action is going, stop them all
+        if( mixer ){ mixer.stopAllAction(); }
+        return( null );
 
       }
+      // Generate keyframes
+      const _time_min = cmap.time_range[0],
+            _time_max = cmap.time_range[1];
+
+      // 1. timeStamps, TODO: get from settings the time range
+      const colors = [], time_stamp = [];
+      to_array( track_data.time ).forEach((v) => {
+        time_stamp.push( v - _time_min );
+      });
+      if( track_data.data_type === 'continuous' ){
+        to_array( track_data.value ).forEach((v) => {
+          let c = cmap.lut.getColor(v);
+          colors.push( c.r, c.g, c.b );
+        });
+      }else{
+        // discrete
+        const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
+        to_array( track_data.value ).forEach((v) => {
+          let c = cmap.lut.getColor(mapping.get( v ));
+          colors.push( c.r, c.g, c.b );
+        });
+      }
+
+
+      const keyframe = new threeplugins_THREE.ColorKeyframeTrack(
+        track_data.target || '.material.color',
+        time_stamp, colors, threeplugins_THREE.InterpolateDiscrete
+      );
+
+
+      // Step 2: Generate animation clip
+      const clip_nm = 'action_' + m.name + '__' + animation_name;
+      let clip = this.animation_clips.get( clip_nm ),
+          new_clip = false;
+      if( !clip ){
+        clip = new threeplugins_THREE.AnimationClip( clip_nm, _time_max - _time_min, [keyframe] );
+        this.animation_clips.set( clip_nm, clip );
+        new_clip = true;
+      }else{
+        clip.duration = _time_max - _time_min;
+        clip.tracks[0] = keyframe;
+      }
+      // Calculate clip duration
+      // clip.resetDuration();
+
+      // Step 3: create mixer
+      if( !mixer ){
+        mixer = new threeplugins_THREE.AnimationMixer( m );
+        this.animation_mixers.set( m.name, mixer );
+      }
+      mixer.stopAllAction();
+
+      // Step 4: combine mixer with clip
+      const action = mixer.clipAction( clip );
+      action.play();
+
     });
+
+
+
+    callback( cmap );
   }
-
-  set_time_range( min, max ){
-    this.time_range_min = min;
-    this.time_range_max = max;
-  }
-
-
-
 
 
   // -------- Especially designed for brain viewer
@@ -62814,10 +63015,10 @@ class src_BrainCanvas{
     this.el_control.appendChild( this.gui_placeholder );
     this.el_side.appendChild( this.el_control );
 
-    this.el_legend = document.createElement('div');
-    //this.el_legend_img = document.createElement('img');
-    this.el_legend.style.width = '100px';
-    this.el_legend.style.display = 'none';
+    // this.el_legend = document.createElement('div');
+    // this.el_legend_img = document.createElement('img');
+    // this.el_legend.style.width = '100px';
+    // this.el_legend.style.display = 'none';
     // this.el_legend.style.pointerEvents = 'none';
     // this.el_legend.style.padding = '10px';
     // this.el_legend.style.backgroundColor = 'rgba(255,255,255,0.2)';
@@ -62895,21 +63096,6 @@ class src_BrainCanvas{
 
   }
 
-  /*
-  set_legend_value(x, y, title = ''){
-    if( x && y ){
-      this.legend_data.content.sparks.data = {
-        'x' : x,
-        'y' : y
-      };
-    }
-
-    if( this.show_legend ){
-      this.legend._render_graph('sparks', title);
-    }
-
-  }
-  */
 
   check_webgl(){
     this.has_webgl = false;
@@ -63195,6 +63381,9 @@ class src_BrainCanvas{
 
     // ---------------------------- Presets
     to_array( control_presets ).forEach((control_preset) => {
+      if( control_preset === 'animation' ){
+        return(null);
+      }
       try {
         presets[control_preset]();
         // console.log(control_preset);
@@ -63210,6 +63399,18 @@ class src_BrainCanvas{
         }
       }
     });
+
+    if( to_array( this.settings.color_maps ).length > 0 ){
+      // Add animation
+      let _ani_names = Object.keys( this.settings.color_maps ),
+          _ani_init = this.settings.default_colormap;
+      if( !_ani_init || !_ani_names.includes( _ani_init )){
+        _ani_init = _ani_names[0];
+      }
+      presets.animation('Timeline', 0.001, _ani_names, _ani_init);
+      gui.open_folder('Timeline');
+    }
+
 
     // ---------------------------- Misc
     gui.add_folder('Misc');
@@ -63231,27 +63432,7 @@ class src_BrainCanvas{
       });
 
 
-    const _legend_callback = (v) => {
-      this.show_legend = v;
-      let d = v? 'block' : 'none';
-      this.el_legend.style.display = d;
-      this.canvas.render_legend = v;
-      if(this.canvas.lut){
-        this.canvas.lut.color_type = this.settings.color_type ? this.settings.color_type : 'continuous';
-        if( this.canvas.lut.color_type === 'discrete' ){
-
-          this.canvas.lut.color_names = to_array(this.settings.color_names);
-
-        }
-      }
-
-      this.canvas.start_animation(0);
-
-    };
-    gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Misc'})
-      .onChange(_legend_callback);
-
-    _legend_callback(this.settings.show_legend);
+    this.canvas.render_legend = this.settings.show_legend;
 
     /*
     gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
@@ -63302,8 +63483,6 @@ class src_BrainCanvas{
       let gui = this._register_gui_control();
       this._set_info_callback();
 
-      // Generate animations
-      this.canvas.generate_animation_clips();
 
       this.canvas.start_animation(0);
 
@@ -63445,46 +63624,22 @@ class src_BrainCanvas{
       return(re);
     };
 
-    /*
-    // sparks
-    this.legend_data.layout[0].xlim = this.settings.time_range;
-    this.legend_data.layout[0].ylim = this.settings.value_range;
-    this.legend_data.content.sparks.axis[0].at = make_sequence(this.settings.time_range, 4, true);
-    this.legend_data.content.sparks.axis[1].at = make_sequence(this.settings.value_range, 4, true);
-
-    // colorbar
-    this.legend_data.layout[1].xlim = [1,1];
-    this.legend_data.layout[1].ylim = this.settings.value_range;
-    this.legend_data.layout[1].zlim = this.settings.value_range;
-    this.legend_data.content.colorbar.axis[0].at = make_sequence(this.settings.value_range, 4, true);
-    this.legend_data.content.colorbar.data = {
-      'x' : [1], 'y' : make_sequence(this.settings.value_range, 100, false),
-      'z' : [make_sequence(this.settings.value_range, 100, false)]
-    };
-
-    this.legend_data.content.colorbar.geom_traces.heatmap.palette = this.settings.colors.map((v) => { return(v[1].replace(/^0x/, '#')) });
-
-    // render legend
-    if( this.show_legend ){
-      this.legend._render_graph('colorbar');
-      this.legend._render_graph('sparks');
-    }
-    */
-
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();
 
-    this.canvas.set_time_range(
-      this.settings.time_range[0],
-      this.settings.time_range[1]
-    );
+    to_array( this.settings.color_maps ).forEach((v) => {
+      this.canvas.add_colormap(
+        v.name,
+        v.value_type,
+        v.value_names,
+        v.value_range,
+        v.time_range,
+        v.color_keys,
+        v.color_vals,
+        v.color_levels
+      );
+    });
 
-    this.canvas.set_colormap(
-      this.settings.colors,
-      this.settings.value_range[0],
-      this.settings.value_range[1],
-      this.outputId
-    );
 
     // load data
     this.canvas.loader_triggered = false;
