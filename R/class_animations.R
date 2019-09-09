@@ -16,14 +16,19 @@ KeyFrame <- R6::R6Class(
     initialize = function(name, time, value, dtype = 'continuous', target = '.material.color', ...){
 
       if( dtype == 'continuous' ){
+        private$.dtype = 'continuous'
         value = as.numeric(value)
         sel = !is.na(value)
         time = time[ sel ]
         value = value[ sel ]
       }else{
         # factor?
-        value = factor(value, ...)
         private$.dtype = 'discrete'
+
+        # If is factor, then do not remake factor as we need to keep the levels
+        if(!is.factor(value)){
+          value = factor(value, ...)
+        }
       }
 
       stopifnot2(length(value), msg = 'Value length must be greater than 0')

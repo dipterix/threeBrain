@@ -764,7 +764,7 @@ Brain2 <- R6::R6Class(
 
       threejs_brain(
         .list = geoms,
-        symmetric = symmetric,
+        symmetric = symmetric, palettes = palettes,
         side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
         default_colormap = default_colormap,

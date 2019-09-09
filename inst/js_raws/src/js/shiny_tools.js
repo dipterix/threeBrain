@@ -3,6 +3,8 @@
 This file defines shiny callback functions (js to shiny)
 */
 
+import { debounce } from './utils.js';
+
 function storageAvailable(type) {
   try {
     var storage = window[type],
@@ -32,6 +34,18 @@ class THREE_BRAIN_SHINY {
 
     this.outputId = outputId;
     this.shiny_mode = shiny_mode;
+
+    this.stack = [];
+
+    this._do_send = debounce(() => {
+      if( this.shiny_mode && this.stack.length > 0 ){
+        const re = this.stack.pop();
+        Shiny.onInputChange(re['.__callback_id__.'], re);
+      }
+      this.stack.length = 0;
+      // console.log(`Send to shiny, ${this.stack.length}`);
+    }, 200, false);
+
   }
 
   set_token( token ){
@@ -40,19 +54,21 @@ class THREE_BRAIN_SHINY {
     }
   }
 
-  to_shiny(data, method = 'callback'){
+  to_shiny(data, method = 'callback', immediate = false){
     // method won't be checked, assuming string
     // Callback ID will be outputId_callbackname
 
-    let time_stamp = new Date();
-    let re = {...data, '.__timestamp__.': time_stamp};
-    let callback_id = this.outputId + '_' + method;
+    // generate message:
+    const time_stamp = new Date();
+    const callback_id = this.outputId + '_' + method;
+    const re = {...data, '.__timestamp__.': time_stamp, '.__callback_id__.': callback_id};
 
-    if(this.shiny_mode){
-      Shiny.onInputChange(callback_id, re);
-    }
+    this.stack.push( re );
 
-    // Add RAVE support
+    this._do_send();
+
+    /*
+    // Add RAVE support (might be removed in the future)
     if(typeof(this.token) === 'string'){
       // Get item and set back
       // let rave_msg = window.localStorage.getItem('rave-messages');
@@ -68,6 +84,7 @@ class THREE_BRAIN_SHINY {
 
       window.localStorage.setItem('rave-messages', JSON.stringify(msg));
     }
+    */
 
 
   }

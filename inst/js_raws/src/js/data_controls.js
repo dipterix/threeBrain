@@ -1024,8 +1024,7 @@ class THREEBRAIN_CONTROL{
     this.params = {};
     this.folders = {};
     this._gui = new dat.GUI(args);
-
-    // this._gui.remember(this.params);
+    // this._gui.remember( this.params );
 
     this.domElement = this._gui.domElement;
     this.DEBUG = DEBUG;

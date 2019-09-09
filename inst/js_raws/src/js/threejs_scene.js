@@ -2721,7 +2721,8 @@ class THREEBRAIN_CANVAS {
     const re = { 'pial' : 1 }; // always put pials to the first one
 
     this.group.forEach( (gp, g) => {
-      let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
+      // let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
+      const res = CONSTANTS.REGEXP_SURFACE_GROUP.exec(g);
       if( res && res.length === 3 ){
         re[ res[1] ] = 1;
       }
@@ -2737,6 +2738,7 @@ class THREEBRAIN_CANVAS {
       let volume_names = Object.keys( vol ),
           //  brain.finalsurfs (YAB)
           res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
+          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
 
       if( res && res.length === 2 ){
         re[ res[1] ] = 1;
@@ -3037,6 +3039,7 @@ mapped = false,
     // SurfaceElectrode SurfaceType Radius VertexNumber
     this.electrodes.forEach( ( collection , subject_code ) => {
       const _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
+            // _regexp = CONSTANTS.REGEXP_ELECTRODE,
             _v2v = get_or_default( this.shared_data, subject_code, {} ).vox2vox_MNI305,
             re = [],
             mat = new THREE.Matrix4(),

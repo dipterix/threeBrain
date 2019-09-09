@@ -57339,6 +57339,60 @@ function get_or_default(map, key, _default = undefined){
 
 
 
+// Credit David Walsh (https://davidwalsh.name/javascript-debounce-function)
+
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+function debounce(func, wait, immediate) {
+  var timeout;
+
+  // This is the function that is actually executed when
+  // the DOM event is triggered.
+  return function executedFunction() {
+    // Store the context of this and any
+    // parameters passed to executedFunction
+    var context = this;
+    var args = arguments;
+
+    // The function to be called after
+    // the debounce time has elapsed
+    var later = function() {
+      // null timeout to indicate the debounce ended
+      timeout = null;
+
+      // Call function now if you did not on the leading end
+      if (!immediate) func.apply(context, args);
+    };
+
+    // Determine if you should call the function
+    // on the leading or trail end
+    var callNow = immediate && !timeout;
+
+    // This will reset the waiting every function execution.
+    // This is the step that prevents the function from
+    // being executed because it will never reach the
+    // inside of the previous setTimeout
+    clearTimeout(timeout);
+
+    // Restart the debounce waiting period.
+    // setTimeout returns a truthy value (it differs in web vs node)
+    timeout = setTimeout(later, wait);
+
+    // Call immediately if you're dong a leading
+    // end execution
+    if (callNow) func.apply(context, args);
+  };
+};
+
+
+
+
+
+
+
+
 
 // CONCATENATED MODULE: ./src/js/constants.js
 
@@ -57404,6 +57458,14 @@ CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling throu
 CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electrode type (surface ot iEEG)
 CONSTANTS.KEY_NEW_ELECTRODE_EDITOR    = 'Digit1';       // '1' new electrode
 CONSTANTS.KEY_LABEL_FOCUS_EDITOR      = 'Digit2';       // '2' for quick edit label
+
+// Regular expressions
+CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - pial (YAB)
+CONSTANTS.REGEXP_VOLUME_GROUP     = /^Volume - (.+) \((.+)\)$/;   // Volume - brain.finalsurfs (YAB)
+CONSTANTS.REGEXP_ELECTRODE_GROUP  = /^Electrodes \((.+)\)$/;                  // Electrodes (YAB)
+CONSTANTS.REGEXP_SURFACE          = /^([\w ]+) (Left|right) Hemisphere - (.+) \((.+)\)$/;   // Standard 141 Left Hemisphere - pial (YAB)
+CONSTANTS.REGEXP_VOLUME           = /^(.+) \((.+)\)$/;                   // brain.finalsurfs (YAB)
+CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - pSYLV12
 
 // Colors
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects
@@ -58438,8 +58500,7 @@ class data_controls_THREEBRAIN_CONTROL{
     this.params = {};
     this.folders = {};
     this._gui = new GUI$1(args);
-
-    // this._gui.remember(this.params);
+    // this._gui.remember( this.params );
 
     this.domElement = this._gui.domElement;
     this.DEBUG = DEBUG;
@@ -58584,6 +58645,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
 This file defines shiny callback functions (js to shiny)
 */
 
+
+
 function storageAvailable(type) {
   try {
     var storage = window[type],
@@ -58608,11 +58671,23 @@ function storageAvailable(type) {
   }
 }
 
-class THREE_BRAIN_SHINY {
+class shiny_tools_THREE_BRAIN_SHINY {
   constructor(outputId, shiny_mode = true) {
 
     this.outputId = outputId;
     this.shiny_mode = shiny_mode;
+
+    this.stack = [];
+
+    this._do_send = debounce(() => {
+      if( this.shiny_mode && this.stack.length > 0 ){
+        const re = this.stack.pop();
+        Shiny.onInputChange(re['.__callback_id__.'], re);
+      }
+      this.stack.length = 0;
+      // console.log(`Send to shiny, ${this.stack.length}`);
+    }, 200, false);
+
   }
 
   set_token( token ){
@@ -58621,19 +58696,21 @@ class THREE_BRAIN_SHINY {
     }
   }
 
-  to_shiny(data, method = 'callback'){
+  to_shiny(data, method = 'callback', immediate = false){
     // method won't be checked, assuming string
     // Callback ID will be outputId_callbackname
 
-    let time_stamp = new Date();
-    let re = {...data, '.__timestamp__.': time_stamp};
-    let callback_id = this.outputId + '_' + method;
+    // generate message:
+    const time_stamp = new Date();
+    const callback_id = this.outputId + '_' + method;
+    const re = {...data, '.__timestamp__.': time_stamp, '.__callback_id__.': callback_id};
 
-    if(this.shiny_mode){
-      Shiny.onInputChange(callback_id, re);
-    }
+    this.stack.push( re );
 
-    // Add RAVE support
+    this._do_send();
+
+    /*
+    // Add RAVE support (might be removed in the future)
     if(typeof(this.token) === 'string'){
       // Get item and set back
       // let rave_msg = window.localStorage.getItem('rave-messages');
@@ -58649,6 +58726,7 @@ class THREE_BRAIN_SHINY {
 
       window.localStorage.setItem('rave-messages', JSON.stringify(msg));
     }
+    */
 
 
   }
@@ -58838,23 +58916,24 @@ Stats.Panel = function ( name, fg, bg ) {
 
 class THREEBRAIN_STORAGE {
   constructor(){
-    this._d = {};
+    this._d = new Map();
   }
 
   check_item( path ){
-    return( this._d.hasOwnProperty( path ) || this._d[ path ] !== undefined );
+    return( this._d.has( path ) || this._d.get( path ) !== undefined );
   }
 
   get_item( path , ifnotfound = '' ){
-    if(this.check_item( path )){
-      return( this._d[ path ] );
+    const re = this._d.get( path );
+    if( re !== undefined ){
+      return( re );
     }else{
       return( ifnotfound );
     }
   }
 
   set_item( path, obj ){
-    this._d[ path ] = obj;
+    this._d.set( path , obj );
   }
 
   get_hash( path ){
@@ -58872,13 +58951,13 @@ class THREEBRAIN_STORAGE {
 
   clear_items( paths ){
     if( paths === undefined ){
-      paths = Object.keys( this._d );
+      // Remove all
+      this._d.clear();
+    }else{
+      paths.forEach((p) => {
+        this._d.delete( p );
+      });
     }
-    paths.forEach((p) => {
-      if( this.check_item( p ) ){
-        this._d[ p ] = undefined;
-      }
-    });
   }
 
 }
@@ -62283,7 +62362,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
     const re = { 'pial' : 1 }; // always put pials to the first one
 
     this.group.forEach( (gp, g) => {
-      let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
+      // let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
+      const res = CONSTANTS.REGEXP_SURFACE_GROUP.exec(g);
       if( res && res.length === 3 ){
         re[ res[1] ] = 1;
       }
@@ -62299,6 +62379,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       let volume_names = Object.keys( vol ),
           //  brain.finalsurfs (YAB)
           res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
+          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
 
       if( res && res.length === 2 ){
         re[ res[1] ] = 1;
@@ -62599,6 +62680,7 @@ mapped = false,
     // SurfaceElectrode SurfaceType Radius VertexNumber
     this.electrodes.forEach( ( collection , subject_code ) => {
       const _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
+            // _regexp = CONSTANTS.REGEXP_ELECTRODE,
             _v2v = get_or_default( this.shared_data, subject_code, {} ).vox2vox_MNI305,
             re = [],
             mat = new threeplugins_THREE.Matrix4(),
@@ -62990,7 +63072,7 @@ class src_BrainCanvas{
     this.shiny_mode = shiny_mode;
     this.DEBUG = DEBUG;
     this.outputId = this.el.getAttribute('id');
-    this.shiny = new THREE_BRAIN_SHINY( this.outputId, this.shiny_mode );
+    this.shiny = new shiny_tools_THREE_BRAIN_SHINY( this.outputId, this.shiny_mode );
     this.has_webgl = false;
 
     // ---------------------------- Utils ----------------------------
@@ -63516,76 +63598,61 @@ class src_BrainCanvas{
   }
 
   _set_info_callback(){
+    const pos = new threeplugins_THREE.Vector3();
+
     this.canvas.add_mouse_callback(
       (evt) => {
         return({
-          pass  : (evt.action === 'click' || evt.action === 'dblclick') && !this.canvas.edit_mode,
+          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
           type  : 'clickable'
         });
       },
       ( res, evt ) => {
         const obj = res.target_object;
         if( obj && obj.userData ){
-          let g = obj.userData.construct_params,
-            pos = obj.getWorldPosition( new threeplugins_THREE.Vector3() );
+          const g = obj.userData.construct_params;
+          obj.getWorldPosition( pos );
 
           // Get information and show them on screen
-          let group_name = g.group ? g.group.group_name : '(No Group)';
-
-          let shiny_data = {
-            object: g,
-            group: group_name,
-            position: pos,
-            event: evt
+          const group_name = g.group ? g.group.group_name : null;
+          const shiny_data = {
+            object      : g,
+            name        : g.name,
+            geom_type   : g.type,
+            group       : group_name,
+            position    : pos.toArray(),
+            action      : evt.action,
+            meta        : evt,
+            edit_mode   : this.canvas.edit_mode,
+            is_electrode: false
           };
-          this.shiny.to_shiny(shiny_data, '_mouse_event');
+
+          if( g.is_electrode ){
+
+            const m = CONSTANTS.REGEXP_ELECTRODE.exec( g.name );
+            if( m.length === 4 ){
+
+              shiny_data.subject = m[1];
+              shiny_data.electrode_number = parseInt( m[2] );
+              shiny_data.is_electrode = true;
+            }
+
+
+          }
+
+          if( evt.action === 'click' ){
+            this.shiny.to_shiny(shiny_data, '_mouse_clicked');
+          }else{
+            this.shiny.to_shiny(shiny_data, '_mouse_dblclicked');
+          }
+
+
         }
       },
-      'show_info'
+      'to-shiny'
     );
 
-    /* this.canvas.set_animation_callback((obj, v, t) => {
-      let txt = '';
-      if( obj === undefined || this.hide_controls ){
-        this.set_legend_value(
-          [0],[0], ''
-        );
-      }else{
-        if( typeof(v) !== 'number' ){
-          v = 'NA';
-        }else{
-          v = v.toFixed(2);
-        }
 
-        txt = `Value: ${v}`;
-
-        if(this.has_animation && typeof(t) === 'number'){
-          txt = `Time: ${t.toFixed(2)} \nValue: ${v}`;
-        }
-
-        try {
-          this.set_legend_value(
-            to_array( obj.userData.ani_time ),
-            to_array( obj.userData.ani_value ),
-            txt
-          );
-        } catch (e) {}
-
-      }
-
-      // Purely for video export only
-      if( obj && obj.userData ){
-        let g = obj.userData.construct_params,
-            pos = obj.getWorldPosition( new THREE.Vector3() );
-        // Get information and show them on screen
-        let group_name = g.group ? g.group.group_name : '(No Group)';
-
-        txt = `${g.name} \n Group: ${group_name} \n Global Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}) \n ${g.custom_info || ''} \n ${txt}`;
-      }
-
-      return(txt);
-
-    }); */
 
   }
 
@@ -63715,9 +63782,9 @@ class src_BrainCanvas{
 }
 
 window.BrainCanvas = src_BrainCanvas;
-window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 window.THREE = threeplugins_THREE;
 window.download = download;
+window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 
 
 

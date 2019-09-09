@@ -554,76 +554,61 @@ class BrainCanvas{
   }
 
   _set_info_callback(){
+    const pos = new THREE.Vector3();
+
     this.canvas.add_mouse_callback(
       (evt) => {
         return({
-          pass  : (evt.action === 'click' || evt.action === 'dblclick') && !this.canvas.edit_mode,
+          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
           type  : 'clickable'
         });
       },
       ( res, evt ) => {
         const obj = res.target_object;
         if( obj && obj.userData ){
-          let g = obj.userData.construct_params,
-            pos = obj.getWorldPosition( new THREE.Vector3() );
+          const g = obj.userData.construct_params;
+          obj.getWorldPosition( pos );
 
           // Get information and show them on screen
-          let group_name = g.group ? g.group.group_name : '(No Group)';
-
-          let shiny_data = {
-            object: g,
-            group: group_name,
-            position: pos,
-            event: evt
+          const group_name = g.group ? g.group.group_name : null;
+          const shiny_data = {
+            object      : g,
+            name        : g.name,
+            geom_type   : g.type,
+            group       : group_name,
+            position    : pos.toArray(),
+            action      : evt.action,
+            meta        : evt,
+            edit_mode   : this.canvas.edit_mode,
+            is_electrode: false
           };
-          this.shiny.to_shiny(shiny_data, '_mouse_event');
+
+          if( g.is_electrode ){
+
+            const m = CONSTANTS.REGEXP_ELECTRODE.exec( g.name );
+            if( m.length === 4 ){
+
+              shiny_data.subject = m[1];
+              shiny_data.electrode_number = parseInt( m[2] );
+              shiny_data.is_electrode = true;
+            }
+
+
+          }
+
+          if( evt.action === 'click' ){
+            this.shiny.to_shiny(shiny_data, 'mouse_clicked');
+          }else{
+            this.shiny.to_shiny(shiny_data, 'mouse_dblclicked');
+          }
+
+
         }
       },
-      'show_info'
+      'to-shiny'
     );
 
-    /* this.canvas.set_animation_callback((obj, v, t) => {
-      let txt = '';
-      if( obj === undefined || this.hide_controls ){
-        this.set_legend_value(
-          [0],[0], ''
-        );
-      }else{
-        if( typeof(v) !== 'number' ){
-          v = 'NA';
-        }else{
-          v = v.toFixed(2);
-        }
 
-        txt = `Value: ${v}`;
-
-        if(this.has_animation && typeof(t) === 'number'){
-          txt = `Time: ${t.toFixed(2)} \nValue: ${v}`;
-        }
-
-        try {
-          this.set_legend_value(
-            to_array( obj.userData.ani_time ),
-            to_array( obj.userData.ani_value ),
-            txt
-          );
-        } catch (e) {}
-
-      }
-
-      // Purely for video export only
-      if( obj && obj.userData ){
-        let g = obj.userData.construct_params,
-            pos = obj.getWorldPosition( new THREE.Vector3() );
-        // Get information and show them on screen
-        let group_name = g.group ? g.group.group_name : '(No Group)';
-
-        txt = `${g.name} \n Group: ${group_name} \n Global Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}) \n ${g.custom_info || ''} \n ${txt}`;
-      }
-
-      return(txt);
-
-    }); */
 
   }
 
@@ -753,7 +738,7 @@ class BrainCanvas{
 }
 
 window.BrainCanvas = BrainCanvas;
-window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 window.THREE = THREE;
 window.download = download;
+window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 export { BrainCanvas };

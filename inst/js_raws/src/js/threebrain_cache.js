@@ -3,23 +3,24 @@
 
 class THREEBRAIN_STORAGE {
   constructor(){
-    this._d = {};
+    this._d = new Map();
   }
 
   check_item( path ){
-    return( this._d.hasOwnProperty( path ) || this._d[ path ] !== undefined );
+    return( this._d.has( path ) || this._d.get( path ) !== undefined );
   }
 
   get_item( path , ifnotfound = '' ){
-    if(this.check_item( path )){
-      return( this._d[ path ] );
+    const re = this._d.get( path );
+    if( re !== undefined ){
+      return( re );
     }else{
       return( ifnotfound );
     }
   }
 
   set_item( path, obj ){
-    this._d[ path ] = obj;
+    this._d.set( path , obj );
   }
 
   get_hash( path ){
@@ -37,13 +38,13 @@ class THREEBRAIN_STORAGE {
 
   clear_items( paths ){
     if( paths === undefined ){
-      paths = Object.keys( this._d );
+      // Remove all
+      this._d.clear();
+    }else{
+      paths.forEach((p) => {
+        this._d.delete( p );
+      });
     }
-    paths.forEach((p) => {
-      if( this.check_item( p ) ){
-        this._d[ p ] = undefined;
-      }
-    });
   }
 
 }
