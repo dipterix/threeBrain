@@ -55,7 +55,7 @@ function gen_sphere(g, canvas){
     }
 
     if( reset_material ){
-      if( re ){
+      if( re && re.value !== null ){
         mesh.material = material_basic;
       }else{
         mesh.material = material_lambert;

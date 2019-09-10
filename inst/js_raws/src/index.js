@@ -455,7 +455,7 @@ class BrainCanvas{
 
     /* Misc settings */
     // Background color
-    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
+    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Default'})
       .onChange((v) => {
         let inversedColor = invertColor(v);
         this.canvas.main_renderer.setClearColor(v);
@@ -480,12 +480,11 @@ class BrainCanvas{
     */
 
     // ---------------------------- Default
-
-    gui.add_item('Viewer Title', '', {folder_name: 'Default'})
-      .onChange((v) => {
+    /*
+    gui.add_item('Viewer Title', '', {folder_name: 'Default'}).onChange((v) => {
         this.canvas.title = v;
         this.canvas.start_animation(0);
-      });
+      });*/
 
     return(gui);
 

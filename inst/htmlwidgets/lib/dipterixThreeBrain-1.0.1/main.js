@@ -57623,6 +57623,7 @@ class data_controls_THREEBRAIN_PRESETS{
           min = cmap.time_range[0];
           max = cmap.time_range[1];
           this.set_animation_time( min );
+          legend_visible.setValue(true);
         }
         this._update_canvas();
       });
@@ -59257,7 +59258,7 @@ function gen_sphere(g, canvas){
     }
 
     if( reset_material ){
-      if( re ){
+      if( re && re.value !== null ){
         mesh.material = material_basic;
       }else{
         mesh.material = material_lambert;
@@ -60856,12 +60857,17 @@ class threejs_scene_THREEBRAIN_CANVAS {
     }
     const lut = new threeplugins_THREE.Lut( color_name , n_color );
 
+    // min and max cannot be the same, otherwise colors will not be rendered
     if( value_type === 'continuous' ){
       lut.setMin( value_range[0] );
-      lut.setMax( value_range[1] );
+      if( value_range[1] === value_range[0] ){
+        lut.setMax( value_range[0] + 1 );
+      }else{
+        lut.setMax( value_range[1] );
+      }
     }else{
       lut.setMin( 0 );
-      lut.setMax( n_levels - 1 );
+      lut.setMax( Math.max( n_levels - 1, 1) );
     }
 
     this.color_maps.set( name, {
@@ -62311,6 +62317,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
         const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
         to_array( track_data.value ).forEach((v) => {
           let c = cmap.lut.getColor(mapping.get( v ));
+          if( !c ) {
+            console.log( v );
+            console.log( mapping.get( v ) );
+          }
           colors.push( c.r, c.g, c.b );
         });
       }
@@ -63499,7 +63509,7 @@ class src_BrainCanvas{
 
     /* Misc settings */
     // Background color
-    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
+    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Default'})
       .onChange((v) => {
         let inversedColor = invertColor(v);
         this.canvas.main_renderer.setClearColor(v);
@@ -63524,12 +63534,11 @@ class src_BrainCanvas{
     */
 
     // ---------------------------- Default
-
-    gui.add_item('Viewer Title', '', {folder_name: 'Default'})
-      .onChange((v) => {
+    /*
+    gui.add_item('Viewer Title', '', {folder_name: 'Default'}).onChange((v) => {
         this.canvas.title = v;
         this.canvas.start_animation(0);
-      });
+      });*/
 
     return(gui);
 
@@ -63641,9 +63650,9 @@ class src_BrainCanvas{
           }
 
           if( evt.action === 'click' ){
-            this.shiny.to_shiny(shiny_data, '_mouse_clicked');
+            this.shiny.to_shiny(shiny_data, 'mouse_clicked');
           }else{
-            this.shiny.to_shiny(shiny_data, '_mouse_dblclicked');
+            this.shiny.to_shiny(shiny_data, 'mouse_dblclicked');
           }
 
 

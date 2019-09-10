@@ -1215,12 +1215,17 @@ class THREEBRAIN_CANVAS {
     }
     const lut = new THREE.Lut( color_name , n_color );
 
+    // min and max cannot be the same, otherwise colors will not be rendered
     if( value_type === 'continuous' ){
       lut.setMin( value_range[0] );
-      lut.setMax( value_range[1] );
+      if( value_range[1] === value_range[0] ){
+        lut.setMax( value_range[0] + 1 );
+      }else{
+        lut.setMax( value_range[1] );
+      }
     }else{
       lut.setMin( 0 );
-      lut.setMax( n_levels - 1 );
+      lut.setMax( Math.max( n_levels - 1, 1) );
     }
 
     this.color_maps.set( name, {
@@ -2670,6 +2675,10 @@ class THREEBRAIN_CANVAS {
         const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
         to_array( track_data.value ).forEach((v) => {
           let c = cmap.lut.getColor(mapping.get( v ));
+          if( !c ) {
+            console.log( v );
+            console.log( mapping.get( v ) );
+          }
           colors.push( c.r, c.g, c.b );
         });
       }

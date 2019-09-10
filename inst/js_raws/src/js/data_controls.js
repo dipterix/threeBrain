@@ -147,6 +147,7 @@ class THREEBRAIN_PRESETS{
           min = cmap.time_range[0];
           max = cmap.time_range[1];
           this.set_animation_time( min );
+          legend_visible.setValue(true);
         }
         this._update_canvas();
       });
