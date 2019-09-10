@@ -1,8 +1,12 @@
-# threeBrain - HTML, WebGL based 3D Viewer
+# [threeBrain - HTML, WebGL based 3D Viewer](https://dipterix.github.io/threeBrain/index.html)
 
 <img src="https://github.com/dipterix/threeBrain/blob/dev/docs/demo.gif?raw=true" width="100%" />
 
 A live [demo]() is under construction!
+
+* Click [here](https://dipterix.github.io/threeBrain/news/index.html) for the news
+* For function usage, check [Reference page](https://dipterix.github.io/threeBrain/reference/index.html)
+* Check [keyboard shortcuts](https://dipterix.github.io/threeBrain/shortcuts.html) here
 
 ## A. Installation
 

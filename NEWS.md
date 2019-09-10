@@ -16,7 +16,7 @@ threeBrain 0.1.3
 
 ### Improvements
 
-* Shortcuts available at [here](https://github.com/dipterix/threeBrain/blob/shortcuts.md)
+* Shortcuts available at [here](https://github.com/dipterix/threeBrain/blob/master/shortcuts.md)
 * Optimized electrode value settings
 
 threeBrain 0.1.2
