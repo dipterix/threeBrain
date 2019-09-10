@@ -14,7 +14,7 @@ freesurfer_brain(fs_subject_folder, subject_name,
 
 \item{additional_surfaces}{character array, additional surface types to load, such as `white`, `smoothwm`}
 
-\item{use_cache}{logical, whether to use cached json files or from raw `FreeSurfer` files}
+\item{use_cache}{logical, whether to use cached `json` files or from raw `FreeSurfer` files}
 
 \item{use_141}{logical, whether to use standard 141 brain for surface file}
 }
@@ -27,7 +27,7 @@ This function is under FreeSurfer license.
 3D viewer uses `mri/brain.finalsurfs.mgz` from `FreeSurfer` to show the
 volume information. `brain.finalsurfs.mgz` results from step 1 to 15 in `FreeSurfer`
 command `recon-all`, which aligns the original `DICOM` image to `RAS` coordinate
-system, resamples to volume with \code{256x256x256} voxels (trilinear by default,
+system, resamples to volume with \code{256x256x256} voxels (tri-linear by default,
 check \url{https://mail.nmr.mgh.harvard.edu/pipermail/freesurfer/2018-August/058127.html}
 for more information).
 
@@ -45,7 +45,7 @@ to `[FREESURFER SUBJECT DIR]/SUMA/`. The file name follows the convention of
 `rh` means right hemisphere; `SURFACE TYPE` can be `pial`, `white`, `smoothwm`,
 and `POSTFIX` can be `asc`, `gii`. If multiple files for the same surface
 type exists, the search order will be `asc > gii`.
-The other option is to use mesh files directly from freesurfer output located
+The other option is to use mesh files directly from `FreeSurfer` output located
 at `[FREESURFER SUBJECT DIR]/surf`. If you want to use these surface, make sure
 they are converted to `asc` or `gii` format.
 

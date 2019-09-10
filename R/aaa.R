@@ -1,11 +1,19 @@
-#' @import grDevices
+#' @importFrom grDevices palette
 #' @importFrom graphics plot
-#' @import R6
-#' @import htmlwidgets
-#' @import htmltools
-#' @import shiny
-#' @import stringr
-#' @import utils
+#' @importFrom R6 is.R6
+#' @importFrom R6 R6Class
+#' @importFrom htmlwidgets createWidget
+#' @importFrom htmlwidgets sizingPolicy
+#' @importFrom htmlwidgets shinyWidgetOutput
+#' @importFrom htmlwidgets shinyRenderWidget
+#' @importFrom htmlwidgets saveWidget
+#' @importFrom htmltools htmlDependency
+#' @importFrom shiny getDefaultReactiveDomain
+#' @importFrom utils write.csv
+#' @importFrom utils zip
+#' @importFrom utils compareVersion
+#' @importFrom utils download.file
+#' @importFrom utils unzip
 NULL
 
 
@@ -15,7 +23,7 @@ NULL
 #' probably need to restart R session after the first phase and continue setting up.
 #' @param show_example whether to show example of `N27` subject at the end.
 #' @param use_python whether to install python toolbox (recommended)
-#' @param try_conda try to use conda to create RAVEPy environment
+#' @param try_conda try to use `conda` to create `RAVEPy` environment
 #' @export
 brain_setup <- function(continued = FALSE, show_example = TRUE, use_python=TRUE, try_conda = TRUE){
   if( use_python && !continued ){

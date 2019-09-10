@@ -5,7 +5,7 @@
 #' 3D viewer uses `mri/brain.finalsurfs.mgz` from `FreeSurfer` to show the
 #' volume information. `brain.finalsurfs.mgz` results from step 1 to 15 in `FreeSurfer`
 #' command `recon-all`, which aligns the original `DICOM` image to `RAS` coordinate
-#' system, resamples to volume with \code{256x256x256} voxels (trilinear by default,
+#' system, resamples to volume with \code{256x256x256} voxels (tri-linear by default,
 #' check \url{https://mail.nmr.mgh.harvard.edu/pipermail/freesurfer/2018-August/058127.html}
 #' for more information).
 #'
@@ -23,7 +23,7 @@
 #' `rh` means right hemisphere; `SURFACE TYPE` can be `pial`, `white`, `smoothwm`,
 #' and `POSTFIX` can be `asc`, `gii`. If multiple files for the same surface
 #' type exists, the search order will be `asc > gii`.
-#' The other option is to use mesh files directly from freesurfer output located
+#' The other option is to use mesh files directly from `FreeSurfer` output located
 #' at `[FREESURFER SUBJECT DIR]/surf`. If you want to use these surface, make sure
 #' they are converted to `asc` or `gii` format.
 #'
@@ -46,7 +46,7 @@
 #' @param fs_subject_folder character, `FreeSurfer` subject folder, or `RAVE` subject folder
 #' @param subject_name character, subject code to display with only letters and digits
 #' @param additional_surfaces character array, additional surface types to load, such as `white`, `smoothwm`
-#' @param use_cache logical, whether to use cached json files or from raw `FreeSurfer` files
+#' @param use_cache logical, whether to use cached `json` files or from raw `FreeSurfer` files
 #' @param use_141 logical, whether to use standard 141 brain for surface file
 #'
 #' @examples

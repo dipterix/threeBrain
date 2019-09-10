@@ -18,9 +18,9 @@
 NULL
 
 #' @rdname template_subject
-#' @param subject_code chcaracter with only letters and numbers (Important). Default is `N27`
+#' @param subject_code character with only letters and numbers (Important). Default is `N27`
 #' @param url zip file address
-#' @param template_dir parent directory where subject's `FreeSurfer` folder should bw stored
+#' @param template_dir parent directory where subject's `FreeSurfer` folder should be stored
 #' @export
 download_template_subject <- function(
   subject_code = 'N27',
@@ -35,7 +35,7 @@ download_template_subject <- function(
   cat2(sprintf('Downloading %s brain from\n\t%s\nto\n\t%s', subject_code, url, dir), level = 'INFO')
 
   destzip = file.path(dir, sprintf('%s_fs.zip', subject_code))
-  download.file(url = url, destfile = destzip, quiet = F, cacheOK = T)
+  utils::download.file(url = url, destfile = destzip, quiet = F, cacheOK = T)
 
   sub_dir = file.path(dir, subject_code)
 

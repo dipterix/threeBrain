@@ -20,11 +20,11 @@ set_default_template(subject_code, view = TRUE,
   "~/rave_data/others/three_brain"))
 }
 \arguments{
-\item{subject_code}{chcaracter with only letters and numbers (Important). Default is `N27`}
+\item{subject_code}{character with only letters and numbers (Important). Default is `N27`}
 
 \item{url}{zip file address}
 
-\item{template_dir}{parent directory where subject's `FreeSurfer` folder should bw stored}
+\item{template_dir}{parent directory where subject's `FreeSurfer` folder should be stored}
 
 \item{make_default}{logical, whether to make `N27` default subject}
 

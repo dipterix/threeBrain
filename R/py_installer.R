@@ -181,7 +181,7 @@ ravepy_register <- function(){
 
 #' @rdname ravepy
 #' @usage ravepy_virtualenv_install(python_path = NULL)
-#' @param python_path character, python path, auo-detected if \code{NULL}. Please specify \code{Python3} path
+#' @param python_path character, python path, auto-detected if \code{NULL}. Please specify \code{Python3} path
 ravepy_virtualenv_install <- function(python_path = NULL){
   # Try to config virtual environment with reticulate
   cat2('Creating RAVE-Python3 environment', level = 'INFO')

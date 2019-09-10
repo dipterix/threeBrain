@@ -3,8 +3,8 @@
 #' @param ...,.list geometries inherit from AbstractGeom
 #' @param width,height positive integers. Width and height of the widget.
 #'   By default width=`100\%`, and height varies.
-#' @param default_colormap character, which colormap name to display at startup
-#' @param palettes named list, names corresponds to colormap names if you want to change color palettes
+#' @param default_colormap character, which color map name to display at startup
+#' @param palettes named list, names corresponds to color-map names if you want to change color palettes
 #' @param side_canvas logical, enable side cameras to view objects from fixed perspective
 #' @param side_zoom numerical, if side camera is enabled, zoom-in level, from 1 to 5
 #' @param side_width positive integer, side panel size in pixels

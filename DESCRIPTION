@@ -27,6 +27,9 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
+Language: en-US
+URL: https://github.com/dipterix/threeBrain
+BugReports: https://github.com/dipterix/threeBrain/issues
 Imports:
     grDevices,
     graphics,
@@ -45,3 +48,4 @@ Suggests:
     knitr,
     rmarkdown,
     pryr
+

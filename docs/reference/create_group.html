@@ -18,13 +18,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
 
-<!-- sticky kit -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+<!-- headroom.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -48,6 +50,7 @@
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
+
 
 
   </head>
@@ -74,7 +77,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -86,7 +89,12 @@
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/dipterix/threeBrain">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
       
     </div><!--/.nav-collapse -->
@@ -94,13 +102,14 @@
 </div><!--/.navbar -->
 
       
+
       </header>
 
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Create a geometry group containing multiple geometries</h1>
-    
+    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/s3_geom.R'><code>R/s3_geom.R</code></a></small>
     <div class="hidden name"><code>create_group.Rd</code></div>
     </div>
 
@@ -108,7 +117,7 @@
     <p>Create a geometry group containing multiple geometries</p>
     </div>
 
-    <pre class="usage"><span class='fu'>create_group</span>(<span class='no'>name</span>, <span class='kw'>position</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>), <span class='kw'>layer</span> <span class='kw'>=</span> <span class='fl'>1</span>)</pre>
+    <pre class="usage"><span class='fu'>create_group</span>(<span class='no'>name</span>, <span class='kw'>position</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>), <span class='kw'>layer</span> <span class='kw'>=</span> <span class='fl'>1</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -158,11 +167,11 @@ brain in a short time.</p>
 <span class='no'>g</span> <span class='kw'>=</span> <span class='fu'>create_group</span>(<span class='st'>'Group A'</span>)
 
 <span class='co'># create two spheres at 10,0,0, but s2 is relative to group A</span>
-<span class='no'>s1</span> <span class='kw'>=</span> <span class='fu'><a href='geom_sphere.html'>geom_sphere</a></span>(<span class='st'>'Sphere 1'</span>, <span class='kw'>radius</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>position</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>10</span>,<span class='fl'>0</span>,<span class='fl'>0</span>))
-<span class='no'>s2</span> <span class='kw'>=</span> <span class='fu'><a href='geom_sphere.html'>geom_sphere</a></span>(<span class='st'>'Sphere 2'</span>, <span class='kw'>radius</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>position</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>10</span>,<span class='fl'>0</span>,<span class='fl'>0</span>), <span class='kw'>group</span> <span class='kw'>=</span> <span class='no'>g</span>)
+<span class='no'>s1</span> <span class='kw'>=</span> <span class='fu'><a href='geom_sphere.html'>geom_sphere</a></span>(<span class='st'>'Sphere 1'</span>, <span class='kw'>radius</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>position</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>10</span>,<span class='fl'>0</span>,<span class='fl'>0</span>))
+<span class='no'>s2</span> <span class='kw'>=</span> <span class='fu'><a href='geom_sphere.html'>geom_sphere</a></span>(<span class='st'>'Sphere 2'</span>, <span class='kw'>radius</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>position</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>10</span>,<span class='fl'>0</span>,<span class='fl'>0</span>), <span class='kw'>group</span> <span class='kw'>=</span> <span class='no'>g</span>)
 
 <span class='co'># set transform (rotation)</span>
-<span class='no'>g</span>$<span class='fu'>set_transform</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/matrix'>matrix</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(
+<span class='no'>g</span>$<span class='fu'>set_transform</span>(<span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(
   <span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,
   <span class='fl'>1</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,
   <span class='fl'>0</span>,<span class='fl'>0</span>,<span class='fl'>1</span>,<span class='fl'>0</span>,
@@ -172,19 +181,30 @@ brain in a short time.</p>
 <span class='co'># global position for s2 is 0,10,0</span>
 <span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>s1</span>, <span class='no'>s2</span>)
 
-<span class='co'># Example 2: cache</span></div><div class='input'><span class='co'># download N27 brain</span>
-<span class='fu'>download_N27_surface</span>(<span class='kw'>surfaces</span> <span class='kw'>=</span> <span class='st'>'pial'</span>)</div><div class='output co'>#&gt; <span class='error'>Error in download_N27_surface(surfaces = "pial"): could not find function "download_N27_surface"</span></div><div class='input'>
-<span class='no'>dat</span> <span class='kw'>=</span> <span class='kw pkg'>threeBrain</span><span class='kw ns'>:::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/threeBrain/topics/read_fs_asc'>read_fs_asc</a></span>(<span class='st'>'~/rave_data/others/three_brain/N27/std.141.lh.pial.asc'</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: cannot open file '/Users/beauchamplab/rave_data/others/three_brain/N27/std.141.lh.pial.asc': No such file or directory</span></div><div class='output co'>#&gt; <span class='error'>Error in file(con, "r"): cannot open the connection</span></div><div class='input'><span class='no'>vertex</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>vertices</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>]</div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'dat' not found</span></div><div class='input'><span class='no'>face</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>faces</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>]</div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'dat' not found</span></div><div class='input'>
-<span class='co'># 1. dynamically serialize</span>
-<span class='no'>mesh</span> <span class='kw'>=</span> <span class='fu'><a href='geom_freemesh.html'>geom_freemesh</a></span>(<span class='st'>'Left Hemisphere'</span>, <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>vertex</span>, <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>face</span>)</div><div class='output co'>#&gt; <span class='error'>Error in ncol(vertex): object 'vertex' not found</span></div><div class='input'><span class='kw pkg'>pryr</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/pryr/topics/object_size'>object_size</a></span>(<span class='no'>mesh</span>) <span class='co'># ~10 MB</span></div><div class='output co'>#&gt; <span class='message'>Registered S3 method overwritten by 'pryr':</span>
-#&gt; <span class='message'>  method      from</span>
-#&gt; <span class='message'>  print.bytes Rcpp</span></div><div class='output co'>#&gt; <span class='error'>Error in object_sizes(list(...), env): object 'mesh' not found</span></div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># ~3 seconds to serialize</span></div><div class='output co'>#&gt; <span class='error'>Error in threejs_brain(mesh): object 'mesh' not found</span></div><div class='input'>
-<span class='co'># 2. cache</span>
-<span class='no'>tmp_file</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/tempfile'>tempfile</a></span>()
-<span class='no'>mesh</span> <span class='kw'>=</span> <span class='fu'><a href='geom_freemesh.html'>geom_freemesh</a></span>(<span class='st'>'Left Hemisphere cached'</span>, <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>vertex</span>,
-                     <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>face</span>, <span class='kw'>cache_file</span> <span class='kw'>=</span> <span class='no'>tmp_file</span>)</div><div class='output co'>#&gt; <span class='error'>Error in ncol(vertex): object 'vertex' not found</span></div><div class='input'><span class='kw pkg'>pryr</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/pryr/topics/object_size'>object_size</a></span>(<span class='no'>mesh</span>) <span class='co'># ~0.5 MB</span></div><div class='output co'>#&gt; <span class='error'>Error in object_sizes(list(...), env): object 'mesh' not found</span></div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># serialize at once, load in browser</span></div><div class='output co'>#&gt; <span class='error'>Error in threejs_brain(mesh): object 'mesh' not found</span></div><div class='input'>
+<span class='co'># Example 2: cache</span>
+<span class='co'># \donttest{</span>
+<span class='co'># download N27 brain</span>
+<span class='co'># Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27</span>
+<span class='co'># download_N27()</span>
 
-</div></pre>
+<span class='no'>dat</span> <span class='kw'>=</span> <span class='kw pkg'>threeBrain</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/threeBrain/man/read_fs_asc.html'>read_fs_asc</a></span>(<span class='st'>'~/rave_data/others/three_brain/N27/surf/lh.pial.asc'</span>)
+<span class='no'>vertex</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>vertices</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>]
+<span class='no'>face</span> <span class='kw'>=</span> <span class='no'>dat</span>$<span class='no'>faces</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>]
+
+<span class='co'># 1. dynamically serialize</span>
+<span class='no'>mesh</span> <span class='kw'>=</span> <span class='fu'><a href='geom_freemesh.html'>geom_freemesh</a></span>(<span class='st'>'lh'</span>, <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>vertex</span>, <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>face</span>, <span class='kw'>layer</span> <span class='kw'>=</span> <span class='fl'>1</span>)
+<span class='kw pkg'>pryr</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/pryr/man/object_size.html'>object_size</a></span>(<span class='no'>mesh</span>) <span class='co'># ~10 MB</span></div><div class='output co'>#&gt; <span class='message'>Registered S3 method overwritten by 'pryr':</span>
+#&gt; <span class='message'>  method      from</span>
+#&gt; <span class='message'>  print.bytes Rcpp</span></div><div class='output co'>#&gt; 8.4 MB</div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># ~3 seconds to serialize</span>
+
+<span class='co'># 2. cache</span>
+<span class='co'># Create group, all geometries in this group are relatively positioned</span>
+<span class='no'>tmp_file</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>()
+<span class='no'>mesh</span> <span class='kw'>=</span> <span class='fu'><a href='geom_freemesh.html'>geom_freemesh</a></span>(<span class='st'>'Left Hemisphere cached'</span>, <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>vertex</span>,
+                     <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>face</span>, <span class='kw'>cache_file</span> <span class='kw'>=</span> <span class='no'>tmp_file</span>)</div><div class='output co'>#&gt; Creating cache data to - /var/folders/rh/4bkfl5z50wgbbjd85xvc695c0000gn/T//RtmpoGHI0P/file70db2569f38c</div><div class='input'><span class='kw pkg'>pryr</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/pryr/man/object_size.html'>object_size</a></span>(<span class='no'>mesh</span>) <span class='co'># ~0.5 MB</span></div><div class='output co'>#&gt; 326 kB</div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># serialize at once, load in browser</span>
+
+
+<span class='co'># }</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -200,19 +220,23 @@ brain in a short time.</p>
   </div>
 </div>
 
+
       <footer>
       <div class="copyright">
-  <p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
+  <p>Developed by Zhengjia Wang, John Magnotti, Brian Metzger, Michael Beauchamp.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
 </div>
+
       </footer>
    </div>
 
   
 
+
   </body>
 </html>
+
 

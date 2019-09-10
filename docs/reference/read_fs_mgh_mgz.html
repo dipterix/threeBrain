@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Read `FreeSurfer` ascii file — read_fs_asc • threeBrain</title>
+<title>Read `FreeSurfer` `mgz/mgh` file — read_fs_mgh_mgz • threeBrain</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,8 @@
 
 
 
-<meta property="og:title" content="Read `FreeSurfer` ascii file — read_fs_asc" />
-<meta property="og:description" content="Read `FreeSurfer` ascii file" />
+<meta property="og:title" content="Read `FreeSurfer` `mgz/mgh` file — read_fs_mgh_mgz" />
+<meta property="og:description" content="Read `FreeSurfer` `mgz/mgh` file" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -108,29 +108,29 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Read `FreeSurfer` ascii file</h1>
+    <h1>Read `FreeSurfer` `mgz/mgh` file</h1>
     <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
-    <div class="hidden name"><code>read_fs_asc.Rd</code></div>
+    <div class="hidden name"><code>read_fs_mgh_mgz.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Read `FreeSurfer` ascii file</p>
+    <p>Read `FreeSurfer` `mgz/mgh` file</p>
     </div>
 
-    <pre class="usage"><span class='fu'>read_fs_asc</span>(<span class='no'>file</span>)</pre>
+    <pre class="usage"><span class='fu'>read_fs_mgh_mgz</span>(<span class='no'>filename</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>file</th>
+      <th>filename</th>
       <td><p>file location</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a list of vertices and face indices</p>
+    <p>list contains coordinate transforms and volume data</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

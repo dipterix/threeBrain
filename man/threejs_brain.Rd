@@ -42,9 +42,9 @@ By default width=`100\%`, and height varies.}
 
 \item{symmetric}{numerical, default 0, color center will be mapped to this value}
 
-\item{default_colormap}{character, which colormap name to display at startup}
+\item{default_colormap}{character, which color map name to display at startup}
 
-\item{palettes}{named list, names corresponds to colormap names if you want to change color palettes}
+\item{palettes}{named list, names corresponds to color-map names if you want to change color palettes}
 
 \item{widget_id}{character, internally used as unique identifiers for widgets.
 Only use it when you have multiple widgets in one website}

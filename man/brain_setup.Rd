@@ -15,7 +15,7 @@ probably need to restart R session after the first phase and continue setting up
 
 \item{use_python}{whether to install python toolbox (recommended)}
 
-\item{try_conda}{try to use conda to create RAVEPy environment}
+\item{try_conda}{try to use `conda` to create `RAVEPy` environment}
 }
 \description{
 Setup Package, Install Environment

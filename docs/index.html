@@ -7,22 +7,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3D Brain Visualization • threeBrain</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="3D Brain Visualization">
-<meta property="og:description" content="In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain.
-    However, it takes efforts to interact and share the viewer to others. In
-    addition, 'AFNI/SUMA' doesn't support Windows platform. In the 'EEG/iEEG'
-    field, it's hard to have multiple cortical electrodes mapped to a template
-    brain for group analysis. Therefore this package is written aimed at
-    providing a fast, stable, interactive and easy to share tool based on 'Three.js',
-    a 'WebGL' engine to render 3D objects in the web browser such that we can
-    display brain surfaces on webpage interactively. This package translates R
-    objects to JavaScript objects via 'JSON' format, and provides 'R-Shiny' interface
-    to manipulate geometries interactively. The visualizations can also serve as
-    standalone widgets that can be easily shared across different platforms.
-    Along with 'rave', another package developed by Beauchamp's lab at Baylor
-    College Medicine, this package provides solutions to easily map surface
+<meta property="og:description" content="In neuroscience, AFNI/SUMA is a great tool to visualize 3D brain. 
+    However, it takes efforts to interact and share the viewer to others. In 
+    addition, AFNI/SUMA doesnt support Windows platform. In the EEG/iEEG 
+    field, its hard to have multiple cortical electrodes mapped to a template 
+    brain for group analysis. Therefore this package is written aimed at 
+    providing a fast, stable, interactive and easy to share tool based on Three.js, 
+    a WebGL engine to render 3D objects in the web browser such that we can 
+    display brain surfaces on webpage interactively. This package translates R 
+    objects to JavaScript objects via JSON format, and provides R-Shiny interface
+    to manipulate geometries interactively. The visualizations can also serve as 
+    standalone widgets that can be easily shared across different platforms. 
+    Along with rave, another package developed by Beauchamp's lab at Baylor 
+    College Medicine, this package provides solutions to easily map surface 
     electrodes from multiple subjects to one template 141 brain.">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -51,8 +52,8 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="index.html">
-    <span class="fa fa-home fa-lg"></span>
-
+    <span class="fas fa fas fa-home fa-lg"></span>
+     
   </a>
 </li>
 <li>
@@ -62,7 +63,14 @@
   <a href="news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/dipterix/threeBrain">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -70,13 +78,14 @@
 </div>
 <!--/.navbar -->
 
+      
 
       </header><div class="row">
   <div class="contents col-md-9">
 <div id="threebrain---html-webgl-based-3d-viewer" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#threebrain---html-webgl-based-3d-viewer" class="anchor"></a>threeBrain - HTML, WebGL based 3D Viewer</h1></div>
-<p><img src="demo.gif"></p>
+<p><img src="https://github.com/dipterix/threeBrain/blob/dev/docs/demo.gif?raw=true" width="100%"></p>
 <p>A live <a href="">demo</a> is under construction!</p>
 <div id="a-installation" class="section level2">
 <h2 class="hasAnchor">
@@ -86,14 +95,14 @@
 </li>
 <li>Open <code>RStudio</code>, enter from its console:</li>
 </ol>
-<pre class="{r}"><code><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages("threeBrain")</a></code></pre>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"threeBrain"</span>)</a></code></pre></div>
 <p>If you want to install <code>dev</code> version from <em>Github</em>, then use:</p>
-<pre class="{r}"><code><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages("devtools")
-devtools::install_github("dipterix/threeBrain@dev")</a></code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"devtools"</span>)</a>
+<a class="sourceLine" id="cb2-2" title="2">devtools<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html">install_github</a></span>(<span class="st">"dipterix/threeBrain@dev"</span>)</a></code></pre></div>
 <ol>
 <li>Setups: after installation, in <code>RStudio</code> console, type the following command</li>
 </ol>
-<pre class="{r}"><code><a href="reference/brain_setup.html">threeBrain::brain_setup()</a></code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">threeBrain<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/threeBrain/man/brain_setup.html">brain_setup</a></span>()</a></code></pre></div>
 <p>and follow the instructions.</p>
 </div>
 <div id="b-basic-brain-viewer" class="section level2">
@@ -106,36 +115,36 @@ devtools::install_github("dipterix/threeBrain@dev")</a></code></pre>
 <ol>
 <li>Import subject</li>
 </ol>
-<pre class="{r}"><code>n27 = freesurfer_brain(
-    fs_subject_folder = '~/rave_data/others/three_brain/N27',
-    subject_name = 'N27',
-    additional_surfaces = c('white', 'smoothwm')
-)</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">n27 =<span class="st"> </span><span class="kw"><a href="reference/freesurfer_brain.html">freesurfer_brain</a></span>(</a>
+<a class="sourceLine" id="cb5-2" title="2">    <span class="dt">fs_subject_folder =</span> <span class="st">'~/rave_data/others/three_brain/N27'</span>,</a>
+<a class="sourceLine" id="cb5-3" title="3">    <span class="dt">subject_name =</span> <span class="st">'N27'</span>,</a>
+<a class="sourceLine" id="cb5-4" title="4">    <span class="dt">additional_surfaces =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'white'</span>, <span class="st">'smoothwm'</span>)</a>
+<a class="sourceLine" id="cb5-5" title="5">)</a></code></pre></div>
 <ol>
 <li>Visualize</li>
 </ol>
-<pre class="{r}"><code><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot(x)       # alternatively, you can use `x$plot()`</a></code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(x)       <span class="co"># alternatively, you can use `x$plot()`</span></a></code></pre></div>
 <p>If you have electrode file, you can import it before calling <code>plot</code> function. Please make sure it’s in <code>csv</code> format.</p>
-<pre class="{r}"><code>x$set_electrodes(electrodes = "[PATH to ELECTRODE FILE]")</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">x<span class="op">$</span><span class="kw">set_electrodes</span>(<span class="dt">electrodes =</span> <span class="st">"[PATH to ELECTRODE FILE]"</span>)</a></code></pre></div>
 <p>Here is an example of electrode csv file. Only the first five columns (<strong>case-sensitive</strong>) are mandatory: <code>Electrode (integer)</code>, <code>Coord_x</code>, <code>Coord_y</code>, <code>Coord_z</code>, and <code>Label (character)</code>. <code>Coord_*</code> is <code>RAS</code> location from <code>FreeSurfer</code> coordinates.</p>
 <pre><code>| Electrode| Coord_x| Coord_y| Coord_z|Label  | MNI305_x|  MNI305_y|  MNI305_z|SurfaceElectrode |SurfaceType | Radius| VertexNumber|Hemisphere |
 |---------:|-------:|-------:|-------:|:------|--------:|---------:|---------:|:----------------|:-----------|------:|------------:|:----------|
-|         1|    29.0|    -7.8|   -34.6|RMHCH1 | 30.46817| -17.98119| -23.40022|FALSE            |pial          |    0.5|           -1|right      |
-|         2|    33.8|    -8.0|   -34.2|RMHCH2 | 35.57109| -17.76624| -22.80131|FALSE            |pial          |    0.5|           -1|right      |
-|         3|    38.0|    -7.5|   -33.5|RMHCH3 | 39.97102| -16.81249| -22.17986|FALSE            |white          |    0.5|           -1|right      |
-|         4|    42.6|    -6.8|   -33.0|RMHCH4 | 44.79092| -15.73442| -21.82591|FALSE            |smoothwm          |    0.5|           -1|right      |
-|         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |pial          |    0.5|           -1|right      |
+|         1|    29.0|    -7.8|   -34.6|RMHCH1 | 30.46817| -17.98119| -23.40022|FALSE            |pial        |      2|           -1|left       |
+|         2|    33.8|    -8.0|   -34.2|RMHCH2 | 35.57109| -17.76624| -22.80131|FALSE            |pial        |      2|           -1|left       |
+|         3|    38.0|    -7.5|   -33.5|RMHCH3 | 39.97102| -16.81249| -22.17986|FALSE            |white       |      2|           -1|right      |
+|         4|    42.6|    -6.8|   -33.0|RMHCH4 | 44.79092| -15.73442| -21.82591|FALSE            |smoothwm    |      2|           -1|right      |
+|         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |pial        |      2|           -1|right      |
 |         ...</code></pre>
 </div>
 <div id="c-merge-subjects-and-template-mapping" class="section level2">
 <h2 class="hasAnchor">
 <a href="#c-merge-subjects-and-template-mapping" class="anchor"></a>C. Merge Subjects and Template mapping</h2>
 <p>If you have your own subjects with <code>FreeSurfer</code> output, for example, I have two subjects <code>YAB</code> and <code>YCQ</code>. To merge these two subjects and show them on <code>N27</code> template,</p>
-<pre class="{r}"><code># yab = ... (see section B for import a single subject)
-# ycq = ...
-template_n27 = threeBrain::merge_brain(yab, ycq, template_subject = 'N27')
-
-plot( template_n27 )</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="co"># yab = ... (see section B for import a single subject)</span></a>
+<a class="sourceLine" id="cb9-2" title="2"><span class="co"># ycq = ...</span></a>
+<a class="sourceLine" id="cb9-3" title="3">template_n27 =<span class="st"> </span>threeBrain<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/threeBrain/man/merge_brain.html">merge_brain</a></span>(yab, ycq, <span class="dt">template_subject =</span> <span class="st">'N27'</span>)</a>
+<a class="sourceLine" id="cb9-4" title="4"></a>
+<a class="sourceLine" id="cb9-5" title="5"><span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>( template_n27 )</a></code></pre></div>
 <p>The viewer will be in <code>N27</code> template, and electrodes of these two subjects can be mapped via <code>MNI305</code> (for surface and stereo EEG) or <code>std.141</code> (for surface-only).</p>
 </div>
 </div>
@@ -145,7 +154,11 @@ plot( template_n27 )</code></pre>
     <div class="links">
 <h2>Links</h2>
 <ul class="list-unstyled">
-<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=threeBrain">https://cloud.r-project.org/package=threeBrain</a>
+<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=threeBrain">https://​cloud.r-project.org/​package=threeBrain</a>
+</li>
+<li>Browse source code at <br><a href="https://github.com/dipterix/threeBrain">https://​github.com/​dipterix/​threeBrain</a>
+</li>
+<li>Report a bug at <br><a href="https://github.com/dipterix/threeBrain/issues">https://​github.com/​dipterix/​threeBrain/​issues</a>
 </li>
 </ul>
 </div>
@@ -160,23 +173,28 @@ plot( template_n27 )</code></pre>
 <ul class="list-unstyled">
 <li>Zhengjia Wang <br><small class="roles"> Author, maintainer, copyright holder </small>  </li>
 <li>John Magnotti <br><small class="roles"> Author </small>  </li>
+<li>Brian Metzger <br><small class="roles"> Author </small>  </li>
 <li>Michael Beauchamp <br><small class="roles"> Author, data contributor, funder </small>  </li>
+<li><a href="authors.html">All authors...</a></li>
 </ul>
 </div>
 
   </div>
 </div>
 
+
       <footer><div class="copyright">
-  <p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
+  <p>Developed by Zhengjia Wang, John Magnotti, Brian Metzger, Michael Beauchamp.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
 </div>
+
       </footer>
 </div>
 
+  
 
 
   </body>
