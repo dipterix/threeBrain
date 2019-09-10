@@ -1,8 +1,12 @@
 # Update logs (for R-cran only)
 
+## 2019-09-10
+
+Version 0.1.3 (current version)
+
 ## 2019-06-27
 
-Version 0.1.2 (current submission)
+**Version 0.1.2 (passed)**
 
 ## 2019-06-10
 
