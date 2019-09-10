@@ -13,3 +13,6 @@
 \description{
 Shiny Renderer for threeBrain Widgets
 }
+\author{
+Zhengjia Wang
+}

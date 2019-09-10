@@ -1,55 +1,96 @@
-#' Create a Threejs Brain
+#' @title Create a Threejs Brain and View it in Browsers
+#' @author Zhengjia Wang
 #' @param ...,.list geometries inherit from AbstractGeom
-#' @param widget_id unique identifier for the widget. Use it when you have
-#'   multiple widgets in one website (shiny for example)
-#' @param time_range used to calculate animation time (not yet implemented)
-#' @param value_range used to generate colors
-#' @param symmetric default 0, color center will be mapped to this value
-#' @param side_camera enable side cameras to view objects from fixed perspective
-#' @param side_camera_zoom if side camera is enabled, zoom-in level, from 1 to 5
-#' @param control_panel enable control panels for the widget
-#' @param control_presets presets to be shown in control panels
-#' @param camera_center position where camera should focus at
-#' @param camera_pos XYZ position of camera
-#' @param start_zoom numeric, positive number indicating start zoom level
-#' @param color_ramp used to generate color ramps
-#' @param color_type 'continuous' or 'discrete'
-#' @param n_color how many colors in the color ramp (used by continuous legend)
-#' @param color_names color names (used by discrete legend)
-#' @param show_legend show legend in control panel?
-#' @param legend_title legend title
-#' @param tmp_dirname internally used
-#' @param token used to identify widgets in JS localStorage
-#' @param debug internally used for debugging
-#' @param optionals internally used
-#' @param width,height width and height of the widget. By default width="100%",
-#'   and height varies.
+#' @param width,height positive integers. Width and height of the widget.
+#'   By default width=`100\%`, and height varies.
+#' @param default_colormap character, which color map name to display at startup
+#' @param palettes named list, names corresponds to color-map names if you want to change color palettes
+#' @param side_canvas logical, enable side cameras to view objects from fixed perspective
+#' @param side_zoom numerical, if side camera is enabled, zoom-in level, from 1 to 5
+#' @param side_width positive integer, side panel size in pixels
+#' @param side_shift integer of length two, side panel shift in pixels (`CSS style`: top, left)
+#' @param control_panel logical, enable control panels for the widget
+#' @param control_presets characters, presets to be shown in control panels
+#' @param camera_center numerical, length of three, XYZ position where camera should focus at
+#' @param camera_pos XYZ position of camera itself, default (0, 0, 500)
+#' @param start_zoom numerical, positive number indicating camera zoom level
 #' @param coords \code{NULL} to hide coordinates or numeric vector of three.
-#' @param browser_external use system default browser (default) or builtin one.
+#' @param symmetric numerical, default 0, color center will be mapped to this value
+#' @param tmp_dirname character path, internally used, where to store temporary files
+#' @param token unique character, internally used to identify widgets in JS localStorage
+#' @param debug logical, internally used for debugging
+#' @param optionals internally used, to be deprecated
+#' @param browser_external logical, use system default browser (default) or builtin one.
+#' @param global_data internally use, mainly to store orientation matrices.
+#' @param widget_id character, internally used as unique identifiers for widgets.
+#'   Only use it when you have multiple widgets in one website
 #' @export
 threejs_brain <- function(
-  ..., widget_id = 'threebrain_data', time_range = NULL,
-  value_range = NULL, symmetric = 0, side_camera = FALSE, side_camera_zoom = 1,
-  control_panel = TRUE, control_presets = NULL, camera_center = c(0,0,0),
-  camera_pos = c(0,0,500), start_zoom = 1,
-  color_ramp = c('navyblue', '#e2e2e2', 'red'), color_type = 'continuous',
-  n_color = 64,
-  color_names = seq_along(color_ramp),
-  show_legend = TRUE, legend_title = 'Value',
-  tmp_dirname = NULL, width = NULL, height = NULL, optionals = list(),
-  debug = FALSE, token = NULL, coords = NULL,
-  browser_external = TRUE,
-  .list = list()){
+  ..., .list = list(), width = NULL, height = NULL,
+
+  # Args for the side panels
+  side_canvas = FALSE, side_zoom = 1, side_width = 250, side_shift = c(0, 0),
+
+  # for controls GUI
+  control_panel = TRUE, control_presets = NULL,
+
+  # Main camera and scene center
+  camera_center = c(0,0,0), camera_pos = c(0,0,500), start_zoom = 1, coords = NULL,
+
+  # For colors and animation
+  symmetric = 0, default_colormap = 'Value',
+  palettes = NULL,
+
+  # Builds, additional data, etc (misc)
+  widget_id = 'threebrain_data', tmp_dirname = NULL,
+  debug = FALSE, token = NULL, optionals = list(),
+  browser_external = TRUE, global_data = list()
+){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
   stopifnot2(length(coords) == 0 || (length(coords) == 3 && is.numeric(coords)), msg = 'corrds must be NULL or a vector length of 3')
   stopifnot2(length(camera_pos) == 3 && is.numeric(camera_pos) && sum(abs(camera_pos)) > 0, msg = 'camera_pos must be a vector length of 3 and cannot be origin')
 
+  # Inject global data
+  global_container = BlankGeom$new(name = '__blank__', group = GeomGroup$new(name = '__global_data'))
+  sapply( names(global_data), function(nm){
+    global_container$group$set_group_data(
+      name = sprintf('__global_data__%s', nm),
+      value = global_data[[ nm ]]
+    )
+  })
+
 
   # Create element list
-  geoms = c(list(...), .list)
+  geoms = unlist(c(global_container, list(...), .list))
+  # Remove illegal geoms
+  is_geom = vapply(geoms, function(x){ R6::is.R6(x) && ('AbstractGeom' %in% class(x)) }, FUN.VALUE = FALSE)
+  geoms = geoms[is_geom]
+
   groups = unique(lapply(geoms, '[[', 'group'))
   groups = groups[!vapply(groups, is.null, FUN.VALUE = FALSE)]
+
+  # get color schema
+  animation_types = unique(unlist( lapply(geoms, function(g){ g$animation_types }) ))
+  if(!is.list(palettes)){ palettes = list() }
+  pnames = names(palettes)
+  color_maps = sapply(animation_types, function(atype){
+    c = ColorMap$new(name = atype, .list = geoms, symmetric = symmetric)
+    if( atype %in% pnames ){
+      c$set_colors( palettes[[atype]] )
+    }
+    c$to_list()
+  }, USE.NAMES = TRUE, simplify = FALSE)
+
+  if( length(animation_types) ){
+    if( !length(default_colormap) || !default_colormap %in% animation_types){
+      default_colormap = animation_types[1]
+    }
+  }else{
+    default_colormap = NULL
+  }
+
+
 
   # Check elements
   geoms = lapply(geoms, function(g){ g$to_list() })
@@ -85,72 +126,6 @@ threejs_brain <- function(
   # Get groups
   groups = lapply(groups, function(g){ g$to_list() })
 
-
-  # Extract timestamp
-  if(length(time_range) < 2){
-    time_range = unlist(lapply(geoms, '[[', 'time_stamp'))
-    if(length(time_range) != 0){
-      time_range = range(time_range)
-    }else{
-      time_range = c(0,1)
-      show_legend = FALSE
-    }
-    if(time_range[2] == time_range[1]){
-      time_range[2] = time_range[1] + 1
-    }
-  }else{
-    time_range = range(time_range)
-  }
-
-  # Extract value range
-  v_count = unlist(lapply(geoms, function(g){ length(g$value )}))
-  if(length(v_count)){
-    v_count = max(v_count)
-  }else{
-    v_count = 0
-  }
-  if(length(value_range) < 2){
-    value_ranges = unlist(lapply(geoms, '[[', 'value'))
-    if(length(value_range) != 0){
-      value_range = range(value_range)
-    }else{
-      value_range = c(-1,1) + symmetric
-    }
-    if(value_range[2] == value_range[1]){
-      value_range = c(-1,1) + symmetric
-    }
-  }else{
-    value_range = range(value_range)
-  }
-
-  # generate color ramp
-  if(color_type == 'continuous'){
-    if(!is.function(color_ramp)){
-      color_ramp = grDevices::colorRampPalette(color_ramp)
-    }
-    n_color = 2^ceiling(log2(n_color))
-    hex_colors = color_ramp(n_color)
-  }else{
-
-    stopifnot2(length(color_names) == length(color_ramp), msg = 'In discrete mode, color_names must be specified and its length must equals to color_ramp')
-    stopifnot2(!is.function(color_ramp), msg = 'In discrete mode, color_ramp must be a vector')
-
-    n_color = length(color_ramp) * 10
-    n_color = 2^ceiling(log2(n_color))
-    value_range = c(1, length(color_ramp))
-
-    color_ramp = grDevices::colorRampPalette(color_ramp)
-    hex_colors = color_ramp(n_color)
-
-  }
-
-  colors = gsub('^#', '0x', hex_colors)
-  colors = cbind(seq(0, 1, length.out = length(colors)), colors)
-
-  color_scale = (n_color-1) / (value_range[2] - value_range[1]);
-  color_shift = value_range[1];
-
-
   if(is.null(shiny::getDefaultReactiveDomain())){
     lib_path = 'lib/'
   }else{
@@ -165,26 +140,23 @@ threejs_brain <- function(
 
   # Generate settings
   settings = list(
-    side_camera = side_camera,
-    side_canvas_zoom = side_camera_zoom,
-    time_range = time_range,
-    value_range = value_range,
+    side_camera = side_canvas,
+    side_canvas_zoom = side_zoom,
+    side_canvas_width = side_width,
+    side_canvas_shift = side_shift,
+    color_maps = color_maps,
+    default_colormap = default_colormap,
     hide_controls = !control_panel,
     control_center = as.vector(camera_center),
     camera_pos = camera_pos,
     start_zoom = ifelse(start_zoom > 0, start_zoom, 1),
-    colors = colors,
-    color_scale = color_scale, # color_index = floor((value - color_shift) * color_scale)
-    color_shift = color_shift,
-    color_type = color_type,
-    color_names = color_names,
-    show_legend = show_legend,
+    show_legend = TRUE,
     control_presets = control_presets,
     cache_folder = paste0(lib_path, widget_id, '-0/'),
     lib_path = lib_path,
     optionals = optionals,
     debug = debug,
-    has_animation = v_count > 1,
+    # has_animation = v_count > 1,
     token = token,
     coords = coords
   )
@@ -217,6 +189,7 @@ threejs_brain <- function(
 }
 
 #' Shiny Output for threeBrain Widgets
+#' @author Zhengjia Wang
 #' @name threejsBrainOutput
 #' @param outputId unique identifier for the widget
 #' @param width,height width and height of the widget. By default width="100%",
@@ -230,6 +203,7 @@ threejsBrainOutput <- function(outputId, width = '100%', height = '500px'){
 
 
 #' Shiny Renderer for threeBrain Widgets
+#' @author Zhengjia Wang
 #' @name renderBrain
 #' @param expr R expression that calls three_brain function or Brain object
 #' @param env environment of expression to be evaluated
@@ -245,6 +219,7 @@ renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
 
 
 #' Save threeBrain widgets to local file system
+#' @author Zhengjia Wang
 #' @param widget generated from function 'threejs_brain'.
 #' @param directory directory to save the widget.
 #' @param filename default is 'index.html', filename of the widget index file.

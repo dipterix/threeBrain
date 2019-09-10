@@ -1,9 +1,9 @@
 const webpack = require("webpack");
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const THREE = require('three');
 
 module.exports = {
+  mode: 'production',
   entry: path.resolve(__dirname, 'src/index.js'),
   devtool: "source-map",
   output: {

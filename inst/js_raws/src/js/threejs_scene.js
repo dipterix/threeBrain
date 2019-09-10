@@ -1,16 +1,29 @@
-import { to_dict, to_array } from './utils.js';
+import { to_array, get_element_size, get_or_default } from './utils.js';
 import { Stats } from './libs/stats.min.js';
 import { THREE } from './threeplugins.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
 import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
-import { get_element_size } from './libs/get.element.size.js';
+import { CONSTANTS } from './constants.js';
+import { gen_sphere } from './geometry/sphere.js';
+import { gen_datacube } from './geometry/datacube.js';
+import { gen_free } from './geometry/free.js';
+import { Compass } from './geometry/compass.js';
+import { json2csv } from 'json-2-csv';
+import * as download from 'downloadjs';
 
 
-/*
-    Class defining basic canvas
+/* Geometry generator */
+const GEOMETRY_FACTORY = {
+  'sphere' : gen_sphere,
+  'free'   : gen_free,
+  'datacube' : gen_datacube,
+  'blank'  : (g, canvas) => { return(null) }
+};
 
-
+/* ------------------------------------ Layer setups ------------------------------------
+  Defines for each camera which layers are visible.
+  Protocols are
     Layers:
       - 0, 2, 3: Especially reserved for main camera
       - 1, Shared by all cameras
@@ -25,6 +38,11 @@ import { get_element_size } from './libs/get.element.size.js';
       - 14~31 invisible
 
 */
+
+// A storage to cache large objects such as mesh data
+const cached_storage = new THREEBRAIN_STORAGE();
+
+// Make sure window.requestAnimationFrame exists
 // Override methods so that we have multiple support across platforms
 window.requestAnimationFrame =
     window.requestAnimationFrame ||
@@ -36,17 +54,14 @@ window.requestAnimationFrame =
         setTimeout(function() { callback(Date.now()); },  1000/60);
     };
 
-const cached_storage = new THREEBRAIN_STORAGE();
-const MAX_RENDER_ORDER = 9999999;
+
+
 
 class THREEBRAIN_CANVAS {
   constructor(
     el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
   ) {
-    this.el = el;
-    this.container_id = el.id;
-    this.has_webgl2 = has_webgl2;
-    this.side_width = side_width;
+
     if(DEBUG){
       console.debug('Debug Mode: ON.');
       this.DEBUG = true;
@@ -63,22 +78,74 @@ class THREEBRAIN_CANVAS {
       this.cache = cache;
     }
 
-    this.mesh = {};
-    this.group = {};
-    this.clickable = {};
+    // DOM container information
+    this.el = el;
+    this.container_id = el.id;
+
+    // Is system supporting WebGL2? some customized shaders might need this feature
+    // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
+    this.has_webgl2 = has_webgl2;
+
+    // Side panel initial size in pt
+    this.side_width = side_width;
+
+    // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
     this.shiny_mode = shiny_mode;
-    this.render_flag = 0;
-    this.disable_raycast = true;
-    this.render_legend = false;
-    this.color_type = 'continuous';
+
+    // Container that stores mesh objects from inputs (user defined) for each inquery
+    this.mesh = new Map();
+
+    // Stores all electrodes
+    this.subject_codes = [];
+    this.electrodes = new Map();
+    this.volumes = new Map();
+    this.surfaces = new Map();
+    this.state_data = new Map();
+    // set default values
+    this.state_data.set( 'coronal_depth', 0 );
+    this.state_data.set( 'axial_depth', 0 );
+    this.state_data.set( 'sagittal_depth', 0 );
+
+    // for global usage
+    this.shared_data = new Map();
+
+    // Stores all groups
+    this.group = new Map();
+
+    // All mesh/geoms in this store will be calculated when raycasting
+    this.clickable = new Map();
+
+    // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
+    this._keyboard_callbacks = {};
+
+    /* A render flag that tells renderers whether the canvas needs update.
+          Case -1, -2, ... ( < 0 ) : stop rendering
+          Case 0: render once
+          Case 1, 2: render until reset
+    lower render_flag will be ignored if higher one is set. For example, if
+    render_flag=2 and pause_animation only has input of 1, renderer will ignore
+    the pause signal.
+    */
+    this.render_flag = 0;
+
+    // Disable raycasting, soft deprecated
+    this.disable_raycast = true;
+
+    // A indicator of whether to render legends, will be true if input meshes have animations
+    this.render_legend = false;
+    // If legend is drawn, should be continuous or discrete.
+    this.color_type = 'continuous';
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
-    this.animation_mixers = {};
+    this.animation_mixers = new Map();
+    this.animation_clips = new Map();
+    this.color_maps = new Map();
+    // Important, this keeps animation clock aligned with real-time PC clock.
     this.clock = new THREE.Clock();
 
-    // Generate a canvas domElement using 2d context to put all renderers together
+    // Generate a canvas domElement using 2d context to put all elements together
     // Since it's 2d canvas, we might also add customized information onto it
     this.domElement = document.createElement('canvas');
     this.domContext = this.domElement.getContext('2d');
@@ -88,55 +155,63 @@ class THREEBRAIN_CANVAS {
 
 
     // General scene.
-    // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another
-    // to set render order
+    // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another to set render order
     this.scene = new THREE.Scene();
-    //this.scene_legend = new THREE.Scene();
+    this.origin = new THREE.Object3D();
+    this.origin.position.copy( CONSTANTS.VEC_ORIGIN );
+    this.scene.add( this.origin );
 
-    // Main camera
+    /* Main camera
+        Main camera is initialized at 0,0,500. The distance is stayed at 500 away from origin
+        The view range is set from -150 to 150 (left - right) respect container ratio
+        render distance is from 1 to 10000, sufficient for brain object.
+        Parameters:
+          position: 0,0,500
+          left: -150, right: 150, near 1, far: 10000
+          layers: 0, 1, 2, 3, 7, 8
+          center/lookat: origin (0,0,0)
+          up: 0,1,0 ( heads up )
+    */
     this.main_camera = new THREE.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
 		this.main_camera.position.z = 500;
 		this.main_camera.userData.pos = [0,0,500];
-		this.main_camera.layers.set(0);
-		this.main_camera.layers.enable(1);
-		this.main_camera.layers.enable(2);
-		this.main_camera.layers.enable(3);
-		this.main_camera.layers.enable(7);
-		this.main_camera.layers.enable(8);
-		this.main_camera.lookAt( new THREE.Vector3(0,0,0) ); // Force camera
+		this.main_camera.layers.set( CONSTANTS.LAYER_USER_MAIN_CAMERA_0 );
+		this.main_camera.layers.enable( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
+		this.main_camera.layers.enable( 2 );
+		this.main_camera.layers.enable( 3 );
+		this.main_camera.layers.enable( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+		this.main_camera.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+		this.main_camera.lookAt( CONSTANTS.VEC_ORIGIN ); // Force camera
 
-		// Camera light, casting from behind the main_camera
-    var light = new THREE.DirectionalLight( 0xefefef, 0.5 );
-    light.position.set(0,0,-1);
-    light.layers.set(8);
-    this.main_camera.add(light);
+		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
+    const main_light = new THREE.DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
+    main_light.position.copy( CONSTANTS.VEC_ANAT_I );
+    main_light.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+    this.main_camera.add( main_light );
 
     // Add main camera to scene
-    this.scene.add( this.main_camera );
+    this.add_to_scene( this.main_camera, true );
 
-    // Add ambient light
-    let ambient_light = new THREE.AmbientLight( 0x808080 );
-    ambient_light.layers.set(7);
-    this.scene.add( ambient_light ); // soft white light
+    // Add ambient light to make scene soft
+    const ambient_light = new THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT );
+    ambient_light.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+    this.add_to_scene( ambient_light, true ); // soft white light
 
 
-    // Set Main renderer
+    // Set pixel ratio, separate settings for main and side renderers
+    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
+
+    // Set Main renderer, strongly recommend WebGL2
     if( this.has_webgl2 ){
       // We need to use webgl2 for VolumeRenderShader1 to work
       let main_canvas_el = document.createElement('canvas'),
           main_context = main_canvas_el.getContext( 'webgl2' );
     	this.main_renderer = new THREE.WebGLRenderer({
-    	  antialias: false, alpha: true,
-    	  canvas: main_canvas_el, context: main_context
+    	  antialias: false, alpha: true, canvas: main_canvas_el, context: main_context
     	});
     }else{
-    	this.main_renderer = new THREE.WebGLRenderer({
-    	  antialias: false, alpha: true
-    	});
+    	this.main_renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
     }
-
-    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
-
   	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
   	this.main_renderer.autoClear = false; // Manual update so that it can render two scenes
@@ -151,7 +226,8 @@ class THREEBRAIN_CANVAS {
           side_context = side_canvas_el.getContext( 'webgl2' );
     	this.side_renderer = new THREE.WebGLRenderer({
     	  antialias: false, alpha: true,
-    	  canvas: side_canvas_el, context: side_context
+    	  canvas: side_canvas_el, context: side_context,
+    	  depths: false
     	});
     }else{
     	this.side_renderer = new THREE.WebGLRenderer( { antialias: false, alpha: true } );
@@ -159,31 +235,12 @@ class THREEBRAIN_CANVAS {
 
   	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
   	this.side_renderer.autoClear = false; // Manual update so that it can render two scenes
-  	let _render_height = Math.max( Math.floor( Math.max( width / 3, height ) / this.pixel_ratio[1] / 2 ), 256 );
+  	let _render_height = Math.floor( Math.max( width / 3, height ) / this.pixel_ratio[1] / 2 );
+  	if( _render_height < 256 ){ _render_height = 256; }
+  	if( _render_height > 512 ){ _render_height = 512; }
   	this.side_renderer._render_height = _render_height;
     this.side_renderer.setSize( _render_height * 3 , _render_height );
   	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
-
-    /* Use R plots instead
-  	// legend renderer to this.scene_legend
-  	this.legend_renderer = new THREE.WebGLRenderer( { antialias: false, alpha: true } );
-  	this.legend_renderer.setPixelRatio( window.devicePixelRatio );
-  	this.legend_renderer.setSize( 100, 200 );
-
-  	// legend camera
-  	this.legend_camera = new THREE.OrthographicCamera( -0.65, 1.15, 1.9, -1.7, 1, 100 );
-  	this.legend_camera.layers.set(1);
-  	this.legend_camera.position.z = 10;
-  	this.legend_camera.aspect = 1/2;
-  	this.legend_camera.updateProjectionMatrix();
-
-  	this.scene_legend.add( new THREE.AmbientLight( 0x808080 ) );
-  	this.scene_legend.add( this.legend_camera );
-
-    this.legend_renderer.domElement.style.pointerEvents = 'none';
-    adapter.add_legend( this.legend_renderer.domElement );
-  	// this.legend_renderer.render( this.scene_legend, this.legend_camera );
-    */
 
     // Element container
     this.main_canvas = document.createElement('div');
@@ -244,7 +301,12 @@ class THREEBRAIN_CANVAS {
 			  cvs.style.height = parseInt(level * 100) + '%';
 			  const cvs_size = get_element_size( cvs );
 			  const div_size = get_element_size( div );
-			  const depths = [this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
+			  const depths = [
+          this.state_data.get( 'sagittal_depth' ),
+          this.state_data.get( 'coronal_depth' ),
+          this.state_data.get( 'axial_depth' )
+        ];
+			  //  this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
 
 			  let _left = 0,
 			      _top = 0;
@@ -316,23 +378,23 @@ class THREEBRAIN_CANVAS {
 			  // coronal (FB)
 			  camera.position.fromArray( [0, -500, 0] );
 			  camera.up.set( 0, 0, 1 );
-			  camera.layers.enable(9);
+			  camera.layers.enable( CONSTANTS.LAYER_SYS_CORONAL_9 );
 			  side_light.position.fromArray([0, 1, 0]);
-			  side_light.layers.set(9);
+			  side_light.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
 			}else if( idx === 1 ){
 			  // axial (IS)
 			  camera.position.fromArray( [0, 0, 500] );
 			  camera.up.set( 0, 1, 0 );
-			  camera.layers.enable(10);
+			  camera.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
 			  side_light.position.fromArray([0, 0, -1]);
-			  side_light.layers.set(10);
+			  side_light.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
 			}else{
 			  // sagittal (LR)
 			  camera.position.fromArray( [-500, 0, 0] );
 			  camera.up.set( 0, 0, 1 );
-			  camera.layers.enable(11);
+			  camera.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
 			  side_light.position.fromArray([1, 0, 0]);
-			  side_light.layers.set(11);
+			  side_light.layers.set( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
 			}
 
 			camera.lookAt( new THREE.Vector3(0,0,0) );
@@ -344,7 +406,7 @@ class THREEBRAIN_CANVAS {
 
       // light is always following cameras
       camera.add( side_light );
-      this.scene.add( camera );
+      this.add_to_scene( camera, true );
 
       // Add resizables
       let tmp = [
@@ -387,20 +449,31 @@ class THREEBRAIN_CANVAS {
 
           console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
           if( nm === 'coronal' ){
-            this._sagittal_depth = _x;
-            this._axial_depth = -_y;
+            this.state_data.set( 'sagittal_depth', _x );
+            this.state_data.set( 'axial_depth', -_y );
+            // this._sagittal_depth = _x;
+            // this._axial_depth = -_y;
           }else if( nm === 'axial' ){
-            this._sagittal_depth = _x;
-            this._coronal_depth = -_y;
+            this.state_data.set( 'sagittal_depth', _x );
+            this.state_data.set( 'coronal_depth', -_y );
+            // this._sagittal_depth = _x;
+            // this._coronal_depth = -_y;
           }else if( nm === 'sagittal' ){
-            this._coronal_depth = -_x;
-            this._axial_depth = -_y;
+            this.state_data.set( 'coronal_depth', -_x );
+            this.state_data.set( 'axial_depth', -_y );
+            // this._coronal_depth = -_x;
+            // this._axial_depth = -_y;
           }
           // Also set main_camera
           const _d = new THREE.Vector3(
-            this._sagittal_depth || 0,
-            this._coronal_depth || 0,
-            this._axial_depth || 0
+            // this._sagittal_depth || 0,
+            this.state_data.get( 'sagittal_depth' ),
+
+            // this._coronal_depth || 0,
+            this.state_data.get( 'coronal_depth' ),
+
+            // this._axial_depth || 0
+            this.state_data.get( 'axial_depth' )
           ).normalize().multiplyScalar(500);
           if( _d.length() === 0 ){
             _d.z = 500;
@@ -423,7 +496,11 @@ class THREEBRAIN_CANVAS {
             this.main_camera.up.copy( _cp );
           }
 
-          this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+          this.set_side_depth(
+            this.state_data.get( 'coronal_depth' ),
+            this.state_data.get( 'axial_depth' ),
+            this.state_data.get( 'sagittal_depth' )
+          );
 
         }
       } );
@@ -434,12 +511,19 @@ class THREEBRAIN_CANVAS {
         evt.preventDefault();
         if( evt.altKey ){
           if( evt.deltaY > 0 ){
-            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
+            this.state_data.set( nm + '_depth', 1 + this.state_data.get(nm + '_depth') );
+            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
           }else if( evt.deltaY < 0 ){
-            this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
+            this.state_data.set( nm + '_depth', -1 + this.state_data.get(nm + '_depth') );
+            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
           }
         }
-        this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+        // this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
+        this.set_side_depth(
+          this.state_data.get( 'coronal_depth' ),
+          this.state_data.get( 'axial_depth' ),
+          this.state_data.get( 'sagittal_depth' )
+        );
       });
 
       // Make resizable, keep current width and height
@@ -483,66 +567,7 @@ class THREEBRAIN_CANVAS {
     this.el.appendChild( this.wrapper_canvas );
 
 
-    // Side cameras
-    /*
-
-    this.side_cameras = [
-      // // coronal (FB), position: ( 0 , -500 , 0 )
-      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
-
-      // axial (IS),
-      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
-
-      // sagittal (LR)
-      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 ),
-      new THREE.OrthographicCamera( side_width / - 2, side_width / 2, side_width / 2, side_width / - 2, 1, 10000 )
-    ];
-
-    this.side_cameras[0].position.fromArray( [-500, 0, 0] );
-    this.side_cameras[0].up.set( 0, 0, 1 );
-
-    this.side_cameras[1].position.fromArray( [100, 0, 0] );
-    this.side_cameras[1].up.set( 0, 0, 1 );
-
-    this.side_cameras[2].position.fromArray( [0, 100, 0] );
-    this.side_cameras[2].up.set( 0, 0, 1 );
-
-    this.side_cameras[3].position.fromArray( [0, 0, 100] );
-    this.side_cameras[3].up.set( 0, 1, 0 );
-
-    for(var ii = 0; ii < 4; ii++){
-      this.side_cameras[ii].lookAt( new THREE.Vector3(0,0,0) );
-      this.side_cameras[ii].aspect = 1;
-      this.side_cameras[ii].updateProjectionMatrix();
-      this.side_cameras[ii].layers.set(1);
-
-      [1, 4, 5, 6, 7, ii+9, 13].forEach((ly) => {
-        this.side_cameras[ii].layers.enable(ly);
-      });
-
-      let side_light = new THREE.DirectionalLight( 0xefefef, 0.5 ),
-          pos = [0,0,0];
-      if(ii === 0){
-        pos[0] = -1;
-      }else{
-        pos[ii-1] = 1;
-      }
-
-      side_light.position.fromArray(pos);
-      side_light.layers.set(ii + 9);
-      this.scene.add( side_light );
-    }
-    this.has_side_cameras = false;
-    this.side_width = side_width;
-    */
-
-
-
-
-
-
     this.has_stats = false;
-
 
 
     // Controls
@@ -560,7 +585,7 @@ class THREEBRAIN_CANVAS {
     // set control listeners
     this.controls.addEventListener('start', (v) => {
 
-      if(this.render_flag < 0 && !v.no_resize ){
+      if(this.render_flag < 0 ){
         // adjust controls
         this.handle_resize(undefined, undefined, true);
       }
@@ -575,9 +600,16 @@ class THREEBRAIN_CANVAS {
 
     });
 
+    // Follower that fixed at bottom-left
+    this.compass = new Compass( this.main_camera, this.controls );
+    // Hide the anchor first
+    this.compass.set_visibility( false );
+    this.add_to_scene(this.compass.container, true);
+
+
 
     // Mouse helpers
-    let mouse_pointer = new THREE.Vector2(),
+    const mouse_pointer = new THREE.Vector2(),
         mouse_raycaster = new THREE.Raycaster(),
         mouse_helper = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
         mouse_helper_root = new THREE.Mesh(
@@ -586,11 +618,11 @@ class THREEBRAIN_CANVAS {
         );
 
     // root is a green cube that's only visible in side cameras
-    mouse_helper_root.layers.set(13);
-    mouse_helper.layers.set(8);
+    mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+    mouse_helper.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
 
     // In side cameras, always render mouse_helper_root on top
-    mouse_helper_root.renderOrder = MAX_RENDER_ORDER;
+    mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
     mouse_helper_root.material.depthTest = false;
     // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
@@ -598,27 +630,15 @@ class THREEBRAIN_CANVAS {
     this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
-    this._mouse_helper_sleep_count = 0;
 
-    this.scene.add(mouse_helper);
+    this.add_to_scene(mouse_helper, true);
 
-    /*
-    // octree for fast raycasting
-    this.octree = new THREE.Octree( {
-			// uncomment below to see the octree (may kill the fps)
-			//scene: scene,
-			// when undeferred = true, objects are inserted immediately
-			// instead of being deferred until next octree.update() call
-			// this may decrease performance as it forces a matrix update
-			undeferred: false,
-			// set the max depth of tree
-			depthMax: 5,
-			// max number of objects before nodes split or merge
-			objectsThreshold: 200000,
-			// percent between 0 and 1 that nodes will overlap each other
-			// helps insert objects that lie over more than one node
-			overlapPct: 1
-		} );*/
+    this.focus_box = new THREE.BoxHelper();
+    this.focus_box.material.color.setRGB( 1, 0, 0 );
+    this.focus_box.userData.added = false;
+    this.bounding_box = this.focus_box.clone();
+
+
 
 
 		// File loader
@@ -642,6 +662,14 @@ class THREEBRAIN_CANVAS {
     this.json_loader = new THREE.FileLoader( this.loader_manager );
     this.font_loader = new THREE.FontLoader( this.loader_manager );
 
+  }
+
+  add_to_scene( m, global = false ){
+    if( global ){
+      this.scene.add( m );
+    }else{
+      this.origin.add( m );
+    }
   }
 
   get_main_camera_params(){
@@ -669,12 +697,12 @@ class THREEBRAIN_CANVAS {
 
       this._coordinates.z = new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ),
               origin, z === 0 ? 1: z, 0x0000ff );
-      this._coordinates.x.layers.set(7);
-      this._coordinates.y.layers.set(7);
-      this._coordinates.z.layers.set(7);
-      this.scene.add( this._coordinates.x );
-      this.scene.add( this._coordinates.y );
-      this.scene.add( this._coordinates.z );
+      this._coordinates.x.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+      this._coordinates.y.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+      this._coordinates.z.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+      this.add_to_scene( this._coordinates.x );
+      this.add_to_scene( this._coordinates.y );
+      this.add_to_scene( this._coordinates.z );
     }
     // If ? === 0, then hide this axis
     if( x === 0 ){
@@ -699,6 +727,10 @@ class THREEBRAIN_CANVAS {
   }
 
   register_main_canvas_events(){
+
+    this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+
     this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 2){
         return(null);
@@ -774,27 +806,31 @@ class THREEBRAIN_CANVAS {
 
     }, false );
 
+    window.addEventListener( 'keydown', (event) => {
+      if( this.listen_keyboard ){
+        event.preventDefault();
+        this.keyboard_event = {
+          'action' : 'keydown',
+          'event' : event,
+          'dispose' : false,
+          'level' : 0
+        };
+      }
+
+    });
+
     this.add_mouse_callback(
       (evt) => {
+
+        // If editing mode enabled, disable this
         return({
-          pass  : ['click', 'dblclick'].includes( evt.action ) || ( evt.action === 'mousedown' && evt.event.button === 2 ),
+          pass  : !this.edit_mode && (['click', 'dblclick'].includes( evt.action ) ||
+                  ( evt.action === 'mousedown' && evt.event.button === 2 )),
           type  : 'clickable'
         });
       },
       (res, evt) => {
-
-        if( this.object_chosen ){
-          this.object_chosen.material.emissive.r = 0;
-        }
-
-        if( res.target_object ){
-          this.object_chosen = res.target_object;
-          this.object_chosen.material.emissive.r = 1;
-          console.debug('object selected ' + res.target_object.name);
-        }else{
-          this.object_chosen = undefined;
-        }
-
+        this.focus_object( res.target_object );
         this.start_animation( 0 );
       },
       'set_obj_chosen'
@@ -803,7 +839,8 @@ class THREEBRAIN_CANVAS {
     this.add_mouse_callback(
       (evt) => {
         return({
-          pass  : true,
+          pass  : ['click', 'dblclick'].includes( evt.action ) ||
+                  ( evt.action === 'mousedown' && evt.event.button === 2 ),
           type  : 'clickable'
         });
       },
@@ -834,6 +871,80 @@ class THREEBRAIN_CANVAS {
       'raycaster'
     );
 
+    // zoom-in, zoom-out
+    this.add_keyboard_callabck( CONSTANTS.KEY_ZOOM, (evt) => {
+      if( evt.event.shiftKey ){
+        this.main_camera.zoom = this.main_camera.zoom * 1.2; // zoom in
+      }else{
+        this.main_camera.zoom = this.main_camera.zoom / 1.2; // zoom out
+      }
+      this.main_camera.updateProjectionMatrix();
+      this.start_animation( 0 );
+    }, 'zoom');
+
+    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
+      let m = this.object_chosen || this._last_object_chosen,
+          last_obj = false,
+          this_obj = false,
+          first_obj = false;
+
+      // place flag first as the function might ends early
+      this.start_animation( 0 );
+
+      for( let _nm of this.mesh.keys() ){
+        this_obj = this.mesh.get( _nm );
+        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+          if( !m ){
+            this.focus_object( this_obj, true );
+            return(null);
+          }
+          if( last_obj && last_obj.name === m.name ){
+            this.focus_object( this_obj, true );
+            return(null);
+          }
+          last_obj = this_obj;
+          if( !first_obj ){
+            first_obj = this_obj;
+          }
+        }
+      }
+      if( last_obj !== false ){
+        // has electrode
+        if( last_obj.name === m.name ){
+        // focus on the first one
+          last_obj = first_obj;
+        }
+        this.focus_object( last_obj, true );
+        return(null);
+      }
+
+    }, 'electrode_cycling_next');
+
+    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES_PREV, (evt) => {
+      let m = this.object_chosen || this._last_object_chosen,
+          last_obj = false,
+          this_obj = false,
+          first_obj = false;
+
+      // place flag first as the function might ends early
+      this.start_animation( 0 );
+
+      for( let _nm of this.mesh.keys() ){
+        this_obj = this.mesh.get( _nm );
+        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+          if( m && last_obj && m.name == this_obj.name ){
+            this.focus_object( last_obj, true );
+            return(null);
+          }
+          last_obj = this_obj;
+        }
+      }
+      if( last_obj ){
+        this.focus_object( last_obj, true );
+      }
+    }, 'electrode_cycling_prev');
+
+
     if( this.DEBUG ){
       this.add_mouse_callback(
         (evt) => {
@@ -848,8 +959,57 @@ class THREEBRAIN_CANVAS {
         },
         'debug'
       );
+
     }
 
+
+  }
+
+  focus_object( m = undefined, helper = false, auto_unfocus = false ){
+
+    if( m ){
+      if( this.object_chosen ){
+        this.highlight( this.object_chosen, true );
+      }
+      this.object_chosen = m;
+      this._last_object_chosen = m;
+      this.highlight( this.object_chosen, false );
+      console.debug('object selected ' + m.name);
+
+      if( helper ){
+        m.getWorldPosition( this.mouse_helper.position );
+        this.mouse_helper.visible = true;
+      }
+
+
+    }else{
+      if( auto_unfocus && this.object_chosen ){
+        this.highlight( this.object_chosen, true );
+        this.object_chosen = undefined;
+      }
+    }
+  }
+
+  highlight( m, reset = false ){
+
+    // use bounding box with this.focus_box
+    if( !m || !m.isObject3D ){ return(null); }
+
+    this.focus_box.setFromObject( m );
+    if( !this.focus_box.userData.added ){
+      this.add_to_scene( this.focus_box, true );
+    }
+
+    this.focus_box.visible = !reset;
+
+    // check if there is highlight helper
+    if( m.children.length > 0 ){
+      m.children.forEach((_c) => {
+        if( _c.isMesh && _c.userData.is_highlight_helper ){
+          _c.visible = !reset;
+        }
+      });
+    }
 
   }
 
@@ -875,21 +1035,28 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _fast_raycast(clickable_only, max_search = 1000){
+  _fast_raycast( request_type ){
 
-    /* this.use_octree = true; */
-
-    // Use octree to speed up
-    var items = [];
+    let items;
 
     this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
 
-    if(clickable_only){
+    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
+      // intersect with all clickables
+      items = this.mouse_raycaster.intersectObjects( to_array( this.clickable ) );
+    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
+      items = this.mouse_raycaster.intersectObjects( to_array( request_type ), true );
+    }
+
+    /*
+
+    if(clickable_only === true){
       let raycaster = this.mouse_raycaster;
-      //let octreeObjects = this.octree.search( raycaster.ray.origin, raycaster.ray.far, true, raycaster.ray.direction );
       // items = raycaster.intersectOctreeObjects( octreeObjects );
       items = raycaster.intersectObjects( to_array( this.clickable ) );
     }else{
+
+
       if(this.DEBUG){
         console.debug('Searching for all intersections - Partial searching');
       }
@@ -907,8 +1074,7 @@ class THREEBRAIN_CANVAS {
 
       test_layer.mask = 16383;
 
-      for( var mesh_name in this.mesh ){
-        let m = this.mesh[mesh_name];
+      this.mesh.forEach( (m, mesh_name) => {
         if(m.isMesh && m.visible && m.layers.test(test_layer)){
           let geom = m.geometry;
 
@@ -924,8 +1090,7 @@ class THREEBRAIN_CANVAS {
             }
           }
         }
-
-      }
+      });
 
       console.log(target_object.name);
 
@@ -934,7 +1099,9 @@ class THREEBRAIN_CANVAS {
         items = this.mouse_raycaster.intersectObject( target_object, false );
       }
 
+
     }
+    */
 
     if(this.DEBUG){
       this._items = items;
@@ -947,44 +1114,65 @@ class THREEBRAIN_CANVAS {
   add_mouse_callback(check, callback, name){
     this._mouse_click_callbacks[name] = [check, callback];
   }
-
-  /*
-  set_animation_callback(callback){
-    this._animation_callback = callback;
+  add_keyboard_callabck(keycode, callback, name){
+    this._keyboard_callbacks[name] = [keycode, callback];
   }
-  */
+
+  keyboard_update(){
+
+    if( !this.keyboard_event || this.keyboard_event.dispose ){
+      return( null );
+    }
+    this.keyboard_event.dispose = true;
+    if(this.keyboard_event.level <= 2){
+      this.keyboard_event.level = 0;
+    }
+
+    // handle
+    for( let _cb_name in this._keyboard_callbacks ){
+
+      if( this._keyboard_callbacks[ _cb_name ] &&
+          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
+        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
+      }
+
+    }
+  }
 
   // method to target object with mouse pointed at
-  target_mouse_helper(){
+  mouse_update(){
 
-    if(this._mouse_helper_sleep_count++ < 2 || this.mouse_event === undefined || this.mouse_event.dispose || false){
+    if( !this.mouse_event || this.mouse_event.dispose ){
       return(null);
-    }else{
-      this._mouse_helper_sleep_count = 0;
+    }
+
+    // dispose first as the callbacks might have error
+    this.mouse_event.dispose = true;
+    if(this.mouse_event.level <= 2){
+      this.mouse_event.level = 0;
     }
 
 
     // Call callbacks
-    let raycast_result;
+    let raycast_result, request_type, callback, request;
 
     for( let _cb_name in this._mouse_click_callbacks ){
-      let callback = this._mouse_click_callbacks[ _cb_name ];
-      const request = callback[0]( this.mouse_event );
-      if( request.pass ){
+      callback = this._mouse_click_callbacks[ _cb_name ];
+      if( callback === undefined ){
+        continue;
+      }
+      request = callback[0]( this.mouse_event );
+      if( request && request.pass ){
         // raycast object
-        if( raycast_result === undefined ){
-          // Do simple, fast raycast
-          raycast_result = {
-            type  : request.type === 'full' ? 'full' : 'clickable',
-            items : this._fast_raycast( request.type === 'clickable' )
-          };
-        }
+        // check which object(s) to raycast on
+        request_type = request.type || 'clickable';
 
-        // If clickable was performed, but full is requested
-        if( request.type === 'full' && raycast_result.type === 'clickable' ){
+        if( raycast_result === undefined ||
+            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
           raycast_result = {
-            type  : 'full',
-            items : this._fast_raycast( false )
+            type  : request_type,
+            items : this._fast_raycast( request_type ),
+            meta  : request.meta
           };
         }
 
@@ -1002,124 +1190,86 @@ class THREEBRAIN_CANVAS {
       }
     }
 
-    this.mouse_event.dispose = true;
-    if(this.mouse_event.level <= 2){
-      this.mouse_event.level = 0;
-    }
+
 
   }
 
-  render_legend_old(text_color = '#ffffff'){
+  add_colormap( name, value_type, value_names, value_range, time_range,
+                color_keys, color_vals, n_levels ){
 
+    const color_name = name + '--'  + this.el.id;
 
-    let text_color_fmt = text_color.replace(/^[^0-9a-f]*/, '0x');
-    let lut = this.lut,
-        labels = this.lut.legend.labels;
-
-    // canvas.legend_labels[ 'title' ]
-    let c = this.legend_labels.title.material.map.image.getContext( '2d' );
-    // c.clearRect(0,0,0,0);
-    c.fillStyle = text_color;
-    c.fillText(
-      labels.title.toString() + labels.um.toString(), 4, labels.fontsize + 4 // borderThickness = 4
-    );
-
-    this.legend_labels.title.material.map.needsUpdate=true;
-    // this.legend_labels.title.material.color.setHex( text_color );
-
-    for ( let i = 0; i < labels.ticks; i++ ){
-
-      let t = this.legend_labels.ticks[ i ].material.map.image.getContext( '2d' );
-
-      var value = ( lut.maxV - lut.minV ) / ( labels.ticks - 1 ) * i + lut.minV;
-
-			if ( labels.notation == 'scientific' ) {
-				value = value.toExponential( labels.decimal );
-			} else {
-				value = value.toFixed( labels.decimal );
-			}
-
-      t.fillStyle = text_color;
-      t.fillText( value.toString(), 4, labels.fontsize + 4 );
-
-      this.legend_labels.ticks[ i ].material.map.needsUpdate=true;
-
-      this.legend_labels.lines[ i ].material.color.setHex( text_color_fmt );
-      this.legend_labels.lines[ i ].material.needsUpdate = true;
-    }
-
-
-    this.legend_camera.updateProjectionMatrix();
-    this.legend_renderer.render( this.scene_legend, this.legend_camera );
-  }
-
-
-  set_colormap(map, min, max, color_name = 'threebrain_default', label_args = {
-    'title': 'Value', 'ticks': 5, 'fontsize': 36
-  }){
+    // Step 1: register to THREE.ColorMapKeywords
     if(THREE.ColorMapKeywords[color_name] === undefined){
       THREE.ColorMapKeywords[color_name] = [];
     }else{
       THREE.ColorMapKeywords[color_name].length = 0;
     }
 
-    let n_color = map.length;
-    map.forEach((v) => {
-      THREE.ColorMapKeywords[color_name].push([parseFloat(v[0]), v[1]]);
-    });
+    // n_color is number of colors in Lut, not the true levels of colors
+    const n_color = Math.max( 2 , to_array( color_keys ).length );
 
-    // Create lut object
-    this.lut = new THREE.Lut(color_name, n_color);
+    // Step 2:
+    for( let ii=0; ii < n_color; ii++ ){
+      THREE.ColorMapKeywords[color_name].push([ ii / (n_color-1) , color_vals[ii] ]);
+    }
+    const lut = new THREE.Lut( color_name , n_color );
 
-    this.lut.setMin(min);
-    this.lut.setMax(max);
-
-    /* Not use threejs to render anymore. use R plots to render
-    if(this.legend_group === undefined){
-      this.legend_group = new THREE.Group(); // TODO add to constructor
-      this.scene_legend.add( this.legend_group );
+    // min and max cannot be the same, otherwise colors will not be rendered
+    if( value_type === 'continuous' ){
+      lut.setMin( value_range[0] );
+      if( value_range[1] === value_range[0] ){
+        lut.setMax( value_range[0] + 1 );
+      }else{
+        lut.setMax( value_range[1] );
+      }
     }else{
-      // Clear group
+      lut.setMin( 0 );
+      lut.setMax( Math.max( n_levels - 1, 1) );
     }
 
-
-    this.legend = this.lut.setLegendOn({
-      position : { x: 0, y: 0, z: 0 },
-      //dimensions : { width: 0.2, height: 1.6 }
+    this.color_maps.set( name, {
+      lut: lut,
+      value_type: value_type,
+      value_names: to_array( value_names ),
+      time_range: time_range,
+      n_levels: n_levels
     });
-    this.legend.layers.set(1);
-    this.legend_group.add(this.legend);
 
-    this.legend.geometry.computeBoundingBox();
-
-
-    this.legend_labels = this.lut.setLegendLabels( label_args );
-
-    //labels = lut.setLegendLabels( { 'title': 'Pressure', 'um': 'Pa', 'ticks': 5 } );
-    this.legend_labels.title.layers.set(1);
-    this.legend_group.add( this.legend_labels.title);
-
-
-  	for ( var i = 0; i < Object.keys( this.legend_labels.ticks ).length; i ++ ) {
-  	  this.legend_labels.ticks[ i ].layers.set(1);
-  	  this.legend_labels.ticks[ i ].position.y += 0.05;
-  	  this.legend_group.add( this.legend_labels.ticks[ i ] );
-
-  		this.legend_labels.lines[ i ].layers.set(1);
-  		this.legend_group.add( this.legend_labels.lines[ i ] );
-  	}
-
-
-    this.legend_renderer.render( this.scene_legend, this.legend_camera );
-    // canvas.legend_renderer.render( canvas.scene_legend, canvas.legend_camera );
-    /*/
   }
 
-  get_color(v){
-    if(this.lut === undefined){
+  switch_colormap( name ){
+    if( name ){
+      this.state_data.set( 'color_map', name );
+
+      const cmap = this.color_maps.get( name );
+      if( cmap ){
+        this.state_data.set( 'time_range_min', cmap.time_range[0] );
+        this.state_data.set( 'time_range_max', cmap.time_range[1] );
+      }else{
+        this.state_data.set( 'time_range_min', 0 );
+        this.state_data.set( 'time_range_max', 1 );
+      }
+      return(cmap);
+
+    }else{
+      name = get_or_default( this.state_data, 'color_map', '' );
+      return( this.color_maps.get( name ) );
+    }
+  }
+
+  get_color(v, name){
+    let cmap;
+    if( name ){
+      cmap = this.color_maps.get( name );
+    }else{
+      cmap = this.color_maps.get( get_or_default( this.state_data, 'color_map', '' ) );
+    }
+
+    if(cmap === undefined){
       return('#e2e2e2');
     }else{
-      return(this.lut.getColor(v));
+      return(cmap.lut.getColor(v));
     }
   }
 
@@ -1214,10 +1364,32 @@ class THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
-  reset_side_canvas( zoom_level ){
+  reset_side_canvas( zoom_level, side_width, side_position ){
+    if( side_width ){
+      this.side_width = side_width;
+    }else{
+      side_width = this.side_width;
+    }
     this.side_canvas.coronal.reset( zoom_level );
     this.side_canvas.axial.reset( zoom_level );
     this.side_canvas.sagittal.reset( zoom_level );
+
+    side_position = to_array( side_position );
+    if( side_position.length == 2 ){
+      const el_pos = this.el.getBoundingClientRect();
+      side_position[0] = Math.max( side_position[0], -el_pos.x );
+      side_position[1] = Math.max( side_position[1], -el_pos.y );
+
+      this.side_canvas.coronal.container.style.top = side_position[1] + 'px';
+      this.side_canvas.axial.container.style.top = (side_position[1] + side_width) + 'px';
+      this.side_canvas.sagittal.container.style.top = (side_position[1] + side_width * 2) + 'px';
+
+      this.side_canvas.coronal.container.style.left = side_position[0] + 'px';
+      this.side_canvas.axial.container.style.left = side_position[0] + 'px';
+      this.side_canvas.sagittal.container.style.left = side_position[0] + 'px';
+    }
+
+
     // Resize side canvas
     this.handle_resize( undefined, undefined );
   }
@@ -1227,7 +1399,7 @@ class THREEBRAIN_CANVAS {
     if( pos ){
       this._side_canvas_position = pos;
     }else{
-      pos = this._side_canvas_position || new THREE.Vector3( 0, 0, 0 );
+      pos = this._side_canvas_position || CONSTANTS.VEC_ORIGIN;
     }
 
     this.side_canvas.coronal.camera.position.x = pos.x;
@@ -1292,9 +1464,11 @@ class THREEBRAIN_CANVAS {
 
     this.get_mouse();
     this.controls.update();
+    this.compass.update();
 
     try {
-      this.target_mouse_helper();
+      this.keyboard_update();
+      this.mouse_update();
     } catch (e) {
       if(this.DEBUG){
         console.error(e);
@@ -1346,6 +1520,10 @@ class THREEBRAIN_CANVAS {
     this.main_renderer.render( this.scene, this.main_camera );
 
     if(this.has_side_cameras){
+
+      // Disable side plane
+      this.side_plane_sendback( true );
+
       const _rh = this.side_renderer._render_height;
       // Cut side views
       // Threejs's origin is at bottom-left, but html is at topleft
@@ -1371,7 +1549,7 @@ class THREEBRAIN_CANVAS {
       this.side_renderer.clear();
       this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
 
-
+      this.side_plane_sendback( false );
     }
 
   }
@@ -1381,15 +1559,25 @@ class THREEBRAIN_CANVAS {
     // this.clock = new THREE.Clock();
     let results = {};
 
+    const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
 
     // show mesh value info
     if(this.object_chosen !== undefined &&
         this.object_chosen.userData ){
 
         results.selected_object = {
-          name : this.object_chosen.userData.construct_params.name,
-          position : this.object_chosen.getWorldPosition( new THREE.Vector3() ),
-          custom_info : this.object_chosen.userData.construct_params.custom_info
+          name            : this.object_chosen.userData.construct_params.name,
+          position        : this.object_chosen.getWorldPosition( new THREE.Vector3() ),
+          custom_info     : this.object_chosen.userData.construct_params.custom_info,
+          is_electrode    : this.object_chosen.userData.construct_params.is_electrode || false,
+          template_mapping : {
+            mapped        : this.object_chosen.userData._template_mapped || false,
+            shift         : this.object_chosen.userData._template_shift || 0,
+            space         : this.object_chosen.userData._template_space || 'original',
+            surface       : this.object_chosen.userData._template_surface || 'NA',
+            hemisphere    : this.object_chosen.userData._template_hemisphere || 'NA',
+            mni305        : this.object_chosen.userData._template_mni305
+          }
         };
 
       }
@@ -1418,29 +1606,29 @@ class THREEBRAIN_CANVAS {
       }
 
       // Change animation
-      // this.animation_mixer.update( mixerUpdateDelta );
-      for( let g_name in this.animation_mixers ){
-        this.animation_mixers[ g_name ].update(
-          current_time - this.time_range_min - this.animation_mixers[ g_name ].time
-        );
-      }
+      this.animation_mixers.forEach( (mixer) => {
+        mixer.update( current_time - time_range_min - mixer.time );
+      });
 
       // set timer
       this.animation_controls.set_time( current_time );
 
       // show mesh value info
-      if( results.selected_object &&
-        this.object_chosen.userData.ani_value &&
-        this.object_chosen.userData.ani_value.length > 0
-      ){
+      if( results.selected_object && this.object_chosen.userData.ani_exists ){
 
-        const time_stamp = to_array(this.object_chosen.userData.ani_time);
-        const values = to_array(this.object_chosen.userData.ani_value);
-        let _tmp = - Infinity;
-        for( let ii in time_stamp ){
-          if(time_stamp[ ii ] <= current_time && time_stamp[ ii ] > _tmp){
-            results.current_value = values[ ii ];
-            _tmp = time_stamp[ ii ];
+        const track_type = this.state_data.get("color_map");
+
+        const track_data = this.object_chosen.userData.get_track_data(track_type);
+
+        if( track_data ){
+          const time_stamp = to_array( track_data.time );
+          const values = to_array( track_data.value );
+          let _tmp = - Infinity;
+          for( let ii in time_stamp ){
+            if(time_stamp[ ii ] <= current_time && time_stamp[ ii ] > _tmp){
+              results.current_value = values[ ii ];
+              _tmp = time_stamp[ ii ];
+            }
           }
         }
       }
@@ -1452,20 +1640,332 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  start_animation(persist = 0){
+  start_animation( persist = 0 ){
     // persist 0, render once
     // persist > 0, loop
-    if(persist >= this.render_flag){
+
+    const _flag = this.render_flag;
+    if(persist >= _flag){
       this.render_flag = persist;
     }
-
-  }
-
-  pause_animation(level = 1){
-    if(this.render_flag <= level){
-      this.render_flag = -1;
+    if( persist >= 2 && _flag < 2 ){
+      // _flag < 2 means prior state only renders the scene, but animation is paused
+      // if _flag >= 2, then clock was running, then there is no need to start clock
+      // persist >= 2 is a flag for animation to run
+      // animation clips need a clock
+      this.clock.start();
     }
   }
+
+  pause_animation( level = 1 ){
+    const _flag = this.render_flag;
+    if(_flag <= level){
+      this.render_flag = -1;
+
+      // When animation is stopped, we need to check if clock is running, if so, stop it
+      if( _flag >= 2 ){
+        this.clock.stop();
+      }
+    }
+  }
+
+
+
+  _draw_title( results, x = 10, y = 10, w = 100, h = 100 ){
+
+    this._fontType = 'Courier New, monospace';
+    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * this.pixel_ratio[0] );
+    this._fontSize_title = this._fontSize_title || Math.round( 20 * this.pixel_ratio[0] );
+
+
+    this.domContext.fillStyle = this.foreground_color;
+    this.domContext.font = `${ this._fontSize_title }px ${ this._fontType }`;
+
+    // Add title
+    let ii = 0, ss = [];
+    ( this.title || results.title || '' )
+      .split('\\n')
+      .forEach( (ss, ii) => {
+        this.domContext.fillText( ss , x, y + this._lineHeight_title * (ii + 1) );
+      });
+  }
+
+  _draw_ani( results, x = 10, y = 10, w = 100, h = 100  ){
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+
+    // Add current time to bottom right corner
+    if( typeof(results.current_time) === 'number' ){
+      this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
+      this.domContext.fillText(
+
+        // Current clock time
+        `${results.current_time.toFixed(3)} s`,
+
+        // offset
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
+    }
+  }
+
+  _draw_legend( results, x = 10, y = 10, w = 100, h = 100 ){
+
+    const cmap = this.switch_colormap();
+
+    // whether to draw legend
+    const has_color_map = this.render_legend && cmap && (cmap.lut.n !== undefined);
+
+    // If no legend is needed, discard
+    if( !has_color_map ){
+      return( null );
+    }
+    const lut = cmap.lut,
+          color_type = cmap.value_type,
+          color_names = cmap.value_names;
+
+    this._lineHeight_legend = this._lineHeight_legend || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_legend = this._fontSize_legend || Math.round( 10 * this.pixel_ratio[0] );
+
+    let legend_width = 25 * this.pixel_ratio[0],
+        legend_offset = this._fontSize_legend * 7 + legend_width; // '__-1.231e+5__', more than 16 chars
+
+    // Get color map from lut
+    const continuous_cmap = has_color_map && color_type === 'continuous' && lut.n > 1;
+    const discrete_cmap = has_color_map && color_type === 'discrete' && lut.n > 0 && Array.isArray(color_names);
+
+    let legend_height = 0.60,                  // Legend takes 60% of the total heights
+        legend_start = 0.25;                  // Legend starts at 20% of the height
+
+    if( continuous_cmap ){
+      // Create a linear gradient map
+      const grd = this.domContext.createLinearGradient( 0 , 0 , 0 , h );
+
+      // Determine legend coordinates and steps
+      let legend_step = legend_height / ( lut.n - 1 );
+
+      // Starts from legend_start of total height (h)
+      grd.addColorStop( 0, this.background_color );
+      grd.addColorStop( legend_start - 4 / h, this.background_color );
+      for( let ii in lut.lut ){
+        grd.addColorStop( legend_start + legend_step * ii,
+            '#' + lut.lut[lut.n - 1 - ii].getHexString());
+      }
+      grd.addColorStop( legend_height + legend_start + 4 / h, this.background_color );
+
+      // Fill with gradient
+      this.domContext.fillStyle = grd;
+      this.domContext.fillRect( w - legend_offset , legend_start * h , legend_width , legend_height * h );
+
+      // Add value labels
+      let legent_ticks = [];
+      let zero_height = ( legend_start + lut.maxV * legend_height /
+                          (lut.maxV - lut.minV)) * h,
+          minV_height = (legend_height + legend_start) * h,
+          maxV_height = legend_start * h;
+
+      let draw_zero = lut.minV < 0 && lut.maxV > 0;
+
+      if( typeof( results.current_value ) === 'number' ){
+        // There is a colored object rendered, display it
+        let value_height = ( legend_start + (lut.maxV - results.current_value) * legend_height / (lut.maxV - lut.minV)) * h;
+
+        legent_ticks.push([
+          results.current_value.toPrecision(4), value_height, 1 ]);
+
+        // Decide whether to draw 0 and current object value
+        // When max and min is too close, hide 0, otherwise it'll be jittered
+        if( Math.abs( zero_height - value_height ) <= this._fontSize_legend ){
+          draw_zero = false;
+        }
+        if(Math.abs( value_height - minV_height) > this._fontSize_legend){
+          legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
+        }
+        if(Math.abs( value_height - maxV_height) > this._fontSize_legend){
+          legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
+        }
+      } else {
+        legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
+        legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
+      }
+
+      if( draw_zero ){
+        legent_ticks.push(['0', zero_height, 0]);
+      }
+
+
+      // Draw ticks
+      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+      this.domContext.fillStyle = this.foreground_color;
+
+      // Fill text
+      //  150 = 200 - 50
+      let text_offset = Math.round( legend_offset - legend_width ),
+          text_start = Math.round( w - text_offset + this._fontSize_legend ),
+          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
+      legent_ticks.forEach((tick) => {
+
+        if( tick[2] === 1 ){
+          this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
+          this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
+          this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+        }else{
+          this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
+        }
+
+      });
+
+      // Fill ticks
+      // this.domContext.strokeStyle = this.foreground_color;  // do not set state of stroke if color not changed
+      this.domContext.beginPath();
+      legent_ticks.forEach((tick) => {
+        if( tick[2] === 0 ){
+          this.domContext.moveTo( w - text_offset , tick[1] );
+          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] );
+        }else if( tick[2] === 1 ){
+          this.domContext.moveTo( w - text_offset , tick[1] );
+          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] - 2 );
+          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] + 2 );
+          this.domContext.lineTo( w - text_offset , tick[1] );
+        }
+      });
+      this.domContext.stroke();
+
+    }else if( discrete_cmap ){
+      // color_names must exists and length must be
+      const n_factors = cmap.n_levels; // Not color_names.length;
+      let _text_length = 1;
+
+      color_names.forEach((_n)=>{
+        if( _text_length < _n.length ){
+          _text_length = _n.length;
+        }
+      });
+
+      legend_offset = Math.ceil( this._fontSize_legend * 0.42 * ( _text_length + 7 ) + legend_width );
+
+      // this._lineHeight_legend * 2 = 60 px, this is the default block size
+      legend_height = ( ( n_factors - 1 ) * this._lineHeight_legend * 2 ) / h;
+      legend_height = legend_height > 0.60 ? 0.60: legend_height;
+
+      let legend_step = n_factors == 1 ? 52 : (legend_height / ( n_factors - 1 ));
+      let square_height = Math.floor( legend_step * h ) - 2;
+      square_height = square_height >= 50 ? 50 : Math.max(square_height, 4);
+
+
+      let text_offset = Math.round( legend_offset - legend_width ),
+          text_start = Math.round( w - text_offset + this._fontSize_legend ),
+          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
+
+
+      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+      this.domContext.strokeStyle = this.foreground_color;
+
+      for(let ii = 0; ii < n_factors; ii++ ){
+        let square_center = (legend_start + legend_step * ii) * h;
+        this.domContext.fillStyle = '#' + lut.getColor(ii).getHexString();
+        this.domContext.fillRect(
+          w - legend_offset , square_center - square_height / 2 ,
+          legend_width , square_height
+        );
+
+        this.domContext.beginPath();
+        this.domContext.moveTo( w - text_offset , square_center );
+        this.domContext.lineTo( w - text_offset + text_halfheight , square_center );
+        this.domContext.stroke();
+
+        this.domContext.fillStyle = this.foreground_color;
+
+        if( results.current_value === color_names[ii]){
+          this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
+          this.domContext.fillText(color_names[ii],
+            text_start, square_center + text_halfheight, w - text_start - 1
+          );
+          this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+        }else{
+          this.domContext.fillText(color_names[ii],
+            text_start, square_center + text_halfheight, w - text_start - 1
+          );
+        }
+
+      }
+
+
+    }
+  }
+
+  _draw_focused_info( results, x = 10, y = 10, w = 100, h = 100 ){
+    // Add selected object information
+    if( !results.selected_object ){
+      // no object selected, discard
+      return( null );
+    }
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._lineHeight_small = this._lineHeight_small || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_small = this._fontSize_small || Math.round( 10 * this.pixel_ratio[0] );
+
+    this.domContext.fillStyle = this.foreground_color;
+
+    this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
+
+    let text_position = [
+      w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
+      this._lineHeight_normal
+    ];
+
+    // Line 1: object name
+    this.domContext.fillText( results.selected_object.name, text_position[ 0 ], text_position[ 1 ] );
+
+    // Smaller
+    this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
+
+    // Line 2: customized message
+    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+    this.domContext.fillText(
+      results.selected_object.custom_info || '',
+      text_position[ 0 ], text_position[ 1 ]
+    );
+
+    // Line 3: Global position
+    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+    const pos = results.selected_object.position;
+    this.domContext.fillText(
+      `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+      text_position[ 0 ], text_position[ 1 ]
+    );
+
+    // More information:
+
+    // For electrodes
+
+
+    if( results.selected_object.is_electrode ){
+      const _m = results.selected_object.template_mapping;
+
+      // Line 4: mapping method & surface type
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+      this.domContext.fillText(
+        `mapping: ${ _m.space }, surface: ${ _m.surface }`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+
+      // Line 5:
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+      this.domContext.fillText(
+        `hemisphere: ${ _m.hemisphere }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+
+    }
+
+
+  }
+
 
   // Do not call this function directly after the initial call
   // use "this.start_animation(0);" to render once
@@ -1493,6 +1993,8 @@ class THREEBRAIN_CANVAS {
   		// draw main and side rendered images to this.domElement (2d context)
   		this.mapToCanvas();
 
+
+
   		// Add additional information
       const _pixelRatio = this.pixel_ratio[0];
       const _fontType = 'Courier New, monospace';
@@ -1501,185 +2003,17 @@ class THREEBRAIN_CANVAS {
 
       this.domContext.fillStyle = this.foreground_color;
 
-      // Add title
-      let line_y = 50, ii = 0, ss = [];
-      if( this.title && this.title !== '' ){
-        this.domContext.font = `${_pixelRatio * 20}px ${_fontType}`;
-        ss = this.title.split('\\n');
-        for( ii in ss ){
-          this.domContext.fillText(ss[ii], 10, line_y);
-          line_y = line_y + 28 * _pixelRatio;
-        }
-      }
+      // Draw title on the top left corner
+      this._draw_title( results, 0, 0, _width, _height );
 
-      // Add animation message
-      /*
-      if( results.txt && results.txt !== '' ){
-        this.domContext.font = `${_pixelRatio * 20}px ${_fontType}`;
-        ss = results.txt.split('\n');
-        for( ii in ss ){
-          this.domContext.fillText(ss[ii], 10, line_y);
-          line_y = line_y + 28 * _pixelRatio;
-        }
-      }
-      */
+      // Draw timestamp on the bottom right corner
+      this._draw_ani( results, 0, 0, _width, _height );
 
-      // Add current time to bottom right corner
-      if( typeof(results.current_time) === 'number' ){
-        this.domContext.font = `${_pixelRatio * 15}px ${_fontType}`;
-        this.domContext.fillText(
-          `${results.current_time.toFixed(3)} s`,
-          _width - 200, _height - 50);
+      // Draw legend on the right side
+      this._draw_legend( results, 0, 0, _width, _height );
 
-      }
-
-      // Add legend
-      let legend_height = 0.6,  // 60% heights
-            legend_start = (1 - legend_height) / 2,
-            has_color_map = this.render_legend && this.lut && (this.lut.n !== undefined),
-            continuous_cmap = has_color_map && this.lut.color_type === 'continuous' && this.lut.n > 1,
-            discrete_cmap = has_color_map && this.lut.color_type === 'discrete' && this.lut.n > 0 && Array.isArray(this.lut.color_names);
-      if( continuous_cmap ){
-        // Determine legend coordinates
-        let grd = this.domContext.createLinearGradient(0,0,0,_height),
-            legend_step = legend_height / ( this.lut.n - 1 );
-        // Starts from 20% height
-        grd.addColorStop( 0, this.background_color );
-        grd.addColorStop( legend_start - 4 / _height, this.background_color );
-        for( let ii in this.lut.lut ){
-          grd.addColorStop(legend_start + legend_step * ii,
-              '#' + this.lut.lut[this.lut.n - 1 - ii].getHexString());
-        }
-        grd.addColorStop( 1 - legend_start + 4 / _height, this.background_color );
-
-        // Fill with gradient
-        this.domContext.fillStyle = grd;
-        this.domContext.fillRect( _width - 200 , legend_start * _height , 50 , legend_height * _height );
-
-        // Add value labels
-        let legent_ticks = [];
-        let zero_height = ( legend_start + this.lut.maxV * legend_height /
-                            (this.lut.maxV - this.lut.minV)) * _height,
-            minV_height = (1 - legend_start) * _height,
-            maxV_height = legend_start * _height;
-
-        let draw_zero = this.lut.minV < 0 && this.lut.maxV > 0;
-
-        if( typeof( results.current_value ) === 'number' ){
-          // There is a colored object rendered, display it
-          let value_height = ( legend_start + (this.lut.maxV - results.current_value) * legend_height / (this.lut.maxV - this.lut.minV)) * _height;
-          legent_ticks.push([
-            results.current_value.toPrecision(4), value_height, 1 ]);
-
-          if( Math.abs( zero_height - value_height ) <= 10 ){
-            draw_zero = false;
-          }
-          if(Math.abs( value_height - minV_height) > 10){
-            legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
-          }
-          if(Math.abs( value_height - maxV_height) > 10){
-            legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
-          }
-        }else{
-          legent_ticks.push([this.lut.minV.toPrecision(4), minV_height, 0]);
-          legent_ticks.push([this.lut.maxV.toPrecision(4), maxV_height, 0]);
-        }
-
-        if( draw_zero ){
-          legent_ticks.push(['0', zero_height, 0]);
-        }
-
-        this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
-        this.domContext.fillStyle = this.foreground_color;
-
-        // Fill text
-        legent_ticks.forEach((tick) => {
-          this.domContext.fillText( tick[0], _width - 130, tick[1] + 5 );
-        });
-
-        // Fill ticks
-        this.domContext.strokeStyle = this.foreground_color;
-        this.domContext.beginPath();
-        legent_ticks.forEach((tick) => {
-          if( tick[2] === 0 ){
-            this.domContext.moveTo( _width - 150 , tick[1] );
-            this.domContext.lineTo( _width - 145 , tick[1] );
-          }else if( tick[2] === 1 ){
-            this.domContext.moveTo( _width - 150 , tick[1] );
-            this.domContext.lineTo( _width - 145 , tick[1] - 2 );
-            this.domContext.lineTo( _width - 145 , tick[1] + 2 );
-            this.domContext.lineTo( _width - 150 , tick[1] );
-          }
-        });
-        this.domContext.stroke();
-
-      }else if( discrete_cmap ){
-        // this.lut.color_names must exists and length must be
-        let n_factors = this.lut.color_names.length;
-        legend_height = ( ( n_factors - 1 ) * 60 ) / _height;
-        legend_height = legend_height > 0.8 ? 0.8: legend_height;
-        legend_start = (1 - legend_height) / 2;
-        let legend_step = n_factors == 1 ? 52 : (legend_height / ( n_factors - 1 ));
-        let square_height = legend_step * _height;
-        square_height = square_height >= 52 ? 50 : Math.max(square_height - 2, 4);
-        console.log(square_height);
-
-        for(let ii = 0; ii < n_factors; ii++ ){
-          let square_center = (legend_start + legend_step * ii) * _height;
-          this.domContext.fillStyle = '#' + this.lut.getColor(ii + 1).getHexString();
-          this.domContext.fillRect(
-            _width - 200 , square_center - square_height / 2 ,
-            50 , square_height
-          );
-
-          this.domContext.strokeStyle = this.foreground_color;
-          this.domContext.beginPath();
-          this.domContext.moveTo( _width - 150 , square_center );
-          this.domContext.lineTo( _width - 145 , square_center );
-          this.domContext.stroke();
-
-          this.domContext.fillStyle = this.foreground_color;
-          this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
-          this.domContext.fillText(this.lut.color_names[ii],
-            _width - 140, square_center + 5, 139
-          );
-        }
-
-      }
-
-      // Add selected object information
-      if( results.selected_object ){
-        this.domContext.font = `${_pixelRatio * 15}px ${_fontType}`;
-        this.domContext.fillStyle = this.foreground_color;
-
-        let legend_title_width = results.selected_object.name.length * 18;
-        if( legend_title_width < 330 ){
-          legend_title_width = legend_title_width / 2 + 175;
-        }
-        this.domContext.fillText(
-          results.selected_object.name,
-          _width - 10 - legend_title_width, 50 //legend_start * _height - 63
-        );
-
-        const pos = results.selected_object.position;
-        this.domContext.font = `${_pixelRatio * 10}px ${_fontType}`;
-        this.domContext.fillText(
-          `(${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-          _width - 300, 108 //legend_start * _height - 34
-        );
-
-        if( typeof(results.selected_object.custom_info) === 'string' ){
-          legend_title_width = results.selected_object.custom_info.length * 12;
-          if( legend_title_width < 330 ){
-            legend_title_width = legend_title_width / 2 + 175;
-          }
-          this.domContext.fillText(
-            results.selected_object.custom_info,
-            _width - 10 - legend_title_width, 79 //legend_start * _height - 34
-          );
-        }
-
-      }
+      // Draw focused target information on the top right corner
+      this._draw_focused_info( results, 0, 0, _width, _height );
 
 
   		// check if capturer is working
@@ -1719,32 +2053,77 @@ class THREEBRAIN_CANVAS {
 
   // Function to clear all meshes
   clear_all(){
-    for(var i in this.mesh){
-      this.scene.remove(this.mesh[i]);
-    }
-    for(var ii in this.group){
-      this.scene.remove(this.group[ii]);
-    }
-    this.mesh = {};
-    this.group = {};
-    this.clickable = {};
+    this.mesh.forEach((m) => {
+      m.parent.remove( m );
+      // this.scene.remove( m );
+    });
+    this.group.forEach((g) => {
+      // this.scene.remove( g );
+      g.parent.remove( g );
+    });
+    this.mesh.clear();
+    this.group.clear();
+    this.clickable.clear();
+    this.subject_codes.length = 0;
+    this.electrodes.clear();
+    this.volumes.clear();
+    this.surfaces.clear();
+    this.state_data.clear();
+    this.shared_data.clear();
+    this.color_maps.clear();
+    this.animation_clips.clear();
+    this.animation_mixers.clear();
+    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+
+    // set default values
+    this.state_data.set( 'coronal_depth', 0 );
+    this.state_data.set( 'axial_depth', 0 );
+    this.state_data.set( 'sagittal_depth', 0 );
 
     // Stop showing information of any selected objects
     this.object_chosen=undefined;
   }
 
   // To be implemented (abstract methods)
-  set_coronal_depth( depth ){ console.log('Set coronal depth not implemented') }
-  set_axial_depth( depth ){ console.log('Set axial depth not implemented') }
-  set_sagittal_depth( depth ){ console.log('Set sagittal depth not implemented') }
+  set_coronal_depth( depth ){
+    if( typeof this._set_coronal_depth === 'function' ){
+      this._set_coronal_depth( depth );
+    }else{
+      console.log('Set coronal depth not implemented');
+    }
+  }
+  set_axial_depth( depth ){
+    if( typeof this._set_axial_depth === 'function' ){
+      this._set_axial_depth( depth );
+    }else{
+      console.log('Set axial depth not implemented');
+    }
+  }
+  set_sagittal_depth( depth ){
+    if( typeof this._set_sagittal_depth === 'function' ){
+      this._set_sagittal_depth( depth );
+    }else{
+      console.log('Set sagittal depth not implemented');
+    }
+  }
   set_side_depth( c_d, a_d, s_d ){
     console.log('Set side depth not implemented');
   }
   set_side_visibility( which, visible ){
     console.log('Set side visibility not implemented');
   }
+  side_plane_sendback( is_back ){
+    if( typeof this._side_plane_sendback === 'function' ){
+      this._side_plane_sendback( is_back );
+    }
+  }
+
   set_cube_anchor_visibility( visible ){
-    console.log('Set cube anchor visibility not implemented');
+    if( this.compass ){
+      this.compass.set_visibility( visible, () => {
+        this.start_animation( 0 );
+      });
+    }
   }
 
 
@@ -1754,7 +2133,7 @@ class THREEBRAIN_CANVAS {
     if(this.DEBUG){
       console.debug('Generating geometry '+g.type);
     }
-    let gen_f = eval('gen_' + g.type),
+    let gen_f = GEOMETRY_FACTORY[g.type],
         m = gen_f(g, this),
         layers = to_array(g.layer);
 
@@ -1764,7 +2143,7 @@ class THREEBRAIN_CANVAS {
 
     let set_layer = (m) => {
       // Normal 3D object
-      m.layers.set(31);
+      m.layers.set( 31 );
       if(layers.length > 1){
         layers.forEach((ii) => {
           m.layers.enable(ii);
@@ -1774,27 +2153,43 @@ class THREEBRAIN_CANVAS {
         if(this.DEBUG){
           console.debug(g.name + ' is set invisible.');
         }
-        m.layers.set(1);
+        m.layers.set( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
         m.visible = false;
       }else{
-        m.layers.set(layers[0]);
+        m.layers.set( layers[0] );
       }
     };
 
+    // make sure subject array exists
+    const subject_code = g.subject_code || '';
+
+    if( ! this.subject_codes.includes( subject_code ) ){
+      this.subject_codes.push( subject_code );
+      this.electrodes.set( subject_code, {});
+      this.volumes.set( subject_code, {} );
+      this.surfaces.set(subject_code, {} );
+    }
+
+
     if( g.type === 'datacube' ){
       // Special, as m is a array of three planes
-      this.mesh['_coronal_' + g.name]   = m[0];
-      this.mesh['_axial_' + g.name]     = m[1];
-      this.mesh['_sagittal_' + g.name]  = m[2];
+      this.mesh.set( '_coronal_' + g.name, m[0] );
+      this.mesh.set( '_axial_' + g.name, m[1] );
+      this.mesh.set( '_sagittal_' + g.name, m[2] );
 
       if(g.clickable){
-        this.clickable['_coronal_' + g.name]   = m[0];
-        this.clickable['_axial_' + g.name]     = m[1];
-        this.clickable['_sagittal_' + g.name]  = m[2];
+        this.clickable.set( '_coronal_' + g.name, m[0] );
+        this.clickable.set( '_axial_' + g.name, m[1] );
+        this.clickable.set( '_sagittal_' + g.name, m[2] );
       }
 
+
       // data cube must have groups
-      const gp = this.group[g.group.group_name];
+      let gp = this.group.get( g.group.group_name );
+      // Move gp to global scene as its center is always 0,0,0
+      this.origin.remove( gp );
+      this.scene.add( gp );
+
 
       m.forEach((plane) => {
 
@@ -1805,144 +2200,116 @@ class THREEBRAIN_CANVAS {
         plane.updateMatrixWorld();
       });
 
+      get_or_default( this.volumes, subject_code, {} )[ g.name ] = m;
 
-      // Register depth functions
-      const cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),           // XYZ slice counts
-            cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),     // XYZ pixel heights (* 0.5)
-            cube_pos = g.position,
-            cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])});
-
-      // Add anchors to visualize the intersection
-      const cube_anchor = new THREE.Group();
-      cube_anchor.renderOrder = MAX_RENDER_ORDER - 100;
-      cube_anchor.position.fromArray( cube_center );
-      ['z', 'y', 'x'].forEach( (a, ii) => {
-        const geom = new THREE.CylinderGeometry( 0.5, 0.5, 3, 8 );
-        const color = Math.pow(256, ii+1) - Math.pow(256, ii);
-        if( a === 'x' ){
-          geom.rotateZ( Math.PI / 2 );
-        }else if ( a === 'z' ){
-          geom.rotateX( Math.PI / 2 );
-        }
-        const line = new THREE.Mesh( geom, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }) );
-        line.layers.set( 8 );
-        cube_anchor.add( line );
-      } );
-      // Add fonts
-      const _r = new THREE.TextSprite('R', 3, 'rgba(255, 0, 0, 1)'); _r.position.set( 5, 0, 0 );
-      const _l = new THREE.TextSprite('L', 3, 'rgba(255, 0, 0, 1)'); _l.position.set( -5, 0, 0 );
-      const _i = new THREE.TextSprite('I', 3, 'rgba(0, 0, 255, 1)'); _i.position.set( 0, 0, -5 );
-      const _s = new THREE.TextSprite('S', 3, 'rgba(0, 0, 255, 1)'); _s.position.set( 0, 0, 5 );
-      const _a = new THREE.TextSprite('A', 3, 'rgba(0, 255, 0, 1)'); _a.position.set( 0, 5, 0 );
-      const _p = new THREE.TextSprite('P', 3, 'rgba(0, 255, 0, 1)'); _p.position.set( 0, -5, 0 );
-
-      [_r,_l,_a,_p,_i,_s].forEach((_t) => {
-        _t.layers.set( 8 );
-        _t.material.depthTest = false;
-        cube_anchor.add( _t );
-      });
+      // flaw there, if volume has no subject, then subject_code is '',
+      // if two volumes with '' exists, we lose track of the first volume
+      // and switch_volume will fail in setting this cube invisible
+      // TODO: force subject_code for all volumes or use random string as subject_code
+      // or parse subject_code from volume name
+      if( !this._has_datacube_registered ){
+        this._register_datacube( m );
+        this._has_datacube_registered = true;
+      }
 
 
-      this.set_cube_anchor_visibility = ( visible ) => {
-        cube_anchor.visible = visible;
-        this.start_animation( 0 );
-      };
-      gp.add( cube_anchor );
+    }else if( g.type === 'sphere' && g.is_electrode ){
+      set_layer( m );
+      m.userData.construct_params = g;
+      this.mesh.set( g.name, m );
+      get_or_default( this.electrodes, subject_code, {} )[g.name] = m;
 
-      // Add handlers to set plane location when an electrode is clicked
-      this.add_mouse_callback(
-        (evt) => {
-          return({
-            pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-            type  : 'clickable'
-          });
-        },
-        ( res, evt ) => {
-          const obj = res.target_object;
-          if( obj && obj.isMesh && obj.userData.construct_params ){
-            const pos = obj.getWorldPosition(new THREE.Vector3(0,0,0));
-            // calculate depth
-            this.set_side_depth(
-              (pos.y - cube_center[1]) * 128 / cube_half_size[1] - 0.5,
-              (pos.z - cube_center[2]) * 128 / cube_half_size[2] - 0.5,
-              (pos.x - cube_center[0]) * 128 / cube_half_size[0] - 0.5
-            );
+      // electrodes must be clickable, ignore the default settings
+      this.clickable.set( g.name, m );
+      let gp_position;
+      if(g.group === null){
+        this.add_to_scene(m);
+      }else{
+        let gp = this.group.get( g.group.group_name );
+        gp.add(m);
+        gp_position = gp.position.clone();
+      }
+      m.updateMatrixWorld();
 
+      // For electrode, there needs some calculation
+      // g = m.userData.construct_params
+      if( (
+            !g.vertex_number || g.vertex_number < 0 ||
+            !g.hemisphere || !['left', 'right'].includes( g.hemisphere )
+          ) && g.is_surface_electrode ){
+        // surface electrode, need to calculate nearest node
+        const snap_surface = g.surface_type,
+              search_group = this.group.get( `Surface - ${snap_surface} (${subject_code})` );
+
+        // Search 141 only
+        if( search_group && search_group.userData ){
+          const lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${snap_surface} (${subject_code})`];
+          const rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${snap_surface} (${subject_code})`];
+          const mesh_center = search_group.getWorldPosition( gp_position );
+          if( lh_vertices && rh_vertices ){
+            // calculate
+            let _tmp = new THREE.Vector3(),
+                node_idx = -1,
+                min_dist = Infinity,
+                side = '',
+                _dist = 0;
+
+            lh_vertices.forEach((v, ii) => {
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( m.position );
+              if( _dist < min_dist ){
+                min_dist = _dist;
+                node_idx = ii;
+                side = 'left';
+              }
+            });
+            rh_vertices.forEach((v, ii) => {
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( m.position );
+              if( _dist < min_dist ){
+                min_dist = _dist;
+                node_idx = ii;
+                side = 'right';
+              }
+            });
+
+            if( node_idx >= 0 ){
+              g.vertex_number = node_idx;
+              g.hemisphere = side;
+            }
+            console.log(`Electrode ${m.name}: ${node_idx}, ${side}`);
           }
-        },
-        'side_viewer_depth'
-      );
-
-
-      this.set_coronal_depth = ( depth ) => {
-        let idx_mid = cube_dimension[1] / 2;
-        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-
-        m[0].position.y = cube_center[1] + (depth + 0.5) / 128 * cube_half_size[1];
-        cube_anchor.position.y = m[0].position.y;
-        m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-        m[0].material.needsUpdate = true;
-        this._coronal_depth = depth;
-        // Animate on next refresh
-        this.start_animation( 0 );
-      };
-      this.set_axial_depth = ( depth ) => {
-        let idx_mid = cube_dimension[2] / 2;
-        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-        m[1].position.z = cube_center[2] + (depth + 0.5) / 128 * cube_half_size[2];
-        cube_anchor.position.z = m[1].position.z;
-        m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-        m[1].material.needsUpdate = true;
-        this._axial_depth = depth;
-        // Animate on next refresh
-        this.start_animation( 0 );
-      };
-      this.set_sagittal_depth = ( depth ) => {
-        let idx_mid = cube_dimension[0] / 2;
-        if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-        m[2].position.x = cube_center[0] + (depth + 0.5) / 128 * cube_half_size[0];
-        cube_anchor.position.x = m[2].position.x;
-        m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-        m[2].material.needsUpdate = true;
-        this._sagittal_depth = depth;
-        // Animate on next refresh
-        this.start_animation( 0 );
-      };
-
-      this.set_side_visibility = ( which, visible ) => {
-        const fn = visible ? 'enable' : 'disable';
-        if( which === 'coronal' ){
-          m[0].layers[fn](8);
-        }else if( which === 'axial' ){
-          m[1].layers[fn](8);
-        }else if( which === 'sagittal' ){
-          m[2].layers[fn](8);
         }
 
-        this.start_animation( 0 );
-      };
+      }
 
-      // reset side camera positions
-      this.reset_side_cameras(
-        new THREE.Vector3( cube_center[0], cube_center[1], cube_center[2] ),
-        Math.max(...cube_half_size) * 2
-      );
 
+
+    }else if( g.type === 'free' ){
+      set_layer( m );
+      m.userData.construct_params = g;
+      this.mesh.set( g.name, m );
+      if(g.clickable){ this.clickable.set( g.name, m ); }
+      // freemesh must have group
+      let gp = this.group.get( g.group.group_name ); gp.add(m);
+      m.updateMatrixWorld();
+
+      // Need to registr surface
+      // instead of using surface name, use
+      get_or_default( this.surfaces, subject_code, {} )[ g.name ] = m;
 
     }else{
 
       set_layer( m );
       m.userData.construct_params = g;
-      this.mesh[g.name] = m;
+      this.mesh.set( g.name, m );
 
       if(g.clickable){
-        this.clickable[g.name] = m;
+        this.clickable.set( g.name, m );
       }
 
       if(g.group === null){
-        this.scene.add(m);
+        this.add_to_scene(m);
       }else{
-        let gp = this.group[g.group.group_name];
+        let gp = this.group.get( g.group.group_name );
         gp.add(m);
       }
 
@@ -1950,6 +2317,125 @@ class THREEBRAIN_CANVAS {
         m.updateMatrixWorld();
       }
     }
+  }
+
+  _register_datacube( m ){
+
+    const g = m[0].userData.construct_params,
+          gp = m[0].parent;
+
+    // Register depth functions
+
+    const cube_dimension = this.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
+          // XYZ slice counts
+
+          cube_half_size = this.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
+          // XYZ pixel heights (* 0.5)
+
+          cube_center = g.position;
+
+    // Add handlers to set plane location when an electrode is clicked
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.isMesh && obj.userData.construct_params ){
+          const pos = obj.getWorldPosition( gp.position.clone() );
+          // calculate depth
+          this.set_side_depth(
+            (pos.y) * 128 / cube_half_size[1] - 0.5,
+            (pos.z) * 128 / cube_half_size[2] - 0.5,
+            (pos.x) * 128 / cube_half_size[0] - 0.5
+          );
+
+        }
+      },
+      'side_viewer_depth'
+    );
+
+
+    this._set_coronal_depth = ( depth ) => {
+      let idx_mid = cube_dimension[1] / 2;
+      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+
+      m[0].position.y = (depth + 0.5) / 128 * cube_half_size[1];
+      // cube_anchor.position.y = m[0].position.y;
+      m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+      m[0].material.needsUpdate = true;
+      // this._coronal_depth = depth;
+      this.state_data.set( 'coronal_depth', depth );
+      this.state_data.set( 'coronal_posy', m[0].position.y );
+      this.trim_electrodes();
+      // Animate on next refresh
+      this.start_animation( 0 );
+    };
+    this._set_axial_depth = ( depth ) => {
+      let idx_mid = cube_dimension[2] / 2;
+      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+      m[1].position.z = (depth + 0.5) / 128 * cube_half_size[2];
+      // cube_anchor.position.z = m[1].position.z;
+      m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+      m[1].material.needsUpdate = true;
+      // this._axial_depth = depth;
+      this.state_data.set( 'axial_depth', depth );
+      this.state_data.set( 'axial_posz', m[1].position.z );
+      this.trim_electrodes();
+      // Animate on next refresh
+      this.start_animation( 0 );
+    };
+    this._set_sagittal_depth = ( depth ) => {
+      let idx_mid = cube_dimension[0] / 2;
+      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+      m[2].position.x = (depth + 0.5) / 128 * cube_half_size[0];
+      // cube_anchor.position.x = m[2].position.x;
+      m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+      m[2].material.needsUpdate = true;
+      // this._sagittal_depth = depth;
+      this.state_data.set( 'sagittal_depth', depth );
+      this.state_data.set( 'sagittal_posx', m[2].position.x );
+      this.trim_electrodes();
+      // Animate on next refresh
+      this.start_animation( 0 );
+    };
+    this._side_plane_sendback = ( sendback ) => {
+      m.forEach( (p) => {
+        p.material.uniforms.renderDepth.value = sendback ? 0.0 : 1.0;
+        p.material.needsUpdate = true;
+      });
+    };
+
+    this.set_side_visibility = ( which, visible ) => {
+      let fn = visible ? 'enable' : 'disable';
+      if( which === 'coronal' ){
+        m[0].layers[fn](8);
+        this.state_data.set( 'coronal_overlay', visible );
+      }else if( which === 'axial' ){
+        m[1].layers[fn](8);
+        this.state_data.set( 'axial_overlay', visible );
+      }else if( which === 'sagittal' ){
+        m[2].layers[fn](8);
+        this.state_data.set( 'sagittal_overlay', visible );
+      }else{
+        // reset, using cached
+        fn = get_or_default( this.state_data, 'coronal_overlay', false ) ? 'enable' : 'disable';
+        m[0].layers[fn](8);
+        fn = get_or_default( this.state_data, 'axial_overlay', false ) ? 'enable' : 'disable';
+        m[1].layers[fn](8);
+        fn = get_or_default( this.state_data, 'sagittal_overlay', false ) ? 'enable' : 'disable';
+        m[2].layers[fn](8);
+      }
+
+      this.start_animation( 0 );
+    };
+
+    // reset side camera positions
+    this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
+    this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
 
   }
 
@@ -2065,9 +2551,16 @@ class THREEBRAIN_CANVAS {
     }
 
     gp.userData.group_data = g.group_data;
-    this.group[g.name] = gp;
+    this.group.set( g.name, gp );
 
-    this.scene.add(gp);
+    this.add_to_scene(gp);
+
+    // special case, if group name is "__global_data", then set group variable
+    if( g.name === '__global_data' && g.group_data ){
+      for( let _n in g.group_data ){
+        this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
+      }
+    }
 
     const check = function(){
       return(item_size === 0);
@@ -2079,15 +2572,17 @@ class THREEBRAIN_CANVAS {
 
   // Get data from some geometry. Try to get from geom first, then get from group
   get_data(data_name, from_geom, group_hint){
-    if(this.mesh.hasOwnProperty(from_geom)){
-      let m = this.mesh[from_geom];
+
+    const m = this.mesh.get( from_geom );
+
+    if( m ){
       if(m.userData.hasOwnProperty(data_name)){
         return(m.userData[data_name]);
       }else{
         let g = m.userData.construct_params.group;
         if(g !== null){
           let group_name = g.group_name;
-          let gp = this.group[group_name];
+          let gp = this.group.get( group_name );
           if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
             return(gp.userData.group_data[data_name]);
           }
@@ -2095,7 +2590,7 @@ class THREEBRAIN_CANVAS {
       }
     }else if(group_hint !== undefined){
       let group_name = group_hint;
-      let gp = this.group[group_name];
+      let gp = this.group.get( group_name );
       if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
         return(gp.userData.group_data[data_name]);
       }
@@ -2108,364 +2603,669 @@ class THREEBRAIN_CANVAS {
 
 
   // Generate animation clips and mixes
-  generate_animation_clips(){
-    for(let k in this.mesh){
-      let m = this.mesh[k];
-      if(m.isMesh && typeof(m.userData.generate_keyframe_tracks) === 'function'){
-        let g_name = m.userData.construct_params.name;
+  generate_animation_clips( animation_name = 'Value', set_current=true, callback = (e) => {} ){
 
-        if(m.userData.animation_objects === undefined){
-          m.userData.animation_objects = {};
+    if( animation_name === undefined ){
+      animation_name = this.shared_data.get('animation_name') || 'Value';
+    }else{
+      this.shared_data.set('animation_name', animation_name);
+    }
+
+    // TODO: make sure cmap exists or use default lut
+    const cmap = this.switch_colormap( animation_name );
+    // this.color_maps
+
+    this.mesh.forEach( (m, k) => {
+
+      if(!m.isMesh || !m.userData.ani_exists ){ return( null ); }
+
+      // keyframe is not none, generate animation clip(s)
+      /**
+       * Steps to make an animation
+       *
+       * 1. get keyframes, here is "ColorKeyframeTrack"
+       *        new THREE.ColorKeyframeTrack( '.material.color', time_key, color_value, THREE.InterpolateDiscrete )
+       *    keyframe doesn't specify which object, it also can only change one attribute
+       * 2. generate clip via "AnimationClip"
+       *        new THREE.AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
+       *    animation clip combines multiple keyframe, still, doesn't specify which object
+       * 3. mixer via "AnimationMixer"
+       *        new THREE.AnimationMixer( m );
+       *    A mixer specifies an object
+       * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
+       *    action.play() will play the animation clips
+       */
+
+      // Step 0: get animation time_stamp start time
+      // lut: lut,
+      // value_type: value_type,
+      // value_names: value_names, time_range: time_range
+
+      // Obtain mixer, which will be used in multiple places
+      let mixer = this.animation_mixers.get( m.name );
+
+      // Step 1: Obtain keyframe tracks
+      // if animation_name exists, get tracks, otherwise reset to default material
+      const track_data = m.userData.get_track_data( animation_name, true );
+
+      // no keyframe tracks, remove animation
+      if( !track_data ){
+
+        // If action is going, stop them all
+        if( mixer ){ mixer.stopAllAction(); }
+        return( null );
+
+      }
+      // Generate keyframes
+      const _time_min = cmap.time_range[0],
+            _time_max = cmap.time_range[1];
+
+      // 1. timeStamps, TODO: get from settings the time range
+      const colors = [], time_stamp = [];
+      to_array( track_data.time ).forEach((v) => {
+        time_stamp.push( v - _time_min );
+      });
+      if( track_data.data_type === 'continuous' ){
+        to_array( track_data.value ).forEach((v) => {
+          let c = cmap.lut.getColor(v);
+          colors.push( c.r, c.g, c.b );
+        });
+      }else{
+        // discrete
+        const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
+        to_array( track_data.value ).forEach((v) => {
+          let c = cmap.lut.getColor(mapping.get( v ));
+          if( !c ) {
+            console.log( v );
+            console.log( mapping.get( v ) );
+          }
+          colors.push( c.r, c.g, c.b );
+        });
+      }
+
+
+      const keyframe = new THREE.ColorKeyframeTrack(
+        track_data.target || '.material.color',
+        time_stamp, colors, THREE.InterpolateDiscrete
+      );
+
+
+      // Step 2: Generate animation clip
+      const clip_nm = 'action_' + m.name + '__' + animation_name;
+      let clip = this.animation_clips.get( clip_nm ),
+          new_clip = false;
+      if( !clip ){
+        clip = new THREE.AnimationClip( clip_nm, _time_max - _time_min, [keyframe] );
+        this.animation_clips.set( clip_nm, clip );
+        new_clip = true;
+      }else{
+        clip.duration = _time_max - _time_min;
+        clip.tracks[0] = keyframe;
+      }
+      // Calculate clip duration
+      // clip.resetDuration();
+
+      // Step 3: create mixer
+      if( !mixer ){
+        mixer = new THREE.AnimationMixer( m );
+        this.animation_mixers.set( m.name, mixer );
+      }
+      mixer.stopAllAction();
+
+      // Step 4: combine mixer with clip
+      const action = mixer.clipAction( clip );
+      action.play();
+
+    });
+
+
+
+    callback( cmap );
+  }
+
+
+  // -------- Especially designed for brain viewer
+
+  get_surface_types(){
+    const re = { 'pial' : 1 }; // always put pials to the first one
+
+    this.group.forEach( (gp, g) => {
+      // let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
+      const res = CONSTANTS.REGEXP_SURFACE_GROUP.exec(g);
+      if( res && res.length === 3 ){
+        re[ res[1] ] = 1;
+      }
+    });
+
+    return( Object.keys( re ) );
+  }
+
+  get_volume_types(){
+    const re = {};
+
+    this.volumes.forEach( (vol, s) => {
+      let volume_names = Object.keys( vol ),
+          //  brain.finalsurfs (YAB)
+          res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
+          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
+
+      if( res && res.length === 2 ){
+        re[ res[1] ] = 1;
+      }
+    });
+    return( Object.keys( re ) );
+  }
+
+  switch_subject( target_subject = '/', args = {}){
+
+    if( this.subject_codes.length === 0 ){
+      return( null );
+    }
+
+    const state = this.state_data;
+
+    if( !this.subject_codes.includes( target_subject ) ){
+
+      target_subject = state.get('target_subject');
+
+      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
+        // This happends when subjects are just loaded
+        if( this.shared_data.get(".multiple_subjects") ){
+          target_subject = this.shared_data.get(".template_subjects");
         }
+      }
 
-        // Obtain keyframe tracks
-        let keyframes = m.userData.generate_keyframe_tracks();
+      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
+        target_subject = this.subject_codes[0];
+      }
 
-        // Generate animation clip
-        // TODO: Edit so that we can find clips (array)
-        let clip = m.userData.animation_objects.animation_clip;
-        if( clip === undefined ){
-          clip = new THREE.AnimationClip(
-            'action_' + m.name ,
-            this.time_range_max - this.time_range_min,
-            keyframes
-          );
-          m.userData.animation_objects.animation_clip = clip;
+
+
+    }
+    state.set( 'target_subject', target_subject );
+
+    let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
+
+    let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
+    let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
+    let volume_type = args.volume_type || state.get( 'volume_type' ) || 'brain.finalsurfs';
+    let map_template = state.get( 'map_template' ) || false;
+
+    if( args.map_template !== undefined ){
+      map_template = args.map_template;
+    }
+    let map_type_surface = args.map_type_surface || state.get( 'map_type_surface' ) || 'std.141';
+    let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
+    let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
+    let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
+
+    this.switch_volume( target_subject, volume_type );
+    this.switch_surface( target_subject, surface_type,
+                          [surface_opacity_left, surface_opacity_right],
+                          [material_type_left, material_type_right] );
+
+    if( map_template ){
+      this.map_electrodes( target_subject, map_type_surface, map_type_volume );
+    }else{
+      this.map_electrodes( target_subject, 'reset', 'reset' );
+    }
+
+    // reset overlay
+    this.set_side_visibility();
+
+    state.set( 'surface_type', surface_type );
+    state.set( 'material_type_left', material_type_left );
+    state.set( 'material_type_right', material_type_right );
+    state.set( 'volume_type', volume_type );
+    state.set( 'map_template', map_template );
+    state.set( 'map_type_surface', map_type_surface );
+    state.set( 'map_type_volume', map_type_volume );
+    state.set( 'surface_opacity_left', surface_opacity_left );
+    state.set( 'surface_opacity_right', surface_opacity_right );
+
+    this.start_animation( 0 );
+
+  }
+
+  switch_surface( target_subject, surface_type = 'pial', opacity = [1, 1], material_type = ['normal', 'normal'] ){
+    // this.surfaces[ subject_code ][ g.name ] = m;
+    // Naming - Surface         Standard 141 Right Hemisphere - pial (YAB)
+    // or FreeSurfer Right Hemisphere - pial (YAB)
+    this.surfaces.forEach( (sf, subject_code) => {
+      for( let surface_name in sf ){
+        const m = sf[ surface_name ];
+        m.visible = false;
+        if( subject_code === target_subject ){
+
+          if(
+            surface_name === `Standard 141 Left Hemisphere - ${surface_type} (${target_subject})` ||
+            surface_name === `FreeSurfer Left Hemisphere - ${surface_type} (${target_subject})`
+          ){
+            if( material_type[0] === 'hidden' ){
+              m.visible = false;
+            }else{
+              m.material.wireframe = ( material_type[0] === 'wireframe' );
+              m.visible = true;
+              m.material.opacity = opacity[0];
+              m.material.transparent = opacity[0] < 0.99;
+            }
+          }else if(
+            surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
+            surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
+          ){
+            if( material_type[1] === 'hidden' ){
+              m.visible = false;
+            }else{
+              m.material.wireframe = ( material_type[1] === 'wireframe' );
+              m.visible = true;
+              m.material.opacity = opacity[1];
+              m.material.transparent = opacity[1] < 0.99;
+            }
+
+            // Re-calculate controls center so that rotation center is the center of mesh bounding box
+            this.bounding_box.setFromObject( m.parent );
+            this.bounding_box.geometry.computeBoundingBox();
+            const _b = this.bounding_box.geometry.boundingBox;
+            this.controls.target.copy( _b.min.clone() ).add( _b.max ).multiplyScalar( 0.5 );
+            this.control_center = this.controls.target.toArray();
+            this.controls.update();
+          }
+
+        }
+      }
+    });
+    this.start_animation( 0 );
+  }
+
+  switch_volume( target_subject, volume_type = 'brain.finalsurfs' ){
+
+    this.volumes.forEach( (vol, subject_code) => {
+      for( let volume_name in vol ){
+        const m = vol[ volume_name ];
+        if( subject_code === target_subject && volume_name === `${volume_type} (${subject_code})`){
+          m[0].parent.visible = true;
+          this._register_datacube( m );
         }else{
-          clip.tracks = keyframes;
-          clip.duration = this.time_range_max - this.time_range_min;
+          m[0].parent.visible = false;
+        }
+      }
+    });
+
+    this.start_animation( 0 );
+  }
+  // Map electrodes
+  map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
+    /* DEBUG code
+    target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
+    pos_targ = new THREE.Vector3(),
+          pos_orig = new THREE.Vector3(),
+          mat1 = new THREE.Matrix4(),
+          mat2 = new THREE.Matrix4();
+    el = canvas.electrodes.get(origin_subject)["YAB, 29 - aTMP6"];
+    g = el.userData.construct_params,
+              is_surf = g.is_surface_electrode,
+              vert_num = g.vertex_number,
+              surf_type = g.surface_type,
+              mni305 = g.MNI305_position,
+              origin_position = g.position,
+              target_group = canvas.group.get( `Surface - ${surf_type} (${target_subject})` ),
+              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
+              pos_orig.fromArray( origin_position );
+mapped = false,
+            side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
+    */
+
+
+    const pos_targ = new THREE.Vector3(),
+          pos_orig = new THREE.Vector3(),
+          mat1 = new THREE.Matrix4(),
+          mat2 = new THREE.Matrix4();
+
+    this.electrodes.forEach( (els, origin_subject) => {
+      for( let el_name in els ){
+        const el = els[ el_name ],
+              g = el.userData.construct_params,
+              is_surf = g.is_surface_electrode,
+              vert_num = g.vertex_number,
+              surf_type = g.surface_type,
+              mni305 = g.MNI305_position,
+              origin_position = g.position,
+              target_group = this.group.get( `Surface - ${surf_type} (${target_subject})` ),
+              // origin_volume = this.group.get( `Volume (${origin_subject})` ),
+              // target_volume = this.group.get( `Volume (${target_subject})` ),
+              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
+
+        pos_orig.fromArray( origin_position );
+
+        let mapped = false,
+            side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
+
+        // always do MNI305 mapping first as calibration
+        if( !hide_electrode && volume === 'mni305' ){
+          // apply MNI 305 transformation
+          const v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
+          const v2v_targ = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
+
+          if( v2v_targ ){
+            mat2.set( v2v_targ[0][0], v2v_targ[0][1], v2v_targ[0][2], v2v_targ[0][3],
+                      v2v_targ[1][0], v2v_targ[1][1], v2v_targ[1][2], v2v_targ[1][3],
+                      v2v_targ[2][0], v2v_targ[2][1], v2v_targ[2][2], v2v_targ[2][3],
+                      v2v_targ[3][0], v2v_targ[3][1], v2v_targ[3][2], v2v_targ[3][3] );
+
+            mat2.getInverse( mat2 );
+
+            if( Array.isArray( mni305 ) && mni305.length === 3 && !(
+              // not origin
+              mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0
+            ) ){
+              pos_targ.fromArray( mni305 ).applyMatrix4(mat2);
+              mapped = true;
+            }
+
+            if( !mapped && v2v_orig ){
+              mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
+                        v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
+                        v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
+                        v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
+
+              // target position = inv(mat2) * mat1 * origin_position
+              mat2.multiplyMatrices( mat2, mat1 );
+              pos_targ.fromArray( origin_position ).applyMatrix4(mat2);
+              mapped = true;
+            }
+
+            if( mapped ){
+              el.position.copy( pos_targ );
+              el.userData._template_mni305 = pos_targ.clone();
+              el.userData._template_mapped = true;
+              el.userData._template_space = 'mni305';
+              el.userData._template_shift = 0;
+              el.userData._template_surface = g.surface_type;
+              el.userData._template_hemisphere = g.hemisphere;
+            }else{
+              el.userData._template_mni305 = undefined;
+            }
+          }
+
         }
 
-        // setup the AnimationMixer
-        let mixer = m.userData.animation_objects.animation_mixer;
-				if( mixer === undefined ){
-				  mixer = new THREE.AnimationMixer( m );
-				  m.userData.animation_objects.animation_mixer = mixer;
-				}
-				mixer.stopAllAction();
-				this.animation_mixers[ g_name ] = mixer;
+        if( !hide_electrode && surface === 'std.141' && is_surf && vert_num >= 0 &&
+            target_group && target_group.isObject3D && target_group.children.length === 2 ){
+          // User choose std.141, electrode is surface electrode, and
+          // vert_num >= 0, meaning original surface is loaded, and target_surface exists
+          // meaning template surface is loaded
+          //
+          // check if target surface is std 141
+          let target_surface = target_group.children.filter((_t) => {
+            return( _t.name === `mesh_free_Standard 141 ${side} Hemisphere - ${surf_type} (${target_subject})`);
+          });
 
-        // setup animations
-        let animation_actions = m.userData.animation_objects.clip_action;
-        if(animation_actions === undefined){
-  				// bind clip to mixer
-  				animation_actions = mixer.clipAction( clip );
-				  m.userData.animation_objects.clip_action = animation_actions;
+          if( target_surface.length === 1 ){
+            // Find vert_num at target_surface[0]
+            const vertices = target_surface[0].geometry.getAttribute('position');
+            const shift = target_surface[0].getWorldPosition( el.parent.position.clone() );
+            pos_targ.set( vertices.getX( vert_num ), vertices.getY( vert_num ), vertices.getZ( vert_num ) ).add(shift);
+            el.position.copy( pos_targ );
+            el.userData._template_mapped = true;
+            el.userData._template_space = 'std.141';
+            el.userData._template_surface = g.surface_type;
+            el.userData._template_hemisphere = g.hemisphere;
+            if( el.userData._template_mni305 ){
+              el.userData._template_shift = pos_targ.distanceTo( el.userData._template_mni305 );
+            }
+            mapped = true;
+          }
+
         }
-        // TODO: Do we need to check stop clip first?
-				animation_actions.play();
+
+
+        // Reset electrode
+        if( !mapped ){
+          el.position.fromArray( origin_position );
+          el.userData._template_mapped = false;
+          el.userData._template_space = 'original';
+          el.userData._template_mni305 = undefined;
+          el.userData._template_shift = 0;
+          el.userData._template_surface = g.surface_type;
+          el.userData._template_hemisphere = g.hemisphere;
+        }
+        if( hide_electrode ){
+          el.visible = false;
+        }
+      }
+    });
+
+    this.start_animation( 0 );
+  }
+
+
+  // export electrodes
+  electrodes_info(){
+
+    const res = {};
+
+    // Electrode Coord_x Coord_y Coord_z Label MNI305_x MNI305_y MNI305_z
+    // SurfaceElectrode SurfaceType Radius VertexNumber
+    this.electrodes.forEach( ( collection , subject_code ) => {
+      const _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
+            // _regexp = CONSTANTS.REGEXP_ELECTRODE,
+            _v2v = get_or_default( this.shared_data, subject_code, {} ).vox2vox_MNI305,
+            re = [],
+            mat = new THREE.Matrix4(),
+            pos = new THREE.Vector3();
+      let row = {};
+      let parsed, e, g;
+
+      if( _v2v ){
+        mat.set( _v2v[0][0], _v2v[0][1], _v2v[0][2], _v2v[0][3],
+                 _v2v[1][0], _v2v[1][1], _v2v[1][2], _v2v[1][3],
+                 _v2v[2][0], _v2v[2][1], _v2v[2][2], _v2v[2][3],
+                 _v2v[3][0], _v2v[3][1], _v2v[3][2], _v2v[3][3] );
+
+      }
+
+      for( let k in collection ){
+        parsed = _regexp.exec( k );
+        // just incase
+        if( parsed && parsed.length === 3 ){
+          row = {};
+          e = collection[ k ];
+          g = e.userData.construct_params;
+          pos.fromArray( g.position );
+
+          // Electrode Coord_x Coord_y Coord_z Label Hemisphere
+          row.Electrode = parseInt( parsed[1] );
+          row.Coord_x = pos.x;
+          row.Coord_y = pos.y;
+          row.Coord_z = pos.z;
+          row.Label = parsed[2];
+
+          //  MNI305_x MNI305_y MNI305_z
+          pos.applyMatrix4( mat );
+          row.MNI305_x = pos.x;
+          row.MNI305_y = pos.y;
+          row.MNI305_z = pos.z;
+
+          // SurfaceElectrode SurfaceType Radius VertexNumber
+          row.SurfaceElectrode = g.is_surface_electrode? 'TRUE' : 'FALSE';
+          row.SurfaceType = g.surface_type;
+          row.Radius = g.radius;
+          row.VertexNumber = g.vertex_number;     // vertex_number is already changed
+          row.Hemisphere = g.hemisphere;
+
+          // CustomizedInformation
+          row.Notes = g.custom_info || '';
+
+        }
+        re[ row.Electrode - 1 ] = row;
+      }
+      row = {};
+      // re set row to default
+      row.Coord_x = 0;
+      row.Coord_y = 0;
+      row.Coord_z = 0;
+      row.Label = 'NA';
+
+      //  MNI305_x MNI305_y MNI305_z
+      row.MNI305_x = 0;
+      row.MNI305_y = 0;
+      row.MNI305_z = 0;
+
+      // SurfaceElectrode SurfaceType Radius VertexNumber
+      row.SurfaceElectrode = 'TRUE';
+      row.SurfaceType = 'NA';
+      row.Radius = 1;
+      row.VertexNumber = -1;
+      row.Hemisphere = 'NA';
+      row.Notes = '';
+      for( let ii = 0; ii < re.length; ii++ ){
+        if( re[ ii ] === undefined ){
+          // missing one electrode, fill that in
+          row.Electrode = ii + 1;
+          re[ ii ] = {...row};
+        }
+      }
+
+      res[ subject_code ] = re;
+    });
+
+    return( res );
+  }
+
+  download_electrodes( format = 'json' ){
+    const res = this.electrodes_info();
+
+
+    // convert to csv
+    for( let subcode in res ){
+      let electrode_data = res[ subcode ];
+
+      if( subcode === '__localization__' ){
+        const template_sub = this.state_data.get('target_subject');
+        electrode_data = electrode_data.map((e) => {
+
+          return({
+            Electrode : e.Electrode,
+            TemplateCoord_x : e.Coord_x,
+            TemplateCoord_y : e.Coord_y,
+            TemplateCoord_z : e.Coord_z,
+            Label : e.Notes,
+            TemplateSubject : template_sub
+          });
+
+        });
+
+      }
+
+      if( electrode_data.length > 0 ){
+        if( format === 'json' ){
+          download( JSON.stringify(electrode_data) , subcode + '_electrodes.json', 'application/json');
+        }else if( format === 'csv' ){
+          json2csv(electrode_data, (err, csv) => {
+            download( csv , subcode + '_electrodes.csv', 'plan/csv');
+          });
+        }
 
       }
     }
+
+
   }
 
-  set_time_range( min, max ){
-    this.time_range_min = min;
-    this.time_range_max = max;
-  }
-}
-
-
-
-
-function gen_sphere(g, canvas){
-  const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
-      values = to_array(g.value);
-  let material;
-  gb.name = 'geom_sphere_' + g.name;
-
-  // Make material based on value
-  if(values.length === 0){
-    material = new THREE.MeshLambertMaterial({ 'transparent' : true });
-  }else{
-    // Use the first value
-    material = new THREE.MeshBasicMaterial({ 'transparent' : true });
-  }
-
-  const mesh = new THREE.Mesh(gb, material);
-  mesh.name = 'mesh_sphere_' + g.name;
-
-  let linked = false;
-  if(g.use_link){
-    // This is a linkedSphereGeom which should be attached to a surface mesh
-    let vertex_ind = Math.floor(g.vertex_number - 1),
-        target_name = g.linked_geom,
-        target_mesh = canvas.mesh[target_name];
-
-    if(target_mesh && target_mesh.isMesh){
-      let target_pos = target_mesh.geometry.attributes.position.array;
-      mesh.position.set(target_pos[vertex_ind * 3], target_pos[vertex_ind * 3+1], target_pos[vertex_ind * 3+2]);
-      linked = true;
+  // Only show electrodes near 3 planes
+  trim_electrodes( distance ){
+    if( typeof distance !== 'number' ){
+      distance = get_or_default( this.state_data, 'threshold_electrode_plane', Infinity);
+    }else{
+      this.state_data.set( 'threshold_electrode_plane', distance );
     }
+    const _x = get_or_default( this.state_data, 'sagittal_posx', 0);
+    const _y = get_or_default( this.state_data, 'coronal_posy', 0);
+    const _z = get_or_default( this.state_data, 'axial_posz', 0);
+    const plane_pos = new THREE.Vector3().set( _x, _y, _z );
+    const diff = new THREE.Vector3();
+
+    this.electrodes.forEach((li, subcode) => {
+
+      for( let ename in li ){
+        const e = li[ ename ];
+
+        // Make sure layer 8 (main camera can see these electrodes)
+        e.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+
+        // get offsets
+        e.getWorldPosition( diff ).sub( plane_pos );
+
+        // Check visibility
+        if( Math.abs( diff.x ) <= distance ){
+          e.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+        }
+        if( Math.abs( diff.y ) <= distance ){
+          e.layers.enable( CONSTANTS.LAYER_SYS_CORONAL_9 );
+        }
+        if( Math.abs( diff.z ) <= distance ){
+          e.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
+        }
+      }
+
+    });
+
   }
-
-  if(!linked){
-    mesh.position.fromArray(g.position);
-  }
-
-
-  mesh.userData.ani_value = values;
-  mesh.userData.ani_time = to_array(g.time_stamp);
-
-  if(values.length > 0){
-    // Set animation keyframes, will set material color
-    mesh.userData.generate_keyframe_tracks = () => {
-      let cols = [], time_stamp = [];
-      mesh.userData.ani_value.forEach((v) => {
-        let c = canvas.get_color(v);
-        cols.push( c.r, c.g, c.b );
-      });
-      mesh.userData.ani_time.forEach((v) => {
-        time_stamp.push( v - canvas.time_range_min );
-      });
-      return([new THREE.ColorKeyframeTrack(
-        '.material.color',
-        time_stamp, cols, THREE.InterpolateDiscrete
-      )]);
-
-    };
-
-  }
-
-  return(mesh);
 }
 
-function gen_blank(g, canvas){
-  return(null);
-}
-
-function gen_free(g, canvas){
-  const gb = new THREE.BufferGeometry(),
-      vertices = canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name),
-      faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name);
-
-  const vertex_positions = [],
-      face_orders = [];
-      //normals = [];
-
-  vertices.forEach((v) => {
-    vertex_positions.push(v[0], v[1], v[2]);
-    // normals.push(0,0,1);
-  });
-
-  faces.forEach((v) => {
-    face_orders.push(v[0], v[1], v[2]);
-  });
-
-  gb.setIndex( face_orders );
-  gb.addAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
-  // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-  gb.computeVertexNormals();
-  gb.computeBoundingBox();
-  gb.computeBoundingSphere();
-  //gb.computeFaceNormals();
-  //gb.faces = faces;
-
-
-  gb.name = 'geom_free_' + g.name;
-
-  // https://github.com/mrdoob/three.js/issues/3490
-  let material = new THREE.MeshLambertMaterial({ 'transparent' : false });
-
-  let mesh = new THREE.Mesh(gb, material);
-  mesh.name = 'mesh_free_' + g.name;
-
-  mesh.position.fromArray(g.position);
-
-  // mesh.userData.ani_value = values;
-  // mesh.userData.ani_time = to_array(g.time_stamp);
-
-  return(mesh);
-
-}
-
-
-
-function gen_datacube(g, canvas){
-  let mesh, group_name;
-
-  let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-      line_geometry = new THREE.Geometry();
-  line_material.depthTest = false;
-
-  // Cube values Must be from 0 to 1, float
-  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-        cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
-        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-        cube_pos = g.position,
-        cube_center = [0,1,2].map((ii) => {return(cube_pos[ii] + cube_half_size[ii])}),
-        volume = {
-          'xLength' : cube_half_size[0]*2,
-          'yLength' : cube_half_size[1]*2,
-          'zLength' : cube_half_size[2]*2
-        };
-
-  // Generate texture
-  let texture = new THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-  texture.format = THREE.RedFormat;
-	texture.type = THREE.UnsignedByteType;
-	texture.needsUpdate = true;
-
-  // Shader - XY plane
-	const shader_xy = THREE.Volume2dArrayShader_xy;
-	let material_xy = new THREE.ShaderMaterial({
-	  uniforms : {
-  		diffuse: { value: texture },
-  		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
-  		threshold: 0.5
-  	},
-  	vertexShader: shader_xy.vertexShader,
-		fragmentShader: shader_xy.fragmentShader,
-		side: THREE.DoubleSide,
-		transparent: true
-	});
-	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
-
-	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
-	mesh_xy.position.fromArray( cube_center );
-	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
-
-	// Shader - XZ plane
-	const shader_xz = THREE.Volume2dArrayShader_xz;
-	let material_xz = new THREE.ShaderMaterial({
-	  uniforms : {
-  		diffuse: { value: texture },
-  		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
-  		threshold: 0.5
-  	},
-  	vertexShader: shader_xz.vertexShader,
-		fragmentShader: shader_xz.fragmentShader,
-		side: THREE.DoubleSide,
-		transparent: true
-	});
-	let geometry_xz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-	let mesh_xz = new THREE.Mesh( geometry_xz, material_xz );
-	mesh_xz.rotateX( Math.PI / 2 );
-	mesh_xz.position.fromArray( cube_center );
-	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
-
-	// Shader - YZ plane
-	const shader_yz = THREE.Volume2dArrayShader_yz;
-	let material_yz = new THREE.ShaderMaterial({
-	  uniforms : {
-  		diffuse: { value: texture },
-  		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
-  		threshold: 0.5
-  	},
-  	vertexShader: shader_yz.vertexShader,
-		fragmentShader: shader_yz.fragmentShader,
-		side: THREE.DoubleSide,
-		transparent: true
-	});
-	let geometry_yz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-	let mesh_yz = new THREE.Mesh( geometry_yz, material_yz );
-	mesh_yz.rotateY( Math.PI / 2);
-	mesh_yz.rotateZ( Math.PI / 2); // Back side
-	mesh_yz.position.fromArray( cube_center );
-	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
-
-  // coronal (xz), axial (xy), sagittal (yz)
-	mesh = [ mesh_xz, mesh_xy, mesh_yz ];
-
-	// generate diagonal line
-	const _mhw = Math.max( ...cube_half_size );
-
-	line_geometry.vertices.push(
-  	new THREE.Vector3( -_mhw, -_mhw, 0 ),
-  	new THREE.Vector3( _mhw, _mhw, 0 )
-  );
-  let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
-      line_mesh_xy = new THREE.Line( line_geometry, line_material ),
-      line_mesh_yz = new THREE.Line( line_geometry, line_material );
-  line_mesh_xz.renderOrder = MAX_RENDER_ORDER - 1;
-  line_mesh_xy.renderOrder = MAX_RENDER_ORDER - 1;
-  line_mesh_yz.renderOrder = MAX_RENDER_ORDER - 1;
-  line_mesh_xz.layers.set( 10 );
-  line_mesh_xz.layers.enable( 11 );
-  line_mesh_xy.layers.set( 9 );
-  line_mesh_xy.layers.enable( 11 );
-  line_mesh_yz.layers.set( 9 );
-  line_mesh_yz.layers.enable( 10 );
-  mesh_xz.add( line_mesh_xz );
-  mesh_xy.add( line_mesh_xy );
-  mesh_yz.add( line_mesh_yz );
-
-  /*
-  // Cube values Must be from 0 to 1, float
-  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-        volume = {
-          'xLength' : cube_half_size[0]*2,
-          'yLength' : cube_half_size[1]*2,
-          'zLength' : cube_half_size[2]*2
-        };
-
-  // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
-  if( canvas.has_webgl2 ){
-    // Generate 3D texture, to do so, we need to customize shaders
-
-    // 3D texture
-    let texture = new THREE.DataTexture3D(
-      new Float32Array(cube_values),
-      cube_half_size[0]*2,
-      cube_half_size[1]*2,
-      cube_half_size[2]*2
-    );
-
-    texture.minFilter = texture.magFilter = THREE.LinearFilter;
-
-    // Needed to solve error: INVALID_OPERATION: texImage3D: ArrayBufferView not big enough for request
-    texture.format = THREE.RedFormat;
-    texture.type = THREE.FloatType;
-    texture.unpackAlignment = 1;
-
-    texture.needsUpdate = true;
-
-    // Colormap textures, using datauri hard-coded
-  	let cmtextures = {
-  		viridis: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAtUlEQVR42n2Q0W3FMAzEyNNqHaH7j2L1w3ZenDwUMAwedXKA+MMvSqJiiBoiCWqWxKBEXaMZ8Sqs0zcmIv1p2nKwEvpLZMYOe3R4wku+TO7es/O8H+vHlH/KR9zQT8+z8F4531kRe379MIK4oD3v/SP7iplyHTKB5WNPs4AFH3kzO446Y+y6wA4TxqfMXBmzVrtwREY5ZrMY069dxr28Yb+wVjp02QWhSwKFJcHCaGGwTLBIzB9eyYkORwhbNAAAAABJRU5ErkJggg==" ),
-  		gray: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAEklEQVR42mNkYGBgHAWjYKQCAH7BAv8WAlmwAAAAAElFTkSuQmCC" )
-  	};
-
-  	// Material
-  	const shader = THREE.VolumeRenderShader1;
-
-  	let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-  	uniforms.u_data.value = texture;
-  	uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
-  	uniforms.u_clim.value.set( 0, 1 );
-  	uniforms.u_renderstyle.value = 0; // 0: MIP, 1: ISO
-  	uniforms.u_renderthreshold.value = 0.015; // For ISO renderstyle
-  	uniforms.u_cmdata.value = cmtextures.gray;
-
-    let material = new THREE.ShaderMaterial( {
-  		uniforms: uniforms,
-  		vertexShader: shader.vertexShader,
-  		fragmentShader: shader.fragmentShader,
-  		side: THREE.BackSide // The volume shader uses the backface as its "reference point"
-  	} );
-
-  	let geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
-
-  	// TODO: Make sure this translate is correct
-  	geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
-
-  	mesh = new THREE.Mesh( geometry, material );
-  	mesh.name = 'mesh_datacube_' + g.name;
-
-    mesh.position.fromArray(g.position);
-  }
-  */
-
-	return(mesh);
-
-}
 
 
 export { THREEBRAIN_CANVAS };
 // window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;
+
+
+
+
+
+/* Some code that was old
+
+  render_legend_old(text_color = '#ffffff'){
+
+*/
+//    let text_color_fmt = text_color.replace(/^[^0-9a-f]*/, '0x');
+/*    let lut = this.lut,
+        labels = this.lut.legend.labels;
+
+    // canvas.legend_labels[ 'title' ]
+    let c = this.legend_labels.title.material.map.image.getContext( '2d' );
+    // c.clearRect(0,0,0,0);
+    c.fillStyle = text_color;
+    c.fillText(
+      labels.title.toString() + labels.um.toString(), 4, labels.fontsize + 4 // borderThickness = 4
+    );
+
+    this.legend_labels.title.material.map.needsUpdate=true;
+    // this.legend_labels.title.material.color.setHex( text_color );
+
+    for ( let i = 0; i < labels.ticks; i++ ){
+
+      let t = this.legend_labels.ticks[ i ].material.map.image.getContext( '2d' );
+
+      var value = ( lut.maxV - lut.minV ) / ( labels.ticks - 1 ) * i + lut.minV;
+
+			if ( labels.notation == 'scientific' ) {
+				value = value.toExponential( labels.decimal );
+			} else {
+				value = value.toFixed( labels.decimal );
+			}
+
+      t.fillStyle = text_color;
+      t.fillText( value.toString(), 4, labels.fontsize + 4 );
+
+      this.legend_labels.ticks[ i ].material.map.needsUpdate=true;
+
+      this.legend_labels.lines[ i ].material.color.setHex( text_color_fmt );
+      this.legend_labels.lines[ i ].material.needsUpdate = true;
+    }
+
+
+    this.legend_camera.updateProjectionMatrix();
+    this.legend_renderer.render( this.scene_legend, this.legend_camera );
+  }
+
+*/

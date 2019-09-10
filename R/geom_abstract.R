@@ -12,7 +12,7 @@
 
 
 #' R6 Class - Generate Group of Geometries
-#'
+#' @author Zhengjia Wang
 #' @name GeomGroup
 NULL
 
@@ -30,6 +30,8 @@ GeomGroup <- R6::R6Class(
     cache_env = NULL,
     cache_path = NULL,
     disable_trans_mat = FALSE,
+    parent_group = NULL,
+    subject_code = NULL,
     cache_name = function(){
       stringr::str_replace_all(self$name, '[^a-zA-Z0-9]', '_')
     },
@@ -42,11 +44,18 @@ GeomGroup <- R6::R6Class(
       }
     },
     initialize = function(name, layer = 0, position = c(0,0,0),
-                          cache_path = tempfile()){
+                          cache_path = tempfile(), parent = NULL){
       self$name = name
 
       stopifnot2(all(layer %in% 0:13), msg = 'Layer(s) must be from 0 to 12, use 0 for main camera-only, 1 for all cameras, 13 is invisible.')
       self$layer = layer
+
+      if( !is.null(parent) ){
+        if(R6::is.R6(parent)){
+          parent = parent$name
+        }
+        self$parent_group = parent
+      }
 
 
       stopifnot2(length(position) == 3, msg = 'position must have length of 3.')
@@ -123,7 +132,9 @@ GeomGroup <- R6::R6Class(
         trans_mat = trans_mat,
         cached_items = self$cached_items,
         cache_name = self$cache_name(),
-        disable_trans_mat = self$disable_trans_mat
+        disable_trans_mat = self$disable_trans_mat,
+        parent_group = self$parent_group,
+        subject_code = self$subject_code
       )
     }
   )
@@ -131,7 +142,7 @@ GeomGroup <- R6::R6Class(
 
 
 #' R6 Class - Abstract Class of Geometries
-#'
+#' @author Zhengjia Wang
 #' @name AbstractGeom
 NULL
 
@@ -142,17 +153,24 @@ AbstractGeom <- R6::R6Class(
   public = list(
     name = '',
     type = 'abstract',
+
+    # time_stamp and value are deprecated! use keyframe instead
     time_stamp = NULL,
     value = NULL,
+
+    # Animation keyframes
+    keyframes = list(),
+
     position = c(0,0,0),
     group = NULL,
     clickable = TRUE,
     layer = 0,
     use_cache = FALSE,
     custom_info = '',
-    initialize = function(name, position = c(0,0,0), time_stamp = NULL, group = NULL, layer = 0, ...){
+    subject_code = NULL,
+    initialize = function(name, position = c(0,0,0), group = NULL, layer = 0, ...){
       self$name = name
-      self$time_stamp = time_stamp
+      # self$time_stamp = time_stamp
       self$set_position(position)
       self$group = group
       stopifnot2(all(layer %in% 0:13), msg = 'Layer(s) must be from 0 to 13, use 0 for main camera-only, 1 for all cameras, 13 is invisible.')
@@ -163,18 +181,47 @@ AbstractGeom <- R6::R6Class(
       stopifnot2(length(pos) == 3, msg = 'Position must be a length of 3 - X,Y,Z')
       self$position = pos
     },
-    set_value = function(value = NULL, time_stamp = NULL){
-      .NotYetImplemented()
+    # set_value = function(value = NULL, time_stamp = NULL){
+    #   .NotYetImplemented()
+    # },
+    set_value = function(value = NULL, time_stamp = NULL, name = 'Value', target = '.material.color', ...){
+      stopifnot2(name != '[No Color]', msg = 'name cannot be "[No Color]", it\'s reserved')
+
+      # Check length
+      if(length(value) > 1){
+        stopifnot2(length(value) == length(time_stamp), msg = 'Please specify time stamp for each color. They should share the same length.')
+      }else{
+        if(length(value) == 0){
+          # Delete animation keyframe
+          self$keyframes[[name]] = NULL
+          return(invisible())
+        }else if (length(time_stamp) != 1){
+          time_stamp = 0
+        }
+      }
+
+      kf = KeyFrame$new(name = name, value = value, time = time_stamp,
+                        dtype = ifelse( isTRUE(is.numeric(value)), 'continuous', 'discrete'),
+                        target = '.material.color', ...)
+
+      self$keyframes[[name]] = kf
+
     },
     to_list = function(){
       group_info = NULL
+      subject_code = self$subject_code
       if(!is.null(self$group)){
         group_info = list(
           group_name = self$group$name,
           group_layer = self$group$layer,
           group_position = as.numeric(self$group$position)
         )
+        if(is.null( subject_code )){
+          subject_code = self$group$subject_code
+        }
       }
+
+
       list(
         name = self$name,
         type = self$type,
@@ -185,7 +232,9 @@ AbstractGeom <- R6::R6Class(
         layer = as.integer(self$layer),
         group = group_info,
         use_cache = self$use_cache,
-        custom_info = self$custom_info
+        custom_info = self$custom_info,
+        subject_code = subject_code,
+        keyframes = sapply(self$keyframes, function(kf){ kf$to_list() }, USE.NAMES = TRUE, simplify = FALSE)
       )
     },
     get_data = function(key = 'value', force_reload = FALSE, ifnotfound = NULL){
@@ -196,6 +245,32 @@ AbstractGeom <- R6::R6Class(
         return(self$group$get_data(key, force_reload = force_reload, ifnotfound = ifnotfound))
       }
       return(ifnotfound)
+    },
+    animation_time_range = function( ani_name ){
+      kf = self$keyframes[[ ani_name ]]
+      if(length(kf)){
+        return(kf$time_range)
+      }
+      return(NULL)
+    },
+    animation_value_range = function( ani_name ){
+      kf = self$keyframes[[ ani_name ]]
+      if(length(kf) && kf$is_continuous){
+        return(as.numeric(kf$value_range))
+      }
+      return(NULL)
+    },
+    animation_value_names = function( ani_name ){
+      kf = self$keyframes[[ ani_name ]]
+      if(length(kf) && !kf$is_continuous){
+        return(kf$value_names)
+      }
+      return(NULL)
+    }
+  ),
+  active = list(
+    animation_types = function(){
+      names(self$keyframes)
     }
   )
 )

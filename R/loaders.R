@@ -1,119 +1,109 @@
-n27_surfaces <- c('pial', 'white', 'sphere', 'smoothwm', 'inflated')
+#' @name template_subject
+#' @author Zhengjia Wang
+#' @title Download and Manage Template Subjects
+#' @aliases N27
+#' @details To view electrodes implanted in multiple subjects, it's highly
+#' recommended to view them in a template space The detail mapping method
+#' is discussed in function \code{freesurfer_brain}.
+#'
+#' To map to a template space, one idea is to find someone whose brain is
+#' normal. In our case, the choice is subject `N27`, also known as `Colin 27`.
+#' function \code{download_N27} provides a simple and easy way to download a
+#' partial version from the Internet.
+#'
+#' If you have any other ideas about template brain, you can use function
+#' \code{set_default_template(subject_code, template_dir)} to redirect to
+#' your choice. If your template brain is a `Zip` file on the Internet, we
+#' provide function \code{download_template_subject} to automatically install it.
+NULL
 
-get_n27_surface <- function(
-  group_left, group_right, surface = 'pial', force_cache = FALSE,
-  n27_dir = getOption('threeBrain.n27_dir', '~/rave_data/others/three_brain/N27')
-){
-  stopifnot2(surface %in% c('pial', 'white', 'sphere', 'smoothwm', 'inflated'),
-             msg = "surface can only be one of the followings: 'pial', 'white', 'sphere', 'smoothwm', 'inflated'")
-  fs = file.path(n27_dir, sprintf('std.141.%sh.%s.asc', c('l', 'r'), surface))
-  if(any(!file.exists(fs))){
-    download_N27_surface(surfaces = surface)
-  }
-
-  if(missing(group_left)){
-    group_left = GeomGroup$new(name = 'N27 Left Hemisphere')
-  }
-  if(missing(group_right)){
-    group_right = GeomGroup$new(name = 'N27 Right Hemisphere')
-  }
-
-
-  cache_file = file.path(n27_dir, sprintf('N27_std_141_lh_%s.json', surface))
-  if(force_cache){
-    unlink(cache_file)
-  }
-
-  name = sprintf('lh - %s (Template N27)', surface)
-
-  if(file.exists(cache_file)){
-    left_hemisphere = FreeGeom$new(
-      name = name,
-      cache_file = cache_file,
-      group = group_left
-    )
-  }else{
-    dat = read_fs_asc(fs[[1]])
-    left_hemisphere = FreeGeom$new(
-      name = name,
-      cache_file = cache_file,
-      vertex = dat$vertices[,1:3],
-      face = dat$faces[, 1:3],
-      group = group_left
-    )
-  }
-
-  cache_file = file.path(n27_dir, sprintf('N27_std_141_rh_%s.json', surface))
-  if(force_cache){
-    unlink(cache_file)
-  }
-
-  name = sprintf('rh - %s (Template N27)', surface)
-  if(file.exists(cache_file)){
-    right_hemisphere = FreeGeom$new(
-      name = name,
-      cache_file = cache_file,
-      group = group_right
-    )
-  }else{
-    dat = read_fs_asc(fs[[2]])
-    right_hemisphere = FreeGeom$new(
-      name = name,
-      cache_file = cache_file,
-      vertex = dat$vertices[,1:3],
-      face = dat$faces[, 1:3],
-      group = group_right
-    )
-  }
-
-
-
-  return(list(
-    left = left_hemisphere,
-    right = right_hemisphere
-  ))
-
-}
-
-
-#' Download N27 Brain Surfaces From URL
-#' @param url_root URL address to store the meshes
-#' @param surfaces which surface(s) to download
-#' @param reset reset downloads?
-#' @param n27_dir download to
+#' @rdname template_subject
+#' @param subject_code character with only letters and numbers (Important). Default is `N27`
+#' @param url zip file address
+#' @param template_dir parent directory where subject's `FreeSurfer` folder should be stored
 #' @export
-download_N27_surface <- function(
-  url_root = 'https://s3.amazonaws.com/rave-data/sample-data/N27/',
-  surfaces = c('pial', 'white', 'sphere', 'smoothwm', 'inflated'),
-  reset = FALSE, n27_dir = getOption('threeBrain.n27_dir', '~/rave_data/others/three_brain/N27')
+download_template_subject <- function(
+  subject_code = 'N27',
+  url = 'https://rave-data.s3.amazonaws.com/sample-data/N27_fs.zip',
+  template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
 ){
+  dir.create(template_dir, showWarnings = F, recursive = T)
+  dir = normalizePath(template_dir)
 
-  cat2('Downloading N27 Brain - Surface(s):', paste(surfaces, collapse = ', '), level = 'INFO')
+  options('threeBrain.template_dir' = dir)
 
-  dir = n27_dir
+  cat2(sprintf('Downloading %s brain from\n\t%s\nto\n\t%s', subject_code, url, dir), level = 'INFO')
 
-  options('threeBrain.n27_dir' = n27_dir)
+  destzip = file.path(dir, sprintf('%s_fs.zip', subject_code))
+  utils::download.file(url = url, destfile = destzip, quiet = F, cacheOK = T)
 
-  dir.create(dir, showWarnings = F, recursive = T)
+  sub_dir = file.path(dir, subject_code)
 
+  utils::unzip(destzip, exdir = sub_dir, overwrite = TRUE)
 
-  url_root = stringr::str_remove(url_root, '/$')
-  stopifnot2(all(surfaces %in% c('pial', 'white', 'sphere', 'smoothwm', 'inflated')),
-             msg = "surfaces can only be one or more of the followings: 'pial', 'white', 'sphere', 'smoothwm', 'inflated'")
+  # check if files need move
+  if( !'mri' %in% list.dirs(sub_dir, recursive = FALSE, full.names = FALSE) ){
+    # Need to locate this dir
+    dirs = list.dirs(sub_dir, recursive = TRUE, full.names = FALSE)
+    mri_dir = dirs[stringr::str_detect(dirs, 'mri[/]{0}$')]
 
-  fnames = lapply(surfaces, function(s){
-    sapply(c('l', 'r'), function(d){
-      sprintf('std.141.%sh.%s.asc', d, s)
-    })
-  })
-  fnames = unlist(fnames)
-
-  for(f in fnames){
-    a = file.path(dir, f)
-    b = sprintf('%s/%s', url_root, f)
-    if(reset || !file.exists(f)){
-      download.file(url = b, destfile = a, quiet = F, cacheOK = T)
+    if( length(mri_dir) ){
+      brain_mgz = list.files(file.path(sub_dir, mri_dir), full.names = TRUE, pattern = 'brain.finalsurfs.mgz$')
+      dir_from = dirname(dirname(brain_mgz))
+      file_move(dir_from, sub_dir, overwrite = TRUE, clean = TRUE, all_files = TRUE)
     }
   }
 
+  cat2('Subject is located at ', sub_dir, '\nChecking the subject', level = 'INFO')
+  # Try to load
+  pass_check = check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
+  if( !isTRUE(pass_check) ){
+    cat2('Fail the check. Please make sure the following path exist in\n\t', sub_dir, level = 'ERROR')
+    cat2('\nmri/brain.finalsurfs.mgz\n', level = 'ERROR')
+    cat2('mri/surf/\n', level = 'ERROR')
+    cat2('mri/SUMA/ (optional)\n', level = 'WARNING')
+  }else{
+    cat2(sprintf('Congrats! Template subject has passed the check. You can set it as default template subject by entering \n\n\tthreeBrain::set_default_template("%s")', subject_code), level = 'INFO')
+  }
+
+}
+
+#' @rdname template_subject
+#' @param make_default logical, whether to make `N27` default subject
+#' @param ... more to pass to \code{download_template_subject}
+#' @export
+download_N27 <- function(make_default = FALSE, ...){
+  download_template_subject(subject_code = 'N27', ...)
+
+  if(make_default){
+    set_default_template('N27', view = FALSE)
+  }
+}
+
+#' @rdname template_subject
+#' @param view whether to view the subject
+#' @export
+set_default_template <- function(subject_code, view = TRUE,
+                                 template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
+  dir = normalizePath(template_dir, mustWork = TRUE)
+  sub_dir = file.path(dir, subject_code)
+  pass_check = check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
+
+  if( !isTRUE(pass_check) ){
+    stop(paste('Fail the check. Please make sure this is FreeSurfer subject folder:\n\t', sub_dir))
+  }else{
+
+    # try to load template subject
+    x = freesurfer_brain(fs_subject_folder = sub_dir, subject_name = subject_code)
+
+    if( !is.null(x) ){
+      options('threeBrain.template_dir' = dir)
+      options('threeBrain.template_subject' = subject_code)
+    }
+
+
+    if(view){
+      plot(x)
+    }
+  }
 }

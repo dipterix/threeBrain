@@ -2,7 +2,6 @@
  * @Author: Zhengjia Wang
  * Adapter of model (threejs_scene) and viewer (htmlwidgets)
  */
-import * as d3 from "d3";
 import { download } from './js/download.js';
 import { WEBGL } from './js/WebGL.js';
 import { THREE } from './js/threeplugins.js';
@@ -10,8 +9,9 @@ import { THREEBRAIN_PRESETS, THREEBRAIN_CONTROL } from './js/data_controls.js';
 import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
 import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
 import { THREEBRAIN_STORAGE } from './js/threebrain_cache.js';
-import { invertColor, padZero, to_dict, to_array } from './js/utils.js';
-import { D3Canvas } from './js/Math/sparkles.js';
+import { CONSTANTS } from './js/constants.js';
+import { invertColor, padZero, to_array } from './js/utils.js';
+// import { D3Canvas } from './js/Math/sparkles.js';
 // import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
 import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 
@@ -53,10 +53,10 @@ class BrainCanvas{
     this.el_control.appendChild( this.gui_placeholder );
     this.el_side.appendChild( this.el_control );
 
-    this.el_legend = document.createElement('div');
-    //this.el_legend_img = document.createElement('img');
-    this.el_legend.style.width = '100px';
-    this.el_legend.style.display = 'none';
+    // this.el_legend = document.createElement('div');
+    // this.el_legend_img = document.createElement('img');
+    // this.el_legend.style.width = '100px';
+    // this.el_legend.style.display = 'none';
     // this.el_legend.style.pointerEvents = 'none';
     // this.el_legend.style.padding = '10px';
     // this.el_legend.style.backgroundColor = 'rgba(255,255,255,0.2)';
@@ -134,21 +134,6 @@ class BrainCanvas{
 
   }
 
-  /*
-  set_legend_value(x, y, title = ''){
-    if( x && y ){
-      this.legend_data.content.sparks.data = {
-        'x' : x,
-        'y' : y
-      };
-    }
-
-    if( this.show_legend ){
-      this.legend._render_graph('sparks', title);
-    }
-
-  }
-  */
 
   check_webgl(){
     this.has_webgl = false;
@@ -255,6 +240,10 @@ class BrainCanvas{
 
       });
 
+    /* gui.add_item('Keyboard Event', false, {folder_name: 'Main Canvas'})
+      .onChange((v) => { this.canvas.listen_keyboard = v; }); */
+
+
     gui.add_item('Reset', () => {
       // Center camera first.
       this.canvas.handle_resize( undefined, undefined, false, true );
@@ -327,8 +316,15 @@ class BrainCanvas{
           }
         });
 
-      gui.add_item('Reset Position', () => {this.canvas.reset_side_canvas( this.settings.side_canvas_zoom )},
-                    {folder_name: 'Side Canvas'});
+      gui.add_item('Reset Position', () => {
+        this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
+                                       this.settings.side_canvas_width,
+                                       this.settings.side_canvas_shift );
+      }, {folder_name: 'Side Canvas'});
+      // reset first
+      this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
+                                     this.settings.side_canvas_width,
+                                     this.settings.side_canvas_shift );
 
       // side plane
       const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Side Canvas'})
@@ -366,36 +362,75 @@ class BrainCanvas{
       };
 
 
-      gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
+      const overlay_coronal = gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
         .onChange((v) => {
           this.canvas.set_side_visibility('coronal', v);
         });
 
-      gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
+      const overlay_axial = gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
         .onChange((v) => {
           this.canvas.set_side_visibility('axial', v);
         });
 
-      gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
+      const overlay_sagittal = gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
         .onChange((v) => {
           this.canvas.set_side_visibility('sagittal', v);
         });
 
-      gui.add_item('Display Anchor', true, { folder_name: 'Main Canvas' })
-        .onChange( this.canvas.set_cube_anchor_visibility );
+      // register overlay keyboard shortcuts
+      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
+        if( evt.event.shiftKey ){
+          const _v = overlay_coronal.getValue();
+          overlay_coronal.setValue( !_v );
+        }
+      }, 'overlay_coronal');
+
+      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
+        if( evt.event.shiftKey ){
+          const _v = overlay_axial.getValue();
+          overlay_axial.setValue( !_v );
+        }
+      }, 'overlay_axial');
+
+      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
+        if( evt.event.shiftKey ){
+          const _v = overlay_sagittal.getValue();
+          overlay_sagittal.setValue( !_v );
+        }
+      }, 'overlay_sagittal');
+
+      // show electrodes trimmed
+      gui.add_item('Dist. Threshold', 2, { folder_name: 'Side Canvas' })
+        .min(0).max(64).step(0.1)
+        .onChange((v) => {
+          this.canvas.trim_electrodes( v );
+          this.canvas.start_animation( 0 );
+        });
+      this.canvas.trim_electrodes( 2 );
+
+      gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
+        .onChange((v) => {
+          this.canvas.set_cube_anchor_visibility(v);
+        });
+
     }
 
 
 
     // ---------------------------- Presets
     to_array( control_presets ).forEach((control_preset) => {
+      if( control_preset === 'animation' ){
+        return(null);
+      }
       try {
         presets[control_preset]();
+        // console.log(control_preset);
 
-        let callback = presets[control_preset + '_callback'];
-        if(typeof(callback) === 'function'){
-          callback();
+        const _ctrl_callback = presets[control_preset + '_callback'];
+        if(typeof(_ctrl_callback) === 'function'){
+          _ctrl_callback();
         }
+        // console.log(control_preset);
       } catch (e) {
         if(this.DEBUG){
           console.warn(e);
@@ -403,12 +438,24 @@ class BrainCanvas{
       }
     });
 
+    if( to_array( this.settings.color_maps ).length > 0 ){
+      // Add animation
+      let _ani_names = Object.keys( this.settings.color_maps ),
+          _ani_init = this.settings.default_colormap;
+      if( !_ani_init || !_ani_names.includes( _ani_init )){
+        _ani_init = _ani_names[0];
+      }
+      presets.animation('Timeline', 0.001, _ani_names, _ani_init);
+      gui.open_folder('Timeline');
+    }
+
+
     // ---------------------------- Misc
     gui.add_folder('Misc');
 
     /* Misc settings */
     // Background color
-    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Misc'})
+    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Default'})
       .onChange((v) => {
         let inversedColor = invertColor(v);
         this.canvas.main_renderer.setClearColor(v);
@@ -423,27 +470,7 @@ class BrainCanvas{
       });
 
 
-    const _legend_callback = (v) => {
-      this.show_legend = v;
-      let d = v? 'block' : 'none';
-      this.el_legend.style.display = d;
-      this.canvas.render_legend = v;
-      if(this.canvas.lut){
-        this.canvas.lut.color_type = this.settings.color_type ? this.settings.color_type : 'continuous';
-        if( this.canvas.lut.color_type === 'discrete' ){
-
-          this.canvas.lut.color_names = to_array(this.settings.color_names);
-
-        }
-      }
-
-      this.canvas.start_animation(0);
-
-    };
-    gui.add_item('Show Legend', this.settings.show_legend, {folder_name: 'Misc'})
-      .onChange(_legend_callback);
-
-    _legend_callback(this.settings.show_legend);
+    this.canvas.render_legend = this.settings.show_legend;
 
     /*
     gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
@@ -453,12 +480,11 @@ class BrainCanvas{
     */
 
     // ---------------------------- Default
-
-    gui.add_item('Viewer Title', '', {folder_name: 'Default'})
-      .onChange((v) => {
+    /*
+    gui.add_item('Viewer Title', '', {folder_name: 'Default'}).onChange((v) => {
         this.canvas.title = v;
         this.canvas.start_animation(0);
-      });
+      });*/
 
     return(gui);
 
@@ -485,14 +511,20 @@ class BrainCanvas{
         }
       });
 
+      // If this is a brain viewer
+      if( to_array( this.settings.control_presets ).includes('subject2') ){
+        // Set subject, TODO: use N27 as default?
+        this.canvas.switch_subject();
+      }
+
       let gui = this._register_gui_control();
       this._set_info_callback();
 
-      // Generate animations
-      this.canvas.generate_animation_clips();
 
       this.canvas.start_animation(0);
 
+      /**
+       * This might cause problem In RAVE as 3D rendering takes
       // If has animation, then enable it
       if( this.has_animation ){
         let c = gui.get_controller('Play/Pause', 'Timeline');
@@ -500,6 +532,7 @@ class BrainCanvas{
           c.setValue(true);
         }
       }
+      */
 
     };
 
@@ -520,76 +553,61 @@ class BrainCanvas{
   }
 
   _set_info_callback(){
+    const pos = new THREE.Vector3();
+
     this.canvas.add_mouse_callback(
       (evt) => {
         return({
-          pass  : evt.action === 'click' || evt.action === 'dblclick',
+          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
           type  : 'clickable'
         });
       },
       ( res, evt ) => {
         const obj = res.target_object;
         if( obj && obj.userData ){
-          let g = obj.userData.construct_params,
-            pos = obj.getWorldPosition( new THREE.Vector3() );
+          const g = obj.userData.construct_params;
+          obj.getWorldPosition( pos );
 
           // Get information and show them on screen
-          let group_name = g.group ? g.group.group_name : '(No Group)';
-
-          let shiny_data = {
-            object: g,
-            group: group_name,
-            position: pos,
-            event: evt
+          const group_name = g.group ? g.group.group_name : null;
+          const shiny_data = {
+            object      : g,
+            name        : g.name,
+            geom_type   : g.type,
+            group       : group_name,
+            position    : pos.toArray(),
+            action      : evt.action,
+            meta        : evt,
+            edit_mode   : this.canvas.edit_mode,
+            is_electrode: false
           };
-          this.shiny.to_shiny(shiny_data, '_mouse_event');
+
+          if( g.is_electrode ){
+
+            const m = CONSTANTS.REGEXP_ELECTRODE.exec( g.name );
+            if( m.length === 4 ){
+
+              shiny_data.subject = m[1];
+              shiny_data.electrode_number = parseInt( m[2] );
+              shiny_data.is_electrode = true;
+            }
+
+
+          }
+
+          if( evt.action === 'click' ){
+            this.shiny.to_shiny(shiny_data, 'mouse_clicked');
+          }else{
+            this.shiny.to_shiny(shiny_data, 'mouse_dblclicked');
+          }
+
+
         }
       },
-      'show_info'
+      'to-shiny'
     );
 
-    /* this.canvas.set_animation_callback((obj, v, t) => {
-      let txt = '';
-      if( obj === undefined || this.hide_controls ){
-        this.set_legend_value(
-          [0],[0], ''
-        );
-      }else{
-        if( typeof(v) !== 'number' ){
-          v = 'NA';
-        }else{
-          v = v.toFixed(2);
-        }
 
-        txt = `Value: ${v}`;
-
-        if(this.has_animation && typeof(t) === 'number'){
-          txt = `Time: ${t.toFixed(2)} \nValue: ${v}`;
-        }
-
-        try {
-          this.set_legend_value(
-            to_array( obj.userData.ani_time ),
-            to_array( obj.userData.ani_value ),
-            txt
-          );
-        } catch (e) {}
-
-      }
-
-      // Purely for video export only
-      if( obj && obj.userData ){
-        let g = obj.userData.construct_params,
-            pos = obj.getWorldPosition( new THREE.Vector3() );
-        // Get information and show them on screen
-        let group_name = g.group ? g.group.group_name : '(No Group)';
-
-        txt = `${g.name} \n Group: ${group_name} \n Global Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}) \n ${g.custom_info || ''} \n ${txt}`;
-      }
-
-      return(txt);
-
-    }); */
 
   }
 
@@ -628,46 +646,22 @@ class BrainCanvas{
       return(re);
     };
 
-    /*
-    // sparks
-    this.legend_data.layout[0].xlim = this.settings.time_range;
-    this.legend_data.layout[0].ylim = this.settings.value_range;
-    this.legend_data.content.sparks.axis[0].at = make_sequence(this.settings.time_range, 4, true);
-    this.legend_data.content.sparks.axis[1].at = make_sequence(this.settings.value_range, 4, true);
-
-    // colorbar
-    this.legend_data.layout[1].xlim = [1,1];
-    this.legend_data.layout[1].ylim = this.settings.value_range;
-    this.legend_data.layout[1].zlim = this.settings.value_range;
-    this.legend_data.content.colorbar.axis[0].at = make_sequence(this.settings.value_range, 4, true);
-    this.legend_data.content.colorbar.data = {
-      'x' : [1], 'y' : make_sequence(this.settings.value_range, 100, false),
-      'z' : [make_sequence(this.settings.value_range, 100, false)]
-    };
-
-    this.legend_data.content.colorbar.geom_traces.heatmap.palette = this.settings.colors.map((v) => { return(v[1].replace(/^0x/, '#')) });
-
-    // render legend
-    if( this.show_legend ){
-      this.legend._render_graph('colorbar');
-      this.legend._render_graph('sparks');
-    }
-    */
-
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();
 
-    this.canvas.set_time_range(
-      this.settings.time_range[0],
-      this.settings.time_range[1]
-    );
+    to_array( this.settings.color_maps ).forEach((v) => {
+      this.canvas.add_colormap(
+        v.name,
+        v.value_type,
+        v.value_names,
+        v.value_range,
+        v.time_range,
+        v.color_keys,
+        v.color_vals,
+        v.color_levels
+      );
+    });
 
-    this.canvas.set_colormap(
-      this.settings.colors,
-      this.settings.value_range[0],
-      this.settings.value_range[1],
-      this.outputId
-    );
 
     // load data
     this.canvas.loader_triggered = false;
@@ -743,8 +737,7 @@ class BrainCanvas{
 }
 
 window.BrainCanvas = BrainCanvas;
-window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 window.THREE = THREE;
-window.d3 = d3;
 window.download = download;
+window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 export { BrainCanvas };

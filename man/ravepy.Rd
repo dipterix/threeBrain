@@ -27,10 +27,13 @@ ravepy_info(quiet = FALSE, return_libs = FALSE)
 
 \item{quiet}{logical, suppress printing information.}
 
-\item{python_path}{character, python path, auo-detected if \code{NULL}. Please specify \code{Python3} path}
+\item{python_path}{character, python path, auto-detected if \code{NULL}. Please specify \code{Python3} path}
 
 \item{return_libs}{logical, return python modules?}
 }
 \description{
 Manage Python Environment from RAVE
+}
+\author{
+Zhengjia Wang
 }

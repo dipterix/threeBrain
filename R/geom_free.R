@@ -22,6 +22,10 @@ FreeGeom <- R6::R6Class(
 
     clickable = FALSE,
 
+    # for brain surfaces only
+    hemisphere = NULL,
+    surface_type = NULL,
+
     set_value = function(...){
       # ignored
     },
@@ -84,7 +88,10 @@ FreeGeom <- R6::R6Class(
 
     },
     to_list = function(){
-      super$to_list()
+      re = super$to_list()
+      re$hemisphere = self$hemisphere
+      re$surface_type = self$surface_type
+      return( re )
     }
   )
 )

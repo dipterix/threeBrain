@@ -27,3 +27,6 @@ must be relative to \code{directory}.}
 \description{
 Save threeBrain widgets to local file system
 }
+\author{
+Zhengjia Wang
+}

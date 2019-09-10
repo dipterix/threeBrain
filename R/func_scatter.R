@@ -1,7 +1,8 @@
 # Normal usage of 3D plots
 
 
-#' 3D Scatter Plot
+#' @title 3D Scatter Plot
+#' @author Zhengjia Wang
 #' @param x,y,z numeric vectors with the same length \code{n}.
 #' @param size size for each point.
 #' @param col color vector/matrix, can be either numeric or factor.
@@ -13,7 +14,6 @@
 #' @param scale 'auto', \code{NULL}, or numeric, rescale the final coordinates.
 #'              Default 1, no re-scale.
 #' @param axis logical, draw axis.
-#' @param show_legend logical, show legend.
 #' @param control_panel logical, show sidebar (control panel).
 #' @param control_presets if control_panel is true, which widgets to show.
 #' @param camera_pos initial camera position, auto assign if missing.
@@ -30,18 +30,18 @@
 #'               start_zoom = 12, axis = FALSE)
 #'
 #'
-#' #' Discrete example:
+#' # Discrete example:
 #'
-#' three_scatter(x = rnorm(26, c(20, 50, -20)), y = rnorm(26, c(30, -60, 30)),
-#'               z = rnorm(26, c(10, 40, -40)), size = 1,
-#'               col = sample(letters[1:3], 20, TRUE),
+#' x = rnorm(26, c(10, 10, -20))
+#' y = rnorm(26, c(10, -10, 10))
+#' z = rnorm(26, c(10, 40, -10))
+#' three_scatter(x, y, z, size = 1, col = sample(letters[1:3], 20, TRUE),
 #'               pal = c('orange', 'blue3', 'darkgreen'))
 #'
 #' @export
 three_scatter <- function(
   x, y, z, size = 1, col = 1, label = NULL, group = 1, timestamp = NULL, pal = NULL,
-  scale = 1, axis = TRUE, show_legend = TRUE, control_panel = TRUE,
-  control_presets = c("animation"), camera_pos, ...
+  scale = 1, axis = TRUE, control_panel = TRUE, control_presets = NULL, camera_pos, ...
 ){
   maxl = max(length(x),length(y),length(z))
   rec = function(d, max_len = maxl){
@@ -94,25 +94,11 @@ three_scatter <- function(
 
 
   if(!is.numeric(col)){
-    col_type = 'discrete'
     col = as.factor(col)
-    col_names = levels(col)
-    col = as.numeric(col)
-    pal = rec(pal, length(col_names))
-  }else{
-    col_type = 'continuous'
-    col_names = NULL
-    if(length(pal) == 0){
-      pal = 1:2
-    }
-    stopifnot2(length(pal) >= 2, msg = 'Continuous mode, pal must have length >= 2.')
   }
 
   col = as.matrix(rec(col))
   timestamp = rec(timestamp, ncol(col))
-
-
-  rg = range(x,y,z, na.rm = TRUE)
 
   geoms = lapply(seq_len(maxl), function(ii){
     if(length(groups) > 1){
@@ -122,7 +108,7 @@ three_scatter <- function(
     }
     g = SphereGeom$new(name = nm, position = c(x[ii], y[ii], z[ii]) * scale,
                        radius = size[ii], group = groups[[group[[ii]]]])
-    g$set_value(value = col[ii,], time_stamp = timestamp)
+    g$set_value(value = col[ii,], time_stamp = timestamp, name = 'Value')
 
     if(scale != 1){
       g$custom_info = sprintf('Rescale: %.2f x', 1/scale)
@@ -132,18 +118,6 @@ three_scatter <- function(
     g
   })
 
-  time_range = range(timestamp)
-  if(time_range[2] == time_range[1]){
-    time_range[2] = time_range[1] + 1
-  }else{
-    steps = (time_range[2] - time_range[1]) / length(timestamp)
-    time_range[2] = time_range[2] + steps
-  }
-
-  value_range = range(col)
-  if(col_type == 'continuous' && value_range[1] == value_range[2]){
-    value_range[1] = -value_range[1]
-  }
 
   camera_center = c(mean(range(x)),mean(range(y)),mean(range(z))) * scale
 
@@ -161,11 +135,10 @@ three_scatter <- function(
     camera_pos = camera_center + c(0,0,2*span)
   }
 
-
-  threejs_brain(.list = geoms, time_range = time_range, value_range = value_range,
+  threejs_brain(.list = geoms,
                 control_panel = control_panel, control_presets = control_presets,
-                color_ramp = pal, color_type = col_type, color_names = col_names,
-                camera_center = camera_center, show_legend = show_legend,
+                palettes = list('Value' = pal),
+                camera_center = camera_center,
                 coords = coords, camera_pos = camera_pos* scale,
                 ...)
 

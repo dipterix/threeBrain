@@ -6,3 +6,6 @@
 \description{
 R6 Class - Abstract Class of Geometries
 }
+\author{
+Zhengjia Wang
+}

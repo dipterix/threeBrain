@@ -6,8 +6,7 @@
 \usage{
 three_scatter(x, y, z, size = 1, col = 1, label = NULL, group = 1,
   timestamp = NULL, pal = NULL, scale = 1, axis = TRUE,
-  show_legend = TRUE, control_panel = TRUE,
-  control_presets = c("animation"), camera_pos, ...)
+  control_panel = TRUE, control_presets = NULL, camera_pos, ...)
 }
 \arguments{
 \item{x, y, z}{numeric vectors with the same length \code{n}.}
@@ -29,8 +28,6 @@ Its length (vector) or nrow (matrix) must be either \code{n} or 1.}
 Default 1, no re-scale.}
 
 \item{axis}{logical, draw axis.}
-
-\item{show_legend}{logical, show legend.}
 
 \item{control_panel}{logical, show sidebar (control panel).}
 
@@ -55,11 +52,15 @@ three_scatter(x = iris$Sepal.Length, y = iris$Sepal.Width,
               start_zoom = 12, axis = FALSE)
 
 
-#' Discrete example:
+# Discrete example:
 
-three_scatter(x = rnorm(26, c(20, 50, -20)), y = rnorm(26, c(30, -60, 30)),
-              z = rnorm(26, c(10, 40, -40)), size = 1,
-              col = sample(letters[1:3], 20, TRUE),
+x = rnorm(26, c(10, 10, -20))
+y = rnorm(26, c(10, -10, 10))
+z = rnorm(26, c(10, 40, -10))
+three_scatter(x, y, z, size = 1, col = sample(letters[1:3], 20, TRUE),
               pal = c('orange', 'blue3', 'darkgreen'))
 
+}
+\author{
+Zhengjia Wang
 }

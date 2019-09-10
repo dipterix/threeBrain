@@ -2,8 +2,7 @@
 +(function(){
 })();
 // This is a global cache that is shared across the widgets.
-const global_cache = new THREEBRAIN_STORAGE();
-window.global_cache = window.global_cache || global_cache;
+const global_cache = window.global_cache || new THREEBRAIN_STORAGE();
 
 HTMLWidgets.widget({
 

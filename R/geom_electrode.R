@@ -5,21 +5,19 @@ ElectrodeGeom <- R6::R6Class(
   public = list(
 
     # Is subcortical electrode?
-    sub_cortical = FALSE,
+    is_surface_electrode = FALSE,
 
     # Do you want to map to the template electrode? for initialization-only
     use_template = FALSE,
 
     # ------------ for cortical electrodes only ------------
 
-    # Which surfaces (name vector) to search for node list(left = , right = )
-    search_geoms = NULL,
-
     # if attached not specified, which hemisphere to look for
     # and which vertex number to check
     surface_type = 'pial',
     hemisphere = NULL,
     vertex_number = -1,
+    MNI305_position = c(0,0,0),
 
     # ------------ for sub cortical electrodes only ------------
 
@@ -31,16 +29,35 @@ ElectrodeGeom <- R6::R6Class(
         super$to_list(),
         list(
           is_electrode = TRUE,
-          sub_cortical = self$sub_cortical,
+          is_surface_electrode = self$is_surface_electrode,
           use_template = self$use_template,
-          search_geoms = self$search_geoms,
           surface_type = self$surface_type,
           hemisphere = self$hemisphere,
-          vertex_number = self$vertex_number
+          vertex_number = self$vertex_number,
+          MNI305_position = self$MNI305_position,
+          sub_cortical = !self$is_surface_electrode,
+          search_geoms = self$hemisphere
         )
       )
+      return( re )
     }
 
+  ),
+  active = list(
+    sub_cortical = function(v){
+      cat2('sub_cortical is deprecated, use is_surface_electrode instead.', level = 'WARNING')
+      if(!missing(v)){
+        self$is_surface_electrode = !isTRUE(v)
+      }
+      return(!self$is_surface_electrode)
+    },
+    search_geoms = function(v){
+      cat2('search_geoms is deprecated, use hemisphere instead.', level = 'WARNING')
+      if(!missing(v)){
+        self$hemisphere = v
+      }
+      return(self$hemisphere)
+    }
   )
 )
 

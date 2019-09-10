@@ -1,4 +1,5 @@
 #' @name ravepy
+#' @author Zhengjia Wang
 #' @title Manage Python Environment from RAVE
 NULL
 
@@ -46,7 +47,7 @@ ravepy_check <- function(quiet = FALSE){
          Install Miniconda Python 3.x at
          \thttps://docs.conda.io/en/latest/miniconda.html\n
          first, and run
-         \trave::ravepy_conda_install()')
+         \tthreeBrain:::ravepy_conda_install()')
   }
 
 
@@ -66,7 +67,7 @@ ravepy_check <- function(quiet = FALSE){
   }, silent = TRUE)
 
   if(!using_ravepy){
-    stop('Please run \n\n\trave::ravepy_register() \n\nand restart R.')
+    stop('Please run \n\n\tthreeBrain:::ravepy_register() \n\nand restart R.')
   }
 
   h5py = reticulate::import('h5py')
@@ -82,11 +83,12 @@ ravepy_check <- function(quiet = FALSE){
 #' @usage ravepy_register()
 ravepy_register <- function(){
   # Create startup file
-  if(!length(startup::find_rprofile())){
-    startup::install()
-  }
+  startup::install(overwrite = TRUE, backup = TRUE)
+  # Find .Rprofile.d
+  profile_d = startup::find_rprofile_d()
+  dir.create(profile_d, recursive = TRUE, showWarnings = FALSE)
+  p = normalizePath(file.path(profile_d, 'rave_python.R'), mustWork = FALSE)
 
-  p = normalizePath(startup::find_rprofile(all = FALSE), mustWork = FALSE)
   if(file.exists(p)){
     s = readLines(p)
     if(length(s)){
@@ -109,7 +111,52 @@ ravepy_register <- function(){
         pkg_installed <- function(pkg) {
           system.file('', package = pkg) != ''
         }
-        if(pkg_installed('rave') && pkg_installed('reticulate')){
+        get_os <- function(){
+          sysinf = Sys.info()
+          if (!is.null(sysinf)){
+            os = sysinf['sysname']
+            if (os == 'Darwin')
+              os = "osx"
+          } else {
+            os = .Platform$OS.type
+            if (grepl("^darwin", R.version$os))
+              os = "osx"
+            if (grepl("linux-gnu", R.version$os))
+              os = "linux"
+          }
+          tolower(os)
+        }
+
+        ravepy_find_conda_path <- function(add_to_path = TRUE){
+          conda_path = NULL
+          try({
+            conda_path = reticulate::conda_binary()
+            conda_path = dirname(conda_path)
+          }, silent = TRUE)
+          if( !length(conda_path) ){
+            conda_path = '~/miniconda3/condabin/'
+            if( !dir.exists(conda_path) ){
+              conda_path = '~/../miniconda3/condabin/'
+            }
+          }
+          if( !length(conda_path) ){
+            return(invisible())
+          }
+          conda_path = normalizePath(conda_path)
+          if( add_to_path ){
+            path = Sys.getenv('PATH')
+            os = get_os()
+            if( os %in% c('osx', 'linux') ){
+              path = paste0(path, ':', conda_path)
+            }else{
+              path = paste0(path, ';', conda_path, ';')
+            }
+            Sys.setenv('PATH' = path)
+          }
+          conda_path
+        }
+        if((pkg_installed('threeBrain') || pkg_installed('rave')) && pkg_installed('reticulate')){
+          try({ ravepy_find_conda_path() }, silent = TRUE)
           tryCatch({
             if('RAVEPy' %in% reticulate::conda_list()$name){
               reticulate::use_condaenv('RAVEPy')
@@ -134,7 +181,7 @@ ravepy_register <- function(){
 
 #' @rdname ravepy
 #' @usage ravepy_virtualenv_install(python_path = NULL)
-#' @param python_path character, python path, auo-detected if \code{NULL}. Please specify \code{Python3} path
+#' @param python_path character, python path, auto-detected if \code{NULL}. Please specify \code{Python3} path
 ravepy_virtualenv_install <- function(python_path = NULL){
   # Try to config virtual environment with reticulate
   cat2('Creating RAVE-Python3 environment', level = 'INFO')
@@ -194,7 +241,7 @@ ravepy_virtualenv_install <- function(python_path = NULL){
 
   # Install pacakges
   cat2('[RAVEPy] Installing packages', level = 'INFO')
-  pypkgs = c('numpy', 'pandas', 'h5py', 'jupyter', 'mkl_fft', 'pyfftw', 'nibabel', 'matplotlib')
+  pypkgs = c('numpy', 'pandas', 'h5py', 'jupyter', 'pyfftw', 'nibabel', 'matplotlib')
   reticulate::virtualenv_install('RAVEPy', pypkgs, ignore_installed = FALSE)
 
   # reticulate::virtualenv_install('RAVEPy', 'openmpi', ignore_installed = FALSE)
@@ -205,12 +252,94 @@ ravepy_virtualenv_install <- function(python_path = NULL){
   ravepy_register()
 }
 
+
+
+ravepy_download_miniconda_windows <- function(){
+  url = 'https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe'
+  dest_file = file.path(tempdir(check = TRUE), 'Miniconda3-latest-Windows-x86_64.exe')
+  utils::download.file(url, dest_file, cacheOK = TRUE, mode = 'wb')
+  on.exit({ unlink(dest_file) })
+  system(sprintf('"%s"', dest_file), minimized = FALSE, invisible = FALSE, wait = TRUE)
+}
+ravepy_download_miniconda_osx <- function(){
+  url = 'https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh'
+  dest_file = file.path(tempdir(check = TRUE), 'Miniconda3-latest-MacOSX-x86_64.sh')
+  utils::download.file(url, dest_file, cacheOK = TRUE)
+  on.exit({ unlink(dest_file) })
+  system(sprintf('sh "%s" -b -u', normalizePath(dest_file)), wait = TRUE)
+}
+ravepy_download_miniconda_linux <- function(){
+  url = 'https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh'
+  dest_file = file.path(tempdir(check = TRUE), 'Miniconda3-latest-Linux-x86_64.sh')
+  utils::download.file(url, dest_file, cacheOK = TRUE)
+  on.exit({ unlink(dest_file) })
+  system(sprintf('sh "%s" -b -u', normalizePath(dest_file)), wait = TRUE)
+}
+
+get_os <- function(){
+  sysinf = Sys.info()
+  if (!is.null(sysinf)){
+    os = sysinf['sysname']
+    if (os == 'Darwin')
+      os = "osx"
+  } else {
+    os = .Platform$OS.type
+    if (grepl("^darwin", R.version$os))
+      os = "osx"
+    if (grepl("linux-gnu", R.version$os))
+      os = "linux"
+  }
+  tolower(os)
+}
+
+ravepy_find_conda_path <- function(add_to_path = TRUE){
+  conda_path = NULL
+  try({
+    conda_path = reticulate::conda_binary()
+    conda_path = dirname(conda_path)
+  }, silent = TRUE)
+  if( !length(conda_path) ){
+    conda_path = '~/miniconda3/condabin/'
+    if( !dir.exists(conda_path) ){
+      conda_path = '~/../miniconda3/condabin/'
+    }
+  }
+  if( !length(conda_path) || !dir.exists(conda_path) ){
+    return(invisible())
+  }
+  conda_path = normalizePath(conda_path)
+  if( add_to_path ){
+    path = Sys.getenv('PATH')
+    os = get_os()
+    if( os %in% c('osx', 'linux') ){
+      path = paste0(path, ':', conda_path)
+    }else{
+      path = paste0(path, ';', conda_path, ';')
+    }
+    Sys.setenv('PATH' = path)
+  }
+  conda_path
+}
+
+ravepy_download_miniconda <- function(){
+  os = get_os()
+  if( os == 'osx' ){
+    ravepy_download_miniconda_osx()
+  }else if( os == 'linux' ){
+    ravepy_download_miniconda_linux()
+  }else{
+    ravepy_download_miniconda_windows()
+  }
+}
+
+
 #' @rdname ravepy
 #' @usage ravepy_conda_install(python_path = NULL)
 ravepy_conda_install <- function(){
 
   # If you have more than one conda, you probably know to type command
   #
+  ravepy_find_conda_path()
 
   cat2('Locating conda path', level = 'INFO')
   reticulate::conda_binary()
@@ -219,7 +348,10 @@ ravepy_conda_install <- function(){
   reticulate::conda_create('RAVEPy', 'python=3')
 
   cat2('Looking for latest OpenMPI library', level = 'INFO')
-  reticulate::conda_install('RAVEPy', packages = 'mpi4py', forge = TRUE)
+  try({
+    reticulate::conda_install('RAVEPy', packages = 'mpi4py', forge = TRUE)
+  })
+
 
   # reticulate::conda_install('RAVEPy', packages = 'h5py', forge = TRUE)
 
@@ -227,7 +359,7 @@ ravepy_conda_install <- function(){
   try({
     reticulate::conda_install('RAVEPy', 'accelerate')
   })
-  pypkgs = c('mkl_fft', 'pyfftw', 'numpy', 'pandas', 'h5py', 'jupyter', 'nibabel', 'matplotlib')
+  pypkgs = c('pyfftw', 'numpy', 'pandas', 'h5py', 'jupyter', 'nibabel', 'matplotlib')
   reticulate::conda_install('RAVEPy', pypkgs)
 
 

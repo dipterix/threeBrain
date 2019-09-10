@@ -2,6 +2,10 @@
   display: none!important;
 }
 
+#webglmessage {
+  position: absolute;
+}
+
 .threejs-control .dg .c,
 .threejs-control .dg button,
 .threejs-control .dg input,
@@ -29,6 +33,10 @@
 }
 .threejs-control .dg {
   font: 11px monospace, 'Lucida Grande', sans-serif;
+}
+
+.threejs-control .dg .cr.color .property-name {
+  overflow-y: hidden;
 }
 
 .threejs-control .dg .property-name {

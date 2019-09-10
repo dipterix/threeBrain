@@ -2,72 +2,68 @@
 % Please edit documentation in R/threejs_brain.R
 \name{threejs_brain}
 \alias{threejs_brain}
-\title{Create a Threejs Brain}
+\title{Create a Threejs Brain and View it in Browsers}
 \usage{
-threejs_brain(..., widget_id = "threebrain_data", time_range = NULL,
-  value_range = NULL, symmetric = 0, side_camera = FALSE,
-  side_camera_zoom = 1, control_panel = TRUE, control_presets = NULL,
+threejs_brain(..., .list = list(), width = NULL, height = NULL,
+  side_canvas = FALSE, side_zoom = 1, side_width = 250,
+  side_shift = c(0, 0), control_panel = TRUE, control_presets = NULL,
   camera_center = c(0, 0, 0), camera_pos = c(0, 0, 500),
-  start_zoom = 1, color_ramp = c("navyblue", "#e2e2e2", "red"),
-  color_type = "continuous", n_color = 64,
-  color_names = seq_along(color_ramp), show_legend = TRUE,
-  legend_title = "Value", tmp_dirname = NULL, width = NULL,
-  height = NULL, optionals = list(), debug = FALSE, token = NULL,
-  coords = NULL, browser_external = TRUE, .list = list())
+  start_zoom = 1, coords = NULL, symmetric = 0,
+  default_colormap = "Value", palettes = NULL,
+  widget_id = "threebrain_data", tmp_dirname = NULL, debug = FALSE,
+  token = NULL, optionals = list(), browser_external = TRUE,
+  global_data = list())
 }
 \arguments{
 \item{..., .list}{geometries inherit from AbstractGeom}
 
-\item{widget_id}{unique identifier for the widget. Use it when you have
-multiple widgets in one website (shiny for example)}
+\item{width, height}{positive integers. Width and height of the widget.
+By default width=`100\%`, and height varies.}
 
-\item{time_range}{used to calculate animation time (not yet implemented)}
+\item{side_canvas}{logical, enable side cameras to view objects from fixed perspective}
 
-\item{value_range}{used to generate colors}
+\item{side_zoom}{numerical, if side camera is enabled, zoom-in level, from 1 to 5}
 
-\item{symmetric}{default 0, color center will be mapped to this value}
+\item{side_width}{positive integer, side panel size in pixels}
 
-\item{side_camera}{enable side cameras to view objects from fixed perspective}
+\item{side_shift}{integer of length two, side panel shift in pixels (`CSS style`: top, left)}
 
-\item{side_camera_zoom}{if side camera is enabled, zoom-in level, from 1 to 5}
+\item{control_panel}{logical, enable control panels for the widget}
 
-\item{control_panel}{enable control panels for the widget}
+\item{control_presets}{characters, presets to be shown in control panels}
 
-\item{control_presets}{presets to be shown in control panels}
+\item{camera_center}{numerical, length of three, XYZ position where camera should focus at}
 
-\item{camera_center}{position where camera should focus at}
+\item{camera_pos}{XYZ position of camera itself, default (0, 0, 500)}
 
-\item{camera_pos}{XYZ position of camera}
-
-\item{start_zoom}{numeric, positive number indicating start zoom level}
-
-\item{color_ramp}{used to generate color ramps}
-
-\item{color_type}{'continuous' or 'discrete'}
-
-\item{n_color}{how many colors in the color ramp (used by continuous legend)}
-
-\item{color_names}{color names (used by discrete legend)}
-
-\item{show_legend}{show legend in control panel?}
-
-\item{legend_title}{legend title}
-
-\item{tmp_dirname}{internally used}
-
-\item{width, height}{width and height of the widget. By default width="100%",
-and height varies.}
-
-\item{optionals}{internally used}
-
-\item{debug}{internally used for debugging}
-
-\item{token}{used to identify widgets in JS localStorage}
+\item{start_zoom}{numerical, positive number indicating camera zoom level}
 
 \item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
 
-\item{browser_external}{use system default browser (default) or builtin one.}
+\item{symmetric}{numerical, default 0, color center will be mapped to this value}
+
+\item{default_colormap}{character, which color map name to display at startup}
+
+\item{palettes}{named list, names corresponds to color-map names if you want to change color palettes}
+
+\item{widget_id}{character, internally used as unique identifiers for widgets.
+Only use it when you have multiple widgets in one website}
+
+\item{tmp_dirname}{character path, internally used, where to store temporary files}
+
+\item{debug}{logical, internally used for debugging}
+
+\item{token}{unique character, internally used to identify widgets in JS localStorage}
+
+\item{optionals}{internally used, to be deprecated}
+
+\item{browser_external}{logical, use system default browser (default) or builtin one.}
+
+\item{global_data}{internally use, mainly to store orientation matrices.}
 }
 \description{
-Create a Threejs Brain
+Create a Threejs Brain and View it in Browsers
+}
+\author{
+Zhengjia Wang
 }
