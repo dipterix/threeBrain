@@ -31,6 +31,9 @@ class THREEBRAIN_PRESETS{
 
     this.electrode_regexp = RegExp('^electrodes-(.+)$');
 
+    // Min max of animation time
+    this.animation_time = [0,1];
+
   }
 
   /**
@@ -524,7 +527,7 @@ class THREEBRAIN_PRESETS{
   set_animation_time(v){
     if(this._ani_time){
       if(typeof(v) !== 'number'){
-        v = this._ani_time.min;
+        v = this.animation_time[0];
       }
       this._ani_time.setValue( v );
     }
@@ -535,8 +538,8 @@ class THREEBRAIN_PRESETS{
         play : this._ani_status.getValue(),
         time : this._ani_time.getValue(),
         speed : this._ani_speed.getValue(),
-        min : this._ani_time.min,
-        max : this._ani_time.max
+        min : this.animation_time[0],
+        max : this.animation_time[1]
       });
     }else{
       return({
@@ -544,7 +547,7 @@ class THREEBRAIN_PRESETS{
         time : 0,
         speed : 0,
         min : 0,
-        max : 1
+        max : 0
       });
     }
   }
@@ -560,8 +563,7 @@ class THREEBRAIN_PRESETS{
           folder_name = CONSTANTS.FOLDERS[ 'animation' ];
 
     let names = Object.keys( this.settings.color_maps ),
-        initial = this.settings.default_colormap,
-        min = 0, max = 1;
+        initial = this.settings.default_colormap;
 
     // Make sure the initial value exists, and [No Color] is included in the option
     names = [...new Set(['[No Color]', ...names])];
@@ -581,8 +583,10 @@ class THREEBRAIN_PRESETS{
 
 
     // Link functions to canvas (this is legacy code and I don't want to change it unless we rewrite the animation code)
-    this.canvas.animation_controls.set_time = this.set_animation_time;
-    this.canvas.animation_controls.get_params = this.get_animation_params;
+    this.canvas.animation_controls.set_time = ( v ) => {
+      this.set_animation_time( v );
+    };
+    this.canvas.animation_controls.get_params = () => { return( this.get_animation_params() ); };
 
     // Defines when clip name is changed (variable changed)
     const _ani_name_onchange = (v) => {
@@ -599,9 +603,11 @@ class THREEBRAIN_PRESETS{
           }
         }else{
           this._ani_time.min( cmap.time_range[0] ).max( cmap.time_range[1] );
-          min = cmap.time_range[0];
-          max = cmap.time_range[1];
-          this.set_animation_time( min );
+          // min = cmap.time_range[0];
+          // max = cmap.time_range[1];
+          this.animation_time[0] = cmap.time_range[0];
+          this.animation_time[1] = cmap.time_range[1];
+          this.set_animation_time( this.animation_time[0] );
           legend_visible.setValue(true);
 
           // If inactive electrodes are hidden, re-calculate visibility
@@ -625,8 +631,8 @@ class THREEBRAIN_PRESETS{
       folder_name : folder_name
     });
 
-    this.gui.add_item('Time', min, { folder_name : folder_name })
-        .min(min).max(max).step(step).onChange((v) => {this._update_canvas()});
+    this.gui.add_item('Time', this.animation_time[0], { folder_name : folder_name })
+        .min(this.animation_time[0]).max(this.animation_time[1]).step(step).onChange((v) => {this._update_canvas()});
     this._ani_time = this.gui.get_controller('Time', folder_name);
 
     this._ani_time.domElement.addEventListener('mousewheel', (evt) => {
