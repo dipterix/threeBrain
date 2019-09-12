@@ -286,7 +286,11 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
 }
 
-
+#' @title Function to check whether `FreeSurfer` folder has everything we need
+#' @param fs_subject_folder character, path to `fs` project directory or `RAVE` subject directory
+#' @param autoinstall_template logical, whether `N27` brain should be installed is missing
+#' @return logical whether the directory is valid
+#' @export
 check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE){
   if( dir.exists(fs_subject_folder) ){
 
