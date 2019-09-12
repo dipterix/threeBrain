@@ -61680,6 +61680,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     requestAnimationFrame( this.animate.bind(this) );
 
+    // If this.el is hidden, do not render
+    if( this.el.clientHeight <= 0 ){
+      return(null);
+    }
 
     this.update();
 
