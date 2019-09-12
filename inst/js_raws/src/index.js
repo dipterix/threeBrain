@@ -10,10 +10,11 @@ import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
 import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
 import { THREEBRAIN_STORAGE } from './js/threebrain_cache.js';
 import { CONSTANTS } from './js/constants.js';
-import { invertColor, padZero, to_array } from './js/utils.js';
+// import { invertColor, padZero, to_array } from './js/utils.js';
+import { padZero, to_array } from './js/utils.js';
 // import { D3Canvas } from './js/Math/sparkles.js';
 // import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
-import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
+// import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 
 class BrainCanvas{
   constructor(el, width, height, shiny_mode = false, viewer_mode = false, cache = false, DEBUG = true){
@@ -69,60 +70,6 @@ class BrainCanvas{
     //this.el_text2.style.width = '200px';
     //this.el_text2.style.padding = '10px';
     this.el_side.appendChild( this.el_text );
-
-
-    // 2. Add legend (Not needed anymore, legend is all integrated into canvas 2d context)
-    /*
-
-    this.legend_data = {
-      "id":"canvas",
-      "width":"300px","height":"200px",
-      "layout":[
-        {
-          "name":"sparks","x":"50","y":0,"w":"width - 70","h":"height","xlim":[-1,2],"ylim":[1,200],"margin":[20,20,50,10]
-        },{
-          "name":"colorbar","x":0,"y":0,"w":50,"h":"height","xlim":[-1,2],"ylim":[1,200],"zlim":[1,60200],"margin":[20,25,50,10]
-        }
-      ],
-      "plot_data":{"x":[1],"y":[1], "z": [[1]]},
-      "content":{
-        // right sparks
-        "sparks":{
-          "main":"","cex_main":0.5,"anchor_main":"middle","main_top":30,"data":null,
-          "geom_traces":{"lines":{"type":"geom_line","data":null,"x":"x","y":"y"}},
-          "axis":[
-            {"side":1,"text":"","at":null,"labels":null,"las":1,"cex_axis":0.5,"cex_lab":0.5,"line":0},
-            {"side":2,"text":"","at":null,"labels":null,"las":1,"cex_axis":0.5,"cex_lab":0.5,"line":0}
-          ]
-        },
-        "colorbar":{
-          "main":"","cex_main":0.5,"anchor_main":"middle","main_top":30,"data":null,
-          "geom_traces":{
-            "heatmap":{
-              "type":"geom_heatmap",
-              "data":null,
-              "x":"x","y":"y","z":"z","x_scale":"linear","y_scale":"linear",
-              "palette":["steelblue","red"],
-              "rev_x":false,"rev_y":true
-            }
-          },
-          "axis":[{
-            "side":2,"text":"","at":[0,200],"las":1,"cex_axis":0.5,"cex_lab":0.5,"line":0
-          }]
-        }
-      }
-    };
-
-
-    const legend_el = document.createElement('svg');
-    this.el_legend.appendChild( legend_el );
-    this.el_side.appendChild( this.el_legend );
-    // this.legend = new D3Canvas(this.legend_data, legend_el);
-
-    // window.legend = this.legend;
-    // window.legend_data = this.legend_data;
-  */
-
 
     // 3. initialize threejs scene
     this.canvas = new THREEBRAIN_CANVAS(
@@ -183,117 +130,22 @@ class BrainCanvas{
 
     // Add listeners
     const control_presets = this.settings.control_presets;
-    const presets = new THREEBRAIN_PRESETS( this.canvas, gui, this.optionals.map_to_template || false);
+    const presets = new THREEBRAIN_PRESETS( this.canvas, gui, this.settings);
     if(this.DEBUG){
       window.presets = presets;
+    }else{
+      window.__presets = presets;
     }
+
+    // ---------------------------- Defaults
+    presets.c_background();
 
     // ---------------------------- Main, side canvas settings is on top
     gui.add_folder('Main Canvas').open();
-
-    // Record videos on the main scene
-    gui.add_item('Record Video', false, {folder_name: 'Main Canvas'})
-      .onChange((v) =>{
-
-        if(v){
-          // create capture object
-          if( !this.canvas.capturer ){
-
-            this.canvas.capturer = new CCanvasRecorder({
-
-              canvas: this.canvas.domElement,
-
-              // FPS = 15
-              framerate: 24,
-              // Capture as webm
-              format: 'webm',
-              // workersPath: 'lib/',
-              // verbose results?
-              verbose: true,
-              autoSaveTime : 0,
-
-              main_width: this.canvas.main_renderer.domElement.width,
-              main_height: this.canvas.main_renderer.domElement.height,
-              sidebar_width: 300,
-              pixel_ratio : this.canvas.main_renderer.domElement.width / this.canvas.main_renderer.domElement.clientWidth
-
-
-            });
-
-          }
-
-          this.canvas.capturer.baseFilename = this.canvas.capturer.filename = new Date().toGMTString();
-          this.canvas.capturer.start();
-          this.canvas.capturer_recording = true;
-          // Force render a frame
-          // Canvas might not render
-          // this.canvas.start_animation(0);
-        }else{
-          this.canvas.capturer_recording = false;
-          if(this.canvas.capturer){
-            this.canvas.capturer.stop();
-            this.canvas.capturer.save();
-            // this.canvas.capturer.incoming = false;
-          }
-        }
-
-
-      });
-
-    /* gui.add_item('Keyboard Event', false, {folder_name: 'Main Canvas'})
-      .onChange((v) => { this.canvas.listen_keyboard = v; }); */
-
-
-    gui.add_item('Reset', () => {
-      // Center camera first.
-      this.canvas.handle_resize( undefined, undefined, false, true );
-      this.canvas.reset_controls();
-      this.canvas.controls.enabled = true;
-    }, {folder_name: 'Main Canvas'});
-
-    const _camera_pos = gui.add_item('Camera Position', '[free rotate]', {
-      args : ['[free rotate]', '[lock]', 'right', 'left', 'anterior', 'posterior', 'superior', 'inferior'],
-      folder_name : 'Main Canvas'
-    }).onChange((v) => {
-
-      if( v === '[lock]' ){
-        this.canvas.controls.enabled = false;
-        return( null );
-      }
-      this.canvas.controls.enabled = true;
-
-      switch (v) {
-        case 'right':
-          this.canvas.main_camera.position.set( 500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'left':
-          this.canvas.main_camera.position.set( -500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'anterior':
-          this.canvas.main_camera.position.set( 0, 500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'posterior':
-          this.canvas.main_camera.position.set( 0, -500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'superior':
-          this.canvas.main_camera.position.set( 0, 0, 500 );
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-          break;
-        case 'inferior':
-          this.canvas.main_camera.position.set( 0, 0, -500 );
-          this.canvas.main_camera.up.set( 0, -1, 0 );
-          break;
-      }
-
-      _camera_pos.__select.value = '[free rotate]';
-
-      this.canvas.start_animation( 0 );
-    });
-
+    presets.c_recorder();
+    presets.c_reset_camera();
+    presets.c_main_camera_position();
+    presets.c_toggle_anchor();
     /*
     gui.add_item('Free Controls', () => {
       _camera_pos.setValue( '[free rotate]' );
@@ -301,121 +153,14 @@ class BrainCanvas{
     }, {folder_name: 'Main Canvas'});
     */
 
-
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
-
       gui.add_folder('Side Canvas').open();
-
-      gui.add_item('Show Panels', true, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          if( v ){
-            this.canvas.enable_side_cameras();
-          }else{
-            this.canvas.disable_side_cameras();
-          }
-        });
-
-      gui.add_item('Reset Position', () => {
-        this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
-                                       this.settings.side_canvas_width,
-                                       this.settings.side_canvas_shift );
-      }, {folder_name: 'Side Canvas'});
-      // reset first
-      this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
-                                     this.settings.side_canvas_width,
-                                     this.settings.side_canvas_shift );
-
-      // side plane
-      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Side Canvas'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_coronal_depth( v );
-        });
-      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Side Canvas'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_axial_depth( v );
-        });
-      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Side Canvas'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_sagittal_depth( v );
-        });
-      [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c) => {
-        _c.domElement.addEventListener('mousewheel', (evt) => {
-          if( evt.altKey ){
-            evt.preventDefault();
-            const current_val = _c.getValue();
-            _c.setValue( current_val + evt.deltaY );
-          }
-        });
-      });
-
-      this.canvas.set_side_depth = (c, a, s) => {
-        if( typeof c === 'number' ){
-          _controller_coronal.setValue( c );
-        }
-        if( typeof a === 'number' ){
-          _controller_axial.setValue( a || 0 );
-        }
-        if( typeof s === 'number' ){
-          _controller_sagittal.setValue( s || 0 );
-        }
-      };
-
-
-      const overlay_coronal = gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          this.canvas.set_side_visibility('coronal', v);
-        });
-
-      const overlay_axial = gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          this.canvas.set_side_visibility('axial', v);
-        });
-
-      const overlay_sagittal = gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          this.canvas.set_side_visibility('sagittal', v);
-        });
-
-      // register overlay keyboard shortcuts
-      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
-        if( evt.event.shiftKey ){
-          const _v = overlay_coronal.getValue();
-          overlay_coronal.setValue( !_v );
-        }
-      }, 'overlay_coronal');
-
-      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
-        if( evt.event.shiftKey ){
-          const _v = overlay_axial.getValue();
-          overlay_axial.setValue( !_v );
-        }
-      }, 'overlay_axial');
-
-      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
-        if( evt.event.shiftKey ){
-          const _v = overlay_sagittal.getValue();
-          overlay_sagittal.setValue( !_v );
-        }
-      }, 'overlay_sagittal');
-
-      // show electrodes trimmed
-      gui.add_item('Dist. Threshold', 2, { folder_name: 'Side Canvas' })
-        .min(0).max(64).step(0.1)
-        .onChange((v) => {
-          this.canvas.trim_electrodes( v );
-          this.canvas.start_animation( 0 );
-        });
-      this.canvas.trim_electrodes( 2 );
-
-      gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
-        .onChange((v) => {
-          this.canvas.set_cube_anchor_visibility(v);
-        });
-
+      presets.c_toggle_side_panel();
+      presets.c_reset_side_panel();
+      presets.c_side_depth();
+      presets.c_side_electrode_dist();
     }
-
-
 
     // ---------------------------- Presets
     to_array( control_presets ).forEach((control_preset) => {
@@ -423,14 +168,7 @@ class BrainCanvas{
         return(null);
       }
       try {
-        presets[control_preset]();
-        // console.log(control_preset);
-
-        const _ctrl_callback = presets[control_preset + '_callback'];
-        if(typeof(_ctrl_callback) === 'function'){
-          _ctrl_callback();
-        }
-        // console.log(control_preset);
+        presets['c_' + control_preset]();
       } catch (e) {
         if(this.DEBUG){
           console.warn(e);
@@ -438,22 +176,14 @@ class BrainCanvas{
       }
     });
 
-    if( to_array( this.settings.color_maps ).length > 0 ){
-      // Add animation
-      let _ani_names = Object.keys( this.settings.color_maps ),
-          _ani_init = this.settings.default_colormap;
-      if( !_ani_init || !_ani_names.includes( _ani_init )){
-        _ani_init = _ani_names[0];
-      }
-      presets.animation('Timeline', 0.001, _ani_names, _ani_init);
-      gui.open_folder('Timeline');
-    }
-
+    presets.c_animation();
 
     // ---------------------------- Misc
-    gui.add_folder('Misc');
+    // gui.add_folder('Misc');
 
     /* Misc settings */
+
+    /*
     // Background color
     gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Default'})
       .onChange((v) => {
@@ -468,24 +198,7 @@ class BrainCanvas{
         this.canvas.background_color = v;
         this.canvas.foreground_color = inversedColor;
       });
-
-
-    this.canvas.render_legend = this.settings.show_legend;
-
-    /*
-    gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
-      .onChange((v) =>{
-        this.canvas.disable_raycast = !v;
-      });
-    */
-
-    // ---------------------------- Default
-    /*
-    gui.add_item('Viewer Title', '', {folder_name: 'Default'}).onChange((v) => {
-        this.canvas.title = v;
-        this.canvas.start_animation(0);
-      });*/
-
+      */
     return(gui);
 
   }
@@ -520,20 +233,7 @@ class BrainCanvas{
       let gui = this._register_gui_control();
       this._set_info_callback();
 
-
       this.canvas.start_animation(0);
-
-      /**
-       * This might cause problem In RAVE as 3D rendering takes
-      // If has animation, then enable it
-      if( this.has_animation ){
-        let c = gui.get_controller('Play/Pause', 'Timeline');
-        if( typeof( c.setValue ) === 'function' ){
-          c.setValue(true);
-        }
-      }
-      */
-
     };
 
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {

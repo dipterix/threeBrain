@@ -10,9 +10,9 @@ threejs_brain(..., .list = list(), width = NULL, height = NULL,
   camera_center = c(0, 0, 0), camera_pos = c(0, 0, 500),
   start_zoom = 1, coords = NULL, symmetric = 0,
   default_colormap = "Value", palettes = NULL,
-  widget_id = "threebrain_data", tmp_dirname = NULL, debug = FALSE,
-  token = NULL, optionals = list(), browser_external = TRUE,
-  global_data = list())
+  show_inactive_electrodes = TRUE, widget_id = "threebrain_data",
+  tmp_dirname = NULL, debug = FALSE, token = NULL,
+  optionals = list(), browser_external = TRUE, global_data = list())
 }
 \arguments{
 \item{..., .list}{geometries inherit from AbstractGeom}

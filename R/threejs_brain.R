@@ -39,7 +39,7 @@ threejs_brain <- function(
 
   # For colors and animation
   symmetric = 0, default_colormap = 'Value',
-  palettes = NULL,
+  palettes = NULL, show_inactive_electrodes = TRUE,
 
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
@@ -158,7 +158,8 @@ threejs_brain <- function(
     debug = debug,
     # has_animation = v_count > 1,
     token = token,
-    coords = coords
+    coords = coords,
+    show_inactive_electrodes = isTRUE(show_inactive_electrodes)
   )
 
   # Generate external file

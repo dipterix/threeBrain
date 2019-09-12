@@ -359,6 +359,9 @@ BrainElectrodes <- R6::R6Class(
         el$vertex_number = nearest_vertex
         el$subject_code = subject_code
         el$MNI305_position = mni_305
+        # Add two color schemes
+        el$set_value( value = '', name = '[Hightlight]' )
+        el$set_value( value = as.character(subject_code), name = '[Subject]' )
         self$objects[[ row$Electrode ]] = el
       }
     },

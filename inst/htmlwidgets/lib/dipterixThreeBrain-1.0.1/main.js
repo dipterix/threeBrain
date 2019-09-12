@@ -57449,10 +57449,12 @@ CONSTANTS.KEY_CYCLE_LEFT              = 'BracketLeft';  // [ for cycle through l
 CONSTANTS.KEY_CYCLE_RIGHT             = 'BracketRight'; // ] for cycle through right hemisphere material
 CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 'Period';       // "." for choosing next electrodes
 CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 'Comma';        // "," for choosing previous electrodes
+CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = 'KeyV';         // 'v' for cycling through visible, hide inactive, hidden
 CONSTANTS.KEY_CYCLE_SURFACE           = 'KeyP';         // "p" for cycle through surfaces
 CONSTANTS.KEY_OVERLAY_CORONAL         = 'KeyC';         // 'C' for coronal
 CONSTANTS.KEY_OVERLAY_AXIAL           = 'KeyA';         // 'A' for coronal
 CONSTANTS.KEY_OVERLAY_SAGITTAL        = 'KeyS';         // 'S' for coronal
+CONSTANTS.KEY_CYCLE_ANIMATION         = 'KeyC';         // 'c' for cycling through animation clips
 CONSTANTS.KEY_TOGGLE_ANIMATION        = 'KeyS';         // 's' for play/paus animation
 CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling through electrodes (localization)
 CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electrode type (surface ot iEEG)
@@ -57472,45 +57474,210 @@ CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera
 CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient light that lights up all cameras
 
 
+// dat.GUI folders
+CONSTANTS.FOLDERS = {
+  'background-color'      : 'Default',
+  'video-recorder'        : 'Main Canvas',
+  'reset-main-camera'     : 'Main Canvas',
+  'main-camera-position'  : 'Main Canvas',
+  'toggle-helpper'        : 'Main Canvas',
+  'toggle-side-panels'    : 'Side Canvas',
+  'reset-side-panels'     : 'Side Canvas',
+  'side-three-planes'     : 'Side Canvas',
+  'side-electrode-dist'   : 'Side Canvas',
+  'subject-selector'      : 'Geometry',
+  'surface-selector'      : 'Geometry',
+  'hemisphere-material'   : 'Geometry',
+  'electrode-style'       : 'Geometry',
+  'electrode-mapping'     : 'Electrode Mapping',
+  'animation'             : 'Timeline'
+};
+
+
+
+
+
+
+
+
+
+// CONCATENATED MODULE: ./src/js/capture/CCFrameEncoder.js
+function CCFrameEncoder( settings ) {
+
+	var _handlers = {};
+
+	this.settings = settings;
+
+	this.on = function(event, handler) {
+
+		_handlers[event] = handler;
+
+	};
+
+	this.emit = function(event) {
+
+		var handler = _handlers[event];
+		if (handler) {
+
+			handler.apply(null, Array.prototype.slice.call(arguments, 1));
+
+		}
+
+	};
+
+	this.filename = settings.name || new Date().toGMTString();
+	this.extension = '';
+	this.mimeType = '';
+
+}
+
+CCFrameEncoder.prototype.start = function(){};
+CCFrameEncoder.prototype.stop = function(){};
+CCFrameEncoder.prototype.add = function(){};
+CCFrameEncoder.prototype.save = function(){};
+CCFrameEncoder.prototype.dispose = function(){};
+CCFrameEncoder.prototype.safeToProceed = function(){ return true; };
+CCFrameEncoder.prototype.step = function() {  };
+
+
+
+
+// CONCATENATED MODULE: ./src/js/capture/CCanvasRecorder.js
+
+
+// import { ArrayBufferDataStream, BlobBuffer, WebMWriter } from './webm-writer-0.2.0.js';
+
+
+/*
+	WebM Encoder
+*/
+
+class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
+  constructor( settings ){
+    super( settings );
+  	this.extension = '.webm';
+  	this.mimeType = 'video/webm;codecs=vp8,opus';
+  	this.baseFilename = this.filename;
+    this.framerate = settings.framerate;
+  	this.chunks = [];
+
+  	this.canvas = settings.canvas;
+
+  	// Create stream object
+    this.stream = this.canvas.captureStream( this.framerate );
+
+    // create a recorder fed with our canvas' stream
+    this.recorder = new MediaRecorder(this.stream, {mimeType : 'video/webm;codecs=vp8,opus'});
+
+    // save the chunks
+    this.recorder.ondataavailable = (e) => {
+      this.chunks.push(e.data);
+    };
+
+    // On stop, save data
+    this.recorder.onstop = (e) => {
+      this.save((blob) => {
+        console.log('Start to download...');
+        download( blob, this.filename + this.extension );
+      });
+      this.chunks.length = 0;
+    };
+  }
+
+  stop(){
+    if(this.recorder && this.recorder.state === 'recording'){
+      this.recorder.stop();
+    }
+  }
+
+  start(){
+    this.dispose();
+    this.recorder.start();
+  }
+
+  save( callback = null ) {
+    if( !callback ){
+      return(null);
+    }
+
+    if( this.chunks.length > 0 ){
+      let result = new Blob(this.chunks);
+      callback( result );
+    }
+
+  }
+
+  dispose() {
+    if(this.recorder){
+      this.stop();
+    }
+    this.chunks.length = 0;
+  }
+
+  add() {
+    /*
+    // , addInfo = '', background = '#ffffff', foreground = '#000000'
+
+    // Add additional messages
+    if( addInfo && addInfo !== '' ){
+      // Add additional information
+      const font_size = this.ratio * 20;
+      this.context.font = `${font_size}px Georgia`;
+      this.context.fillStyle = foreground;
+      const ss = addInfo.split('\n');
+      for (let ii in ss ){
+        this.context.fillText(ss[ii], 10, 50 + 1.4 * font_size * ii);
+      }
+
+    }
+    */
+  }
+}
+
+
+// CCWebMEncoder.prototype = Object.create( CCFrameEncoder.prototype );
+
+
 
 // CONCATENATED MODULE: ./src/js/data_controls.js
 
 
 
 
+
 // Some presets for gui and canvas
 
+
+function is_electrode(e) {
+  if(e && e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
+    return(true);
+  }else{
+    return(false);
+  }
+}
+
+
+/**
+ * @author: Zhengjia Wang
+ * Defines model (logic) part for dat.GUI
+ */
 class data_controls_THREEBRAIN_PRESETS{
 
-  constructor(canvas, gui, map_to_template = false, initial_subject = 'N27'){
+  /**
+   * Initialization, defines canvas (viewer), gui controller (viewer), and settings (initial values)
+   */
+  constructor(canvas, gui, settings){
     this.canvas = canvas;
     this.gui = gui;
-    this.map_to_template = map_to_template;
+    this.settings = settings;
 
     this.electrode_regexp = RegExp('^electrodes-(.+)$');
 
-    // Will pass if no surface is included
-    const subjects = this._get_subjects();
-
-    if(subjects.length){
-
-      if(this.map_to_template && subjects.includes(initial_subject)){
-        this.current_subject = initial_subject;
-      }else{
-        // use the only one subject
-        this.current_subject = subjects[0];
-      }
-
-    }else{
-      this.current_subject = undefined;
-    }
-
-    // Create alias for compatibility issue
-    this.initial_subject = this.default_subject = this.current_subject;
-    this.__left_hemisphere = 'normal';
-    this.__right_hemisphere = 'normal';
   }
 
+  /**
+   * wrapper for canvas.start_animation and pause_animation
+   */
   _update_canvas(level = 0){
     if(level >= 0){
       this.canvas.start_animation(level);
@@ -57519,625 +57686,293 @@ class data_controls_THREEBRAIN_PRESETS{
     }
   }
 
-  _surfaces(){
-    return(this.canvas.group.get( "Left Hemisphere" ).userData.group_data['.gui_params']);
-  }
 
-  _current_surfaces( subj ){
-    const surfaces = this._surfaces();
-    return( surfaces[ subj || this.current_subject ] );
-  }
-
-  _all_group_names(){
-    return( [...this.canvas.group.keys()] );
-  }
-
-  _electrode_group_names(filtered_result = false){
-    const groups = this._all_group_names(),
-          re = [];
-
-    groups.forEach((g) => {
-      let r = this.electrode_regexp.exec( g );
-      if(r !== null){
-        if(filtered_result){
-          re.push(r[1]);
-        }else{
-          re.push(r[0]);
-        }
-      }
-    });
-
-    return(re);
-  }
-
-  _get_group_by_name( group_name ){
-    return( this.canvas.group.get( group_name ) );
-  }
-
-  _is_electrode(e){
-    if(e && e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
-      return(true);
-    }else{
-      return(false);
-    }
-  }
-
-  _get_subjects(){
-    if( this.canvas.group.has( "Left Hemisphere" ) ){
-      return(to_array( this.canvas.group.get( "Left Hemisphere" ).userData.group_data['.subjects'] ));
-    }
-    return([]);
-  }
+  // ------------------------------ Defaults -----------------------------------
+  // toc (table of contents):
+  // 1. Background colors
+  // 2. Record Videos
+  // 3. Reset Camera
+  // 4. Camera Position
+  // 5. display anchor
+  // 6. toggle side panel
+  // 7. reset side panel position
+  // 8. coronal, axial, sagittal position (depth)
+  // 9. Electrode visibility in side canvas
+  // 10. subject code
+  // 11. surface type
 
 
-  animation(folder_name = 'Timeline', step = 0.001, names = ['default', 'Value'], initial = 'Value'){
+  // 1. Background colors
+  c_background(){
+    const initial_bgcolor = "#ffffff",
+          folder_name = CONSTANTS.FOLDERS['background-color'];
 
-    if( !names.includes('[No Color]') ){
-      names.push('[No Color]');
-    }
-
-    // this.canvas.animation_controls = {};
-    let min = 0;
-    let max = 1;
-
-    this.set_animation_time = (v) => {
-      if(this._ani_time){
-        if(typeof(v) !== 'number'){
-          v = this._ani_time.min;
-        }
-        this._ani_time.setValue( v );
-      }
-    };
-
-    this.get_animation_params = () => {
-      if(this._ani_time && this._ani_speed && this._ani_status){
-        return({
-          play : this._ani_status.getValue(),
-          time : this._ani_time.getValue(),
-          speed : this._ani_speed.getValue(),
-          min : min,
-          max : max
-        });
-      }else{
-        return({
-          play : false,
-          time : 0,
-          speed : 0,
-          min : min,
-          max : max
-        });
-      }
-    };
-
-    this.canvas.animation_controls.set_time = this.set_animation_time;
-    this.canvas.animation_controls.get_params = this.get_animation_params;
-
-
-    const _ani_name_onchange = (v) => {
-      // Generate animations
-      this.canvas.generate_animation_clips( v, true, (cmap) => {
-        if( !cmap ){
-          legend_visible.setValue(false);
-        }else{
-          this._ani_time.min( cmap.time_range[0] ).max( cmap.time_range[1] );
-          min = cmap.time_range[0];
-          max = cmap.time_range[1];
-          this.set_animation_time( min );
-          legend_visible.setValue(true);
-        }
-        this._update_canvas();
-      });
-    };
-
-    this._ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
-      .onChange((v) => { _ani_name_onchange( v ); });
-
-
-    this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
-    this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
-
-    /*this.gui.add_item('Reset', () => {
-      this.set_animation_time( min );
-      this._update_canvas();
-    }, { folder_name : folder_name }); */
-
-    this._ani_speed = this.gui.add_item('Speed', 1, {
-      args : { 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2, 'x 5':5},
-      folder_name : folder_name
-    });
-
-    this.gui.add_item('Time', min, { folder_name : folder_name })
-        .min(min).max(max).step(step).onChange((v) => {this._update_canvas()});
-    this._ani_time = this.gui.get_controller('Time', 'Timeline');
-
-    this._ani_time.domElement.addEventListener('mousewheel', (evt) => {
-      if( evt.altKey ){
-        evt.preventDefault();
-        const current_val = this._ani_time.getValue();
-        this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
-      }
-    });
-
-    // Add keyboard shortcut
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
-      if( !evt.event.shiftKey ){
-        const is_playing = this._ani_status.getValue();
-        this._ani_status.setValue( !is_playing );
-      }
-    }, 'gui_toggle_animation');
-
-    const legend_visible = this.gui.add_item('Show Legend', true, {folder_name: 'Timeline'})
+    this.gui.add_item('Background Color', initial_bgcolor, {is_color : true, folder_name: folder_name})
       .onChange((v) => {
-        this.canvas.render_legend = v;
+
+        // calculate inversed color for text
+        const inversedColor = invertColor(v);
+
+        this.canvas.background_color = v;
+        this.canvas.foreground_color = inversedColor;
+
+        // Set renderer background to be v
+        this.canvas.main_renderer.setClearColor(v);
+        this.canvas.side_renderer.setClearColor(v);
+
+        // this.el_text.style.color=inversedColor;
+        // this.el_text2.style.color=inversedColor;
+        // this.el.style.backgroundColor = v;
+
+        // force re-render
         this._update_canvas(0);
       });
-
-    this.canvas.render_legend = true;
-
-
-    _ani_name_onchange( initial );
-
   }
 
 
-  color_group(item_name = 'Show Groups', folder_name = 'Geometry'){
-    const group_names = this._electrode_group_names();
-    // check how many groups
-    const col_pal = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9", "#000000"];
-    const col = new threeplugins_THREE.Color();
+  // 2. Record Videos
+  c_recorder(){
+    const folder_name = CONSTANTS.FOLDERS[ 'video-recorder' ];
+    this.gui.add_item('Record Video', false, {folder_name: folder_name })
+      .onChange((v) =>{
 
-
-    this.gui.add_item(item_name, false, {
-        folder_name : folder_name
-      }).onChange((v) => {
-
-        if( v ){
-          this._ani_status.setValue(false);
-        }
-
-        for(let ii in group_names){
-          if(v){
-            col.set( col_pal[ ii % col_pal.length ] );
-          }
-
-          let gnm = group_names[ii];
-          if(this.canvas.group.has( gnm )){
-            this.canvas.group.get( gnm ).children.forEach((e) => {
-              if(this._is_electrode(e)){
-                // supress animation
-                e.userData._color_supressed = v;
-
-                if( v ){
-                  e.userData._original_color = '#' + e.material.color.getHexString();
-                  e.material.color.setRGB( col.r, col.g, col.b );
-                }else{
-                  e.material.color.set( e.userData._original_color || "#ffffff" );
-                }
-
-              }
+        if(v){
+          // create capture object
+          if( !this.canvas.capturer ){
+            this.canvas.capturer = new CCanvasRecorder_CCanvasRecorder({
+              canvas: this.canvas.domElement,
+              // FPS = 15
+              framerate: 24,
+              // Capture as webm
+              format: 'webm',
+              // workersPath: 'lib/',
+              // verbose results?
+              verbose: true,
+              autoSaveTime : 0,
+              main_width: this.canvas.main_renderer.domElement.width,
+              main_height: this.canvas.main_renderer.domElement.height,
+              sidebar_width: 300,
+              pixel_ratio : this.canvas.main_renderer.domElement.width / this.canvas.main_renderer.domElement.clientWidth
             });
           }
 
-        }
-
-        this._update_canvas();
-      });
-  }
-
-  // Preset 1: Select subject
-  subject(item_name = 'Template Subject', folder_name = 'Template Brain'){
-    const canvas = this.canvas,
-          gui = this.gui;
-
-    const subjects = this._get_subjects();
-
-    // Cortical Surface,
-    this.subject_callback = (v) => {
-      if(!v){
-        v = this.current_subject;
-      }else{
-        this.current_subject = v;
-      }
-      try { this.attach_to_surface_callback(this.attached_surface) } catch (e) {}
-      try { this.surface_type_callback(this.main_surface_type) } catch (e) {}
-
-      this._update_canvas();
-    };
-
-
-    gui.add_item(item_name, this.default_subject, {
-        args : subjects,
-        folder_name : folder_name
-      }).onChange(this.subject_callback);
-
-    if(this.map_to_template){
-      gui.open_folder(folder_name);
-    }
-
-  }
-
-  // Preset 2: Select Surface to attach electrode
-  attach_to_surface(item_name = 'Mapping Electrodes', folder_name = 'Template Brain'){
-    const canvas = this.canvas;
-    const gui = this.gui;
-
-    const group_names = this._electrode_group_names();
-    const surfaces = this._surfaces();
-    let current_sf = this._current_surfaces( this.initial_subject );
-    const left_surface_group = canvas.group.get( "Left Hemisphere" ),
-          right_surface_group = canvas.group.get( "Right Hemisphere" );
-
-    let surface_names = Object.keys( current_sf );
-    surface_names.push('original');
-
-    // If template, starts with pial, otherwise start with 'original', if pial not exists, starts with original
-    this.attached_surface = 'original';
-    if(this.map_to_template && surface_names.includes('pial')){
-      this.attached_surface = 'pial';
-    }
-
-    // Cortical Surface,
-    this.attach_to_surface_callback = (v) => {
-      if(!v){
-        v = this.attached_surface;
-      }else{
-        this.attached_surface = v;
-      }
-
-      if(v == 'original'){
-
-        group_names.forEach((gnm) => {
-          let gp = this._get_group_by_name( gnm );
-
-          if(!gp){
-            return(undefined);
-          }
-
-          let trans_mat = gp.userData.trans_mat,
-              inv_trans_mat = gp.userData.inv_trans_mat,
-              disable_trans_mat = gp.userData.construct_params.disable_trans_mat;
-
-          // Step 1: seek for electrode locations
-          gp.children.forEach((e) => {
-            if(e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
-              // Set electrode to original location
-              let original_pos = e.userData.construct_params.position;
-              e.position.fromArray( original_pos );
-
-              if(trans_mat){
-                e.position.applyMatrix4( trans_mat );
-              }
-
-            }
-          });
-
-          // Step 2: inverse trans_mat, the group is not rotated anymore
-          if(!disable_trans_mat && inv_trans_mat){
-            gp.userData.construct_params.disable_trans_mat = true;
-            gp.applyMatrix( inv_trans_mat );
-          }
-
-        });
-      }else{
-        current_sf = this._current_surfaces( this.current_subject );
-
-        // This will be a list of two
-        let template_surface_names = to_array( current_sf[v] );
-
-        group_names.forEach((gnm) => {
-          let gp = this._get_group_by_name( gnm );
-
-          if(!gp){
-            return(undefined);
-          }
-
-          let trans_mat = gp.userData.trans_mat,
-              inv_trans_mat = gp.userData.inv_trans_mat,
-              disable_trans_mat = gp.userData.construct_params.disable_trans_mat;
-
-          // Step 1: seek for electrode locations
-          gp.children.forEach((e) => {
-            if(e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
-              // Set electrode to original location
-              let original_pos = e.userData.construct_params.position;
-              e.position.fromArray( original_pos );
-
-              if(trans_mat){
-                e.position.applyMatrix4( trans_mat );
-              }
-
-              // If on the cortical surface, (!sub_cortical), then map to the surface
-              if(!e.userData.construct_params.sub_cortical){
-                // Mat to the cortical surface
-                let which_h = e.userData.construct_params.hemisphere == 'left'? 0 : 1;
-                let surf = canvas.mesh.get( template_surface_names[which_h] );
-                if(surf && surf.isMesh){
-                  let position = surf.geometry.getAttribute('position'),
-                    vertex_number = e.userData.construct_params.vertex_number,
-                    x = position.getX(vertex_number),
-                    y = position.getY(vertex_number),
-                    z = position.getZ(vertex_number);
-                  e.position.set( x, y, z );
-                }
-
-              }
-
-            }
-          });
-
-          // Step 2: inverse trans_mat, the group is not rotated anymore
-          if(!disable_trans_mat && inv_trans_mat){
-            gp.userData.construct_params.disable_trans_mat = true;
-            gp.applyMatrix( inv_trans_mat );
-          }
-
-        });
-
-      }
-
-      this._update_canvas();
-    };
-
-
-    gui.add_item(item_name, this.attached_surface, {
-        args : surface_names,
-        folder_name : folder_name
-      }).onChange(this.attach_to_surface_callback);
-
-  }
-
-  // Preset 3: Select surface to visualize
-  surface_type(item_name = 'Surface Type', folder_name = 'Geometry'){
-    const canvas = this.canvas;
-    const gui = this.gui;
-    const surfaces = this._surfaces();
-    let current_sf = surfaces[this.initial_subject];
-    const surface_name = Object.keys( current_sf );
-
-    if(surface_name.includes('pial')){
-        this.main_surface_type = 'pial';
-    }else{
-      this.main_surface_type = surface_name[0];
-    }
-
-    this.surface_type_callback = (pn) => {
-
-      if(!pn){
-        pn = this.main_surface_type;
-      }
-
-      for( let sub in surfaces ){
-
-        let sf = to_array( surfaces[sub][this.main_surface_type] );
-
-        sf.forEach((nm) => {
-          let m = canvas.mesh.get( nm );
-          if( m ){
-            m.visible = false;
-          }
-        });
-
-      }
-
-      this.main_surface_type = pn;
-
-      let sf_show = to_array( surfaces[this.current_subject][pn] );
-      let center = [0, 0, 0];
-
-      sf_show.forEach((nm) => {
-        let m = canvas.mesh.get( nm );
-
-        if(m && m.isMesh){
-          m.visible = true;
-
-          // Center mesh
-          if( m.geometry && m.geometry.isBufferGeometry ){
-
-            if( !m.geometry.boundingBox ){
-              m.geometry.computeBoundingBox();
-            }
-
-            let b = m.geometry.boundingBox,
-                v = new threeplugins_THREE.Vector3();
-
-            b.getCenter(v);
-            center[2] = center[2] + v.z / 2.0;
-            center[1] = center[1] + v.y / 2.0;
-
+          this.canvas.capturer.baseFilename = this.canvas.capturer.filename = new Date().toGMTString();
+          this.canvas.capturer.start();
+          this.canvas.capturer_recording = true;
+          // Force render a frame
+          // Canvas might not render
+          // this.canvas.start_animation(0);
+        }else{
+          this.canvas.capturer_recording = false;
+          if(this.canvas.capturer){
+            this.canvas.capturer.stop();
+            this.canvas.capturer.save();
+            // this.canvas.capturer.incoming = false;
           }
         }
+
+
       });
-
-      canvas.update_control_center( center );
-
-      this._update_canvas();
-
-    };
-
-    gui.add_item(item_name, this.main_surface_type, {
-        args : surface_name,
-        folder_name : folder_name
-      }).onChange(this.surface_type_callback);
 
   }
 
-  // TODO deprecate this item
-  lh_material(item_name = 'Left Hemisphere', folder_name = 'Geometry'){
-    const canvas = this.canvas;
-    const gui = this.gui;
-
-    // Add controls on showing and hiding meshes
-    gui.add_item(item_name, 'normal', {
-      args : ['normal', 'wireframe', 'hidden'],
-      folder_name : folder_name
-    })
-      .onChange((v) => {
-        let m = canvas.group.get( "Left Hemisphere" );
-        if(m && m.isObject3D){
-          switch (v) {
-            case 'normal':
-
-              m.children.forEach( (h) => {
-                if(h.isMesh){
-                  h.material.wireframe = false;
-                }
-              });
-              m.visible = true;
-
-              break;
-            case 'wireframe':
-              m.children.forEach( (h) => {
-                if(h.isMesh){
-                  h.material.wireframe = true;
-                }
-              });
-              m.visible = true;
-
-              break;
-            default:
-              m.visible = false;
-          }
-
-        }
-        this._update_canvas();
-      });
-    gui.open_folder(folder_name);
+  // 3. Reset Camera
+  c_reset_camera(){
+    const folder_name = CONSTANTS.FOLDERS[ 'reset-main-camera' ];
+    this.gui.add_item('Reset', () => {
+      // Center camera first.
+      this.canvas.handle_resize( undefined, undefined, false, true );
+      this.canvas.reset_controls();
+      this.canvas.controls.enabled = true;
+    }, {folder_name: folder_name});
   }
-  rh_material(item_name = 'Right Hemisphere', folder_name = 'Geometry'){
-    const canvas = this.canvas;
-    const gui = this.gui;
 
-    // Add controls on showing and hiding meshes
-    gui.add_item(item_name, 'normal', {
-      args : ['normal', 'wireframe', 'hidden'],
-      folder_name : folder_name
-    })
-      .onChange((v) => {
-        let m = canvas.group.get( "Right Hemisphere" );
-        if(m && m.isObject3D){
-          switch (v) {
-            case 'normal':
-
-              m.children.forEach( (h) => {
-                if(h.isMesh){
-                  h.material.wireframe = false;
-                }
-              });
-              m.visible = true;
-
-              break;
-            case 'wireframe':
-              m.children.forEach( (h) => {
-                if(h.isMesh){
-                  h.material.wireframe = true;
-                }
-              });
-              m.visible = true;
-
-              break;
-            default:
-              m.visible = false;
-          }
-
-        }
-        this._update_canvas();
-      });
-    gui.open_folder(folder_name);
-  }
-  electrodes(folder_name = 'Geometry'){
-
-    const li = this.canvas.subject_codes;
-
-    const col_pal = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabebe", "#469990", "#e6beff", "#9A6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9", "#000000"];
-    const col = new threeplugins_THREE.Color();
-    let sidx = 0;
-
-
-    this.gui.add_item('Electrodes', 'default', {
-      args : ['default', 'group by subjects', 'all cameras', 'main camera', 'hidden'],
+  // 4. Camera Position
+  c_main_camera_position(){
+    const folder_name = CONSTANTS.FOLDERS[ 'main-camera-position' ];
+    const camera_pos = gui.add_item('Camera Position', '[free rotate]', {
+      args : ['[free rotate]', '[lock]', 'right', 'left', 'anterior', 'posterior', 'superior', 'inferior'],
       folder_name : folder_name
     }).onChange((v) => {
 
-      if( v === 'group by subjects' ){
-
-        // Stop animation
-        this._ani_status.setValue( false );
-
-        // render electrode colors by subjects
-        li.forEach((subject_code, ii) => {
-          col.set( col_pal[ ii % col_pal.length ] );
-          to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
-            e.userData._original_color = e.material.color.clone();
-            e.material.color.copy( col );
-          });
-        });
-      }else{
-        // recover original color
-        col.setRGB( 1 , 1 , 1 );
-        li.forEach((subject_code, ii) => {
-          to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
-            e.material.color.copy( e.userData._original_color || col );
-          });
-        });
-
-        if( v === 'default' ){
-          return(null);
-        }
-
-
-        if(['all cameras', 'main camera', 'hidden'].includes( v )){
-          li.forEach(( subject_code ) => {
-            this.gui.get_controller( 'E-' + subject_code, folder_name ).setValue( v );
-          });
-        }
+      if( v === '[lock]' ){
+        this.canvas.controls.enabled = false;
+        return( null );
       }
+      this.canvas.controls.enabled = true;
+
+      switch (v) {
+        case 'right':
+          this.canvas.main_camera.position.set( 500, 0, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'left':
+          this.canvas.main_camera.position.set( -500, 0, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'anterior':
+          this.canvas.main_camera.position.set( 0, 500, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'posterior':
+          this.canvas.main_camera.position.set( 0, -500, 0 );
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+          break;
+        case 'superior':
+          this.canvas.main_camera.position.set( 0, 0, 500 );
+          this.canvas.main_camera.up.set( 0, 1, 0 );
+          break;
+        case 'inferior':
+          this.canvas.main_camera.position.set( 0, 0, -500 );
+          this.canvas.main_camera.up.set( 0, -1, 0 );
+          break;
+      }
+
+      camera_pos.__select.value = '[free rotate]';
 
       this._update_canvas();
     });
+  }
 
-
-
-    li.map((subject_code) => {
-      this.gui.add_item('E-' + subject_code, 'all cameras', {
-        args : ['all cameras', 'main camera', 'hidden'],
-        folder_name : folder_name
-      }).onChange( (v) => {
-        let group = this.canvas.electrodes.get( subject_code );
-        if( group ){
-          Object.values( group ).forEach((m) => {
-            if( v === 'hidden' ){
-              m.visible=false;
-            }else{
-              m.visible=true;
-              if( v === 'all cameras' ){
-                m.layers.set(7);
-              }else{
-                m.layers.set(8);
-              }
-            }
-          });
-          this._update_canvas();
-        }
-
+  // 5. display anchor
+  c_toggle_anchor(){
+    const folder_name = CONSTANTS.FOLDERS[ 'toggle-helpper' ];
+    this.gui.add_item('Display Helpers', false, { folder_name: folder_name })
+      .onChange((v) => {
+        this.canvas.set_cube_anchor_visibility(v);
       });
-    });
+  }
 
-
-
+  // 6. toggle side panel
+  c_toggle_side_panel(){
+    const folder_name = CONSTANTS.FOLDERS[ 'toggle-side-panels' ];
+    this.gui.add_item('Show Panels', true, {folder_name: folder_name})
+      .onChange((v) => {
+        if( v ){
+          this.canvas.enable_side_cameras();
+        }else{
+          this.canvas.disable_side_cameras();
+        }
+      });
   }
 
 
+  // 7. reset side panel position
+  c_reset_side_panel(){
+    const folder_name = CONSTANTS.FOLDERS[ 'reset-side-panels' ],
+          zoom_level = this.settings.side_canvas_zoom,
+          side_width = this.settings.side_canvas_width,
+          side_shift = this.settings.side_canvas_shift;
+    this.gui.add_item('Reset Position', () => {
+      this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
+    }, {folder_name: folder_name});
 
-  // -------------------------- New version --------------------------
-  // which subject
-  subject2(item_name = 'Subject', folder_name = 'Geometry'){
+    // reset first
+    this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
+  }
+
+  // 8. coronal, axial, sagittal position (depth)
+  c_side_depth(){
+    const folder_name = CONSTANTS.FOLDERS[ 'side-three-planes' ];
+
+    // side plane
+    const _controller_coronal = gui
+      .add_item('Coronal (P - A)', 0, {folder_name: folder_name})
+      .min(-128).max(128).step(1).onChange((v) => {
+        this.canvas.set_coronal_depth( v );
+      });
+    const _controller_axial = gui
+      .add_item('Axial (I - S)', 0, {folder_name: folder_name})
+      .min(-128).max(128).step(1).onChange((v) => {
+        this.canvas.set_axial_depth( v );
+      });
+    const _controller_sagittal = gui
+      .add_item('Sagittal (L - R)', 0, {folder_name: folder_name})
+      .min(-128).max(128).step(1).onChange((v) => {
+        this.canvas.set_sagittal_depth( v );
+      });
+    [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c) => {
+      _c.domElement.addEventListener('mousewheel', (evt) => {
+        if( evt.altKey ){
+          evt.preventDefault();
+          const current_val = _c.getValue();
+          _c.setValue( current_val + evt.deltaY );
+        }
+      });
+    });
+
+    this.canvas.set_side_depth = (c, a, s) => {
+      if( typeof c === 'number' ){
+        _controller_coronal.setValue( c );
+      }
+      if( typeof a === 'number' ){
+        _controller_axial.setValue( a || 0 );
+      }
+      if( typeof s === 'number' ){
+        _controller_sagittal.setValue( s || 0 );
+      }
+    };
+
+    const overlay_coronal = gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
+      .onChange((v) => {
+        this.canvas.set_side_visibility('coronal', v);
+      });
+
+    const overlay_axial = gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
+      .onChange((v) => {
+        this.canvas.set_side_visibility('axial', v);
+      });
+
+    const overlay_sagittal = gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
+      .onChange((v) => {
+        this.canvas.set_side_visibility('sagittal', v);
+      });
+
+    // register overlay keyboard shortcuts
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
+      if( evt.event.shiftKey ){
+        const _v = overlay_coronal.getValue();
+        overlay_coronal.setValue( !_v );
+      }
+    }, 'overlay_coronal');
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
+      if( evt.event.shiftKey ){
+        const _v = overlay_axial.getValue();
+        overlay_axial.setValue( !_v );
+      }
+    }, 'overlay_axial');
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
+      if( evt.event.shiftKey ){
+        const _v = overlay_sagittal.getValue();
+        overlay_sagittal.setValue( !_v );
+      }
+    }, 'overlay_sagittal');
+  }
+
+  // 9. Electrode visibility in side canvas
+  c_side_electrode_dist(){
+    const folder_name = CONSTANTS.FOLDERS[ 'side-electrode-dist' ];
+    // show electrodes trimmed
+    gui.add_item('Dist. Threshold', 2, { folder_name: folder_name })
+      .min(0).max(64).step(0.1)
+      .onChange((v) => {
+        this.canvas.trim_electrodes( v );
+        this._update_canvas();
+      });
+    this.canvas.trim_electrodes( 2 );
+  }
+
+  // 10. subject code
+  c_subject2(){
     // Get subjects
-    let subject_ids = this.canvas.subject_codes;
-
+    const folder_name = CONSTANTS.FOLDERS[ 'subject-selector' ],
+          subject_ids = this.canvas.subject_codes;
 
     if( subject_ids.length > 0 ){
       let _s = this.canvas.state_data.get( 'target_subject' ) || subject_ids[0];
-      this.gui.add_item(item_name, _s, {
+      this.gui.add_item('Subject', _s, {
         folder_name : folder_name,
         args : subject_ids
       }).onChange((v) => {
@@ -58146,17 +57981,17 @@ class data_controls_THREEBRAIN_PRESETS{
     }
   }
 
+  // 11. surface type
+  c_surface_type2(){
 
-  // which surface
-  surface_type2(item_name = 'Surface Type', folder_name = 'Geometry'){
-
-    const _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
+    const folder_name = CONSTANTS.FOLDERS[ 'surface-selector' ],
+    _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
           _c = this.canvas.get_surface_types();
 
     if( _c.length === 0 ){
       return(null);
     }
-    const surf_type = this.gui.add_item(item_name, _s, {
+    const surf_type = this.gui.add_item('Surface Type', _s, {
         args : _c,
         folder_name : folder_name
       }).onChange((v) => {
@@ -58173,10 +58008,11 @@ class data_controls_THREEBRAIN_PRESETS{
     }, 'gui_surf_type2');
   }
 
+  // 12. Hemisphere material/transparency
+  c_hemisphere_material(){
 
-  hemisphere_material(folder_name = 'Geometry'){
-
-    const options = ['normal', 'wireframe', 'hidden'];
+    const folder_name = CONSTANTS.FOLDERS[ 'hemisphere-material' ],
+          options = ['normal', 'wireframe', 'hidden'];
 
     const lh_ctrl = this.gui.add_item('Left Hemisphere', 'normal', { args : options, folder_name : folder_name })
       .onChange((v) => {
@@ -58228,9 +58064,73 @@ class data_controls_THREEBRAIN_PRESETS{
     }, 'gui_right_cycle');
   }
 
+  // 13. electrode visibility, highlight, groups
+  set_electrodes_visibility( v ){
+    if( !this._controller_electrodes ){
+      return(false);
+    }
+    if( this._ani_status ){
+      this._ani_status.setValue( false );
+    }
 
-  map_template(folder_name = 'Electrode Mapping'){
+    // render electrode colors by subjects
+    this.canvas.subject_codes.forEach((subject_code, ii) => {
+      to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
+        this._electrode_visibility( e , ii , v );
+      });
+    });
 
+    this._update_canvas();
+    return(true);
+  }
+  c_electrodes(){
+    const folder_name = CONSTANTS.FOLDERS[ 'electrode-style' ];
+    const show_inactives = this.settings.show_inactive_electrodes;
+    const vis_types = ['all visible', 'hide inactives', 'hidden'];
+
+    // please check if el is electrode before dumpping into this function
+    this._electrode_visibility = (el, ii, v) => {
+      if( !is_electrode( el ) ){
+        return(null);
+      }
+      switch (v) {
+        case 'hidden':
+          // el is invisible
+          el.visible = false;
+          break;
+        case 'hide inactives':
+          if( el.material.isMeshLambertMaterial ){
+            el.visible = false;
+          }else{
+            el.visible = true;
+          }
+          break;
+        default:
+          el.visible = true;
+      }
+    };
+
+    this._controller_electrodes = this.gui.add_item('Electrodes', show_inactives? 'all visible': 'hide inactives', {
+      args : vis_types,
+      folder_name : folder_name
+    }).onChange((v) => {
+      this.set_electrodes_visibility( v );
+    });
+
+    // Add shortcuts
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY, (evt) => {
+      let current_idx = (vis_types.indexOf( this._controller_electrodes.getValue() ) + 1) % vis_types.length;
+      if( current_idx >= 0 ){
+        this._controller_electrodes.setValue( vis_types[ current_idx ] );
+      }
+    }, 'gui_c_electrodes');
+
+  }
+
+
+  // 14. electrode mapping
+  c_map_template(){
+    const folder_name = CONSTANTS.FOLDERS[ 'electrode-mapping' ];
     const subject_codes = ['[no mapping]', ...this.canvas.subject_codes];
 
     const do_mapping = this.gui.add_item('Map Electrodes', false, { folder_name : folder_name })
@@ -58262,8 +58162,162 @@ class data_controls_THREEBRAIN_PRESETS{
 
   }
 
+  // 15. animation, play/pause, speed, clips...
+  set_animation_time(v){
+    if(this._ani_time){
+      if(typeof(v) !== 'number'){
+        v = this._ani_time.min;
+      }
+      this._ani_time.setValue( v );
+    }
+  }
+  get_animation_params(){
+    if(this._ani_time && this._ani_speed && this._ani_status){
+      return({
+        play : this._ani_status.getValue(),
+        time : this._ani_time.getValue(),
+        speed : this._ani_speed.getValue(),
+        min : this._ani_time.min,
+        max : this._ani_time.max
+      });
+    }else{
+      return({
+        play : false,
+        time : 0,
+        speed : 0,
+        min : 0,
+        max : 1
+      });
+    }
+  }
+  c_animation(){
 
-  electrode_localization(folder_name = 'Electrode Localization (Beta)'){
+    // Check if animation is needed
+    if( to_array( this.settings.color_maps ).length === 0 ){
+      return(false);
+    }
+
+    // Animation is needed
+    const step = 0.001,
+          folder_name = CONSTANTS.FOLDERS[ 'animation' ];
+
+    let names = Object.keys( this.settings.color_maps ),
+        initial = this.settings.default_colormap,
+        min = 0, max = 1;
+
+    // Make sure the initial value exists, and [No Color] is included in the option
+    names = [...new Set(['[No Color]', ...names])];
+
+    if( !initial || !names.includes( initial ) || initial.startsWith('[') ){
+      initial = undefined;
+      names.forEach((_n) => {
+        if( !initial && !_n.startsWith('[') ){
+          initial = _n;
+        }
+      });
+    }
+
+    if( !initial ){
+      initial = '[No Color]';
+    }
+
+
+    // Link functions to canvas (this is legacy code and I don't want to change it unless we rewrite the animation code)
+    this.canvas.animation_controls.set_time = this.set_animation_time;
+    this.canvas.animation_controls.get_params = this.get_animation_params;
+
+    // Defines when clip name is changed (variable changed)
+    const _ani_name_onchange = (v) => {
+      // Generate animations
+      this.canvas.generate_animation_clips( v, true, (cmap) => {
+        if( !cmap ){
+          legend_visible.setValue(false);
+          if( v === '[No Color]' ){
+            this.canvas.electrodes.forEach((e) => {
+              e.visible = true;
+            });
+          }
+        }else{
+          this._ani_time.min( cmap.time_range[0] ).max( cmap.time_range[1] );
+          min = cmap.time_range[0];
+          max = cmap.time_range[1];
+          this.set_animation_time( min );
+          legend_visible.setValue(true);
+
+          // If inactive electrodes are hidden, re-calculate visibility
+          if( this._controller_electrodes){
+            this.set_electrodes_visibility( this._controller_electrodes.getValue() );
+          }
+        }
+        this._update_canvas();
+      });
+    };
+
+    const ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
+      .onChange((v) => { _ani_name_onchange( v ); });
+
+
+    this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
+    this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
+
+    this._ani_speed = this.gui.add_item('Speed', 1, {
+      args : { 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2, 'x 5':5},
+      folder_name : folder_name
+    });
+
+    this.gui.add_item('Time', min, { folder_name : folder_name })
+        .min(min).max(max).step(step).onChange((v) => {this._update_canvas()});
+    this._ani_time = this.gui.get_controller('Time', folder_name);
+
+    this._ani_time.domElement.addEventListener('mousewheel', (evt) => {
+      if( evt.altKey ){
+        evt.preventDefault();
+        const current_val = this._ani_time.getValue();
+        this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
+      }
+    });
+
+    // Add keyboard shortcut
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
+      if( !evt.event.shiftKey ){
+        const is_playing = this._ani_status.getValue();
+        this._ani_status.setValue( !is_playing );
+      }
+    }, 'gui_toggle_animation');
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ANIMATION, (evt) => {
+      let current_idx = (names.indexOf( ani_name.getValue() ) + 1) % names.length;
+      if( current_idx >= 0 ){
+        ani_name.setValue( names[ current_idx ] );
+      }
+    }, 'gui_cycle_animation');
+
+
+    let render_legend = this.settings.show_legend;
+    const legend_visible = this.gui.add_item('Show Legend', true, {folder_name: folder_name })
+      .onChange((v) => {
+        this.canvas.render_legend = v;
+        this._update_canvas(0);
+      });
+    this.canvas.render_legend = render_legend;
+
+    _ani_name_onchange( initial );
+
+    this.gui.open_folder( folder_name );
+
+  }
+
+  // 16.
+
+
+
+
+  // -------------------------- New version --------------------------
+
+
+
+
+  c_electrode_localization(folder_name = 'Electrode Localization (Beta)'){
 
     this.canvas.electrodes.set( '__localization__', [] );
 
@@ -58485,7 +58539,7 @@ class data_controls_THREEBRAIN_PRESETS{
     }, 'edit-gui_edit_label');
   }
 
-  export_electrodes(folder_name = 'Default'){
+  c_export_electrodes(folder_name = 'Default'){
     this.gui.add_item('Download Electrodes', () => {
       this.canvas.download_electrodes('csv');
     });
@@ -62912,144 +62966,6 @@ mapped = false,
 
 */
 
-// CONCATENATED MODULE: ./src/js/capture/CCFrameEncoder.js
-function CCFrameEncoder( settings ) {
-
-	var _handlers = {};
-
-	this.settings = settings;
-
-	this.on = function(event, handler) {
-
-		_handlers[event] = handler;
-
-	};
-
-	this.emit = function(event) {
-
-		var handler = _handlers[event];
-		if (handler) {
-
-			handler.apply(null, Array.prototype.slice.call(arguments, 1));
-
-		}
-
-	};
-
-	this.filename = settings.name || new Date().toGMTString();
-	this.extension = '';
-	this.mimeType = '';
-
-}
-
-CCFrameEncoder.prototype.start = function(){};
-CCFrameEncoder.prototype.stop = function(){};
-CCFrameEncoder.prototype.add = function(){};
-CCFrameEncoder.prototype.save = function(){};
-CCFrameEncoder.prototype.dispose = function(){};
-CCFrameEncoder.prototype.safeToProceed = function(){ return true; };
-CCFrameEncoder.prototype.step = function() {  };
-
-
-
-
-// CONCATENATED MODULE: ./src/js/capture/CCanvasRecorder.js
-
-
-// import { ArrayBufferDataStream, BlobBuffer, WebMWriter } from './webm-writer-0.2.0.js';
-
-
-/*
-	WebM Encoder
-*/
-
-class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
-  constructor( settings ){
-    super( settings );
-  	this.extension = '.webm';
-  	this.mimeType = 'video/webm;codecs=vp8,opus';
-  	this.baseFilename = this.filename;
-    this.framerate = settings.framerate;
-  	this.chunks = [];
-
-  	this.canvas = settings.canvas;
-
-  	// Create stream object
-    this.stream = this.canvas.captureStream( this.framerate );
-
-    // create a recorder fed with our canvas' stream
-    this.recorder = new MediaRecorder(this.stream, {mimeType : 'video/webm;codecs=vp8,opus'});
-
-    // save the chunks
-    this.recorder.ondataavailable = (e) => {
-      this.chunks.push(e.data);
-    };
-
-    // On stop, save data
-    this.recorder.onstop = (e) => {
-      this.save((blob) => {
-        console.log('Start to download...');
-        download( blob, this.filename + this.extension );
-      });
-      this.chunks.length = 0;
-    };
-  }
-
-  stop(){
-    if(this.recorder && this.recorder.state === 'recording'){
-      this.recorder.stop();
-    }
-  }
-
-  start(){
-    this.dispose();
-    this.recorder.start();
-  }
-
-  save( callback = null ) {
-    if( !callback ){
-      return(null);
-    }
-
-    if( this.chunks.length > 0 ){
-      let result = new Blob(this.chunks);
-      callback( result );
-    }
-
-  }
-
-  dispose() {
-    if(this.recorder){
-      this.stop();
-    }
-    this.chunks.length = 0;
-  }
-
-  add() {
-    /*
-    // , addInfo = '', background = '#ffffff', foreground = '#000000'
-
-    // Add additional messages
-    if( addInfo && addInfo !== '' ){
-      // Add additional information
-      const font_size = this.ratio * 20;
-      this.context.font = `${font_size}px Georgia`;
-      this.context.fillStyle = foreground;
-      const ss = addInfo.split('\n');
-      for (let ii in ss ){
-        this.context.fillText(ss[ii], 10, 50 + 1.4 * font_size * ii);
-      }
-
-    }
-    */
-  }
-}
-
-
-// CCWebMEncoder.prototype = Object.create( CCFrameEncoder.prototype );
-
-
-
 // CONCATENATED MODULE: ./src/index.js
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BrainCanvas", function() { return src_BrainCanvas; });
 /**
@@ -63064,10 +62980,11 @@ class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
 
 
 
+// import { invertColor, padZero, to_array } from './js/utils.js';
 
 // import { D3Canvas } from './js/Math/sparkles.js';
 // import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
-
+// import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 
 class src_BrainCanvas{
   constructor(el, width, height, shiny_mode = false, viewer_mode = false, cache = false, DEBUG = true){
@@ -63123,60 +63040,6 @@ class src_BrainCanvas{
     //this.el_text2.style.width = '200px';
     //this.el_text2.style.padding = '10px';
     this.el_side.appendChild( this.el_text );
-
-
-    // 2. Add legend (Not needed anymore, legend is all integrated into canvas 2d context)
-    /*
-
-    this.legend_data = {
-      "id":"canvas",
-      "width":"300px","height":"200px",
-      "layout":[
-        {
-          "name":"sparks","x":"50","y":0,"w":"width - 70","h":"height","xlim":[-1,2],"ylim":[1,200],"margin":[20,20,50,10]
-        },{
-          "name":"colorbar","x":0,"y":0,"w":50,"h":"height","xlim":[-1,2],"ylim":[1,200],"zlim":[1,60200],"margin":[20,25,50,10]
-        }
-      ],
-      "plot_data":{"x":[1],"y":[1], "z": [[1]]},
-      "content":{
-        // right sparks
-        "sparks":{
-          "main":"","cex_main":0.5,"anchor_main":"middle","main_top":30,"data":null,
-          "geom_traces":{"lines":{"type":"geom_line","data":null,"x":"x","y":"y"}},
-          "axis":[
-            {"side":1,"text":"","at":null,"labels":null,"las":1,"cex_axis":0.5,"cex_lab":0.5,"line":0},
-            {"side":2,"text":"","at":null,"labels":null,"las":1,"cex_axis":0.5,"cex_lab":0.5,"line":0}
-          ]
-        },
-        "colorbar":{
-          "main":"","cex_main":0.5,"anchor_main":"middle","main_top":30,"data":null,
-          "geom_traces":{
-            "heatmap":{
-              "type":"geom_heatmap",
-              "data":null,
-              "x":"x","y":"y","z":"z","x_scale":"linear","y_scale":"linear",
-              "palette":["steelblue","red"],
-              "rev_x":false,"rev_y":true
-            }
-          },
-          "axis":[{
-            "side":2,"text":"","at":[0,200],"las":1,"cex_axis":0.5,"cex_lab":0.5,"line":0
-          }]
-        }
-      }
-    };
-
-
-    const legend_el = document.createElement('svg');
-    this.el_legend.appendChild( legend_el );
-    this.el_side.appendChild( this.el_legend );
-    // this.legend = new D3Canvas(this.legend_data, legend_el);
-
-    // window.legend = this.legend;
-    // window.legend_data = this.legend_data;
-  */
-
 
     // 3. initialize threejs scene
     this.canvas = new threejs_scene_THREEBRAIN_CANVAS(
@@ -63237,117 +63100,22 @@ class src_BrainCanvas{
 
     // Add listeners
     const control_presets = this.settings.control_presets;
-    const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, gui, this.optionals.map_to_template || false);
+    const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, gui, this.settings);
     if(this.DEBUG){
       window.presets = presets;
+    }else{
+      window.__presets = presets;
     }
+
+    // ---------------------------- Defaults
+    presets.c_background();
 
     // ---------------------------- Main, side canvas settings is on top
     gui.add_folder('Main Canvas').open();
-
-    // Record videos on the main scene
-    gui.add_item('Record Video', false, {folder_name: 'Main Canvas'})
-      .onChange((v) =>{
-
-        if(v){
-          // create capture object
-          if( !this.canvas.capturer ){
-
-            this.canvas.capturer = new CCanvasRecorder_CCanvasRecorder({
-
-              canvas: this.canvas.domElement,
-
-              // FPS = 15
-              framerate: 24,
-              // Capture as webm
-              format: 'webm',
-              // workersPath: 'lib/',
-              // verbose results?
-              verbose: true,
-              autoSaveTime : 0,
-
-              main_width: this.canvas.main_renderer.domElement.width,
-              main_height: this.canvas.main_renderer.domElement.height,
-              sidebar_width: 300,
-              pixel_ratio : this.canvas.main_renderer.domElement.width / this.canvas.main_renderer.domElement.clientWidth
-
-
-            });
-
-          }
-
-          this.canvas.capturer.baseFilename = this.canvas.capturer.filename = new Date().toGMTString();
-          this.canvas.capturer.start();
-          this.canvas.capturer_recording = true;
-          // Force render a frame
-          // Canvas might not render
-          // this.canvas.start_animation(0);
-        }else{
-          this.canvas.capturer_recording = false;
-          if(this.canvas.capturer){
-            this.canvas.capturer.stop();
-            this.canvas.capturer.save();
-            // this.canvas.capturer.incoming = false;
-          }
-        }
-
-
-      });
-
-    /* gui.add_item('Keyboard Event', false, {folder_name: 'Main Canvas'})
-      .onChange((v) => { this.canvas.listen_keyboard = v; }); */
-
-
-    gui.add_item('Reset', () => {
-      // Center camera first.
-      this.canvas.handle_resize( undefined, undefined, false, true );
-      this.canvas.reset_controls();
-      this.canvas.controls.enabled = true;
-    }, {folder_name: 'Main Canvas'});
-
-    const _camera_pos = gui.add_item('Camera Position', '[free rotate]', {
-      args : ['[free rotate]', '[lock]', 'right', 'left', 'anterior', 'posterior', 'superior', 'inferior'],
-      folder_name : 'Main Canvas'
-    }).onChange((v) => {
-
-      if( v === '[lock]' ){
-        this.canvas.controls.enabled = false;
-        return( null );
-      }
-      this.canvas.controls.enabled = true;
-
-      switch (v) {
-        case 'right':
-          this.canvas.main_camera.position.set( 500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'left':
-          this.canvas.main_camera.position.set( -500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'anterior':
-          this.canvas.main_camera.position.set( 0, 500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'posterior':
-          this.canvas.main_camera.position.set( 0, -500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'superior':
-          this.canvas.main_camera.position.set( 0, 0, 500 );
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-          break;
-        case 'inferior':
-          this.canvas.main_camera.position.set( 0, 0, -500 );
-          this.canvas.main_camera.up.set( 0, -1, 0 );
-          break;
-      }
-
-      _camera_pos.__select.value = '[free rotate]';
-
-      this.canvas.start_animation( 0 );
-    });
-
+    presets.c_recorder();
+    presets.c_reset_camera();
+    presets.c_main_camera_position();
+    presets.c_toggle_anchor();
     /*
     gui.add_item('Free Controls', () => {
       _camera_pos.setValue( '[free rotate]' );
@@ -63355,121 +63123,14 @@ class src_BrainCanvas{
     }, {folder_name: 'Main Canvas'});
     */
 
-
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
-
       gui.add_folder('Side Canvas').open();
-
-      gui.add_item('Show Panels', true, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          if( v ){
-            this.canvas.enable_side_cameras();
-          }else{
-            this.canvas.disable_side_cameras();
-          }
-        });
-
-      gui.add_item('Reset Position', () => {
-        this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
-                                       this.settings.side_canvas_width,
-                                       this.settings.side_canvas_shift );
-      }, {folder_name: 'Side Canvas'});
-      // reset first
-      this.canvas.reset_side_canvas( this.settings.side_canvas_zoom,
-                                     this.settings.side_canvas_width,
-                                     this.settings.side_canvas_shift );
-
-      // side plane
-      const _controller_coronal = gui.add_item('Coronal (P - A)', 0, {folder_name: 'Side Canvas'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_coronal_depth( v );
-        });
-      const _controller_axial = gui.add_item('Axial (I - S)', 0, {folder_name: 'Side Canvas'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_axial_depth( v );
-        });
-      const _controller_sagittal = gui.add_item('Sagittal (L - R)', 0, {folder_name: 'Side Canvas'})
-        .min(-128).max(128).step(1).onChange((v) => {
-          this.canvas.set_sagittal_depth( v );
-        });
-      [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c) => {
-        _c.domElement.addEventListener('mousewheel', (evt) => {
-          if( evt.altKey ){
-            evt.preventDefault();
-            const current_val = _c.getValue();
-            _c.setValue( current_val + evt.deltaY );
-          }
-        });
-      });
-
-      this.canvas.set_side_depth = (c, a, s) => {
-        if( typeof c === 'number' ){
-          _controller_coronal.setValue( c );
-        }
-        if( typeof a === 'number' ){
-          _controller_axial.setValue( a || 0 );
-        }
-        if( typeof s === 'number' ){
-          _controller_sagittal.setValue( s || 0 );
-        }
-      };
-
-
-      const overlay_coronal = gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          this.canvas.set_side_visibility('coronal', v);
-        });
-
-      const overlay_axial = gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          this.canvas.set_side_visibility('axial', v);
-        });
-
-      const overlay_sagittal = gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
-        .onChange((v) => {
-          this.canvas.set_side_visibility('sagittal', v);
-        });
-
-      // register overlay keyboard shortcuts
-      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
-        if( evt.event.shiftKey ){
-          const _v = overlay_coronal.getValue();
-          overlay_coronal.setValue( !_v );
-        }
-      }, 'overlay_coronal');
-
-      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
-        if( evt.event.shiftKey ){
-          const _v = overlay_axial.getValue();
-          overlay_axial.setValue( !_v );
-        }
-      }, 'overlay_axial');
-
-      this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
-        if( evt.event.shiftKey ){
-          const _v = overlay_sagittal.getValue();
-          overlay_sagittal.setValue( !_v );
-        }
-      }, 'overlay_sagittal');
-
-      // show electrodes trimmed
-      gui.add_item('Dist. Threshold', 2, { folder_name: 'Side Canvas' })
-        .min(0).max(64).step(0.1)
-        .onChange((v) => {
-          this.canvas.trim_electrodes( v );
-          this.canvas.start_animation( 0 );
-        });
-      this.canvas.trim_electrodes( 2 );
-
-      gui.add_item('Display Anchor', false, { folder_name: 'Main Canvas' })
-        .onChange((v) => {
-          this.canvas.set_cube_anchor_visibility(v);
-        });
-
+      presets.c_toggle_side_panel();
+      presets.c_reset_side_panel();
+      presets.c_side_depth();
+      presets.c_side_electrode_dist();
     }
-
-
 
     // ---------------------------- Presets
     to_array( control_presets ).forEach((control_preset) => {
@@ -63477,14 +63138,7 @@ class src_BrainCanvas{
         return(null);
       }
       try {
-        presets[control_preset]();
-        // console.log(control_preset);
-
-        const _ctrl_callback = presets[control_preset + '_callback'];
-        if(typeof(_ctrl_callback) === 'function'){
-          _ctrl_callback();
-        }
-        // console.log(control_preset);
+        presets['c_' + control_preset]();
       } catch (e) {
         if(this.DEBUG){
           console.warn(e);
@@ -63492,22 +63146,14 @@ class src_BrainCanvas{
       }
     });
 
-    if( to_array( this.settings.color_maps ).length > 0 ){
-      // Add animation
-      let _ani_names = Object.keys( this.settings.color_maps ),
-          _ani_init = this.settings.default_colormap;
-      if( !_ani_init || !_ani_names.includes( _ani_init )){
-        _ani_init = _ani_names[0];
-      }
-      presets.animation('Timeline', 0.001, _ani_names, _ani_init);
-      gui.open_folder('Timeline');
-    }
-
+    presets.c_animation();
 
     // ---------------------------- Misc
-    gui.add_folder('Misc');
+    // gui.add_folder('Misc');
 
     /* Misc settings */
+
+    /*
     // Background color
     gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Default'})
       .onChange((v) => {
@@ -63522,24 +63168,7 @@ class src_BrainCanvas{
         this.canvas.background_color = v;
         this.canvas.foreground_color = inversedColor;
       });
-
-
-    this.canvas.render_legend = this.settings.show_legend;
-
-    /*
-    gui.add_item('Realtime Raycast', false, {folder_name: 'Misc'})
-      .onChange((v) =>{
-        this.canvas.disable_raycast = !v;
-      });
-    */
-
-    // ---------------------------- Default
-    /*
-    gui.add_item('Viewer Title', '', {folder_name: 'Default'}).onChange((v) => {
-        this.canvas.title = v;
-        this.canvas.start_animation(0);
-      });*/
-
+      */
     return(gui);
 
   }
@@ -63574,20 +63203,7 @@ class src_BrainCanvas{
       let gui = this._register_gui_control();
       this._set_info_callback();
 
-
       this.canvas.start_animation(0);
-
-      /**
-       * This might cause problem In RAVE as 3D rendering takes
-      // If has animation, then enable it
-      if( this.has_animation ){
-        let c = gui.get_controller('Play/Pause', 'Timeline');
-        if( typeof( c.setValue ) === 'function' ){
-          c.setValue(true);
-        }
-      }
-      */
-
     };
 
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {

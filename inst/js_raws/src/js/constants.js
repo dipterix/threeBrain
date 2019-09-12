@@ -52,10 +52,12 @@ CONSTANTS.KEY_CYCLE_LEFT              = 'BracketLeft';  // [ for cycle through l
 CONSTANTS.KEY_CYCLE_RIGHT             = 'BracketRight'; // ] for cycle through right hemisphere material
 CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 'Period';       // "." for choosing next electrodes
 CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 'Comma';        // "," for choosing previous electrodes
+CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = 'KeyV';         // 'v' for cycling through visible, hide inactive, hidden
 CONSTANTS.KEY_CYCLE_SURFACE           = 'KeyP';         // "p" for cycle through surfaces
 CONSTANTS.KEY_OVERLAY_CORONAL         = 'KeyC';         // 'C' for coronal
 CONSTANTS.KEY_OVERLAY_AXIAL           = 'KeyA';         // 'A' for coronal
 CONSTANTS.KEY_OVERLAY_SAGITTAL        = 'KeyS';         // 'S' for coronal
+CONSTANTS.KEY_CYCLE_ANIMATION         = 'KeyC';         // 'c' for cycling through animation clips
 CONSTANTS.KEY_TOGGLE_ANIMATION        = 'KeyS';         // 's' for play/paus animation
 CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling through electrodes (localization)
 CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electrode type (surface ot iEEG)
@@ -73,5 +75,31 @@ CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - p
 // Colors
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects
 CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient light that lights up all cameras
+
+
+// dat.GUI folders
+CONSTANTS.FOLDERS = {
+  'background-color'      : 'Default',
+  'video-recorder'        : 'Main Canvas',
+  'reset-main-camera'     : 'Main Canvas',
+  'main-camera-position'  : 'Main Canvas',
+  'toggle-helpper'        : 'Main Canvas',
+  'toggle-side-panels'    : 'Side Canvas',
+  'reset-side-panels'     : 'Side Canvas',
+  'side-three-planes'     : 'Side Canvas',
+  'side-electrode-dist'   : 'Side Canvas',
+  'subject-selector'      : 'Geometry',
+  'surface-selector'      : 'Geometry',
+  'hemisphere-material'   : 'Geometry',
+  'electrode-style'       : 'Geometry',
+  'electrode-mapping'     : 'Electrode Mapping',
+  'animation'             : 'Timeline'
+};
+
+
+
+
+
+
 
 export { CONSTANTS };
