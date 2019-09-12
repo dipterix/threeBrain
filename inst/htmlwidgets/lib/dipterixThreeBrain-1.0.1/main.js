@@ -57790,7 +57790,7 @@ class data_controls_THREEBRAIN_PRESETS{
   // 4. Camera Position
   c_main_camera_position(){
     const folder_name = CONSTANTS.FOLDERS[ 'main-camera-position' ];
-    const camera_pos = gui.add_item('Camera Position', '[free rotate]', {
+    const camera_pos = this.gui.add_item('Camera Position', '[free rotate]', {
       args : ['[free rotate]', '[lock]', 'right', 'left', 'anterior', 'posterior', 'superior', 'inferior'],
       folder_name : folder_name
     }).onChange((v) => {
@@ -57876,17 +57876,17 @@ class data_controls_THREEBRAIN_PRESETS{
     const folder_name = CONSTANTS.FOLDERS[ 'side-three-planes' ];
 
     // side plane
-    const _controller_coronal = gui
+    const _controller_coronal = this.gui
       .add_item('Coronal (P - A)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_coronal_depth( v );
       });
-    const _controller_axial = gui
+    const _controller_axial = this.gui
       .add_item('Axial (I - S)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_axial_depth( v );
       });
-    const _controller_sagittal = gui
+    const _controller_sagittal = this.gui
       .add_item('Sagittal (L - R)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_sagittal_depth( v );
@@ -57913,17 +57913,17 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     };
 
-    const overlay_coronal = gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
+    const overlay_coronal = this.gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
       .onChange((v) => {
         this.canvas.set_side_visibility('coronal', v);
       });
 
-    const overlay_axial = gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
+    const overlay_axial = this.gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
       .onChange((v) => {
         this.canvas.set_side_visibility('axial', v);
       });
 
-    const overlay_sagittal = gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
+    const overlay_sagittal = this.gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
       .onChange((v) => {
         this.canvas.set_side_visibility('sagittal', v);
       });
@@ -57955,7 +57955,7 @@ class data_controls_THREEBRAIN_PRESETS{
   c_side_electrode_dist(){
     const folder_name = CONSTANTS.FOLDERS[ 'side-electrode-dist' ];
     // show electrodes trimmed
-    gui.add_item('Dist. Threshold', 2, { folder_name: folder_name })
+    this.gui.add_item('Dist. Threshold', 2, { folder_name: folder_name })
       .min(0).max(64).step(0.1)
       .onChange((v) => {
         this.canvas.trim_electrodes( v );
