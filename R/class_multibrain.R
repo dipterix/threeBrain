@@ -160,8 +160,8 @@ MultiBrain2 <- R6::R6Class(
         }
       }
 
-      self$apply(function(x){
-        x$set_electrode_values(table[table$Subject == self$subject_code, ])
+      self$apply_all(function(x){
+        x$set_electrode_values(table[table$Subject == x$subject_code, ])
       })
 
 
