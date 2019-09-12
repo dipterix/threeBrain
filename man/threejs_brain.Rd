@@ -46,6 +46,8 @@ By default width=`100\%`, and height varies.}
 
 \item{palettes}{named list, names corresponds to color-map names if you want to change color palettes}
 
+\item{show_inactive_electrodes}{logical, whether to show electrodes with no values}
+
 \item{widget_id}{character, internally used as unique identifiers for widgets.
 Only use it when you have multiple widgets in one website}
 

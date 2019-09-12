@@ -591,8 +591,10 @@ class THREEBRAIN_PRESETS{
         if( !cmap ){
           legend_visible.setValue(false);
           if( v === '[No Color]' ){
-            this.canvas.electrodes.forEach((e) => {
-              e.visible = true;
+            this.canvas.electrodes.forEach((_d) => {
+              for( let _kk in _d ){
+                _d[ _kk ].visible = true;
+              }
             });
           }
         }else{

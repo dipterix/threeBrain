@@ -5,6 +5,7 @@
 #'   By default width=`100\%`, and height varies.
 #' @param default_colormap character, which color map name to display at startup
 #' @param palettes named list, names corresponds to color-map names if you want to change color palettes
+#' @param show_inactive_electrodes logical, whether to show electrodes with no values
 #' @param side_canvas logical, enable side cameras to view objects from fixed perspective
 #' @param side_zoom numerical, if side camera is enabled, zoom-in level, from 1 to 5
 #' @param side_width positive integer, side panel size in pixels
