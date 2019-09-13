@@ -58587,12 +58587,39 @@ class data_controls_THREEBRAIN_CONTROL{
     this.folders = {};
     this._gui = new GUI$1(args);
     // this._gui.remember( this.params );
+    this._gui.__closeButton.addEventListener('click', (e) => {
+      if( typeof this.__on_closed === 'function' ){
+        this.__on_closed( e );
+      }
+    });
 
     this.domElement = this._gui.domElement;
     this.DEBUG = DEBUG;
 
     this.add_folder('Default');
     this.open_folder('Default');
+  }
+
+  set closed( is_closed ){
+    this._gui.closed = is_closed;
+  }
+  get closed(){
+    return( this._gui.closed );
+  }
+
+  close(){
+    this._gui.close();
+    if( typeof this.__on_closed === 'function' ){
+      this.__on_closed( undefined );
+    }
+  }
+
+
+  // function to
+  set_closeHandler( h ){
+    if( typeof h === 'function' ){
+      this.__on_closed = h;
+    }
   }
 
 
@@ -61638,7 +61665,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     let text_position = [
       w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
-      this._lineHeight_normal
+      this._lineHeight_normal + this.pixel_ratio[0] * 25
     ];
 
     // Line 1: object name
@@ -63121,14 +63148,20 @@ class src_BrainCanvas{
       window.gui = gui;
     }
     // --------------- Register GUI controller ---------------
+    // Set default on close handler
+    gui.set_closeHandler( (evt) => {
+      this.hide_controls = gui.closed;
+      this.resize_widget( this.el.clientWidth, this.el.clientHeight );
+    });
 
     // Set side bar
     if(this.settings.hide_controls || false){
-      gui.domElement.style.display = 'none';
       this.hide_controls = true;
+      gui.close();
+      // gui.domElement.style.display = 'none';
     }else{
-      gui.domElement.style.display = 'block';
-      let placeholder = this.el_control.firstChild;
+      // gui.domElement.style.display = 'block';
+      const placeholder = this.el_control.firstChild;
       this.el_control.replaceChild( gui.domElement, placeholder );
       this.hide_controls = false;
     }
@@ -63141,6 +63174,8 @@ class src_BrainCanvas{
     }else{
       window.__presets = presets;
     }
+
+
 
     // ---------------------------- Defaults
     presets.c_background();
@@ -63210,13 +63245,9 @@ class src_BrainCanvas{
 
   _set_loader_callbacks(){
     this.canvas.loader_manager.onLoad = () => {
-      console.debug(this.outputId + ' - Loading complete. Adding object');
+      console.debug(this.outputId + ' - Finished loading. Adding object');
       // this.el_text2.innerHTML = '';
-      if( this.hide_controls ){
-        this.el_text.innerHTML = '';
-      }else{
-        this.el_text.innerHTML = '<p><small>Loading Complete!</small></p>';
-      }
+      this.el_text.style.display = 'none';
 
       this.geoms.forEach((g) => {
         if( this.DEBUG ){

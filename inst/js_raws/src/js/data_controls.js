@@ -945,12 +945,39 @@ class THREEBRAIN_CONTROL{
     this.folders = {};
     this._gui = new dat.GUI(args);
     // this._gui.remember( this.params );
+    this._gui.__closeButton.addEventListener('click', (e) => {
+      if( typeof this.__on_closed === 'function' ){
+        this.__on_closed( e );
+      }
+    });
 
     this.domElement = this._gui.domElement;
     this.DEBUG = DEBUG;
 
     this.add_folder('Default');
     this.open_folder('Default');
+  }
+
+  set closed( is_closed ){
+    this._gui.closed = is_closed;
+  }
+  get closed(){
+    return( this._gui.closed );
+  }
+
+  close(){
+    this._gui.close();
+    if( typeof this.__on_closed === 'function' ){
+      this.__on_closed( undefined );
+    }
+  }
+
+
+  // function to
+  set_closeHandler( h ){
+    if( typeof h === 'function' ){
+      this.__on_closed = h;
+    }
   }
 
 

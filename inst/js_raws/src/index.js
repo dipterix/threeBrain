@@ -116,14 +116,20 @@ class BrainCanvas{
       window.gui = gui;
     }
     // --------------- Register GUI controller ---------------
+    // Set default on close handler
+    gui.set_closeHandler( (evt) => {
+      this.hide_controls = gui.closed;
+      this.resize_widget( this.el.clientWidth, this.el.clientHeight );
+    });
 
     // Set side bar
     if(this.settings.hide_controls || false){
-      gui.domElement.style.display = 'none';
       this.hide_controls = true;
+      gui.close();
+      // gui.domElement.style.display = 'none';
     }else{
-      gui.domElement.style.display = 'block';
-      let placeholder = this.el_control.firstChild;
+      // gui.domElement.style.display = 'block';
+      const placeholder = this.el_control.firstChild;
       this.el_control.replaceChild( gui.domElement, placeholder );
       this.hide_controls = false;
     }
@@ -136,6 +142,8 @@ class BrainCanvas{
     }else{
       window.__presets = presets;
     }
+
+
 
     // ---------------------------- Defaults
     presets.c_background();
@@ -205,13 +213,9 @@ class BrainCanvas{
 
   _set_loader_callbacks(){
     this.canvas.loader_manager.onLoad = () => {
-      console.debug(this.outputId + ' - Loading complete. Adding object');
+      console.debug(this.outputId + ' - Finished loading. Adding object');
       // this.el_text2.innerHTML = '';
-      if( this.hide_controls ){
-        this.el_text.innerHTML = '';
-      }else{
-        this.el_text.innerHTML = '<p><small>Loading Complete!</small></p>';
-      }
+      this.el_text.style.display = 'none';
 
       this.geoms.forEach((g) => {
         if( this.DEBUG ){

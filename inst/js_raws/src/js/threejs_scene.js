@@ -1911,7 +1911,9 @@ class THREEBRAIN_CANVAS {
 
     let text_position = [
       w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
-      this._lineHeight_normal
+
+      // Make sure it's not hidden by control panel
+      this._lineHeight_normal + this.pixel_ratio[0] * 25
     ];
 
     // Line 1: object name

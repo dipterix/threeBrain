@@ -96,6 +96,23 @@ threejs_brain <- function(
   # Check elements
   geoms = lapply(geoms, function(g){ g$to_list() })
 
+  # Check lib_path. whether running inside of shiny or standalone
+  if(is.null(shiny::getDefaultReactiveDomain())){
+    lib_path = 'lib/'
+  }else{
+    lib_path = ''
+    if(is.null(token)){
+      session = shiny::getDefaultReactiveDomain()
+      token = session$userData$rave_id
+    }
+
+    # If in shiny, token is given or rave_id is given, we use fixed temp path
+    # in this way to reduce redundency
+    if( !is.null(token) && length(tmp_dirname) != 1 ){
+      tmp_dirname = token
+    }
+  }
+
   # Check cached json files
   if(length(tmp_dirname) != 1){
     tmp_dirname = paste(sample(c(letters, LETTERS, 0:9), 10), collapse = '')
@@ -126,17 +143,6 @@ threejs_brain <- function(
 
   # Get groups
   groups = lapply(groups, function(g){ g$to_list() })
-
-  if(is.null(shiny::getDefaultReactiveDomain())){
-    lib_path = 'lib/'
-  }else{
-    lib_path = ''
-    if(is.null(token)){
-      session = shiny::getDefaultReactiveDomain()
-      token = session$userData$rave_id
-    }
-  }
-
 
 
   # Generate settings
