@@ -224,12 +224,6 @@ class BrainCanvas{
         }
       });
 
-      // If this is a brain viewer
-      if( to_array( this.settings.control_presets ).includes('subject2') ){
-        // Set subject, TODO: use N27 as default?
-        this.canvas.switch_subject();
-      }
-
       let gui = this._register_gui_control();
       this._set_info_callback();
 
@@ -390,8 +384,6 @@ class BrainCanvas{
       this.canvas.loader_manager.onLoad();
     }
 
-    // controller center
-    this.canvas.update_control_center( this.settings.control_center );
 
     /* Update camera. If we set camera position, then shiny will behave weird and we have to
     * reset camera every time. To solve this problem, we only reset zoom level

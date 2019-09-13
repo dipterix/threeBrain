@@ -350,7 +350,13 @@ class THREEBRAIN_PRESETS{
       }).onChange((v) => {
         this.canvas.switch_subject( v );
       });
+
+      this.canvas.switch_subject();
+    }else{
+      // controller center
+      this.canvas.update_control_center( this.settings.control_center );
     }
+
   }
 
   // 11. surface type

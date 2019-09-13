@@ -15,6 +15,10 @@
   line-height: normal;
 }
 
+.html-widget.threejs_brain {
+  position: relative;
+}
+
 
 .threejs-control {
   position: relative;
