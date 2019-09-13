@@ -14,7 +14,18 @@ function is_electrode(e) {
   }
 }
 
-
+function has_meta_keys( event, shift = true, ctrl = true, alt = true){
+  if( shift && event.shiftKey ){
+    return(true);
+  }
+  if( ctrl && event.ctrlKey ){
+    return(true);
+  }
+  if( alt && event.altKey ){
+    return(true);
+  }
+  return( false );
+}
 /**
  * @author: Zhengjia Wang
  * Defines model (logic) part for dat.GUI
@@ -291,21 +302,21 @@ class THREEBRAIN_PRESETS{
 
     // register overlay keyboard shortcuts
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
-      if( evt.event.shiftKey ){
+      if( has_meta_keys( evt.event, true, false, false ) ){
         const _v = overlay_coronal.getValue();
         overlay_coronal.setValue( !_v );
       }
     }, 'overlay_coronal');
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
-      if( evt.event.shiftKey ){
+      if( has_meta_keys( evt.event, true, false, false ) ){
         const _v = overlay_axial.getValue();
         overlay_axial.setValue( !_v );
       }
     }, 'overlay_axial');
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
-      if( evt.event.shiftKey ){
+      if( has_meta_keys( evt.event, true, false, false ) ){
         const _v = overlay_sagittal.getValue();
         overlay_sagittal.setValue( !_v );
       }
@@ -362,9 +373,11 @@ class THREEBRAIN_PRESETS{
       });
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE, (evt) => {
-      let current_idx = (_c.indexOf( surf_type.getValue() ) + 1) % _c.length;
-      if( current_idx >= 0 ){
-        surf_type.setValue( _c[ current_idx ] );
+      if( !has_meta_keys( evt.event, true, true, true ) ){
+        let current_idx = (_c.indexOf( surf_type.getValue() ) + 1) % _c.length;
+        if( current_idx >= 0 ){
+          surf_type.setValue( _c[ current_idx ] );
+        }
       }
     }, 'gui_surf_type2');
   }
@@ -399,11 +412,11 @@ class THREEBRAIN_PRESETS{
 
     // add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_LEFT, (evt) => {
-      if( evt.event.shiftKey ){
+      if( has_meta_keys( evt.event, true, false, false ) ){
         let current_opacity = lh_trans.getValue() - 0.3;
         if( current_opacity < 0 ){ current_opacity = 1; }
         lh_trans.setValue( current_opacity );
-      }else{
+      }else if( !has_meta_keys( evt.event, true, true, true ) ){
         let current_idx = (options.indexOf( lh_ctrl.getValue() ) + 1) % options.length;
         if( current_idx >= 0 ){
           lh_ctrl.setValue( options[ current_idx ] );
@@ -412,11 +425,11 @@ class THREEBRAIN_PRESETS{
     }, 'gui_left_cycle');
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_RIGHT, (evt) => {
-      if( evt.event.shiftKey ){
+      if( has_meta_keys( evt.event, true, false, false ) ){
         let current_opacity = rh_trans.getValue() - 0.3;
         if( current_opacity < 0 ){ current_opacity = 1; }
         rh_trans.setValue( current_opacity );
-      }else{
+      }else if( !has_meta_keys( evt.event, true, true, true ) ){
         let current_idx = (options.indexOf( rh_ctrl.getValue() ) + 1) % options.length;
         if( current_idx >= 0 ){
           rh_ctrl.setValue( options[ current_idx ] );
@@ -480,9 +493,11 @@ class THREEBRAIN_PRESETS{
 
     // Add shortcuts
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY, (evt) => {
-      let current_idx = (vis_types.indexOf( this._controller_electrodes.getValue() ) + 1) % vis_types.length;
-      if( current_idx >= 0 ){
-        this._controller_electrodes.setValue( vis_types[ current_idx ] );
+      if( !has_meta_keys( evt.event, true, true, true ) ){
+        let current_idx = (vis_types.indexOf( this._controller_electrodes.getValue() ) + 1) % vis_types.length;
+        if( current_idx >= 0 ){
+          this._controller_electrodes.setValue( vis_types[ current_idx ] );
+        }
       }
     }, 'gui_c_electrodes');
 
@@ -645,16 +660,18 @@ class THREEBRAIN_PRESETS{
 
     // Add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
-      if( !evt.event.shiftKey ){
+      if( !has_meta_keys( evt.event, true, true, true ) ){
         const is_playing = this._ani_status.getValue();
         this._ani_status.setValue( !is_playing );
       }
     }, 'gui_toggle_animation');
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ANIMATION, (evt) => {
-      let current_idx = (names.indexOf( ani_name.getValue() ) + 1) % names.length;
-      if( current_idx >= 0 ){
-        ani_name.setValue( names[ current_idx ] );
+      if( !has_meta_keys( evt.event, true, true, true ) ){
+        let current_idx = (names.indexOf( ani_name.getValue() ) + 1) % names.length;
+        if( current_idx >= 0 ){
+          ani_name.setValue( names[ current_idx ] );
+        }
       }
     }, 'gui_cycle_animation');
 
@@ -872,7 +889,7 @@ class THREEBRAIN_PRESETS{
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_EDITOR, (evt) => {
       if( this.canvas.edit_mode ){
         let delta = 1;
-        if( evt.event.shiftKey ){
+        if( has_meta_keys( evt.event, true, false, false ) ){
           delta = -1;
         }
         // last
