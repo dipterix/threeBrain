@@ -934,6 +934,19 @@ class THREEBRAIN_PRESETS{
     });
   }
 
+  c_ct_visibility(){
+    this.gui.add_item('Align CT to T1', false, { folder_name: 'Default' })
+      .onChange((v) => {
+        this.canvas._show_ct = v;
+        this.canvas.switch_subject();
+      });
+    this.gui.add_item('CT threshold', 0.8, { folder_name: 'Default' })
+      .min(0.3).max(1).step(0.01)
+      .onChange((v) => {
+        this.canvas.switch_subject('/', { ct_threshold : v });
+      });
+  }
+
 }
 
 

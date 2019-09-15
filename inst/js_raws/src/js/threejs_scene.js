@@ -7,6 +7,7 @@ import { make_resizable } from './libs/resizable.js';
 import { CONSTANTS } from './constants.js';
 import { gen_sphere } from './geometry/sphere.js';
 import { gen_datacube } from './geometry/datacube.js';
+import { gen_datacube2 } from './geometry/datacube2.js';
 import { gen_free } from './geometry/free.js';
 import { Compass } from './geometry/compass.js';
 import { json2csv } from 'json-2-csv';
@@ -15,10 +16,11 @@ import * as download from 'downloadjs';
 
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
-  'sphere' : gen_sphere,
-  'free'   : gen_free,
-  'datacube' : gen_datacube,
-  'blank'  : (g, canvas) => { return(null) }
+  'sphere'    : gen_sphere,
+  'free'      : gen_free,
+  'datacube'  : gen_datacube,
+  'datacube2' : gen_datacube2,
+  'blank'     : (g, canvas) => { return(null) }
 };
 
 /* ------------------------------------ Layer setups ------------------------------------
@@ -99,6 +101,8 @@ class THREEBRAIN_CANVAS {
     this.subject_codes = [];
     this.electrodes = new Map();
     this.volumes = new Map();
+    this.ct_scan = new Map();
+    this._show_ct = false;
     this.surfaces = new Map();
     this.state_data = new Map();
     // set default values
@@ -2073,6 +2077,7 @@ class THREEBRAIN_CANVAS {
     this.subject_codes.length = 0;
     this.electrodes.clear();
     this.volumes.clear();
+    this.ct_scan.clear();
     this.surfaces.clear();
     this.state_data.clear();
     this.shared_data.clear();
@@ -2095,28 +2100,28 @@ class THREEBRAIN_CANVAS {
     if( typeof this._set_coronal_depth === 'function' ){
       this._set_coronal_depth( depth );
     }else{
-      console.log('Set coronal depth not implemented');
+      console.debug('Set coronal depth not implemented');
     }
   }
   set_axial_depth( depth ){
     if( typeof this._set_axial_depth === 'function' ){
       this._set_axial_depth( depth );
     }else{
-      console.log('Set axial depth not implemented');
+      console.debug('Set axial depth not implemented');
     }
   }
   set_sagittal_depth( depth ){
     if( typeof this._set_sagittal_depth === 'function' ){
       this._set_sagittal_depth( depth );
     }else{
-      console.log('Set sagittal depth not implemented');
+      console.debug('Set sagittal depth not implemented');
     }
   }
   set_side_depth( c_d, a_d, s_d ){
-    console.log('Set side depth not implemented');
+    console.debug('Set side depth not implemented');
   }
   set_side_visibility( which, visible ){
-    console.log('Set side visibility not implemented');
+    console.debug('Set side visibility not implemented');
   }
   side_plane_sendback( is_back ){
     if( typeof this._side_plane_sendback === 'function' ){
@@ -2173,6 +2178,7 @@ class THREEBRAIN_CANVAS {
       this.subject_codes.push( subject_code );
       this.electrodes.set( subject_code, {});
       this.volumes.set( subject_code, {} );
+      this.ct_scan.set( subject_code, {} );
       this.surfaces.set(subject_code, {} );
     }
 
@@ -2217,6 +2223,28 @@ class THREEBRAIN_CANVAS {
         this._register_datacube( m );
         this._has_datacube_registered = true;
       }
+
+
+    }else if( g.type === 'datacube2' ){
+      this.mesh.set( g.name, m );
+
+      if(g.clickable){
+        this.clickable.set( g.name, m );
+      }
+
+      // data cube 2 must have groups
+      let gp = this.group.get( g.group.group_name );
+      // Move gp to global scene as its center is always 0,0,0
+      this.origin.remove( gp );
+      this.scene.add( gp );
+
+      gp.add( m );
+      set_layer( m );
+      m.userData.construct_params = g;
+      m.updateMatrixWorld();
+
+      get_or_default( this.ct_scan, subject_code, {} )[ g.name ] = m;
+
 
 
     }else if( g.type === 'sphere' && g.is_electrode ){
@@ -2762,6 +2790,22 @@ class THREEBRAIN_CANVAS {
     return( Object.keys( re ) );
   }
 
+  get_ct_types(){
+    const re = {};
+
+    this.ct_scan.forEach( (vol, s) => {
+      let volume_names = Object.keys( vol ),
+          //  brain.finalsurfs (YAB)
+          res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
+          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
+
+      if( res && res.length === 2 ){
+        re[ res[1] ] = 1;
+      }
+    });
+    return( Object.keys( re ) );
+  }
+
   switch_subject( target_subject = '/', args = {}){
 
     if( this.subject_codes.length === 0 ){
@@ -2795,6 +2839,9 @@ class THREEBRAIN_CANVAS {
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
     let volume_type = args.volume_type || state.get( 'volume_type' ) || 'brain.finalsurfs';
+    let ct_type = args.ct_type || state.get( 'ct_type' ) || 'ct.aligned.t1';
+    let ct_threshold = args.ct_threshold || state.get( 'ct_threshold' ) || 0.8;
+
     let map_template = state.get( 'map_template' ) || false;
 
     if( args.map_template !== undefined ){
@@ -2806,6 +2853,7 @@ class THREEBRAIN_CANVAS {
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
 
     this.switch_volume( target_subject, volume_type );
+    this.switch_ct( target_subject, ct_type, ct_threshold );
     this.switch_surface( target_subject, surface_type,
                           [surface_opacity_left, surface_opacity_right],
                           [material_type_left, material_type_right] );
@@ -2823,6 +2871,8 @@ class THREEBRAIN_CANVAS {
     state.set( 'material_type_left', material_type_left );
     state.set( 'material_type_right', material_type_right );
     state.set( 'volume_type', volume_type );
+    state.set( 'ct_type', ct_type );
+    state.set( 'ct_threshold', ct_threshold );
     state.set( 'map_template', map_template );
     state.set( 'map_type_surface', map_type_surface );
     state.set( 'map_type_volume', map_type_volume );
@@ -2899,6 +2949,24 @@ class THREEBRAIN_CANVAS {
 
     this.start_animation( 0 );
   }
+
+  switch_ct( target_subject, ct_type = 'ct.aligned.t1', ct_threshold = 0.8 ){
+
+    this.ct_scan.forEach( (vol, subject_code) => {
+      for( let ct_name in vol ){
+        const m = vol[ ct_name ];
+        if( subject_code === target_subject && ct_name === `${ct_type} (${subject_code})`){
+          m.parent.visible = this._show_ct;
+          m.material.uniforms.u_renderthreshold.value = ct_threshold;
+        }else{
+          m.parent.visible = false;
+        }
+      }
+    });
+
+    this.start_animation( 0 );
+  }
+
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
     /* DEBUG code

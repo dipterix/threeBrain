@@ -29964,7 +29964,7 @@ SpriteMaterial.prototype.copy = function ( source ) {
  * @author alteredq / http://alteredqualia.com/
  */
 
-var geometry;
+var three_module_geometry;
 
 function Sprite( material ) {
 
@@ -29972,9 +29972,9 @@ function Sprite( material ) {
 
 	this.type = 'Sprite';
 
-	if ( geometry === undefined ) {
+	if ( three_module_geometry === undefined ) {
 
-		geometry = new BufferGeometry();
+		three_module_geometry = new BufferGeometry();
 
 		var float32Array = new Float32Array( [
 			- 0.5, - 0.5, 0, 0, 0,
@@ -29985,13 +29985,13 @@ function Sprite( material ) {
 
 		var interleavedBuffer = new InterleavedBuffer( float32Array, 5 );
 
-		geometry.setIndex( [ 0, 1, 2,	0, 2, 3 ] );
-		geometry.addAttribute( 'position', new InterleavedBufferAttribute( interleavedBuffer, 3, 0, false ) );
-		geometry.addAttribute( 'uv', new InterleavedBufferAttribute( interleavedBuffer, 2, 3, false ) );
+		three_module_geometry.setIndex( [ 0, 1, 2,	0, 2, 3 ] );
+		three_module_geometry.addAttribute( 'position', new InterleavedBufferAttribute( interleavedBuffer, 3, 0, false ) );
+		three_module_geometry.addAttribute( 'uv', new InterleavedBufferAttribute( interleavedBuffer, 2, 3, false ) );
 
 	}
 
-	this.geometry = geometry;
+	this.geometry = three_module_geometry;
 	this.material = ( material !== undefined ) ? material : new SpriteMaterial();
 
 	this.center = new Vector2( 0.5, 0.5 );
@@ -54122,6 +54122,7 @@ return( THREE );
  * This is not the only approach, therefore it's marked 1.
  */
 
+
 const register_volumeShader1 = function(THREE){
 
   THREE.VolumeRenderShader1 = {
@@ -54137,6 +54138,7 @@ const register_volumeShader1 = function(THREE){
   				'varying vec4 v_nearpos;',
   				'varying vec4 v_farpos;',
   				'varying vec3 v_position;',
+  				'varying mat4 m_proj_mat;',
 
   				'mat4 inversemat(mat4 m) {',
   						// Taken from https://github.com/stackgl/glsl-inverse/blob/master/index.glsl
@@ -54188,27 +54190,30 @@ const register_volumeShader1 = function(THREE){
   						'mat4 viewtransformf = viewMatrix;',
   						'mat4 viewtransformi = inversemat(viewMatrix);',
 
+  						'v_position = position;',
+
   						// Project local vertex coordinate to camera position. Then do a step
   						// backward (in cam coords) to the near clipping plane, and project back. Do
   						// the same for the far clipping plane. This gives us all the information we
   						// need to calculate the ray and truncate it to the viewing cone.
-  						'vec4 position4 = vec4(position, 1.0);',
+  						'vec4 position4 = vec4(v_position, 1.0);',
   						'vec4 pos_in_cam = viewtransformf * position4;',
 
   						// Intersection of ray and near clipping plane (z = -1 in clip coords)
   						'pos_in_cam.z = -pos_in_cam.w;',
-  						'v_nearpos = viewtransformi * pos_in_cam;',
+  						'v_nearpos = viewtransformi * pos_in_cam / pos_in_cam.w;',
 
   						// Intersection of ray and far clipping plane (z = +1 in clip coords)
   						'pos_in_cam.z = pos_in_cam.w;',
-  						'v_farpos = viewtransformi * pos_in_cam;',
+  						'v_farpos = viewtransformi * pos_in_cam / pos_in_cam.w;',
 
   						// Set varyings and output pos
-  						'v_position = position;',
+  						'm_proj_mat = projectionMatrix* viewMatrix * modelMatrix;',
+
   						'gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;',
   				'}',
   		].join( '\n' ),
-  	fragmentShader: [
+  	  fragmentShader: [
   				'precision highp float;',
   				'precision mediump sampler3D;',
 
@@ -54223,10 +54228,11 @@ const register_volumeShader1 = function(THREE){
   				'varying vec3 v_position;',
   				'varying vec4 v_nearpos;',
   				'varying vec4 v_farpos;',
+  				'varying mat4 m_proj_mat;',
 
   				// The maximum distance through our rendering volume is sqrt(3).
   				'const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3',
-  				'const int REFINEMENT_STEPS = 4;',
+  				'const int REFINEMENT_STEPS = 2;',
   				'const float relative_step_size = 1.0;',
   				'const vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);',
   				'const vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);',
@@ -54253,37 +54259,50 @@ const register_volumeShader1 = function(THREE){
   						// v_position is the back face of the cuboid, so the initial distance calculated in the dot
   						// product below is the distance from near clip plane to the back of the cuboid
   						'float distance = dot(nearpos - v_position, view_ray);',
-  						'distance = max(distance, min((-0.5 - v_position.x) / view_ray.x,',
-  																				'(u_size.x - 0.5 - v_position.x) / view_ray.x));',
-  						'distance = max(distance, min((-0.5 - v_position.y) / view_ray.y,',
-  																				'(u_size.y - 0.5 - v_position.y) / view_ray.y));',
-  						'distance = max(distance, min((-0.5 - v_position.z) / view_ray.z,',
-  																				'(u_size.z - 0.5 - v_position.z) / view_ray.z));',
+  						'vec3 dist1 = (-0.5 - v_position) / view_ray;',
+  						'vec3 dist2 = (u_size -0.5 - v_position) / view_ray;',
 
-  																				// Now we have the starting position on the front surface
+  						'distance = max(distance, min(dist1.x, dist2.x));',
+  						'distance = max(distance, min(dist1.y, dist2.y));',
+  						'distance = max(distance, min(dist1.z, dist2.z));',
+
+              // Now we have the starting position on the front surface
   						'vec3 front = v_position + view_ray * distance;',
 
   						// Decide how many steps to take
   						'int nsteps = int(-distance / relative_step_size + 0.5);',
-  						'if ( nsteps < 1 )',
-  								'discard;',
+  						'if ( nsteps < 1 ){',
+  								// 'discard;',
+  								'gl_FragColor = vec4(0.0);',
+  								'gl_FragDepth = 1.0;',
+  								'return;',
+  						'}else {',
 
-  						// Get starting location and step vector in texture coordinates
-  						'vec3 step = ((v_position - front) / u_size) / float(nsteps);',
-  						'vec3 start_loc = front / u_size;',
+      						// Get starting location and step vector in texture coordinates
+      						'vec3 step = ((v_position - front) / u_size) / float(nsteps);',
+      						'vec3 start_loc = front / u_size;',
 
-  						// For testing: show the number of steps. This helps to establish
-  						// whether the rays are correctly oriented
-  						//'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);',
-  						//'return;',
+      						// For testing: show the number of steps. This helps to establish
+      						// whether the rays are correctly oriented
+      						// 'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);',
+      						// 'return;',
 
-  						'if (u_renderstyle == 0)',
-  								'cast_mip(start_loc, step, nsteps, view_ray);',
-  						'else if (u_renderstyle == 1)',
-  								'cast_iso(start_loc, step, nsteps, view_ray);',
+      						// 'if (u_renderstyle == 0)',
+      						// 		'cast_mip(start_loc, step, nsteps, view_ray);',
+      						// 'else if (u_renderstyle == 1)',
+      						'gl_FragColor = vec4(0.0);	// init transparent',
+  						    'gl_FragDepth = 1.0;',
+      						'cast_iso(start_loc, step, nsteps, view_ray);',
 
-  						'if (gl_FragColor.a < 0.05)',
-  								'discard;',
+                  'if (gl_FragColor.a < 0.05){',
+                      'gl_FragDepth = 1.0;',
+                      'gl_FragColor.a = 0.0;',
+                  '}',
+      						// 'gl_FragColor = vec4(0.0, gl_FragDepth, 1.0, 1.0);',
+      				'}',
+
+  						// 'if (gl_FragColor.a < 0.05)',
+  								// 'discard;',
   				'}',
 
 
@@ -54337,7 +54356,6 @@ const register_volumeShader1 = function(THREE){
 
   				'void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
 
-  						'gl_FragColor = vec4(0.0);	// init transparent',
   						'vec4 color3 = vec4(0.0);	// final color',
   						'vec3 dstep = 1.5 / u_size;	// step to sample derivative',
   						'vec3 loc = start_loc;',
@@ -54354,17 +54372,21 @@ const register_volumeShader1 = function(THREE){
   										// Sample from the 3D texture
   								'float val = sample1(loc);',
 
+  								'vec4 proj_p = vec4(1.0);',
+
   								'if (val > low_threshold) {',
   								// Take the last interval in smaller steps
-  										'vec3 iloc = loc - 0.5 * step;',
+  										'vec4 iloc = vec4(loc - 0.5 * step, 1.0);',
   										'vec3 istep = step / float(REFINEMENT_STEPS);',
   										'for (int i=0; i<REFINEMENT_STEPS; i++) {',
-  												'val = sample1(iloc);',
+  												'val = sample1(iloc.xyz);',
   												'if (val > u_renderthreshold) {',
-  														'gl_FragColor = add_lighting(val, iloc, dstep, view_ray);',
+  														'gl_FragColor = add_lighting(val, iloc.xyz, dstep, view_ray);',
+  														'proj_p = m_proj_mat * (iloc * vec4(u_size, 1.0));',
+  														'gl_FragDepth = proj_p.z / proj_p.w / 2.0 + 0.5;',//gl_FragCoord.z;',
   														'return;',
   												'}',
-  												'iloc += istep;',
+  												'iloc.xyz += istep;',
   										'}',
   								'}',
 
@@ -54438,6 +54460,126 @@ const register_volumeShader1 = function(THREE){
   						'final_color.a = color.a;',
   						'return final_color;',
   				'}',
+  	].join( '\n' )
+  };
+
+  return(THREE);
+
+};
+
+
+
+
+const register_volumeShader2 = function(THREE){
+
+  THREE.VolumeRenderShader1 = {
+  	uniforms: {
+  				"u_size": { value: new THREE.Vector3( 1, 1, 1 ) },
+  				"u_renderstyle": { value: 0 },
+  				"u_renderthreshold": { value: 0.5 },
+  				"u_clim": { value: new THREE.Vector2( 1, 1 ) },
+  				"u_data": { value: null },
+  				"u_cmdata": { value: null },
+  				'volume_scale' : { value: new THREE.Vector3(1,1,1) }
+  		},
+  		vertexShader: [
+          // 'uniform mat4 proj_view;'
+          'uniform vec3 volume_scale;',
+          'out vec3 vray_dir;',
+          'flat out vec3 transformed_eye;',
+
+          'void main(void) {',
+          	// Translate the cube to center it at the origin.
+          	// 'vec3 volume_translation = vec3(0.5) - volume_scale * 0.5;',
+          	'vec3 volume_translation =  - 0.5 * volume_scale;',
+
+          	'gl_Position = projectionMatrix * modelViewMatrix * vec4(position * volume_scale + volume_translation, 1);',
+
+          	// Compute eye position and ray directions in the unit cube space
+          	'transformed_eye = cameraPosition;',//(cameraPosition - volume_translation) / volume_scale;',
+
+          	'vray_dir = position - transformed_eye;',
+          '}'
+  		].join( '\n' ),
+  	fragmentShader: [
+  	      'precision highp int;',
+          'precision highp float;',
+
+          // 'uniform highp sampler3D volume;',
+          'uniform highp sampler3D u_data;',
+          // WebGL doesn't support 1D textures, so we use a 2D texture for the transfer function
+          // 'uniform highp sampler2D transfer_fcn;'
+          'uniform highp sampler2D u_cmdata;',
+
+          // 'uniform ivec3 volume_dims;',
+          'uniform vec3 u_size;',
+
+          // Read from vertexShader
+          'in vec3 vray_dir;',
+          'flat in vec3 transformed_eye;',
+
+          // function to intersect raycaster with box
+          'vec2 intersect_box(vec3 orig, vec3 dir) {',
+          	'const vec3 box_min = vec3(0);',
+          	'const vec3 box_max = vec3(1);',
+          	'vec3 inv_dir = 1.0 / dir;',
+          	'vec3 tmin_tmp = (box_min - orig) * inv_dir;',
+          	'vec3 tmax_tmp = (box_max - orig) * inv_dir;',
+          	'vec3 tmin = min(tmin_tmp, tmax_tmp);',
+          	'vec3 tmax = max(tmin_tmp, tmax_tmp);',
+          	'float t0 = max(tmin.x, max(tmin.y, tmin.z));',
+          	'float t1 = min(tmax.x, min(tmax.y, tmax.z));',
+          	'return vec2(t0, t1);',
+          '}',
+
+          'void main() {',
+              'vec4 color;',
+              // Step 1: Normalize the view ray (TODO: add function normalize?)
+            	'vec3 ray_dir = normalize(vray_dir);',
+
+            	// Step 2: Intersect the ray with the volume bounds to find the interval
+            	// along the ray overlapped by the volume.
+            	'vec2 t_hit = intersect_box(transformed_eye, ray_dir);',
+
+            	// give default value
+            	//'color.rgba = vec4(0.0);',
+
+            	'if (t_hit.x > t_hit.y) {',
+            		'discard;',
+            	'}',
+            	// We don't want to sample voxels behind the eye if it's
+            	// inside the volume, so keep the starting point at or in front
+            	// of the eye
+            	't_hit.x = max(t_hit.x, 0.0);',
+
+            	// Step 3: Compute the step size to march through the volume grid
+            	'vec3 dt_vec = 1.0 / (u_size * abs(ray_dir));',
+            	'float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));',
+
+            	// Step 4: Starting from the entry point, march the ray through the volume
+            	// and sample it
+            	'vec3 p = transformed_eye + t_hit.x * ray_dir;',
+            	'for (float t = t_hit.x; t < t_hit.y; t += dt) {',
+              		// Step 4.1: Sample the volume, and color it by the transfer function.
+              		// Note that here we don't use the opacity from the transfer function,
+              		// and just use the sample value as the opacity
+              		'float val = texture(u_data, p).r;',
+              		'vec4 val_color = vec4(texture(u_cmdata, vec2(val, 0.5)).rgb, val);',
+
+              		// Step 4.2: Accumulate the color and opacity using the front-to-back
+              		// compositing equation
+              		'color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;',
+              		'color.a += (1.0 - color.a) * val_color.a;',
+
+              		// Optimization: break out of the loop when the color is near opaque
+              		'if (color.a >= 0.95) {',
+              			  'break;',
+              		'}',
+              		'p += ray_dir * dt;',
+            	'}',
+
+            	'gl_FragColor = color;',
+          '}'
   	].join( '\n' )
   };
 
@@ -58576,6 +58718,19 @@ class data_controls_THREEBRAIN_PRESETS{
     });
   }
 
+  c_ct_visibility(){
+    this.gui.add_item('Align CT to T1', false, { folder_name: 'Default' })
+      .onChange((v) => {
+        this.canvas._show_ct = v;
+        this.canvas.switch_subject();
+      });
+    this.gui.add_item('CT threshold', 0.8, { folder_name: 'Default' })
+      .min(0.3).max(1).step(0.01)
+      .onChange((v) => {
+        this.canvas.switch_subject('/', { ct_threshold : v });
+      });
+  }
+
 }
 
 
@@ -59632,6 +59787,93 @@ function gen_datacube(g, canvas){
 
 
 
+// CONCATENATED MODULE: ./src/js/geometry/datacube2.js
+
+
+
+
+
+function gen_datacube2(g, canvas){
+
+  let mesh;
+
+  // Cube values Must be from 0 to 1, float
+  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
+        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
+        volume = {
+          'xLength' : cube_half_size[0]*2,
+          'yLength' : cube_half_size[1]*2,
+          'zLength' : cube_half_size[2]*2
+        };
+  // const cube_values_float = cube_values.map((v) => {return(v / 255)});
+
+  // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
+  if( canvas.has_webgl2 ){
+    // Generate 3D texture, to do so, we need to customize shaders
+
+    // 3D texture
+    let texture = new threeplugins_THREE.DataTexture3D(
+      new Uint8Array(cube_values),
+      cube_half_size[0]*2,
+      cube_half_size[1]*2,
+      cube_half_size[2]*2
+    );
+
+    texture.minFilter = texture.magFilter = threeplugins_THREE.LinearFilter;
+
+    // Needed to solve error: INVALID_OPERATION: texImage3D: ArrayBufferView not big enough for request
+    texture.format = threeplugins_THREE.RedFormat;
+    texture.type = threeplugins_THREE.UnsignedByteType;
+    // texture.unpackAlignment = 1;
+
+    texture.needsUpdate = true;
+
+    // Colormap textures, using datauri hard-coded
+  	let cmtextures = {
+  		viridis: new threeplugins_THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAtUlEQVR42n2Q0W3FMAzEyNNqHaH7j2L1w3ZenDwUMAwedXKA+MMvSqJiiBoiCWqWxKBEXaMZ8Sqs0zcmIv1p2nKwEvpLZMYOe3R4wku+TO7es/O8H+vHlH/KR9zQT8+z8F4531kRe379MIK4oD3v/SP7iplyHTKB5WNPs4AFH3kzO446Y+y6wA4TxqfMXBmzVrtwREY5ZrMY069dxr28Yb+wVjp02QWhSwKFJcHCaGGwTLBIzB9eyYkORwhbNAAAAABJRU5ErkJggg==" ),
+  		gray: new threeplugins_THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAEklEQVR42mNkYGBgHAWjYKQCAH7BAv8WAlmwAAAAAElFTkSuQmCC" )
+  	};
+
+  	// Material
+  	const shader = threeplugins_THREE.VolumeRenderShader1;
+
+  	let uniforms = threeplugins_THREE.UniformsUtils.clone( shader.uniforms );
+  	uniforms.u_data.value = texture;
+  	uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
+  	uniforms.u_clim.value.set( 0, 1 );
+  	uniforms.u_renderstyle.value = 1; // 0: MIP, 1: ISO
+  	uniforms.u_renderthreshold.value = Math.max( g.threshold || 0, 1 ); // For ISO renderstyle
+  	uniforms.u_cmdata.value = cmtextures.viridis;
+
+    let material = new threeplugins_THREE.ShaderMaterial( {
+  		uniforms: uniforms,
+  		vertexShader: shader.vertexShader,
+  		fragmentShader: shader.fragmentShader,
+  		side: threeplugins_THREE.BackSide // The volume shader uses the backface as its "reference point"
+  	} );
+
+  	let geometry = new threeplugins_THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
+
+  	// This translate will make geometry rendered correctly
+  	geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
+
+  	mesh = new threeplugins_THREE.Mesh( geometry, material );
+  	mesh.name = 'mesh_datacube_' + g.name;
+
+    mesh.position.fromArray([
+      g.position[0] - cube_half_size[0],
+      g.position[1] - cube_half_size[1],
+      g.position[2] - cube_half_size[2]
+    ]);
+    // mesh.position.fromArray( g.position );
+  }
+
+	return(mesh);
+
+}
+
+
+
 // CONCATENATED MODULE: ./src/js/geometry/free.js
 
 
@@ -59767,12 +60009,14 @@ var downloadjs_download = __webpack_require__(3);
 
 
 
+
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
-  'sphere' : gen_sphere,
-  'free'   : gen_free,
-  'datacube' : gen_datacube,
-  'blank'  : (g, canvas) => { return(null) }
+  'sphere'    : gen_sphere,
+  'free'      : gen_free,
+  'datacube'  : gen_datacube,
+  'datacube2' : gen_datacube2,
+  'blank'     : (g, canvas) => { return(null) }
 };
 
 /* ------------------------------------ Layer setups ------------------------------------
@@ -59853,6 +60097,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.subject_codes = [];
     this.electrodes = new Map();
     this.volumes = new Map();
+    this.ct_scan = new Map();
+    this._show_ct = false;
     this.surfaces = new Map();
     this.state_data = new Map();
     // set default values
@@ -61665,6 +61911,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     let text_position = [
       w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
+
+      // Make sure it's not hidden by control panel
       this._lineHeight_normal + this.pixel_ratio[0] * 25
     ];
 
@@ -61825,6 +62073,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.subject_codes.length = 0;
     this.electrodes.clear();
     this.volumes.clear();
+    this.ct_scan.clear();
     this.surfaces.clear();
     this.state_data.clear();
     this.shared_data.clear();
@@ -61847,28 +62096,28 @@ class threejs_scene_THREEBRAIN_CANVAS {
     if( typeof this._set_coronal_depth === 'function' ){
       this._set_coronal_depth( depth );
     }else{
-      console.log('Set coronal depth not implemented');
+      console.debug('Set coronal depth not implemented');
     }
   }
   set_axial_depth( depth ){
     if( typeof this._set_axial_depth === 'function' ){
       this._set_axial_depth( depth );
     }else{
-      console.log('Set axial depth not implemented');
+      console.debug('Set axial depth not implemented');
     }
   }
   set_sagittal_depth( depth ){
     if( typeof this._set_sagittal_depth === 'function' ){
       this._set_sagittal_depth( depth );
     }else{
-      console.log('Set sagittal depth not implemented');
+      console.debug('Set sagittal depth not implemented');
     }
   }
   set_side_depth( c_d, a_d, s_d ){
-    console.log('Set side depth not implemented');
+    console.debug('Set side depth not implemented');
   }
   set_side_visibility( which, visible ){
-    console.log('Set side visibility not implemented');
+    console.debug('Set side visibility not implemented');
   }
   side_plane_sendback( is_back ){
     if( typeof this._side_plane_sendback === 'function' ){
@@ -61925,6 +62174,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.subject_codes.push( subject_code );
       this.electrodes.set( subject_code, {});
       this.volumes.set( subject_code, {} );
+      this.ct_scan.set( subject_code, {} );
       this.surfaces.set(subject_code, {} );
     }
 
@@ -61969,6 +62219,28 @@ class threejs_scene_THREEBRAIN_CANVAS {
         this._register_datacube( m );
         this._has_datacube_registered = true;
       }
+
+
+    }else if( g.type === 'datacube2' ){
+      this.mesh.set( g.name, m );
+
+      if(g.clickable){
+        this.clickable.set( g.name, m );
+      }
+
+      // data cube 2 must have groups
+      let gp = this.group.get( g.group.group_name );
+      // Move gp to global scene as its center is always 0,0,0
+      this.origin.remove( gp );
+      this.scene.add( gp );
+
+      gp.add( m );
+      set_layer( m );
+      m.userData.construct_params = g;
+      m.updateMatrixWorld();
+
+      get_or_default( this.ct_scan, subject_code, {} )[ g.name ] = m;
+
 
 
     }else if( g.type === 'sphere' && g.is_electrode ){
@@ -62514,6 +62786,22 @@ class threejs_scene_THREEBRAIN_CANVAS {
     return( Object.keys( re ) );
   }
 
+  get_ct_types(){
+    const re = {};
+
+    this.ct_scan.forEach( (vol, s) => {
+      let volume_names = Object.keys( vol ),
+          //  brain.finalsurfs (YAB)
+          res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
+          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
+
+      if( res && res.length === 2 ){
+        re[ res[1] ] = 1;
+      }
+    });
+    return( Object.keys( re ) );
+  }
+
   switch_subject( target_subject = '/', args = {}){
 
     if( this.subject_codes.length === 0 ){
@@ -62547,6 +62835,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
     let volume_type = args.volume_type || state.get( 'volume_type' ) || 'brain.finalsurfs';
+    let ct_type = args.ct_type || state.get( 'ct_type' ) || 'ct.aligned.t1';
+    let ct_threshold = args.ct_threshold || state.get( 'ct_threshold' ) || 0.8;
+
     let map_template = state.get( 'map_template' ) || false;
 
     if( args.map_template !== undefined ){
@@ -62558,6 +62849,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
 
     this.switch_volume( target_subject, volume_type );
+    this.switch_ct( target_subject, ct_type, ct_threshold );
     this.switch_surface( target_subject, surface_type,
                           [surface_opacity_left, surface_opacity_right],
                           [material_type_left, material_type_right] );
@@ -62575,6 +62867,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
     state.set( 'material_type_left', material_type_left );
     state.set( 'material_type_right', material_type_right );
     state.set( 'volume_type', volume_type );
+    state.set( 'ct_type', ct_type );
+    state.set( 'ct_threshold', ct_threshold );
     state.set( 'map_template', map_template );
     state.set( 'map_type_surface', map_type_surface );
     state.set( 'map_type_volume', map_type_volume );
@@ -62651,6 +62945,24 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     this.start_animation( 0 );
   }
+
+  switch_ct( target_subject, ct_type = 'ct.aligned.t1', ct_threshold = 0.8 ){
+
+    this.ct_scan.forEach( (vol, subject_code) => {
+      for( let ct_name in vol ){
+        const m = vol[ ct_name ];
+        if( subject_code === target_subject && ct_name === `${ct_type} (${subject_code})`){
+          m.parent.visible = this._show_ct;
+          m.material.uniforms.u_renderthreshold.value = ct_threshold;
+        }else{
+          m.parent.visible = false;
+        }
+      }
+    });
+
+    this.start_animation( 0 );
+  }
+
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
     /* DEBUG code
