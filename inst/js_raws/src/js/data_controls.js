@@ -956,6 +956,7 @@ class THREEBRAIN_CONTROL{
   constructor(args = {}, DEBUG = false){
     this.params = {};
     this.folders = {};
+    this.ctrls = {};
     this._gui = new dat.GUI(args);
     // this._gui.remember( this.params );
     this._gui.__closeButton.addEventListener('click', (e) => {
@@ -970,6 +971,7 @@ class THREEBRAIN_CONTROL{
     this.add_folder('Default');
     this.open_folder('Default');
   }
+
 
   set closed( is_closed ){
     this._gui.closed = is_closed;
@@ -1015,7 +1017,11 @@ class THREEBRAIN_CONTROL{
   }
 
   get_controller(name, folder_name = 'Default'){
-    let folder = this.folders[folder_name];
+    let fname = folder_name;
+    if( folder_name === 'Default' && typeof this.ctrls[name] === 'string' ){
+      fname = this.ctrls[name];
+    }
+    let folder = this.folders[fname];
 
     if(folder && folder.__controllers){
       for(var ii in folder.__controllers){
@@ -1060,6 +1066,8 @@ class THREEBRAIN_CONTROL{
     this.params[name] = value;
     let folder = this.add_folder(folder_name);
 
+    this.ctrls[name] = folder_name;
+
     if(is_color){
       return(folder.addColor(this.params, name));
     }else{
@@ -1069,6 +1077,7 @@ class THREEBRAIN_CONTROL{
         return(folder.add(this.params, name));
       }
     }
+
 
     return(undefined);
   }

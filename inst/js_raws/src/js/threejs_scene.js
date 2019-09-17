@@ -273,6 +273,7 @@ class THREEBRAIN_CANVAS {
 
       const div = document.createElement('div');
       div.id = this.container_id + '__' + nm;
+      div.style.display = 'none';
       div.className = 'THREEBRAIN-SIDE resizable';
       div.style.zIndex = idx;
       div.style.top = ( idx * this.side_width ) + 'px';

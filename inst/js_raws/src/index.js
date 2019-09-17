@@ -137,6 +137,7 @@ class BrainCanvas{
     // Add listeners
     const control_presets = this.settings.control_presets;
     const presets = new THREEBRAIN_PRESETS( this.canvas, gui, this.settings);
+    this.presets = presets;
     if(this.DEBUG){
       window.presets = presets;
     }else{
@@ -213,25 +214,7 @@ class BrainCanvas{
 
   _set_loader_callbacks(){
     this.canvas.loader_manager.onLoad = () => {
-      console.debug(this.outputId + ' - Finished loading. Adding object');
-      // this.el_text2.innerHTML = '';
-      this.el_text.style.display = 'none';
-
-      this.geoms.forEach((g) => {
-        if( this.DEBUG ){
-          this.canvas.add_object( g );
-        }else{
-          try {
-            this.canvas.add_object(g);
-          } catch (e) {
-          }
-        }
-      });
-
-      let gui = this._register_gui_control();
-      this._set_info_callback();
-
-      this.canvas.start_animation(0);
+      this.finalize_render();
     };
 
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
@@ -246,8 +229,6 @@ class BrainCanvas{
       this.el_text.innerHTML = msg;
 
     };
-
-
   }
 
   _set_info_callback(){
@@ -277,8 +258,24 @@ class BrainCanvas{
             action      : evt.action,
             meta        : evt,
             edit_mode   : this.canvas.edit_mode,
-            is_electrode: false
+            is_electrode: false,
+            current_time: 0,
+            color_maps  : this.settings.color_maps,
+            time_range  : this.presets.animation_time
           };
+
+          if( this.gui ){
+            // clip name
+            let _c = this.gui.get_controller('Clip Name');
+            if( _c ){
+              shiny_data.current_clip = _c.getValue();
+            }
+
+            _c = this.presets._ani_time;
+            if( _c ){
+              shiny_data.current_time = _c.getValue();
+            }
+          }
 
           if( g.is_electrode ){
 
@@ -289,7 +286,6 @@ class BrainCanvas{
               shiny_data.electrode_number = parseInt( m[2] );
               shiny_data.is_electrode = true;
             }
-
 
           }
 
@@ -385,8 +381,32 @@ class BrainCanvas{
 
     // Make sure the data loading process is on
     if( !this.canvas.loader_triggered ){
-      this.canvas.loader_manager.onLoad();
+      this.finalize_render();
     }
+
+  }
+
+
+  finalize_render(){
+    console.debug(this.outputId + ' - Finished loading. Adding object');
+    // this.el_text2.innerHTML = '';
+    this.el_text.style.display = 'none';
+
+    this.geoms.forEach((g) => {
+      if( this.DEBUG ){
+        this.canvas.add_object( g );
+      }else{
+        try {
+          this.canvas.add_object(g);
+        } catch (e) {
+        }
+      }
+    });
+
+    let gui = this._register_gui_control();
+    this.gui = gui;
+    this._set_info_callback();
+
 
 
     /* Update camera. If we set camera position, then shiny will behave weird and we have to
@@ -429,6 +449,8 @@ class BrainCanvas{
     this.hide_controls = this.settings.hide_controls || false;
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     this.canvas.render();
+
+    this.canvas.start_animation(0);
   }
 }
 

@@ -189,88 +189,93 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   surface_type = unique(c('pial', additional_surfaces))
 
   for( surf_t in surface_type ){
-    surf_lh = NULL; surf_rh = NULL
-    surf_group = GeomGroup$new(name = sprintf('Surface - %s (%s)', surf_t, subject_name),
-                               position = c( 0, 0, 0 ))
-    surf_group$subject_code = subject_name
-    surface = NULL
-    loaded = FALSE
+    tryCatch({
+      surf_lh = NULL; surf_rh = NULL
+      surf_group = GeomGroup$new(name = sprintf('Surface - %s (%s)', surf_t, subject_name),
+                                 position = c( 0, 0, 0 ))
+      surf_group$subject_code = subject_name
+      surface = NULL
+      loaded = FALSE
 
-    if( use_141 ){
-      # Load surface from 141 cache
-      cache_lh = file.path(path_cache, sprintf('%s_std_141_lh_%s.json', subject_name, surf_t))
-      cache_rh = file.path(path_cache, sprintf('%s_std_141_rh_%s.json', subject_name, surf_t))
-      if( use_cache && file.exists(cache_lh) && file.exists(cache_rh) ){
-        surf_lh = FreeGeom$new(name = sprintf('Standard 141 Left Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
-        surf_rh = FreeGeom$new(name = sprintf('Standard 141 Right Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), cache_file = cache_rh, group = surf_group, layer = 8)
-        surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'std.141',
-                                   left_hemisphere = surf_lh, right_hemisphere = surf_rh)
-        loaded = TRUE
-      }else{
-        unlink(cache_lh)
-        unlink(cache_rh)
-      }
-      if( !loaded ){
-        # try to locate std.141.lh.xxx in SUMA folder
-        surf = load_141_surface( path_suma, surf_t = surf_t, quiet = TRUE )
-        if( is.null(surf) ){
-          # Cannot find any surface
-          use_141 = FALSE
-        }else{
+      if( use_141 ){
+        # Load surface from 141 cache
+        cache_lh = file.path(path_cache, sprintf('%s_std_141_lh_%s.json', subject_name, surf_t))
+        cache_rh = file.path(path_cache, sprintf('%s_std_141_rh_%s.json', subject_name, surf_t))
+        if( use_cache && file.exists(cache_lh) && file.exists(cache_rh) ){
           surf_lh = FreeGeom$new(name = sprintf('Standard 141 Left Hemisphere - %s (%s)', surf_t, subject_name),
-                                 position = c(0,0,0), vertex = surf$left$vertices, face = surf$left$faces,
-                                 cache_file = cache_lh, group = surf_group, layer = 8)
+                                 position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
           surf_rh = FreeGeom$new(name = sprintf('Standard 141 Right Hemisphere - %s (%s)', surf_t, subject_name),
-                                 position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
-                                 cache_file = cache_rh, group = surf_group, layer = 8)
+                                 position = c(0,0,0), cache_file = cache_rh, group = surf_group, layer = 8)
           surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'std.141',
                                      left_hemisphere = surf_lh, right_hemisphere = surf_rh)
           loaded = TRUE
+        }else{
+          unlink(cache_lh)
+          unlink(cache_rh)
         }
-        rm(surf)
+        if( !loaded ){
+          # try to locate std.141.lh.xxx in SUMA folder
+          surf = load_141_surface( path_suma, surf_t = surf_t, quiet = TRUE )
+          if( is.null(surf) ){
+            # Cannot find any surface
+            use_141 = FALSE
+          }else{
+            surf_lh = FreeGeom$new(name = sprintf('Standard 141 Left Hemisphere - %s (%s)', surf_t, subject_name),
+                                   position = c(0,0,0), vertex = surf$left$vertices, face = surf$left$faces,
+                                   cache_file = cache_lh, group = surf_group, layer = 8)
+            surf_rh = FreeGeom$new(name = sprintf('Standard 141 Right Hemisphere - %s (%s)', surf_t, subject_name),
+                                   position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
+                                   cache_file = cache_rh, group = surf_group, layer = 8)
+            surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'std.141',
+                                       left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+            loaded = TRUE
+          }
+          rm(surf)
+        }
+
       }
 
-    }
+      if( !use_141 ){
+        cache_lh = file.path(path_cache, sprintf('%s_fs_lh_%s.json', subject_name, surf_t))
+        cache_rh = file.path(path_cache, sprintf('%s_fs_rh_%s.json', subject_name, surf_t))
+        if( use_cache && file.exists(cache_lh) && file.exists(cache_rh) ){
+          surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
+                                 position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
+          surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
+                                 position = c(0,0,0), cache_file = cache_rh, group = surf_group, layer = 8)
 
-    if( !use_141 ){
-      cache_lh = file.path(path_cache, sprintf('%s_fs_lh_%s.json', subject_name, surf_t))
-      cache_rh = file.path(path_cache, sprintf('%s_fs_rh_%s.json', subject_name, surf_t))
-      if( use_cache && file.exists(cache_lh) && file.exists(cache_rh) ){
-        surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
-        surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), cache_file = cache_rh, group = surf_group, layer = 8)
-
-        surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
-                                   left_hemisphere = surf_lh, right_hemisphere = surf_rh)
-        loaded = TRUE
-      }else{
-        unlink(cache_lh)
-        unlink(cache_rh)
+          surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
+                                     left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+          loaded = TRUE
+        }else{
+          unlink(cache_lh)
+          unlink(cache_rh)
+        }
+        if( !loaded ){
+          # load from fs
+          surf = load_fs_surface( path_surf, surf_t = surf_t, quiet = TRUE )
+          surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
+                                 position = c(0,0,0), vertex = surf$left$vertices, face = surf$left$faces,
+                                 cache_file = cache_lh, group = surf_group, layer = 8)
+          surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
+                                 position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
+                                 cache_file = cache_rh, group = surf_group, layer = 8)
+          surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
+                                     left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+          loaded = TRUE
+          rm(surf)
+        }
       }
-      if( !loaded ){
-        # load from fs
-        surf = load_fs_surface( path_surf, surf_t = surf_t, quiet = TRUE )
-        surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), vertex = surf$left$vertices, face = surf$left$faces,
-                               cache_file = cache_lh, group = surf_group, layer = 8)
-        surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
-                               cache_file = cache_rh, group = surf_group, layer = 8)
-        surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
-                                   left_hemisphere = surf_lh, right_hemisphere = surf_rh)
-        loaded = TRUE
-        rm(surf)
+
+      if( 'brain-surface' %in% class(surface) ){
+
+        # This step will automatically adjust position for std.141 mesh
+        brain$add_surface( surface = surface )
       }
-    }
-
-    if( 'brain-surface' %in% class(surface) ){
-
-      # This step will automatically adjust position for std.141 mesh
-      brain$add_surface( surface = surface )
-    }
+    }, error = function(e){
+      cat2('Cannot import surface type', surf_t, 'for subject', subject_name, level = 'WARNING')
+      cat2(e)
+    })
 
   }
 
