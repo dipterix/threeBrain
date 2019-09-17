@@ -414,7 +414,7 @@ BrainElectrodes <- R6::R6Class(
 
       # Need to figure out what variables to be put into electrodes
 
-      var_names = var_names[ !var_names %in% c('Electrode', 'Time') ]
+      var_names = var_names[ !var_names %in% c('Electrode', 'Time', 'Note') ]
 
       # Check values
       for( vn in var_names ){
@@ -430,6 +430,9 @@ BrainElectrodes <- R6::R6Class(
           # if no subset, then remove keyframes, else set keyframes
           el$set_value(value = sub[[vn]], time_stamp = sub$Time,
                        name = vn, target = '.material.color')
+          if( length(sub$Note) && is.character(sub$Note) ){
+            el$custom_info = sub$Note
+          }
         })
         NULL
       })
