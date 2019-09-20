@@ -733,8 +733,10 @@ class THREEBRAIN_CANVAS {
 
   register_main_canvas_events(){
 
-    this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    // this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    this.main_canvas.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    this.main_canvas.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
 
     this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 2){
@@ -2968,6 +2970,7 @@ class THREEBRAIN_CANVAS {
     this.start_animation( 0 );
   }
 
+
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
     /* DEBUG code
@@ -3044,8 +3047,9 @@ mapped = false,
                         v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
 
               // target position = inv(mat2) * mat1 * origin_position
-              mat2.multiplyMatrices( mat2, mat1 );
-              pos_targ.fromArray( origin_position ).applyMatrix4(mat2);
+              // mat2.multiplyMatrices( mat2, mat1 );
+              pos_targ.fromArray( origin_position ).applyMatrix4(mat1);
+              pos_targ.applyMatrix4( mat2 );
               mapped = true;
             }
 

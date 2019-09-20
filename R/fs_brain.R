@@ -66,6 +66,7 @@
 #' @export
 freesurfer_brain <- function(fs_subject_folder, subject_name,
                              additional_surfaces = NULL,
+                             # aligned_ct_nii = NULL,
                              use_cache = TRUE, use_141 = TRUE){
   # Naming conventions
   #
@@ -86,13 +87,17 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   mustWork = TRUE
 
 
-  # Main get mgz loader
-  mgz_loader = tryCatch({
-    nibabel = reticulate::import('nibabel')
-    nibabel$load
-  }, error = function(e){
-    read_fs_mgh_mgz
-  })
+  # .mgz_loader = tryCatch({
+  #   nibabel = reticulate::import('nibabel')
+  #   nibabel$load
+  # }, error = function(e){
+  #   read_fs_mgh_mgz
+  # })
+  # # Main get mgz loader
+  # mgz_loader = function(path, ...){
+  #   cat2('Loading from: ', path)
+  #   .mgz_loader(path, ...)
+  # }
 
   # Find folders
   if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
@@ -106,12 +111,14 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   # Find target files
   path_brainfinal = normalizePath(file.path(path_subject, 'mri', 'brain.finalsurfs.mgz'), mustWork = mustWork)
+  path_aseg = normalizePath(file.path(path_subject, 'mri', 'aseg.mgz'), mustWork = FALSE)
+  path_brainmask = normalizePath(file.path(path_subject, 'mri', 'brainmask.mgz'), mustWork = FALSE)
   path_xform = normalizePath(file.path(path_subject, 'mri', 'transforms', 'talairach.xfm'), mustWork = mustWork)
   path_suma = normalizePath(file.path(path_subject, 'SUMA'), mustWork = FALSE)
   path_surf = normalizePath(file.path(path_subject, 'surf'), mustWork = FALSE)
 
   # Get general information from fs output
-  brain_finalsurf = mgz_loader(path_brainfinal)
+  brain_finalsurf = read_mgz(path_brainfinal)
   # get Norig
   Norig = brain_finalsurf$header$get_vox2ras()
   Torig = brain_finalsurf$header$get_vox2ras_tkr()
@@ -165,6 +172,15 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   if(is.null(geom_brain_finalsurfs)){
     volume = fill_blanks(brain_finalsurf$get_data(), niter=2)
+
+    # Also try to load aseg to fill inner brains
+    # if( file.exists(path_brainmask) ){
+    #   path_brainmask
+    #   brainmask = read_mgz(path_brainmask)
+    #   volume_brainmask = brainmask$get_data()
+    #   volume[ volume == 0 & volume_brainmask != 0 ] = 1
+    # }
+
     # Re-order the data according to Norig, map voxels to RAS coord - anatomical
     order_index = round((Norig %*% c(1,2,3,0))[1:3])
     volume = aperm(volume, abs(order_index))
@@ -201,6 +217,8 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
         # Load surface from 141 cache
         cache_lh = file.path(path_cache, sprintf('%s_std_141_lh_%s.json', subject_name, surf_t))
         cache_rh = file.path(path_cache, sprintf('%s_std_141_rh_%s.json', subject_name, surf_t))
+        if( file.exists(cache_lh) && file.size(cache_lh) < 4096 ){ unlink(cache_lh) }
+        if( file.exists(cache_rh) && file.size(cache_rh) < 4096 ){ unlink(cache_rh) }
         if( use_cache && file.exists(cache_lh) && file.exists(cache_rh) ){
           surf_lh = FreeGeom$new(name = sprintf('Standard 141 Left Hemisphere - %s (%s)', surf_t, subject_name),
                                  position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
@@ -238,6 +256,9 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
       if( !use_141 ){
         cache_lh = file.path(path_cache, sprintf('%s_fs_lh_%s.json', subject_name, surf_t))
         cache_rh = file.path(path_cache, sprintf('%s_fs_rh_%s.json', subject_name, surf_t))
+        # Check file size
+        if( file.exists(cache_lh) && file.size(cache_lh) < 4096 ){ unlink(cache_lh) }
+        if( file.exists(cache_rh) && file.size(cache_rh) < 4096 ){ unlink(cache_rh) }
         if( use_cache && file.exists(cache_lh) && file.exists(cache_rh) ){
           surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
                                  position = c(0,0,0), cache_file = cache_lh, group = surf_group, layer = 8)
@@ -254,15 +275,17 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
         if( !loaded ){
           # load from fs
           surf = load_fs_surface( path_surf, surf_t = surf_t, quiet = TRUE )
-          surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
-                                 position = c(0,0,0), vertex = surf$left$vertices, face = surf$left$faces,
-                                 cache_file = cache_lh, group = surf_group, layer = 8)
-          surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
-                                 position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
-                                 cache_file = cache_rh, group = surf_group, layer = 8)
-          surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
-                                     left_hemisphere = surf_lh, right_hemisphere = surf_rh)
-          loaded = TRUE
+          if( length(surf) ){
+            surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
+                                   position = c(0,0,0), vertex = surf$left$vertices, face = surf$left$faces,
+                                   cache_file = cache_lh, group = surf_group, layer = 8)
+            surf_rh = FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
+                                   position = c(0,0,0), vertex = surf$right$vertices, face = surf$right$faces,
+                                   cache_file = cache_rh, group = surf_group, layer = 8)
+            surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
+                                       left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+            loaded = TRUE
+          }
           rm(surf)
         }
       }
@@ -283,7 +306,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   surface_type = brain$surface_types
   if( !'pial' %in% surface_type ){
-    cat2('Cannot find pial surface. Please make sure fs/SUMA/std.141.[lr]h.pial.asc or fs/surf/[lr]h.pial.asc exists', level = 'FATAL')
+    cat2('Cannot find pial surface. Please make sure fs/SUMA/std.141.[lr]h.pial.asc or fs/surf/[lr]h.pial.asc exists', level = 'ERROR')
   }
 
   ##### return an environment ####
@@ -294,9 +317,11 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 #' @title Function to check whether `FreeSurfer` folder has everything we need
 #' @param fs_subject_folder character, path to `fs` project directory or `RAVE` subject directory
 #' @param autoinstall_template logical, whether `N27` brain should be installed is missing
-#' @return logical whether the directory is valid
+#' @param return_path logical, whether to return `FreeSurfer` path
+#' @return logical whether the directory is valid or, if \code{return_path} is true,
+#' return `FreeSurfer` path
 #' @export
-check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE){
+check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE, return_path = FALSE){
   if( dir.exists(fs_subject_folder) ){
 
     if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
@@ -309,6 +334,9 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
     path_surf = file.path(path_subject, 'surf')
 
     if( file.exists(path_brainfinal) && file.exists(path_xform) && file.exists(path_surf) ){
+      if( return_path ){
+        return( path_subject )
+      }
       return(TRUE)
     }
 
@@ -321,6 +349,9 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
     download_N27()
   }
 
+  if( return_path ){
+    return( NULL )
+  }
   return(FALSE)
 }
 
@@ -346,7 +377,7 @@ electrode_mapped_141 <- function(position = c(0,0,0), is_surface, vertex_number,
 
 
 
-load_surface_asc_gii_nii <- function(file){
+load_surface_asc_gii <- function(file){
 
   if( stringr::str_ends(stringr::str_to_lower(file), '\\.asc') ){
     surf = read_fs_asc(file)
@@ -354,35 +385,10 @@ load_surface_asc_gii_nii <- function(file){
     surf$faces = surf$faces[,1:3]
   }else if( stringr::str_ends(stringr::str_to_lower(file), '\\.gii') ){
     # Check if python version is available
-    surf = tryCatch({
-      # Use python nibabel to load
-      nibabel = reticulate::import('nibabel')
-      tmp = nibabel$load(file)
-      vertices = tmp$darrays[[1]]$data[,1:3]
-      faces = tmp$darrays[[2]]$data[,1:3]
-      surf = list(
-        header = c(nrow(vertices), nrow(faces)),
-        vertices = vertices,
-        faces = faces
-      )
-      surf
-    }, error = function(e){
-      # Use gifti R package to load
-      tmp = gifti::readgii(file)
-      vertices = tmp$data$pointset[,1:3]
-      faces = tmp$data$triangle[,1:3]
-      surf = list(
-        header = c(nrow(vertices), nrow(faces)),
-        vertices = vertices,
-        faces = faces
-      )
-      surf
-    })
+    surf = read_gii2(file)
 
-  }else if( stringr::str_ends(stringr::str_to_lower(file), '\\.nii') ){
-    stop('Support for Nifti file has not been implemented')
   }else{
-    stop('Only support ASCII, Gifti, Nifti formats. Unknown type')
+    stop('Only support ASCII, Gifti formats. Unknown type')
   }
   return(surf)
 }
@@ -393,15 +399,15 @@ load_fs_surface <- function(dir, surf_t = 'pial', quiet = FALSE){
   rh_file = list.files( dir, pattern = sprintf('^rh\\.%s\\.(asc|gii|nii)', surf_t), full.names = TRUE)
   if(any( length(lh_file) == 0, length(rh_file) == 0 )){
     if(!quiet){
-      cat2('Cannot find 141 brain from ', dir, level = 'ERROR')
+      cat2('Cannot find FreeSurfer brain from ', dir, level = 'ERROR')
     }
     return(invisible())
   }
   lh_file = sort(lh_file)[1]
   rh_file = sort(rh_file)[1]
 
-  lh_surf = load_surface_asc_gii_nii(lh_file)
-  rh_surf = load_surface_asc_gii_nii(rh_file)
+  lh_surf = load_surface_asc_gii(lh_file)
+  rh_surf = load_surface_asc_gii(rh_file)
 
   return(list(
     type = surf_t,
@@ -429,8 +435,8 @@ load_141_surface <- function(dir, surf_t = 'pial', quiet = FALSE){
   rh_file = sort(rh_file)[1]
 
 
-  lh_surf = load_surface_asc_gii_nii(lh_file)
-  rh_surf = load_surface_asc_gii_nii(rh_file)
+  lh_surf = load_surface_asc_gii(lh_file)
+  rh_surf = load_surface_asc_gii(rh_file)
 
   return(list(
     type = surf_t,

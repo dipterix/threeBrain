@@ -57594,8 +57594,11 @@ CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 'Comma';        // "," for choosing prev
 CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = 'KeyV';         // 'v' for cycling through visible, hide inactive, hidden
 CONSTANTS.KEY_CYCLE_SURFACE           = 'KeyP';         // "p" for cycle through surfaces
 CONSTANTS.KEY_OVERLAY_CORONAL         = 'KeyC';         // 'C' for coronal
-CONSTANTS.KEY_OVERLAY_AXIAL           = 'KeyA';         // 'A' for coronal
-CONSTANTS.KEY_OVERLAY_SAGITTAL        = 'KeyS';         // 'S' for coronal
+CONSTANTS.KEY_OVERLAY_AXIAL           = 'KeyA';         // 'A' for axial
+CONSTANTS.KEY_OVERLAY_SAGITTAL        = 'KeyS';         // 'S' for sagittal
+CONSTANTS.KEY_MOVE_CORONAL            = 'KeyE';         // 'Q' for moving coronal f/b
+CONSTANTS.KEY_MOVE_AXIAL              = 'KeyQ';         // 'W' for moving axial f/b
+CONSTANTS.KEY_MOVE_SAGITTAL           = 'KeyW';         // 'E' for moving sagittal f/b
 CONSTANTS.KEY_CYCLE_ANIMATION         = 'KeyC';         // 'c' for cycling through animation clips
 CONSTANTS.KEY_TOGGLE_ANIMATION        = 'KeyS';         // 's' for play/paus animation
 CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling through electrodes (localization)
@@ -57799,13 +57802,9 @@ function is_electrode(e) {
 }
 
 function has_meta_keys( event, shift = true, ctrl = true, alt = true){
-  if( shift && event.shiftKey ){
-    return(true);
-  }
-  if( ctrl && event.ctrlKey ){
-    return(true);
-  }
-  if( alt && event.altKey ){
+  let v1 = 0 + event.shiftKey + event.ctrlKey * 2 + event.altKey * 4,
+      v2 = 0 + shift + ctrl * 2 + alt * 4;
+  if( v1 === v2 ){
     return(true);
   }
   return( false );
@@ -57819,10 +57818,11 @@ class data_controls_THREEBRAIN_PRESETS{
   /**
    * Initialization, defines canvas (viewer), gui controller (viewer), and settings (initial values)
    */
-  constructor(canvas, gui, settings){
+  constructor(canvas, gui, settings, shiny){
     this.canvas = canvas;
     this.gui = gui;
     this.settings = settings;
+    this.shiny = shiny;
 
     this.electrode_regexp = RegExp('^electrodes-(.+)$');
 
@@ -58092,6 +58092,16 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     }, 'overlay_coronal');
 
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_MOVE_CORONAL, (evt) => {
+      const _v = _controller_coronal.getValue();
+      if( has_meta_keys( evt.event, true, false, false ) ){
+        _controller_coronal.setValue( _v - 1 );
+      }else if( has_meta_keys( evt.event, false, false, false ) ){
+        _controller_coronal.setValue( _v + 1 );
+      }
+    }, 'move_coronal');
+
+
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
       if( has_meta_keys( evt.event, true, false, false ) ){
         const _v = overlay_axial.getValue();
@@ -58099,12 +58109,30 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     }, 'overlay_axial');
 
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_MOVE_AXIAL, (evt) => {
+      const _v = _controller_axial.getValue();
+      if( has_meta_keys( evt.event, true, false, false ) ){
+        _controller_axial.setValue( _v - 1 );
+      }else if( has_meta_keys( evt.event, false, false, false ) ){
+        _controller_axial.setValue( _v + 1 );
+      }
+    }, 'move_axial');
+
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
       if( has_meta_keys( evt.event, true, false, false ) ){
         const _v = overlay_sagittal.getValue();
         overlay_sagittal.setValue( !_v );
       }
     }, 'overlay_sagittal');
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_MOVE_SAGITTAL, (evt) => {
+      const _v = _controller_sagittal.getValue();
+      if( has_meta_keys( evt.event, true, false, false ) ){
+        _controller_sagittal.setValue( _v - 1 );
+      }else if( has_meta_keys( evt.event, false, false, false ) ){
+        _controller_sagittal.setValue( _v + 1 );
+      }
+    }, 'move_sagittal');
   }
 
   // 9. Electrode visibility in side canvas
@@ -58163,7 +58191,7 @@ class data_controls_THREEBRAIN_PRESETS{
       });
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE, (evt) => {
-      if( !has_meta_keys( evt.event, true, true, true ) ){
+      if( has_meta_keys( evt.event, false, false, false ) ){
         let current_idx = (_c.indexOf( surf_type.getValue() ) + 1) % _c.length;
         if( current_idx >= 0 ){
           surf_type.setValue( _c[ current_idx ] );
@@ -58206,7 +58234,7 @@ class data_controls_THREEBRAIN_PRESETS{
         let current_opacity = lh_trans.getValue() - 0.3;
         if( current_opacity < 0 ){ current_opacity = 1; }
         lh_trans.setValue( current_opacity );
-      }else if( !has_meta_keys( evt.event, true, true, true ) ){
+      }else if( has_meta_keys( evt.event, false, false, false ) ){
         let current_idx = (options.indexOf( lh_ctrl.getValue() ) + 1) % options.length;
         if( current_idx >= 0 ){
           lh_ctrl.setValue( options[ current_idx ] );
@@ -58219,7 +58247,7 @@ class data_controls_THREEBRAIN_PRESETS{
         let current_opacity = rh_trans.getValue() - 0.3;
         if( current_opacity < 0 ){ current_opacity = 1; }
         rh_trans.setValue( current_opacity );
-      }else if( !has_meta_keys( evt.event, true, true, true ) ){
+      }else if( has_meta_keys( evt.event, false, false, false ) ){
         let current_idx = (options.indexOf( rh_ctrl.getValue() ) + 1) % options.length;
         if( current_idx >= 0 ){
           rh_ctrl.setValue( options[ current_idx ] );
@@ -58283,7 +58311,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
     // Add shortcuts
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY, (evt) => {
-      if( !has_meta_keys( evt.event, true, true, true ) ){
+      if( has_meta_keys( evt.event, false, false, false ) ){
         let current_idx = (vis_types.indexOf( this._controller_electrodes.getValue() ) + 1) % vis_types.length;
         if( current_idx >= 0 ){
           this._controller_electrodes.setValue( vis_types[ current_idx ] );
@@ -58450,14 +58478,14 @@ class data_controls_THREEBRAIN_PRESETS{
 
     // Add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
-      if( !has_meta_keys( evt.event, true, true, true ) ){
+      if( has_meta_keys( evt.event, false, false, false ) ){
         const is_playing = this._ani_status.getValue();
         this._ani_status.setValue( !is_playing );
       }
     }, 'gui_toggle_animation');
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ANIMATION, (evt) => {
-      if( !has_meta_keys( evt.event, true, true, true ) ){
+      if( has_meta_keys( evt.event, false, false, false ) ){
         let current_idx = (names.indexOf( ani_name.getValue() ) + 1) % names.length;
         if( current_idx >= 0 ){
           ani_name.setValue( names[ current_idx ] );
@@ -58499,7 +58527,7 @@ class data_controls_THREEBRAIN_PRESETS{
      * 2. electrode number (positive integer)
      * 3. electrode location (string)
      * 4. electrode label
-     * 5. ECoG or iEEG
+     * 5. Surface or Depth
     */
     // function to get electrode info and update dat.GUI
     // idx is from 0 - (electrode count -1)
@@ -58509,13 +58537,13 @@ class data_controls_THREEBRAIN_PRESETS{
       if( !_el ){
         // use default settings
         elec_position.setValue('0, 0, 0');
-        elec_label.setValue('');
+        // elec_label.setValue('');
       }else{
         elec_position.setValue(`${_el.position.x.toFixed(2)}, ${_el.position.y.toFixed(2)}, ${_el.position.z.toFixed(2)}`);
-        elec_label.setValue( _el.userData.construct_params.custom_info || '' );
+        // elec_label.setValue( _el.userData.construct_params.custom_info || '' );
 
         let electrode_is_surface = _el.userData.construct_params.is_surface_electrode === true;
-        elec_surface.setValue( electrode_is_surface ? 'ECoG' : 'Stereo-iEEG' );
+        elec_surface.setValue( electrode_is_surface ? 'Surface' : 'Depth' );
 
         this.canvas.focus_object( _el );
       }
@@ -58533,9 +58561,9 @@ class data_controls_THREEBRAIN_PRESETS{
       .onChange( (v) => {
         this.canvas.edit_mode = v;
         if( v ){
-          this.gui.show_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'object type' ], folder_name);
+          this.gui.show_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'Electrode type' ], folder_name);
         }else{
-          this.gui.hide_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'object type' ], folder_name);
+          this.gui.hide_item([ 'Previous', 'Number', 'Position', 'Label', 'Next', 'Electrode type' ], folder_name);
         }
       } );
 
@@ -58545,25 +58573,28 @@ class data_controls_THREEBRAIN_PRESETS{
           v = Math.max( Math.round( v ) , 1 );
           switch_electrode( v );
           this._update_canvas();
+
+          // send electrode information to shiny
+          this.shiny.loc_electrode_info();
         }
       } );
 
     // const st = canvas.get_surface_types().concat( canvas.get_volume_types() );
-    const elec_surface = this.gui.add_item( 'object type', 'ECoG', {
-      folder_name: folder_name, args: ['ECoG', 'Stereo-iEEG']
+    const elec_surface = this.gui.add_item( 'Electrode type', 'Surface', {
+      folder_name: folder_name, args: ['Surface', 'Depth']
     } ).onChange((v) => {
       if( this.canvas.edit_mode ){
         let el = get_electrode();
         if( el ){
-          el.userData.construct_params.is_surface_electrode = (v === 'ECoG');
+          el.userData.construct_params.is_surface_electrode = (v === 'Surface');
         }
-        if( v === 'Stereo-iEEG' ){
+        if( v === 'Depth' ){
           this.gui.get_controller('Overlay Coronal', 'Side Canvas').setValue( true );
           this.gui.get_controller('Overlay Axial', 'Side Canvas').setValue( true );
           this.gui.get_controller('Overlay Sagittal', 'Side Canvas').setValue( true );
           this.gui.get_controller('Left Hemisphere', 'Geometry').setValue( 'hidden' );
           this.gui.get_controller('Right Hemisphere', 'Geometry').setValue( 'hidden' );
-        }else if ( v === 'ECoG' ){
+        }else if ( v === 'Surface' ){
           this.gui.get_controller('Left Hemisphere', 'Geometry').setValue( 'normal' );
           this.gui.get_controller('Right Hemisphere', 'Geometry').setValue( 'normal' );
         }
@@ -58587,6 +58618,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
       } );
 
+    /*
     const elec_label = this.gui.add_item( 'Label', '', { folder_name: folder_name} )
       .onChange((v) => {
         if( this.canvas.edit_mode ){
@@ -58596,7 +58628,7 @@ class data_controls_THREEBRAIN_PRESETS{
           }
           this._update_canvas();
         }
-      } );
+      } ); */
 
     const new_electrode = () => {
       let next_elnum = 1;
@@ -58616,15 +58648,40 @@ class data_controls_THREEBRAIN_PRESETS{
       (evt) => {
         if( this.canvas.edit_mode ){
           if( evt.action === 'dblclick' ){
-            const is_surface = elec_surface.getValue() === 'ECoG',
+            const is_surface = elec_surface.getValue() === 'Surface',
                   current_subject = this.canvas.state_data.get("target_subject");
             if( !current_subject ){
               return({pass : false});
             }
 
-            // If ECoG, we only focus on the surfaces
-            let search_objects = [];
+            // If Surface, we only focus on the surfaces
+            let search_objects = [],
+                meta;
+            let lh_name, rh_name;
             if( is_surface ){
+              let surfs = this.canvas.surfaces.get( current_subject );
+
+              // Check if pial-outer-smoothed is loaded
+              lh_name = `FreeSurfer Left Hemisphere - pial-outer-smoothed (${ current_subject })`;
+              rh_name = `FreeSurfer Right Hemisphere - pial-outer-smoothed (${ current_subject })`;
+              if( !surfs.hasOwnProperty( lh_name ) ){
+                lh_name = `Standard 141 Left Hemisphere - pial-outer-smoothed (${ current_subject })`;
+                rh_name = `Standard 141 Right Hemisphere - pial-outer-smoothed (${ current_subject })`;
+              }
+              if( surfs.hasOwnProperty( lh_name ) && surfs.hasOwnProperty( rh_name ) && !surfs[ lh_name ].visible ){
+                // outer pial exists
+                surfs[ lh_name ].visible = true;
+                surfs[ rh_name ].visible = true;
+                meta = {
+                  lh_name: lh_name,
+                  rh_name: rh_name,
+                  current_subject: current_subject
+                };
+              }else{
+                lh_name = undefined;
+                rh_name = undefined;
+              }
+
               search_objects = to_array( this.canvas.surfaces.get( current_subject ) );
             }else{
               search_objects = to_array(
@@ -58634,7 +58691,8 @@ class data_controls_THREEBRAIN_PRESETS{
 
             return({
               pass  : true,
-              type  : search_objects
+              type  : search_objects,
+              meta  : meta
             });
           }else if( evt.action === 'click' ){
             if( this.canvas.group.has( '__electrode_editor__' ) ){
@@ -58649,22 +58707,33 @@ class data_controls_THREEBRAIN_PRESETS{
         return({ pass: false });
       },
       ( res, evt ) => {
+        if( res.meta && res.meta.current_subject ){
+          let surfs = this.canvas.surfaces.get( res.meta.current_subject );
+          if( res.meta.lh_name ){
+            surfs[ res.meta.lh_name ].visible = false;
+            surfs[ res.meta.rh_name ].visible = false;
+          }
+        }
         if( evt.action === 'click' ){
           this.canvas.focus_object( res.target_object );
+          /*
           if( res.target_object && res.target_object.isMesh &&
               typeof res.target_object.userData.electrode_number === 'number' ){
             elec_number.setValue( res.target_object.userData.electrode_number );
           }
+          */
         }else if( evt.action === 'dblclick' ){
           if( res.first_item ){
             // get current electrode
             let current_electrode = Math.max(1, Math.round( elec_number.getValue() )),
-                label = elec_label.getValue(),
+                // label = elec_label.getValue(),
+                label = '',
                 position = res.first_item.point.toArray(),
-                is_surface_electrode = elec_surface.getValue() === 'ECoG';
+                is_surface_electrode = elec_surface.getValue() === 'Surface';
 
+            const surface_type = get_or_default( this.canvas.state_data, 'surface_type', 'pial');
             add_electrode(this.canvas, current_electrode, `__localization__, ${current_electrode} - ` ,
-                                  position, 'NA', label, is_surface_electrode);
+                                  position, surface_type, label, is_surface_electrode, 1);
 
             new_electrode();
           }
@@ -58678,9 +58747,9 @@ class data_controls_THREEBRAIN_PRESETS{
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_EDITOR, (evt) => {
       if( this.canvas.edit_mode ){
-        let delta = 1;
+        let delta = -1;
         if( has_meta_keys( evt.event, true, false, false ) ){
-          delta = -1;
+          delta = 1;
         }
         // last
         let el_num = Math.round( elec_number.getValue() + delta );
@@ -58693,8 +58762,8 @@ class data_controls_THREEBRAIN_PRESETS{
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR, (evt) => {
       if( this.canvas.edit_mode ){
-        const is_ecog = elec_surface.getValue() === 'ECoG';
-        elec_surface.setValue( is_ecog ? 'Stereo-iEEG' : 'ECoG' );
+        const is_ecog = elec_surface.getValue() === 'Surface';
+        elec_surface.setValue( is_ecog ? 'Depth' : 'Surface' );
         this._update_canvas();
       }
     }, 'edit-gui_cycle_surftype');
@@ -58704,12 +58773,18 @@ class data_controls_THREEBRAIN_PRESETS{
         new_electrode();
       }
     }, 'edit-gui_new_electrodes');
-
+/*
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_LABEL_FOCUS_EDITOR, (evt) => {
       if( this.canvas.edit_mode ){
         elec_label.domElement.children[0].click();
       }
-    }, 'edit-gui_edit_label');
+    }, 'edit-gui_edit_label');*/
+
+    // close other folders
+    this.gui.folders["Main Canvas"].close();
+    this.gui.folders["Side Canvas"].close();
+    this.gui.folders[ folder_name ].open();
+    edit_mode.setValue( true );
   }
 
   c_export_electrodes(folder_name = 'Default'){
@@ -58802,18 +58877,29 @@ class data_controls_THREEBRAIN_CONTROL{
 
   get_controller(name, folder_name = 'Default'){
     let fname = folder_name;
-    if( folder_name === 'Default' && typeof this.ctrls[name] === 'string' ){
-      fname = this.ctrls[name];
-    }
     let folder = this.folders[fname];
 
     if(folder && folder.__controllers){
-      for(var ii in folder.__controllers){
+      for(let ii in folder.__controllers){
         if(folder.__controllers[ii].property === name){
           return(folder.__controllers[ii]);
         }
       }
     }
+
+    if( folder_name === 'Default' && typeof this.ctrls[name] === 'string' ){
+      fname = this.ctrls[name];
+      folder = this.folders[fname];
+
+      if(folder && folder.__controllers){
+        for(let ii in folder.__controllers){
+          if(folder.__controllers[ii].property === name){
+            return(folder.__controllers[ii]);
+          }
+        }
+      }
+    }
+
 
     const re = {};
     re.onChange = (callback) => {};
@@ -58855,7 +58941,7 @@ class data_controls_THREEBRAIN_CONTROL{
     if(is_color){
       return(folder.addColor(this.params, name));
     }else{
-      if(args !== null && args !== undefined){
+      if( args ){
         return(folder.add(this.params, name, args));
       }else{
         return(folder.add(this.params, name));
@@ -58873,10 +58959,10 @@ class data_controls_THREEBRAIN_CONTROL{
 
 function add_electrode (canvas, number, name, position, surface_type = 'NA',
                         custom_info = '', is_surface_electrode = false,
+                        radius = 2,
                         group_name = '__electrode_editor__',
-                        subject_code = '__localization__', radius = 2) {
+                        subject_code = '__localization__') {
   let _el;
-
   if( !canvas.group.has(group_name) ){
     canvas.add_group( {
       name : group_name, layer : 0, position : [0,0,0],
@@ -58891,7 +58977,6 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
     _el.parent.remove( _el );
   } catch (e) {}
 
-
   const g = { "name":name, "type":"sphere", "time_stamp":[], "position":position,
           "value":null, "clickable":true, "layer":0,
           "group":{"group_name":group_name,"group_layer":0,"group_position":[0,0,0]},
@@ -58899,15 +58984,82 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
           "subject_code":subject_code, "radius":radius,
           "width_segments":10,"height_segments":6,
           "is_electrode":true,
-          "is_surface_electrode": is_surface_electrode || (surface_type !== 'NA'),
+          "is_surface_electrode": is_surface_electrode,
           "use_template":false,
           "surface_type": surface_type,
           "hemisphere":null,"vertex_number":-1,"sub_cortical":true,"search_geoms":null};
 
+  if( subject_code === '__localization__' ){
+    // look for current subject code
+    const scode = canvas.state_data.get("target_subject");
+    const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
+
+    const gp_position = new threeplugins_THREE.Vector3(),
+          _mpos = new threeplugins_THREE.Vector3();
+    _mpos.fromArray( position );
+
+    // Search 141 nodes
+    if( search_group && search_group.userData ){
+      const lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${surface_type} (${scode})`];
+      const rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${surface_type} (${scode})`];
+      const mesh_center = search_group.getWorldPosition( gp_position );
+      if( lh_vertices && rh_vertices ){
+        // calculate
+        let _tmp = new threeplugins_THREE.Vector3(),
+            node_idx = -1,
+            min_dist = Infinity,
+            side = '',
+            _dist = 0;
+
+        lh_vertices.forEach((v, ii) => {
+          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
+          if( _dist < min_dist ){
+            min_dist = _dist;
+            node_idx = ii;
+            side = 'left';
+          }
+        });
+        rh_vertices.forEach((v, ii) => {
+          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
+          if( _dist < min_dist ){
+            min_dist = _dist;
+            node_idx = ii;
+            side = 'right';
+          }
+        });
+        if( node_idx >= 0 ){
+          g.vertex_number = node_idx;
+          g.hemisphere = side;
+        }
+      }
+    }
+    // calculate MNI305 coordinate
+    const mat1 = new threeplugins_THREE.Matrix4(),
+          pos_targ = new threeplugins_THREE.Vector3();
+    const v2v_orig = get_or_default( canvas.shared_data, scode, {} ).vox2vox_MNI305;
+
+    if( v2v_orig ){
+      mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
+                v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
+                v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
+                v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
+      pos_targ.fromArray( position ).applyMatrix4(mat1);
+      g.MNI305_position = pos_targ.toArray();
+    }
+
+  }
+
   canvas.add_object( g );
+
 
   _el = canvas.electrodes.get( subject_code )[ name ];
   _el.userData.electrode_number = number;
+
+  if( subject_code === '__localization__' ){
+    // make electrode color red
+    _el.material.color.setRGB(1,0,0);
+  }
+
   return( _el );
 }
 
@@ -58921,6 +59073,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
 
 This file defines shiny callback functions (js to shiny)
 */
+
 
 
 
@@ -58948,11 +59101,13 @@ function storageAvailable(type) {
   }
 }
 
+
 class shiny_tools_THREE_BRAIN_SHINY {
   constructor(outputId, shiny_mode = true) {
 
     this.outputId = outputId;
     this.shiny_mode = shiny_mode;
+    this.shinyId = outputId + '__shiny';
 
     this.stack = [];
 
@@ -58965,6 +59120,14 @@ class shiny_tools_THREE_BRAIN_SHINY {
       // console.log(`Send to shiny, ${this.stack.length}`);
     }, 200, false);
 
+    // Register shiny handlers
+    if( this.shiny_mode ){
+      this.register_shiny();
+    }
+  }
+
+  register_canvas( canvas ){
+    this.canvas = canvas;
   }
 
   set_token( token ){
@@ -58972,6 +59135,102 @@ class shiny_tools_THREE_BRAIN_SHINY {
       this.token = token;
     }
   }
+
+  loc_electrode_info(){
+
+    const els = this.canvas.electrodes.get("__localization__");
+    if( !els ){ return(null); }
+
+    let current_subject = this.canvas.state_data.get("target_subject");
+    if( !current_subject ){
+      if( this.canvas.subject_codes.length === 0 ){
+        return(null);
+      }
+      current_subject = this.canvas.subject_codes[0];
+    }
+    const re = [];
+    // get MNI mapping matrix
+
+    to_array( els ).forEach((el, ii) => {
+      const g = el.userData.construct_params;
+      let pos = g.MNI305_position;
+      let info = {
+        Electrode: ii + 1, MNI305_x : 0, MNI305_y : 0, MNI305_z : 0,
+        Label : g.custom_info || 'NA', Valid : false,
+        Coord_x : g.position[0], Coord_y : g.position[1], Coord_z : g.position[2],
+        TemplateSubject: current_subject,
+        SurfaceElectrode: g.is_surface_electrode === true,
+        SurfaceType: g.surface_type || 'NA',
+        Radius : g.radius,
+        VertexNumber : g.vertex_number || -1,
+        Hemisphere : g.hemisphere || 'NA'
+      };
+
+      if( !Array.isArray(pos) || pos.length !== 3 ){
+        pos = [0,0,0];
+      }
+
+
+      if( el.visible ){
+        info.MNI305_x = pos[0];
+        info.MNI305_y = pos[1];
+        info.MNI305_z = pos[2];
+        info.Valid = true;
+      }
+      re.push( info );
+    });
+
+
+    this.to_shiny({ table: re }, 'localization', true);
+
+    return(re);
+  }
+  loc_set_electrode(el_number, label, valid = true){
+    const el = this.canvas.electrodes.get("__localization__")[`__localization__, ${el_number} - `];
+    if( !el || !el.userData.construct_params.is_electrode ){
+      return(null);
+    }
+    el.userData.construct_params.custom_info = label || '';
+
+    if( !valid ){
+      // el.position.set(0,0,0);
+      el.visible = false;
+    }else{
+      el.visible = true;
+    }
+    this.canvas.start_animation( 0 );
+  }
+
+  register_shiny(){
+    Shiny.addCustomMessageHandler(this.shinyId, (data) => {
+      if( !data || typeof data.command !== 'string' || !this.canvas ){ return ( null ); }
+      switch (data.command) {
+
+        // 1. get electrode info
+        case 'loc_electrode_info':
+          this.loc_electrode_info();
+          break;
+
+        // 2. set electrode_info (localization)
+        case 'loc_set_electrode':
+          this.loc_set_electrode( data.electrode, data.label, data.is_valid );
+          this.loc_electrode_info();
+          break;
+
+        case 'loc_set_electrodes':
+          to_array( data.data ).forEach((d) => {
+            this.loc_set_electrode( d.electrode, d.label, d.is_valid );
+          });
+          this.loc_electrode_info();
+          break;
+
+        default:
+          // code
+      }
+    });
+  }
+
+
 
   to_shiny(data, method = 'callback', immediate = false){
     // method won't be checked, assuming string
@@ -58982,9 +59241,20 @@ class shiny_tools_THREE_BRAIN_SHINY {
     const callback_id = this.outputId + '_' + method;
     const re = {...data, '.__timestamp__.': time_stamp, '.__callback_id__.': callback_id};
 
-    this.stack.push( re );
+    // print
+    // console.debug(JSON.stringify( re ));
 
-    this._do_send();
+    if( immediate && this.shiny_mode ){
+      Shiny.onInputChange(re['.__callback_id__.'], re);
+      this.stack.length = 0;
+    }else{
+      this.stack.push( re );
+      this._do_send();
+    }
+
+
+
+
 
     /*
     // Add RAVE support (might be removed in the future)
@@ -60738,8 +61008,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   register_main_canvas_events(){
 
-    this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    // this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    this.main_canvas.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    this.main_canvas.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
 
     this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 2){
@@ -62973,6 +63245,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.start_animation( 0 );
   }
 
+
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
     /* DEBUG code
@@ -63049,8 +63322,9 @@ mapped = false,
                         v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
 
               // target position = inv(mat2) * mat1 * origin_position
-              mat2.multiplyMatrices( mat2, mat1 );
-              pos_targ.fromArray( origin_position ).applyMatrix4(mat2);
+              // mat2.multiplyMatrices( mat2, mat1 );
+              pos_targ.fromArray( origin_position ).applyMatrix4(mat1);
+              pos_targ.applyMatrix4( mat2 );
               mapped = true;
             }
 
@@ -63429,6 +63703,7 @@ class src_BrainCanvas{
     this.canvas = new threejs_scene_THREEBRAIN_CANVAS(
       this.el, width, height, 250,
       this.shiny_mode, cache, this.DEBUG, this.has_webgl2);
+    this.shiny.register_canvas( this.canvas );
 
     // 4. Animation, but do not render;
     this.canvas.animate();
@@ -63490,7 +63765,7 @@ class src_BrainCanvas{
 
     // Add listeners
     const control_presets = this.settings.control_presets;
-    const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, gui, this.settings);
+    const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, gui, this.settings, this.shiny );
     this.presets = presets;
     if(this.DEBUG){
       window.presets = presets;
@@ -63541,27 +63816,6 @@ class src_BrainCanvas{
 
     presets.c_animation();
 
-    // ---------------------------- Misc
-    // gui.add_folder('Misc');
-
-    /* Misc settings */
-
-    /*
-    // Background color
-    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Default'})
-      .onChange((v) => {
-        let inversedColor = invertColor(v);
-        this.canvas.main_renderer.setClearColor(v);
-        this.canvas.side_renderer.setClearColor(v);
-        this.el_text.style.color=inversedColor;
-        // this.el_text2.style.color=inversedColor;
-        this.el.style.backgroundColor = v;
-
-        this.canvas.start_animation(0);
-        this.canvas.background_color = v;
-        this.canvas.foreground_color = inversedColor;
-      });
-      */
     return(gui);
 
   }
@@ -63570,6 +63824,8 @@ class src_BrainCanvas{
     this.canvas.loader_manager.onLoad = () => {
       this.finalize_render();
     };
+
+    this.el_text.style.display = 'block';
 
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
 
@@ -63621,12 +63877,12 @@ class src_BrainCanvas{
           if( this.gui ){
             // clip name
             let _c = this.gui.get_controller('Clip Name');
-            if( _c ){
+            if( _c && _c.getValue ){
               shiny_data.current_clip = _c.getValue();
             }
 
             _c = this.presets._ani_time;
-            if( _c ){
+            if( _c && _c.getValue ){
               shiny_data.current_time = _c.getValue();
             }
           }

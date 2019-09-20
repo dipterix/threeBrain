@@ -75,6 +75,7 @@ class BrainCanvas{
     this.canvas = new THREEBRAIN_CANVAS(
       this.el, width, height, 250,
       this.shiny_mode, cache, this.DEBUG, this.has_webgl2);
+    this.shiny.register_canvas( this.canvas );
 
     // 4. Animation, but do not render;
     this.canvas.animate();
@@ -136,7 +137,7 @@ class BrainCanvas{
 
     // Add listeners
     const control_presets = this.settings.control_presets;
-    const presets = new THREEBRAIN_PRESETS( this.canvas, gui, this.settings);
+    const presets = new THREEBRAIN_PRESETS( this.canvas, gui, this.settings, this.shiny );
     this.presets = presets;
     if(this.DEBUG){
       window.presets = presets;
@@ -187,27 +188,6 @@ class BrainCanvas{
 
     presets.c_animation();
 
-    // ---------------------------- Misc
-    // gui.add_folder('Misc');
-
-    /* Misc settings */
-
-    /*
-    // Background color
-    gui.add_item('Background Color', "#ffffff", {is_color : true, folder_name: 'Default'})
-      .onChange((v) => {
-        let inversedColor = invertColor(v);
-        this.canvas.main_renderer.setClearColor(v);
-        this.canvas.side_renderer.setClearColor(v);
-        this.el_text.style.color=inversedColor;
-        // this.el_text2.style.color=inversedColor;
-        this.el.style.backgroundColor = v;
-
-        this.canvas.start_animation(0);
-        this.canvas.background_color = v;
-        this.canvas.foreground_color = inversedColor;
-      });
-      */
     return(gui);
 
   }
@@ -216,6 +196,8 @@ class BrainCanvas{
     this.canvas.loader_manager.onLoad = () => {
       this.finalize_render();
     };
+
+    this.el_text.style.display = 'block';
 
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
 
@@ -267,12 +249,12 @@ class BrainCanvas{
           if( this.gui ){
             // clip name
             let _c = this.gui.get_controller('Clip Name');
-            if( _c ){
+            if( _c && _c.getValue ){
               shiny_data.current_clip = _c.getValue();
             }
 
             _c = this.presets._ani_time;
-            if( _c ){
+            if( _c && _c.getValue ){
               shiny_data.current_time = _c.getValue();
             }
           }

@@ -4,15 +4,19 @@
 \alias{check_freesurfer_path}
 \title{Function to check whether `FreeSurfer` folder has everything we need}
 \usage{
-check_freesurfer_path(fs_subject_folder, autoinstall_template = TRUE)
+check_freesurfer_path(fs_subject_folder, autoinstall_template = TRUE,
+  return_path = FALSE)
 }
 \arguments{
 \item{fs_subject_folder}{character, path to `fs` project directory or `RAVE` subject directory}
 
 \item{autoinstall_template}{logical, whether `N27` brain should be installed is missing}
+
+\item{return_path}{logical, whether to return `FreeSurfer` path}
 }
 \value{
-logical whether the directory is valid
+logical whether the directory is valid or, if \code{return_path} is true,
+return `FreeSurfer` path
 }
 \description{
 Function to check whether `FreeSurfer` folder has everything we need
