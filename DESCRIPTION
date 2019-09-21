@@ -43,7 +43,8 @@ Imports:
     R6 (>= 2.3.0),
     startup (>= 0.12.0),
     reticulate (>= 1.13),
-    gifti (>= 0.7.5)
+    gifti (>= 0.7.5),
+    oro.nifti (>= 0.9.1)
 Suggests: 
     knitr,
     rmarkdown,
