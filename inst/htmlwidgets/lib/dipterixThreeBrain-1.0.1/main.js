@@ -54231,8 +54231,8 @@ const register_volumeShader1 = function(THREE){
   				'varying mat4 m_proj_mat;',
 
   				// The maximum distance through our rendering volume is sqrt(3).
-  				'const int MAX_STEPS = 444;	// 887 for 512^3, 1774 for 1024^3',
-  				'const int REFINEMENT_STEPS = 2;',
+  				'const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3',
+  				'const int REFINEMENT_STEPS = 4;',
   				'const float relative_step_size = 1.0;',
   				'const vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);',
   				'const vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);',
@@ -57536,6 +57536,250 @@ function debounce(func, wait, immediate) {
 
 
 
+// CONCATENATED MODULE: ./src/js/geometry/sphere.js
+
+
+
+function gen_sphere(g, canvas){
+  const gb = new threeplugins_THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+      values = g.keyframes,
+      n_keyframes = to_array( g.keyframes ).length;
+  let material_basic = new threeplugins_THREE.MeshBasicMaterial({ 'transparent' : false }),
+      material_lambert = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : false }),
+      material;
+  gb.name = 'geom_sphere_' + g.name;
+
+  // Make material based on value
+  if( n_keyframes > 0 ){
+    // Use the first value
+    material = material_basic;
+  }else{
+    material = material_lambert;
+  }
+
+  const mesh = new threeplugins_THREE.Mesh(gb, material);
+  mesh.name = 'mesh_sphere_' + g.name;
+
+  let linked = false;
+  if(g.use_link){
+    // This is a linkedSphereGeom which should be attached to a surface mesh
+    let vertex_ind = Math.floor(g.vertex_number - 1),
+        target_name = g.linked_geom,
+        target_mesh = canvas.mesh.get( target_name );
+
+    if(target_mesh && target_mesh.isMesh){
+      let target_pos = target_mesh.geometry.attributes.position.array;
+      mesh.position.set(target_pos[vertex_ind * 3], target_pos[vertex_ind * 3+1], target_pos[vertex_ind * 3+2]);
+      linked = true;
+    }
+  }
+
+  if(!linked){
+    mesh.position.fromArray(g.position);
+  }
+
+  if( n_keyframes > 0 ){
+    mesh.userData.ani_exists = true;
+  }
+  mesh.userData.ani_params = {...values};
+  mesh.userData.ani_name = 'default';
+  mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
+
+  mesh.userData.get_track_data = ( track_name, reset_material ) => {
+    let re;
+
+    if( mesh.userData.ani_exists ){
+      if( track_name === undefined ){ track_name = mesh.userData.ani_name; }
+      re = values[ track_name ];
+    }
+
+    if( reset_material ){
+      if( re && re.value !== null ){
+        mesh.material = material_basic;
+      }else{
+        mesh.material = material_lambert;
+      }
+    }
+
+    return( re );
+  };
+
+
+  // Set animation keyframes, will set material color
+  // Not used. to be deleted
+  mesh.userData.generate_keyframe_tracks = ( track_name ) => {
+    if( !values ){ return( undefined ); }
+    if( track_name === undefined ){
+      track_name = mesh.userData.ani_name;
+    }else{
+      mesh.userData.ani_name = track_name;
+    }
+    const cols = [], time_stamp = [];
+    const ani_data = values[ track_name ];
+
+    if( ani_data ){
+
+      mesh.material = material_basic;
+
+      to_array( ani_data.value ).forEach((v) => {
+        let c = canvas.get_color(v);
+        cols.push( c.r, c.g, c.b );
+      });
+      to_array( ani_data.key_frame ).forEach((v) => {
+        time_stamp.push( v - canvas.time_range_min );
+      });
+      return([new threeplugins_THREE.ColorKeyframeTrack(
+        '.material.color',
+        time_stamp, cols, threeplugins_THREE.InterpolateDiscrete
+      )]);
+    }else{
+      // No animation for current mesh, set to MeshLambertMaterial
+      mesh.material = material_lambert;
+      return( undefined );
+    }
+
+  };
+
+  return(mesh);
+}
+
+
+function add_electrode (canvas, number, name, position, surface_type = 'NA',
+                        custom_info = '', is_surface_electrode = false,
+                        radius = 2, color = [1,1,0],
+                        group_name = '__electrode_editor__',
+                        subject_code = '__localization__') {
+  if( subject_code === '__localization__' ){
+    name = `__localization__, ${number} - `
+  }
+  let _el;
+  if( !canvas.group.has(group_name) ){
+    canvas.add_group( {
+      name : group_name, layer : 0, position : [0,0,0],
+      disable_trans_mat: false, group_data: null,
+      parent_group: null, subject_code: subject_code, trans_mat: null
+    } );
+  }
+
+  // Check if electrode has been added, if so, remove it
+  try {
+    _el = canvas.electrodes.get( subject_code )[ name ];
+    _el.parent.remove( _el );
+  } catch (e) {}
+
+  const g = { "name":name, "type":"sphere", "time_stamp":[], "position":position,
+          "value":null, "clickable":true, "layer":0,
+          "group":{"group_name":group_name,"group_layer":0,"group_position":[0,0,0]},
+          "use_cache":false, "custom_info":custom_info,
+          "subject_code":subject_code, "radius":radius,
+          "width_segments":10,"height_segments":6,
+          "is_electrode":true,
+          "is_surface_electrode": is_surface_electrode,
+          "use_template":false,
+          "surface_type": surface_type,
+          "hemisphere":null,"vertex_number":-1,"sub_cortical":true,"search_geoms":null};
+
+  if( subject_code === '__localization__' ){
+    // look for current subject code
+    const scode = canvas.state_data.get("target_subject");
+    const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
+
+    const gp_position = new threeplugins_THREE.Vector3(),
+          _mpos = new threeplugins_THREE.Vector3();
+    _mpos.fromArray( position );
+
+    // Search 141 nodes
+    if( search_group && search_group.userData ){
+      let lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${surface_type} (${scode})`],
+          rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${surface_type} (${scode})`],
+          is_141 = true;
+
+      if( !lh_vertices || !rh_vertices ){
+        is_141 = false;
+        lh_vertices = search_group.userData.group_data[`free_vertices_FreeSurfer Left Hemisphere - ${surface_type} (${scode})`];
+        rh_vertices = search_group.userData.group_data[`free_vertices_FreeSurfer Right Hemisphere - ${surface_type} (${scode})`];
+      }
+
+
+      const mesh_center = search_group.getWorldPosition( gp_position );
+      if( lh_vertices && rh_vertices ){
+        // calculate
+        let _tmp = new threeplugins_THREE.Vector3(),
+            node_idx = -1,
+            min_dist = Infinity,
+            side = '',
+            _dist = 0;
+
+        lh_vertices.forEach((v, ii) => {
+          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
+          if( _dist < min_dist ){
+            min_dist = _dist;
+            node_idx = ii;
+            side = 'left';
+          }
+        });
+        rh_vertices.forEach((v, ii) => {
+          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
+          if( _dist < min_dist ){
+            min_dist = _dist;
+            node_idx = ii;
+            side = 'right';
+          }
+        });
+        if( node_idx >= 0 ){
+          if( is_141 ){
+            g.vertex_number = node_idx;
+            g.hemisphere = side;
+            g._distance_to_surf = Math.sqrt(min_dist);
+          }else{
+            g.vertex_number = -1;
+            g.hemisphere = side;
+            g._distance_to_surf = Math.sqrt(min_dist);
+          }
+        }
+
+      }
+    }
+    // calculate MNI305 coordinate
+    const mat1 = new threeplugins_THREE.Matrix4(),
+          pos_targ = new threeplugins_THREE.Vector3();
+    const v2v_orig = get_or_default( canvas.shared_data, scode, {} ).vox2vox_MNI305;
+
+    if( v2v_orig ){
+      mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
+                v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
+                v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
+                v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
+      pos_targ.fromArray( position ).applyMatrix4(mat1);
+      g.MNI305_position = pos_targ.toArray();
+    }
+
+  }
+
+  canvas.add_object( g );
+
+
+  _el = canvas.electrodes.get( subject_code )[ name ];
+  _el.userData.electrode_number = number;
+
+  if( subject_code === '__localization__' ){
+    // make electrode color red
+    _el.material.color.setRGB(color[0], color[1], color[2]);
+  }
+
+  return( _el );
+}
+
+function is_electrode(e) {
+  if(e && e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
+    return(true);
+  }else{
+    return(false);
+  }
+}
+
+
+
 // CONCATENATED MODULE: ./src/js/constants.js
 
 // Defined all the constants
@@ -57790,16 +58034,9 @@ class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
 
 
 
+
 // Some presets for gui and canvas
 
-
-function is_electrode(e) {
-  if(e && e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
-    return(true);
-  }else{
-    return(false);
-  }
-}
 
 function has_meta_keys( event, shift = true, ctrl = true, alt = true){
   let v1 = 0 + event.shiftKey + event.ctrlKey * 2 + event.altKey * 4,
@@ -58670,8 +58907,15 @@ class data_controls_THREEBRAIN_PRESETS{
               }
               if( surfs.hasOwnProperty( lh_name ) && surfs.hasOwnProperty( rh_name ) && !surfs[ lh_name ].visible ){
                 // outer pial exists
-                surfs[ lh_name ].visible = true;
-                surfs[ rh_name ].visible = true;
+                // Check lh and rh visibility
+                const _lh = this.gui.get_controller('Left Hemisphere');
+                if( !(_lh && _lh.getValue && _lh.getValue() === 'hidden') ){
+                  surfs[ lh_name ].visible = true;
+                }
+                const _rh = this.gui.get_controller('Right Hemisphere');
+                if( !(_rh && _rh.getValue && _rh.getValue() === 'hidden') ){
+                  surfs[ rh_name ].visible = true;
+                }
                 meta = {
                   lh_name: lh_name,
                   rh_name: rh_name,
@@ -58785,6 +59029,9 @@ class data_controls_THREEBRAIN_PRESETS{
     this.gui.folders["Side Canvas"].close();
     this.gui.folders[ folder_name ].open();
     edit_mode.setValue( true );
+
+    this._has_localization = true;
+
   }
 
   c_export_electrodes(folder_name = 'Default'){
@@ -58794,16 +59041,60 @@ class data_controls_THREEBRAIN_PRESETS{
   }
 
   c_ct_visibility(){
-    this.gui.add_item('Align CT to T1', false, { folder_name: 'Default' })
+    const folder_name = 'CT Overlay';
+    this.gui.add_item('Align CT to T1', false, { folder_name: folder_name })
       .onChange((v) => {
         this.canvas._show_ct = v;
         this.canvas.switch_subject();
       });
-    this.gui.add_item('CT threshold', 0.8, { folder_name: 'Default' })
+    const ct_thred = this.gui.add_item('CT threshold', 0.8, { folder_name: folder_name })
       .min(0.3).max(1).step(0.01)
       .onChange((v) => {
         this.canvas.switch_subject('/', { ct_threshold : v });
       });
+    this.gui.add_item('Guess Electrodes', () => {
+      const thred = ct_thred.getValue() * 255;
+      const current_subject = this.canvas.state_data.get("target_subject") || '';
+      const ct_cube = this.canvas.mesh.get(`ct.aligned.t1 (${current_subject})`);
+      if( !ct_cube || ct_cube.userData.construct_params.type !== 'datacube2' ){
+        alert(`Cannot find aligned CT (${current_subject})`);
+        return(null);
+      }
+
+      this.shiny.to_shiny({
+        threshold: thred,
+        current_subject : current_subject
+      }, 'ct_threshold', true);
+
+      /*
+
+
+      const dset = ct_cube.material.uniforms.u_data.value.image,
+            dat = dset.data,
+            _w = dset.width,
+            _h = dset.height,
+            _d = dset.depth;
+
+      // Get data
+      let xyz = [];
+      for(let _z = 0; _z < _d; _z++ ){
+        for(let _y = 0; _y < _h; _y++ ){
+          for(let _x = 0; _x < _w; _x++ ){
+            if( dat[_x + _w * (_y + _h * _z)] >= thred ){
+              xyz.push( [ _x, _y, _z ] );
+            }
+          }
+        }
+      }
+      window.xyz = xyz;
+      */
+
+
+    }, { folder_name: folder_name });
+
+
+    this.gui.folders[ folder_name ].open();
+
   }
 
 }
@@ -58957,111 +59248,7 @@ class data_controls_THREEBRAIN_CONTROL{
 }
 
 
-function add_electrode (canvas, number, name, position, surface_type = 'NA',
-                        custom_info = '', is_surface_electrode = false,
-                        radius = 2,
-                        group_name = '__electrode_editor__',
-                        subject_code = '__localization__') {
-  let _el;
-  if( !canvas.group.has(group_name) ){
-    canvas.add_group( {
-      name : group_name, layer : 0, position : [0,0,0],
-      disable_trans_mat: false, group_data: null,
-      parent_group: null, subject_code: subject_code, trans_mat: null
-    } );
-  }
 
-  // Check if electrode has been added, if so, remove it
-  try {
-    _el = canvas.electrodes.get( subject_code )[ name ];
-    _el.parent.remove( _el );
-  } catch (e) {}
-
-  const g = { "name":name, "type":"sphere", "time_stamp":[], "position":position,
-          "value":null, "clickable":true, "layer":0,
-          "group":{"group_name":group_name,"group_layer":0,"group_position":[0,0,0]},
-          "use_cache":false, "custom_info":custom_info,
-          "subject_code":subject_code, "radius":radius,
-          "width_segments":10,"height_segments":6,
-          "is_electrode":true,
-          "is_surface_electrode": is_surface_electrode,
-          "use_template":false,
-          "surface_type": surface_type,
-          "hemisphere":null,"vertex_number":-1,"sub_cortical":true,"search_geoms":null};
-
-  if( subject_code === '__localization__' ){
-    // look for current subject code
-    const scode = canvas.state_data.get("target_subject");
-    const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
-
-    const gp_position = new threeplugins_THREE.Vector3(),
-          _mpos = new threeplugins_THREE.Vector3();
-    _mpos.fromArray( position );
-
-    // Search 141 nodes
-    if( search_group && search_group.userData ){
-      const lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${surface_type} (${scode})`];
-      const rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${surface_type} (${scode})`];
-      const mesh_center = search_group.getWorldPosition( gp_position );
-      if( lh_vertices && rh_vertices ){
-        // calculate
-        let _tmp = new threeplugins_THREE.Vector3(),
-            node_idx = -1,
-            min_dist = Infinity,
-            side = '',
-            _dist = 0;
-
-        lh_vertices.forEach((v, ii) => {
-          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
-          if( _dist < min_dist ){
-            min_dist = _dist;
-            node_idx = ii;
-            side = 'left';
-          }
-        });
-        rh_vertices.forEach((v, ii) => {
-          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
-          if( _dist < min_dist ){
-            min_dist = _dist;
-            node_idx = ii;
-            side = 'right';
-          }
-        });
-        if( node_idx >= 0 ){
-          g.vertex_number = node_idx;
-          g.hemisphere = side;
-        }
-      }
-    }
-    // calculate MNI305 coordinate
-    const mat1 = new threeplugins_THREE.Matrix4(),
-          pos_targ = new threeplugins_THREE.Vector3();
-    const v2v_orig = get_or_default( canvas.shared_data, scode, {} ).vox2vox_MNI305;
-
-    if( v2v_orig ){
-      mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
-                v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
-                v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
-                v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-      pos_targ.fromArray( position ).applyMatrix4(mat1);
-      g.MNI305_position = pos_targ.toArray();
-    }
-
-  }
-
-  canvas.add_object( g );
-
-
-  _el = canvas.electrodes.get( subject_code )[ name ];
-  _el.userData.electrode_number = number;
-
-  if( subject_code === '__localization__' ){
-    // make electrode color red
-    _el.material.color.setRGB(1,0,0);
-  }
-
-  return( _el );
-}
 
 
 
@@ -59073,6 +59260,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
 
 This file defines shiny callback functions (js to shiny)
 */
+
 
 
 
@@ -59129,6 +59317,9 @@ class shiny_tools_THREE_BRAIN_SHINY {
   register_canvas( canvas ){
     this.canvas = canvas;
   }
+  register_gui( gui ){
+    this.gui = gui;
+  }
 
   set_token( token ){
     if(storageAvailable('localStorage') && typeof(token) === 'string'){
@@ -59163,7 +59354,8 @@ class shiny_tools_THREE_BRAIN_SHINY {
         SurfaceType: g.surface_type || 'NA',
         Radius : g.radius,
         VertexNumber : g.vertex_number || -1,
-        Hemisphere : g.hemisphere || 'NA'
+        Hemisphere : g.hemisphere || 'NA',
+        DistanceToSurface : g._distance_to_surf
       };
 
       if( !Array.isArray(pos) || pos.length !== 3 ){
@@ -59185,12 +59377,15 @@ class shiny_tools_THREE_BRAIN_SHINY {
 
     return(re);
   }
-  loc_set_electrode(el_number, label, valid = true){
+  loc_set_electrode(el_number, label = '', valid = true, position = undefined){
     const el = this.canvas.electrodes.get("__localization__")[`__localization__, ${el_number} - `];
     if( !el || !el.userData.construct_params.is_electrode ){
       return(null);
     }
-    el.userData.construct_params.custom_info = label || '';
+    if( label && typeof label === 'string' && label !== '' && label!=='NA'){
+      el.userData.construct_params.custom_info = label;
+    }
+
 
     if( !valid ){
       // el.position.set(0,0,0);
@@ -59198,12 +59393,27 @@ class shiny_tools_THREE_BRAIN_SHINY {
     }else{
       el.visible = true;
     }
+    if( position ){
+      position = to_array( position );
+      if( position.length === 3 ){
+        el.position.fromArray( position );
+        el.userData.construct_params.position = position;
+      }
+    }
     this.canvas.start_animation( 0 );
+  }
+
+  loc_add_electrode(el_number, label, position, is_surface_electrode = false, surface_type = 'pial'){
+    add_electrode(this.canvas, el_number, `__localization__, ${el_number} - ` ,
+                  position, surface_type, label, is_surface_electrode, 2, [1,0,0]);
   }
 
   register_shiny(){
     Shiny.addCustomMessageHandler(this.shinyId, (data) => {
       if( !data || typeof data.command !== 'string' || !this.canvas ){ return ( null ); }
+
+      console.log(data);
+
       switch (data.command) {
 
         // 1. get electrode info
@@ -59219,8 +59429,19 @@ class shiny_tools_THREE_BRAIN_SHINY {
 
         case 'loc_set_electrodes':
           to_array( data.data ).forEach((d) => {
-            this.loc_set_electrode( d.electrode, d.label, d.is_valid );
+            this.loc_set_electrode( d.electrode, d.label, d.is_valid, d.position );
           });
+          this.loc_electrode_info();
+          break;
+        case 'loc_add_electrodes':
+          const _es = to_array( data.data );
+          _es.forEach((d) => {
+            this.loc_add_electrode( d.electrode, d.label, d.position,
+                                    d.is_surface || false, d.surface_type || 'pial');
+          });
+          if( this.gui ){
+            this.gui.get_controller('Number').setValue( _es.length + 1 );
+          }
           this.loc_electrode_info();
           break;
 
@@ -59743,115 +59964,6 @@ function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_
 
 // makeResizableDiv('.resizable')
 
-
-
-
-// CONCATENATED MODULE: ./src/js/geometry/sphere.js
-
-
-
-function gen_sphere(g, canvas){
-  const gb = new threeplugins_THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
-      values = g.keyframes,
-      n_keyframes = to_array( g.keyframes ).length;
-  let material_basic = new threeplugins_THREE.MeshBasicMaterial({ 'transparent' : false }),
-      material_lambert = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : false }),
-      material;
-  gb.name = 'geom_sphere_' + g.name;
-
-  // Make material based on value
-  if( n_keyframes > 0 ){
-    // Use the first value
-    material = material_basic;
-  }else{
-    material = material_lambert;
-  }
-
-  const mesh = new threeplugins_THREE.Mesh(gb, material);
-  mesh.name = 'mesh_sphere_' + g.name;
-
-  let linked = false;
-  if(g.use_link){
-    // This is a linkedSphereGeom which should be attached to a surface mesh
-    let vertex_ind = Math.floor(g.vertex_number - 1),
-        target_name = g.linked_geom,
-        target_mesh = canvas.mesh.get( target_name );
-
-    if(target_mesh && target_mesh.isMesh){
-      let target_pos = target_mesh.geometry.attributes.position.array;
-      mesh.position.set(target_pos[vertex_ind * 3], target_pos[vertex_ind * 3+1], target_pos[vertex_ind * 3+2]);
-      linked = true;
-    }
-  }
-
-  if(!linked){
-    mesh.position.fromArray(g.position);
-  }
-
-  if( n_keyframes > 0 ){
-    mesh.userData.ani_exists = true;
-  }
-  mesh.userData.ani_params = {...values};
-  mesh.userData.ani_name = 'default';
-  mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
-
-  mesh.userData.get_track_data = ( track_name, reset_material ) => {
-    let re;
-
-    if( mesh.userData.ani_exists ){
-      if( track_name === undefined ){ track_name = mesh.userData.ani_name; }
-      re = values[ track_name ];
-    }
-
-    if( reset_material ){
-      if( re && re.value !== null ){
-        mesh.material = material_basic;
-      }else{
-        mesh.material = material_lambert;
-      }
-    }
-
-    return( re );
-  };
-
-
-  // Set animation keyframes, will set material color
-  // Not used. to be deleted
-  mesh.userData.generate_keyframe_tracks = ( track_name ) => {
-    if( !values ){ return( undefined ); }
-    if( track_name === undefined ){
-      track_name = mesh.userData.ani_name;
-    }else{
-      mesh.userData.ani_name = track_name;
-    }
-    const cols = [], time_stamp = [];
-    const ani_data = values[ track_name ];
-
-    if( ani_data ){
-
-      mesh.material = material_basic;
-
-      to_array( ani_data.value ).forEach((v) => {
-        let c = canvas.get_color(v);
-        cols.push( c.r, c.g, c.b );
-      });
-      to_array( ani_data.key_frame ).forEach((v) => {
-        time_stamp.push( v - canvas.time_range_min );
-      });
-      return([new threeplugins_THREE.ColorKeyframeTrack(
-        '.material.color',
-        time_stamp, cols, threeplugins_THREE.InterpolateDiscrete
-      )]);
-    }else{
-      // No animation for current mesh, set to MeshLambertMaterial
-      mesh.material = material_lambert;
-      return( undefined );
-    }
-
-  };
-
-  return(mesh);
-}
 
 
 
@@ -63830,7 +63942,7 @@ class src_BrainCanvas{
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
 
     	let path = /\/([^/]*)$/.exec(url)[1],
-    	    msg = '<p><small>Loading file: ' + itemsLoaded + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
+    	    msg = '<p><small>Loading file: ' + (itemsLoaded + 1) + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
 
       if(this.DEBUG){
         console.debug(msg);
@@ -64015,6 +64127,7 @@ class src_BrainCanvas{
 
     let gui = this._register_gui_control();
     this.gui = gui;
+    this.shiny.register_gui( gui );
     this._set_info_callback();
 
 

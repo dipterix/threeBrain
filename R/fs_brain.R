@@ -46,6 +46,7 @@
 #' @param fs_subject_folder character, `FreeSurfer` subject folder, or `RAVE` subject folder
 #' @param subject_name character, subject code to display with only letters and digits
 #' @param additional_surfaces character array, additional surface types to load, such as `white`, `smoothwm`
+#' @param aligned_ct character, path to `ct_aligned_mri.nii.gz`, used for electrode localization
 #' @param use_cache logical, whether to use cached `json` files or from raw `FreeSurfer` files
 #' @param use_141 logical, whether to use standard 141 brain for surface file
 #'
@@ -66,7 +67,7 @@
 #' @export
 freesurfer_brain <- function(fs_subject_folder, subject_name,
                              additional_surfaces = NULL,
-                             # aligned_ct_nii = NULL,
+                             aligned_ct = NULL,
                              use_cache = TRUE, use_141 = TRUE){
   # Naming conventions
   #
@@ -83,6 +84,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   ##### Load volume and surface ####
   # fs_subject_folder = '~/rave_data/data_dir/congruency/YAB/rave/fs/'
+  # aligned_ct_nii = '~/rave_data/data_dir/congruency/YAB/rave/fs/RAVE/ct_aligned_mri.nii.gz'
   # subject_name = 'YAB'
   mustWork = TRUE
 
@@ -182,10 +184,11 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     # }
 
     # Re-order the data according to Norig, map voxels to RAS coord - anatomical
-    order_index = round((Norig %*% c(1,2,3,0))[1:3])
-    volume = aperm(volume, abs(order_index))
-    sub = sprintf(c('%d:1', '1:%d')[(sign(order_index) + 3) / 2], dim(volume))
-    volume = eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
+    # order_index = round((Norig %*% c(1,2,3,0))[1:3])
+    # volume = aperm(volume, abs(order_index))
+    # sub = sprintf(c('%d:1', '1:%d')[(sign(order_index) + 3) / 2], dim(volume))
+    # volume = eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
+    volume = reorient_volume( volume, Norig )
 
     geom_brain_finalsurfs = DataCubeGeom$new(
       name = sprintf('brain.finalsurfs (%s)', subject_name), value = volume, dim = volume_shape,
@@ -200,6 +203,66 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     volume = geom_brain_finalsurfs, position = c(0, 0, 0 ))
 
   brain$add_volume( volume = geom_brain_finalsurfs )
+
+  #### Load aligned CT if required
+  if( !is.null(aligned_ct) ){
+
+    group_ct = GeomGroup$new(name = sprintf('Volume - ct.aligned.t1 (%s)', subject_name))
+    group_ct$subject_code = subject_name
+    cache_ct = file.path(path_cache, sprintf('%s_ct_aligned_t1.json', subject_name))
+
+
+    geom_brain_ct = NULL
+    # Check whether cache exists
+    if( use_cache && file.exists(cache_ct) && file.size(cache_ct) > 4096 ){
+      # Load from original file
+      # ct = read_nii2( aligned_ct, head_only = TRUE )
+
+      # get volume data
+      ct_shape = c(2,2,2); #as.integer(unlist( ct$get_shape() ))
+
+      geom_brain_ct = DataCubeGeom2$new(
+        name = sprintf('ct.aligned.t1 (%s)', subject_name),
+        value = array(NA, dim = ct_shape), dim = ct_shape,
+        half_size = ct_shape / 2, group = group_ct, position = c(0,0,0),
+        cache_file = cache_ct)
+    }else{
+      unlink( cache_ct )
+    }
+
+
+    # Load from original nii
+    if( is.null(geom_brain_ct) && file.exists(aligned_ct) ){
+      # Load from original file
+      ct = read_nii2( aligned_ct )
+
+      # get volume data
+      ct_data = ct$get_data()
+      ct_shape = as.integer(unlist( ct$get_shape() ))
+
+      # re-orient to RAS
+      ct_data = reorient_volume( ct_data, Norig )
+
+      geom_brain_ct = DataCubeGeom2$new(
+        name = sprintf('ct.aligned.t1 (%s)', subject_name),
+        value = ct_data, dim = ct_shape,
+        half_size = ct_shape / 2, group = group_ct, position = c(0,0,0),
+        cache_file = cache_ct)
+
+      rm( ct, ct_data )
+    }
+
+    if( !is.null(geom_brain_ct) ){
+      geom_brain_ct = BrainVolume$new(
+        subject_code = subject_name, volume_type = 'ct.aligned.t1',
+        volume = geom_brain_ct, position = c(0,0,0)
+      )
+      brain$add_volume( volume = geom_brain_ct )
+    }
+
+
+
+  }
 
   #### Read surface files ####
   surface_type = unique(c('pial', additional_surfaces))

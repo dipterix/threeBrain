@@ -81,6 +81,41 @@ read_gii2 <- function(path){
   surf
 }
 
+
+read_nii2 <- function(path, head_only = FALSE ){
+  path = normalizePath(path, mustWork = FALSE)
+
+  nibabel = load_nibabel()
+  if( !is.null(nibabel) ){
+    tmp = nibabel$load( path )
+
+    re = list(
+      header = tmp$header,
+      get_shape = tmp$get_shape,
+      get_data = tmp$get_data
+    )
+
+  }else{
+    nii = oro.nifti::readNIfTI(path, verbose = FALSE, reorient = FALSE, read_data = !head_only)
+
+    re = list(
+      header = nii,
+      get_shape = function(){ as.list(dim(nii@.Data)) },
+      get_data = function(){ nii@.Data }
+    )
+  }
+
+  return(re)
+}
+
+
+
+
+
+
+
+
+
 #
 #
 # .onLoad <- function(libname, pkgname){

@@ -1,18 +1,11 @@
 import { THREE } from './threeplugins.js';
 import * as dat from './libs/dat.gui.module.js';
+import { add_electrode, is_electrode } from './geometry/sphere.js';
 import { invertColor, to_array, get_or_default } from './utils.js';
 import { CONSTANTS } from './constants.js';
 import { CCanvasRecorder } from './capture/CCanvasRecorder.js';
 // Some presets for gui and canvas
 
-
-function is_electrode(e) {
-  if(e && e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
-    return(true);
-  }else{
-    return(false);
-  }
-}
 
 function has_meta_keys( event, shift = true, ctrl = true, alt = true){
   let v1 = 0 + event.shiftKey + event.ctrlKey * 2 + event.altKey * 4,
@@ -883,8 +876,15 @@ class THREEBRAIN_PRESETS{
               }
               if( surfs.hasOwnProperty( lh_name ) && surfs.hasOwnProperty( rh_name ) && !surfs[ lh_name ].visible ){
                 // outer pial exists
-                surfs[ lh_name ].visible = true;
-                surfs[ rh_name ].visible = true;
+                // Check lh and rh visibility
+                const _lh = this.gui.get_controller('Left Hemisphere');
+                if( !(_lh && _lh.getValue && _lh.getValue() === 'hidden') ){
+                  surfs[ lh_name ].visible = true;
+                }
+                const _rh = this.gui.get_controller('Right Hemisphere');
+                if( !(_rh && _rh.getValue && _rh.getValue() === 'hidden') ){
+                  surfs[ rh_name ].visible = true;
+                }
                 meta = {
                   lh_name: lh_name,
                   rh_name: rh_name,
@@ -998,6 +998,9 @@ class THREEBRAIN_PRESETS{
     this.gui.folders["Side Canvas"].close();
     this.gui.folders[ folder_name ].open();
     edit_mode.setValue( true );
+
+    this._has_localization = true;
+
   }
 
   c_export_electrodes(folder_name = 'Default'){
@@ -1007,16 +1010,60 @@ class THREEBRAIN_PRESETS{
   }
 
   c_ct_visibility(){
-    this.gui.add_item('Align CT to T1', false, { folder_name: 'Default' })
+    const folder_name = 'CT Overlay';
+    this.gui.add_item('Align CT to T1', false, { folder_name: folder_name })
       .onChange((v) => {
         this.canvas._show_ct = v;
         this.canvas.switch_subject();
       });
-    this.gui.add_item('CT threshold', 0.8, { folder_name: 'Default' })
+    const ct_thred = this.gui.add_item('CT threshold', 0.8, { folder_name: folder_name })
       .min(0.3).max(1).step(0.01)
       .onChange((v) => {
         this.canvas.switch_subject('/', { ct_threshold : v });
       });
+    this.gui.add_item('Guess Electrodes', () => {
+      const thred = ct_thred.getValue() * 255;
+      const current_subject = this.canvas.state_data.get("target_subject") || '';
+      const ct_cube = this.canvas.mesh.get(`ct.aligned.t1 (${current_subject})`);
+      if( !ct_cube || ct_cube.userData.construct_params.type !== 'datacube2' ){
+        alert(`Cannot find aligned CT (${current_subject})`);
+        return(null);
+      }
+
+      this.shiny.to_shiny({
+        threshold: thred,
+        current_subject : current_subject
+      }, 'ct_threshold', true);
+
+      /*
+
+
+      const dset = ct_cube.material.uniforms.u_data.value.image,
+            dat = dset.data,
+            _w = dset.width,
+            _h = dset.height,
+            _d = dset.depth;
+
+      // Get data
+      let xyz = [];
+      for(let _z = 0; _z < _d; _z++ ){
+        for(let _y = 0; _y < _h; _y++ ){
+          for(let _x = 0; _x < _w; _x++ ){
+            if( dat[_x + _w * (_y + _h * _z)] >= thred ){
+              xyz.push( [ _x, _y, _z ] );
+            }
+          }
+        }
+      }
+      window.xyz = xyz;
+      */
+
+
+    }, { folder_name: folder_name });
+
+
+    this.gui.folders[ folder_name ].open();
+
   }
 
 }
@@ -1170,111 +1217,7 @@ class THREEBRAIN_CONTROL{
 }
 
 
-function add_electrode (canvas, number, name, position, surface_type = 'NA',
-                        custom_info = '', is_surface_electrode = false,
-                        radius = 2,
-                        group_name = '__electrode_editor__',
-                        subject_code = '__localization__') {
-  let _el;
-  if( !canvas.group.has(group_name) ){
-    canvas.add_group( {
-      name : group_name, layer : 0, position : [0,0,0],
-      disable_trans_mat: false, group_data: null,
-      parent_group: null, subject_code: subject_code, trans_mat: null
-    } );
-  }
 
-  // Check if electrode has been added, if so, remove it
-  try {
-    _el = canvas.electrodes.get( subject_code )[ name ];
-    _el.parent.remove( _el );
-  } catch (e) {}
-
-  const g = { "name":name, "type":"sphere", "time_stamp":[], "position":position,
-          "value":null, "clickable":true, "layer":0,
-          "group":{"group_name":group_name,"group_layer":0,"group_position":[0,0,0]},
-          "use_cache":false, "custom_info":custom_info,
-          "subject_code":subject_code, "radius":radius,
-          "width_segments":10,"height_segments":6,
-          "is_electrode":true,
-          "is_surface_electrode": is_surface_electrode,
-          "use_template":false,
-          "surface_type": surface_type,
-          "hemisphere":null,"vertex_number":-1,"sub_cortical":true,"search_geoms":null};
-
-  if( subject_code === '__localization__' ){
-    // look for current subject code
-    const scode = canvas.state_data.get("target_subject");
-    const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
-
-    const gp_position = new THREE.Vector3(),
-          _mpos = new THREE.Vector3();
-    _mpos.fromArray( position );
-
-    // Search 141 nodes
-    if( search_group && search_group.userData ){
-      const lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${surface_type} (${scode})`];
-      const rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${surface_type} (${scode})`];
-      const mesh_center = search_group.getWorldPosition( gp_position );
-      if( lh_vertices && rh_vertices ){
-        // calculate
-        let _tmp = new THREE.Vector3(),
-            node_idx = -1,
-            min_dist = Infinity,
-            side = '',
-            _dist = 0;
-
-        lh_vertices.forEach((v, ii) => {
-          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
-          if( _dist < min_dist ){
-            min_dist = _dist;
-            node_idx = ii;
-            side = 'left';
-          }
-        });
-        rh_vertices.forEach((v, ii) => {
-          _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( _mpos );
-          if( _dist < min_dist ){
-            min_dist = _dist;
-            node_idx = ii;
-            side = 'right';
-          }
-        });
-        if( node_idx >= 0 ){
-          g.vertex_number = node_idx;
-          g.hemisphere = side;
-        }
-      }
-    }
-    // calculate MNI305 coordinate
-    const mat1 = new THREE.Matrix4(),
-          pos_targ = new THREE.Vector3();
-    const v2v_orig = get_or_default( canvas.shared_data, scode, {} ).vox2vox_MNI305;
-
-    if( v2v_orig ){
-      mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
-                v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
-                v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
-                v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-      pos_targ.fromArray( position ).applyMatrix4(mat1);
-      g.MNI305_position = pos_targ.toArray();
-    }
-
-  }
-
-  canvas.add_object( g );
-
-
-  _el = canvas.electrodes.get( subject_code )[ name ];
-  _el.userData.electrode_number = number;
-
-  if( subject_code === '__localization__' ){
-    // make electrode color red
-    _el.material.color.setRGB(0,1,0);
-  }
-
-  return( _el );
-}
 
 export { THREEBRAIN_PRESETS, THREEBRAIN_CONTROL };
 

@@ -115,8 +115,8 @@ const register_volumeShader1 = function(THREE){
   				'varying mat4 m_proj_mat;',
 
   				// The maximum distance through our rendering volume is sqrt(3).
-  				'const int MAX_STEPS = 444;	// 887 for 512^3, 1774 for 1024^3',
-  				'const int REFINEMENT_STEPS = 2;',
+  				'const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3',
+  				'const int REFINEMENT_STEPS = 4;',
   				'const float relative_step_size = 1.0;',
   				'const vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);',
   				'const vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);',

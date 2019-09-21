@@ -5,6 +5,7 @@ This file defines shiny callback functions (js to shiny)
 
 import { debounce, to_array, get_or_default } from './utils.js';
 import { THREE } from './threeplugins.js';
+import { add_electrode, is_electrode } from './geometry/sphere.js';
 
 function storageAvailable(type) {
   try {
@@ -58,6 +59,9 @@ class THREE_BRAIN_SHINY {
   register_canvas( canvas ){
     this.canvas = canvas;
   }
+  register_gui( gui ){
+    this.gui = gui;
+  }
 
   set_token( token ){
     if(storageAvailable('localStorage') && typeof(token) === 'string'){
@@ -92,7 +96,8 @@ class THREE_BRAIN_SHINY {
         SurfaceType: g.surface_type || 'NA',
         Radius : g.radius,
         VertexNumber : g.vertex_number || -1,
-        Hemisphere : g.hemisphere || 'NA'
+        Hemisphere : g.hemisphere || 'NA',
+        DistanceToSurface : g._distance_to_surf
       };
 
       if( !Array.isArray(pos) || pos.length !== 3 ){
@@ -114,12 +119,15 @@ class THREE_BRAIN_SHINY {
 
     return(re);
   }
-  loc_set_electrode(el_number, label, valid = true){
+  loc_set_electrode(el_number, label = '', valid = true, position = undefined){
     const el = this.canvas.electrodes.get("__localization__")[`__localization__, ${el_number} - `];
     if( !el || !el.userData.construct_params.is_electrode ){
       return(null);
     }
-    el.userData.construct_params.custom_info = label || '';
+    if( label && typeof label === 'string' && label !== '' && label!=='NA'){
+      el.userData.construct_params.custom_info = label;
+    }
+
 
     if( !valid ){
       // el.position.set(0,0,0);
@@ -127,12 +135,27 @@ class THREE_BRAIN_SHINY {
     }else{
       el.visible = true;
     }
+    if( position ){
+      position = to_array( position );
+      if( position.length === 3 ){
+        el.position.fromArray( position );
+        el.userData.construct_params.position = position;
+      }
+    }
     this.canvas.start_animation( 0 );
+  }
+
+  loc_add_electrode(el_number, label, position, is_surface_electrode = false, surface_type = 'pial'){
+    add_electrode(this.canvas, el_number, `__localization__, ${el_number} - ` ,
+                  position, surface_type, label, is_surface_electrode, 2, [1,0,0]);
   }
 
   register_shiny(){
     Shiny.addCustomMessageHandler(this.shinyId, (data) => {
       if( !data || typeof data.command !== 'string' || !this.canvas ){ return ( null ); }
+
+      console.log(data);
+
       switch (data.command) {
 
         // 1. get electrode info
@@ -148,8 +171,19 @@ class THREE_BRAIN_SHINY {
 
         case 'loc_set_electrodes':
           to_array( data.data ).forEach((d) => {
-            this.loc_set_electrode( d.electrode, d.label, d.is_valid );
+            this.loc_set_electrode( d.electrode, d.label, d.is_valid, d.position );
           });
+          this.loc_electrode_info();
+          break;
+        case 'loc_add_electrodes':
+          const _es = to_array( data.data );
+          _es.forEach((d) => {
+            this.loc_add_electrode( d.electrode, d.label, d.position,
+                                    d.is_surface || false, d.surface_type || 'pial');
+          });
+          if( this.gui ){
+            this.gui.get_controller('Number').setValue( _es.length + 1 );
+          }
           this.loc_electrode_info();
           break;
 

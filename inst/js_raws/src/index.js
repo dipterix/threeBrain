@@ -202,7 +202,7 @@ class BrainCanvas{
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
 
     	let path = /\/([^/]*)$/.exec(url)[1],
-    	    msg = '<p><small>Loading file: ' + itemsLoaded + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
+    	    msg = '<p><small>Loading file: ' + (itemsLoaded + 1) + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
 
       if(this.DEBUG){
         console.debug(msg);
@@ -387,6 +387,7 @@ class BrainCanvas{
 
     let gui = this._register_gui_control();
     this.gui = gui;
+    this.shiny.register_gui( gui );
     this._set_info_callback();
 
 
