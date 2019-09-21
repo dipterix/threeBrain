@@ -216,7 +216,12 @@ class THREEBRAIN_PRESETS{
           this.canvas.disable_side_cameras();
         }
       });
+
+    if( this.settings.side_camera || false ){
+      this.canvas.enable_side_cameras();
+    }
   }
+
 
 
   // 7. reset side panel position
@@ -997,6 +1002,9 @@ class THREEBRAIN_PRESETS{
     this.gui.folders["Main Canvas"].close();
     this.gui.folders["Side Canvas"].close();
     this.gui.folders[ folder_name ].open();
+
+    // hide 3 planes
+    this.gui.get_controller('Show Panels').setValue( false );
     edit_mode.setValue( true );
 
     this._has_localization = true;

@@ -413,7 +413,6 @@ class BrainCanvas{
 
     // Set side camera
     if(this.settings.side_camera || false){
-      this.canvas.enable_side_cameras();
 
       // Set canvas zoom-in level
       this.canvas.side_canvas.coronal.set_zoom_level( this.settings.side_canvas_zoom || 1 );

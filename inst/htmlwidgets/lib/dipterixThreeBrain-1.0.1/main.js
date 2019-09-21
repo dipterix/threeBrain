@@ -58247,7 +58247,12 @@ class data_controls_THREEBRAIN_PRESETS{
           this.canvas.disable_side_cameras();
         }
       });
+
+    if( this.settings.side_camera || false ){
+      this.canvas.enable_side_cameras();
+    }
   }
+
 
 
   // 7. reset side panel position
@@ -59028,6 +59033,9 @@ class data_controls_THREEBRAIN_PRESETS{
     this.gui.folders["Main Canvas"].close();
     this.gui.folders["Side Canvas"].close();
     this.gui.folders[ folder_name ].open();
+
+    // hide 3 planes
+    this.gui.get_controller('Show Panels').setValue( false );
     edit_mode.setValue( true );
 
     this._has_localization = true;
@@ -64153,7 +64161,6 @@ class src_BrainCanvas{
 
     // Set side camera
     if(this.settings.side_camera || false){
-      this.canvas.enable_side_cameras();
 
       // Set canvas zoom-in level
       this.canvas.side_canvas.coronal.set_zoom_level( this.settings.side_canvas_zoom || 1 );
