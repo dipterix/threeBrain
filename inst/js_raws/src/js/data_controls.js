@@ -832,7 +832,7 @@ class THREEBRAIN_PRESETS{
           el.position.x = v;
           el.userData.construct_params.position[0] = v;
           el.userData.construct_params.vertex_number = -1;
-          el.userData.construct_params._distance_to_surf = null;
+          el.userData.construct_params._distance_to_surf = -1;
           el.userData.construct_params.hemisphere = 'NA';
           this.shiny.loc_electrode_info( true );
         }
@@ -860,7 +860,7 @@ class THREEBRAIN_PRESETS{
           el.position.z = v;
           el.userData.construct_params.position[2] = v;
           el.userData.construct_params.vertex_number = -1;
-          el.userData.construct_params._distance_to_surf = null;
+          el.userData.construct_params._distance_to_surf = -1;
           el.userData.construct_params.hemisphere = 'NA';
           this.shiny.loc_electrode_info( true );
         }
