@@ -48,7 +48,7 @@ download_template_subject <- function(
     mri_dir = dirs[stringr::str_detect(dirs, 'mri[/]{0}$')]
 
     if( length(mri_dir) ){
-      brain_mgz = list.files(file.path(sub_dir, mri_dir), full.names = TRUE, pattern = 'brain.finalsurfs.mgz$')
+      brain_mgz = list.files(file.path(sub_dir, mri_dir), full.names = TRUE, pattern = 'T1.mgz$')
       dir_from = dirname(dirname(brain_mgz))
       file_move(dir_from, sub_dir, overwrite = TRUE, clean = TRUE, all_files = TRUE)
     }
@@ -59,7 +59,7 @@ download_template_subject <- function(
   pass_check = check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
   if( !isTRUE(pass_check) ){
     cat2('Fail the check. Please make sure the following path exist in\n\t', sub_dir, level = 'ERROR')
-    cat2('\nmri/brain.finalsurfs.mgz\n', level = 'ERROR')
+    cat2('\nmri/T1.mgz\n', level = 'ERROR')
     cat2('mri/surf/\n', level = 'ERROR')
     cat2('mri/SUMA/ (optional)\n', level = 'WARNING')
   }else{

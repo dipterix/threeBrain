@@ -964,7 +964,7 @@ class THREEBRAIN_PRESETS{
             search_objects = to_array( this.canvas.surfaces.get( current_subject ) );
           }else{
             search_objects = to_array(
-              get_or_default( this.canvas.volumes, current_subject, {})[`brain.finalsurfs (${current_subject})`]
+              get_or_default( this.canvas.volumes, current_subject, {})[`T1 (${current_subject})`]
             );
           }
 

@@ -131,7 +131,7 @@ BrainVolume <- R6::R6Class(
     subject_code = '',
 
     # which surface type pial, white, inflated ...
-    volume_type = 'brain.finalsurf',
+    volume_type = 'T1',
 
     # to store freemesh objects, left, right, in sequential
     object = NULL,

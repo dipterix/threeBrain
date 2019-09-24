@@ -27,11 +27,11 @@ Read `FreeSurfer` surface and volume files
 \details{
 This function is under FreeSurfer license.
 1. Volumes:
-3D viewer uses `mri/brain.finalsurfs.mgz` from `FreeSurfer` to show the
-volume information. `brain.finalsurfs.mgz` results from step 1 to 15 in `FreeSurfer`
-command `recon-all`, which aligns the original `DICOM` image to `RAS` coordinate
+3D viewer uses `mri/T1.mgz` from `FreeSurfer` to show the
+volume information. `T1.mgz` results from step 1 to 5 in `FreeSurfer`
+command `recon-all -autorecon1`, which aligns the original `DICOM` image to `RAS` coordinate
 system, resamples to volume with \code{256x256x256} voxels (tri-linear by default,
-check \url{https://mail.nmr.mgh.harvard.edu/pipermail/freesurfer/2018-August/058127.html}
+check \url{https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all}
 for more information).
 
 2. Surface:

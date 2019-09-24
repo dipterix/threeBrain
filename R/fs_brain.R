@@ -2,11 +2,11 @@
 #' @author Zhengjia Wang
 #' @details This function is under FreeSurfer license.
 #' 1. Volumes:
-#' 3D viewer uses `mri/brain.finalsurfs.mgz` from `FreeSurfer` to show the
-#' volume information. `brain.finalsurfs.mgz` results from step 1 to 15 in `FreeSurfer`
-#' command `recon-all`, which aligns the original `DICOM` image to `RAS` coordinate
+#' 3D viewer uses `mri/T1.mgz` from `FreeSurfer` to show the
+#' volume information. `T1.mgz` results from step 1 to 5 in `FreeSurfer`
+#' command `recon-all -autorecon1`, which aligns the original `DICOM` image to `RAS` coordinate
 #' system, resamples to volume with \code{256x256x256} voxels (tri-linear by default,
-#' check \url{https://mail.nmr.mgh.harvard.edu/pipermail/freesurfer/2018-August/058127.html}
+#' check \url{https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all}
 #' for more information).
 #'
 #' 2. Surface:
@@ -72,7 +72,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   # Naming conventions
   #
   # Volume group:   Volume (YAB)
-  # Volume:         brain.finalsurfs (YAB)
+  # Volume:         brain.finalsurfs (YAB), T1 (YAB)
   #
   # Surface group:  Surface - pial (YAB)
   # Surface         Standard 141 Right Hemisphere - pial (YAB)
@@ -112,7 +112,8 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   path_cache = file.path(path_subject, 'RAVE')
 
   # Find target files
-  path_brainfinal = normalizePath(file.path(path_subject, 'mri', 'brain.finalsurfs.mgz'), mustWork = mustWork)
+  # path_brainfinal = normalizePath(file.path(path_subject, 'mri', 'brain.finalsurfs.mgz'), mustWork = mustWork)
+  path_t1 = normalizePath(file.path(path_subject, 'mri', 'T1.mgz'), mustWork = mustWork)
   path_aseg = normalizePath(file.path(path_subject, 'mri', 'aseg.mgz'), mustWork = FALSE)
   path_brainmask = normalizePath(file.path(path_subject, 'mri', 'brainmask.mgz'), mustWork = FALSE)
   path_xform = normalizePath(file.path(path_subject, 'mri', 'transforms', 'talairach.xfm'), mustWork = mustWork)
@@ -120,10 +121,12 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   path_surf = normalizePath(file.path(path_subject, 'surf'), mustWork = FALSE)
 
   # Get general information from fs output
-  brain_finalsurf = read_mgz(path_brainfinal)
+  # brain_finalsurf = read_mgz(path_brainfinal)
+  brain_t1 = read_mgz(path_t1)
+
   # get Norig
-  Norig = brain_finalsurf$header$get_vox2ras()
-  Torig = brain_finalsurf$header$get_vox2ras_tkr()
+  Norig = brain_t1$header$get_vox2ras()
+  Torig = brain_t1$header$get_vox2ras_tkr()
 
   # get talairach tranform
   ss = readLines(path_xform)
@@ -146,7 +149,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   brain$meta$path = list(
     path_subject = path_subject,
     path_cache = path_cache,
-    path_brainfinal = path_brainfinal,
+    path_t1 = path_t1,
     path_xform = path_xform,
     path_suma = path_suma,
     path_surf = path_surf
@@ -156,24 +159,24 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   ##### get volume 256x256x256 ####
   dir.create(path_cache, recursive = TRUE, showWarnings = FALSE)
 
-  geom_brain_finalsurfs = NULL
-  volume_shape = as.integer(brain_finalsurf$get_shape())
-  group_volume = GeomGroup$new(name = sprintf('Volume - brain.finalsurfs (%s)', subject_name))
+  geom_brain_t1 = NULL
+  volume_shape = as.integer(brain_t1$get_shape())
+  group_volume = GeomGroup$new(name = sprintf('Volume - T1 (%s)', subject_name))
   group_volume$subject_code = subject_name
-  cache_volume = file.path(path_cache, sprintf('%s_brain_finalsurfs.json', subject_name))
+  cache_volume = file.path(path_cache, sprintf('%s_t1.json', subject_name))
   # Read from cache
   if( use_cache && file.exists(cache_volume) ){
     # TODO: Read volume cache
-    geom_brain_finalsurfs = DataCubeGeom$new(
-      name = sprintf('brain.finalsurfs (%s)', subject_name), value = array(NA, dim = volume_shape),
+    geom_brain_t1 = DataCubeGeom$new(
+      name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
       dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
       position = c(0,0,0), cache_file = cache_volume)
   }else{
     unlink(cache_volume)
   }
 
-  if(is.null(geom_brain_finalsurfs)){
-    volume = fill_blanks(brain_finalsurf$get_data(), niter=2)
+  if(is.null(geom_brain_t1)){
+    volume = fill_blanks(brain_t1$get_data(), niter=2)
 
     # Also try to load aseg to fill inner brains
     # if( file.exists(path_brainmask) ){
@@ -190,19 +193,19 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
     # volume = eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
     volume = reorient_volume( volume, Norig )
 
-    geom_brain_finalsurfs = DataCubeGeom$new(
-      name = sprintf('brain.finalsurfs (%s)', subject_name), value = volume, dim = volume_shape,
+    geom_brain_t1 = DataCubeGeom$new(
+      name = sprintf('T1 (%s)', subject_name), value = volume, dim = volume_shape,
       half_size = volume_shape / 2, group = group_volume, position = c(0,0,0),
       cache_file = cache_volume)
     rm(volume)
   }
-  geom_brain_finalsurfs$subject_code = subject_name
+  geom_brain_t1$subject_code = subject_name
 
-  geom_brain_finalsurfs = BrainVolume$new(
-    subject_code = subject_name, volume_type = 'brain.finalsurfs',
-    volume = geom_brain_finalsurfs, position = c(0, 0, 0 ))
+  geom_brain_t1 = BrainVolume$new(
+    subject_code = subject_name, volume_type = 'T1',
+    volume = geom_brain_t1, position = c(0, 0, 0 ))
 
-  brain$add_volume( volume = geom_brain_finalsurfs )
+  brain$add_volume( volume = geom_brain_t1 )
 
   #### Load aligned CT if required
   if( !is.null(aligned_ct) ){
@@ -369,7 +372,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   surface_type = brain$surface_types
   if( !'pial' %in% surface_type ){
-    cat2('Cannot find pial surface. Please make sure fs/SUMA/std.141.[lr]h.pial.asc or fs/surf/[lr]h.pial.asc exists', level = 'ERROR')
+    cat2('Cannot find pial surface. Please make sure fs/SUMA/std.141.[lr]h.pial.asc or fs/surf/[lr]h.pial.asc exists', level = 'WARNING')
   }
 
   ##### return an environment ####
@@ -392,11 +395,11 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
     }else{
       path_subject = fs_subject_folder
     }
-    path_brainfinal = file.path(path_subject, 'mri', 'brain.finalsurfs.mgz')
+    path_t1 = file.path(path_subject, 'mri', 'T1.mgz')
     path_xform = file.path(path_subject, 'mri', 'transforms', 'talairach.xfm')
-    path_surf = file.path(path_subject, 'surf')
+    # path_surf = file.path(path_subject, 'surf')
 
-    if( file.exists(path_brainfinal) && file.exists(path_xform) && file.exists(path_surf) ){
+    if( file.exists(path_t1) && file.exists(path_xform) ){
       if( return_path ){
         return( path_subject )
       }

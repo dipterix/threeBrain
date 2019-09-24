@@ -58996,7 +58996,7 @@ class data_controls_THREEBRAIN_PRESETS{
             search_objects = to_array( this.canvas.surfaces.get( current_subject ) );
           }else{
             search_objects = to_array(
-              get_or_default( this.canvas.volumes, current_subject, {})[`brain.finalsurfs (${current_subject})`]
+              get_or_default( this.canvas.volumes, current_subject, {})[`T1 (${current_subject})`]
             );
           }
 
@@ -63259,7 +63259,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     this.volumes.forEach( (vol, s) => {
       let volume_names = Object.keys( vol ),
-          //  brain.finalsurfs (YAB)
+          //  T1 (YAB)
           res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
           // res = CONSTANTS.REGEXP_VOLUME.exec(g);
 
@@ -63275,7 +63275,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     this.ct_scan.forEach( (vol, s) => {
       let volume_names = Object.keys( vol ),
-          //  brain.finalsurfs (YAB)
+          //  T1 (YAB)
           res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
           // res = CONSTANTS.REGEXP_VOLUME.exec(g);
 
@@ -63318,7 +63318,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
-    let volume_type = args.volume_type || state.get( 'volume_type' ) || 'brain.finalsurfs';
+    let volume_type = args.volume_type || state.get( 'volume_type' ) || 'T1';
     let ct_type = args.ct_type || state.get( 'ct_type' ) || 'ct.aligned.t1';
     let ct_threshold = args.ct_threshold || state.get( 'ct_threshold' ) || 0.8;
 
@@ -63413,7 +63413,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.start_animation( 0 );
   }
 
-  switch_volume( target_subject, volume_type = 'brain.finalsurfs' ){
+  switch_volume( target_subject, volume_type = 'T1' ){
 
     this.volumes.forEach( (vol, subject_code) => {
       for( let volume_name in vol ){
