@@ -66,6 +66,7 @@ CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling throu
 CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electrode type (surface ot iEEG)
 CONSTANTS.KEY_NEW_ELECTRODE_EDITOR    = 'Digit1';       // '1' new electrode
 CONSTANTS.KEY_LABEL_FOCUS_EDITOR      = 'Digit2';       // '2' for quick edit label
+CONSTANTS.KEY_CYCLE_REMOVE_EDITOR     = 'KeyR';
 
 // Regular expressions
 CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - pial (YAB)

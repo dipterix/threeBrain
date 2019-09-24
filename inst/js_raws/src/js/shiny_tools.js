@@ -69,7 +69,7 @@ class THREE_BRAIN_SHINY {
     }
   }
 
-  loc_electrode_info(){
+  loc_electrode_info( debounce = false ){
 
     const els = this.canvas.electrodes.get("__localization__");
     if( !els ){ return(null); }
@@ -115,7 +115,7 @@ class THREE_BRAIN_SHINY {
     });
 
 
-    this.to_shiny({ table: re }, 'localization', true);
+    this.to_shiny({ table: re }, 'localization', !debounce );
 
     return(re);
   }
