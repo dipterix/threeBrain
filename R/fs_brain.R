@@ -368,8 +368,6 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   }
 
-
-
   surface_type = brain$surface_types
   if( !'pial' %in% surface_type ){
     cat2('Cannot find pial surface. Please make sure fs/SUMA/std.141.[lr]h.pial.asc or fs/surf/[lr]h.pial.asc exists', level = 'WARNING')
