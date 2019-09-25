@@ -80,26 +80,12 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   # Electrode container: Electrodes (YAB)
   # Electrode          : YAB, 1 - NA
 
-
-
   ##### Load volume and surface ####
   # fs_subject_folder = '~/rave_data/data_dir/congruency/YAB/rave/fs/'
+  # fs_subject_folder = '/Volumes/data/rave_data/ent_data/congruency/YAB/'
   # aligned_ct_nii = '~/rave_data/data_dir/congruency/YAB/rave/fs/RAVE/ct_aligned_mri.nii.gz'
   # subject_name = 'YAB'
   mustWork = TRUE
-
-
-  # .mgz_loader = tryCatch({
-  #   nibabel = reticulate::import('nibabel')
-  #   nibabel$load
-  # }, error = function(e){
-  #   read_fs_mgh_mgz
-  # })
-  # # Main get mgz loader
-  # mgz_loader = function(path, ...){
-  #   cat2('Loading from: ', path)
-  #   .mgz_loader(path, ...)
-  # }
 
   # Find folders
   if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
@@ -113,35 +99,50 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
   # Find target files
   # path_brainfinal = normalizePath(file.path(path_subject, 'mri', 'brain.finalsurfs.mgz'), mustWork = mustWork)
-  path_t1 = normalizePath(file.path(path_subject, 'mri', 'T1.mgz'), mustWork = mustWork)
-  path_aseg = normalizePath(file.path(path_subject, 'mri', 'aseg.mgz'), mustWork = FALSE)
-  path_brainmask = normalizePath(file.path(path_subject, 'mri', 'brainmask.mgz'), mustWork = FALSE)
-  path_xform = normalizePath(file.path(path_subject, 'mri', 'transforms', 'talairach.xfm'), mustWork = mustWork)
+  path_mri = function(fname, mw = FALSE){ normalizePath(file.path(path_subject, 'mri', fname), mustWork = mw) }
+  path_t1 = path_mri('T1.mgz')
+  path_brain_finalsurf = path_mri('brain.finalsurfs.mgz')
+  path_aseg = path_mri('aseg.mgz')
+  path_brainmask = path_mri('brainmask.mgz')
+  path_brain_automask = path_mri('brainmask.auto.mgz')
+
+  path_xform = normalizePath(file.path(path_subject, 'mri', 'transforms', 'talairach.xfm'), mustWork = FALSE)
   path_suma = normalizePath(file.path(path_subject, 'SUMA'), mustWork = FALSE)
   path_surf = normalizePath(file.path(path_subject, 'surf'), mustWork = FALSE)
 
   # Get general information from fs output
-  # brain_finalsurf = read_mgz(path_brainfinal)
-  brain_t1 = read_mgz(path_t1)
-
-  # get Norig
-  Norig = brain_t1$header$get_vox2ras()
-  Torig = brain_t1$header$get_vox2ras_tkr()
+  path_mri_volumes = c(path_brain_finalsurf, path_brainmask, path_brain_automask, path_t1)
+  fe = file.exists(path_mri_volumes)
 
   # get talairach tranform
-  ss = readLines(path_xform)
-  xfm = stringr::str_match(ss, '^([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+)[;]{0,1}$')
-  xfm = xfm[!is.na(xfm[,1]), -1, drop = FALSE]
-  if( nrow(xfm) >= 3 ){
-    xfm = xfm[1:3,1:4]
-  }else{
-    cat2('Cannot parse file talairach.xfm properly.', level = 'WARNING')
-    xfm = cbind(diag(c(1,1,1)), 0)
+  xfm = diag(c(1,1,1,1))
+  has_volume = FALSE
+  if( file.exists(path_xform) ){
+    ss = readLines(path_xform)
+    ss = stringr::str_match(ss, '^([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+)[;]{0,1}$')
+    ss = ss[!is.na(ss[,1]), -1, drop = FALSE]
+    if( nrow(ss) >= 3 ){
+      ss = ss[1:3,1:4]
+    }else{
+      cat2('Cannot parse file talairach.xfm properly.', level = 'WARNING')
+      ss = cbind(diag(c(1,1,1)), 0)
+    }
+    ss = as.numeric(ss)
+    dim(ss) = c(3,4)
+    xfm = rbind(ss, c(0,0,0,1))
+    has_volume = TRUE
   }
-  xfm = as.numeric(xfm)
-  dim(xfm) = c(3,4)
-  xfm = rbind(xfm, c(0,0,0,1))
 
+
+  # Get Norig and Torig
+  if(any(fe)){
+    brain_t1 = read_mgz(path_mri_volumes[fe][1])
+    # get Norig
+    Norig = brain_t1$header$get_vox2ras()
+    Torig = brain_t1$header$get_vox2ras_tkr()
+  }else{
+    Norig = Torig = diag(c(1,1,1,1))
+  }
 
 
   # Generate brain object to return
@@ -160,52 +161,57 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   dir.create(path_cache, recursive = TRUE, showWarnings = FALSE)
 
   geom_brain_t1 = NULL
-  volume_shape = as.integer(brain_t1$get_shape())
-  group_volume = GeomGroup$new(name = sprintf('Volume - T1 (%s)', subject_name))
-  group_volume$subject_code = subject_name
-  cache_volume = file.path(path_cache, sprintf('%s_t1.json', subject_name))
-  # Read from cache
-  if( use_cache && file.exists(cache_volume) ){
-    # TODO: Read volume cache
-    geom_brain_t1 = DataCubeGeom$new(
-      name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
-      dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
-      position = c(0,0,0), cache_file = cache_volume)
-  }else{
-    unlink(cache_volume)
+
+  if( has_volume ){
+    volume_shape = as.integer(brain_t1$get_shape())
+    group_volume = GeomGroup$new(name = sprintf('Volume - T1 (%s)', subject_name))
+    group_volume$subject_code = subject_name
+    cache_volume = file.path(path_cache, sprintf('%s_t1.json', subject_name))
+    # Read from cache
+    if( use_cache && file.exists(cache_volume) ){
+      # TODO: Read volume cache
+      geom_brain_t1 = DataCubeGeom$new(
+        name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
+        dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
+        position = c(0,0,0), cache_file = cache_volume)
+    }else{
+      unlink(cache_volume)
+    }
+    if(is.null(geom_brain_t1)){
+      volume = fill_blanks(brain_t1$get_data(), niter=2)
+
+      # Also try to load aseg to fill inner brains
+      # if( file.exists(path_brainmask) ){
+      #   path_brainmask
+      #   brainmask = read_mgz(path_brainmask)
+      #   volume_brainmask = brainmask$get_data()
+      #   volume[ volume == 0 & volume_brainmask != 0 ] = 1
+      # }
+
+      # Re-order the data according to Norig, map voxels to RAS coord - anatomical
+      # order_index = round((Norig %*% c(1,2,3,0))[1:3])
+      # volume = aperm(volume, abs(order_index))
+      # sub = sprintf(c('%d:1', '1:%d')[(sign(order_index) + 3) / 2], dim(volume))
+      # volume = eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
+      volume = reorient_volume( volume, Norig )
+
+      geom_brain_t1 = DataCubeGeom$new(
+        name = sprintf('T1 (%s)', subject_name), value = volume, dim = volume_shape,
+        half_size = volume_shape / 2, group = group_volume, position = c(0,0,0),
+        cache_file = cache_volume)
+      rm(volume)
+    }
+    geom_brain_t1$subject_code = subject_name
+
+    geom_brain_t1 = BrainVolume$new(
+      subject_code = subject_name, volume_type = 'T1',
+      volume = geom_brain_t1, position = c(0, 0, 0 ))
+
+    brain$add_volume( volume = geom_brain_t1 )
   }
 
-  if(is.null(geom_brain_t1)){
-    volume = fill_blanks(brain_t1$get_data(), niter=2)
 
-    # Also try to load aseg to fill inner brains
-    # if( file.exists(path_brainmask) ){
-    #   path_brainmask
-    #   brainmask = read_mgz(path_brainmask)
-    #   volume_brainmask = brainmask$get_data()
-    #   volume[ volume == 0 & volume_brainmask != 0 ] = 1
-    # }
 
-    # Re-order the data according to Norig, map voxels to RAS coord - anatomical
-    # order_index = round((Norig %*% c(1,2,3,0))[1:3])
-    # volume = aperm(volume, abs(order_index))
-    # sub = sprintf(c('%d:1', '1:%d')[(sign(order_index) + 3) / 2], dim(volume))
-    # volume = eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
-    volume = reorient_volume( volume, Norig )
-
-    geom_brain_t1 = DataCubeGeom$new(
-      name = sprintf('T1 (%s)', subject_name), value = volume, dim = volume_shape,
-      half_size = volume_shape / 2, group = group_volume, position = c(0,0,0),
-      cache_file = cache_volume)
-    rm(volume)
-  }
-  geom_brain_t1$subject_code = subject_name
-
-  geom_brain_t1 = BrainVolume$new(
-    subject_code = subject_name, volume_type = 'T1',
-    volume = geom_brain_t1, position = c(0, 0, 0 ))
-
-  brain$add_volume( volume = geom_brain_t1 )
 
   #### Load aligned CT if required
   if( !is.null(aligned_ct) ){
@@ -394,10 +400,14 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
       path_subject = fs_subject_folder
     }
     path_t1 = file.path(path_subject, 'mri', 'T1.mgz')
+    path_brain_finalsurf = file.path(path_subject, 'mri', 'brain.finalsurfs.mgz')
+    path_brain_automask = file.path(path_subject, 'mri', 'brainmask.auto.mgz')
+    path_brain_mask = file.path(path_subject, 'mri', 'brainmask.mgz')
+
     path_xform = file.path(path_subject, 'mri', 'transforms', 'talairach.xfm')
     # path_surf = file.path(path_subject, 'surf')
 
-    if( file.exists(path_t1) && file.exists(path_xform) ){
+    if( any(file.exists(c(path_t1, path_brain_finalsurf, path_brain_automask, path_brain_mask))) && file.exists(path_xform) ){
       if( return_path ){
         return( path_subject )
       }
