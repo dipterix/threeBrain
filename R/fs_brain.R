@@ -388,10 +388,13 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 #' @param fs_subject_folder character, path to `fs` project directory or `RAVE` subject directory
 #' @param autoinstall_template logical, whether `N27` brain should be installed is missing
 #' @param return_path logical, whether to return `FreeSurfer` path
+#' @param check_volume logical, whether to check volume data
+#' @param check_surface logical, whether to check surface data (not implemented yet)
 #' @return logical whether the directory is valid or, if \code{return_path} is true,
 #' return `FreeSurfer` path
 #' @export
-check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE, return_path = FALSE){
+check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE,
+                                  return_path = FALSE, check_volume = FALSE, check_surface = FALSE){
   if( dir.exists(fs_subject_folder) ){
 
     if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
@@ -399,6 +402,11 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
     }else{
       path_subject = fs_subject_folder
     }
+    dir.create(file.path(path_subject, 'mri', 'transforms'), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(path_subject, 'surf'), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(path_subject, 'SUMA'), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(path_subject, 'RAVE'), showWarnings = FALSE, recursive = TRUE)
+
     path_t1 = file.path(path_subject, 'mri', 'T1.mgz')
     path_brain_finalsurf = file.path(path_subject, 'mri', 'brain.finalsurfs.mgz')
     path_brain_automask = file.path(path_subject, 'mri', 'brainmask.auto.mgz')
@@ -407,12 +415,21 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
     path_xform = file.path(path_subject, 'mri', 'transforms', 'talairach.xfm')
     # path_surf = file.path(path_subject, 'surf')
 
-    if( any(file.exists(c(path_t1, path_brain_finalsurf, path_brain_automask, path_brain_mask))) && file.exists(path_xform) ){
-      if( return_path ){
-        return( path_subject )
-      }
-      return(TRUE)
+
+    if( !check_volume && !check_surface ){
+      return( TRUE )
     }
+    if( check_volume ){
+      if( any(file.exists(c(path_t1, path_brain_finalsurf, path_brain_automask, path_brain_mask))) && file.exists(path_xform) ){
+        if( return_path ){ return( path_subject ) } else { return(TRUE) }
+      }
+    }
+
+    if( check_surface ){
+      # Not implemented yet
+      if( return_path ){ return( path_subject ) } else { return(TRUE) }
+    }
+
 
   }
 

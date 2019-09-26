@@ -422,6 +422,13 @@ class BrainCanvas{
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.coronal.camera );
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.axial.camera );
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.sagittal.camera );
+
+      if( this.settings.side_display || false ){
+        this.canvas.enable_side_cameras();
+      }else{
+        this.canvas.disable_side_cameras();
+      }
+
     }else{
       this.canvas.disable_side_cameras();
     }
@@ -429,6 +436,9 @@ class BrainCanvas{
     // Force render canvas
     // Resize widget in case control panel is hidden
     this.hide_controls = this.settings.hide_controls || false;
+    if( !this.hide_controls && !this.settings.control_display ){
+      this.gui.close();
+    }
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     this.canvas.render();
 

@@ -1240,16 +1240,20 @@ class THREEBRAIN_CANVAS {
       value_type: value_type,
       value_names: to_array( value_names ),
       time_range: time_range,
-      n_levels: n_levels
+      n_levels: n_levels,
+      // Used for back-up
+      value_range : [ lut.minV, lut.maxV ]
     });
 
   }
 
-  switch_colormap( name ){
+  switch_colormap( name, value_range = [] ){
+    let cmap;
     if( name ){
       this.state_data.set( 'color_map', name );
 
-      const cmap = this.color_maps.get( name );
+      cmap = this.color_maps.get( name );
+
       if( cmap ){
         this.state_data.set( 'time_range_min', cmap.time_range[0] );
         this.state_data.set( 'time_range_max', cmap.time_range[1] );
@@ -1257,12 +1261,23 @@ class THREEBRAIN_CANVAS {
         this.state_data.set( 'time_range_min', 0 );
         this.state_data.set( 'time_range_max', 1 );
       }
-      return(cmap);
+      // return(cmap);
 
     }else{
       name = get_or_default( this.state_data, 'color_map', '' );
-      return( this.color_maps.get( name ) );
+      cmap = this.color_maps.get( name );
+      // return( this.color_maps.get( name ) );
     }
+    if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
+        // Must be continuous color map
+        cmap.value_type === 'continuous' ){
+      // set cmap value_range
+      cmap.lut.setMax( value_range[1] );
+      cmap.lut.setMin( value_range[0] );
+      // Legend needs to be updated
+      this.start_animation( 0 );
+    }
+    return( cmap );
   }
 
   get_color(v, name){
@@ -2640,7 +2655,8 @@ class THREEBRAIN_CANVAS {
 
 
   // Generate animation clips and mixes
-  generate_animation_clips( animation_name = 'Value', set_current=true, callback = (e) => {} ){
+  generate_animation_clips( animation_name = 'Value', set_current=true,
+                            callback = (e) => {} ){
 
     if( animation_name === undefined ){
       animation_name = this.shared_data.get('animation_name') || 'Value';
@@ -2653,8 +2669,9 @@ class THREEBRAIN_CANVAS {
     // this.color_maps
 
     this.mesh.forEach( (m, k) => {
+      if( !m.isMesh || !m.userData.get_track_data ){ return(null); }
 
-      if(!m.isMesh || !m.userData.ani_exists ){ return( null ); }
+      if( !m.userData.ani_exists ){ return(null); }
 
       // keyframe is not none, generate animation clip(s)
       /**
@@ -2737,17 +2754,21 @@ class THREEBRAIN_CANVAS {
         new_clip = true;
       }else{
         clip.duration = _time_max - _time_min;
-        clip.tracks[0] = keyframe;
+        clip.tracks[0].name = keyframe.name;
+        clip.tracks[0].times = keyframe.times;
+        clip.tracks[0].values = keyframe.values;
       }
       // Calculate clip duration
       // clip.resetDuration();
 
       // Step 3: create mixer
-      if( !mixer ){
-        mixer = new THREE.AnimationMixer( m );
-        this.animation_mixers.set( m.name, mixer );
+      if( mixer ){
+        mixer.stopAllAction();
       }
+      mixer = new THREE.AnimationMixer( m );
+      this.animation_mixers.set( m.name, mixer );
       mixer.stopAllAction();
+
 
       // Step 4: combine mixer with clip
       const action = mixer.clipAction( clip );

@@ -58240,7 +58240,8 @@ class data_controls_THREEBRAIN_PRESETS{
   // 6. toggle side panel
   c_toggle_side_panel(){
     const folder_name = CONSTANTS.FOLDERS[ 'toggle-side-panels' ];
-    this.gui.add_item('Show Panels', true, {folder_name: folder_name})
+    const _v = this.settings.side_display || false;
+    const show_side = this.gui.add_item('Show Panels', _v, {folder_name: folder_name})
       .onChange((v) => {
         if( v ){
           this.canvas.enable_side_cameras();
@@ -58249,9 +58250,14 @@ class data_controls_THREEBRAIN_PRESETS{
         }
       });
 
-    if( this.settings.side_camera || false ){
+
+    if( _v ){
       this.canvas.enable_side_cameras();
+    }else{
+      this.canvas.disable_side_cameras();
     }
+
+
   }
 
 
@@ -58687,9 +58693,17 @@ class data_controls_THREEBRAIN_PRESETS{
           legend_visible.setValue(true);
 
           // If inactive electrodes are hidden, re-calculate visibility
-          if( this._controller_electrodes){
+          if( this._controller_electrodes ){
             this.set_electrodes_visibility( this._controller_electrodes.getValue() );
           }
+          // reset color-range
+          val_range.setValue(',');
+          if( cmap.value_type === 'continuous' ){
+            this.gui.show_item(['Value Range'], folder_name);
+          }else{
+            this.gui.hide_item(['Value Range'], folder_name);
+          }
+
         }
         this._update_canvas();
       });
@@ -58697,6 +58711,28 @@ class data_controls_THREEBRAIN_PRESETS{
 
     const ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
       .onChange((v) => { _ani_name_onchange( v ); });
+    const val_range = this.gui.add_item('Value Range', ',', { folder_name : folder_name })
+      .onChange((v) => {
+        let ss = v;
+        if( v.match(/[^0-9,-.]/) ){
+          // illegal chars
+          ss = Array.from(v).map((s) => {
+            return( '0123456789.,-'.indexOf(s) === -1 ? '' : s );
+          }).join('');
+        }
+        let vr = ss.split(',');
+        if( vr.length === 2 ){
+          vr[0] = parseFloat( vr[0] );
+          vr[1] = parseFloat( vr[1] );
+        }
+        if( !isNaN( vr[0] ) && !isNaN( vr[1] ) ){
+          // Set cmap value range
+          this.canvas.switch_colormap( undefined, vr );
+          // reset animation tracks
+          this.canvas.generate_animation_clips( ani_name.getValue() , true );
+        }
+
+      });
 
 
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
@@ -61717,16 +61753,20 @@ class threejs_scene_THREEBRAIN_CANVAS {
       value_type: value_type,
       value_names: to_array( value_names ),
       time_range: time_range,
-      n_levels: n_levels
+      n_levels: n_levels,
+      // Used for back-up
+      value_range : [ lut.minV, lut.maxV ]
     });
 
   }
 
-  switch_colormap( name ){
+  switch_colormap( name, value_range = [] ){
+    let cmap;
     if( name ){
       this.state_data.set( 'color_map', name );
 
-      const cmap = this.color_maps.get( name );
+      cmap = this.color_maps.get( name );
+
       if( cmap ){
         this.state_data.set( 'time_range_min', cmap.time_range[0] );
         this.state_data.set( 'time_range_max', cmap.time_range[1] );
@@ -61734,12 +61774,23 @@ class threejs_scene_THREEBRAIN_CANVAS {
         this.state_data.set( 'time_range_min', 0 );
         this.state_data.set( 'time_range_max', 1 );
       }
-      return(cmap);
+      // return(cmap);
 
     }else{
       name = get_or_default( this.state_data, 'color_map', '' );
-      return( this.color_maps.get( name ) );
+      cmap = this.color_maps.get( name );
+      // return( this.color_maps.get( name ) );
     }
+    if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
+        // Must be continuous color map
+        cmap.value_type === 'continuous' ){
+      // set cmap value_range
+      cmap.lut.setMax( value_range[1] );
+      cmap.lut.setMin( value_range[0] );
+      // Legend needs to be updated
+      this.start_animation( 0 );
+    }
+    return( cmap );
   }
 
   get_color(v, name){
@@ -63117,7 +63168,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 
   // Generate animation clips and mixes
-  generate_animation_clips( animation_name = 'Value', set_current=true, callback = (e) => {} ){
+  generate_animation_clips( animation_name = 'Value', set_current=true,
+                            callback = (e) => {} ){
 
     if( animation_name === undefined ){
       animation_name = this.shared_data.get('animation_name') || 'Value';
@@ -63130,8 +63182,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // this.color_maps
 
     this.mesh.forEach( (m, k) => {
+      if( !m.isMesh || !m.userData.get_track_data ){ return(null); }
 
-      if(!m.isMesh || !m.userData.ani_exists ){ return( null ); }
+      if( !m.userData.ani_exists ){ return(null); }
 
       // keyframe is not none, generate animation clip(s)
       /**
@@ -63214,17 +63267,21 @@ class threejs_scene_THREEBRAIN_CANVAS {
         new_clip = true;
       }else{
         clip.duration = _time_max - _time_min;
-        clip.tracks[0] = keyframe;
+        clip.tracks[0].name = keyframe.name;
+        clip.tracks[0].times = keyframe.times;
+        clip.tracks[0].values = keyframe.values;
       }
       // Calculate clip duration
       // clip.resetDuration();
 
       // Step 3: create mixer
-      if( !mixer ){
-        mixer = new threeplugins_THREE.AnimationMixer( m );
-        this.animation_mixers.set( m.name, mixer );
+      if( mixer ){
+        mixer.stopAllAction();
       }
+      mixer = new threeplugins_THREE.AnimationMixer( m );
+      this.animation_mixers.set( m.name, mixer );
       mixer.stopAllAction();
+
 
       // Step 4: combine mixer with clip
       const action = mixer.clipAction( clip );
@@ -64252,6 +64309,13 @@ class src_BrainCanvas{
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.coronal.camera );
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.axial.camera );
       this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.sagittal.camera );
+
+      if( this.settings.side_display || false ){
+        this.canvas.enable_side_cameras();
+      }else{
+        this.canvas.disable_side_cameras();
+      }
+
     }else{
       this.canvas.disable_side_cameras();
     }
@@ -64259,6 +64323,9 @@ class src_BrainCanvas{
     // Force render canvas
     // Resize widget in case control panel is hidden
     this.hide_controls = this.settings.hide_controls || false;
+    if( !this.hide_controls && !this.settings.control_display ){
+      this.gui.close();
+    }
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     this.canvas.render();
 
