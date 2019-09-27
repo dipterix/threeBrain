@@ -90,7 +90,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   # Find folders
   if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
     path_subject = normalizePath(file.path(fs_subject_folder, 'fs'), mustWork = mustWork)
-  }else if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
+  }else if( dir.exists(file.path(fs_subject_folder, 'rave')) ){
     path_subject = normalizePath(file.path(fs_subject_folder, 'rave', 'fs'), mustWork = mustWork)
   }else{
     path_subject = normalizePath(fs_subject_folder, mustWork = mustWork)
@@ -397,11 +397,11 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
                                   return_path = FALSE, check_volume = FALSE, check_surface = FALSE){
   if( dir.exists(fs_subject_folder) ){
 
-    if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
-      path_subject = file.path(fs_subject_folder, 'rave', 'fs')
-    }else if ( dir.exists(file.path(fs_subject_folder, 'fs')) ){
+    if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
       path_subject = file.path(fs_subject_folder, 'fs')
-    } else{
+    }else if( dir.exists(file.path(fs_subject_folder, 'rave')) ){
+      path_subject = file.path(fs_subject_folder, 'rave', 'fs')
+    }else{
       path_subject = fs_subject_folder
     }
     dir.create(file.path(path_subject, 'mri', 'transforms'), showWarnings = FALSE, recursive = TRUE)
