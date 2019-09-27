@@ -399,7 +399,9 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
 
     if( dir.exists(file.path(fs_subject_folder, 'rave', 'fs')) ){
       path_subject = file.path(fs_subject_folder, 'rave', 'fs')
-    }else{
+    }else if ( dir.exists(file.path(fs_subject_folder, 'fs')) ){
+      path_subject = file.path(fs_subject_folder, 'fs')
+    } else{
       path_subject = fs_subject_folder
     }
     dir.create(file.path(path_subject, 'mri', 'transforms'), showWarnings = FALSE, recursive = TRUE)
@@ -417,7 +419,7 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
 
 
     if( !check_volume && !check_surface ){
-      return( TRUE )
+      if( return_path ){ return( path_subject ) } else { return(TRUE) }
     }
     if( check_volume ){
       if( any(file.exists(c(path_t1, path_brain_finalsurf, path_brain_automask, path_brain_mask))) && file.exists(path_xform) ){
