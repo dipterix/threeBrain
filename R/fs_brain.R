@@ -88,7 +88,9 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   mustWork = TRUE
 
   # Find folders
-  if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
+  if( dir.exists(file.path(fs_subject_folder, 'surf')) ){
+    path_subject = normalizePath(fs_subject_folder, mustWork = mustWork)
+  }else if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
     path_subject = normalizePath(file.path(fs_subject_folder, 'fs'), mustWork = mustWork)
   }else if( dir.exists(file.path(fs_subject_folder, 'rave')) ){
     path_subject = normalizePath(file.path(fs_subject_folder, 'rave', 'fs'), mustWork = mustWork)
@@ -397,17 +399,15 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
                                   return_path = FALSE, check_volume = FALSE, check_surface = FALSE){
   if( dir.exists(fs_subject_folder) ){
 
-    if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
+    if( dir.exists(file.path(fs_subject_folder, 'surf')) ){
+      path_subject = fs_subject_folder
+    }else if( dir.exists(file.path(fs_subject_folder, 'fs')) ){
       path_subject = file.path(fs_subject_folder, 'fs')
     }else if( dir.exists(file.path(fs_subject_folder, 'rave')) ){
       path_subject = file.path(fs_subject_folder, 'rave', 'fs')
     }else{
       path_subject = fs_subject_folder
     }
-    dir.create(file.path(path_subject, 'mri', 'transforms'), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(path_subject, 'surf'), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(path_subject, 'SUMA'), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(path_subject, 'RAVE'), showWarnings = FALSE, recursive = TRUE)
 
     path_t1 = file.path(path_subject, 'mri', 'T1.mgz')
     path_brain_finalsurf = file.path(path_subject, 'mri', 'brain.finalsurfs.mgz')
@@ -417,35 +417,45 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
     path_xform = file.path(path_subject, 'mri', 'transforms', 'talairach.xfm')
     # path_surf = file.path(path_subject, 'surf')
 
+    pass_test = FALSE
 
     if( !check_volume && !check_surface ){
-      if( return_path ){ return( path_subject ) } else { return(TRUE) }
+      # check if surf dir exists
+      if( dir.exists(file.path(path_subject, 'surf')) ){
+        pass_test = TRUE
+      }
     }
-    if( check_volume ){
+    if( !pass_test && check_volume ){
       if( any(file.exists(c(path_t1, path_brain_finalsurf, path_brain_automask, path_brain_mask))) && file.exists(path_xform) ){
-        if( return_path ){ return( path_subject ) } else { return(TRUE) }
+        pass_test = TRUE
       }
     }
 
-    if( check_surface ){
+    if( !pass_test && check_surface ){
       # Not implemented yet
-      if( return_path ){ return( path_subject ) } else { return(TRUE) }
+      pass_test = TRUE
+
     }
 
 
   }
 
-
-  # check if this is N27 subject
-  subject_code = unlist(stringr::str_split(fs_subject_folder, '/|\\\\'))
-  if( subject_code[length(subject_code)] == 'N27' ){
-    download_N27()
+  if( autoinstall_template ){
+    # check if this is N27 subject
+    subject_code = unlist(stringr::str_split(fs_subject_folder, '/|\\\\'))
+    if( subject_code[length(subject_code)] == 'N27' ){
+      download_N27()
+    }
   }
 
-  if( return_path ){
-    return( NULL )
+  if( pass_test ){
+    dir.create(file.path(path_subject, 'mri', 'transforms'), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(path_subject, 'surf'), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(path_subject, 'SUMA'), showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(path_subject, 'RAVE'), showWarnings = FALSE, recursive = TRUE)
+    if( return_path ){ return( path_subject ) } else { return(TRUE) }
   }
-  return(FALSE)
+  if( return_path ){ return( NULL ) } else { return(FALSE) }
 }
 
 electrode_mapped_141 <- function(position = c(0,0,0), is_surface, vertex_number, surf_type, hemisphere){
