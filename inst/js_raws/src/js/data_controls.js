@@ -1121,7 +1121,6 @@ class THREEBRAIN_PRESETS{
     this.gui.folders[ folder_name ].open();
 
     // hide 3 planes
-    this.gui.get_controller('Show Panels').setValue( false );
     edit_mode.setValue( 'new electrodes' );
 
     this._has_localization = true;
