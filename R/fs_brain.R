@@ -102,6 +102,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   # Find target files
   # path_brainfinal = normalizePath(file.path(path_subject, 'mri', 'brain.finalsurfs.mgz'), mustWork = mustWork)
   path_mri = function(fname, mw = FALSE){ normalizePath(file.path(path_subject, 'mri', fname), mustWork = mw) }
+  path_rawavg = path_mri('rawavg.mgz')
   path_t1 = path_mri('T1.mgz')
   path_brain_finalsurf = path_mri('brain.finalsurfs.mgz')
   path_aseg = path_mri('aseg.mgz')
@@ -145,6 +146,12 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   }else{
     Norig = Torig = diag(c(1,1,1,1))
   }
+  # if( file.exists(path_rawavg) ){
+  #   rawavg = read_mgz(path_rawavg)
+  #   Norig_raw = rawavg$header$get_vox2ras()
+  #   Torig_raw = rawavg$header$get_vox2ras_tkr()
+  #   Torig_raw %*% solve( Norig_raw )
+  # }
 
 
   # Generate brain object to return

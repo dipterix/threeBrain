@@ -1068,11 +1068,12 @@ class THREEBRAIN_PRESETS{
     );
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_REMOVE_EDITOR, (evt) => {
-      if( this.canvas.edit_mode && this.edit_mode === 'modification' &&
-          has_meta_keys( evt.event, true, false, false ) ){
+      if( this.canvas.edit_mode && has_meta_keys( evt.event, true, false, false ) ){
         const el = get_electrode();
         if( el && el.userData.construct_params.is_electrode ){
-          el.visible = false;
+          el.parent.remove( el );
+          const group = this.canvas.electrodes.get('__localization__');
+          delete group[ el.userData.construct_params.name ];
           this.shiny.loc_electrode_info();
           this._update_canvas();
         }
@@ -1145,8 +1146,12 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         this.canvas.switch_subject('/', { ct_threshold : v });
       });
+
+    const n_elec = this.gui.add_item('Number of Elecs', 100, { folder_name: folder_name })
+      .min(1).step(1);
     this.gui.add_item('Guess Electrodes', () => {
       const thred = ct_thred.getValue() * 255;
+      const n_electrodes = Math.ceil(n_elec.getValue());
       const current_subject = this.canvas.state_data.get("target_subject") || '';
       const ct_cube = this.canvas.mesh.get(`ct.aligned.t1 (${current_subject})`);
       if( !ct_cube || ct_cube.userData.construct_params.type !== 'datacube2' ){
@@ -1156,7 +1161,8 @@ class THREEBRAIN_PRESETS{
 
       this.shiny.to_shiny({
         threshold: thred,
-        current_subject : current_subject
+        current_subject : current_subject,
+        n_electrodes : n_electrodes
       }, 'ct_threshold', true);
 
       /*
