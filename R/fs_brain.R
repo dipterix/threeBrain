@@ -404,6 +404,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 #' @export
 check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE,
                                   return_path = FALSE, check_volume = FALSE, check_surface = FALSE){
+  pass_test = FALSE
   if( dir.exists(fs_subject_folder) ){
 
     if( dir.exists(file.path(fs_subject_folder, 'surf')) ){
@@ -423,8 +424,6 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
 
     path_xform = file.path(path_subject, 'mri', 'transforms', 'talairach.xfm')
     # path_surf = file.path(path_subject, 'surf')
-
-    pass_test = FALSE
 
     if( !check_volume && !check_surface ){
       # check if surf dir exists
