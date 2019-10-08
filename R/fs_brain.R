@@ -446,7 +446,7 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
 
   }
 
-  if( autoinstall_template ){
+  if( autoinstall_template && !pass_test ){
     # check if this is N27 subject
     subject_code = unlist(stringr::str_split(fs_subject_folder, '/|\\\\'))
     if( subject_code[length(subject_code)] == 'N27' ){
