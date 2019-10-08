@@ -46,7 +46,8 @@
 .threejs-control .dg .property-name {
     text-overflow: clip;
     overflow-y: hidden;
-    overflow-x: scroll;
+    overflow-x: hidden;
+    /* overflow-x: scroll; */
     white-space: nowrap;
     /* hide scrollbar */
     padding-bottom: 17px;
