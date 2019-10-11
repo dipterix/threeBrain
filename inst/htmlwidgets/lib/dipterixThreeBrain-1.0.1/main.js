@@ -64012,6 +64012,10 @@ class src_BrainCanvas{
   }
 
   resize_widget(width, height){
+    if( width <= 0 || height <= 0 ){
+      // Do nothing! as the canvas is usually invisible
+      return(null);
+    }
     console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
     this.el_side.style.maxHeight = height + 'px';
     if(this.hide_controls){
