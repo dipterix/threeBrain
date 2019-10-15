@@ -815,7 +815,7 @@ class THREEBRAIN_CANVAS {
 
     window.addEventListener( 'keydown', (event) => {
       if( this.listen_keyboard ){
-        event.preventDefault();
+        // event.preventDefault();
         this.keyboard_event = {
           'action' : 'keydown',
           'event' : event,
@@ -824,7 +824,7 @@ class THREEBRAIN_CANVAS {
         };
       }
 
-    });
+    }, {passive: true});
 
     this.add_mouse_callback(
       (evt) => {
