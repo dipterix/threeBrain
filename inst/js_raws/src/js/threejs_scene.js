@@ -848,6 +848,7 @@ class THREEBRAIN_CANVAS {
     }, this.main_canvas, false );
 
     this.bind( 'main_canvas_keydown', 'keydown', (event) => {
+      if (event.isComposing || event.keyCode === 229) { return; }
       if( this.listen_keyboard ){
         // event.preventDefault();
         this.keyboard_event = {
@@ -858,7 +859,7 @@ class THREEBRAIN_CANVAS {
         };
       }
 
-    }, this.main_canvas, {passive: true} );
+    }, document );
 
 
     this.add_mouse_callback(
