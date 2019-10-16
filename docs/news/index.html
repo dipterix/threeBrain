@@ -110,13 +110,46 @@
       <small>Source: <a href='https://github.com/dipterix/threeBrain/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="threebrain-013" class="section level1">
+    <div id="threebrain-014" class="section level1">
 <h1 class="page-header">
-<a href="#threebrain-013" class="anchor"></a>threeBrain 0.1.3<small> 2019-09-10 </small>
+<a href="#threebrain-014" class="anchor"></a>threeBrain 0.1.4<small> Unreleased </small>
 </h1>
 <div id="changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#changes" class="anchor"></a>Changes</h2>
+<ul>
+<li>Implemented a new mesh type - volume rendering using ray marching</li>
+<li>Added alternative methods to read <code>.nii</code> files, <code>nibabel</code> is now optional</li>
+<li>Customized color palettes and value range for better visualizations with ourliers</li>
+<li>Only requires <code>T1.mgz</code> or <code>brainmask</code> of <code>brain.finalsurf</code> is not found. This allows users only run <code>FreeSurfer</code> to the first stage, which only takes around 8 to 10 minutes instead of 6 hours.</li>
+<li>Fully compatible with <code>htmlwidgets</code> in <code>shiny</code> mode. When calling <code>threejsBrainOutput</code> under <code><a href="https://rdrr.io/pkg/shiny/man/renderUI.html">shiny::renderUI</a></code>, the <code>DOM</code> element might get reset by <code>shiny</code>, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn’t reset correctly. A cache is created and now is reusing the canvas.</li>
+</ul>
+<div id="improvements" class="section level3">
+<h3 class="hasAnchor">
+<a href="#improvements" class="anchor"></a>Improvements</h3>
+<ul>
+<li>More flexible directory requirement</li>
+<li>Added dispose function to canvas so that memory gets cleared correctly</li>
+<li>Renderer optimization and memory optimization</li>
+</ul>
+</div>
+<div id="bug-fixes" class="section level3">
+<h3 class="hasAnchor">
+<a href="#bug-fixes" class="anchor"></a>Bug Fixes</h3>
+<ul>
+<li>Fixed keyboard listeners locking the keys</li>
+<li>Fixed huge memory leaks due to <code>threejs</code> not garbage collecting geometries and textures</li>
+</ul>
+</div>
+</div>
+</div>
+    <div id="threebrain-013" class="section level1">
+<h1 class="page-header">
+<a href="#threebrain-013" class="anchor"></a>threeBrain 0.1.3<small> 2019-09-10 </small>
+</h1>
+<div id="changes-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-1" class="anchor"></a>Changes</h2>
 <ul>
 <li>File structure change: now directly read in from <code>FreeSurfer</code> folder</li>
 <li>Added readers for <code>.mgz</code>, <code>.m3z</code> files</li>
@@ -129,9 +162,9 @@
 <li>Implemented experimental electrode localization</li>
 <li>Automatically determine color type (continuous or discrete) and value range</li>
 </ul>
-<div id="improvements" class="section level3">
+<div id="improvements-1" class="section level3">
 <h3 class="hasAnchor">
-<a href="#improvements" class="anchor"></a>Improvements</h3>
+<a href="#improvements-1" class="anchor"></a>Improvements</h3>
 <ul>
 <li>Shortcuts available at <a href="https://github.com/dipterix/threeBrain/blob/master/shortcuts.md">here</a>
 </li>
@@ -144,9 +177,9 @@
 <h1 class="page-header">
 <a href="#threebrain-012" class="anchor"></a>threeBrain 0.1.2<small> 2019-06-28 </small>
 </h1>
-<div id="changes-1" class="section level2">
+<div id="changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#changes-1" class="anchor"></a>Changes</h2>
+<a href="#changes-2" class="anchor"></a>Changes</h2>
 <ul>
 <li>Re-draw canvas on a 2D context to make customized overlay directly on canvas.</li>
 <li>Implemented continuous and discrete legends to replace D3.</li>
@@ -156,9 +189,9 @@
 <li>Improved color palette calculation.</li>
 <li>Support customized title.</li>
 </ul>
-<div id="improvements-1" class="section level3">
+<div id="improvements-2" class="section level3">
 <h3 class="hasAnchor">
-<a href="#improvements-1" class="anchor"></a>Improvements</h3>
+<a href="#improvements-2" class="anchor"></a>Improvements</h3>
 <ul>
 <li>Support customized datapath when saving widgets.</li>
 <li>Added instructions on how to embed widgets into websites without R.</li>
@@ -191,6 +224,7 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
+        <li><a href="#threebrain-014">0.1.4</a></li>
         <li><a href="#threebrain-013">0.1.3</a></li>
         <li><a href="#threebrain-012">0.1.2</a></li>
         <li><a href="#threebrain-011">0.1.1</a></li>
@@ -208,7 +242,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>

@@ -119,10 +119,11 @@
 
     <pre class="usage"><span class='fu'>threejs_brain</span>(<span class='no'>...</span>, <span class='kw'>.list</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(), <span class='kw'>width</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>height</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>side_canvas</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>side_zoom</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>side_width</span> <span class='kw'>=</span> <span class='fl'>250</span>,
-  <span class='kw'>side_shift</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>), <span class='kw'>control_panel</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>control_presets</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>side_shift</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>), <span class='kw'>side_display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>control_panel</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>control_presets</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control_display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>camera_center</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>), <span class='kw'>camera_pos</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>500</span>),
   <span class='kw'>start_zoom</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>coords</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>symmetric</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>default_colormap</span> <span class='kw'>=</span> <span class='st'>"Value"</span>, <span class='kw'>palettes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>default_colormap</span> <span class='kw'>=</span> <span class='st'>"Value"</span>, <span class='kw'>palettes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>val_ranges</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>show_inactive_electrodes</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>widget_id</span> <span class='kw'>=</span> <span class='st'>"threebrain_data"</span>,
   <span class='kw'>tmp_dirname</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>debug</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>token</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>optionals</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(), <span class='kw'>browser_external</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>global_data</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())</pre>
@@ -156,12 +157,20 @@ By default width=`100%`, and height varies.</p></td>
       <td><p>integer of length two, side panel shift in pixels (`CSS style`: top, left)</p></td>
     </tr>
     <tr>
+      <th>side_display</th>
+      <td><p>logical, show/hide side panels at begining</p></td>
+    </tr>
+    <tr>
       <th>control_panel</th>
       <td><p>logical, enable control panels for the widget</p></td>
     </tr>
     <tr>
       <th>control_presets</th>
       <td><p>characters, presets to be shown in control panels</p></td>
+    </tr>
+    <tr>
+      <th>control_display</th>
+      <td><p>logical, whether to expand/collapse control UI at the begining</p></td>
     </tr>
     <tr>
       <th>camera_center</th>
@@ -190,6 +199,10 @@ By default width=`100%`, and height varies.</p></td>
     <tr>
       <th>palettes</th>
       <td><p>named list, names corresponds to color-map names if you want to change color palettes</p></td>
+    </tr>
+    <tr>
+      <th>val_ranges</th>
+      <td><p>named list, similar to <code>palettes</code>, value range for each values</p></td>
     </tr>
     <tr>
       <th>show_inactive_electrodes</th>
@@ -246,7 +259,7 @@ Only use it when you have multiple widgets in one website</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>

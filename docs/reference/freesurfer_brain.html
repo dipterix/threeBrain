@@ -118,7 +118,8 @@
     </div>
 
     <pre class="usage"><span class='fu'>freesurfer_brain</span>(<span class='no'>fs_subject_folder</span>, <span class='no'>subject_name</span>,
-  <span class='kw'>additional_surfaces</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>use_cache</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>use_141</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+  <span class='kw'>additional_surfaces</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>aligned_ct</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>use_cache</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>use_141</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -136,6 +137,10 @@
       <td><p>character array, additional surface types to load, such as `white`, `smoothwm`</p></td>
     </tr>
     <tr>
+      <th>aligned_ct</th>
+      <td><p>character, path to `ct_aligned_mri.nii.gz`, used for electrode localization</p></td>
+    </tr>
+    <tr>
       <th>use_cache</th>
       <td><p>logical, whether to use cached `json` files or from raw `FreeSurfer` files</p></td>
     </tr>
@@ -149,11 +154,11 @@
 
     <p>This function is under FreeSurfer license.
 1. Volumes:
-3D viewer uses `mri/brain.finalsurfs.mgz` from `FreeSurfer` to show the
-volume information. `brain.finalsurfs.mgz` results from step 1 to 15 in `FreeSurfer`
-command `recon-all`, which aligns the original `DICOM` image to `RAS` coordinate
+3D viewer uses `mri/T1.mgz` from `FreeSurfer` to show the
+volume information. `T1.mgz` results from step 1 to 5 in `FreeSurfer`
+command `recon-all -autorecon1`, which aligns the original `DICOM` image to `RAS` coordinate
 system, resamples to volume with <code>256x256x256</code> voxels (tri-linear by default,
-check <a href='https://mail.nmr.mgh.harvard.edu/pipermail/freesurfer/2018-August/058127.html'>https://mail.nmr.mgh.harvard.edu/pipermail/freesurfer/2018-August/058127.html</a>
+check <a href='https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all'>https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all</a>
 for more information).</p>
 <p>2. Surface:
 There are two options for surface files. The first choice is using
@@ -195,8 +200,7 @@ The 3D viewer in this package uses the center of volume as the origin (0, 0, 0).
 <span class='no'>brain</span> <span class='kw'>=</span> <span class='kw pkg'>threeBrain</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/threeBrain/man/freesurfer_brain.html'>freesurfer_brain</a></span>(
   <span class='kw'>fs_subject_folder</span> <span class='kw'>=</span> <span class='st'>'~/rave_data/others/three_brain/N27/'</span>, <span class='kw'>subject_name</span> <span class='kw'>=</span> <span class='st'>'N27'</span>,
   <span class='kw'>additional_surfaces</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>'white'</span>, <span class='st'>'smoothwm'</span>)
-)
-
+)</div><div class='output co'>#&gt; Loading from:  /Users/beauchamplab/rave_data/others/three_brain/N27/mri/brain.finalsurfs.mgz</div><div class='input'>
 <span class='co'># Visualize. Alternatively, you can use brain$plot(...)</span>
 <span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>( <span class='no'>brain</span> )
 <span class='co'># }</span></div></pre>
@@ -221,7 +225,7 @@ The 3D viewer in this package uses the center of volume as the origin (0, 0, 0).
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Setup Package, Install Environment — brain_setup • threeBrain</title>
+<title>Function to load surface data from `Gifti` files — read_gii2 • threeBrain</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,9 @@
 
 
 
-<meta property="og:title" content="Setup Package, Install Environment — brain_setup" />
-<meta property="og:description" content="Setup Package, Install Environment" />
+<meta property="og:title" content="Function to load surface data from `Gifti` files — read_gii2" />
+<meta property="og:description" content="The function `read_gii2` is a dynamic wrapper of Python `nibabel` loader.
+If no Python is detected, it will switch to `gifti::readgii`." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -108,50 +109,39 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Setup Package, Install Environment</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/aaa.R'><code>R/aaa.R</code></a></small>
-    <div class="hidden name"><code>brain_setup.Rd</code></div>
+    <h1>Function to load surface data from `Gifti` files</h1>
+    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/zzz.R'><code>R/zzz.R</code></a></small>
+    <div class="hidden name"><code>read_gii2.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Setup Package, Install Environment</p>
+    <p>The function `read_gii2` is a dynamic wrapper of Python `nibabel` loader.
+If no Python is detected, it will switch to `gifti::readgii`.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>brain_setup</span>(<span class='kw'>continued</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>show_example</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>use_python</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>try_conda</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>read_gii2</span>(<span class='no'>path</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>continued</th>
-      <td><p>logical, there are two phases of setting up environment. You
-probably need to restart R session after the first phase and continue setting up.</p></td>
-    </tr>
-    <tr>
-      <th>show_example</th>
-      <td><p>whether to show example of `N27` subject at the end.</p></td>
-    </tr>
-    <tr>
-      <th>use_python</th>
-      <td><p>whether to install python toolbox (recommended)</p></td>
-    </tr>
-    <tr>
-      <th>try_conda</th>
-      <td><p>try to use `conda` to create `RAVEPy` environment</p></td>
+      <th>path</th>
+      <td><p>`Gifti` file path</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
+
+    <p>An <span style="R">R</span> function acting as safe wrapper for <code>nibabel.load</code>.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#format">Format</a></li>
     </ul>
 
-    <h2>Author</h2>
-    <p>Zhengjia Wang</p>
   </div>
 </div>
 

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Setup Package, Install Environment — brain_setup • threeBrain</title>
+<title>Function to check whether `FreeSurfer` folder has everything we need — check_freesurfer_path • threeBrain</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,8 @@
 
 
 
-<meta property="og:title" content="Setup Package, Install Environment — brain_setup" />
-<meta property="og:description" content="Setup Package, Install Environment" />
+<meta property="og:title" content="Function to check whether `FreeSurfer` folder has everything we need — check_freesurfer_path" />
+<meta property="og:description" content="Function to check whether `FreeSurfer` folder has everything we need" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -108,50 +108,56 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Setup Package, Install Environment</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/aaa.R'><code>R/aaa.R</code></a></small>
-    <div class="hidden name"><code>brain_setup.Rd</code></div>
+    <h1>Function to check whether `FreeSurfer` folder has everything we need</h1>
+    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/fs_brain.R'><code>R/fs_brain.R</code></a></small>
+    <div class="hidden name"><code>check_freesurfer_path.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Setup Package, Install Environment</p>
+    <p>Function to check whether `FreeSurfer` folder has everything we need</p>
     </div>
 
-    <pre class="usage"><span class='fu'>brain_setup</span>(<span class='kw'>continued</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>show_example</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>use_python</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>try_conda</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>check_freesurfer_path</span>(<span class='no'>fs_subject_folder</span>, <span class='kw'>autoinstall_template</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>return_path</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>check_volume</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>check_surface</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>continued</th>
-      <td><p>logical, there are two phases of setting up environment. You
-probably need to restart R session after the first phase and continue setting up.</p></td>
+      <th>fs_subject_folder</th>
+      <td><p>character, path to `fs` project directory or `RAVE` subject directory</p></td>
     </tr>
     <tr>
-      <th>show_example</th>
-      <td><p>whether to show example of `N27` subject at the end.</p></td>
+      <th>autoinstall_template</th>
+      <td><p>logical, whether `N27` brain should be installed is missing</p></td>
     </tr>
     <tr>
-      <th>use_python</th>
-      <td><p>whether to install python toolbox (recommended)</p></td>
+      <th>return_path</th>
+      <td><p>logical, whether to return `FreeSurfer` path</p></td>
     </tr>
     <tr>
-      <th>try_conda</th>
-      <td><p>try to use `conda` to create `RAVEPy` environment</p></td>
+      <th>check_volume</th>
+      <td><p>logical, whether to check volume data</p></td>
+    </tr>
+    <tr>
+      <th>check_surface</th>
+      <td><p>logical, whether to check surface data (not implemented yet)</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>logical whether the directory is valid or, if <code>return_path</code> is true,
+return `FreeSurfer` path</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
     </ul>
 
-    <h2>Author</h2>
-    <p>Zhengjia Wang</p>
   </div>
 </div>
 
