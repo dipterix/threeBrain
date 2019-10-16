@@ -1,7 +1,9 @@
 # [threeBrain - HTML, WebGL based 3D Viewer](https://dipterix.github.io/threeBrain/index.html)
 
-<img src="https://github.com/dipterix/threeBrain/blob/docs/demo.gif?raw=true" width="50%" />
-<img src="https://github.com/dipterix/threeBrain/blob/docs/demo2.gif?raw=true" width="50%" />
+<div style="width:100%;">
+<img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="50%" />
+<img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo2.gif?raw=true" width="50%" />
+</div>
 
 A live [demo]() is under construction!
 
