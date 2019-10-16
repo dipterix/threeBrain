@@ -28,7 +28,8 @@ class BrainCanvas{
     // --------------------- Assign class attribute ----------------------
     this.shiny_mode = shiny_mode;
     this.DEBUG = DEBUG;
-    this.outputId = this.el.getAttribute('id');
+    this.outputId = this.el.getAttribute( 'data-target' );
+    // this.outputId = this.el.getAttribute('id');
     this.shiny = new THREE_BRAIN_SHINY( this.outputId, this.shiny_mode );
     this.has_webgl = false;
 
@@ -389,6 +390,11 @@ class BrainCanvas{
       }
     });
 
+    if( this.gui ){
+      try {
+        this.gui.dispose();
+      } catch (e) {}
+    }
     let gui = this._register_gui_control();
     this.gui = gui;
     this.shiny.register_gui( gui );

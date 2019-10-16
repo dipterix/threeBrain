@@ -29,6 +29,7 @@ function gen_datacube2(g, canvas){
       cube_half_size[2]*2
     );
 
+
     texture.minFilter = texture.magFilter = THREE.LinearFilter;
 
     // Needed to solve error: INVALID_OPERATION: texImage3D: ArrayBufferView not big enough for request
@@ -64,6 +65,7 @@ function gen_datacube2(g, canvas){
 
   	let geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
 
+
   	// This translate will make geometry rendered correctly
   	geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
 
@@ -76,6 +78,12 @@ function gen_datacube2(g, canvas){
       g.position[2] - cube_half_size[2]
     ]);
     // mesh.position.fromArray( g.position );
+
+    mesh.userData.dispose = () => {
+      material.dispose();
+      geometry.dispose();
+      texture.dispose();
+    };
   }
 
 	return(mesh);

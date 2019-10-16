@@ -82,7 +82,7 @@ class THREEBRAIN_CANVAS {
 
     // DOM container information
     this.el = el;
-    this.container_id = el.id;
+    this.container_id = this.el.getAttribute( 'data-target' );
 
     // Is system supporting WebGL2? some customized shaders might need this feature
     // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
@@ -105,6 +105,10 @@ class THREEBRAIN_CANVAS {
     this._show_ct = false;
     this.surfaces = new Map();
     this.state_data = new Map();
+
+    // action event listener functions and dispose flags
+    this._disposed = false;
+    this._dispose_functions = new Map();
     // set default values
     this.state_data.set( 'coronal_depth', 0 );
     this.state_data.set( 'axial_depth', 0 );
@@ -335,43 +339,44 @@ class THREEBRAIN_CANVAS {
 			zoom_in.style.top = '23px';
 			zoom_in.innerText = '+';
 			div.appendChild( zoom_in );
-			zoom_in.addEventListener('click', (e) => {
+
+			this.bind( `${nm}_zoomin_click`, 'click', (e) => {
 			  zoom_level = zoom_level * 1.2;
 			  zoom_level = zoom_level > 10 ? 10 : zoom_level;
 			  set_zoom_level();
-			});
+			}, zoom_in);
 
 			const zoom_out = document.createElement('div');
 			zoom_out.className = 'zoom-tool';
 			zoom_out.style.top = '50px';
 			zoom_out.innerText = '-';
 			div.appendChild( zoom_out );
-			zoom_out.addEventListener('click', (e) => {
+			this.bind( `${nm}_zoomout_click`, 'click', (e) => {
 			  zoom_level = zoom_level / 1.2;
 			  zoom_level = zoom_level < 1.1 ? 1 : zoom_level;
 			  set_zoom_level();
-			});
+			}, zoom_out);
 
 			const toggle_pan = document.createElement('div');
 			toggle_pan.className = 'zoom-tool';
 			toggle_pan.style.top = '77px';
 			toggle_pan.innerText = 'P';
 			div.appendChild( toggle_pan );
-			toggle_pan.addEventListener('click', (e) => {
+			this.bind( `${nm}_toggle_pan_click`, 'click', (e) => {
 			  toggle_pan.classList.toggle('pan-active');
 			  toggle_pan_canvas( toggle_pan.classList.contains('pan-active') ? 'pan' : 'select' );
-			});
+			}, toggle_pan);
 
 			const zoom_reset = document.createElement('div');
 			zoom_reset.className = 'zoom-tool';
 			zoom_reset.style.top = '104px';
 			zoom_reset.innerText = '0';
 			div.appendChild( zoom_reset );
-			zoom_reset.addEventListener('click', (e) => {
+			this.bind( `${nm}_zoom_reset_click`, 'click', (e) => {
 			  cvs.style.top = '0';
         cvs.style.left = '0';
 			  set_zoom_level( 1 );
-			});
+			}, zoom_reset);
 
 
 			// Add cameras
@@ -512,7 +517,7 @@ class THREEBRAIN_CANVAS {
       toggle_pan_canvas( 'select' );
 
       // Make cvs scrollable, but change slices
-      cvs.addEventListener("mousewheel", (evt) => {
+      this.bind( `${nm}_cvs_mousewheel`, 'mousewheel', (evt) => {
         evt.preventDefault();
         if( evt.altKey ){
           if( evt.deltaY > 0 ){
@@ -529,7 +534,7 @@ class THREEBRAIN_CANVAS {
           this.state_data.get( 'axial_depth' ),
           this.state_data.get( 'sagittal_depth' )
         );
-      });
+      }, cvs);
 
       // Make resizable, keep current width and height
       make_resizable( div, true );
@@ -545,11 +550,11 @@ class THREEBRAIN_CANVAS {
         }
 
       };
-      div_header.addEventListener("dblclick", (evt) => {
+      this.bind( `${nm}_div_header_dblclick`, 'dblclick', (evt) => {
         reset();
         // Resize side canvas
         // this.handle_resize( undefined, undefined );
-      });
+      }, div_header);
 
 
       this.side_canvas[ nm ] = {
@@ -588,7 +593,7 @@ class THREEBRAIN_CANVAS {
     this.control_center = [0, 0, 0];
 
     // set control listeners
-    this.controls.addEventListener('start', (v) => {
+    this.bind( 'controls_start', 'start', (v) => {
 
       if(this.render_flag < 0 ){
         // adjust controls
@@ -597,13 +602,12 @@ class THREEBRAIN_CANVAS {
 
       // normal controls, can be interrupted
       this.start_animation(1);
-    });
+    }, this.controls );
 
-    this.controls.addEventListener('end', (v) => {
+    this.bind( 'controls_end', 'end', (v) => {
       // normal pause, can be overridden
       this.pause_animation(1);
-
-    });
+    }, this.controls );
 
     // Follower that fixed at bottom-left
     this.compass = new Compass( this.main_camera, this.controls );
@@ -677,6 +681,33 @@ class THREEBRAIN_CANVAS {
     }
   }
 
+  bind( name, evtstr, fun, target, options = false ){
+    const _target = target || this.main_canvas;
+
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      _f();
+    }
+    this._dispose_functions.set( name, () => {
+      console.debug('Calling dispose function ' + name);
+      try {
+        _target.removeEventListener( evtstr , fun );
+      } catch (e) {
+        console.warn('Unable to dispose ' + name);
+      }
+    });
+
+    console.debug(`Registering event ${evtstr} (${name})`);
+    _target.addEventListener( evtstr , fun, options );
+  }
+
+  dispose_eventlisters(){
+    this._dispose_functions.forEach( (_f) => {
+      _f();
+    });
+    this._dispose_functions.clear();
+  }
+
   get_main_camera_params(){
     return({
       'target' : this.main_camera.localToWorld(new THREE.Vector3(
@@ -735,10 +766,14 @@ class THREEBRAIN_CANVAS {
 
     // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
     // this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
-    this.main_canvas.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    this.main_canvas.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
+			  this.listen_keyboard = true;
+			}, this.main_canvas);
+		this.bind( 'main_canvas_mouseleave', 'mouseleave', (e) => {
+			  this.listen_keyboard = false;
+			}, this.main_canvas);
 
-    this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
+		this.bind( 'main_canvas_dblclick', 'dblclick', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 2){
         return(null);
       }
@@ -749,9 +784,9 @@ class THREEBRAIN_CANVAS {
         'level' : 2
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'click', (event) => { // Use => to create flexible access to this
+    this.bind( 'main_canvas_click', 'click', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 1){
         return(null);
       }
@@ -763,9 +798,9 @@ class THREEBRAIN_CANVAS {
         'level' : 1
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'contextmenu', (event) => { // Use => to create flexible access to this
+    this.bind( 'main_canvas_contextmenu', 'contextmenu', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 1){
         return(null);
       }
@@ -777,9 +812,9 @@ class THREEBRAIN_CANVAS {
         'level' : 1
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'mousemove', (event) => {
+    this.bind( 'main_canvas_mousemove', 'mousemove', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 0){
         return(null);
       }
@@ -790,10 +825,9 @@ class THREEBRAIN_CANVAS {
         'level' : 0
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'mousedown', (event) => {
-
+    this.bind( 'main_canvas_mousedown', 'mousedown', (event) => {
       this.mouse_event = {
         'action' : 'mousedown',
         'event' : event,
@@ -801,9 +835,9 @@ class THREEBRAIN_CANVAS {
         'level' : 3
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'mouseup', (event) => {
+    this.bind( 'main_canvas_mouseup', 'mouseup', (event) => {
       this.mouse_event = {
         'action' : 'mouseup',
         'event' : event,
@@ -811,9 +845,9 @@ class THREEBRAIN_CANVAS {
         'level' : 0
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    window.addEventListener( 'keydown', (event) => {
+    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
       if( this.listen_keyboard ){
         // event.preventDefault();
         this.keyboard_event = {
@@ -824,7 +858,8 @@ class THREEBRAIN_CANVAS {
         };
       }
 
-    }, {passive: true});
+    }, this.main_canvas, {passive: true} );
+
 
     this.add_mouse_callback(
       (evt) => {
@@ -1204,7 +1239,7 @@ class THREEBRAIN_CANVAS {
   add_colormap( name, value_type, value_names, value_range, time_range,
                 color_keys, color_vals, n_levels ){
 
-    const color_name = name + '--'  + this.el.id;
+    const color_name = name + '--'  + this.container_id;
 
     // Step 1: register to THREE.ColorMapKeywords
     if(THREE.ColorMapKeywords[color_name] === undefined){
@@ -1298,7 +1333,7 @@ class THREEBRAIN_CANVAS {
 
   handle_resize(width, height, lazy = false, center_camera = false){
 
-
+    if( this._disposed ) { return; }
     if(width === undefined){
       width = this.client_width;
       height = this.client_height;
@@ -1998,6 +2033,8 @@ class THREEBRAIN_CANVAS {
   // Only use 0 or 1
   animate(){
 
+    if( this._disposed ){ return; }
+
     requestAnimationFrame( this.animate.bind(this) );
 
     // If this.el is hidden, do not render
@@ -2077,40 +2114,122 @@ class THREEBRAIN_CANVAS {
 	  this.handle_resize();
 	}
 
+  remove_object( obj, resursive = true, dispose = true, depth = 100 ){
+    if( !obj && depth < 0 ){ return; }
+    if( resursive ){
+      if( Array.isArray( obj.children ) ){
+        for( let ii = obj.children.length - 1; ii >= 0; ii = Math.min(ii-1, obj.children.length) ){
+          if( ii < obj.children.length ){
+            this.remove_object( obj.children[ ii ], resursive, dispose, depth - 1 );
+          }
+        }
+      }
+    }
+    if( obj.parent ){
+      console.debug( 'removing object - ' + (obj.name || obj.type) );
+      obj.parent.remove( obj );
+    }
 
+    if( dispose ){
+      this.dispose_object( obj );
+    }
+  }
+  dispose_object( obj, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    const obj_name = obj.name || obj.type || 'unknown';
+    if( !quiet ){
+      console.debug('Disposing - ' + obj_name);
+    }
+    if( obj.userData && typeof obj.userData.dispose === 'function' ){
+      this._try_dispose( obj.userData, obj.name, quiet );
+    }else{
+      // Not implemented, try to guess dispose methods
+      this._try_dispose( obj.material, obj_name + '-material', quiet );
+      this._try_dispose( obj.geometry, obj_name + '-geometry', quiet );
+      this._try_dispose( obj, obj_name, quiet );
+    }
+  }
+
+  _try_dispose( obj, obj_name = undefined, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    if( typeof obj.dispose === 'function' ){
+      try {
+        obj.dispose();
+      } catch(e) {
+        if( !quiet ){
+          console.warn( 'Failed to dispose ' + (obj_name || obj.name || 'unknown') );
+        }
+      }
+    }
+  }
+
+  dispose(){
+    // Remove all objects, listeners, and dispose all
+    this._disposed = true;
+    this.clock.stop();
+
+    // Remove custom listeners
+    this.dispose_eventlisters();
+
+    // Remove customized objects
+    this.clear_all();
+
+    // Remove the rest objects in the scene
+    this.remove_object( this.scene );
+
+    // dispose scene
+    this.scene.dispose();
+    this.scene = null;
+
+    // Remove el
+    this.el.innerHTML = '';
+
+    // How to dispose renderers? Not sure
+    this.domContext = null;
+    this.main_renderer.dispose();
+    this.side_renderer.dispose();
+
+  }
 
   // Function to clear all meshes
   clear_all(){
-    this.mesh.forEach((m) => {
-      m.parent.remove( m );
-      // this.scene.remove( m );
-    });
-    this.group.forEach((g) => {
-      // this.scene.remove( g );
-      g.parent.remove( g );
-    });
-    this.mesh.clear();
-    this.group.clear();
+    // Stop showing information of any selected objects
+    this.object_chosen=undefined;
     this.clickable.clear();
+
     this.subject_codes.length = 0;
     this.electrodes.clear();
     this.volumes.clear();
     this.ct_scan.clear();
     this.surfaces.clear();
+
     this.state_data.clear();
     this.shared_data.clear();
     this.color_maps.clear();
+    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+
+    console.log('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
     this.animation_mixers.clear();
-    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+
+    this.group.forEach((g) => {
+      // g.parent.remove( g );
+      this.remove_object( g );
+    });
+    this.mesh.forEach((m) => {
+      this.remove_object( m );
+      // m.parent.remove( m );
+      // this.dispose_object(m);
+      // this.scene.remove( m );
+    });
+    this.mesh.clear();
+    this.group.clear();
 
     // set default values
     this.state_data.set( 'coronal_depth', 0 );
     this.state_data.set( 'axial_depth', 0 );
     this.state_data.set( 'sagittal_depth', 0 );
 
-    // Stop showing information of any selected objects
-    this.object_chosen=undefined;
   }
 
   // To be implemented (abstract methods)

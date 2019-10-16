@@ -12,32 +12,54 @@ HTMLWidgets.widget({
 
   factory: function(el, width, height) {
 
-    let cache = false;
+    let _container, cache = false;
     if( HTMLWidgets.shinyMode ){
       cache = global_cache;
     }
 
-    // handlers should never be "this.handlers" since HTMLWidgets is a class,
-    // this.handlers will have crosstalk with other widgets
-    let handlers = new BrainCanvas(
+    const elid = el.getAttribute('id'),
+          cache_id = '__THREE_CANVAS_' + elid;
 
-      // Element to store 3D viewer
-      el,
+    // Add class to el to make it display: flex
+    el.classList.add('threejs-brain-container');
 
-      // dimension of the viewer
-      width, height,
+    let handlers = global_cache.get_item(cache_id, undefined);
+    if( handlers ){
+      console.log('Found previous handler, re-use it.');
 
-      // Different sizing policy, as well as callbacks
-      HTMLWidgets.shinyMode, HTMLWidgets.viewerMode,
+      _container = handlers.el;
 
-      // use cache? true, false, or the cache object
-      cache,
+      // remove inner html of el
+      el.innerHTML = '';
 
-      // DEBUG mode?
-      false
-    );
+      el.appendChild( _container );
+    }else{
+      _container = document.createElement('div');
+      _container.classList.add( 'threejs-brain-canvas' );
+      _container.setAttribute( 'data-target', elid );
 
-    // global_cache.set_item('__' + el.getAttribute('id'), handlers);
+      el.appendChild( _container );
+
+      handlers = new BrainCanvas(
+
+        // Element to store 3D viewer
+        _container,
+
+        // dimension of the viewer
+        width, height,
+
+        // Different sizing policy, as well as callbacks
+        HTMLWidgets.shinyMode, HTMLWidgets.viewerMode,
+
+        // use cache? true, false, or the cache object
+        cache,
+
+        // DEBUG mode?
+        false
+      );
+
+      global_cache.set_item(cache_id, handlers);
+    }
 
     return {
       // "find", "renderError", "clearError", "sizing", "name", "type", "initialize", "renderValue", "resize"

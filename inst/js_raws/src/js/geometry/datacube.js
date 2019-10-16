@@ -22,6 +22,7 @@ function gen_datacube(g, canvas){
       line_geometry = new THREE.Geometry();
   line_material.depthTest = false;
 
+
   // Cube values Must be from 0 to 1, float
   const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
         cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
@@ -38,6 +39,7 @@ function gen_datacube(g, canvas){
   texture.format = THREE.RedFormat;
 	texture.type = THREE.UnsignedByteType;
 	texture.needsUpdate = true;
+
 
   // Shader - XY plane
 	const shader_xy = THREE.Volume2dArrayShader_xy;
@@ -56,11 +58,13 @@ function gen_datacube(g, canvas){
 	});
 	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
 
+
 	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
-	let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
+	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
 	mesh_xy.renderOrder = -1;
 	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
+
 
 	// Shader - XZ plane
 	const shader_xz = THREE.Volume2dArrayShader_xz;
@@ -84,6 +88,7 @@ function gen_datacube(g, canvas){
 	mesh_xz.renderOrder = -1;
 	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
+
 
 	// Shader - YZ plane
 	const shader_yz = THREE.Volume2dArrayShader_yz;
@@ -135,72 +140,31 @@ function gen_datacube(g, canvas){
   mesh_xy.add( line_mesh_xy );
   mesh_yz.add( line_mesh_yz );
 
-  /*
-  // Cube values Must be from 0 to 1, float
-  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-        volume = {
-          'xLength' : cube_half_size[0]*2,
-          'yLength' : cube_half_size[1]*2,
-          'zLength' : cube_half_size[2]*2
-        };
 
-  // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
-  if( canvas.has_webgl2 ){
-    // Generate 3D texture, to do so, we need to customize shaders
+  mesh_xy.userData.dispose = () => {
+	  material_xy.dispose();
+	  geometry_xy.dispose();
+    line_material.dispose();
+    line_geometry.dispose();
+    texture.dispose();
+  };
 
-    // 3D texture
-    let texture = new THREE.DataTexture3D(
-      new Float32Array(cube_values),
-      cube_half_size[0]*2,
-      cube_half_size[1]*2,
-      cube_half_size[2]*2
-    );
+  mesh_xz.userData.dispose = () => {
+	  material_xz.dispose();
+	  geometry_xz.dispose();
+    line_material.dispose();
+    line_geometry.dispose();
+    texture.dispose();
+  };
 
-    texture.minFilter = texture.magFilter = THREE.LinearFilter;
+  mesh_yz.userData.dispose = () => {
+	  material_yz.dispose();
+	  geometry_yz.dispose();
+    line_material.dispose();
+    line_geometry.dispose();
+    texture.dispose();
+  };
 
-    // Needed to solve error: INVALID_OPERATION: texImage3D: ArrayBufferView not big enough for request
-    texture.format = THREE.RedFormat;
-    texture.type = THREE.FloatType;
-    texture.unpackAlignment = 1;
-
-    texture.needsUpdate = true;
-
-    // Colormap textures, using datauri hard-coded
-  	let cmtextures = {
-  		viridis: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAtUlEQVR42n2Q0W3FMAzEyNNqHaH7j2L1w3ZenDwUMAwedXKA+MMvSqJiiBoiCWqWxKBEXaMZ8Sqs0zcmIv1p2nKwEvpLZMYOe3R4wku+TO7es/O8H+vHlH/KR9zQT8+z8F4531kRe379MIK4oD3v/SP7iplyHTKB5WNPs4AFH3kzO446Y+y6wA4TxqfMXBmzVrtwREY5ZrMY069dxr28Yb+wVjp02QWhSwKFJcHCaGGwTLBIzB9eyYkORwhbNAAAAABJRU5ErkJggg==" ),
-  		gray: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAEklEQVR42mNkYGBgHAWjYKQCAH7BAv8WAlmwAAAAAElFTkSuQmCC" )
-  	};
-
-  	// Material
-  	const shader = THREE.VolumeRenderShader1;
-
-  	let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-  	uniforms.u_data.value = texture;
-  	uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
-  	uniforms.u_clim.value.set( 0, 1 );
-  	uniforms.u_renderstyle.value = 0; // 0: MIP, 1: ISO
-  	uniforms.u_renderthreshold.value = 0.015; // For ISO renderstyle
-  	uniforms.u_cmdata.value = cmtextures.gray;
-
-    let material = new THREE.ShaderMaterial( {
-  		uniforms: uniforms,
-  		vertexShader: shader.vertexShader,
-  		fragmentShader: shader.fragmentShader,
-  		side: THREE.BackSide // The volume shader uses the backface as its "reference point"
-  	} );
-
-  	let geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
-
-  	// TODO: Make sure this translate is correct
-  	geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
-
-  	mesh = new THREE.Mesh( geometry, material );
-  	mesh.name = 'mesh_datacube_' + g.name;
-
-    mesh.position.fromArray(g.position);
-  }
-  */
 
 	return(mesh);
 

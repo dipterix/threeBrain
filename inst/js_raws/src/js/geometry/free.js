@@ -41,6 +41,10 @@ function gen_free(g, canvas){
   // mesh.userData.ani_value = values;
   // mesh.userData.ani_time = to_array(g.time_stamp);
 
+  mesh.userData.dispose = () => {
+    mesh.material.dispose();
+    mesh.geometry.dispose();
+  };
   return(mesh);
 
 }

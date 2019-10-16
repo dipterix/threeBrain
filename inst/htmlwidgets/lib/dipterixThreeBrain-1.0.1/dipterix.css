@@ -15,8 +15,17 @@
   line-height: normal;
 }
 
-.html-widget.threejs_brain {
+.html-widget.threejs-brain-container {
+  display: flex;
   position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+.html-widget.threejs-brain-container>.threejs-brain-canvas {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 

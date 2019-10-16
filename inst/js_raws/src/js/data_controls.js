@@ -264,14 +264,17 @@ class THREEBRAIN_PRESETS{
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_sagittal_depth( v );
       });
-    [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c) => {
-      _c.domElement.addEventListener('mousewheel', (evt) => {
-        if( evt.altKey ){
-          evt.preventDefault();
-          const current_val = _c.getValue();
-          _c.setValue( current_val + evt.deltaY );
-        }
-      });
+    [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c, ii) => {
+
+      this.canvas.bind( `dat_gui_side_controller_${ii}_mousewheel`, 'mousewheel',
+        (evt) => {
+          if( evt.altKey ){
+            evt.preventDefault();
+            const current_val = _c.getValue();
+            _c.setValue( current_val + evt.deltaY );
+          }
+        }, _c.domElement );
+
     });
 
     this.canvas.set_side_depth = (c, a, s) => {
@@ -715,13 +718,14 @@ class THREEBRAIN_PRESETS{
         .min(this.animation_time[0]).max(this.animation_time[1]).step(step).onChange((v) => {this._update_canvas()});
     this._ani_time = this.gui.get_controller('Time', folder_name);
 
-    this._ani_time.domElement.addEventListener('mousewheel', (evt) => {
-      if( evt.altKey ){
-        evt.preventDefault();
-        const current_val = this._ani_time.getValue();
-        this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
-      }
-    });
+    this.canvas.bind( `dat_gui_ani_time_mousewheel`, 'mousewheel',
+      (evt) => {
+        if( evt.altKey ){
+          evt.preventDefault();
+          const current_val = this._ani_time.getValue();
+          this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
+        }
+      }, this._ani_time.domElement );
 
     // Add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
@@ -1208,11 +1212,16 @@ class THREEBRAIN_CONTROL{
     this.ctrls = {};
     this._gui = new dat.GUI(args);
     // this._gui.remember( this.params );
-    this._gui.__closeButton.addEventListener('click', (e) => {
+    const _close_f = (e) => {
       if( typeof this.__on_closed === 'function' ){
         this.__on_closed( e );
       }
-    });
+    };
+    this._gui.__closeButton.addEventListener('click', _close_f);
+
+    this.dispose = () => {
+      this._gui.__closeButton.removeEventListener('click', _close_f);
+    };
 
     this.domElement = this._gui.domElement;
     this.DEBUG = DEBUG;

@@ -101,6 +101,10 @@ function gen_sphere(g, canvas){
 
   };
 
+  mesh.userData.dispose = () => {
+    mesh.material.dispose();
+    mesh.geometry.dispose();
+  };
   return(mesh);
 }
 

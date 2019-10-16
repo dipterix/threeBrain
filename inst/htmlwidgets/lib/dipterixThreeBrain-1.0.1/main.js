@@ -57640,6 +57640,10 @@ function gen_sphere(g, canvas){
 
   };
 
+  mesh.userData.dispose = () => {
+    mesh.material.dispose();
+    mesh.geometry.dispose();
+  };
   return(mesh);
 }
 
@@ -58296,14 +58300,17 @@ class data_controls_THREEBRAIN_PRESETS{
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_sagittal_depth( v );
       });
-    [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c) => {
-      _c.domElement.addEventListener('mousewheel', (evt) => {
-        if( evt.altKey ){
-          evt.preventDefault();
-          const current_val = _c.getValue();
-          _c.setValue( current_val + evt.deltaY );
-        }
-      });
+    [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c, ii) => {
+
+      this.canvas.bind( `dat_gui_side_controller_${ii}_mousewheel`, 'mousewheel',
+        (evt) => {
+          if( evt.altKey ){
+            evt.preventDefault();
+            const current_val = _c.getValue();
+            _c.setValue( current_val + evt.deltaY );
+          }
+        }, _c.domElement );
+
     });
 
     this.canvas.set_side_depth = (c, a, s) => {
@@ -58747,13 +58754,14 @@ class data_controls_THREEBRAIN_PRESETS{
         .min(this.animation_time[0]).max(this.animation_time[1]).step(step).onChange((v) => {this._update_canvas()});
     this._ani_time = this.gui.get_controller('Time', folder_name);
 
-    this._ani_time.domElement.addEventListener('mousewheel', (evt) => {
-      if( evt.altKey ){
-        evt.preventDefault();
-        const current_val = this._ani_time.getValue();
-        this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
-      }
-    });
+    this.canvas.bind( `dat_gui_ani_time_mousewheel`, 'mousewheel',
+      (evt) => {
+        if( evt.altKey ){
+          evt.preventDefault();
+          const current_val = this._ani_time.getValue();
+          this._ani_time.setValue( current_val + Math.sign( evt.deltaY ) * step );
+        }
+      }, this._ani_time.domElement );
 
     // Add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
@@ -59240,11 +59248,16 @@ class data_controls_THREEBRAIN_CONTROL{
     this.ctrls = {};
     this._gui = new GUI$1(args);
     // this._gui.remember( this.params );
-    this._gui.__closeButton.addEventListener('click', (e) => {
+    const _close_f = (e) => {
       if( typeof this.__on_closed === 'function' ){
         this.__on_closed( e );
       }
-    });
+    };
+    this._gui.__closeButton.addEventListener('click', _close_f);
+
+    this.dispose = () => {
+      this._gui.__closeButton.removeEventListener('click', _close_f);
+    };
 
     this.domElement = this._gui.domElement;
     this.DEBUG = DEBUG;
@@ -60142,6 +60155,7 @@ function gen_datacube(g, canvas){
       line_geometry = new threeplugins_THREE.Geometry();
   line_material.depthTest = false;
 
+
   // Cube values Must be from 0 to 1, float
   const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
         cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
@@ -60158,6 +60172,7 @@ function gen_datacube(g, canvas){
   texture.format = threeplugins_THREE.RedFormat;
 	texture.type = threeplugins_THREE.UnsignedByteType;
 	texture.needsUpdate = true;
+
 
   // Shader - XY plane
 	const shader_xy = threeplugins_THREE.Volume2dArrayShader_xy;
@@ -60176,11 +60191,13 @@ function gen_datacube(g, canvas){
 	});
 	let geometry_xy = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
 
+
 	let mesh_xy = new threeplugins_THREE.Mesh( geometry_xy, material_xy );
-	let mesh_xy2 = new threeplugins_THREE.Mesh( geometry_xy, material_xy );
+	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
 	mesh_xy.renderOrder = -1;
 	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
+
 
 	// Shader - XZ plane
 	const shader_xz = threeplugins_THREE.Volume2dArrayShader_xz;
@@ -60204,6 +60221,7 @@ function gen_datacube(g, canvas){
 	mesh_xz.renderOrder = -1;
 	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
 	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
+
 
 	// Shader - YZ plane
 	const shader_yz = threeplugins_THREE.Volume2dArrayShader_yz;
@@ -60255,72 +60273,31 @@ function gen_datacube(g, canvas){
   mesh_xy.add( line_mesh_xy );
   mesh_yz.add( line_mesh_yz );
 
-  /*
-  // Cube values Must be from 0 to 1, float
-  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-        volume = {
-          'xLength' : cube_half_size[0]*2,
-          'yLength' : cube_half_size[1]*2,
-          'zLength' : cube_half_size[2]*2
-        };
 
-  // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
-  if( canvas.has_webgl2 ){
-    // Generate 3D texture, to do so, we need to customize shaders
+  mesh_xy.userData.dispose = () => {
+	  material_xy.dispose();
+	  geometry_xy.dispose();
+    line_material.dispose();
+    line_geometry.dispose();
+    texture.dispose();
+  };
 
-    // 3D texture
-    let texture = new THREE.DataTexture3D(
-      new Float32Array(cube_values),
-      cube_half_size[0]*2,
-      cube_half_size[1]*2,
-      cube_half_size[2]*2
-    );
+  mesh_xz.userData.dispose = () => {
+	  material_xz.dispose();
+	  geometry_xz.dispose();
+    line_material.dispose();
+    line_geometry.dispose();
+    texture.dispose();
+  };
 
-    texture.minFilter = texture.magFilter = THREE.LinearFilter;
+  mesh_yz.userData.dispose = () => {
+	  material_yz.dispose();
+	  geometry_yz.dispose();
+    line_material.dispose();
+    line_geometry.dispose();
+    texture.dispose();
+  };
 
-    // Needed to solve error: INVALID_OPERATION: texImage3D: ArrayBufferView not big enough for request
-    texture.format = THREE.RedFormat;
-    texture.type = THREE.FloatType;
-    texture.unpackAlignment = 1;
-
-    texture.needsUpdate = true;
-
-    // Colormap textures, using datauri hard-coded
-  	let cmtextures = {
-  		viridis: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAtUlEQVR42n2Q0W3FMAzEyNNqHaH7j2L1w3ZenDwUMAwedXKA+MMvSqJiiBoiCWqWxKBEXaMZ8Sqs0zcmIv1p2nKwEvpLZMYOe3R4wku+TO7es/O8H+vHlH/KR9zQT8+z8F4531kRe379MIK4oD3v/SP7iplyHTKB5WNPs4AFH3kzO446Y+y6wA4TxqfMXBmzVrtwREY5ZrMY069dxr28Yb+wVjp02QWhSwKFJcHCaGGwTLBIzB9eyYkORwhbNAAAAABJRU5ErkJggg==" ),
-  		gray: new THREE.TextureLoader().load( "data:;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAABCAIAAAC+O+cgAAAAEklEQVR42mNkYGBgHAWjYKQCAH7BAv8WAlmwAAAAAElFTkSuQmCC" )
-  	};
-
-  	// Material
-  	const shader = THREE.VolumeRenderShader1;
-
-  	let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-  	uniforms.u_data.value = texture;
-  	uniforms.u_size.value.set( volume.xLength, volume.yLength, volume.zLength );
-  	uniforms.u_clim.value.set( 0, 1 );
-  	uniforms.u_renderstyle.value = 0; // 0: MIP, 1: ISO
-  	uniforms.u_renderthreshold.value = 0.015; // For ISO renderstyle
-  	uniforms.u_cmdata.value = cmtextures.gray;
-
-    let material = new THREE.ShaderMaterial( {
-  		uniforms: uniforms,
-  		vertexShader: shader.vertexShader,
-  		fragmentShader: shader.fragmentShader,
-  		side: THREE.BackSide // The volume shader uses the backface as its "reference point"
-  	} );
-
-  	let geometry = new THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
-
-  	// TODO: Make sure this translate is correct
-  	geometry.translate( volume.xLength / 2 - 0.5, volume.yLength / 2 - 0.5, volume.zLength / 2 - 0.5 );
-
-  	mesh = new THREE.Mesh( geometry, material );
-  	mesh.name = 'mesh_datacube_' + g.name;
-
-    mesh.position.fromArray(g.position);
-  }
-  */
 
 	return(mesh);
 
@@ -60360,6 +60337,7 @@ function gen_datacube2(g, canvas){
       cube_half_size[2]*2
     );
 
+
     texture.minFilter = texture.magFilter = threeplugins_THREE.LinearFilter;
 
     // Needed to solve error: INVALID_OPERATION: texImage3D: ArrayBufferView not big enough for request
@@ -60395,6 +60373,7 @@ function gen_datacube2(g, canvas){
 
   	let geometry = new threeplugins_THREE.BoxBufferGeometry( volume.xLength, volume.yLength, volume.zLength );
 
+
   	// This translate will make geometry rendered correctly
   	geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
 
@@ -60407,6 +60386,12 @@ function gen_datacube2(g, canvas){
       g.position[2] - cube_half_size[2]
     ]);
     // mesh.position.fromArray( g.position );
+
+    mesh.userData.dispose = () => {
+      material.dispose();
+      geometry.dispose();
+      texture.dispose();
+    };
   }
 
 	return(mesh);
@@ -60459,6 +60444,10 @@ function gen_free(g, canvas){
   // mesh.userData.ani_value = values;
   // mesh.userData.ani_time = to_array(g.time_stamp);
 
+  mesh.userData.dispose = () => {
+    mesh.material.dispose();
+    mesh.geometry.dispose();
+  };
   return(mesh);
 
 }
@@ -60619,7 +60608,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // DOM container information
     this.el = el;
-    this.container_id = el.id;
+    this.container_id = this.el.getAttribute( 'data-target' );
 
     // Is system supporting WebGL2? some customized shaders might need this feature
     // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
@@ -60642,6 +60631,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this._show_ct = false;
     this.surfaces = new Map();
     this.state_data = new Map();
+
+    // action event listener functions and dispose flags
+    this._disposed = false;
+    this._dispose_functions = new Map();
     // set default values
     this.state_data.set( 'coronal_depth', 0 );
     this.state_data.set( 'axial_depth', 0 );
@@ -60872,43 +60865,44 @@ class threejs_scene_THREEBRAIN_CANVAS {
 			zoom_in.style.top = '23px';
 			zoom_in.innerText = '+';
 			div.appendChild( zoom_in );
-			zoom_in.addEventListener('click', (e) => {
+
+			this.bind( `${nm}_zoomin_click`, 'click', (e) => {
 			  zoom_level = zoom_level * 1.2;
 			  zoom_level = zoom_level > 10 ? 10 : zoom_level;
 			  set_zoom_level();
-			});
+			}, zoom_in);
 
 			const zoom_out = document.createElement('div');
 			zoom_out.className = 'zoom-tool';
 			zoom_out.style.top = '50px';
 			zoom_out.innerText = '-';
 			div.appendChild( zoom_out );
-			zoom_out.addEventListener('click', (e) => {
+			this.bind( `${nm}_zoomout_click`, 'click', (e) => {
 			  zoom_level = zoom_level / 1.2;
 			  zoom_level = zoom_level < 1.1 ? 1 : zoom_level;
 			  set_zoom_level();
-			});
+			}, zoom_out);
 
 			const toggle_pan = document.createElement('div');
 			toggle_pan.className = 'zoom-tool';
 			toggle_pan.style.top = '77px';
 			toggle_pan.innerText = 'P';
 			div.appendChild( toggle_pan );
-			toggle_pan.addEventListener('click', (e) => {
+			this.bind( `${nm}_toggle_pan_click`, 'click', (e) => {
 			  toggle_pan.classList.toggle('pan-active');
 			  toggle_pan_canvas( toggle_pan.classList.contains('pan-active') ? 'pan' : 'select' );
-			});
+			}, toggle_pan);
 
 			const zoom_reset = document.createElement('div');
 			zoom_reset.className = 'zoom-tool';
 			zoom_reset.style.top = '104px';
 			zoom_reset.innerText = '0';
 			div.appendChild( zoom_reset );
-			zoom_reset.addEventListener('click', (e) => {
+			this.bind( `${nm}_zoom_reset_click`, 'click', (e) => {
 			  cvs.style.top = '0';
         cvs.style.left = '0';
 			  set_zoom_level( 1 );
-			});
+			}, zoom_reset);
 
 
 			// Add cameras
@@ -61049,7 +61043,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       toggle_pan_canvas( 'select' );
 
       // Make cvs scrollable, but change slices
-      cvs.addEventListener("mousewheel", (evt) => {
+      this.bind( `${nm}_cvs_mousewheel`, 'mousewheel', (evt) => {
         evt.preventDefault();
         if( evt.altKey ){
           if( evt.deltaY > 0 ){
@@ -61066,7 +61060,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
           this.state_data.get( 'axial_depth' ),
           this.state_data.get( 'sagittal_depth' )
         );
-      });
+      }, cvs);
 
       // Make resizable, keep current width and height
       make_resizable( div, true );
@@ -61082,11 +61076,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
         }
 
       };
-      div_header.addEventListener("dblclick", (evt) => {
+      this.bind( `${nm}_div_header_dblclick`, 'dblclick', (evt) => {
         reset();
         // Resize side canvas
         // this.handle_resize( undefined, undefined );
-      });
+      }, div_header);
 
 
       this.side_canvas[ nm ] = {
@@ -61125,7 +61119,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.control_center = [0, 0, 0];
 
     // set control listeners
-    this.controls.addEventListener('start', (v) => {
+    this.bind( 'controls_start', 'start', (v) => {
 
       if(this.render_flag < 0 ){
         // adjust controls
@@ -61134,13 +61128,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       // normal controls, can be interrupted
       this.start_animation(1);
-    });
+    }, this.controls );
 
-    this.controls.addEventListener('end', (v) => {
+    this.bind( 'controls_end', 'end', (v) => {
       // normal pause, can be overridden
       this.pause_animation(1);
-
-    });
+    }, this.controls );
 
     // Follower that fixed at bottom-left
     this.compass = new compass_Compass( this.main_camera, this.controls );
@@ -61214,6 +61207,33 @@ class threejs_scene_THREEBRAIN_CANVAS {
     }
   }
 
+  bind( name, evtstr, fun, target, options = false ){
+    const _target = target || this.main_canvas;
+
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      _f();
+    }
+    this._dispose_functions.set( name, () => {
+      console.debug('Calling dispose function ' + name);
+      try {
+        _target.removeEventListener( evtstr , fun );
+      } catch (e) {
+        console.warn('Unable to dispose ' + name);
+      }
+    });
+
+    console.debug(`Registering event ${evtstr} (${name})`);
+    _target.addEventListener( evtstr , fun, options );
+  }
+
+  dispose_eventlisters(){
+    this._dispose_functions.forEach( (_f) => {
+      _f();
+    });
+    this._dispose_functions.clear();
+  }
+
   get_main_camera_params(){
     return({
       'target' : this.main_camera.localToWorld(new threeplugins_THREE.Vector3(
@@ -61272,10 +61292,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
     // this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
-    this.main_canvas.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    this.main_canvas.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
+			  this.listen_keyboard = true;
+			}, this.main_canvas);
+		this.bind( 'main_canvas_mouseleave', 'mouseleave', (e) => {
+			  this.listen_keyboard = false;
+			}, this.main_canvas);
 
-    this.main_canvas.addEventListener( 'dblclick', (event) => { // Use => to create flexible access to this
+		this.bind( 'main_canvas_dblclick', 'dblclick', (event) => { // Use => to create flexible access to this
       if(this.mouse_event !== undefined && this.mouse_event.level > 2){
         return(null);
       }
@@ -61286,9 +61310,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
         'level' : 2
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'click', (event) => { // Use => to create flexible access to this
+    this.bind( 'main_canvas_click', 'click', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 1){
         return(null);
       }
@@ -61300,9 +61324,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
         'level' : 1
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'contextmenu', (event) => { // Use => to create flexible access to this
+    this.bind( 'main_canvas_contextmenu', 'contextmenu', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 1){
         return(null);
       }
@@ -61314,9 +61338,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
         'level' : 1
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'mousemove', (event) => {
+    this.bind( 'main_canvas_mousemove', 'mousemove', (event) => {
       if(this.mouse_event !== undefined && this.mouse_event.level > 0){
         return(null);
       }
@@ -61327,10 +61351,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
         'level' : 0
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'mousedown', (event) => {
-
+    this.bind( 'main_canvas_mousedown', 'mousedown', (event) => {
       this.mouse_event = {
         'action' : 'mousedown',
         'event' : event,
@@ -61338,9 +61361,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
         'level' : 3
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    this.main_canvas.addEventListener( 'mouseup', (event) => {
+    this.bind( 'main_canvas_mouseup', 'mouseup', (event) => {
       this.mouse_event = {
         'action' : 'mouseup',
         'event' : event,
@@ -61348,9 +61371,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
         'level' : 0
       };
 
-    }, false );
+    }, this.main_canvas, false );
 
-    window.addEventListener( 'keydown', (event) => {
+    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
       if( this.listen_keyboard ){
         // event.preventDefault();
         this.keyboard_event = {
@@ -61361,7 +61384,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
         };
       }
 
-    }, {passive: true});
+    }, this.main_canvas, {passive: true} );
+
 
     this.add_mouse_callback(
       (evt) => {
@@ -61741,7 +61765,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
   add_colormap( name, value_type, value_names, value_range, time_range,
                 color_keys, color_vals, n_levels ){
 
-    const color_name = name + '--'  + this.el.id;
+    const color_name = name + '--'  + this.container_id;
 
     // Step 1: register to THREE.ColorMapKeywords
     if(threeplugins_THREE.ColorMapKeywords[color_name] === undefined){
@@ -61835,7 +61859,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   handle_resize(width, height, lazy = false, center_camera = false){
 
-
+    if( this._disposed ) { return; }
     if(width === undefined){
       width = this.client_width;
       height = this.client_height;
@@ -62535,6 +62559,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
   // Only use 0 or 1
   animate(){
 
+    if( this._disposed ){ return; }
+
     requestAnimationFrame( this.animate.bind(this) );
 
     // If this.el is hidden, do not render
@@ -62614,40 +62640,122 @@ class threejs_scene_THREEBRAIN_CANVAS {
 	  this.handle_resize();
 	}
 
+  remove_object( obj, resursive = true, dispose = true, depth = 100 ){
+    if( !obj && depth < 0 ){ return; }
+    if( resursive ){
+      if( Array.isArray( obj.children ) ){
+        for( let ii = obj.children.length - 1; ii >= 0; ii = Math.min(ii-1, obj.children.length) ){
+          if( ii < obj.children.length ){
+            this.remove_object( obj.children[ ii ], resursive, dispose, depth - 1 );
+          }
+        }
+      }
+    }
+    if( obj.parent ){
+      console.debug( 'removing object - ' + (obj.name || obj.type) );
+      obj.parent.remove( obj );
+    }
 
+    if( dispose ){
+      this.dispose_object( obj );
+    }
+  }
+  dispose_object( obj, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    const obj_name = obj.name || obj.type || 'unknown';
+    if( !quiet ){
+      console.debug('Disposing - ' + obj_name);
+    }
+    if( obj.userData && typeof obj.userData.dispose === 'function' ){
+      this._try_dispose( obj.userData, obj.name, quiet );
+    }else{
+      // Not implemented, try to guess dispose methods
+      this._try_dispose( obj.material, obj_name + '-material', quiet );
+      this._try_dispose( obj.geometry, obj_name + '-geometry', quiet );
+      this._try_dispose( obj, obj_name, quiet );
+    }
+  }
+
+  _try_dispose( obj, obj_name = undefined, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    if( typeof obj.dispose === 'function' ){
+      try {
+        obj.dispose();
+      } catch(e) {
+        if( !quiet ){
+          console.warn( 'Failed to dispose ' + (obj_name || obj.name || 'unknown') );
+        }
+      }
+    }
+  }
+
+  dispose(){
+    // Remove all objects, listeners, and dispose all
+    this._disposed = true;
+    this.clock.stop();
+
+    // Remove custom listeners
+    this.dispose_eventlisters();
+
+    // Remove customized objects
+    this.clear_all();
+
+    // Remove the rest objects in the scene
+    this.remove_object( this.scene );
+
+    // dispose scene
+    this.scene.dispose();
+    this.scene = null;
+
+    // Remove el
+    this.el.innerHTML = '';
+
+    // How to dispose renderers? Not sure
+    this.domContext = null;
+    this.main_renderer.dispose();
+    this.side_renderer.dispose();
+
+  }
 
   // Function to clear all meshes
   clear_all(){
-    this.mesh.forEach((m) => {
-      m.parent.remove( m );
-      // this.scene.remove( m );
-    });
-    this.group.forEach((g) => {
-      // this.scene.remove( g );
-      g.parent.remove( g );
-    });
-    this.mesh.clear();
-    this.group.clear();
+    // Stop showing information of any selected objects
+    this.object_chosen=undefined;
     this.clickable.clear();
+
     this.subject_codes.length = 0;
     this.electrodes.clear();
     this.volumes.clear();
     this.ct_scan.clear();
     this.surfaces.clear();
+
     this.state_data.clear();
     this.shared_data.clear();
     this.color_maps.clear();
+    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+
+    console.log('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
     this.animation_mixers.clear();
-    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+
+    this.group.forEach((g) => {
+      // g.parent.remove( g );
+      this.remove_object( g );
+    });
+    this.mesh.forEach((m) => {
+      this.remove_object( m );
+      // m.parent.remove( m );
+      // this.dispose_object(m);
+      // this.scene.remove( m );
+    });
+    this.mesh.clear();
+    this.group.clear();
 
     // set default values
     this.state_data.set( 'coronal_depth', 0 );
     this.state_data.set( 'axial_depth', 0 );
     this.state_data.set( 'sagittal_depth', 0 );
 
-    // Stop showing information of any selected objects
-    this.object_chosen=undefined;
   }
 
   // To be implemented (abstract methods)
@@ -63939,7 +64047,8 @@ class src_BrainCanvas{
     // --------------------- Assign class attribute ----------------------
     this.shiny_mode = shiny_mode;
     this.DEBUG = DEBUG;
-    this.outputId = this.el.getAttribute('id');
+    this.outputId = this.el.getAttribute( 'data-target' );
+    // this.outputId = this.el.getAttribute('id');
     this.shiny = new shiny_tools_THREE_BRAIN_SHINY( this.outputId, this.shiny_mode );
     this.has_webgl = false;
 
@@ -64300,6 +64409,11 @@ class src_BrainCanvas{
       }
     });
 
+    if( this.gui ){
+      try {
+        this.gui.dispose();
+      } catch (e) {}
+    }
     let gui = this._register_gui_control();
     this.gui = gui;
     this.shiny.register_gui( gui );
