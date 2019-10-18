@@ -1,4 +1,12 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: R
-cache: packages
+warnings_are_errors: true
+cache:
+  directories:
+    - $TRAVIS_BUILD_DIR/packrat/src
+    - $TRAVIS_BUILD_DIR/packrat/lib
+  packages: true
+r:
+  - release
+  - devel
