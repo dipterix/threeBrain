@@ -6,7 +6,7 @@ Version 0.1.4 (current version)
 
 Self check: 0 errors, 0 warnings, 1 note
 
-The URLs are currently unavailable. The target server is temporary down. Please ignore this warning and I'll check the validity next time. If the problem persists or they change the website, I'll update it. Thanks.
+The URLs are currently unavailable. The target server is temporary down these days. Please ignore this warning and I'll check the validity next time. If the problem is still there or they have change the website, I'll update it. Thanks.
 
 ```
 Found the following (possibly) invalid URLs:
