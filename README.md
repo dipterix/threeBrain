@@ -1,5 +1,7 @@
 # [threeBrain - HTML, WebGL based 3D Viewer](https://dipterix.github.io/threeBrain/index.html)
 
+[![Travis build status](https://travis-ci.org/dipterix/threeBrain.svg?branch=master)](https://travis-ci.org/dipterix/threeBrain)
+
 <img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />
 
 A live [demo]() is under construction!
