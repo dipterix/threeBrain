@@ -29,13 +29,13 @@ By default width=`100\%`, and height varies.}
 
 \item{side_shift}{integer of length two, side panel shift in pixels (`CSS style`: top, left)}
 
-\item{side_display}{logical, show/hide side panels at begining}
+\item{side_display}{logical, show/hide side panels at beginning}
 
 \item{control_panel}{logical, enable control panels for the widget}
 
 \item{control_presets}{characters, presets to be shown in control panels}
 
-\item{control_display}{logical, whether to expand/collapse control UI at the begining}
+\item{control_display}{logical, whether to expand/collapse control UI at the beginning}
 
 \item{camera_center}{numerical, length of three, XYZ position where camera should focus at}
 

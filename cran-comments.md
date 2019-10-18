@@ -1,8 +1,35 @@
 # Update logs (for R-cran only)
 
+## 2019-10-18
+
+Version 0.1.4 (current version)
+
+Self check: 0 errors, 0 warnings, 1 note
+
+The URLs are currently unavailable. The target server is temporary down. Please ignore this warning and I'll check the validity next time. If the problem persists or they change the website, I'll update it. Thanks.
+
+```
+Found the following (possibly) invalid URLs:
+  URL: https://surfer.nmr.mgh.harvard.edu/fswiki/CoordinateSystems
+    From: man/freesurfer_brain.Rd
+    Status: Error
+    Message: libcurl error code 35:
+      	Unknown SSL protocol error in connection to surfer.nmr.mgh.harvard.edu:443
+  URL: https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+    From: man/read_fs_m3z.Rd
+    Status: Error
+    Message: libcurl error code 35:
+      	Unknown SSL protocol error in connection to surfer.nmr.mgh.harvard.edu:443
+  URL: https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all
+    From: man/freesurfer_brain.Rd
+    Status: Error
+    Message: libcurl error code 35:
+      	Unknown SSL protocol error in connection to surfer.nmr.mgh.harvard.edu:443
+```
+
 ## 2019-09-10
 
-Version 0.1.3 (current version)
+**Version 0.1.3 (passed)**
 
 ## 2019-06-27
 

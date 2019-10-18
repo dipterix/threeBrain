@@ -61,7 +61,7 @@ at template brain are the mapped electrode coordinates.
 If standard 141 brain is missing, or the electrode type is `stereo EEG`, then
 the second option is volume mapping. The idea is to map electrodes to `MNI305`
 brain. The details can be found at \url{https://surfer.nmr.mgh.harvard.edu/fswiki/CoordinateSystems}.
-To perform volume mapping, we need `FreeSurfer` folder `mri/tranforms`.
+To perform volume mapping, we need `FreeSurfer` folder `mri/transforms`.
 Currently, only linear `Talairach` transform matrix is supported (located at
 `talairach.xfm`).
 

@@ -5,7 +5,7 @@ threeBrain 0.1.4
 
 * Implemented a new mesh type - volume rendering using ray marching
 * Added alternative methods to read `.nii` files, `nibabel` is now optional
-* Customized color palettes and value range for better visualizations with ourliers
+* Customized color palettes and value range for better visualizations with outliers
 * Only requires `T1.mgz` or `brainmask` of `brain.finalsurf` is not found. This allows users only run `FreeSurfer` to the first stage, which only takes around 8 to 10 minutes instead of 6 hours.
 * Fully compatible with `htmlwidgets` in `shiny` mode. When calling `threejsBrainOutput` under `shiny::renderUI`, the `DOM` element might get reset by `shiny`, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn't reset correctly. A cache is created and now is reusing the canvas.
 

@@ -11,10 +11,10 @@
 #' @param side_zoom numerical, if side camera is enabled, zoom-in level, from 1 to 5
 #' @param side_width positive integer, side panel size in pixels
 #' @param side_shift integer of length two, side panel shift in pixels (`CSS style`: top, left)
-#' @param side_display logical, show/hide side panels at begining
+#' @param side_display logical, show/hide side panels at beginning
 #' @param control_panel logical, enable control panels for the widget
 #' @param control_presets characters, presets to be shown in control panels
-#' @param control_display logical, whether to expand/collapse control UI at the begining
+#' @param control_display logical, whether to expand/collapse control UI at the beginning
 #' @param camera_center numerical, length of three, XYZ position where camera should focus at
 #' @param camera_pos XYZ position of camera itself, default (0, 0, 500)
 #' @param start_zoom numerical, positive number indicating camera zoom level
