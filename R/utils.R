@@ -71,10 +71,39 @@ filename <- function(path){
 }
 
 
-json_cache <- function(path, data, recache=FALSE, ...){
+json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header = NULL, ...){
+  digest_path = paste0(path, '.digest')
+
+  if( digest ){
+    digest_content = as.list(digest_header)
+    digest_content$digest = digest::digest(data)
+    digest_content$header_digest = digest::digest(digest_content)
+
+  }
+  cached_digest = list()
+
   if(recache){
     cat2('Re-cache...')
   }
+
+  if(!recache && file.exists(path) && digest){
+    # Check digest
+    if(!file.exists(digest_path)){
+      recache = TRUE
+    }else{
+      recache = tryCatch({
+        cached_digest = from_json(digest_path)
+        !isTRUE(cached_digest$digest == digest_content$digest)
+      }, error = function(e){
+        TRUE
+      })
+    }
+    if( recache ){
+      cat2('Digest not match, re-cache...')
+    }
+  }
+
+
 
   is_new_cache = FALSE
 
@@ -88,6 +117,18 @@ json_cache <- function(path, data, recache=FALSE, ...){
 
     writeLines(s, path)
     is_new_cache = TRUE
+
+    if( digest ){
+      # also check digest_content is changed?
+      rewrite_digest = tryCatch({
+        !isTRUE(cached_digest$header_digest == digest_content$header_digest)
+      }, error = function(e){
+        TRUE
+      })
+      if( rewrite_digest ){
+        to_json(digest_content, to_file = digest_path)
+      }
+    }
   }
 
   list(
@@ -484,6 +525,89 @@ safe_write_csv <- function(data, file, ..., quiet = F){
 }
 
 
+
+read_fs_labels <- function(path){
+  # path = '~/rave_data/data_dir/demo/YAB/fs/label/lh.aparc.annot'
+
+  con = file(path, 'rb')
+  on.exit({ close(con) })
+
+  vtxct = readBin(con, 'integer', 1, size = 4, endian = 'big'); vtxct
+
+  # (B * 256^2) + (G * 256) + (R)
+  vno = readBin(con, 'integer', vtxct * 2, size = 4, endian = 'big'); vno
+  vno = matrix(vno, ncol = 2, byrow = TRUE)
+  vno = as.data.frame(vno, stringsAsFactors=FALSE); names(vno) = c('Vertex', 'Label')
+
+
+  tag = readBin(con, 'integer', 1, size = 4, endian = 'big'); tag
+  ctabversion = readBin(con, 'integer', 1, size = 4, endian = 'big'); ctabversion
+  maxstruc = readBin(con, 'integer', 1, size = 4, endian = 'big'); maxstruc
+  len = readBin(con, 'integer', 1, size = 4, endian = 'big'); len
+  fname = readBin(con, 'character', n = 1, size = len, endian = 'big'); fname
+  num_entries = readBin(con, 'integer', n = 1, size = 4, endian = 'big'); num_entries
+
+  entries = list(
+    list(
+      label = 0,
+      name = 'unknown',
+      rgba = c(25,5,25,255),
+      color = "#190519",
+      color_label = 1639705
+    )
+  )
+
+  for( ii in seq_len(num_entries) ){
+    struct_label = readBin(con, 'integer', 1, size = 4, endian = 'big'); struct_label
+    len = readBin(con, 'integer', 1, size = 4, endian = 'big'); len
+    struct_name = readBin(con, 'character', n = 1, size = len, endian = 'big'); struct_name
+    struct_rgba = readBin(con, 'integer', 4, size = 4, endian = 'big'); struct_rgba
+    struct_rgba[4] = 255 - struct_rgba[4]
+    entries[[ii]] = list(
+      label = struct_label,
+      name = struct_name,
+      rgba = struct_rgba,
+      color = grDevices::rgb(struct_rgba[1], struct_rgba[2], struct_rgba[3], maxColorValue = 255),
+      color_label = sum(struct_rgba * c(1, 256, 256^2, 0))
+    )
+  }
+
+
+  ctab = do.call(rbind, lapply(entries, function(x){
+    data.frame(x[c('label', 'name', 'color_label', 'color')], stringsAsFactors = FALSE)
+  }))
+
+  tmp = merge(vno, ctab, by.x = 'Label', by.y = 'color_label', all.x = TRUE)
+
+  # Check if the first label is unknown
+  if( entries[[1]]$name == 'unknown' ){
+    sel = is.na(tmp$name)
+    tmp$label[sel] = 0
+    tmp$name[sel] = 'unknown'
+    tmp$Label[sel] = entries[[1]]$color_label
+  }
+
+  tmp$R = tmp$Label %% 256
+  tmp$G = ((tmp$Label - tmp$R)/256) %% 256
+  tmp$B = ((tmp$Label - tmp$R - tmp$G * 256)/256^2) %% 256
+
+  names(tmp) = c('Collabel', 'Vertex', 'AnnotIdx', 'Name', 'hex', 'R', 'G', 'B')
+  tmp = tmp[order(tmp$Vertex), ]
+
+
+  list(
+    vertex_count = vtxct,
+    tag = tag,
+    colortab_version = ctabversion,
+    n_structure = num_entries,
+    maxstruc = maxstruc,
+    ctab_path = fname,
+    entries = entries,
+    data = tmp
+  )
+
+
+}
 
 
 

@@ -182,7 +182,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
       geom_brain_t1 = DataCubeGeom$new(
         name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
         dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
-        position = c(0,0,0), cache_file = cache_volume)
+        position = c(0,0,0), cache_file = cache_volume, digest = FALSE)
     }else{
       unlink(cache_volume)
     }
@@ -243,7 +243,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
         name = sprintf('ct.aligned.t1 (%s)', subject_name),
         value = array(NA, dim = ct_shape), dim = ct_shape,
         half_size = ct_shape / 2, group = group_ct, position = c(0,0,0),
-        cache_file = cache_ct)
+        cache_file = cache_ct, digest = FALSE)
     }else{
       unlink( cache_ct )
     }

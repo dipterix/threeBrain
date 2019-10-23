@@ -10,6 +10,8 @@ KeyFrame <- R6::R6Class(
   public = list(
     name = '',
 
+    cached = FALSE,
+
     # This keyframe controls material color
     target = '.material.color',
 
@@ -48,8 +50,22 @@ KeyFrame <- R6::R6Class(
         time = private$.time,
         value = private$.values,
         data_type = private$.dtype,
-        target = self$target
+        target = self$target,
+        cached = self$cached
       )
+    },
+
+    use_cache = function(path, name){
+      if(self$cached){ return() }
+      self$cached = TRUE
+
+      json_cache(path = path, data = structure(list(self$to_list()), names = name))
+      if(self$is_continuous){
+        private$.values = range(private$.values)
+      }else{
+        private$.values = unique(private$.values)
+      }
+
     }
   ),
   active = list(
@@ -61,6 +77,53 @@ KeyFrame <- R6::R6Class(
     value_names = function(){
       if( !self$is_continuous ){ levels(private$.values) }else{ NULL }
     }
+  )
+)
+
+KeyFrame2 <- R6::R6Class(
+  inherit = KeyFrame,
+  classname = 'brain-animation-vertex-color',
+  portable = TRUE,
+  cloneable = TRUE,
+  private = list(
+    .time = NULL,
+    .values = NULL,
+    .dtype = 'continuous'
+  ),
+  public = list(
+
+    # This keyframe controls material color
+    target = '.geometry.attributes.color.array',
+
+    initialize = function(name, time, value, dtype = 'continuous', target = '.material.color', ...){
+      if( dtype == 'continuous' ){
+        private$.dtype = 'continuous'
+        # Please make sure vakue and time are valid, no checks here
+        value = as.numeric(value)
+        # sel = !is.na(value)
+        # time = time[ sel ]
+        # value = value[ sel ]
+      }else{
+        # factor?
+        private$.dtype = 'discrete'
+
+        # If is factor, then do not remake factor as we need to keep the levels
+        if(!is.factor(value)){
+          value = factor(value, ...)
+        }
+      }
+
+      stopifnot2(length(value), msg = 'Value length must be greater than 0')
+      stopifnot2(nrow(value) == length(time), msg = 'nrow(Value), length(time) must equal')
+      stopifnot2(is.numeric(time), msg = 'Time must be numerical')
+
+      self$name = name
+      self$target = target
+
+      private$.time = time
+      private$.values = value
+    }
+
   )
 )
 
@@ -171,3 +234,7 @@ ColorMap <- R6::R6Class(
     }
   )
 )
+
+
+
+

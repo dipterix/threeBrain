@@ -3,17 +3,12 @@
 #' @name FreeGeom
 NULL
 
-
-
-
-
-
-
 #' @export
 FreeGeom <- R6::R6Class(
   classname = 'FreeGeom',
   inherit = AbstractGeom,
   public = list(
+    cache_file = NULL,
 
     type = 'free',
 
@@ -26,11 +21,44 @@ FreeGeom <- R6::R6Class(
     hemisphere = NULL,
     surface_type = NULL,
 
-    set_value = function(...){
-      # ignored
+    set_value = function(value = NULL, time_stamp = 0, name = 'Value',
+                         target = '.geometry.attributes.color.array', ...){
+      stopifnot2(name != '[No Color]', msg = 'name cannot be "[No Color]", it\'s reserved')
+
+      # Check length
+      if(length(value) == 0){
+        # Delete animation keyframe
+        self$keyframes[[name]] = NULL
+        return(invisible())
+      }
+      value = as.vector(value)
+
+      kf = KeyFrame2$new(name = name, value = value, time = time_stamp,
+                        dtype = ifelse( isTRUE(is.numeric(value)), 'continuous', 'discrete'),
+                        target = '.geometry.attributes.color.array', ...)
+
+
+      if(length(self$cache_file)){
+        cf = stringr::str_replace(self$cache_file, '\\.json$', paste0('__', name, '.json'))
+      }
+
+      dname = sprintf('free_vertex_colors_%s_%s', name, self$name)
+      kf$use_cache(path = cf, name = dname)
+
+      re = list(
+        path = cf,
+        absolute_path = normalizePath(cf),
+        file_name = filename(cf),
+        is_new_cache = FALSE,
+        is_cache = TRUE
+      )
+      self$keyframes[[name]] = kf
+      self$group$set_group_data(dname, value = re, is_cached = TRUE)
+
     },
 
-    initialize = function(name, position = c(0,0,0), vertex, face, group, ..., cache_file = NULL){
+    initialize = function(name, position = c(0,0,0), vertex, face, group,
+                          ..., cache_file = NULL){
       # cache_file = '~/rave_data/data_dir/Complete/YAB/rave/viewer/lh_normal.json'
 
 
@@ -40,6 +68,7 @@ FreeGeom <- R6::R6Class(
       self$group = group
 
       if(length(cache_file)){
+        self$cache_file = cache_file
 
         if(missing(vertex) || missing(face)){
           # Use cache file only
@@ -79,10 +108,10 @@ FreeGeom <- R6::R6Class(
 
       }
 
-      self$set_value(
-        value = get2('value', other_args, ifnotfound = NULL),
-        time_stamp = get2('time_stamp', other_args, ifnotfound = NULL)
-      )
+      # self$set_value(
+      #   value = get2('value', other_args, ifnotfound = NULL),
+      #   time_stamp = get2('time_stamp', other_args, ifnotfound = NULL)
+      # )
 
 
 

@@ -54,7 +54,8 @@ BrainSurface <- R6::R6Class(
     },
 
     initialize = function(
-      subject_code, surface_type, mesh_type, left_hemisphere, right_hemisphere, position = NULL
+      subject_code, surface_type, mesh_type, left_hemisphere, right_hemisphere,
+      position = NULL
     ){
 
       # right now only supports std.141 and fs mesh_type

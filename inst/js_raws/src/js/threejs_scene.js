@@ -5,6 +5,7 @@ import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
 import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
 import { CONSTANTS } from './constants.js';
+import { generate_animation_default } from './Math/animations.js';
 import { gen_sphere } from './geometry/sphere.js';
 import { gen_datacube } from './geometry/datacube.js';
 import { gen_datacube2 } from './geometry/datacube2.js';
@@ -1575,6 +1576,19 @@ class THREEBRAIN_CANVAS {
     // double-buffer to make sure depth renderings
     //this.main_renderer.setClearColor( renderer_colors[0] );
     this.main_renderer.clear();
+
+    // Pre render all meshes
+    this.mesh.forEach((m) => {
+      if( typeof m.userData.pre_render === 'function' ){
+        m.userData.pre_render();
+        /*
+        try {
+          m.userData.pre_render();
+        } catch (e) {}
+        */
+      }
+    });
+
     this.main_renderer.render( this.scene, this.main_camera );
 
     if(this.has_side_cameras){
@@ -1676,7 +1690,7 @@ class THREEBRAIN_CANVAS {
 
         const track_type = this.state_data.get("color_map");
 
-        const track_data = this.object_chosen.userData.get_track_data(track_type);
+        const track_data = this.object_chosen.userData.get_track_data( track_type );
 
         if( track_data ){
           const time_stamp = to_array( track_data.time );
@@ -2489,6 +2503,7 @@ class THREEBRAIN_CANVAS {
         m.updateMatrixWorld();
       }
     }
+
   }
 
   _register_datacube( m ){
@@ -2816,7 +2831,8 @@ class THREEBRAIN_CANVAS {
       // value_names: value_names, time_range: time_range
 
       // Obtain mixer, which will be used in multiple places
-      let mixer = this.animation_mixers.get( m.name );
+      // let mixer = this.animation_mixers.get( m.name );
+      let mixer = this.animation_mixers.get( m.name ), keyframe;
 
       // Step 1: Obtain keyframe tracks
       // if animation_name exists, get tracks, otherwise reset to default material
@@ -2830,47 +2846,23 @@ class THREEBRAIN_CANVAS {
         return( null );
 
       }
-      // Generate keyframes
+
+      if( typeof m.userData.generate_animation === 'function'){
+        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, this.animation_mixers);
+      }else{
+        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, this.animation_mixers);
+      }
+      if( !keyframe ){ return; }
+
       const _time_min = cmap.time_range[0],
             _time_max = cmap.time_range[1];
 
-      // 1. timeStamps, TODO: get from settings the time range
-      const colors = [], time_stamp = [];
-      to_array( track_data.time ).forEach((v) => {
-        time_stamp.push( v - _time_min );
-      });
-      if( track_data.data_type === 'continuous' ){
-        to_array( track_data.value ).forEach((v) => {
-          let c = cmap.lut.getColor(v);
-          colors.push( c.r, c.g, c.b );
-        });
-      }else{
-        // discrete
-        const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
-        to_array( track_data.value ).forEach((v) => {
-          let c = cmap.lut.getColor(mapping.get( v ));
-          if( !c ) {
-            console.log( v );
-            console.log( mapping.get( v ) );
-          }
-          colors.push( c.r, c.g, c.b );
-        });
-      }
+      const clip_name = 'action_' + m.name + '__' + track_data.name;
+      let clip = this.animation_clips.get( clip_name ), new_clip = false;
 
-
-      const keyframe = new THREE.ColorKeyframeTrack(
-        track_data.target || '.material.color',
-        time_stamp, colors, THREE.InterpolateDiscrete
-      );
-
-
-      // Step 2: Generate animation clip
-      const clip_nm = 'action_' + m.name + '__' + animation_name;
-      let clip = this.animation_clips.get( clip_nm ),
-          new_clip = false;
       if( !clip ){
-        clip = new THREE.AnimationClip( clip_nm, _time_max - _time_min, [keyframe] );
-        this.animation_clips.set( clip_nm, clip );
+        clip = new THREE.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
+        this.animation_clips.set( clip_name, clip );
         new_clip = true;
       }else{
         clip.duration = _time_max - _time_min;
@@ -2878,8 +2870,6 @@ class THREEBRAIN_CANVAS {
         clip.tracks[0].times = keyframe.times;
         clip.tracks[0].values = keyframe.values;
       }
-      // Calculate clip duration
-      // clip.resetDuration();
 
       // Step 3: create mixer
       if( mixer ){
@@ -2889,10 +2879,10 @@ class THREEBRAIN_CANVAS {
       this.animation_mixers.set( m.name, mixer );
       mixer.stopAllAction();
 
-
       // Step 4: combine mixer with clip
       const action = mixer.clipAction( clip );
       action.play();
+
 
     });
 

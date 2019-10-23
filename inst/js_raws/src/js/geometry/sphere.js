@@ -101,6 +101,12 @@ function gen_sphere(g, canvas){
 
   };
 
+  /* Add point light
+  const point_light = new THREE.PointLight(0x000000, 1, 6, 1);
+  point_light.visible = false;
+  mesh.userData.point_light = point_light;
+  mesh.add(point_light);
+  */
   mesh.userData.dispose = () => {
     mesh.material.dispose();
     mesh.geometry.dispose();

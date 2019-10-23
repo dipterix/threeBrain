@@ -16,7 +16,7 @@ DataCubeGeom <- R6::R6Class(
                             group = GeomGroup$new(name = 'default'),
                             position = c(0,0,0),
                             cache_file = NULL,
-                            layer = 13, ...){
+                            layer = 13, digest = TRUE, ...){
         super$initialize(name, position = position, layer = layer, ...)
         self$group = group
 
@@ -53,7 +53,7 @@ DataCubeGeom <- R6::R6Class(
               ), name)
             )
 
-            re = json_cache(path = cache_file, data = data)
+            re = json_cache(path = cache_file, data = data, digest = digest)
           }
 
           group$set_group_data(sprintf('datacube_value_%s', name), value = re, is_cached = TRUE)

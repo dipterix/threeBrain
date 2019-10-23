@@ -85,6 +85,7 @@ class THREEBRAIN_PRESETS{
         // this.el_text.style.color=inversedColor;
         // this.el_text2.style.color=inversedColor;
         // this.el.style.backgroundColor = v;
+        this.canvas.el.style.backgroundColor = v;
 
         // force re-render
         this._update_canvas(0);

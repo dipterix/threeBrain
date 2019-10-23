@@ -57640,6 +57640,12 @@ function gen_sphere(g, canvas){
 
   };
 
+  /* Add point light
+  const point_light = new THREE.PointLight(0x000000, 1, 6, 1);
+  point_light.visible = false;
+  mesh.userData.point_light = point_light;
+  mesh.add(point_light);
+  */
   mesh.userData.dispose = () => {
     mesh.material.dispose();
     mesh.geometry.dispose();
@@ -58121,6 +58127,7 @@ class data_controls_THREEBRAIN_PRESETS{
         // this.el_text.style.color=inversedColor;
         // this.el_text2.style.color=inversedColor;
         // this.el.style.backgroundColor = v;
+        this.canvas.el.style.backgroundColor = v;
 
         // force re-render
         this._update_canvas(0);
@@ -60130,6 +60137,48 @@ function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_
 
 
 
+// CONCATENATED MODULE: ./src/js/Math/animations.js
+
+
+
+function generate_animation_default(m, track_data, cmap, animation_clips, animation_mixers) {
+
+    // Generate keyframes
+    const _time_min = cmap.time_range[0],
+          _time_max = cmap.time_range[1];
+
+    // 1. timeStamps, TODO: get from settings the time range
+    const colors = [], time_stamp = [];
+    to_array( track_data.time ).forEach((v) => {
+      time_stamp.push( v - _time_min );
+    });
+    if( track_data.data_type === 'continuous' ){
+      to_array( track_data.value ).forEach((v) => {
+        let c = cmap.lut.getColor(v);
+        colors.push( c.r, c.g, c.b );
+      });
+    }else{
+      // discrete
+      const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
+      to_array( track_data.value ).forEach((v) => {
+        let c = cmap.lut.getColor(mapping.get( v ));
+        if( !c ) {
+          console.log( v );
+          console.log( mapping.get( v ) );
+        }
+        colors.push( c.r, c.g, c.b );
+      });
+    }
+    const keyframe = new threeplugins_THREE.ColorKeyframeTrack(
+      track_data.target || '.material.color',
+      time_stamp, colors, threeplugins_THREE.InterpolateDiscrete
+    );
+
+    return(keyframe);
+}
+
+
+
 // CONCATENATED MODULE: ./src/js/geometry/datacube.js
 
 
@@ -60403,18 +60452,21 @@ function gen_datacube2(g, canvas){
 // CONCATENATED MODULE: ./src/js/geometry/free.js
 
 
+
 function gen_free(g, canvas){
   const gb = new threeplugins_THREE.BufferGeometry(),
       vertices = canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name),
       faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name);
 
   const vertex_positions = [],
-      face_orders = [];
+        vertex_colors = [],
+        face_orders = [];
       //normals = [];
 
   vertices.forEach((v) => {
     vertex_positions.push(v[0], v[1], v[2]);
     // normals.push(0,0,1);
+    vertex_colors.push( 0, 0, 0);
   });
 
   faces.forEach((v) => {
@@ -60423,6 +60475,7 @@ function gen_free(g, canvas){
 
   gb.setIndex( face_orders );
   gb.addAttribute( 'position', new threeplugins_THREE.Float32BufferAttribute( vertex_positions, 3 ) );
+  gb.addAttribute( 'color', new threeplugins_THREE.Float32BufferAttribute( vertex_colors, 3 ) );
   // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
   gb.computeVertexNormals();
   gb.computeBoundingBox();
@@ -60434,7 +60487,7 @@ function gen_free(g, canvas){
   gb.name = 'geom_free_' + g.name;
 
   // https://github.com/mrdoob/three.js/issues/3490
-  let material = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : true });
+  let material = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : true, side: threeplugins_THREE.DoubleSide });
 
   let mesh = new threeplugins_THREE.Mesh(gb, material);
   mesh.name = 'mesh_free_' + g.name;
@@ -60448,6 +60501,128 @@ function gen_free(g, canvas){
     mesh.material.dispose();
     mesh.geometry.dispose();
   };
+
+
+  // animation data
+  mesh.userData.ani_name = 'default';
+  mesh.userData.ani_all_names = Object.keys( g.keyframes );
+
+  mesh.userData.ani_exists = mesh.userData.ani_all_names.length > 0;
+
+  mesh.userData.get_track_data = ( track_name, reset_material ) => {
+    let re, tname = track_name;
+
+    if( mesh.userData.ani_exists ){
+      if( tname === undefined ){ tname = mesh.userData.ani_name; }
+      re = g.keyframes[ tname ];
+    }else{
+      re = g.keyframes[ tname ];
+    }
+    // remember last choice
+    mesh.userData.ani_name = tname;
+
+    if( reset_material !== false ){
+      if( !re ){
+        // track data not found, ignore vertex color
+        mesh.material.vertexColors = threeplugins_THREE.NoColors;
+        mesh.material.needsUpdate=true;
+      }else {
+        mesh.material.vertexColors = threeplugins_THREE.VertexColors;
+        mesh.material.needsUpdate=true;
+      }
+    }
+
+    if( !re ){
+      return;
+    }
+    console.log('Using track name ' + tname);
+
+    if( re.cached ){
+      let value = canvas.get_data('free_vertex_colors_' + re.name + '_'+g.name, g.name, g.group.group_name);
+      if( !value || typeof value !== 'object' || !Array.isArray(value.value) || value.value.length === 0 ){
+        // value should be cached but not found or invalid
+        return;
+      }
+      re.value = value.value;
+      re.cached = false;
+    }
+    return(re);
+
+  };
+
+
+  mesh.userData.generate_animation = (track_data, cmap, animation_clips, animation_mixers) => {
+    console.log('Using customized animation mixer');
+
+    // Generate keyframes
+    const _time_min = cmap.time_range[0],
+          _time_max = cmap.time_range[1];
+    // Prepare color map
+    const color_trans = {};
+    cmap.value_names.map((nm, ii) => {
+      color_trans[ nm ] = cmap.lut.getColor(ii);
+    });
+
+    // 1. timeStamps, TODO: get from settings the time range
+    const values = [], time_stamp = [], cvalues = [];
+    to_array( track_data.time ).forEach((v, ii) => {
+      time_stamp.push( v - _time_min );
+      values.push( ii );
+    });
+
+    const _size = track_data.value.length / time_stamp.length;
+    let _value = [];
+
+    track_data.value.forEach((v, ii) => {
+      let _c = color_trans[ v ] || cmap.lut.getColor(v) || {r:0,g:0,b:0};
+      _value.push( _c.r, _c.g, _c.b );
+      if( (ii+1) % _size === 0 && _value.length > 0 ){
+        cvalues.push( _value );
+        _value = [];
+      }
+    });
+    if( _value.length > 0 ){
+      cvalues.push( _value );
+      _value = [];
+    }
+    track_data.cvalues = cvalues;
+
+    // We cannot morph vertex colors, but can still use the animation
+    // The key is to set mesh.userData.animationIndex to be value index, and
+    mesh.userData.animation_target = track_data.target;
+
+    const keyframe = new threeplugins_THREE.NumberKeyframeTrack(
+      '.userData[animationIndex]',
+      time_stamp, values, threeplugins_THREE.InterpolateDiscrete
+    );
+
+    return( keyframe );
+  };
+
+  mesh.userData.pre_render = () => {
+    // console.log( mesh.userData.animationIndex );
+    // get current index
+    let vidx = mesh.userData.animationIndex;
+    if( typeof vidx !== 'number' ){ return; }
+
+    // get current track_data
+    const track_data = mesh.userData.get_track_data( mesh.userData.ani_name, false );
+    if( !track_data ){ return; }
+
+    vidx = Math.floor( vidx );
+    if( vidx < 0 ){ vidx = 0; }
+    if( vidx >= track_data.cvalues.length ){ vidx = track_data.cvalues.length-1; }
+
+    const cvalue = track_data.cvalues[ vidx ];
+
+    // check? TODO
+    for( let ii=0; ii<cvalue.length; ii++ ){
+      mesh.geometry.attributes.color.array[ ii ] = cvalue[ ii ];
+    }
+    mesh.geometry.attributes.color.needsUpdate=true;
+
+  };
+
   return(mesh);
 
 }
@@ -60524,6 +60699,7 @@ var converter = __webpack_require__(5);
 var downloadjs_download = __webpack_require__(3);
 
 // CONCATENATED MODULE: ./src/js/threejs_scene.js
+
 
 
 
@@ -62101,6 +62277,19 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // double-buffer to make sure depth renderings
     //this.main_renderer.setClearColor( renderer_colors[0] );
     this.main_renderer.clear();
+
+    // Pre render all meshes
+    this.mesh.forEach((m) => {
+      if( typeof m.userData.pre_render === 'function' ){
+        m.userData.pre_render();
+        /*
+        try {
+          m.userData.pre_render();
+        } catch (e) {}
+        */
+      }
+    });
+
     this.main_renderer.render( this.scene, this.main_camera );
 
     if(this.has_side_cameras){
@@ -62202,7 +62391,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
         const track_type = this.state_data.get("color_map");
 
-        const track_data = this.object_chosen.userData.get_track_data(track_type);
+        const track_data = this.object_chosen.userData.get_track_data( track_type );
 
         if( track_data ){
           const time_stamp = to_array( track_data.time );
@@ -63015,6 +63204,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
         m.updateMatrixWorld();
       }
     }
+
   }
 
   _register_datacube( m ){
@@ -63342,7 +63532,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // value_names: value_names, time_range: time_range
 
       // Obtain mixer, which will be used in multiple places
-      let mixer = this.animation_mixers.get( m.name );
+      // let mixer = this.animation_mixers.get( m.name );
+      let mixer = this.animation_mixers.get( m.name ), keyframe;
 
       // Step 1: Obtain keyframe tracks
       // if animation_name exists, get tracks, otherwise reset to default material
@@ -63356,47 +63547,23 @@ class threejs_scene_THREEBRAIN_CANVAS {
         return( null );
 
       }
-      // Generate keyframes
+
+      if( typeof m.userData.generate_animation === 'function'){
+        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, this.animation_mixers);
+      }else{
+        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, this.animation_mixers);
+      }
+      if( !keyframe ){ return; }
+
       const _time_min = cmap.time_range[0],
             _time_max = cmap.time_range[1];
 
-      // 1. timeStamps, TODO: get from settings the time range
-      const colors = [], time_stamp = [];
-      to_array( track_data.time ).forEach((v) => {
-        time_stamp.push( v - _time_min );
-      });
-      if( track_data.data_type === 'continuous' ){
-        to_array( track_data.value ).forEach((v) => {
-          let c = cmap.lut.getColor(v);
-          colors.push( c.r, c.g, c.b );
-        });
-      }else{
-        // discrete
-        const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
-        to_array( track_data.value ).forEach((v) => {
-          let c = cmap.lut.getColor(mapping.get( v ));
-          if( !c ) {
-            console.log( v );
-            console.log( mapping.get( v ) );
-          }
-          colors.push( c.r, c.g, c.b );
-        });
-      }
+      const clip_name = 'action_' + m.name + '__' + track_data.name;
+      let clip = this.animation_clips.get( clip_name ), new_clip = false;
 
-
-      const keyframe = new threeplugins_THREE.ColorKeyframeTrack(
-        track_data.target || '.material.color',
-        time_stamp, colors, threeplugins_THREE.InterpolateDiscrete
-      );
-
-
-      // Step 2: Generate animation clip
-      const clip_nm = 'action_' + m.name + '__' + animation_name;
-      let clip = this.animation_clips.get( clip_nm ),
-          new_clip = false;
       if( !clip ){
-        clip = new threeplugins_THREE.AnimationClip( clip_nm, _time_max - _time_min, [keyframe] );
-        this.animation_clips.set( clip_nm, clip );
+        clip = new threeplugins_THREE.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
+        this.animation_clips.set( clip_name, clip );
         new_clip = true;
       }else{
         clip.duration = _time_max - _time_min;
@@ -63404,8 +63571,6 @@ class threejs_scene_THREEBRAIN_CANVAS {
         clip.tracks[0].times = keyframe.times;
         clip.tracks[0].values = keyframe.values;
       }
-      // Calculate clip duration
-      // clip.resetDuration();
 
       // Step 3: create mixer
       if( mixer ){
@@ -63415,10 +63580,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.animation_mixers.set( m.name, mixer );
       mixer.stopAllAction();
 
-
       // Step 4: combine mixer with clip
       const action = mixer.clipAction( clip );
       action.play();
+
 
     });
 
