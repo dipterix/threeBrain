@@ -167,7 +167,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 
 
   ##### get volume 256x256x256 ####
-  dir.create(path_cache, recursive = TRUE, showWarnings = FALSE)
+  dir_create(path_cache)
 
   geom_brain_t1 = NULL
 
@@ -455,10 +455,10 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = TRUE
   }
 
   if( pass_test ){
-    dir.create(file.path(path_subject, 'mri', 'transforms'), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(path_subject, 'surf'), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(path_subject, 'SUMA'), showWarnings = FALSE, recursive = TRUE)
-    dir.create(file.path(path_subject, 'RAVE'), showWarnings = FALSE, recursive = TRUE)
+    dir_create(file.path(path_subject, 'mri', 'transforms'))
+    dir_create(file.path(path_subject, 'surf'))
+    dir_create(file.path(path_subject, 'SUMA'))
+    dir_create(file.path(path_subject, 'RAVE'))
     if( return_path ){ return( path_subject ) } else { return(TRUE) }
   }
   if( return_path ){ return( NULL ) } else { return(FALSE) }
@@ -497,7 +497,18 @@ load_surface_asc_gii <- function(file){
     surf = read_gii2(file)
 
   }else{
-    stop('Only support ASCII, Gifti formats. Unknown type')
+    # Use freesurferformats:::read.fs.surface
+    tryCatch({
+      tmp = freesurferformats::read.fs.surface(file)
+      surf = list(
+        header = c(nrow(tmp$vertices), nrow(tmp$faces)),
+        vertices = tmp$vertices[, 1:3],
+        faces = tmp$faces[, 1:3]
+      )
+    }, error = function(e){
+      stop('Unknown type - Only support ASCII, Gifti, or native FS formats (if freesurferformats is installed).')
+    })
+
   }
   return(surf)
 }

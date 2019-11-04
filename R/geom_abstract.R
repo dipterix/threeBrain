@@ -71,7 +71,7 @@ GeomGroup <- R6::R6Class(
       }
 
       if(cache_if_not_exists && !is_cached){
-        dir.create(self$cache_path, showWarnings = FALSE, recursive = TRUE)
+        dir_create(self$cache_path)
         # cache file path
         path = file.path(self$cache_path, stringr::str_replace_all(name, '[^\\w.]', '_'))
         if(!file.exists(path)){

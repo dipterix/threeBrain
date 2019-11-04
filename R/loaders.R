@@ -27,7 +27,7 @@ download_template_subject <- function(
   url = 'https://rave-data.s3.amazonaws.com/sample-data/N27_fs.zip',
   template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
 ){
-  dir.create(template_dir, showWarnings = F, recursive = T)
+  dir_create(template_dir)
   dir = normalizePath(template_dir)
 
   options('threeBrain.template_dir' = dir)

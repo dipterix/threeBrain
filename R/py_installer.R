@@ -86,7 +86,7 @@ ravepy_register <- function(){
   startup::install(overwrite = TRUE, backup = TRUE)
   # Find .Rprofile.d
   profile_d = startup::find_rprofile_d()
-  dir.create(profile_d, recursive = TRUE, showWarnings = FALSE)
+  dir_create(profile_d)
   p = normalizePath(file.path(profile_d, 'rave_python.R'), mustWork = FALSE)
 
   if(file.exists(p)){

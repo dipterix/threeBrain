@@ -1,3 +1,11 @@
+dir_create <- function(path, showWarnings = FALSE, recursive = TRUE, ...){
+  if(!dir.exists(path)){
+    dir.create(path = path, showWarnings = showWarnings, recursive = recursive, ...)
+  }
+  normalizePath(path)
+}
+
+
 get2 <- function(x, from, ifnotfound = NULL, ...){
   if(x %in% names(from)){
     return(from[[x]])
@@ -113,7 +121,7 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
     s = to_json(data, ...)
 
     dir = dirname(path)
-    dir.create(dir, showWarnings = F, recursive = T)
+    dir_create(dir)
 
     writeLines(s, path)
     is_new_cache = TRUE
@@ -147,7 +155,7 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
 to_json <- function(x, dataframe = 'rows', matrix = 'rowmajor', null = 'null', na = 'null', ..., to_file = NULL){
   s = jsonlite::toJSON(x, dataframe = dataframe, matrix = matrix, null = null, na = na, ...)
   if(length(to_file) == 1){
-    dir.create(dirname(to_file), showWarnings = FALSE, recursive = TRUE)
+    dir_create(dirname(to_file))
     writeLines(s, con = to_file)
   }
   s
@@ -445,7 +453,7 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
   if(!dir.exists(from)){
     # from is a file
     if(!dir.exists(dirname(to))){
-      dir.create(dirname(to), showWarnings = show_warnings, recursive = TRUE)
+      dir_create(dirname(to), showWarnings = show_warnings)
     }
 
     file.copy(from = from, to = to, overwrite = overwrite, recursive = FALSE,
@@ -459,7 +467,7 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
 
   }else{
     # is a dir, move recursively
-    dir.create(to, showWarnings = show_warnings, recursive = TRUE)
+    dir_create(to, showWarnings = show_warnings)
 
     to = normalizePath(to, mustWork = TRUE)
     if(from == to){
@@ -524,15 +532,19 @@ safe_write_csv <- function(data, file, ..., quiet = F){
   utils::write.csv(data, file, ...)
 }
 
-
-
-read_fs_labels <- function(path){
+#' Read FreeSurfer Annotations
+#' @param path label path
+#' @param vertex_number force to reset vertex number if raw file is incorrect
+read_fs_labels <- function(path, vertex_number){
   # path = '~/rave_data/data_dir/demo/YAB/fs/label/lh.aparc.annot'
 
   con = file(path, 'rb')
   on.exit({ close(con) })
 
   vtxct = readBin(con, 'integer', 1, size = 4, endian = 'big'); vtxct
+  if( !missing(vertex_number) ){
+    vtxct = vertex_number
+  }
 
   # (B * 256^2) + (G * 256) + (R)
   vno = readBin(con, 'integer', vtxct * 2, size = 4, endian = 'big'); vno
@@ -557,20 +569,23 @@ read_fs_labels <- function(path){
     )
   )
 
-  for( ii in seq_len(num_entries) ){
-    struct_label = readBin(con, 'integer', 1, size = 4, endian = 'big'); struct_label
-    len = readBin(con, 'integer', 1, size = 4, endian = 'big'); len
-    struct_name = readBin(con, 'character', n = 1, size = len, endian = 'big'); struct_name
-    struct_rgba = readBin(con, 'integer', 4, size = 4, endian = 'big'); struct_rgba
-    struct_rgba[4] = 255 - struct_rgba[4]
-    entries[[ii]] = list(
-      label = struct_label,
-      name = struct_name,
-      rgba = struct_rgba,
-      color = grDevices::rgb(struct_rgba[1], struct_rgba[2], struct_rgba[3], maxColorValue = 255),
-      color_label = sum(struct_rgba * c(1, 256, 256^2, 0))
-    )
+  if(length(num_entries)){
+    for( ii in seq_len(num_entries) ){
+      struct_label = readBin(con, 'integer', 1, size = 4, endian = 'big'); struct_label
+      len = readBin(con, 'integer', 1, size = 4, endian = 'big'); len
+      struct_name = readBin(con, 'character', n = 1, size = len, endian = 'big'); struct_name
+      struct_rgba = readBin(con, 'integer', 4, size = 4, endian = 'big'); struct_rgba
+      struct_rgba[4] = 255 - struct_rgba[4]
+      entries[[ii]] = list(
+        label = struct_label,
+        name = struct_name,
+        rgba = struct_rgba,
+        color = grDevices::rgb(struct_rgba[1], struct_rgba[2], struct_rgba[3], maxColorValue = 255),
+        color_label = sum(struct_rgba * c(1, 256, 256^2, 0))
+      )
+    }
   }
+
 
 
   ctab = do.call(rbind, lapply(entries, function(x){
@@ -630,4 +645,75 @@ fill_blanks <- function(volume, replace = 1, threshold = 0, niter=1){
   volume[(volume <= threshold) & mask] = replace
 
   fill_blanks(volume, replace, threshold, niter-1)
+}
+
+
+#' Function to read digest header
+#' @param file file path to a `JSON` file
+#' @param key character, key to extract
+#' @param if_error value to return if key not found or read error occurs
+#' @param .list alternative list to supply if file is missing
+get_digest_header <- function(file, key, if_error = NULL, .list = NULL){
+  if( !missing(file) ){
+    .list = list()
+    try({
+      .list = from_json(from_file = file)
+    }, silent = TRUE)
+  }
+  .list = as.list(.list)
+
+  if( key %in% names(.list) && !is.null(.list[[key]]) ){
+    re = .list[[key]]
+  }else{
+    re = if_error
+  }
+  re
+
+}
+
+
+digest_file <- function(file){
+  digest::digest(file, file = TRUE)
+}
+
+add_to_digest_file <- function(file, ..., .list = NULL, .append = FALSE){
+  .list = c(.list, list(...))
+  if( !length(.list) ){
+    return()
+  }
+  if( file.exists(file) ){
+    digest = from_json(from_file = file)
+  }else{
+    digest = list()
+  }
+
+  digest$header_digest = NULL
+  for(nm in names(.list)){
+    if(nm != ''){
+      if(.append){
+        digest[[nm]] = c(digest[[nm]], .list[[nm]])
+      }else{
+        digest[[nm]] = .list[[nm]]
+      }
+    }
+  }
+
+  digest$header_digest = digest::digest(digest)
+
+  to_json(digest, to_file = file)
+}
+
+load_first_file <- function(files, fun, ..., if_not_found = NULL){
+  if_not_found = substitute(if_not_found)
+  fe = file.exists(files)
+  if( !any(fe) ){
+    parent_env = parent.frame()
+    re = eval(if_not_found, envir = parent_env)
+    return(re)
+  }
+
+  f = files[fe][[1]]
+
+  fun(f, ...)
+
 }

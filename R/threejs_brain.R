@@ -127,11 +127,11 @@ threejs_brain <- function(
     tmp_dirname = paste(sample(c(letters, LETTERS, 0:9), 10), collapse = '')
   }
   tmp_dir = file.path(tempdir(), 'threebrain_cache', tmp_dirname)
-  dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
+  dir_create(tmp_dir)
 
   lapply(groups, function(g){
     if(length(g$cached_items)){
-      dir.create(file.path(tmp_dir, g$cache_name()), recursive = TRUE, showWarnings = FALSE)
+      dir_create(file.path(tmp_dir, g$cache_name()))
       for(f in g$cached_items){
         re = g$group_data[[f]]
         file.copy(re$absolute_path, to = file.path(tmp_dir, g$cache_name(), re$file_name))
@@ -249,12 +249,12 @@ renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
 #' @param as_zip whether to create zip file "compressed.zip".
 #' @export
 save_brain <- function(widget, directory, filename = 'index.html', assetpath = 'lib/', datapath = 'lib/threebrain_data-0/', title = '3D Viewer', as_zip = FALSE){
-  dir.create(directory, showWarnings = F, recursive = T)
+  dir_create(directory)
   cat2('Generating 3D Viewer...')
 
   # Need to save json data to datapath. Must be a relative path
-  dir.create(file.path(directory, datapath), recursive = TRUE, showWarnings = FALSE)
-  dir.create(file.path(directory, assetpath), recursive = TRUE, showWarnings = FALSE)
+  dir_create(file.path(directory, datapath))
+  dir_create(file.path(directory, assetpath))
   datapath = stringr::str_replace_all(datapath, '[/]{0}$', '/')
   datapath = stringr::str_replace_all(datapath, '[/\\\\]+', '/')
   datapath = stringr::str_replace_all(datapath, '^/', '')
