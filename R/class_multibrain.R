@@ -31,7 +31,8 @@ MultiBrain2 <- R6::R6Class(
     initialize = function(..., .list = NULL,
                           template_surface_types = NULL,
                           template_subject = getOption('threeBrain.template_subject', 'N27'),
-                          template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
+                          template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain'),
+                          use_cache = TRUE, use_141 = TRUE ){
 
 
       l = unlist( c(list(...), .list) )
@@ -49,13 +50,15 @@ MultiBrain2 <- R6::R6Class(
       if( is.null(self$template_object) ){
         self$alter_template( template_subject = template_subject,
                              surface_types = template_surface_types,
-                             template_dir = template_dir )
+                             template_dir = template_dir,
+                             use_cache = use_cache, use_141 = use_141 )
       }
     },
 
     alter_template = function(surface_types = NULL,
                               template_subject = getOption('threeBrain.template_subject', 'N27'),
-                              template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
+                              template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain'),
+                              use_cache = TRUE, use_141 = TRUE){
       # test
       template_path = file.path(template_dir, template_subject)
       stopifnot2(check_freesurfer_path(template_path),
@@ -70,9 +73,9 @@ MultiBrain2 <- R6::R6Class(
         surface_types = unique(c('pial', unlist( surface_types )))
       }
 
-      self$template_object = freesurfer_brain(
+      self$template_object = freesurfer_brain2(
         fs_subject_folder = template_path, subject_name = template_subject,
-        additional_surfaces = surface_types)
+        surface_types = surface_types, use_cache = use_cache, use_141 = use_141)
     },
 
     add_subject = function(x){

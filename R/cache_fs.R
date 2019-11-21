@@ -83,7 +83,10 @@ import_fs_label <- function(
     target = '.userData.animationIndex',
     levels = levels,
     default_palette = palette,
-    threebrain_data_ver = threebrain_data_ver
+    threebrain_data_ver = threebrain_data_ver,
+
+    # Ignore previous saves
+    .append = FALSE
   )
 
 
@@ -99,6 +102,7 @@ import_fs_label <- function(
   names(args) = sprintf('annot_fs_%sh_%s', hemisphere, label_name);
   args$file = file.path(rave_dir, 'common.digest')
   args$subject = subject_name
+  args$.append = FALSE
   do.call('add_to_digest_file', args)
 
   add_to_digest_file(
@@ -192,7 +196,9 @@ import_fs_T1 <- function(subject_name, fs_path, folder = 'mri', cache_dir = 'RAV
     Torig = Torig,
     source_name = t1_name,
     shape = volume_shape,
-    threebrain_data_ver = threebrain_data_ver
+    threebrain_data_ver = threebrain_data_ver,
+
+    .append = FALSE
   )
 
   add_to_digest_file(
@@ -282,7 +288,9 @@ import_fs_surf <- function(subject_name, fs_path, folder = 'surf',
     n_vertices = nrow(surf$vertices),
     n_faces = nrow(surf$faces),
     is_surface = TRUE,
-    is_fs_surface = TRUE
+    is_fs_surface = TRUE,
+
+    .append = FALSE
   )
 
   args = list(
@@ -295,6 +303,7 @@ import_fs_surf <- function(subject_name, fs_path, folder = 'surf',
   names(args) = sprintf('surface_fs_%sh', hemisphere);
   args$file = file.path(rave_dir, 'common.digest')
   args$subject = subject_name
+  args$.append = FALSE
   do.call('add_to_digest_file', args)
 
   add_to_digest_file(

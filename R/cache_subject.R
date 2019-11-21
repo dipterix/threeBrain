@@ -38,13 +38,6 @@ import_from_freesurfer <- function(fs_path, subject_name){
     import_suma_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'r')
   }
 
-  progress$inc(sprintf('Check fs labels - %s [%sh]', 'aparc', 'l'))
-  import_fs_label(subject_name, fs_path, label_name = 'aparc', hemisphere = 'l')
-
-  progress$inc(sprintf('Check fs labels - %s [%sh]', 'aparc', 'r'))
-  import_fs_label(subject_name, fs_path, label_name = 'aparc', hemisphere = 'r')
-
-
   # from_json(from_file = '~/rave_data/others/three_brain/N27/RAVE/common.digest')
 
   # Load xfm
@@ -67,8 +60,22 @@ import_from_freesurfer <- function(fs_path, subject_name){
   add_to_digest_file(
     file = file.path(fs_path, 'RAVE', 'common.digest'),
     last_cached = strftime(Sys.time(), '%Y-%m-%d %H:%M:%S', usetz = TRUE),
-    xfm = xfm
+    xfm = xfm,
+
+    # Append to common digest
+    .append = FALSE
   )
+
+  # Try to save labels, but this might raise error
+  tryCatch({
+    progress$inc(sprintf('Check fs labels - %s [%sh]', 'aparc', 'l'))
+    import_fs_label(subject_name, fs_path, label_name = 'aparc', hemisphere = 'l')
+
+    progress$inc(sprintf('Check fs labels - %s [%sh]', 'aparc', 'r'))
+    import_fs_label(subject_name, fs_path, label_name = 'aparc', hemisphere = 'r')
+  }, error = function(e){
+  })
+
 
   invisible()
 }

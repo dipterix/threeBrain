@@ -286,8 +286,8 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
 
   s = c(
     '#!/bin/bash',
-    'DIRECTORY=`dirname $0`',
-    'cd $DIRECTORY',
+    'DIRECTORY=`dirname "$0"`',
+    'cd "$DIRECTORY"',
     "Rscript -e '{if(system.file(\"\",package=\"servr\")==\"\"){install.packages(\"servr\",repos=\"https://cloud.r-project.org\")};servr::httd(browser=TRUE)}'"
   )
   sh_file = file.path(directory, 'launch.sh')

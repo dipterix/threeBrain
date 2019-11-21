@@ -91,14 +91,12 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, use_python=TRUE,
     cat2('Wrapping up installation...', level = 'INFO')
 
     template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
-    freesurfer_brain(fs_subject_folder = file.path(template_dir, 'N27'),
-                           subject_name = 'N27', additional_surfaces = c(
-                             'white', 'smoothwm', 'inflated', 'pial-outer-smoothed'), use_141 = FALSE)
-    env = freesurfer_brain(fs_subject_folder = file.path(template_dir, 'N27'),
-                           subject_name = 'N27', additional_surfaces = c(
-                             'white', 'smoothwm', 'inflated', 'inf_200', 'pial-outer-smoothed'))
+    import_from_freesurfer(fs_path = file.path(template_dir, 'N27'), subject_name = 'N27')
+
 
     if( show_example ){
+      env = freesurfer_brain2(fs_subject_folder = file.path(template_dir, 'N27'),
+                              subject_name = 'N27', surface_types = c('pial', 'smoothwm'))
       plot(env)
     }
 

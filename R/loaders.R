@@ -94,7 +94,7 @@ set_default_template <- function(subject_code, view = TRUE,
   }else{
 
     # try to load template subject
-    x = freesurfer_brain(fs_subject_folder = sub_dir, subject_name = subject_code)
+    x = freesurfer_brain2(fs_subject_folder = sub_dir, subject_name = subject_code)
 
     if( !is.null(x) ){
       options('threeBrain.template_dir' = dir)

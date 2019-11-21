@@ -75,7 +75,10 @@ import_suma_surf <- function(subject_name, fs_path, folder = 'SUMA',
     n_faces = nrow(surf$faces),
     is_surface = TRUE,
     is_suma_surface = TRUE,
-    is_standard_141 = TRUE
+    is_standard_141 = TRUE,
+
+    # Ignore the previous digests
+    .append = FALSE
   )
 
   args = list(
@@ -88,11 +91,14 @@ import_suma_surf <- function(subject_name, fs_path, folder = 'SUMA',
   names(args) = sprintf('surface_std_141_%sh', hemisphere);
   args$file = file.path(rave_dir, 'common.digest')
   args$subject = subject_name
+  args$.append = FALSE
   do.call('add_to_digest_file', args)
 
   add_to_digest_file(
     args$file,
     suma_surface_files = cache_fname,
+
+    # Append to common digest file however.
     .append = TRUE
   )
 
