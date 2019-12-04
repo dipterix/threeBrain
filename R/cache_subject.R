@@ -6,6 +6,7 @@ NULL
 #' Import from `FreeSurfer` and create `JSON` cache for 3D viewer
 #' @param fs_path `FreeSurfer` subject directory
 #' @param subject_name subject code
+#' @export
 #' @return None.
 import_from_freesurfer <- function(fs_path, subject_name){
   # fs_path = '~/rave_data/others/three_brain/N27/'
@@ -23,19 +24,23 @@ import_from_freesurfer <- function(fs_path, subject_name){
   import_fs_T1(subject_name, fs_path)
 
   for(surf_type in surface_types){
-    progress$inc(sprintf('Check fs surface - %s [%sh]', surf_type, 'l'))
-    import_fs_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'l')
+    try({
+      progress$inc(sprintf('Check fs surface - %s [%sh]', surf_type, 'l'))
+      import_fs_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'l')
 
-    progress$inc(sprintf('Check fs surface - %s [%sh]', surf_type, 'r'))
-    import_fs_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'r')
+      progress$inc(sprintf('Check fs surface - %s [%sh]', surf_type, 'r'))
+      import_fs_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'r')
+    }, silent = TRUE)
   }
 
   for(surf_type in surface_types){
-    progress$inc(sprintf('Check SUMA surface - %s [%sh]', surf_type, 'l'))
-    import_suma_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'l')
+    try({
+      progress$inc(sprintf('Check SUMA surface - %s [%sh]', surf_type, 'l'))
+      import_suma_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'l')
 
-    progress$inc(sprintf('Check SUMA surface - %s [%sh]', surf_type, 'r'))
-    import_suma_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'r')
+      progress$inc(sprintf('Check SUMA surface - %s [%sh]', surf_type, 'r'))
+      import_suma_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'r')
+    }, silent = TRUE)
   }
 
   # from_json(from_file = '~/rave_data/others/three_brain/N27/RAVE/common.digest')

@@ -4,10 +4,13 @@
 \alias{merge_brain}
 \title{Create Multi-subject Template}
 \usage{
-merge_brain(..., .list = NULL, template_surface_types = NULL,
+merge_brain(
+  ...,
+  .list = NULL,
+  template_surface_types = NULL,
   template_subject = getOption("threeBrain.template_subject", "N27"),
-  template_dir = getOption("threeBrain.template_dir",
-  "~/rave_data/others/three_brain"))
+  template_dir = getOption("threeBrain.template_dir", "~/rave_data/others/three_brain")
+)
 }
 \arguments{
 \item{..., .list}{\code{Brain2} objects}

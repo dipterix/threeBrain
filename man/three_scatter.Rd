@@ -4,9 +4,23 @@
 \alias{three_scatter}
 \title{3D Scatter Plot}
 \usage{
-three_scatter(x, y, z, size = 1, col = 1, label = NULL, group = 1,
-  timestamp = NULL, pal = NULL, scale = 1, axis = TRUE,
-  control_panel = TRUE, control_presets = NULL, camera_pos, ...)
+three_scatter(
+  x,
+  y,
+  z,
+  size = 1,
+  col = 1,
+  label = NULL,
+  group = 1,
+  timestamp = NULL,
+  pal = NULL,
+  scale = 1,
+  axis = TRUE,
+  control_panel = TRUE,
+  control_presets = NULL,
+  camera_pos,
+  ...
+)
 }
 \arguments{
 \item{x, y, z}{numeric vectors with the same length \code{n}.}

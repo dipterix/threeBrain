@@ -26,7 +26,8 @@ Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
+Roxygen: list(r6 = FALSE)
 Language: en-US
 URL: https://github.com/dipterix/threeBrain
 BugReports: https://github.com/dipterix/threeBrain/issues
@@ -49,4 +50,3 @@ Suggests:
     knitr,
     rmarkdown,
     pryr
-

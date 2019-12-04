@@ -4,8 +4,15 @@
 \alias{geom_freemesh}
 \title{Creates any mesh geometry given vertices and face indices}
 \usage{
-geom_freemesh(name, vertex = NULL, face = NULL, position = c(0, 0,
-  0), layer = 1, cache_file = NULL, group = NULL)
+geom_freemesh(
+  name,
+  vertex = NULL,
+  face = NULL,
+  position = c(0, 0, 0),
+  layer = 1,
+  cache_file = NULL,
+  group = NULL
+)
 }
 \arguments{
 \item{name}{unique string in a scene to tell apart from different objects}

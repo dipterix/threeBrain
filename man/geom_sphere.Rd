@@ -4,8 +4,15 @@
 \alias{geom_sphere}
 \title{Create sphere geometry}
 \usage{
-geom_sphere(name, radius, position = c(0, 0, 0), layer = 1,
-  group = NULL, value = NULL, time_stamp = NULL)
+geom_sphere(
+  name,
+  radius,
+  position = c(0, 0, 0),
+  layer = 1,
+  group = NULL,
+  value = NULL,
+  time_stamp = NULL
+)
 }
 \arguments{
 \item{name}{unique string in a scene to tell apart from different objects}

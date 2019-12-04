@@ -5,12 +5,24 @@
 \alias{freesurfer_brain2}
 \title{Read `FreeSurfer` surface and volume files}
 \usage{
-freesurfer_brain(fs_subject_folder, subject_name,
-  additional_surfaces = NULL, aligned_ct = NULL, use_cache = TRUE,
-  use_141 = TRUE)
+freesurfer_brain(
+  fs_subject_folder,
+  subject_name,
+  additional_surfaces = NULL,
+  aligned_ct = NULL,
+  use_cache = TRUE,
+  use_141 = TRUE
+)
 
-freesurfer_brain2(fs_subject_folder, subject_name, volume_types = "t1",
-  surface_types = "pial", use_cache = TRUE, use_141 = TRUE, ...)
+freesurfer_brain2(
+  fs_subject_folder,
+  subject_name,
+  volume_types = "t1",
+  surface_types = "pial",
+  use_cache = TRUE,
+  use_141 = TRUE,
+  ...
+)
 }
 \arguments{
 \item{fs_subject_folder}{character, `FreeSurfer` subject folder, or `RAVE` subject folder}

@@ -4,8 +4,12 @@
 \alias{brain_setup}
 \title{Setup Package, Install Environment}
 \usage{
-brain_setup(continued = FALSE, show_example = TRUE,
-  use_python = TRUE, try_conda = TRUE)
+brain_setup(
+  continued = FALSE,
+  show_example = TRUE,
+  use_python = TRUE,
+  try_conda = TRUE
+)
 }
 \arguments{
 \item{continued}{logical, there are two phases of setting up environment. You

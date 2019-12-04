@@ -4,9 +4,15 @@
 \alias{save_brain}
 \title{Save threeBrain widgets to local file system}
 \usage{
-save_brain(widget, directory, filename = "index.html",
-  assetpath = "lib/", datapath = "lib/threebrain_data-0/",
-  title = "3D Viewer", as_zip = FALSE)
+save_brain(
+  widget,
+  directory,
+  filename = "index.html",
+  assetpath = "lib/",
+  datapath = "lib/threebrain_data-0/",
+  title = "3D Viewer",
+  as_zip = FALSE
+)
 }
 \arguments{
 \item{widget}{generated from function 'threejs_brain'.}
