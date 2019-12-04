@@ -66,7 +66,7 @@ import_from_freesurfer <- function(fs_path, subject_name){
     file = file.path(fs_path, 'RAVE', 'common.digest'),
     last_cached = strftime(Sys.time(), '%Y-%m-%d %H:%M:%S', usetz = TRUE),
     xfm = xfm,
-
+    cache_version = cache_version,
     # Append to common digest
     .append = FALSE
   )

@@ -1,3 +1,4 @@
+
 #' @rdname freesurfer_brain
 #' @param volume_types volume types, right now only support T1 image
 #' @param surface_types surface types to load
@@ -45,7 +46,7 @@ freesurfer_brain2 <- function(
     dir_create(rave_dir)
   }else{
     common = from_json(from_file = common_file)
-    if( common$subject != subject_name ){
+    if( common$subject != subject_name || !isTRUE(cache_version <= common$cache_version) ){
       has_cache = FALSE
     }
   }
