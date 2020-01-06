@@ -1,6 +1,6 @@
 const webpack = require("webpack");
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const minimizer = require('terser-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -12,7 +12,7 @@ module.exports = {
   },
   optimization: {
     minimize: true,
-    minimizer: [new UglifyJsPlugin({
+    minimizer: [new minimizer({
       include: /\.min\.js$/
     })]
   }

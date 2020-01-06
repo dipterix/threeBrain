@@ -1788,7 +1788,7 @@
 /* 1 */
 /***/ (function(module) {
 
-module.exports = {"errors":{"callbackRequired":"A callback is required!","optionsRequired":"Options were not passed and are required.","json2csv":{"cannotCallOn":"Cannot call json2csv on ","dataCheckFailure":"Data provided was not an array of documents.","notSameSchema":"Not all documents have the same schema."},"csv2json":{"cannotCallOn":"Cannot call csv2json on ","dataCheckFailure":"CSV is not a string."}},"defaultOptions":{"delimiter":{"field":",","wrap":"\"","eol":"\n"},"excelBOM":false,"prependHeader":true,"trimHeaderFields":false,"trimFieldValues":false,"sortHeader":false,"parseCsvNumbers":false,"keys":null,"checkSchemaDifferences":false,"expandArrayObjects":false},"values":{"excelBOM":"﻿"}};
+module.exports = JSON.parse("{\"errors\":{\"callbackRequired\":\"A callback is required!\",\"optionsRequired\":\"Options were not passed and are required.\",\"json2csv\":{\"cannotCallOn\":\"Cannot call json2csv on \",\"dataCheckFailure\":\"Data provided was not an array of documents.\",\"notSameSchema\":\"Not all documents have the same schema.\"},\"csv2json\":{\"cannotCallOn\":\"Cannot call csv2json on \",\"dataCheckFailure\":\"CSV is not a string.\"}},\"defaultOptions\":{\"delimiter\":{\"field\":\",\",\"wrap\":\"\\\"\",\"eol\":\"\\n\"},\"excelBOM\":false,\"prependHeader\":true,\"trimHeaderFields\":false,\"trimFieldValues\":false,\"sortHeader\":false,\"parseCsvNumbers\":false,\"keys\":null,\"checkSchemaDifferences\":false,\"expandArrayObjects\":false},\"values\":{\"excelBOM\":\"﻿\"}}");
 
 /***/ }),
 /* 2 */
