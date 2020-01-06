@@ -6,7 +6,6 @@
     "ajv": "^6.10.2",
     "downloadjs": "^1.4.7",
     "json-2-csv": "^3.5.9",
-    "terser-webpack-plugin": "^2.3.1",
     "three": "^0.112.1"
   },
   "devDependencies": {
