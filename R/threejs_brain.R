@@ -3,6 +3,7 @@
 #' @param ...,.list geometries inherit from AbstractGeom
 #' @param width,height positive integers. Width and height of the widget.
 #'   By default width=`100\%`, and height varies.
+#' @param background character, background color such as \code{"#FFFFFF"} or \code{"white"}
 #' @param default_colormap character, which color map name to display at startup
 #' @param palettes named list, names corresponds to color-map names if you want to change color palettes
 #' @param val_ranges named list, similar to \code{palettes}, value range for each values
@@ -30,11 +31,11 @@
 #'   Only use it when you have multiple widgets in one website
 #' @export
 threejs_brain <- function(
-  ..., .list = list(), width = NULL, height = NULL,
+  ..., .list = list(), width = NULL, height = NULL, background = "#FFFFFF",
 
   # Args for the side panels
   side_canvas = FALSE, side_zoom = 1, side_width = 250, side_shift = c(0, 0),
-  side_display = TRUE,
+  side_display = TRUE, # side_background = background,
 
   # for controls GUI
   control_panel = TRUE, control_presets = NULL, control_display = TRUE,
@@ -99,6 +100,10 @@ threejs_brain <- function(
   }else{
     default_colormap = NULL
   }
+
+  # backgrounds
+  background = dipsaus::col2hexStr(background)
+  # side_background = dipsaus::col2hexStr(side_background)
 
 
 
@@ -172,6 +177,7 @@ threejs_brain <- function(
     lib_path = lib_path,
     optionals = optionals,
     debug = debug,
+    background = background,
     # has_animation = v_count > 1,
     token = token,
     coords = coords,

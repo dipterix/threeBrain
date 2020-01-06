@@ -13,12 +13,8 @@ import_from_freesurfer <- function(fs_path, subject_name){
   # subject_name = 'N27'
   surface_types = c('pial', 'white', 'smoothwm', 'pial-outer-smoothed', 'inflated', 'orig', 'sphere')
   # Setup progress
-  if( requireNamespace('dipsaus', quietly = TRUE) ){
-    progress = dipsaus::progress2(sprintf('First-time Importing %s', subject_name),
-                                  max = length(surface_types) * 4 + 3, shiny_auto_close = TRUE)
-  }else{
-    progress = list(inc = function(m){cat2(m, '\n')})
-  }
+  progress = dipsaus::progress2(sprintf('First-time Importing %s', subject_name),
+                                max = length(surface_types) * 4 + 3, shiny_auto_close = TRUE)
 
   progress$inc('Check T1 volume data')
   import_fs_T1(subject_name, fs_path)

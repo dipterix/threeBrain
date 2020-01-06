@@ -260,6 +260,19 @@ class THREE_BRAIN_SHINY {
 
   }
 
+  // previous one should be soft-deprecated in the future
+  // use setInputValue instead of onInputChange as later one is never officially supported
+  to_shiny2(name, value, priority = "deferred"){
+
+    if( this.shiny_mode ){
+
+      const callback = this.outputId + '_' + name;
+      console.debug(callback + ' is set to ', JSON.stringify(value));
+      Shiny.setInputValue(callback, value, { priority : priority });
+
+    }
+  }
+
 }
 
 export { THREE_BRAIN_SHINY };

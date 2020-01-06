@@ -9,6 +9,7 @@ threejs_brain(
   .list = list(),
   width = NULL,
   height = NULL,
+  background = "#FFFFFF",
   side_canvas = FALSE,
   side_zoom = 1,
   side_width = 250,
@@ -40,6 +41,8 @@ threejs_brain(
 
 \item{width, height}{positive integers. Width and height of the widget.
 By default width=`100\%`, and height varies.}
+
+\item{background}{character, background color such as \code{"#FFFFFF"} or \code{"white"}}
 
 \item{side_canvas}{logical, enable side cameras to view objects from fixed perspective}
 

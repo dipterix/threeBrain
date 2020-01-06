@@ -35,6 +35,8 @@ class THREEBRAIN_PRESETS{
     // Min max of animation time
     this.animation_time = [0,1];
 
+    // this.parameters = {};
+
   }
 
   /**
@@ -46,6 +48,15 @@ class THREEBRAIN_PRESETS{
     }else{
       this.canvas.pause_animation(-level);
     }
+  }
+
+  fire_change( args, priority = "event" ){
+    for(let k in args){
+      // this.parameters[k] = args[k];
+
+      this.shiny.to_shiny2(k, args[k], priority);
+    }
+
   }
 
 
@@ -66,8 +77,10 @@ class THREEBRAIN_PRESETS{
 
   // 1. Background colors
   c_background(){
-    const initial_bgcolor = "#ffffff",
+    const initial_bgcolor = this.settings.background || "#ffffff",
           folder_name = CONSTANTS.FOLDERS['background-color'];
+
+    this.fire_change({ 'background' : initial_bgcolor });
 
     this.gui.add_item('Background Color', initial_bgcolor, {is_color : true, folder_name: folder_name})
       .onChange((v) => {
@@ -86,6 +99,8 @@ class THREEBRAIN_PRESETS{
         // this.el_text2.style.color=inversedColor;
         // this.el.style.backgroundColor = v;
         this.canvas.el.style.backgroundColor = v;
+
+        this.fire_change({ 'background' : v });
 
         // force re-render
         this._update_canvas(0);
@@ -210,6 +225,7 @@ class THREEBRAIN_PRESETS{
   c_toggle_side_panel(){
     const folder_name = CONSTANTS.FOLDERS[ 'toggle-side-panels' ];
     const _v = this.settings.side_display || false;
+
     const show_side = this.gui.add_item('Show Panels', _v, {folder_name: folder_name})
       .onChange((v) => {
         if( v ){
@@ -217,6 +233,7 @@ class THREEBRAIN_PRESETS{
         }else{
           this.canvas.disable_side_cameras();
         }
+        this.fire_change({ 'side_display' : v });
       });
 
 
@@ -225,7 +242,7 @@ class THREEBRAIN_PRESETS{
     }else{
       this.canvas.disable_side_cameras();
     }
-
+    this.fire_change({ 'side_display' : _v });
 
   }
 
@@ -254,17 +271,25 @@ class THREEBRAIN_PRESETS{
       .add_item('Coronal (P - A)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_coronal_depth( v );
+        this.fire_change({ 'coronal_depth' : v });
       });
     const _controller_axial = this.gui
       .add_item('Axial (I - S)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_axial_depth( v );
+        this.fire_change({ 'axial_depth' : v });
       });
     const _controller_sagittal = this.gui
       .add_item('Sagittal (L - R)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_sagittal_depth( v );
+        this.fire_change({ 'sagittal_depth' : v });
       });
+
+    this.fire_change({ 'coronal_depth' : 0 });
+    this.fire_change({ 'axial_depth' : 0 });
+    this.fire_change({ 'sagittal_depth' : 0 });
+
     [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c, ii) => {
 
       this.canvas.bind( `dat_gui_side_controller_${ii}_mousewheel`, 'mousewheel',
@@ -293,17 +318,24 @@ class THREEBRAIN_PRESETS{
     const overlay_coronal = this.gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
       .onChange((v) => {
         this.canvas.set_side_visibility('coronal', v);
+        this.fire_change({ 'coronal_visibility' : v });
       });
 
     const overlay_axial = this.gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
       .onChange((v) => {
         this.canvas.set_side_visibility('axial', v);
+        this.fire_change({ 'axial_visibility' : v });
       });
 
     const overlay_sagittal = this.gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
       .onChange((v) => {
         this.canvas.set_side_visibility('sagittal', v);
+        this.fire_change({ 'sagittal_visibility' : v });
       });
+
+    this.fire_change({ 'coronal_visibility' : false });
+    this.fire_change({ 'axial_visibility' : false });
+    this.fire_change({ 'sagittal_visibility' : false });
 
     // register overlay keyboard shortcuts
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
@@ -409,7 +441,9 @@ class THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', {
           'surface_type': v
         });
+        this.fire_change({ 'surface_type' : v });
       });
+    this.fire_change({ 'surface_type' : _s });
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
@@ -494,6 +528,7 @@ class THREEBRAIN_PRESETS{
     });
 
     this._update_canvas();
+    this.fire_change({ 'electrode_visibility' : v });
     return(true);
   }
   c_electrodes(){
@@ -679,6 +714,8 @@ class THREEBRAIN_PRESETS{
         }
         this._update_canvas();
       });
+
+      this.fire_change({ 'clip_name' : v });
     };
 
     const ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
