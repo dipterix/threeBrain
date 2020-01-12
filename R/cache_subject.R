@@ -12,9 +12,12 @@ import_from_freesurfer <- function(fs_path, subject_name){
   # fs_path = '~/rave_data/others/three_brain/N27/'
   # subject_name = 'N27'
   surface_types = c('pial', 'white', 'smoothwm', 'pial-outer-smoothed', 'inflated', 'orig', 'sphere')
+  curvatures = c('sulc')
   # Setup progress
-  progress = dipsaus::progress2(sprintf('First-time Importing %s', subject_name),
-                                max = length(surface_types) * 4 + 3, shiny_auto_close = TRUE)
+  progress = dipsaus::progress2(
+    sprintf('First-time Importing %s', subject_name),
+    max = length(surface_types) * 4 + length(curvatures) * 4 + 3,
+    shiny_auto_close = TRUE)
 
   progress$inc('Check T1 volume data')
   import_fs_T1(subject_name, fs_path)
@@ -36,6 +39,26 @@ import_from_freesurfer <- function(fs_path, subject_name){
 
       progress$inc(sprintf('Check SUMA surface - %s [%sh]', surf_type, 'r'))
       import_suma_surf(subject_name, fs_path, surf_type = surf_type, hemisphere = 'r')
+    }, silent = TRUE)
+  }
+
+  for(curv in curvatures){
+    try({
+      progress$inc(sprintf('Check fs curvature - %s [%sh]', curv, 'l'))
+      import_fs_curv( subject_name, fs_path, curv_name = curv, hemisphere = 'l')
+
+      progress$inc(sprintf('Check fs curvature - %s [%sh]', curv, 'r'))
+      import_fs_curv( subject_name, fs_path, curv_name = curv, hemisphere = 'r')
+    }, silent = TRUE)
+  }
+
+  for(curv in curvatures){
+    try({
+      progress$inc(sprintf('Check SUMA curvature - %s [%sh]', curv, 'l'))
+      import_suma_curv( subject_name, fs_path, curv_name = curv, hemisphere = 'l')
+
+      progress$inc(sprintf('Check SUMA curvature - %s [%sh]', curv, 'r'))
+      import_suma_curv( subject_name, fs_path, curv_name = curv, hemisphere = 'r')
     }, silent = TRUE)
   }
 
@@ -66,6 +89,7 @@ import_from_freesurfer <- function(fs_path, subject_name){
     # Append to common digest
     .append = FALSE
   )
+
 
   # Try to save labels, but this might raise error
   tryCatch({

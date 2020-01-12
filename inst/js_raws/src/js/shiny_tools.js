@@ -6,6 +6,7 @@ This file defines shiny callback functions (js to shiny)
 import { debounce, to_array, get_or_default } from './utils.js';
 import { THREE } from './threeplugins.js';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
+import { CONSTANTS } from './constants.js';
 
 function storageAvailable(type) {
   try {
@@ -31,13 +32,18 @@ function storageAvailable(type) {
   }
 }
 
-
+/**
+ * Though the name is "shiny", it works more like adapter to communicate:
+ * R-Shiny, gui, canvas
+ *
+ */
 class THREE_BRAIN_SHINY {
-  constructor(outputId, shiny_mode = true) {
+  constructor(outputId, canvas, shiny_mode = true) {
 
     this.outputId = outputId;
     this.shiny_mode = shiny_mode;
     this.shinyId = outputId + '__shiny';
+    this.canvas = canvas;
 
     this.stack = [];
 
@@ -54,13 +60,112 @@ class THREE_BRAIN_SHINY {
     if( this.shiny_mode ){
       this.register_shiny();
     }
+
+    // Add canvas listeners
+    // 1. controls
+    this.canvas.bind( 'camera_parameters', 'end', (evt) => {
+      this.to_shiny2('main_camera', {
+        position  : canvas.main_camera.position,
+        zoom      : canvas.main_camera.zoom,
+        up        : canvas.main_camera.up
+      });
+    }, this.canvas.controls );
+
+    // 2. click callback
+    // finalize registering
+    const pos = new THREE.Vector3();
+    this.canvas.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.userData ){
+          const g = obj.userData.construct_params;
+          obj.getWorldPosition( pos );
+
+          // Get information and show them on screen
+          const group_name = g.group ? g.group.group_name : null;
+          const shiny_data = {
+            object      : g,
+            name        : g.name,
+            geom_type   : g.type,
+            group       : group_name,
+            position    : pos.toArray(),
+            action      : evt.action,
+            meta        : evt,
+            edit_mode   : this.canvas.edit_mode,
+            is_electrode: false,
+            current_time: 0,
+            time_range  : [0, 0]
+          };
+
+          if( this.canvas.state_data.has( 'color_map' ) ){
+            const cmap_name = this.canvas.state_data.get( 'color_map' );
+            shiny_data.color_map = this.canvas.color_maps.get( cmap_name );
+          }
+
+          if( this.gui ){
+            // clip name
+            let _c = this.gui.get_controller('Display Data', CONSTANTS.FOLDERS['animation']);
+            if( _c && _c.getValue ){
+              shiny_data.current_clip = _c.getValue();
+            }
+
+            _c = this.gui.get_controller('Time', CONSTANTS.FOLDERS['animation']);
+            if( _c && _c.getValue ){
+              shiny_data.current_time = _c.getValue();
+              shiny_data.time_range = [_c.__min, _c.__max];
+            }
+          }
+
+          if( g.is_electrode ){
+
+            const m = CONSTANTS.REGEXP_ELECTRODE.exec( g.name );
+            if( m.length === 4 ){
+
+              shiny_data.subject = m[1];
+              shiny_data.electrode_number = parseInt( m[2] );
+              shiny_data.is_electrode = true;
+            }
+
+          }
+
+          if( evt.action === 'click' ){
+
+            // this.to_shiny(shiny_data, 'mouse_clicked');
+
+            // use better version to_shiny2
+            this.to_shiny2('mouse_clicked', shiny_data, 'event');
+          }else{
+            // this.to_shiny(shiny_data, 'mouse_dblclicked');
+            this.to_shiny2('mouse_dblclicked', shiny_data, 'event');
+          }
+
+
+        }
+      },
+      'click-electrodes-callbacks'
+    );
   }
 
-  register_canvas( canvas ){
-    this.canvas = canvas;
-  }
   register_gui( gui ){
     this.gui = gui;
+
+    if( this.shiny_mode ){
+      // register shiny customized message
+      Shiny.addCustomMessageHandler(`threeBrain-RtoJS-${this.outputId}`, (data) => {
+        const message_type = data.name,
+              message_content = data.value,
+              method_name = 'handle_' + message_type;
+        if( typeof this[method_name] === 'function' ){
+          this[method_name]( message_content );
+        }
+      });
+    }
   }
 
   set_token( token ){
@@ -68,6 +173,63 @@ class THREE_BRAIN_SHINY {
       this.token = token;
     }
   }
+
+
+  handle_background( bgcolor ){
+    const _c = this.gui.get_controller('Background Color', CONSTANTS.FOLDERS['background-color']);
+    _c.setValue( bgcolor );
+  }
+
+  handle_zoom_level( zoom ){
+    this.canvas.main_camera.zoom = zoom;
+    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.start_animation( 0 );
+  }
+
+  handle_camera( args = { position: [500, 0, 0] , up : [0, 0, 1]} ){
+    const pos = to_array( args.position ),
+          up = to_array( args.up );
+    if( pos.length === 3 ){
+      this.canvas.main_camera.position.set(pos[0] , pos[1] , pos[2]);
+    }
+    if( up.length === 3 ){
+      this.canvas.main_camera.up.set(up[0] , up[1] , up[2]);
+    }
+    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.start_animation( 0 );
+  }
+
+  handle_display_data( args = { variable : '', range : [] } ){
+    const variable = args.variable,
+          range = to_array( args.range );
+    if( typeof variable === 'string' && variable !== '' ){
+      this.gui
+        .get_controller( 'Display Data', CONSTANTS.FOLDERS[ 'animation' ])
+        .setValue( variable );
+    }
+    if( range.length === 2 ){
+      this.gui
+        .get_controller( 'Display Range', CONSTANTS.FOLDERS[ 'animation' ])
+        .setValue(`${range[0].toPrecision(5)},${range[1].toPrecision(5)}`);
+    }
+    this.canvas.start_animation( 0 );
+  }
+
+  handle_font_magnification( cex = 1 ){
+    this.canvas.set_font_size( cex );
+    this.canvas.start_animation( 0 );
+  }
+
+
+
+
+
+
+
+
+
+
+
 
   collect_electrode_info( group_name = "__localization__" ){
     const els = this.canvas.electrodes.get( group_name ),
@@ -264,7 +426,8 @@ class THREE_BRAIN_SHINY {
   // use setInputValue instead of onInputChange as later one is never officially supported
   to_shiny2(name, value, priority = "deferred"){
 
-    if( this.shiny_mode ){
+    // make sure shiny is running
+    if( this.shiny_mode && Shiny.shinyapp.$socket ){
 
       const callback = this.outputId + '_' + name;
       console.debug(callback + ' is set to ', JSON.stringify(value));

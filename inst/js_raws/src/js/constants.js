@@ -92,12 +92,12 @@ CONSTANTS.FOLDERS = {
   'reset-side-panels'     : 'Side Canvas',
   'side-three-planes'     : 'Side Canvas',
   'side-electrode-dist'   : 'Side Canvas',
-  'subject-selector'      : 'Geometry',
-  'surface-selector'      : 'Geometry',
-  'hemisphere-material'   : 'Geometry',
-  'electrode-style'       : 'Geometry',
-  'electrode-mapping'     : 'Electrode Mapping',
-  'animation'             : 'Timeline'
+  'subject-selector'      : 'Surface Settings',
+  'surface-selector'      : 'Surface Settings',
+  'hemisphere-material'   : 'Surface Settings',
+  'electrode-style'       : 'Electrodes',
+  'electrode-mapping'     : 'Electrodes',
+  'animation'             : 'Data Visualization'
 };
 
 

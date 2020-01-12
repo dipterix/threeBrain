@@ -42,6 +42,7 @@ function gen_sphere(g, canvas){
   if( n_keyframes > 0 ){
     mesh.userData.ani_exists = true;
   }
+  mesh.userData.ani_active = false;
   mesh.userData.ani_params = {...values};
   mesh.userData.ani_name = 'default';
   mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
@@ -57,8 +58,10 @@ function gen_sphere(g, canvas){
     if( reset_material ){
       if( re && re.value !== null ){
         mesh.material = material_basic;
+        mesh.userData.ani_active = true;
       }else{
         mesh.material = material_lambert;
+        mesh.userData.ani_active = false;
       }
     }
 
@@ -81,6 +84,7 @@ function gen_sphere(g, canvas){
     if( ani_data ){
 
       mesh.material = material_basic;
+      mesh.userData.ani_active = true;
 
       to_array( ani_data.value ).forEach((v) => {
         let c = canvas.get_color(v);
@@ -96,8 +100,104 @@ function gen_sphere(g, canvas){
     }else{
       // No animation for current mesh, set to MeshLambertMaterial
       mesh.material = material_lambert;
-      return( undefined );
+      mesh.userData.ani_active = false;
+      return;
     }
+
+  };
+
+  // Add pre-render function to change some attributes
+  mesh.userData.pre_render = ( results ) => {
+
+    // 1. whether passed threshold
+    let threshold_test = true;
+
+    if( get_or_default(canvas.state_data, 'threshold_active', false) ){
+      // need to check the threshold
+      threshold_test = false;
+
+      const track_name = canvas.state_data.get('threshold_variable');
+      const track = mesh.userData.get_track_data(track_name, false);
+
+      if(track){
+
+        // obtain current threshold value
+        let current_value;
+        if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
+          // need to get the value at current time
+          const ani_params = canvas.animation_controls.get_params();
+
+          for(let idx in track.time){
+            if(track.time[idx] >= ani_params.time){
+              current_value = track.value[ idx ];
+              break;
+            }
+          }
+
+        }else{
+          if(Array.isArray(track.value)){
+            current_value = track.value[0];
+          }else{
+            current_value = track.value;
+          }
+        }
+
+        // get threshold criteria
+        if(current_value !== undefined){
+          const ranges = to_array(canvas.state_data.get('threshold_values'));
+          if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
+            // contunuous
+            threshold_test = false;
+            ranges.forEach((r) => {
+              if(Array.isArray(r) && r.length === 2){
+                if(!threshold_test && r[1] >= current_value && r[0] <= current_value){
+                  threshold_test = true;
+                }
+              }
+            });
+          }else{
+            // discrete
+            threshold_test = ranges.includes( current_value );
+          }
+        }
+      }
+
+    }
+
+    // 2. check if active
+    let active_test = threshold_test & mesh.userData.ani_active;
+
+    // 3. change material
+    if( active_test && mesh.material.isMeshLambertMaterial ){
+      mesh.material = material_basic;
+    }else if( !active_test && mesh.material.isMeshBasicMaterial ){
+      mesh.material = material_lambert;
+    }
+
+    // 4. set visibility
+    const vis = get_or_default(canvas.state_data, 'electrode_visibility', 'all visible');
+
+    switch (vis) {
+      case 'all visible':
+        mesh.visible = true;
+        break;
+      case 'hidden':
+        mesh.visible = false;
+        break;
+      case 'hide inactives':
+        // The electrode has no value, hide
+        if( active_test ){
+          mesh.visible = true;
+        }else{
+          mesh.visible = false;
+        }
+        break;
+    }
+    // 5. check if mixer exists, update
+    if( mesh.userData.ani_mixer ){
+      mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+    }
+
 
   };
 

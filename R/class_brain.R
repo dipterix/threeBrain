@@ -738,11 +738,12 @@ Brain2 <- R6::R6Class(
     },
 
     plot = function( # Elements
-      volumes = TRUE, surfaces = TRUE,
+      volumes = TRUE, surfaces = TRUE, start_zoom = 1, cex = 1,
+      background = '#FFFFFF',
 
       # Layouts
       side_canvas = TRUE, side_width = 250, side_shift = c(0, 0), side_display = TRUE,
-      control_panel = TRUE, default_colormap = NULL,
+      control_panel = TRUE, control_display = TRUE, default_colormap = NULL,
 
       # Legend and color
       palettes = NULL,
@@ -764,6 +765,7 @@ Brain2 <- R6::R6Class(
 
       global_data = self$global_data
 
+
       control_presets = unique(
         c( 'subject2', 'surface_type2', 'hemisphere_material',
            'map_template', 'electrodes', control_presets)
@@ -773,14 +775,19 @@ Brain2 <- R6::R6Class(
         side_display = FALSE
       }
 
+      # # check if curvature files exist
+      # global_files =
+
       threejs_brain(
         .list = geoms,
         symmetric = symmetric, palettes = palettes,
         side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
+        control_display = control_display,
         default_colormap = default_colormap, side_display = side_display,
         width = width, height = height, debug = debug, token = token,
-        browser_external = browser_external, global_data = global_data, ...)
+        browser_external = browser_external, global_data = global_data,
+        start_zoom = start_zoom, cex = cex, background = background, ...)
     }
 
   ),

@@ -30,7 +30,7 @@ class BrainCanvas{
     this.DEBUG = DEBUG;
     this.outputId = this.el.getAttribute( 'data-target' );
     // this.outputId = this.el.getAttribute('id');
-    this.shiny = new THREE_BRAIN_SHINY( this.outputId, this.shiny_mode );
+
     this.has_webgl = false;
 
     // ---------------------------- Utils ----------------------------
@@ -76,7 +76,7 @@ class BrainCanvas{
     this.canvas = new THREEBRAIN_CANVAS(
       this.el, width, height, 250,
       this.shiny_mode, cache, this.DEBUG, this.has_webgl2);
-    this.shiny.register_canvas( this.canvas );
+    this.shiny = new THREE_BRAIN_SHINY( this.outputId, this.canvas, this.shiny_mode );
 
     // 4. Animation, but do not render;
     this.canvas.animate();
@@ -218,79 +218,6 @@ class BrainCanvas{
     };
   }
 
-  _set_info_callback(){
-    const pos = new THREE.Vector3();
-
-    this.canvas.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.userData ){
-          const g = obj.userData.construct_params;
-          obj.getWorldPosition( pos );
-
-          // Get information and show them on screen
-          const group_name = g.group ? g.group.group_name : null;
-          const shiny_data = {
-            object      : g,
-            name        : g.name,
-            geom_type   : g.type,
-            group       : group_name,
-            position    : pos.toArray(),
-            action      : evt.action,
-            meta        : evt,
-            edit_mode   : this.canvas.edit_mode,
-            is_electrode: false,
-            current_time: 0,
-            color_maps  : this.settings.color_maps,
-            time_range  : this.presets.animation_time
-          };
-
-          if( this.gui ){
-            // clip name
-            let _c = this.gui.get_controller('Clip Name');
-            if( _c && _c.getValue ){
-              shiny_data.current_clip = _c.getValue();
-            }
-
-            _c = this.presets._ani_time;
-            if( _c && _c.getValue ){
-              shiny_data.current_time = _c.getValue();
-            }
-          }
-
-          if( g.is_electrode ){
-
-            const m = CONSTANTS.REGEXP_ELECTRODE.exec( g.name );
-            if( m.length === 4 ){
-
-              shiny_data.subject = m[1];
-              shiny_data.electrode_number = parseInt( m[2] );
-              shiny_data.is_electrode = true;
-            }
-
-          }
-
-          if( evt.action === 'click' ){
-            this.shiny.to_shiny(shiny_data, 'mouse_clicked');
-          }else{
-            this.shiny.to_shiny(shiny_data, 'mouse_dblclicked');
-          }
-
-
-        }
-      },
-      'to-shiny'
-    );
-
-
-
-  }
 
   render_value( x ){
     this.geoms = x.geoms;
@@ -398,7 +325,6 @@ class BrainCanvas{
     let gui = this._register_gui_control();
     this.gui = gui;
     this.shiny.register_gui( gui );
-    this._set_info_callback();
 
 
 
@@ -409,8 +335,9 @@ class BrainCanvas{
     */
     // this.canvas.reset_main_camera( this.settings.camera_pos , this.settings.start_zoom );
     this.canvas.reset_main_camera( undefined , this.settings.start_zoom );
+    this.canvas.set_font_size( this.settings.font_magnification || 1 );
 
-    // Add/remove axis
+    // Add/remove axis anchor
     let coords = to_array(this.settings.coords);
     if(coords.length === 3){
       this.canvas.draw_axis( coords[0], coords[1], coords[2] );

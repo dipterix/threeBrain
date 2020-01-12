@@ -57581,6 +57581,7 @@ function gen_sphere(g, canvas){
   if( n_keyframes > 0 ){
     mesh.userData.ani_exists = true;
   }
+  mesh.userData.ani_active = false;
   mesh.userData.ani_params = {...values};
   mesh.userData.ani_name = 'default';
   mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
@@ -57596,8 +57597,10 @@ function gen_sphere(g, canvas){
     if( reset_material ){
       if( re && re.value !== null ){
         mesh.material = material_basic;
+        mesh.userData.ani_active = true;
       }else{
         mesh.material = material_lambert;
+        mesh.userData.ani_active = false;
       }
     }
 
@@ -57620,6 +57623,7 @@ function gen_sphere(g, canvas){
     if( ani_data ){
 
       mesh.material = material_basic;
+      mesh.userData.ani_active = true;
 
       to_array( ani_data.value ).forEach((v) => {
         let c = canvas.get_color(v);
@@ -57635,8 +57639,104 @@ function gen_sphere(g, canvas){
     }else{
       // No animation for current mesh, set to MeshLambertMaterial
       mesh.material = material_lambert;
-      return( undefined );
+      mesh.userData.ani_active = false;
+      return;
     }
+
+  };
+
+  // Add pre-render function to change some attributes
+  mesh.userData.pre_render = ( results ) => {
+
+    // 1. whether passed threshold
+    let threshold_test = true;
+
+    if( get_or_default(canvas.state_data, 'threshold_active', false) ){
+      // need to check the threshold
+      threshold_test = false;
+
+      const track_name = canvas.state_data.get('threshold_variable');
+      const track = mesh.userData.get_track_data(track_name, false);
+
+      if(track){
+
+        // obtain current threshold value
+        let current_value;
+        if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
+          // need to get the value at current time
+          const ani_params = canvas.animation_controls.get_params();
+
+          for(let idx in track.time){
+            if(track.time[idx] >= ani_params.time){
+              current_value = track.value[ idx ];
+              break;
+            }
+          }
+
+        }else{
+          if(Array.isArray(track.value)){
+            current_value = track.value[0];
+          }else{
+            current_value = track.value;
+          }
+        }
+
+        // get threshold criteria
+        if(current_value !== undefined){
+          const ranges = to_array(canvas.state_data.get('threshold_values'));
+          if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
+            // contunuous
+            threshold_test = false;
+            ranges.forEach((r) => {
+              if(Array.isArray(r) && r.length === 2){
+                if(!threshold_test && r[1] >= current_value && r[0] <= current_value){
+                  threshold_test = true;
+                }
+              }
+            });
+          }else{
+            // discrete
+            threshold_test = ranges.includes( current_value );
+          }
+        }
+      }
+
+    }
+
+    // 2. check if active
+    let active_test = threshold_test & mesh.userData.ani_active;
+
+    // 3. change material
+    if( active_test && mesh.material.isMeshLambertMaterial ){
+      mesh.material = material_basic;
+    }else if( !active_test && mesh.material.isMeshBasicMaterial ){
+      mesh.material = material_lambert;
+    }
+
+    // 4. set visibility
+    const vis = get_or_default(canvas.state_data, 'electrode_visibility', 'all visible');
+
+    switch (vis) {
+      case 'all visible':
+        mesh.visible = true;
+        break;
+      case 'hidden':
+        mesh.visible = false;
+        break;
+      case 'hide inactives':
+        // The electrode has no value, hide
+        if( active_test ){
+          mesh.visible = true;
+        }else{
+          mesh.visible = false;
+        }
+        break;
+    }
+    // 5. check if mixer exists, update
+    if( mesh.userData.ani_mixer ){
+      mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+    }
+
 
   };
 
@@ -57885,12 +57985,12 @@ CONSTANTS.FOLDERS = {
   'reset-side-panels'     : 'Side Canvas',
   'side-three-planes'     : 'Side Canvas',
   'side-electrode-dist'   : 'Side Canvas',
-  'subject-selector'      : 'Geometry',
-  'surface-selector'      : 'Geometry',
-  'hemisphere-material'   : 'Geometry',
-  'electrode-style'       : 'Geometry',
-  'electrode-mapping'     : 'Electrode Mapping',
-  'animation'             : 'Timeline'
+  'subject-selector'      : 'Surface Settings',
+  'surface-selector'      : 'Surface Settings',
+  'hemisphere-material'   : 'Surface Settings',
+  'electrode-style'       : 'Electrodes',
+  'electrode-mapping'     : 'Electrodes',
+  'animation'             : 'Data Visualization'
 };
 
 
@@ -58077,12 +58177,12 @@ class data_controls_THREEBRAIN_PRESETS{
     // Min max of animation time
     this.animation_time = [0,1];
 
-    // this.parameters = {};
+    this.cache = {};
 
   }
 
   /**
-   * wrapper for canvas.start_animation and pause_animation
+   * wrapper for this.canvas.start_animation and pause_animation
    */
   _update_canvas(level = 0){
     if(level >= 0){
@@ -58092,7 +58192,7 @@ class data_controls_THREEBRAIN_PRESETS{
     }
   }
 
-  fire_change( args, priority = "event" ){
+  fire_change( args, priority = "deferred" ){
     for(let k in args){
       // this.parameters[k] = args[k];
 
@@ -58568,6 +58668,7 @@ class data_controls_THREEBRAIN_PRESETS{
         this._electrode_visibility( e , ii , v );
       });
     });
+    this.canvas.state_data.set('electrode_visibility', v);
 
     this._update_canvas();
     this.fire_change({ 'electrode_visibility' : v });
@@ -58577,6 +58678,9 @@ class data_controls_THREEBRAIN_PRESETS{
     const folder_name = CONSTANTS.FOLDERS[ 'electrode-style' ];
     const show_inactives = this.settings.show_inactive_electrodes;
     const vis_types = ['all visible', 'hide inactives', 'hidden'];
+    const initial_value = show_inactives? 'all visible': 'hide inactives';
+
+    this.canvas.state_data.set('electrode_visibility', initial_value);
 
     // please check if el is electrode before dumpping into this function
     this._electrode_visibility = (el, ii, v) => {
@@ -58600,7 +58704,8 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     };
 
-    this._controller_electrodes = this.gui.add_item('Electrodes', show_inactives? 'all visible': 'hide inactives', {
+
+    this._controller_electrodes = this.gui.add_item('Visibility', initial_value, {
       args : vis_types,
       folder_name : folder_name
     }).onChange((v) => {
@@ -58630,14 +58735,14 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'map_template': v });
       });
 
-    this.gui.add_item('Surface', 'std.141', {
+    this.gui.add_item('Surface Mapping', 'std.141', {
       args : ['std.141', 'mni305', 'no mapping'],
       folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_type_surface': v });
       });
 
-    this.gui.add_item('Volume', 'mni305', {
+    this.gui.add_item('Volume Mapping', 'mni305', {
       args : ['mni305', 'no mapping'],
       folder_name : folder_name })
       .onChange((v) => {
@@ -58746,11 +58851,16 @@ class data_controls_THREEBRAIN_PRESETS{
             this.set_electrodes_visibility( this._controller_electrodes.getValue() );
           }
           // reset color-range
-          val_range.setValue(',');
           if( cmap.value_type === 'continuous' ){
-            this.gui.show_item(['Value Range'], folder_name);
+
+             val_range.setValue(
+               `${cmap.lut.minV.toPrecision(5)},${cmap.lut.maxV.toPrecision(5)}`
+             );
+
+            this.gui.show_item(['Display Range'], folder_name);
           }else{
-            this.gui.hide_item(['Value Range'], folder_name);
+            val_range.setValue(',');
+            this.gui.hide_item(['Display Range'], folder_name);
           }
 
         }
@@ -58760,18 +58870,41 @@ class data_controls_THREEBRAIN_PRESETS{
       this.fire_change({ 'clip_name' : v });
     };
 
-    const ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
+    const _thres_name_onchange = (v) => {
+      const cmap = this.canvas.color_maps.get(v);
+      if(!cmap){
+        // this is not a value we can refer to
+        thres_range.setValue('Cannot threshold on this variable');
+        this.canvas.state_data.set('threshold_active', false);
+        return;
+      }
+
+      // set flags to canvas
+      this.canvas.state_data.set('threshold_active', true);
+      this.canvas.state_data.set('threshold_variable', v);
+
+      if(cmap.value_type === 'continuous'){
+        this.canvas.state_data.set('threshold_type', 'continuous');
+        thres_range.setValue(`${cmap.value_range[0].toPrecision(5)},${cmap.value_range[1].toPrecision(5)}`);
+      }else{
+        // '' means no threshold
+        this.canvas.state_data.set('threshold_type', 'discrete');
+        thres_range.setValue(cmap.value_names.join('|'));
+      }
+    };
+
+    const ani_name = this.gui.add_item('Display Data', initial, { folder_name : folder_name, args : names })
       .onChange((v) => { _ani_name_onchange( v ); });
-    const val_range = this.gui.add_item('Value Range', ',', { folder_name : folder_name })
+    const val_range = this.gui.add_item('Display Range', '~', { folder_name : folder_name })
       .onChange((v) => {
         let ss = v;
-        if( v.match(/[^0-9,-.]/) ){
+        if( v.match(/[^0-9,-.eE~]/) ){
           // illegal chars
           ss = Array.from(v).map((s) => {
-            return( '0123456789.,-'.indexOf(s) === -1 ? '' : s );
+            return( '0123456789.,-eE~'.indexOf(s) === -1 ? '' : s );
           }).join('');
         }
-        let vr = ss.split(',');
+        let vr = ss.split(/[,~]/);
         if( vr.length === 2 ){
           vr[0] = parseFloat( vr[0] );
           vr[1] = parseFloat( vr[1] );
@@ -58785,6 +58918,35 @@ class data_controls_THREEBRAIN_PRESETS{
 
       });
 
+    const thres_name = this.gui.add_item('Threshold Data', initial, { folder_name : folder_name, args : names })
+      .onChange((v) => { _thres_name_onchange( v ); });
+
+    const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
+      .onChange((v) => {
+        const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
+        let candidates = v.split('|').map((x) => { return(x.trim()); });
+
+        if(is_continuous){
+          candidates = candidates.map((x) => {
+            let s = Array.from(x).map((s) => {
+              return( '0123456789.,-eE~'.indexOf(s) === -1 ? '' : s );
+            }).join('').split(/[,~]/);
+            if( s.length === 2 ){
+              s[0] = parseFloat( s[0] );
+              s[1] = parseFloat( s[1] );
+            }else{
+              return([]);
+            }
+            if( isNaN( s[0] ) || isNaN( s[1] ) ){
+              return([]);
+            }
+            return(s);
+          });
+        }
+        // set flag
+        this.canvas.state_data.set('threshold_values', candidates);
+        this._update_canvas();
+      });
 
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
     this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
@@ -58922,7 +59084,7 @@ class data_controls_THREEBRAIN_PRESETS{
         }
       } );
 
-    // const st = canvas.get_surface_types().concat( canvas.get_volume_types() );
+    // const st = this.canvas.get_surface_types().concat( this.canvas.get_volume_types() );
     const elec_surface = this.gui.add_item( 'Electrode type', 'Surface', {
       folder_name: folder_name, args: ['Surface', 'Depth']
     } ).onChange((v) => {
@@ -59453,6 +59615,7 @@ This file defines shiny callback functions (js to shiny)
 
 
 
+
 function storageAvailable(type) {
   try {
     var storage = window[type],
@@ -59477,13 +59640,18 @@ function storageAvailable(type) {
   }
 }
 
-
+/**
+ * Though the name is "shiny", it works more like adapter to communicate:
+ * R-Shiny, gui, canvas
+ *
+ */
 class shiny_tools_THREE_BRAIN_SHINY {
-  constructor(outputId, shiny_mode = true) {
+  constructor(outputId, canvas, shiny_mode = true) {
 
     this.outputId = outputId;
     this.shiny_mode = shiny_mode;
     this.shinyId = outputId + '__shiny';
+    this.canvas = canvas;
 
     this.stack = [];
 
@@ -59500,13 +59668,112 @@ class shiny_tools_THREE_BRAIN_SHINY {
     if( this.shiny_mode ){
       this.register_shiny();
     }
+
+    // Add canvas listeners
+    // 1. controls
+    this.canvas.bind( 'camera_parameters', 'end', (evt) => {
+      this.to_shiny2('main_camera', {
+        position  : canvas.main_camera.position,
+        zoom      : canvas.main_camera.zoom,
+        up        : canvas.main_camera.up
+      });
+    }, this.canvas.controls );
+
+    // 2. click callback
+    // finalize registering
+    const pos = new threeplugins_THREE.Vector3();
+    this.canvas.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.userData ){
+          const g = obj.userData.construct_params;
+          obj.getWorldPosition( pos );
+
+          // Get information and show them on screen
+          const group_name = g.group ? g.group.group_name : null;
+          const shiny_data = {
+            object      : g,
+            name        : g.name,
+            geom_type   : g.type,
+            group       : group_name,
+            position    : pos.toArray(),
+            action      : evt.action,
+            meta        : evt,
+            edit_mode   : this.canvas.edit_mode,
+            is_electrode: false,
+            current_time: 0,
+            time_range  : [0, 0]
+          };
+
+          if( this.canvas.state_data.has( 'color_map' ) ){
+            const cmap_name = this.canvas.state_data.get( 'color_map' );
+            shiny_data.color_map = this.canvas.color_maps.get( cmap_name );
+          }
+
+          if( this.gui ){
+            // clip name
+            let _c = this.gui.get_controller('Display Data', CONSTANTS.FOLDERS['animation']);
+            if( _c && _c.getValue ){
+              shiny_data.current_clip = _c.getValue();
+            }
+
+            _c = this.gui.get_controller('Time', CONSTANTS.FOLDERS['animation']);
+            if( _c && _c.getValue ){
+              shiny_data.current_time = _c.getValue();
+              shiny_data.time_range = [_c.__min, _c.__max];
+            }
+          }
+
+          if( g.is_electrode ){
+
+            const m = CONSTANTS.REGEXP_ELECTRODE.exec( g.name );
+            if( m.length === 4 ){
+
+              shiny_data.subject = m[1];
+              shiny_data.electrode_number = parseInt( m[2] );
+              shiny_data.is_electrode = true;
+            }
+
+          }
+
+          if( evt.action === 'click' ){
+
+            // this.to_shiny(shiny_data, 'mouse_clicked');
+
+            // use better version to_shiny2
+            this.to_shiny2('mouse_clicked', shiny_data, 'event');
+          }else{
+            // this.to_shiny(shiny_data, 'mouse_dblclicked');
+            this.to_shiny2('mouse_dblclicked', shiny_data, 'event');
+          }
+
+
+        }
+      },
+      'click-electrodes-callbacks'
+    );
   }
 
-  register_canvas( canvas ){
-    this.canvas = canvas;
-  }
   register_gui( gui ){
     this.gui = gui;
+
+    if( this.shiny_mode ){
+      // register shiny customized message
+      Shiny.addCustomMessageHandler(`threeBrain-RtoJS-${this.outputId}`, (data) => {
+        const message_type = data.name,
+              message_content = data.value,
+              method_name = 'handle_' + message_type;
+        if( typeof this[method_name] === 'function' ){
+          this[method_name]( message_content );
+        }
+      });
+    }
   }
 
   set_token( token ){
@@ -59514,6 +59781,63 @@ class shiny_tools_THREE_BRAIN_SHINY {
       this.token = token;
     }
   }
+
+
+  handle_background( bgcolor ){
+    const _c = this.gui.get_controller('Background Color', CONSTANTS.FOLDERS['background-color']);
+    _c.setValue( bgcolor );
+  }
+
+  handle_zoom_level( zoom ){
+    this.canvas.main_camera.zoom = zoom;
+    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.start_animation( 0 );
+  }
+
+  handle_camera( args = { position: [500, 0, 0] , up : [0, 0, 1]} ){
+    const pos = to_array( args.position ),
+          up = to_array( args.up );
+    if( pos.length === 3 ){
+      this.canvas.main_camera.position.set(pos[0] , pos[1] , pos[2]);
+    }
+    if( up.length === 3 ){
+      this.canvas.main_camera.up.set(up[0] , up[1] , up[2]);
+    }
+    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.start_animation( 0 );
+  }
+
+  handle_display_data( args = { variable : '', range : [] } ){
+    const variable = args.variable,
+          range = to_array( args.range );
+    if( typeof variable === 'string' && variable !== '' ){
+      this.gui
+        .get_controller( 'Display Data', CONSTANTS.FOLDERS[ 'animation' ])
+        .setValue( variable );
+    }
+    if( range.length === 2 ){
+      this.gui
+        .get_controller( 'Display Range', CONSTANTS.FOLDERS[ 'animation' ])
+        .setValue(`${range[0].toPrecision(5)},${range[1].toPrecision(5)}`);
+    }
+    this.canvas.start_animation( 0 );
+  }
+
+  handle_font_magnification( cex = 1 ){
+    this.canvas.set_font_size( cex );
+    this.canvas.start_animation( 0 );
+  }
+
+
+
+
+
+
+
+
+
+
+
 
   collect_electrode_info( group_name = "__localization__" ){
     const els = this.canvas.electrodes.get( group_name ),
@@ -59710,7 +60034,8 @@ class shiny_tools_THREE_BRAIN_SHINY {
   // use setInputValue instead of onInputChange as later one is never officially supported
   to_shiny2(name, value, priority = "deferred"){
 
-    if( this.shiny_mode ){
+    // make sure shiny is running
+    if( this.shiny_mode && Shiny.shinyapp.$socket ){
 
       const callback = this.outputId + '_' + name;
       console.debug(callback + ' is set to ', JSON.stringify(value));
@@ -60191,7 +60516,7 @@ function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_
 
 
 
-function generate_animation_default(m, track_data, cmap, animation_clips, animation_mixers) {
+function generate_animation_default(m, track_data, cmap, animation_clips, mixer) {
 
     // Generate keyframes
     const _time_min = cmap.time_range[0],
@@ -60503,20 +60828,74 @@ function gen_datacube2(g, canvas){
 
 
 
+
+function render_curvature(canvas, mesh, curv_type, update_color = false){
+
+  // surf_group$set_group_data('curvature_subject', template_subject)
+  const g = mesh.userData.construct_params,
+        curvature_subject = canvas.get_data('curvature_subject', g.name, g.group.group_name) || g.subject_code;
+
+  const curv_data = canvas.get_data(`Curvature - ${g.hemisphere[0]}h.${curv_type} (${curvature_subject})`,
+                                    g.name, g.group.group_name);
+  const vertex_colors = [];
+  let scale = 1;
+
+  if( curv_data && Array.isArray(curv_data.value) &&
+      mesh.geometry.attributes.position.count == curv_data.value.length ){
+
+    if( !Array.isArray(curv_data.range) || curv_data.range.length < 2 ){
+      curv_data.range = [-1, 1];
+    }
+
+    scale = Math.max(curv_data.range[1], -curv_data.range[0]);
+
+    // generate color for each vertices
+    curv_data.value.forEach((v) => {
+      let col;
+      if( v < 0 ){
+        col = v / curv_data.range[0] * 54 + 200;
+      }else{
+        col = (1 - v / curv_data.range[1]) * 128;
+      }
+      // col = 127.5 - (v / scale * 127.5);
+      vertex_colors.push( col );
+      vertex_colors.push( col );
+      vertex_colors.push( col );
+    });
+
+
+    if( update_color ){
+      // update color to geometry
+      mesh.geometry.addAttribute( 'color', new threeplugins_THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
+      mesh.material.vertexColors = threeplugins_THREE.VertexColors;
+      mesh.material.needsUpdate = true;
+    }
+
+  }else if( update_color ){
+    mesh.material.vertexColors = threeplugins_THREE.NoColors;
+    mesh.material.needsUpdate = true;
+  }
+
+}
+
+
+
 function gen_free(g, canvas){
   const gb = new threeplugins_THREE.BufferGeometry(),
       vertices = canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name),
-      faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name);
+      faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name),
+      curvature_type = canvas.get_data("curvature", g.name, g.group.group_name);
 
   const vertex_positions = [],
-        vertex_colors = [],
+        // vertex_colors = [],
         face_orders = [];
       //normals = [];
+
 
   vertices.forEach((v) => {
     vertex_positions.push(v[0], v[1], v[2]);
     // normals.push(0,0,1);
-    vertex_colors.push( 0, 0, 0);
+    // vertex_colors.push( 0, 0, 0);
   });
 
   faces.forEach((v) => {
@@ -60525,19 +60904,19 @@ function gen_free(g, canvas){
 
   gb.setIndex( face_orders );
   gb.addAttribute( 'position', new threeplugins_THREE.Float32BufferAttribute( vertex_positions, 3 ) );
-  gb.addAttribute( 'color', new threeplugins_THREE.Float32BufferAttribute( vertex_colors, 3 ) );
+  // gb.addAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
   // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+
   gb.computeVertexNormals();
   gb.computeBoundingBox();
   gb.computeBoundingSphere();
   //gb.computeFaceNormals();
   //gb.faces = faces;
 
-
   gb.name = 'geom_free_' + g.name;
 
   // https://github.com/mrdoob/three.js/issues/3490
-  let material = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : true, side: threeplugins_THREE.DoubleSide });
+  let material = new threeplugins_THREE.MeshPhongMaterial({ 'transparent' : true, side: threeplugins_THREE.DoubleSide });
 
   let mesh = new threeplugins_THREE.Mesh(gb, material);
   mesh.name = 'mesh_free_' + g.name;
@@ -60546,6 +60925,14 @@ function gen_free(g, canvas){
 
   // mesh.userData.ani_value = values;
   // mesh.userData.ani_time = to_array(g.time_stamp);
+
+  // have to assign construct_params to use render_curvature
+  mesh.userData.construct_params = g;
+
+  if( typeof curvature_type === 'string' ){
+    render_curvature(canvas, mesh, curvature_type, true);
+  }
+
 
   mesh.userData.dispose = () => {
     mesh.material.dispose();
@@ -60601,7 +60988,7 @@ function gen_free(g, canvas){
   };
 
 
-  mesh.userData.generate_animation = (track_data, cmap, animation_clips, animation_mixers) => {
+  mesh.userData.generate_animation = (track_data, cmap, animation_clips, mixer) => {
     console.log('Using customized animation mixer');
 
     // Generate keyframes
@@ -60649,7 +61036,7 @@ function gen_free(g, canvas){
     return( keyframe );
   };
 
-  mesh.userData.pre_render = () => {
+  mesh.userData.pre_render = ( results ) => {
     // console.log( mesh.userData.animationIndex );
     // get current index
     let vidx = mesh.userData.animationIndex;
@@ -60899,7 +61286,6 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
-    this.animation_mixers = new Map();
     this.animation_clips = new Map();
     this.color_maps = new Map();
     // Important, this keeps animation clock aligned with real-time PC clock.
@@ -60922,19 +61308,21 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.scene.add( this.origin );
 
     /* Main camera
-        Main camera is initialized at 0,0,500. The distance is stayed at 500 away from origin
+        Main camera is initialized at 500,0,0. The distance is stayed at 500 away from
+        origin (stay at right &look at left)
         The view range is set from -150 to 150 (left - right) respect container ratio
         render distance is from 1 to 10000, sufficient for brain object.
         Parameters:
-          position: 0,0,500
+          position: 500,0,0
           left: -150, right: 150, near 1, far: 10000
           layers: 0, 1, 2, 3, 7, 8
           center/lookat: origin (0,0,0)
           up: 0,1,0 ( heads up )
     */
     this.main_camera = new threeplugins_THREE.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
-		this.main_camera.position.z = 500;
-		this.main_camera.userData.pos = [0,0,500];
+		this.main_camera.position.x = 500;
+		this.main_camera.userData.pos = [500,0,0];
+		this.main_camera.up.set(0,0,1);
 		this.main_camera.layers.set( CONSTANTS.LAYER_USER_MAIN_CAMERA_0 );
 		this.main_camera.layers.enable( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
 		this.main_camera.layers.enable( 2 );
@@ -60944,17 +61332,20 @@ class threejs_scene_THREEBRAIN_CANVAS {
 		this.main_camera.lookAt( CONSTANTS.VEC_ORIGIN ); // Force camera
 
 		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
+		// Maybe we should get rid of directional light as it will cause reflactions?
     const main_light = new threeplugins_THREE.DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
     main_light.position.copy( CONSTANTS.VEC_ANAT_I );
     main_light.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+    main_light.name = 'main light - directional';
     this.main_camera.add( main_light );
 
     // Add main camera to scene
     this.add_to_scene( this.main_camera, true );
 
     // Add ambient light to make scene soft
-    const ambient_light = new threeplugins_THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT );
+    const ambient_light = new threeplugins_THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT, 1.0 );
     ambient_light.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+    ambient_light.name = 'main light - ambient';
     this.add_to_scene( ambient_light, true ); // soft white light
 
 
@@ -61238,7 +61629,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
             this.state_data.get( 'axial_depth' )
           ).normalize().multiplyScalar(500);
           if( _d.length() === 0 ){
-            _d.z = 500;
+            _d.x = 500;
           }
 
           if( e.shiftKey ){
@@ -61399,8 +61790,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.focus_box.userData.added = false;
     this.bounding_box = this.focus_box.clone();
 
-
-
+    this.set_font_size();
 
 		// File loader
     this.loader_triggered = false;
@@ -61431,6 +61821,16 @@ class threejs_scene_THREEBRAIN_CANVAS {
     }else{
       this.origin.add( m );
     }
+  }
+
+  set_font_size( magnification = 1 ){
+    // font size
+    this._lineHeight_normal = Math.round( 30 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_small = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._fontSize_normal = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_small = Math.round( 16 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_legend = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._fontSize_legend = Math.round( 16 * this.pixel_ratio[0] * magnification );
   }
 
   bind( name, evtstr, fun, target, options = false ){
@@ -62321,7 +62721,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   }
 
-  render(){
+  render( results ){
+
+    if( !results ){
+      results = {
+        current_time        : 0,
+        current_time_delta  : 0
+      };
+    }
 
 
     // double-buffer to make sure depth renderings
@@ -62331,7 +62738,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // Pre render all meshes
     this.mesh.forEach((m) => {
       if( typeof m.userData.pre_render === 'function' ){
-        m.userData.pre_render();
+        m.userData.pre_render( results );
         /*
         try {
           m.userData.pre_render();
@@ -62377,12 +62784,15 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   }
 
-  text_ani(){
+  inc_time(){
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
-    let results = {};
+    let results = {
+      current_time_delta  : 0
+    };
 
     const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
+    results.time_range_min = time_range_min;
 
     // show mesh value info
     if(this.object_chosen !== undefined &&
@@ -62429,32 +62839,15 @@ class threejs_scene_THREEBRAIN_CANVAS {
       }
 
       // Change animation
+      results.current_time_delta = current_time - time_range_min;
+      /*
       this.animation_mixers.forEach( (mixer) => {
         mixer.update( current_time - time_range_min - mixer.time );
       });
+      */
 
       // set timer
       this.animation_controls.set_time( current_time );
-
-      // show mesh value info
-      if( results.selected_object && this.object_chosen.userData.ani_exists ){
-
-        const track_type = this.state_data.get("color_map");
-
-        const track_data = this.object_chosen.userData.get_track_data( track_type );
-
-        if( track_data ){
-          const time_stamp = to_array( track_data.time );
-          const values = to_array( track_data.value );
-          let _tmp = - Infinity;
-          for( let ii in time_stamp ){
-            if(time_stamp[ ii ] <= current_time && time_stamp[ ii ] > _tmp){
-              results.current_value = values[ ii ];
-              _tmp = time_stamp[ ii ];
-            }
-          }
-        }
-      }
 
     }
 
@@ -62816,10 +63209,31 @@ class threejs_scene_THREEBRAIN_CANVAS {
         this.stats.update();
       }
 
-  		const results = this.text_ani();
+  		const results = this.inc_time();
 
 
-  		this.render();
+  		this.render( results );
+
+
+  		// show mesh value info
+      if( results.selected_object && this.object_chosen.userData.ani_exists ){
+
+        const track_type = this.state_data.get("color_map");
+
+        const track_data = this.object_chosen.userData.get_track_data( track_type );
+
+        if( track_data ){
+          const time_stamp = to_array( track_data.time );
+          const values = to_array( track_data.value );
+          let _tmp = - Infinity;
+          for( let ii in time_stamp ){
+            if(time_stamp[ ii ] <= results.current_time && time_stamp[ ii ] > _tmp){
+              results.current_value = values[ ii ];
+              _tmp = time_stamp[ ii ];
+            }
+          }
+        }
+      }
 
   		// draw main and side rendered images to this.domElement (2d context)
   		this.mapToCanvas();
@@ -62976,7 +63390,6 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     console.log('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
-    this.animation_mixers.clear();
 
     this.group.forEach((g) => {
       // g.parent.remove( g );
@@ -63582,8 +63995,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // value_names: value_names, time_range: time_range
 
       // Obtain mixer, which will be used in multiple places
-      // let mixer = this.animation_mixers.get( m.name );
-      let mixer = this.animation_mixers.get( m.name ), keyframe;
+      let keyframe;
 
       // Step 1: Obtain keyframe tracks
       // if animation_name exists, get tracks, otherwise reset to default material
@@ -63593,15 +64005,15 @@ class threejs_scene_THREEBRAIN_CANVAS {
       if( !track_data ){
 
         // If action is going, stop them all
-        if( mixer ){ mixer.stopAllAction(); }
+        if( m.userData.ani_mixer ){ m.userData.ani_mixer.stopAllAction(); }
         return( null );
 
       }
 
       if( typeof m.userData.generate_animation === 'function'){
-        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, this.animation_mixers);
+        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, m.userData.ani_mixer );
       }else{
-        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, this.animation_mixers);
+        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, m.userData.ani_mixer );
       }
       if( !keyframe ){ return; }
 
@@ -63623,15 +64035,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
       }
 
       // Step 3: create mixer
-      if( mixer ){
-        mixer.stopAllAction();
+      if( m.userData.ani_mixer ){
+        m.userData.ani_mixer.stopAllAction();
       }
-      mixer = new threeplugins_THREE.AnimationMixer( m );
-      this.animation_mixers.set( m.name, mixer );
-      mixer.stopAllAction();
+      m.userData.ani_mixer = new threeplugins_THREE.AnimationMixer( m );
+      m.userData.ani_mixer.stopAllAction();
 
       // Step 4: combine mixer with clip
-      const action = mixer.clipAction( clip );
+      const action = m.userData.ani_mixer.clipAction( clip );
       action.play();
 
 
@@ -64265,7 +64676,7 @@ class src_BrainCanvas{
     this.DEBUG = DEBUG;
     this.outputId = this.el.getAttribute( 'data-target' );
     // this.outputId = this.el.getAttribute('id');
-    this.shiny = new shiny_tools_THREE_BRAIN_SHINY( this.outputId, this.shiny_mode );
+
     this.has_webgl = false;
 
     // ---------------------------- Utils ----------------------------
@@ -64311,7 +64722,7 @@ class src_BrainCanvas{
     this.canvas = new threejs_scene_THREEBRAIN_CANVAS(
       this.el, width, height, 250,
       this.shiny_mode, cache, this.DEBUG, this.has_webgl2);
-    this.shiny.register_canvas( this.canvas );
+    this.shiny = new shiny_tools_THREE_BRAIN_SHINY( this.outputId, this.canvas, this.shiny_mode );
 
     // 4. Animation, but do not render;
     this.canvas.animate();
@@ -64453,79 +64864,6 @@ class src_BrainCanvas{
     };
   }
 
-  _set_info_callback(){
-    const pos = new threeplugins_THREE.Vector3();
-
-    this.canvas.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.userData ){
-          const g = obj.userData.construct_params;
-          obj.getWorldPosition( pos );
-
-          // Get information and show them on screen
-          const group_name = g.group ? g.group.group_name : null;
-          const shiny_data = {
-            object      : g,
-            name        : g.name,
-            geom_type   : g.type,
-            group       : group_name,
-            position    : pos.toArray(),
-            action      : evt.action,
-            meta        : evt,
-            edit_mode   : this.canvas.edit_mode,
-            is_electrode: false,
-            current_time: 0,
-            color_maps  : this.settings.color_maps,
-            time_range  : this.presets.animation_time
-          };
-
-          if( this.gui ){
-            // clip name
-            let _c = this.gui.get_controller('Clip Name');
-            if( _c && _c.getValue ){
-              shiny_data.current_clip = _c.getValue();
-            }
-
-            _c = this.presets._ani_time;
-            if( _c && _c.getValue ){
-              shiny_data.current_time = _c.getValue();
-            }
-          }
-
-          if( g.is_electrode ){
-
-            const m = CONSTANTS.REGEXP_ELECTRODE.exec( g.name );
-            if( m.length === 4 ){
-
-              shiny_data.subject = m[1];
-              shiny_data.electrode_number = parseInt( m[2] );
-              shiny_data.is_electrode = true;
-            }
-
-          }
-
-          if( evt.action === 'click' ){
-            this.shiny.to_shiny(shiny_data, 'mouse_clicked');
-          }else{
-            this.shiny.to_shiny(shiny_data, 'mouse_dblclicked');
-          }
-
-
-        }
-      },
-      'to-shiny'
-    );
-
-
-
-  }
 
   render_value( x ){
     this.geoms = x.geoms;
@@ -64633,7 +64971,6 @@ class src_BrainCanvas{
     let gui = this._register_gui_control();
     this.gui = gui;
     this.shiny.register_gui( gui );
-    this._set_info_callback();
 
 
 
@@ -64644,8 +64981,9 @@ class src_BrainCanvas{
     */
     // this.canvas.reset_main_camera( this.settings.camera_pos , this.settings.start_zoom );
     this.canvas.reset_main_camera( undefined , this.settings.start_zoom );
+    this.canvas.set_font_size( this.settings.font_magnification || 1 );
 
-    // Add/remove axis
+    // Add/remove axis anchor
     let coords = to_array(this.settings.coords);
     if(coords.length === 3){
       this.canvas.draw_axis( coords[0], coords[1], coords[2] );

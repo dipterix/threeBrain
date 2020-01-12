@@ -148,7 +148,6 @@ class THREEBRAIN_CANVAS {
 
     // If there exists animations, this will control the flow;
     this.animation_controls = {};
-    this.animation_mixers = new Map();
     this.animation_clips = new Map();
     this.color_maps = new Map();
     // Important, this keeps animation clock aligned with real-time PC clock.
@@ -171,19 +170,21 @@ class THREEBRAIN_CANVAS {
     this.scene.add( this.origin );
 
     /* Main camera
-        Main camera is initialized at 0,0,500. The distance is stayed at 500 away from origin
+        Main camera is initialized at 500,0,0. The distance is stayed at 500 away from
+        origin (stay at right &look at left)
         The view range is set from -150 to 150 (left - right) respect container ratio
         render distance is from 1 to 10000, sufficient for brain object.
         Parameters:
-          position: 0,0,500
+          position: 500,0,0
           left: -150, right: 150, near 1, far: 10000
           layers: 0, 1, 2, 3, 7, 8
           center/lookat: origin (0,0,0)
           up: 0,1,0 ( heads up )
     */
     this.main_camera = new THREE.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
-		this.main_camera.position.z = 500;
-		this.main_camera.userData.pos = [0,0,500];
+		this.main_camera.position.x = 500;
+		this.main_camera.userData.pos = [500,0,0];
+		this.main_camera.up.set(0,0,1);
 		this.main_camera.layers.set( CONSTANTS.LAYER_USER_MAIN_CAMERA_0 );
 		this.main_camera.layers.enable( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
 		this.main_camera.layers.enable( 2 );
@@ -193,17 +194,20 @@ class THREEBRAIN_CANVAS {
 		this.main_camera.lookAt( CONSTANTS.VEC_ORIGIN ); // Force camera
 
 		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
+		// Maybe we should get rid of directional light as it will cause reflactions?
     const main_light = new THREE.DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
     main_light.position.copy( CONSTANTS.VEC_ANAT_I );
     main_light.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+    main_light.name = 'main light - directional';
     this.main_camera.add( main_light );
 
     // Add main camera to scene
     this.add_to_scene( this.main_camera, true );
 
     // Add ambient light to make scene soft
-    const ambient_light = new THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT );
+    const ambient_light = new THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT, 1.0 );
     ambient_light.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+    ambient_light.name = 'main light - ambient';
     this.add_to_scene( ambient_light, true ); // soft white light
 
 
@@ -487,7 +491,7 @@ class THREEBRAIN_CANVAS {
             this.state_data.get( 'axial_depth' )
           ).normalize().multiplyScalar(500);
           if( _d.length() === 0 ){
-            _d.z = 500;
+            _d.x = 500;
           }
 
           if( e.shiftKey ){
@@ -648,8 +652,7 @@ class THREEBRAIN_CANVAS {
     this.focus_box.userData.added = false;
     this.bounding_box = this.focus_box.clone();
 
-
-
+    this.set_font_size();
 
 		// File loader
     this.loader_triggered = false;
@@ -680,6 +683,16 @@ class THREEBRAIN_CANVAS {
     }else{
       this.origin.add( m );
     }
+  }
+
+  set_font_size( magnification = 1 ){
+    // font size
+    this._lineHeight_normal = Math.round( 30 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_small = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._fontSize_normal = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_small = Math.round( 16 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_legend = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._fontSize_legend = Math.round( 16 * this.pixel_ratio[0] * magnification );
   }
 
   bind( name, evtstr, fun, target, options = false ){
@@ -1570,7 +1583,14 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  render(){
+  render( results ){
+
+    if( !results ){
+      results = {
+        current_time        : 0,
+        current_time_delta  : 0
+      };
+    }
 
 
     // double-buffer to make sure depth renderings
@@ -1580,7 +1600,7 @@ class THREEBRAIN_CANVAS {
     // Pre render all meshes
     this.mesh.forEach((m) => {
       if( typeof m.userData.pre_render === 'function' ){
-        m.userData.pre_render();
+        m.userData.pre_render( results );
         /*
         try {
           m.userData.pre_render();
@@ -1626,12 +1646,15 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  text_ani(){
+  inc_time(){
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
-    let results = {};
+    let results = {
+      current_time_delta  : 0
+    };
 
     const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
+    results.time_range_min = time_range_min;
 
     // show mesh value info
     if(this.object_chosen !== undefined &&
@@ -1678,32 +1701,15 @@ class THREEBRAIN_CANVAS {
       }
 
       // Change animation
+      results.current_time_delta = current_time - time_range_min;
+      /*
       this.animation_mixers.forEach( (mixer) => {
         mixer.update( current_time - time_range_min - mixer.time );
       });
+      */
 
       // set timer
       this.animation_controls.set_time( current_time );
-
-      // show mesh value info
-      if( results.selected_object && this.object_chosen.userData.ani_exists ){
-
-        const track_type = this.state_data.get("color_map");
-
-        const track_data = this.object_chosen.userData.get_track_data( track_type );
-
-        if( track_data ){
-          const time_stamp = to_array( track_data.time );
-          const values = to_array( track_data.value );
-          let _tmp = - Infinity;
-          for( let ii in time_stamp ){
-            if(time_stamp[ ii ] <= current_time && time_stamp[ ii ] > _tmp){
-              results.current_value = values[ ii ];
-              _tmp = time_stamp[ ii ];
-            }
-          }
-        }
-      }
 
     }
 
@@ -2065,10 +2071,31 @@ class THREEBRAIN_CANVAS {
         this.stats.update();
       }
 
-  		const results = this.text_ani();
+  		const results = this.inc_time();
 
 
-  		this.render();
+  		this.render( results );
+
+
+  		// show mesh value info
+      if( results.selected_object && this.object_chosen.userData.ani_exists ){
+
+        const track_type = this.state_data.get("color_map");
+
+        const track_data = this.object_chosen.userData.get_track_data( track_type );
+
+        if( track_data ){
+          const time_stamp = to_array( track_data.time );
+          const values = to_array( track_data.value );
+          let _tmp = - Infinity;
+          for( let ii in time_stamp ){
+            if(time_stamp[ ii ] <= results.current_time && time_stamp[ ii ] > _tmp){
+              results.current_value = values[ ii ];
+              _tmp = time_stamp[ ii ];
+            }
+          }
+        }
+      }
 
   		// draw main and side rendered images to this.domElement (2d context)
   		this.mapToCanvas();
@@ -2225,7 +2252,6 @@ class THREEBRAIN_CANVAS {
 
     console.log('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
-    this.animation_mixers.clear();
 
     this.group.forEach((g) => {
       // g.parent.remove( g );
@@ -2831,8 +2857,7 @@ class THREEBRAIN_CANVAS {
       // value_names: value_names, time_range: time_range
 
       // Obtain mixer, which will be used in multiple places
-      // let mixer = this.animation_mixers.get( m.name );
-      let mixer = this.animation_mixers.get( m.name ), keyframe;
+      let keyframe;
 
       // Step 1: Obtain keyframe tracks
       // if animation_name exists, get tracks, otherwise reset to default material
@@ -2842,15 +2867,15 @@ class THREEBRAIN_CANVAS {
       if( !track_data ){
 
         // If action is going, stop them all
-        if( mixer ){ mixer.stopAllAction(); }
+        if( m.userData.ani_mixer ){ m.userData.ani_mixer.stopAllAction(); }
         return( null );
 
       }
 
       if( typeof m.userData.generate_animation === 'function'){
-        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, this.animation_mixers);
+        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, m.userData.ani_mixer );
       }else{
-        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, this.animation_mixers);
+        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, m.userData.ani_mixer );
       }
       if( !keyframe ){ return; }
 
@@ -2872,15 +2897,14 @@ class THREEBRAIN_CANVAS {
       }
 
       // Step 3: create mixer
-      if( mixer ){
-        mixer.stopAllAction();
+      if( m.userData.ani_mixer ){
+        m.userData.ani_mixer.stopAllAction();
       }
-      mixer = new THREE.AnimationMixer( m );
-      this.animation_mixers.set( m.name, mixer );
-      mixer.stopAllAction();
+      m.userData.ani_mixer = new THREE.AnimationMixer( m );
+      m.userData.ani_mixer.stopAllAction();
 
       // Step 4: combine mixer with clip
-      const action = mixer.clipAction( clip );
+      const action = m.userData.ani_mixer.clipAction( clip );
       action.play();
 
 

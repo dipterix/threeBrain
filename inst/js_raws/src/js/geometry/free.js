@@ -1,20 +1,74 @@
 import { THREE } from '../threeplugins.js';
 import { to_array } from '../utils.js';
 
+
+function render_curvature(canvas, mesh, curv_type, update_color = false){
+
+  // surf_group$set_group_data('curvature_subject', template_subject)
+  const g = mesh.userData.construct_params,
+        curvature_subject = canvas.get_data('curvature_subject', g.name, g.group.group_name) || g.subject_code;
+
+  const curv_data = canvas.get_data(`Curvature - ${g.hemisphere[0]}h.${curv_type} (${curvature_subject})`,
+                                    g.name, g.group.group_name);
+  const vertex_colors = [];
+  let scale = 1;
+
+  if( curv_data && Array.isArray(curv_data.value) &&
+      mesh.geometry.attributes.position.count == curv_data.value.length ){
+
+    if( !Array.isArray(curv_data.range) || curv_data.range.length < 2 ){
+      curv_data.range = [-1, 1];
+    }
+
+    scale = Math.max(curv_data.range[1], -curv_data.range[0]);
+
+    // generate color for each vertices
+    curv_data.value.forEach((v) => {
+      let col;
+      if( v < 0 ){
+        col = v / curv_data.range[0] * 54 + 200;
+      }else{
+        col = (1 - v / curv_data.range[1]) * 128;
+      }
+      // col = 127.5 - (v / scale * 127.5);
+      vertex_colors.push( col );
+      vertex_colors.push( col );
+      vertex_colors.push( col );
+    });
+
+
+    if( update_color ){
+      // update color to geometry
+      mesh.geometry.addAttribute( 'color', new THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
+      mesh.material.vertexColors = THREE.VertexColors;
+      mesh.material.needsUpdate = true;
+    }
+
+  }else if( update_color ){
+    mesh.material.vertexColors = THREE.NoColors;
+    mesh.material.needsUpdate = true;
+  }
+
+}
+
+
+
 function gen_free(g, canvas){
   const gb = new THREE.BufferGeometry(),
       vertices = canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name),
-      faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name);
+      faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name),
+      curvature_type = canvas.get_data("curvature", g.name, g.group.group_name);
 
   const vertex_positions = [],
-        vertex_colors = [],
+        // vertex_colors = [],
         face_orders = [];
       //normals = [];
+
 
   vertices.forEach((v) => {
     vertex_positions.push(v[0], v[1], v[2]);
     // normals.push(0,0,1);
-    vertex_colors.push( 0, 0, 0);
+    // vertex_colors.push( 0, 0, 0);
   });
 
   faces.forEach((v) => {
@@ -23,19 +77,19 @@ function gen_free(g, canvas){
 
   gb.setIndex( face_orders );
   gb.addAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
-  gb.addAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
+  // gb.addAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
   // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+
   gb.computeVertexNormals();
   gb.computeBoundingBox();
   gb.computeBoundingSphere();
   //gb.computeFaceNormals();
   //gb.faces = faces;
 
-
   gb.name = 'geom_free_' + g.name;
 
   // https://github.com/mrdoob/three.js/issues/3490
-  let material = new THREE.MeshLambertMaterial({ 'transparent' : true, side: THREE.DoubleSide });
+  let material = new THREE.MeshPhongMaterial({ 'transparent' : true, side: THREE.DoubleSide });
 
   let mesh = new THREE.Mesh(gb, material);
   mesh.name = 'mesh_free_' + g.name;
@@ -44,6 +98,14 @@ function gen_free(g, canvas){
 
   // mesh.userData.ani_value = values;
   // mesh.userData.ani_time = to_array(g.time_stamp);
+
+  // have to assign construct_params to use render_curvature
+  mesh.userData.construct_params = g;
+
+  if( typeof curvature_type === 'string' ){
+    render_curvature(canvas, mesh, curvature_type, true);
+  }
+
 
   mesh.userData.dispose = () => {
     mesh.material.dispose();
@@ -99,7 +161,7 @@ function gen_free(g, canvas){
   };
 
 
-  mesh.userData.generate_animation = (track_data, cmap, animation_clips, animation_mixers) => {
+  mesh.userData.generate_animation = (track_data, cmap, animation_clips, mixer) => {
     console.log('Using customized animation mixer');
 
     // Generate keyframes
@@ -147,7 +209,7 @@ function gen_free(g, canvas){
     return( keyframe );
   };
 
-  mesh.userData.pre_render = () => {
+  mesh.userData.pre_render = ( results ) => {
     // console.log( mesh.userData.animationIndex );
     // get current index
     let vidx = mesh.userData.animationIndex;

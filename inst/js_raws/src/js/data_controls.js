@@ -35,12 +35,12 @@ class THREEBRAIN_PRESETS{
     // Min max of animation time
     this.animation_time = [0,1];
 
-    // this.parameters = {};
+    this.cache = {};
 
   }
 
   /**
-   * wrapper for canvas.start_animation and pause_animation
+   * wrapper for this.canvas.start_animation and pause_animation
    */
   _update_canvas(level = 0){
     if(level >= 0){
@@ -50,7 +50,7 @@ class THREEBRAIN_PRESETS{
     }
   }
 
-  fire_change( args, priority = "event" ){
+  fire_change( args, priority = "deferred" ){
     for(let k in args){
       // this.parameters[k] = args[k];
 
@@ -526,6 +526,7 @@ class THREEBRAIN_PRESETS{
         this._electrode_visibility( e , ii , v );
       });
     });
+    this.canvas.state_data.set('electrode_visibility', v);
 
     this._update_canvas();
     this.fire_change({ 'electrode_visibility' : v });
@@ -535,6 +536,9 @@ class THREEBRAIN_PRESETS{
     const folder_name = CONSTANTS.FOLDERS[ 'electrode-style' ];
     const show_inactives = this.settings.show_inactive_electrodes;
     const vis_types = ['all visible', 'hide inactives', 'hidden'];
+    const initial_value = show_inactives? 'all visible': 'hide inactives';
+
+    this.canvas.state_data.set('electrode_visibility', initial_value);
 
     // please check if el is electrode before dumpping into this function
     this._electrode_visibility = (el, ii, v) => {
@@ -558,7 +562,8 @@ class THREEBRAIN_PRESETS{
       }
     };
 
-    this._controller_electrodes = this.gui.add_item('Electrodes', show_inactives? 'all visible': 'hide inactives', {
+
+    this._controller_electrodes = this.gui.add_item('Visibility', initial_value, {
       args : vis_types,
       folder_name : folder_name
     }).onChange((v) => {
@@ -588,14 +593,14 @@ class THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'map_template': v });
       });
 
-    this.gui.add_item('Surface', 'std.141', {
+    this.gui.add_item('Surface Mapping', 'std.141', {
       args : ['std.141', 'mni305', 'no mapping'],
       folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_type_surface': v });
       });
 
-    this.gui.add_item('Volume', 'mni305', {
+    this.gui.add_item('Volume Mapping', 'mni305', {
       args : ['mni305', 'no mapping'],
       folder_name : folder_name })
       .onChange((v) => {
@@ -704,11 +709,16 @@ class THREEBRAIN_PRESETS{
             this.set_electrodes_visibility( this._controller_electrodes.getValue() );
           }
           // reset color-range
-          val_range.setValue(',');
           if( cmap.value_type === 'continuous' ){
-            this.gui.show_item(['Value Range'], folder_name);
+
+             val_range.setValue(
+               `${cmap.lut.minV.toPrecision(5)},${cmap.lut.maxV.toPrecision(5)}`
+             );
+
+            this.gui.show_item(['Display Range'], folder_name);
           }else{
-            this.gui.hide_item(['Value Range'], folder_name);
+            val_range.setValue(',');
+            this.gui.hide_item(['Display Range'], folder_name);
           }
 
         }
@@ -718,18 +728,41 @@ class THREEBRAIN_PRESETS{
       this.fire_change({ 'clip_name' : v });
     };
 
-    const ani_name = this.gui.add_item('Clip Name', initial, { folder_name : folder_name, args : names })
+    const _thres_name_onchange = (v) => {
+      const cmap = this.canvas.color_maps.get(v);
+      if(!cmap){
+        // this is not a value we can refer to
+        thres_range.setValue('Cannot threshold on this variable');
+        this.canvas.state_data.set('threshold_active', false);
+        return;
+      }
+
+      // set flags to canvas
+      this.canvas.state_data.set('threshold_active', true);
+      this.canvas.state_data.set('threshold_variable', v);
+
+      if(cmap.value_type === 'continuous'){
+        this.canvas.state_data.set('threshold_type', 'continuous');
+        thres_range.setValue(`${cmap.value_range[0].toPrecision(5)},${cmap.value_range[1].toPrecision(5)}`);
+      }else{
+        // '' means no threshold
+        this.canvas.state_data.set('threshold_type', 'discrete');
+        thres_range.setValue(cmap.value_names.join('|'));
+      }
+    };
+
+    const ani_name = this.gui.add_item('Display Data', initial, { folder_name : folder_name, args : names })
       .onChange((v) => { _ani_name_onchange( v ); });
-    const val_range = this.gui.add_item('Value Range', ',', { folder_name : folder_name })
+    const val_range = this.gui.add_item('Display Range', '~', { folder_name : folder_name })
       .onChange((v) => {
         let ss = v;
-        if( v.match(/[^0-9,-.]/) ){
+        if( v.match(/[^0-9,-.eE~]/) ){
           // illegal chars
           ss = Array.from(v).map((s) => {
-            return( '0123456789.,-'.indexOf(s) === -1 ? '' : s );
+            return( '0123456789.,-eE~'.indexOf(s) === -1 ? '' : s );
           }).join('');
         }
-        let vr = ss.split(',');
+        let vr = ss.split(/[,~]/);
         if( vr.length === 2 ){
           vr[0] = parseFloat( vr[0] );
           vr[1] = parseFloat( vr[1] );
@@ -743,6 +776,35 @@ class THREEBRAIN_PRESETS{
 
       });
 
+    const thres_name = this.gui.add_item('Threshold Data', initial, { folder_name : folder_name, args : names })
+      .onChange((v) => { _thres_name_onchange( v ); });
+
+    const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
+      .onChange((v) => {
+        const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
+        let candidates = v.split('|').map((x) => { return(x.trim()); });
+
+        if(is_continuous){
+          candidates = candidates.map((x) => {
+            let s = Array.from(x).map((s) => {
+              return( '0123456789.,-eE~'.indexOf(s) === -1 ? '' : s );
+            }).join('').split(/[,~]/);
+            if( s.length === 2 ){
+              s[0] = parseFloat( s[0] );
+              s[1] = parseFloat( s[1] );
+            }else{
+              return([]);
+            }
+            if( isNaN( s[0] ) || isNaN( s[1] ) ){
+              return([]);
+            }
+            return(s);
+          });
+        }
+        // set flag
+        this.canvas.state_data.set('threshold_values', candidates);
+        this._update_canvas();
+      });
 
     this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
     this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
@@ -880,7 +942,7 @@ class THREEBRAIN_PRESETS{
         }
       } );
 
-    // const st = canvas.get_surface_types().concat( canvas.get_volume_types() );
+    // const st = this.canvas.get_surface_types().concat( this.canvas.get_volume_types() );
     const elec_surface = this.gui.add_item( 'Electrode type', 'Surface', {
       folder_name: folder_name, args: ['Surface', 'Depth']
     } ).onChange((v) => {

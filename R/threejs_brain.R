@@ -4,6 +4,7 @@
 #' @param width,height positive integers. Width and height of the widget.
 #'   By default width=`100\%`, and height varies.
 #' @param background character, background color such as \code{"#FFFFFF"} or \code{"white"}
+#' @param cex positive number, relative text magnification level
 #' @param default_colormap character, which color map name to display at startup
 #' @param palettes named list, names corresponds to color-map names if you want to change color palettes
 #' @param val_ranges named list, similar to \code{palettes}, value range for each values
@@ -26,12 +27,13 @@
 #' @param debug logical, internally used for debugging
 #' @param optionals internally used, to be deprecated
 #' @param browser_external logical, use system default browser (default) or builtin one.
-#' @param global_data internally use, mainly to store orientation matrices.
+#' @param global_data,global_files internally use, mainly to store orientation matrices and files.
 #' @param widget_id character, internally used as unique identifiers for widgets.
 #'   Only use it when you have multiple widgets in one website
 #' @export
 threejs_brain <- function(
   ..., .list = list(), width = NULL, height = NULL, background = "#FFFFFF",
+  cex = 1,
 
   # Args for the side panels
   side_canvas = FALSE, side_zoom = 1, side_width = 250, side_shift = c(0, 0),
@@ -41,7 +43,7 @@ threejs_brain <- function(
   control_panel = TRUE, control_presets = NULL, control_display = TRUE,
 
   # Main camera and scene center
-  camera_center = c(0,0,0), camera_pos = c(0,0,500), start_zoom = 1, coords = NULL,
+  camera_center = c(0,0,0), camera_pos = c(500,0,0), start_zoom = 1, coords = NULL,
 
   # For colors and animation
   symmetric = 0, default_colormap = 'Value',
@@ -50,7 +52,7 @@ threejs_brain <- function(
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
   debug = FALSE, token = NULL, optionals = list(),
-  browser_external = TRUE, global_data = list()
+  browser_external = TRUE, global_data = list(), global_files = list()
 ){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
@@ -64,6 +66,17 @@ threejs_brain <- function(
       name = sprintf('__global_data__%s', nm),
       value = global_data[[ nm ]]
     )
+  })
+  sapply( names(global_files), function(nm){
+    file_info = as.list(global_files[[nm]])
+    if(all(c("path", "absolute_path", "file_name", "is_new_cache", "is_cache") %in% names(file_info))){
+      global_container$group$set_group_data(
+        name = sprintf('__global_data__%s', nm),
+        value = file_info,
+        is_cached = TRUE,
+        cache_if_not_exists = FALSE
+      )
+    }
   })
 
 
@@ -170,6 +183,7 @@ threejs_brain <- function(
     hide_controls = !control_panel,
     control_center = as.vector(camera_center),
     camera_pos = camera_pos,
+    font_magnification = ifelse(cex > 0, cex, 1),
     start_zoom = ifelse(start_zoom > 0, start_zoom, 1),
     show_legend = TRUE,
     control_presets = control_presets,

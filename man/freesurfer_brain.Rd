@@ -19,6 +19,7 @@ freesurfer_brain2(
   subject_name,
   volume_types = "t1",
   surface_types = "pial",
+  curvature = "sulc",
   use_cache = TRUE,
   use_141 = TRUE,
   ...
@@ -40,6 +41,8 @@ freesurfer_brain2(
 \item{volume_types}{volume types, right now only support T1 image}
 
 \item{surface_types}{surface types to load}
+
+\item{curvature}{curvature data. Only support \code{"sulc"} for current version}
 
 \item{...}{ignored}
 }

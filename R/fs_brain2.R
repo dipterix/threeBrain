@@ -2,11 +2,13 @@
 #' @rdname freesurfer_brain
 #' @param volume_types volume types, right now only support T1 image
 #' @param surface_types surface types to load
+#' @param curvature curvature data. Only support \code{"sulc"} for current version
 #' @param ... ignored
 #' @export
 freesurfer_brain2 <- function(
   fs_subject_folder,
   subject_name, volume_types = 't1', surface_types = 'pial',
+  curvature = 'sulc',
   use_cache = TRUE, use_141 = TRUE, ...){
 
   mustWork = TRUE
@@ -117,6 +119,9 @@ freesurfer_brain2 <- function(
 
   #### Read surface files ####
   surface_type = unique(c('pial', surface_types))
+  template_subject = getOption('threeBrain.template_subject', 'N27')
+  template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
+
 
   for( surf_t in surface_type ){
     surf_group = GeomGroup$new(name = sprintf('Surface - %s (%s)', surf_t, subject_name),
@@ -124,12 +129,16 @@ freesurfer_brain2 <- function(
     surf_group$subject_code = subject_name
     surface = NULL
     loaded = FALSE
+    surf_group$set_group_data('template_subject', template_subject)
+    surf_group$set_group_data('surface_type', surf_t)
+    surf_group$set_group_data('curvature_subject', subject_name)
 
     # check if has cache
     cache_lh = sprintf('%s_std_141_lh_%s.json', subject_name, surf_t)
     cache_rh = sprintf('%s_std_141_rh_%s.json', subject_name, surf_t)
 
     if( use_141 && all(c(cache_lh, cache_rh) %in% common$suma_surface_files) ){
+      surf_group$set_group_data('surface_format', 'std.141')
       # We can get 141 SUMA brain
       surf_lh = FreeGeom$new(name = sprintf('Standard 141 Left Hemisphere - %s (%s)', surf_t, subject_name),
                              position = c(0,0,0), cache_file = rave_cached(cache_lh), group = surf_group, layer = 8)
@@ -138,12 +147,61 @@ freesurfer_brain2 <- function(
       surface = BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'std.141',
                                  left_hemisphere = surf_lh, right_hemisphere = surf_rh)
       loaded = TRUE
+
+      surf_group$set_group_data('curvature', curvature)
+
+      curv_lh = rave_cached(sprintf('%s_std_141_lh_%s.json', subject_name, curvature))
+      # if(!file.exists(curv_lh)){
+      #   # FIXME
+      #   # use N27 curv file because 141 brain is surface mapping and share vertex count?
+      #   curv_lh = file.path(template_dir, template_subject, 'RAVE',
+      #                       sprintf('%s_std_141_lh_%s.json', template_subject, curvature))
+      #   surf_group$set_group_data('curvature_subject', template_subject)
+      # }
+      if( file.exists(curv_lh) ){
+        curv_lh = normalizePath(curv_lh)
+        surf_group$set_group_data(
+          name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name),
+          value = list(
+            path = curv_lh,
+            absolute_path = curv_lh,
+            file_name = filename(curv_lh),
+            is_new_cache = FALSE,
+            is_cache = TRUE
+          ),
+          is_cached = TRUE
+        )
+      }
+
+      curv_rh = rave_cached(sprintf('%s_std_141_rh_%s.json', subject_name, curvature))
+      # if(!file.exists(curv_rh)){
+      #   # FIXME
+      #   # use N27 curv file because 141 brain is surface mapping and share vertex count?
+      #   curv_rh = file.path(template_dir, template_subject, 'RAVE',
+      #                       sprintf('%s_std_141_rh_%s.json', template_subject, curvature))
+      #   surf_group$set_group_data('curvature_subject', template_subject)
+      # }
+      if( file.exists(curv_rh) ){
+        curv_rh = normalizePath(curv_rh)
+        surf_group$set_group_data(
+          name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name),
+          value = list(
+            path = curv_rh,
+            absolute_path = curv_rh,
+            file_name = filename(curv_rh),
+            is_new_cache = FALSE,
+            is_cache = TRUE
+          ),
+          is_cached = TRUE
+        )
+      }
     }
     if( !loaded ){
       cache_lh = sprintf('%s_fs_lh_%s.json', subject_name, surf_t)
       cache_rh = sprintf('%s_fs_rh_%s.json', subject_name, surf_t)
 
       if( all(c(cache_lh, cache_rh) %in% common$fs_surface_files) ){
+        surf_group$set_group_data('surface_format', 'fs')
         # We can get FreeSurfer brain
         surf_lh = FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
                                position = c(0,0,0), cache_file = rave_cached(cache_lh), group = surf_group, layer = 8)
@@ -154,6 +212,46 @@ freesurfer_brain2 <- function(
                                    left_hemisphere = surf_lh, right_hemisphere = surf_rh)
         loaded = TRUE
       }
+
+      # load curvature data
+      # pial-outer-smoothed doesn't have sulc as it's calculated based on outer smoothed
+      if( surf_t != 'pial-outer-smoothed' ){
+
+        surf_group$set_group_data('curvature', curvature)
+
+        curv_lh = rave_cached(sprintf('%s_fs_lh_%s.json', subject_name, curvature))
+        if( file.exists(curv_lh) ){
+          curv_lh = normalizePath(curv_lh)
+          surf_group$set_group_data(
+            name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name),
+            value = list(
+              path = curv_lh,
+              absolute_path = curv_lh,
+              file_name = filename(curv_lh),
+              is_new_cache = FALSE,
+              is_cache = TRUE
+            ),
+            is_cached = TRUE
+          )
+        }
+
+        curv_rh = rave_cached(sprintf('%s_fs_rh_%s.json', subject_name, curvature))
+        if( file.exists(curv_rh) ){
+          curv_rh = normalizePath(curv_rh)
+          surf_group$set_group_data(
+            name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name),
+            value = list(
+              path = curv_rh,
+              absolute_path = curv_rh,
+              file_name = filename(curv_rh),
+              is_new_cache = FALSE,
+              is_cache = TRUE
+            ),
+            is_cached = TRUE
+          )
+        }
+      }
+
     }
 
     if( 'brain-surface' %in% class(surface) ){

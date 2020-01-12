@@ -1,7 +1,7 @@
 import { THREE } from '../threeplugins.js';
 import { to_array } from '../utils.js';
 
-function generate_animation_default(m, track_data, cmap, animation_clips, animation_mixers) {
+function generate_animation_default(m, track_data, cmap, animation_clips, mixer) {
 
     // Generate keyframes
     const _time_min = cmap.time_range[0],

@@ -10,6 +10,7 @@ threejs_brain(
   width = NULL,
   height = NULL,
   background = "#FFFFFF",
+  cex = 1,
   side_canvas = FALSE,
   side_zoom = 1,
   side_width = 250,
@@ -19,7 +20,7 @@ threejs_brain(
   control_presets = NULL,
   control_display = TRUE,
   camera_center = c(0, 0, 0),
-  camera_pos = c(0, 0, 500),
+  camera_pos = c(500, 0, 0),
   start_zoom = 1,
   coords = NULL,
   symmetric = 0,
@@ -33,7 +34,8 @@ threejs_brain(
   token = NULL,
   optionals = list(),
   browser_external = TRUE,
-  global_data = list()
+  global_data = list(),
+  global_files = list()
 )
 }
 \arguments{
@@ -43,6 +45,8 @@ threejs_brain(
 By default width=`100\%`, and height varies.}
 
 \item{background}{character, background color such as \code{"#FFFFFF"} or \code{"white"}}
+
+\item{cex}{positive number, relative text magnification level}
 
 \item{side_canvas}{logical, enable side cameras to view objects from fixed perspective}
 
@@ -91,7 +95,7 @@ Only use it when you have multiple widgets in one website}
 
 \item{browser_external}{logical, use system default browser (default) or builtin one.}
 
-\item{global_data}{internally use, mainly to store orientation matrices.}
+\item{global_data, global_files}{internally use, mainly to store orientation matrices and files.}
 }
 \description{
 Create a Threejs Brain and View it in Browsers
