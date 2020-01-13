@@ -687,11 +687,11 @@ class THREEBRAIN_CANVAS {
 
   set_font_size( magnification = 1 ){
     // font size
-    this._lineHeight_normal = Math.round( 30 * this.pixel_ratio[0] * magnification );
-    this._lineHeight_small = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_normal = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_small = Math.round( 20 * this.pixel_ratio[0] * magnification );
     this._fontSize_normal = Math.round( 20 * this.pixel_ratio[0] * magnification );
     this._fontSize_small = Math.round( 16 * this.pixel_ratio[0] * magnification );
-    this._lineHeight_legend = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_legend = Math.round( 20 * this.pixel_ratio[0] * magnification );
     this._fontSize_legend = Math.round( 16 * this.pixel_ratio[0] * magnification );
   }
 
@@ -1774,7 +1774,7 @@ class THREEBRAIN_CANVAS {
     this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
 
     // Add current time to bottom right corner
-    if( typeof(results.current_time) === 'number' ){
+    if( this.render_timestamp !== false && typeof(results.current_time) === 'number' ){
       this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
       this.domContext.fillText(
 
@@ -1991,7 +1991,7 @@ class THREEBRAIN_CANVAS {
       w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
 
       // Make sure it's not hidden by control panel
-      this._lineHeight_normal + this.pixel_ratio[0] * 25
+      this._lineHeight_normal + this.pixel_ratio[0] * 10
     ];
 
     // Line 1: object name

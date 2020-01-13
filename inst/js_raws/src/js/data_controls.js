@@ -851,7 +851,20 @@ class THREEBRAIN_PRESETS{
         this.canvas.render_legend = v;
         this._update_canvas(0);
       });
+
+    let render_timestamp = this.settings.render_timestamp || false;
+    const timestamp_visible = this.gui.add_item('Show Time', render_timestamp, {folder_name: folder_name })
+      .onChange((v) => {
+        this.canvas.render_timestamp = v;
+        this.fire_change({ 'render_timestamp' : v });
+        this._update_canvas(0);
+      });
+
+
     this.canvas.render_legend = render_legend;
+    this.canvas.render_timestamp = render_timestamp;
+
+    this.fire_change({ 'render_timestamp' : render_timestamp });
 
     _ani_name_onchange( initial );
 

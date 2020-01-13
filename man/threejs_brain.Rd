@@ -11,6 +11,7 @@ threejs_brain(
   height = NULL,
   background = "#FFFFFF",
   cex = 1,
+  timestamp = TRUE,
   side_canvas = FALSE,
   side_zoom = 1,
   side_width = 250,
@@ -47,6 +48,8 @@ By default width=`100\%`, and height varies.}
 \item{background}{character, background color such as \code{"#FFFFFF"} or \code{"white"}}
 
 \item{cex}{positive number, relative text magnification level}
+
+\item{timestamp}{logical, whether to show timestamp at the beginning}
 
 \item{side_canvas}{logical, enable side cameras to view objects from fixed perspective}
 

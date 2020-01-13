@@ -9,6 +9,7 @@
 #' @param palettes named list, names corresponds to color-map names if you want to change color palettes
 #' @param val_ranges named list, similar to \code{palettes}, value range for each values
 #' @param show_inactive_electrodes logical, whether to show electrodes with no values
+#' @param timestamp logical, whether to show timestamp at the beginning
 #' @param side_canvas logical, enable side cameras to view objects from fixed perspective
 #' @param side_zoom numerical, if side camera is enabled, zoom-in level, from 1 to 5
 #' @param side_width positive integer, side panel size in pixels
@@ -33,7 +34,7 @@
 #' @export
 threejs_brain <- function(
   ..., .list = list(), width = NULL, height = NULL, background = "#FFFFFF",
-  cex = 1,
+  cex = 1, timestamp = TRUE,
 
   # Args for the side panels
   side_canvas = FALSE, side_zoom = 1, side_width = 250, side_shift = c(0, 0),
@@ -186,6 +187,7 @@ threejs_brain <- function(
     font_magnification = ifelse(cex > 0, cex, 1),
     start_zoom = ifelse(start_zoom > 0, start_zoom, 1),
     show_legend = TRUE,
+    render_timestamp = isTRUE(timestamp),
     control_presets = control_presets,
     cache_folder = paste0(lib_path, widget_id, '-0/'),
     lib_path = lib_path,
