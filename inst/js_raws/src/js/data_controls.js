@@ -779,7 +779,7 @@ class THREEBRAIN_PRESETS{
 
       });
 
-    const thres_name = this.gui.add_item('Threshold Data', initial, { folder_name : folder_name, args : names })
+    const thres_name = this.gui.add_item('Threshold Data', '[No Color]', { folder_name : folder_name, args : names })
       .onChange((v) => { _thres_name_onchange( v ); });
 
     const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
