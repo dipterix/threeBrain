@@ -57,6 +57,9 @@ class THREEBRAIN_PRESETS{
       this.shiny.to_shiny2(k, args[k], priority);
     }
 
+    // also fire gui.params
+    this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
+
   }
 
 
@@ -1364,6 +1367,25 @@ class THREEBRAIN_CONTROL{
     if( typeof h === 'function' ){
       this.__on_closed = h;
     }
+  }
+
+  // remember from args
+  remember( args ){
+
+    const keys = [
+      "Background Color", "Display Helpers", "Show Panels", "Coronal (P - A)",
+      "Axial (I - S)", "Sagittal (L - R)", "Overlay Coronal", "Overlay Axial", "Overlay Sagittal",
+      "Dist. Threshold", "Surface Type", "Left Hemisphere", "Right Hemisphere", "Left Opacity", "Right Opacity",
+      "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
+      "Display Range", "Threshold Data", "Threshold Range", "Show Legend", "Show Time"
+    ];
+
+    keys.forEach((k) => {
+      if( args[k] !== undefined ){
+        this.get_controller(k).setValue( args[k] );
+      }
+    });
+
   }
 
 

@@ -33,7 +33,7 @@ threejs_brain(
   tmp_dirname = NULL,
   debug = FALSE,
   token = NULL,
-  optionals = list(),
+  controllers = list(),
   browser_external = TRUE,
   global_data = list(),
   global_files = list()
@@ -94,7 +94,7 @@ Only use it when you have multiple widgets in one website}
 
 \item{token}{unique character, internally used to identify widgets in JS localStorage}
 
-\item{optionals}{internally used, to be deprecated}
+\item{controllers}{list to override the settings, for example \code{proxy$get_controllers()}}
 
 \item{browser_external}{logical, use system default browser (default) or builtin one.}
 

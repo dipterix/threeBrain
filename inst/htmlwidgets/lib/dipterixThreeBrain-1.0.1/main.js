@@ -58199,6 +58199,9 @@ class data_controls_THREEBRAIN_PRESETS{
       this.shiny.to_shiny2(k, args[k], priority);
     }
 
+    // also fire gui.params
+    this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
+
   }
 
 
@@ -59506,6 +59509,25 @@ class data_controls_THREEBRAIN_CONTROL{
     if( typeof h === 'function' ){
       this.__on_closed = h;
     }
+  }
+
+  // remember from args
+  remember( args ){
+
+    const keys = [
+      "Background Color", "Display Helpers", "Show Panels", "Coronal (P - A)",
+      "Axial (I - S)", "Sagittal (L - R)", "Overlay Coronal", "Overlay Axial", "Overlay Sagittal",
+      "Dist. Threshold", "Surface Type", "Left Hemisphere", "Right Hemisphere", "Left Opacity", "Right Opacity",
+      "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
+      "Display Range", "Threshold Data", "Threshold Range", "Show Legend", "Show Time"
+    ];
+
+    keys.forEach((k) => {
+      if( args[k] !== undefined ){
+        this.get_controller(k).setValue( args[k] );
+      }
+    });
+
   }
 
 
@@ -64776,7 +64798,9 @@ class src_BrainCanvas{
   }
 
   _register_gui_control(){
-    const gui = new data_controls_THREEBRAIN_CONTROL({ autoPlace: false }, this.DEBUG);
+    const gui = new data_controls_THREEBRAIN_CONTROL({
+      autoPlace: false,
+    }, this.DEBUG);
     if(this.DEBUG){
       window.gui = gui;
     }
@@ -64881,7 +64905,7 @@ class src_BrainCanvas{
   render_value( x ){
     this.geoms = x.geoms;
     this.settings = x.settings;
-    this.optionals = x.settings.optionals || {},
+    this.default_controllers = x.settings.default_controllers || {},
     this.groups = x.groups,
     this.has_animation = x.settings.has_animation,
     this.DEBUG = x.settings.debug || false;
@@ -65036,6 +65060,13 @@ class src_BrainCanvas{
       this.gui.close();
     }
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
+
+    // remember last settings
+    if( this.gui ){
+      this.gui.remember( this.default_controllers );
+    }
+
+
     this.canvas.render();
 
     this.canvas.start_animation(0);

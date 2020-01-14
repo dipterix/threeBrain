@@ -26,7 +26,7 @@
 #' @param tmp_dirname character path, internally used, where to store temporary files
 #' @param token unique character, internally used to identify widgets in JS localStorage
 #' @param debug logical, internally used for debugging
-#' @param optionals internally used, to be deprecated
+#' @param controllers list to override the settings, for example \code{proxy$get_controllers()}
 #' @param browser_external logical, use system default browser (default) or builtin one.
 #' @param global_data,global_files internally use, mainly to store orientation matrices and files.
 #' @param widget_id character, internally used as unique identifiers for widgets.
@@ -52,7 +52,7 @@ threejs_brain <- function(
 
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
-  debug = FALSE, token = NULL, optionals = list(),
+  debug = FALSE, token = NULL, controllers = list(),
   browser_external = TRUE, global_data = list(), global_files = list()
 ){
 
@@ -191,7 +191,7 @@ threejs_brain <- function(
     control_presets = control_presets,
     cache_folder = paste0(lib_path, widget_id, '-0/'),
     lib_path = lib_path,
-    optionals = optionals,
+    default_controllers = controllers,
     debug = debug,
     background = background,
     # has_animation = v_count > 1,

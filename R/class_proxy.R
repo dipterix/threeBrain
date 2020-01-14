@@ -59,6 +59,10 @@ ViewerProxy <- R6::R6Class(
       shiny::isolate(self[[name]])
     },
 
+    get_controllers = function(){
+      shiny::isolate(private$get_value('controllers', list()))
+    },
+
     set_background = function(col){
       private$set_value('background', dipsaus::col2hexStr(col))
     },
@@ -149,6 +153,7 @@ ViewerProxy <- R6::R6Class(
     mouse_event_click = function(){
       private$get_value('mouse_clicked', list())
     }
+
   )
 )
 

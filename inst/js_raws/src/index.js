@@ -117,7 +117,9 @@ class BrainCanvas{
   }
 
   _register_gui_control(){
-    const gui = new THREEBRAIN_CONTROL({ autoPlace: false }, this.DEBUG);
+    const gui = new THREEBRAIN_CONTROL({
+      autoPlace: false,
+    }, this.DEBUG);
     if(this.DEBUG){
       window.gui = gui;
     }
@@ -222,7 +224,7 @@ class BrainCanvas{
   render_value( x ){
     this.geoms = x.geoms;
     this.settings = x.settings;
-    this.optionals = x.settings.optionals || {},
+    this.default_controllers = x.settings.default_controllers || {},
     this.groups = x.groups,
     this.has_animation = x.settings.has_animation,
     this.DEBUG = x.settings.debug || false;
@@ -377,6 +379,13 @@ class BrainCanvas{
       this.gui.close();
     }
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
+
+    // remember last settings
+    if( this.gui ){
+      this.gui.remember( this.default_controllers );
+    }
+
+
     this.canvas.render();
 
     this.canvas.start_animation(0);
