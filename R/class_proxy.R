@@ -152,6 +152,10 @@ ViewerProxy <- R6::R6Class(
 
     mouse_event_click = function(){
       private$get_value('mouse_clicked', list())
+    },
+
+    controllers = function(){
+      private$get_value('controllers', list())
     }
 
   )

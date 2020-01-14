@@ -51,11 +51,15 @@ class THREEBRAIN_PRESETS{
   }
 
   fire_change( args, priority = "deferred" ){
-    for(let k in args){
-      // this.parameters[k] = args[k];
 
-      this.shiny.to_shiny2(k, args[k], priority);
+    if( typeof args === 'object' ){
+      for(let k in args){
+        // this.parameters[k] = args[k];
+
+        this.shiny.to_shiny2(k, args[k], priority);
+      }
     }
+
 
     // also fire gui.params
     this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
@@ -221,6 +225,7 @@ class THREEBRAIN_PRESETS{
     this.gui.add_item('Display Helpers', false, { folder_name: folder_name })
       .onChange((v) => {
         this.canvas.set_cube_anchor_visibility(v);
+        this.fire_change();
       });
   }
 
@@ -400,6 +405,7 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         this.canvas.trim_electrodes( v );
         this._update_canvas();
+        this.fire_change();
       });
     this.canvas.trim_electrodes( 2 );
   }
@@ -417,6 +423,7 @@ class THREEBRAIN_PRESETS{
         args : subject_ids
       }).onChange((v) => {
         this.canvas.switch_subject( v );
+        this.fire_change();
       });
 
       this.canvas.switch_subject();
@@ -467,23 +474,27 @@ class THREEBRAIN_PRESETS{
     const lh_ctrl = this.gui.add_item('Left Hemisphere', 'normal', { args : options, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'material_type_left': v });
+        this.fire_change();
       });
 
     const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'material_type_right': v });
+        this.fire_change();
       });
 
     const lh_trans = this.gui.add_item('Left Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
+        this.fire_change();
       });
 
     const rh_trans = this.gui.add_item('Right Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
+        this.fire_change();
       });
 
     // add keyboard shortcut
@@ -571,6 +582,7 @@ class THREEBRAIN_PRESETS{
       folder_name : folder_name
     }).onChange((v) => {
       this.set_electrodes_visibility( v );
+      this.fire_change();
     });
 
     // Add shortcuts
@@ -594,6 +606,7 @@ class THREEBRAIN_PRESETS{
     const do_mapping = this.gui.add_item('Map Electrodes', false, { folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_template': v });
+        this.fire_change();
       });
 
     this.gui.add_item('Surface Mapping', 'std.141', {
@@ -601,6 +614,7 @@ class THREEBRAIN_PRESETS{
       folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_type_surface': v });
+        this.fire_change();
       });
 
     this.gui.add_item('Volume Mapping', 'mni305', {
@@ -608,6 +622,7 @@ class THREEBRAIN_PRESETS{
       folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_type_volume': v });
+        this.fire_change();
       });
 
     // need to check if this is multiple subject case
@@ -755,7 +770,7 @@ class THREEBRAIN_PRESETS{
     };
 
     const ani_name = this.gui.add_item('Display Data', initial, { folder_name : folder_name, args : names })
-      .onChange((v) => { _ani_name_onchange( v ); });
+      .onChange((v) => { _ani_name_onchange( v ); this.fire_change(); });
     const val_range = this.gui.add_item('Display Range', '~', { folder_name : folder_name })
       .onChange((v) => {
         let ss = v;
@@ -776,11 +791,12 @@ class THREEBRAIN_PRESETS{
           // reset animation tracks
           this.canvas.generate_animation_clips( ani_name.getValue() , true );
         }
+        this.fire_change();
 
       });
 
     const thres_name = this.gui.add_item('Threshold Data', '[No Color]', { folder_name : folder_name, args : names })
-      .onChange((v) => { _thres_name_onchange( v ); });
+      .onChange((v) => { _thres_name_onchange( v ); this.fire_change(); });
 
     const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
       .onChange((v) => {
@@ -806,6 +822,7 @@ class THREEBRAIN_PRESETS{
         }
         // set flag
         this.canvas.state_data.set('threshold_values', candidates);
+        this.fire_change();
         this._update_canvas();
       });
 
@@ -818,7 +835,9 @@ class THREEBRAIN_PRESETS{
     });
 
     this.gui.add_item('Time', this.animation_time[0], { folder_name : folder_name })
-        .min(this.animation_time[0]).max(this.animation_time[1]).step(step).onChange((v) => {this._update_canvas()});
+        .min(this.animation_time[0]).max(this.animation_time[1]).step(step).onChange((v) => {
+          this._update_canvas();
+        });
     this._ani_time = this.gui.get_controller('Time', folder_name);
 
     this.canvas.bind( `dat_gui_ani_time_mousewheel`, 'mousewheel',
@@ -853,6 +872,7 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         this.canvas.render_legend = v;
         this._update_canvas(0);
+        this.fire_change();
       });
 
     let render_timestamp = this.settings.render_timestamp || false;
