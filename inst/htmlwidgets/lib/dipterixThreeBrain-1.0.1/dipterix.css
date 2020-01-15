@@ -52,6 +52,13 @@
   overflow-y: hidden;
 }
 
+.threejs-control .dg .cr.function .property-name {
+  width: 100%;
+}
+.threejs-control .dg .cr.function .c {
+  display: hidden;
+}
+
 .threejs-control .dg .property-name {
     text-overflow: clip;
     overflow-y: hidden;

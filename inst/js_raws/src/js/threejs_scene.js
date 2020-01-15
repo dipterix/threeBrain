@@ -1523,7 +1523,12 @@ class THREEBRAIN_CANVAS {
     const pos = this.main_camera.userData.pos;
     this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
 
-    this.main_camera.up.set(0, 1, 0);
+    if( pos[2] === 0 ){
+      this.main_camera.up.set(0, 0, 1);
+    }else{
+      this.main_camera.up.set(0, 1, 0);
+    }
+
 
     this.main_camera.zoom = 1;
     this.main_camera.updateProjectionMatrix();
@@ -1847,9 +1852,6 @@ class THREEBRAIN_CANVAS {
         // There is a colored object rendered, display it
         let value_height = ( legend_start + (lut.maxV - results.current_value) * legend_height / (lut.maxV - lut.minV)) * h;
 
-        legent_ticks.push([
-          results.current_value.toPrecision(4), value_height, 1 ]);
-
         // Decide whether to draw 0 and current object value
         // When max and min is too close, hide 0, otherwise it'll be jittered
         if( Math.abs( zero_height - value_height ) <= this._fontSize_legend ){
@@ -1858,9 +1860,18 @@ class THREEBRAIN_CANVAS {
         if(Math.abs( value_height - minV_height) > this._fontSize_legend){
           legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
         }
+        if( value_height - minV_height > this._lineHeight_legend ){
+          value_height = minV_height + this._lineHeight_legend;
+        }
         if(Math.abs( value_height - maxV_height) > this._fontSize_legend){
           legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
         }
+        if( maxV_height - value_height > this._lineHeight_legend ){
+          value_height = maxV_height - this._lineHeight_legend;
+        }
+
+        legent_ticks.push([
+          results.current_value.toPrecision(4), value_height, 1 ]);
       } else {
         legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
         legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
@@ -2000,15 +2011,7 @@ class THREEBRAIN_CANVAS {
     // Smaller
     this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
 
-    // Line 2: customized message
-    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
-
-    this.domContext.fillText(
-      results.selected_object.custom_info || '',
-      text_position[ 0 ], text_position[ 1 ]
-    );
-
-    // Line 3: Global position
+    // Line 2: Global position
     text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
     const pos = results.selected_object.position;
@@ -2025,11 +2028,36 @@ class THREEBRAIN_CANVAS {
     if( results.selected_object.is_electrode ){
       const _m = results.selected_object.template_mapping;
 
-      // Line 4: mapping method & surface type
+      const _tn = this.object_chosen.userData.display_info.threshold_name || '[None]';
+      let _tv = this.object_chosen.userData.display_info.threshold_value;
+      if( _tv === undefined ){
+        _tv = '<NA>';
+      }else if( typeof _tv === 'number' ){
+        _tv = _tv.toPrecision(4);
+      }
+
+      const _dn = this.object_chosen.userData.display_info.display_name;
+      let _dv = results.current_value;
+
+      if( _dv === undefined ){
+        _dv = '<NA>';
+      }else if( typeof _dv === 'number' ){
+        _dv = _dv.toPrecision(4);
+      }
+
+      // Line 3: mapping method & surface type
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
       this.domContext.fillText(
-        `mapping: ${ _m.space }, surface: ${ _m.surface }`,
+        `surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+
+      // Line 4:
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+      this.domContext.fillText(
+        `display: ${ _dn } (${ _dv })`,
         text_position[ 0 ], text_position[ 1 ]
       );
 
@@ -2037,12 +2065,19 @@ class THREEBRAIN_CANVAS {
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
       this.domContext.fillText(
-        `hemisphere: ${ _m.hemisphere }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        `threshold: ${ _tn } (${ _tv })`,
         text_position[ 0 ], text_position[ 1 ]
       );
 
     }
 
+    // Line last: customized message
+    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+    this.domContext.fillText(
+      results.selected_object.custom_info || '',
+      text_position[ 0 ], text_position[ 1 ]
+    );
 
   }
 

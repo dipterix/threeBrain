@@ -84,6 +84,7 @@ CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient lig
 // dat.GUI folders
 CONSTANTS.FOLDERS = {
   'background-color'      : 'Default',
+  'sync-viewers'          : 'Default',
   'video-recorder'        : 'Main Canvas',
   'reset-main-camera'     : 'Main Canvas',
   'main-camera-position'  : 'Main Canvas',

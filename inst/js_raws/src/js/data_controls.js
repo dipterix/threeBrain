@@ -52,6 +52,9 @@ class THREEBRAIN_PRESETS{
 
   fire_change( args, priority = "deferred" ){
 
+    // fire gui.params first
+    this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
+
     if( typeof args === 'object' ){
       for(let k in args){
         // this.parameters[k] = args[k];
@@ -59,10 +62,6 @@ class THREEBRAIN_PRESETS{
         this.shiny.to_shiny2(k, args[k], priority);
       }
     }
-
-
-    // also fire gui.params
-    this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
 
   }
 
@@ -112,6 +111,15 @@ class THREEBRAIN_PRESETS{
         // force re-render
         this._update_canvas(0);
       });
+  }
+
+  c_syncviewer(){
+    if( this.shiny.shiny_mode ){
+      const folder_name = CONSTANTS.FOLDERS['sync-viewers'];
+      this.gui.add_item('Send to Other Viewers', () => {
+        this.fire_change({ 'sync' : this.shiny.uuid }, 'event' );
+      }, {folder_name: folder_name });
+    }
   }
 
 
@@ -651,7 +659,9 @@ class THREEBRAIN_PRESETS{
         time : this._ani_time.getValue(),
         speed : this._ani_speed.getValue(),
         min : this.animation_time[0],
-        max : this.animation_time[1]
+        max : this.animation_time[1],
+        display : this._ani_name.getValue(),
+        threshold : this._thres_name.getValue()
       });
     }else{
       return({
@@ -659,7 +669,9 @@ class THREEBRAIN_PRESETS{
         time : 0,
         speed : 0,
         min : 0,
-        max : 0
+        max : 0,
+        display : '[None]',
+        threshold : '[None]'
       });
     }
   }
@@ -677,8 +689,8 @@ class THREEBRAIN_PRESETS{
     let names = Object.keys( this.settings.color_maps ),
         initial = this.settings.default_colormap;
 
-    // Make sure the initial value exists, and [No Color] is included in the option
-    names = [...new Set(['[No Color]', ...names])];
+    // Make sure the initial value exists, and [None] is included in the option
+    names = [...new Set(['[None]', ...names])];
 
     if( !initial || !names.includes( initial ) || initial.startsWith('[') ){
       initial = undefined;
@@ -690,7 +702,7 @@ class THREEBRAIN_PRESETS{
     }
 
     if( !initial ){
-      initial = '[No Color]';
+      initial = '[None]';
     }
 
 
@@ -706,7 +718,7 @@ class THREEBRAIN_PRESETS{
       this.canvas.generate_animation_clips( v, true, (cmap) => {
         if( !cmap ){
           legend_visible.setValue(false);
-          if( v === '[No Color]' ){
+          if( v === '[None]' ){
             this.canvas.electrodes.forEach((_d) => {
               for( let _kk in _d ){
                 _d[ _kk ].visible = true;
@@ -742,8 +754,8 @@ class THREEBRAIN_PRESETS{
         }
         this._update_canvas();
       });
-
-      this.fire_change({ 'clip_name' : v });
+      this.canvas.state_data.set('display_variable', v);
+      this.fire_change({ 'clip_name' : v, 'display_data' : v });
     };
 
     const _thres_name_onchange = (v) => {
@@ -761,7 +773,15 @@ class THREEBRAIN_PRESETS{
 
       if(cmap.value_type === 'continuous'){
         this.canvas.state_data.set('threshold_type', 'continuous');
-        thres_range.setValue(`${cmap.value_range[0].toPrecision(5)},${cmap.value_range[1].toPrecision(5)}`);
+        let b;
+        let lb = cmap.value_range[0].toPrecision(5),
+            ub = cmap.value_range[1].toPrecision(5);
+        b = lb.substring(0,6) - 0.1;
+        lb = b.toPrecision(5) + lb.substring(6);
+        b = ub.substring(0,6) - (-0.1);
+        ub = b.toPrecision(5) + ub.substring(6);
+
+        thres_range.setValue(`${lb},${ub}`);
       }else{
         // '' means no threshold
         this.canvas.state_data.set('threshold_type', 'discrete');
@@ -771,6 +791,7 @@ class THREEBRAIN_PRESETS{
 
     const ani_name = this.gui.add_item('Display Data', initial, { folder_name : folder_name, args : names })
       .onChange((v) => { _ani_name_onchange( v ); this.fire_change(); });
+    this._ani_name = ani_name;
     const val_range = this.gui.add_item('Display Range', '~', { folder_name : folder_name })
       .onChange((v) => {
         let ss = v;
@@ -795,8 +816,9 @@ class THREEBRAIN_PRESETS{
 
       });
 
-    const thres_name = this.gui.add_item('Threshold Data', '[No Color]', { folder_name : folder_name, args : names })
+    const thres_name = this.gui.add_item('Threshold Data', '[None]', { folder_name : folder_name, args : names })
       .onChange((v) => { _thres_name_onchange( v ); this.fire_change(); });
+    this._thres_name = thres_name;
 
     const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
       .onChange((v) => {

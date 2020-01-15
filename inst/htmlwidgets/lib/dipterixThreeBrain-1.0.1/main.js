@@ -57645,23 +57645,24 @@ function gen_sphere(g, canvas){
 
   };
 
+  mesh.userData.display_info = {};
   // Add pre-render function to change some attributes
   mesh.userData.pre_render = ( results ) => {
 
     // 1. whether passed threshold
     let threshold_test = true;
+    let current_value;
+    const track_name = canvas.state_data.get('threshold_variable');
 
     if( get_or_default(canvas.state_data, 'threshold_active', false) ){
       // need to check the threshold
       threshold_test = false;
 
-      const track_name = canvas.state_data.get('threshold_variable');
       const track = mesh.userData.get_track_data(track_name, false);
 
       if(track){
 
         // obtain current threshold value
-        let current_value;
         if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
           // need to get the value at current time
           const ani_params = canvas.animation_controls.get_params();
@@ -57735,6 +57736,13 @@ function gen_sphere(g, canvas){
     // 5. check if mixer exists, update
     if( mesh.userData.ani_mixer ){
       mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+    }
+
+    // 6. if the object is chosen, display information
+    if( mesh === canvas.object_chosen ){
+      mesh.userData.display_info.threshold_name = track_name;
+      mesh.userData.display_info.threshold_value = current_value;
+      mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
     }
 
 
@@ -57977,6 +57985,7 @@ CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient lig
 // dat.GUI folders
 CONSTANTS.FOLDERS = {
   'background-color'      : 'Default',
+  'sync-viewers'          : 'Default',
   'video-recorder'        : 'Main Canvas',
   'reset-main-camera'     : 'Main Canvas',
   'main-camera-position'  : 'Main Canvas',
@@ -58194,6 +58203,9 @@ class data_controls_THREEBRAIN_PRESETS{
 
   fire_change( args, priority = "deferred" ){
 
+    // fire gui.params first
+    this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
+
     if( typeof args === 'object' ){
       for(let k in args){
         // this.parameters[k] = args[k];
@@ -58201,10 +58213,6 @@ class data_controls_THREEBRAIN_PRESETS{
         this.shiny.to_shiny2(k, args[k], priority);
       }
     }
-
-
-    // also fire gui.params
-    this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
 
   }
 
@@ -58254,6 +58262,15 @@ class data_controls_THREEBRAIN_PRESETS{
         // force re-render
         this._update_canvas(0);
       });
+  }
+
+  c_syncviewer(){
+    if( this.shiny.shiny_mode ){
+      const folder_name = CONSTANTS.FOLDERS['sync-viewers'];
+      this.gui.add_item('Send to Other Viewers', () => {
+        this.fire_change({ 'sync' : this.shiny.uuid }, 'event' );
+      }, {folder_name: folder_name });
+    }
   }
 
 
@@ -58793,7 +58810,9 @@ class data_controls_THREEBRAIN_PRESETS{
         time : this._ani_time.getValue(),
         speed : this._ani_speed.getValue(),
         min : this.animation_time[0],
-        max : this.animation_time[1]
+        max : this.animation_time[1],
+        display : this._ani_name.getValue(),
+        threshold : this._thres_name.getValue()
       });
     }else{
       return({
@@ -58801,7 +58820,9 @@ class data_controls_THREEBRAIN_PRESETS{
         time : 0,
         speed : 0,
         min : 0,
-        max : 0
+        max : 0,
+        display : '[None]',
+        threshold : '[None]'
       });
     }
   }
@@ -58819,8 +58840,8 @@ class data_controls_THREEBRAIN_PRESETS{
     let names = Object.keys( this.settings.color_maps ),
         initial = this.settings.default_colormap;
 
-    // Make sure the initial value exists, and [No Color] is included in the option
-    names = [...new Set(['[No Color]', ...names])];
+    // Make sure the initial value exists, and [None] is included in the option
+    names = [...new Set(['[None]', ...names])];
 
     if( !initial || !names.includes( initial ) || initial.startsWith('[') ){
       initial = undefined;
@@ -58832,7 +58853,7 @@ class data_controls_THREEBRAIN_PRESETS{
     }
 
     if( !initial ){
-      initial = '[No Color]';
+      initial = '[None]';
     }
 
 
@@ -58848,7 +58869,7 @@ class data_controls_THREEBRAIN_PRESETS{
       this.canvas.generate_animation_clips( v, true, (cmap) => {
         if( !cmap ){
           legend_visible.setValue(false);
-          if( v === '[No Color]' ){
+          if( v === '[None]' ){
             this.canvas.electrodes.forEach((_d) => {
               for( let _kk in _d ){
                 _d[ _kk ].visible = true;
@@ -58884,8 +58905,8 @@ class data_controls_THREEBRAIN_PRESETS{
         }
         this._update_canvas();
       });
-
-      this.fire_change({ 'clip_name' : v });
+      this.canvas.state_data.set('display_variable', v);
+      this.fire_change({ 'clip_name' : v, 'display_data' : v });
     };
 
     const _thres_name_onchange = (v) => {
@@ -58903,7 +58924,15 @@ class data_controls_THREEBRAIN_PRESETS{
 
       if(cmap.value_type === 'continuous'){
         this.canvas.state_data.set('threshold_type', 'continuous');
-        thres_range.setValue(`${cmap.value_range[0].toPrecision(5)},${cmap.value_range[1].toPrecision(5)}`);
+        let b;
+        let lb = cmap.value_range[0].toPrecision(5),
+            ub = cmap.value_range[1].toPrecision(5);
+        b = lb.substring(0,6) - 0.1;
+        lb = b.toPrecision(5) + lb.substring(6);
+        b = ub.substring(0,6) - (-0.1);
+        ub = b.toPrecision(5) + ub.substring(6);
+
+        thres_range.setValue(`${lb},${ub}`);
       }else{
         // '' means no threshold
         this.canvas.state_data.set('threshold_type', 'discrete');
@@ -58913,6 +58942,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
     const ani_name = this.gui.add_item('Display Data', initial, { folder_name : folder_name, args : names })
       .onChange((v) => { _ani_name_onchange( v ); this.fire_change(); });
+    this._ani_name = ani_name;
     const val_range = this.gui.add_item('Display Range', '~', { folder_name : folder_name })
       .onChange((v) => {
         let ss = v;
@@ -58937,8 +58967,9 @@ class data_controls_THREEBRAIN_PRESETS{
 
       });
 
-    const thres_name = this.gui.add_item('Threshold Data', '[No Color]', { folder_name : folder_name, args : names })
+    const thres_name = this.gui.add_item('Threshold Data', '[None]', { folder_name : folder_name, args : names })
       .onChange((v) => { _thres_name_onchange( v ); this.fire_change(); });
+    this._thres_name = thres_name;
 
     const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
       .onChange((v) => {
@@ -59707,6 +59738,7 @@ class shiny_tools_THREE_BRAIN_SHINY {
     this.shiny_mode = shiny_mode;
     this.shinyId = outputId + '__shiny';
     this.canvas = canvas;
+    this.uuid = threeplugins_THREE.Math.generateUUID();
 
     this.stack = [];
 
@@ -59881,6 +59913,14 @@ class shiny_tools_THREE_BRAIN_SHINY {
   handle_font_magnification( cex = 1 ){
     this.canvas.set_font_size( cex );
     this.canvas.start_animation( 0 );
+  }
+
+  handle_controllers( args ){
+    for(let k in args){
+      this.gui
+        .get_controller( k )
+        .setValue( args[k] );
+    }
   }
 
 
@@ -62716,7 +62756,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
     const pos = this.main_camera.userData.pos;
     this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
 
-    this.main_camera.up.set(0, 1, 0);
+    if( pos[2] === 0 ){
+      this.main_camera.up.set(0, 0, 1);
+    }else{
+      this.main_camera.up.set(0, 1, 0);
+    }
+
 
     this.main_camera.zoom = 1;
     this.main_camera.updateProjectionMatrix();
@@ -63040,9 +63085,6 @@ class threejs_scene_THREEBRAIN_CANVAS {
         // There is a colored object rendered, display it
         let value_height = ( legend_start + (lut.maxV - results.current_value) * legend_height / (lut.maxV - lut.minV)) * h;
 
-        legent_ticks.push([
-          results.current_value.toPrecision(4), value_height, 1 ]);
-
         // Decide whether to draw 0 and current object value
         // When max and min is too close, hide 0, otherwise it'll be jittered
         if( Math.abs( zero_height - value_height ) <= this._fontSize_legend ){
@@ -63051,9 +63093,18 @@ class threejs_scene_THREEBRAIN_CANVAS {
         if(Math.abs( value_height - minV_height) > this._fontSize_legend){
           legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
         }
+        if( value_height - minV_height > this._lineHeight_legend ){
+          value_height = minV_height + this._lineHeight_legend;
+        }
         if(Math.abs( value_height - maxV_height) > this._fontSize_legend){
           legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
         }
+        if( maxV_height - value_height > this._lineHeight_legend ){
+          value_height = maxV_height - this._lineHeight_legend;
+        }
+
+        legent_ticks.push([
+          results.current_value.toPrecision(4), value_height, 1 ]);
       } else {
         legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
         legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
@@ -63193,15 +63244,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // Smaller
     this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
 
-    // Line 2: customized message
-    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
-
-    this.domContext.fillText(
-      results.selected_object.custom_info || '',
-      text_position[ 0 ], text_position[ 1 ]
-    );
-
-    // Line 3: Global position
+    // Line 2: Global position
     text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
     const pos = results.selected_object.position;
@@ -63218,11 +63261,36 @@ class threejs_scene_THREEBRAIN_CANVAS {
     if( results.selected_object.is_electrode ){
       const _m = results.selected_object.template_mapping;
 
-      // Line 4: mapping method & surface type
+      const _tn = this.object_chosen.userData.display_info.threshold_name;
+      let _tv = this.object_chosen.userData.display_info.threshold_value;
+      if( _tv === undefined ){
+        _tv = '<NA>';
+      }else if( typeof _tv === 'number' ){
+        _tv = _tv.toPrecision(4);
+      }
+
+      const _dn = this.object_chosen.userData.display_info.display_name;
+      let _dv = results.current_value;
+
+      if( _dv === undefined ){
+        _dv = '<NA>';
+      }else if( typeof _dv === 'number' ){
+        _dv = _dv.toPrecision(4);
+      }
+
+      // Line 3: mapping method & surface type
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
       this.domContext.fillText(
-        `mapping: ${ _m.space }, surface: ${ _m.surface }`,
+        `surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+
+      // Line 4:
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+      this.domContext.fillText(
+        `display: ${ _dn } (${ _dv })`,
         text_position[ 0 ], text_position[ 1 ]
       );
 
@@ -63230,12 +63298,19 @@ class threejs_scene_THREEBRAIN_CANVAS {
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
       this.domContext.fillText(
-        `hemisphere: ${ _m.hemisphere }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        `threshold: ${ _tn } (${ _tv })`,
         text_position[ 0 ], text_position[ 1 ]
       );
 
     }
 
+    // Line last: customized message
+    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+    this.domContext.fillText(
+      results.selected_object.custom_info || '',
+      text_position[ 0 ], text_position[ 1 ]
+    );
 
   }
 

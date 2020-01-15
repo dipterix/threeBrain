@@ -44,6 +44,7 @@ class THREE_BRAIN_SHINY {
     this.shiny_mode = shiny_mode;
     this.shinyId = outputId + '__shiny';
     this.canvas = canvas;
+    this.uuid = THREE.Math.generateUUID();
 
     this.stack = [];
 
@@ -218,6 +219,14 @@ class THREE_BRAIN_SHINY {
   handle_font_magnification( cex = 1 ){
     this.canvas.set_font_size( cex );
     this.canvas.start_animation( 0 );
+  }
+
+  handle_controllers( args ){
+    for(let k in args){
+      this.gui
+        .get_controller( k )
+        .setValue( args[k] );
+    }
   }
 
 

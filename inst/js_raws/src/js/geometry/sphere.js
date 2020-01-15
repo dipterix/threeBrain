@@ -106,23 +106,24 @@ function gen_sphere(g, canvas){
 
   };
 
+  mesh.userData.display_info = {};
   // Add pre-render function to change some attributes
   mesh.userData.pre_render = ( results ) => {
 
     // 1. whether passed threshold
     let threshold_test = true;
+    let current_value;
+    const track_name = canvas.state_data.get('threshold_variable');
 
     if( get_or_default(canvas.state_data, 'threshold_active', false) ){
       // need to check the threshold
       threshold_test = false;
 
-      const track_name = canvas.state_data.get('threshold_variable');
       const track = mesh.userData.get_track_data(track_name, false);
 
       if(track){
 
         // obtain current threshold value
-        let current_value;
         if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
           // need to get the value at current time
           const ani_params = canvas.animation_controls.get_params();
@@ -196,6 +197,13 @@ function gen_sphere(g, canvas){
     // 5. check if mixer exists, update
     if( mesh.userData.ani_mixer ){
       mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+    }
+
+    // 6. if the object is chosen, display information
+    if( mesh === canvas.object_chosen ){
+      mesh.userData.display_info.threshold_name = track_name;
+      mesh.userData.display_info.threshold_value = current_value;
+      mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
     }
 
 

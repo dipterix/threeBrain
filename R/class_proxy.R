@@ -63,6 +63,10 @@ ViewerProxy <- R6::R6Class(
       shiny::isolate(private$get_value('controllers', list()))
     },
 
+    set_controllers = function(ctrl){
+      private$set_value('controllers', ctrl)
+    },
+
     set_background = function(col){
       private$set_value('background', dipsaus::col2hexStr(col))
     },
@@ -133,7 +137,7 @@ ViewerProxy <- R6::R6Class(
 
     # display name
     display_variable = function(){
-      private$get_value('clip_name', '[No Color]')
+      private$get_value('clip_name', '[None]')
     },
 
     plane_position = function(){
@@ -156,6 +160,10 @@ ViewerProxy <- R6::R6Class(
 
     controllers = function(){
       private$get_value('controllers', list())
+    },
+
+    sync = function(){
+      private$get_value('sync', '')
     }
 
   )
