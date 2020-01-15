@@ -63261,7 +63261,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     if( results.selected_object.is_electrode ){
       const _m = results.selected_object.template_mapping;
 
-      const _tn = this.object_chosen.userData.display_info.threshold_name;
+      const _tn = this.object_chosen.userData.display_info.threshold_name || '[None]';
       let _tv = this.object_chosen.userData.display_info.threshold_value;
       if( _tv === undefined ){
         _tv = '<NA>';
