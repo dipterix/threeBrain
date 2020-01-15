@@ -10,7 +10,7 @@
 \usage{
 download_template_subject(
   subject_code = "N27",
-  url = "https://rave-data.s3.amazonaws.com/sample-data/N27_fs.zip",
+  url = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip",
   template_dir = getOption("threeBrain.template_dir", "~/rave_data/others/three_brain")
 )
 
