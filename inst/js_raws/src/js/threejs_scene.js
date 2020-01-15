@@ -888,6 +888,9 @@ class THREEBRAIN_CANVAS {
       },
       (res, evt) => {
         this.focus_object( res.target_object );
+        try {
+          document.activeElement.blur();
+        } catch (e) {}
         this.start_animation( 0 );
       },
       'set_obj_chosen'

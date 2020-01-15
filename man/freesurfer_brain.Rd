@@ -11,7 +11,7 @@ freesurfer_brain(
   additional_surfaces = NULL,
   aligned_ct = NULL,
   use_cache = TRUE,
-  use_141 = TRUE
+  use_141 = getOption("threeBrain.use141", TRUE)
 )
 
 freesurfer_brain2(
@@ -21,7 +21,7 @@ freesurfer_brain2(
   surface_types = "pial",
   curvature = "sulc",
   use_cache = TRUE,
-  use_141 = TRUE,
+  use_141 = getOption("threeBrain.use141", TRUE),
   ...
 )
 }
@@ -36,7 +36,7 @@ freesurfer_brain2(
 
 \item{use_cache}{logical, whether to use cached `json` files or from raw `FreeSurfer` files}
 
-\item{use_141}{logical, whether to use standard 141 brain for surface file}
+\item{use_141}{logical, whether to use standard 141 brain for surface file, default is \code{getOption('threeBrain.use141', TRUE)}}
 
 \item{volume_types}{volume types, right now only support T1 image}
 

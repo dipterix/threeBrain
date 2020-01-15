@@ -9,7 +9,7 @@ freesurfer_brain2 <- function(
   fs_subject_folder,
   subject_name, volume_types = 't1', surface_types = 'pial',
   curvature = 'sulc',
-  use_cache = TRUE, use_141 = TRUE, ...){
+  use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE), ...){
 
   mustWork = TRUE
 

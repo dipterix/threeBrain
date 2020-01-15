@@ -57586,12 +57586,46 @@ function gen_sphere(g, canvas){
   mesh.userData.ani_name = 'default';
   mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
 
+  mesh.userData.add_track_data = ( track_name, data_type, value, time_stamp = 0 ) => {
+    let first_value = value, track_value = value;
+    if(Array.isArray(time_stamp)){
+      if(!Array.isArray(value) || time_stamp.length !== value.length ){
+        return;
+      }
+      first_value = value[0];
+    }else if(Array.isArray(value)){
+      first_value = value[0];
+      track_value = first_value;
+    }
+    if( !data_type ){
+      data_type = (typeof first_value === 'number')? 'continuous' : 'discrete';
+    }
+    mesh.userData.ani_exists = true;
+    mesh.userData.ani_params[track_name] = {
+      "name"      : track_name,
+      "time"      : time_stamp,
+      "value"     : value,
+      "data_type" : data_type,
+      "target"    : ".material.color",
+      "cached"    : false
+    };
+
+    if( !Array.isArray( mesh.userData.ani_all_names ) ){
+      mesh.userData.ani_all_names = [];
+    }
+    if(!mesh.userData.ani_all_names.includes( track_name )){
+      mesh.userData.ani_all_names.push( track_name );
+    }
+
+
+  };
+
   mesh.userData.get_track_data = ( track_name, reset_material ) => {
     let re;
 
     if( mesh.userData.ani_exists ){
       if( track_name === undefined ){ track_name = mesh.userData.ani_name; }
-      re = values[ track_name ];
+      re = mesh.userData.ani_params[ track_name ];
     }
 
     if( reset_material ){
@@ -57607,43 +57641,6 @@ function gen_sphere(g, canvas){
     return( re );
   };
 
-
-  // Set animation keyframes, will set material color
-  // Not used. to be deleted
-  mesh.userData.generate_keyframe_tracks = ( track_name ) => {
-    if( !values ){ return( undefined ); }
-    if( track_name === undefined ){
-      track_name = mesh.userData.ani_name;
-    }else{
-      mesh.userData.ani_name = track_name;
-    }
-    const cols = [], time_stamp = [];
-    const ani_data = values[ track_name ];
-
-    if( ani_data ){
-
-      mesh.material = material_basic;
-      mesh.userData.ani_active = true;
-
-      to_array( ani_data.value ).forEach((v) => {
-        let c = canvas.get_color(v);
-        cols.push( c.r, c.g, c.b );
-      });
-      to_array( ani_data.key_frame ).forEach((v) => {
-        time_stamp.push( v - canvas.time_range_min );
-      });
-      return([new threeplugins_THREE.ColorKeyframeTrack(
-        '.material.color',
-        time_stamp, cols, threeplugins_THREE.InterpolateDiscrete
-      )]);
-    }else{
-      // No animation for current mesh, set to MeshLambertMaterial
-      mesh.material = material_lambert;
-      mesh.userData.ani_active = false;
-      return;
-    }
-
-  };
 
   mesh.userData.display_info = {};
   // Add pre-render function to change some attributes
@@ -58826,6 +58823,28 @@ class data_controls_THREEBRAIN_PRESETS{
       });
     }
   }
+
+  add_clip( clip_name, focus_ui = false ){
+    if( (typeof clip_name !== 'string') || this._animation_names.includes(clip_name) ){ return; }
+    if( !this._ani_name || !this._thres_name ){ return; }
+    let el = document.createElement('option');
+    el.setAttribute('value', clip_name);
+    el.innerHTML = clip_name;
+    this._ani_name.__select.appendChild( el );
+
+    el = document.createElement('option');
+    el.setAttribute('value', clip_name);
+    el.innerHTML = clip_name;
+    this._thres_name.__select.appendChild( el );
+    this._animation_names.push( clip_name );
+
+    if( focus_ui ){
+      // This needs to be done in the next round (after dom op)
+      setTimeout(() => { this._ani_name.setValue( clip_name ); }, 100);
+    }
+
+  }
+
   c_animation(){
 
     // Check if animation is needed
@@ -58842,6 +58861,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
     // Make sure the initial value exists, and [None] is included in the option
     names = [...new Set(['[None]', ...names])];
+    this._animation_names = names;
 
     if( !initial || !names.includes( initial ) || initial.startsWith('[') ){
       initial = undefined;
@@ -59847,8 +59867,9 @@ class shiny_tools_THREE_BRAIN_SHINY {
     );
   }
 
-  register_gui( gui ){
+  register_gui( gui, presets ){
     this.gui = gui;
+    this.presets = presets;
 
     if( this.shiny_mode ){
       // register shiny customized message
@@ -59921,6 +59942,38 @@ class shiny_tools_THREE_BRAIN_SHINY {
         .get_controller( k )
         .setValue( args[k] );
     }
+  }
+
+  handle_add_clip( args ){
+    window.aaa = args;
+    const clip_name = args.clip_name,
+          mesh_name = args.target,
+          data_type = args.data_type,
+          value = args.value,
+          time = args.time || 0,
+          value_names = args.value_names || [''],
+          value_range = args.value_range || [0,1],
+          time_range = args.time_range || [0,0],
+          color_keys = to_array( args.color_keys ),
+          color_vals = to_array( args.color_vals ),
+          n_levels = args.n_levels,
+          focusui = args.focus || false;
+
+    if(typeof mesh_name !== 'string'){ return; }
+
+    // Add to object
+    const mesh = this.canvas.mesh.get(mesh_name);
+    if( !mesh || ( typeof mesh.userData.add_track_data !== 'function' ) ){ return; }
+
+    mesh.userData.add_track_data( clip_name, data_type, value, time );
+
+    // calculate cmap
+    this.canvas.add_colormap( clip_name, data_type, value_names, value_range, time_range,
+                color_keys, color_vals, n_levels );
+
+    // Add to gui
+    this.presets.add_clip( clip_name, focusui );
+
   }
 
 
@@ -60632,11 +60685,16 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
       const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
       to_array( track_data.value ).forEach((v) => {
         let c = cmap.lut.getColor(mapping.get( v ));
-        if( !c ) {
+        /*if( !c ) {
           console.log( v );
           console.log( mapping.get( v ) );
+        }*/
+        if( c ){
+          colors.push( c.r, c.g, c.b );
+        }else{
+          colors.push( 1,1,1 );
         }
-        colors.push( c.r, c.g, c.b );
+
       });
     }
     const keyframe = new threeplugins_THREE.ColorKeyframeTrack(
@@ -62121,6 +62179,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
       },
       (res, evt) => {
         this.focus_object( res.target_object );
+        try {
+          document.activeElement.blur();
+        } catch (e) {}
         this.start_animation( 0 );
       },
       'set_obj_chosen'
@@ -64893,34 +64954,38 @@ class src_BrainCanvas{
   }
 
   _register_gui_control(){
+
+    if( this.gui ){ try { this.gui.dispose(); } catch (e) {} }
+
     const gui = new data_controls_THREEBRAIN_CONTROL({
       autoPlace: false,
     }, this.DEBUG);
     if(this.DEBUG){
       window.gui = gui;
     }
+    this.gui = gui;
     // --------------- Register GUI controller ---------------
     // Set default on close handler
-    gui.set_closeHandler( (evt) => {
-      this.hide_controls = gui.closed;
+    this.gui.set_closeHandler( (evt) => {
+      this.hide_controls = this.gui.closed;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     });
 
     // Set side bar
     if(this.settings.hide_controls || false){
       this.hide_controls = true;
-      gui.close();
+      this.gui.close();
       // gui.domElement.style.display = 'none';
     }else{
       // gui.domElement.style.display = 'block';
       const placeholder = this.el_control.firstChild;
-      this.el_control.replaceChild( gui.domElement, placeholder );
+      this.el_control.replaceChild( this.gui.domElement, placeholder );
       this.hide_controls = false;
     }
 
     // Add listeners
     const control_presets = this.settings.control_presets;
-    const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, gui, this.settings, this.shiny );
+    const presets = new data_controls_THREEBRAIN_PRESETS( this.canvas, this.gui, this.settings, this.shiny );
     this.presets = presets;
     if(this.DEBUG){
       window.presets = presets;
@@ -64934,13 +64999,13 @@ class src_BrainCanvas{
     presets.c_background();
 
     // ---------------------------- Main, side canvas settings is on top
-    gui.add_folder('Main Canvas').open();
+    this.gui.add_folder('Main Canvas').open();
     presets.c_recorder();
     presets.c_reset_camera();
     presets.c_main_camera_position();
     presets.c_toggle_anchor();
     /*
-    gui.add_item('Free Controls', () => {
+    this.gui.add_item('Free Controls', () => {
       _camera_pos.setValue( '[free rotate]' );
       this.canvas.controls.enabled = true;
     }, {folder_name: 'Main Canvas'});
@@ -64948,7 +65013,7 @@ class src_BrainCanvas{
 
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
-      gui.add_folder('Side Canvas').open();
+      this.gui.add_folder('Side Canvas').open();
       presets.c_toggle_side_panel();
       presets.c_reset_side_panel();
       presets.c_side_depth();
@@ -65095,14 +65160,8 @@ class src_BrainCanvas{
       }
     });
 
-    if( this.gui ){
-      try {
-        this.gui.dispose();
-      } catch (e) {}
-    }
-    let gui = this._register_gui_control();
-    this.gui = gui;
-    this.shiny.register_gui( gui );
+    this._register_gui_control();
+    this.shiny.register_gui( this.gui, this.presets );
 
 
 

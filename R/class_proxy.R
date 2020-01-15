@@ -100,6 +100,66 @@ ViewerProxy <- R6::R6Class(
     set_cex = function( cex = 1 ){
       stopifnot2(cex > 0, msg = 'cex must be positive')
       private$set_value('font_magnification', cex)
+    },
+
+    set_values = function( name, target_object, data_type,
+                           value, palette = rainbow(64), symmetric = FALSE,
+                           time = ifelse(length(value)==1, 0, stop('time must match length with value')),
+                           value_range = NULL, time_range = NULL, value_names = NULL,
+                           switch_display = FALSE){
+      data_type = data_type[[1]]
+      stopifnot2(data_type %in% c('continuous', 'discrete'), msg = paste(
+        'data_type must be either', sQuote('continuous'), 'or', sQuote('discrete')
+      ))
+
+      geom = ElectrodeGeom$new(name = '')
+      if(length(time) == 1){
+        time = rep(time, length(value))
+      }
+      geom$set_value(value = value, name = name, time_stamp = time)
+      kf = geom$keyframes[[1]]
+      l = kf$to_list()
+      cmap = ColorMap$new(name = name, symmetric = symmetric, geom)
+      cmap$value_type = data_type
+
+      cmap$set_colors(colors = palette)
+      cl = cmap$to_list()
+
+      # const clip_name = args.clip_name,
+      # mesh_name = args.target,
+      # data_type = args.data_type,
+      # value = args.value,
+      # time = args.time || 0,
+      # value_names = args.value_names || [''],
+      # value_range = args.value_range || [0,1];
+      # time_range = args.time_range || [0,0],
+      # color_keys = to_array( args.color_keys ),
+      # color_vals = to_array( args.color_vals ),
+      # n_levels = args.n_levels,
+      # focusui = args.focus || false;
+
+
+      if(length(value_range) < 2 && data_type == 'continuous'){
+        value_range = cl$value_range
+      }
+      if(symmetric && data_type == 'continuous'){
+        value_range = c(-1,1) * max(abs(value_range))
+      }
+
+      private$set_value('add_clip', list(
+        clip_name = kf$name,
+        target = target_object,
+        data_type = data_type,
+        value = l$value,
+        time = l$time,
+        value_names = unique(c(value_names, cl$value_names)),
+        value_range = range(value_range, na.rm = TRUE),
+        time_range = range(cl$time_range, time_range),
+        n_levels = length(cl$value_names),
+        color_keys = cl$color_keys,
+        color_vals = cl$color_vals,
+        focusui = switch_display
+      ))
     }
 
   ),

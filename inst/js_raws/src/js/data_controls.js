@@ -675,6 +675,28 @@ class THREEBRAIN_PRESETS{
       });
     }
   }
+
+  add_clip( clip_name, focus_ui = false ){
+    if( (typeof clip_name !== 'string') || this._animation_names.includes(clip_name) ){ return; }
+    if( !this._ani_name || !this._thres_name ){ return; }
+    let el = document.createElement('option');
+    el.setAttribute('value', clip_name);
+    el.innerHTML = clip_name;
+    this._ani_name.__select.appendChild( el );
+
+    el = document.createElement('option');
+    el.setAttribute('value', clip_name);
+    el.innerHTML = clip_name;
+    this._thres_name.__select.appendChild( el );
+    this._animation_names.push( clip_name );
+
+    if( focus_ui ){
+      // This needs to be done in the next round (after dom op)
+      setTimeout(() => { this._ani_name.setValue( clip_name ); }, 100);
+    }
+
+  }
+
   c_animation(){
 
     // Check if animation is needed
@@ -691,6 +713,7 @@ class THREEBRAIN_PRESETS{
 
     // Make sure the initial value exists, and [None] is included in the option
     names = [...new Set(['[None]', ...names])];
+    this._animation_names = names;
 
     if( !initial || !names.includes( initial ) || initial.startsWith('[') ){
       initial = undefined;

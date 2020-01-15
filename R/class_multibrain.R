@@ -32,7 +32,7 @@ MultiBrain2 <- R6::R6Class(
                           template_surface_types = NULL,
                           template_subject = getOption('threeBrain.template_subject', 'N27'),
                           template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain'),
-                          use_cache = TRUE, use_141 = TRUE ){
+                          use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE) ){
 
 
       l = unlist( c(list(...), .list) )
@@ -58,7 +58,7 @@ MultiBrain2 <- R6::R6Class(
     alter_template = function(surface_types = NULL,
                               template_subject = getOption('threeBrain.template_subject', 'N27'),
                               template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain'),
-                              use_cache = TRUE, use_141 = TRUE){
+                              use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE)){
       # test
       template_path = file.path(template_dir, template_subject)
       stopifnot2(check_freesurfer_path(template_path),
@@ -131,6 +131,10 @@ MultiBrain2 <- R6::R6Class(
         width = width, height = height, debug = debug, token = token,
         browser_external = browser_external, global_data = global_data, ...)
 
+    },
+
+    set_electrodes = function( ... ){
+      self$template_object$set_electrodes( ... )
     },
 
     set_electrode_values = function(table_or_path){

@@ -22,11 +22,16 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
       const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
       to_array( track_data.value ).forEach((v) => {
         let c = cmap.lut.getColor(mapping.get( v ));
-        if( !c ) {
+        /*if( !c ) {
           console.log( v );
           console.log( mapping.get( v ) );
+        }*/
+        if( c ){
+          colors.push( c.r, c.g, c.b );
+        }else{
+          colors.push( 1,1,1 );
         }
-        colors.push( c.r, c.g, c.b );
+
       });
     }
     const keyframe = new THREE.ColorKeyframeTrack(

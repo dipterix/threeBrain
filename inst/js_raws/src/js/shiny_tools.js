@@ -153,8 +153,9 @@ class THREE_BRAIN_SHINY {
     );
   }
 
-  register_gui( gui ){
+  register_gui( gui, presets ){
     this.gui = gui;
+    this.presets = presets;
 
     if( this.shiny_mode ){
       // register shiny customized message
@@ -227,6 +228,38 @@ class THREE_BRAIN_SHINY {
         .get_controller( k )
         .setValue( args[k] );
     }
+  }
+
+  handle_add_clip( args ){
+    window.aaa = args;
+    const clip_name = args.clip_name,
+          mesh_name = args.target,
+          data_type = args.data_type,
+          value = args.value,
+          time = args.time || 0,
+          value_names = args.value_names || [''],
+          value_range = args.value_range || [0,1],
+          time_range = args.time_range || [0,0],
+          color_keys = to_array( args.color_keys ),
+          color_vals = to_array( args.color_vals ),
+          n_levels = args.n_levels,
+          focusui = args.focus || false;
+
+    if(typeof mesh_name !== 'string'){ return; }
+
+    // Add to object
+    const mesh = this.canvas.mesh.get(mesh_name);
+    if( !mesh || ( typeof mesh.userData.add_track_data !== 'function' ) ){ return; }
+
+    mesh.userData.add_track_data( clip_name, data_type, value, time );
+
+    // calculate cmap
+    this.canvas.add_colormap( clip_name, data_type, value_names, value_range, time_range,
+                color_keys, color_vals, n_levels );
+
+    // Add to gui
+    this.presets.add_clip( clip_name, focusui );
+
   }
 
 

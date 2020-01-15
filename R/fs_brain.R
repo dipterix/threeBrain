@@ -48,7 +48,7 @@
 #' @param additional_surfaces character array, additional surface types to load, such as `white`, `smoothwm`
 #' @param aligned_ct character, path to `ct_aligned_mri.nii.gz`, used for electrode localization
 #' @param use_cache logical, whether to use cached `json` files or from raw `FreeSurfer` files
-#' @param use_141 logical, whether to use standard 141 brain for surface file
+#' @param use_141 logical, whether to use standard 141 brain for surface file, default is \code{getOption('threeBrain.use141', TRUE)}
 #'
 #' @examples
 #' \donttest{
@@ -68,7 +68,7 @@
 freesurfer_brain <- function(fs_subject_folder, subject_name,
                              additional_surfaces = NULL,
                              aligned_ct = NULL,
-                             use_cache = TRUE, use_141 = TRUE){
+                             use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE)){
   # Naming conventions
   #
   # Volume group:   Volume (YAB)

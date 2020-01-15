@@ -117,34 +117,38 @@ class BrainCanvas{
   }
 
   _register_gui_control(){
+
+    if( this.gui ){ try { this.gui.dispose(); } catch (e) {} }
+
     const gui = new THREEBRAIN_CONTROL({
       autoPlace: false,
     }, this.DEBUG);
     if(this.DEBUG){
       window.gui = gui;
     }
+    this.gui = gui;
     // --------------- Register GUI controller ---------------
     // Set default on close handler
-    gui.set_closeHandler( (evt) => {
-      this.hide_controls = gui.closed;
+    this.gui.set_closeHandler( (evt) => {
+      this.hide_controls = this.gui.closed;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     });
 
     // Set side bar
     if(this.settings.hide_controls || false){
       this.hide_controls = true;
-      gui.close();
+      this.gui.close();
       // gui.domElement.style.display = 'none';
     }else{
       // gui.domElement.style.display = 'block';
       const placeholder = this.el_control.firstChild;
-      this.el_control.replaceChild( gui.domElement, placeholder );
+      this.el_control.replaceChild( this.gui.domElement, placeholder );
       this.hide_controls = false;
     }
 
     // Add listeners
     const control_presets = this.settings.control_presets;
-    const presets = new THREEBRAIN_PRESETS( this.canvas, gui, this.settings, this.shiny );
+    const presets = new THREEBRAIN_PRESETS( this.canvas, this.gui, this.settings, this.shiny );
     this.presets = presets;
     if(this.DEBUG){
       window.presets = presets;
@@ -158,13 +162,13 @@ class BrainCanvas{
     presets.c_background();
 
     // ---------------------------- Main, side canvas settings is on top
-    gui.add_folder('Main Canvas').open();
+    this.gui.add_folder('Main Canvas').open();
     presets.c_recorder();
     presets.c_reset_camera();
     presets.c_main_camera_position();
     presets.c_toggle_anchor();
     /*
-    gui.add_item('Free Controls', () => {
+    this.gui.add_item('Free Controls', () => {
       _camera_pos.setValue( '[free rotate]' );
       this.canvas.controls.enabled = true;
     }, {folder_name: 'Main Canvas'});
@@ -172,7 +176,7 @@ class BrainCanvas{
 
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
-      gui.add_folder('Side Canvas').open();
+      this.gui.add_folder('Side Canvas').open();
       presets.c_toggle_side_panel();
       presets.c_reset_side_panel();
       presets.c_side_depth();
@@ -319,14 +323,8 @@ class BrainCanvas{
       }
     });
 
-    if( this.gui ){
-      try {
-        this.gui.dispose();
-      } catch (e) {}
-    }
-    let gui = this._register_gui_control();
-    this.gui = gui;
-    this.shiny.register_gui( gui );
+    this._register_gui_control();
+    this.shiny.register_gui( this.gui, this.presets );
 
 
 
