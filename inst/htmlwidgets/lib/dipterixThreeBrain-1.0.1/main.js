@@ -58237,9 +58237,7 @@ class data_controls_THREEBRAIN_PRESETS{
     const initial_bgcolor = this.settings.background || "#ffffff",
           folder_name = CONSTANTS.FOLDERS['background-color'];
 
-    this.fire_change({ 'background' : initial_bgcolor });
-
-    this.gui.add_item('Background Color', initial_bgcolor, {is_color : true, folder_name: folder_name})
+    this.gui.add_item('Background Color', '#FFFFFF', {is_color : true, folder_name: folder_name})
       .onChange((v) => {
 
         // calculate inversed color for text
@@ -58261,7 +58259,9 @@ class data_controls_THREEBRAIN_PRESETS{
 
         // force re-render
         this._update_canvas(0);
-      });
+      })
+      .setValue( initial_bgcolor );
+
   }
 
   c_syncviewer(){
