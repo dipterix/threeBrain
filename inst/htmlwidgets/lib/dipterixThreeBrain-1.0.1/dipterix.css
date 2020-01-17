@@ -46,6 +46,7 @@
 }
 .threejs-control .dg {
   font: 11px monospace, 'Lucida Grande', sans-serif;
+  position: relative;
 }
 
 .threejs-control .dg .cr.color .property-name {
@@ -218,3 +219,30 @@
   cursor: nwse-resize;
   transform: rotate(45deg);
 }
+
+
+/* Tooltip text */
+.threejs-control .dg .cr[viewer-tooltip] {
+  position: relative;
+}
+.threejs-control .dg .cr[viewer-tooltip]:before {
+  content: attr(viewer-tooltip);
+  background-color: #f9f9f9;
+  color: #000000;
+  top: 1em;
+  position: absolute;
+  white-space: nowrap;
+  transform: translate(-4px, -4px);
+  right: 0;
+  opacity: 0.7;
+  font-family: inherit;
+  font-weight: bold;
+  text-shadow: none;
+  padding: 0 3px;
+  -webkit-border-radius: 0.2em;
+  border-radius: 0.2em;
+  z-index: 1;
+  line-height: 17px;
+  font-size: 0.85em;
+}
+

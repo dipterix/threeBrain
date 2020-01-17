@@ -57966,6 +57966,28 @@ CONSTANTS.KEY_NEW_ELECTRODE_EDITOR    = 'Digit1';       // '1' new electrode
 CONSTANTS.KEY_LABEL_FOCUS_EDITOR      = 'Digit2';       // '2' for quick edit label
 CONSTANTS.KEY_CYCLE_REMOVE_EDITOR     = 'KeyR';
 
+CONSTANTS.TOOLTIPS = {};
+CONSTANTS.TOOLTIPS.KEY_ZOOM                    = 'z/Z';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT              = '[';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT             = ']';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_NEXT   = '.';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_PREV   = ',';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY   = 'v';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE           = 'p';
+CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL         = '⇧C';
+CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL           = '⇧A';
+CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL        = '⇧S';
+CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL            = 'e/E';
+CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL              = 'q/Q';
+CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL           = 'w/W';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ANIMATION         = 'c';
+CONSTANTS.TOOLTIPS.KEY_TOGGLE_ANIMATION        = 's';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_EDITOR       = '`';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFTYPE_EDITOR   = '4';
+CONSTANTS.TOOLTIPS.KEY_NEW_ELECTRODE_EDITOR    = '1';
+CONSTANTS.TOOLTIPS.KEY_LABEL_FOCUS_EDITOR      = '2';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_REMOVE_EDITOR     = 'r';
+
 // Regular expressions
 CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - pial (YAB)
 CONSTANTS.REGEXP_VOLUME_GROUP     = /^Volume - (.+) \((.+)\)$/;   // Volume - brain.finalsurfs (YAB)
@@ -58437,18 +58459,23 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.set_coronal_depth( v );
         this.fire_change({ 'coronal_depth' : v });
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL, 'Coronal (P - A)', folder_name);
+
     const _controller_axial = this.gui
       .add_item('Axial (I - S)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_axial_depth( v );
         this.fire_change({ 'axial_depth' : v });
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL, 'Axial (I - S)', folder_name);
+
     const _controller_sagittal = this.gui
       .add_item('Sagittal (L - R)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_sagittal_depth( v );
         this.fire_change({ 'sagittal_depth' : v });
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL, 'Sagittal (L - R)', folder_name);
 
     this.fire_change({ 'coronal_depth' : 0 });
     this.fire_change({ 'axial_depth' : 0 });
@@ -58479,23 +58506,29 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     };
 
-    const overlay_coronal = this.gui.add_item('Overlay Coronal', false, {folder_name: 'Side Canvas'})
+    const overlay_coronal = this.gui.add_item('Overlay Coronal', false,
+      {folder_name: folder_name})
       .onChange((v) => {
         this.canvas.set_side_visibility('coronal', v);
         this.fire_change({ 'coronal_visibility' : v });
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL, 'Overlay Coronal', folder_name);
 
-    const overlay_axial = this.gui.add_item('Overlay Axial', false, {folder_name: 'Side Canvas'})
+    const overlay_axial = this.gui.add_item('Overlay Axial', false,
+      {folder_name: folder_name})
       .onChange((v) => {
         this.canvas.set_side_visibility('axial', v);
         this.fire_change({ 'axial_visibility' : v });
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL, 'Overlay Axial', folder_name);
 
-    const overlay_sagittal = this.gui.add_item('Overlay Sagittal', false, {folder_name: 'Side Canvas'})
+    const overlay_sagittal = this.gui.add_item('Overlay Sagittal', false,
+      {folder_name: folder_name})
       .onChange((v) => {
         this.canvas.set_side_visibility('sagittal', v);
         this.fire_change({ 'sagittal_visibility' : v });
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL, 'Overlay Sagittal', folder_name);
 
     this.fire_change({ 'coronal_visibility' : false });
     this.fire_change({ 'axial_visibility' : false });
@@ -58600,16 +58633,15 @@ class data_controls_THREEBRAIN_PRESETS{
     if( _c.length === 0 ){
       return(null);
     }
-    const surf_type = this.gui.add_item('Surface Type', _s, {
-        args : _c,
-        folder_name : folder_name
-      }).onChange((v) => {
+    const surf_type = this.gui.add_item('Surface Type', _s, {args : _c, folder_name : folder_name })
+      .onChange((v) => {
         this.canvas.switch_subject( '/', {
           'surface_type': v
         });
         this.fire_change({ 'surface_type' : v });
       });
     this.fire_change({ 'surface_type' : _s });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE, 'Surface Type', folder_name);
 
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
@@ -58627,17 +58659,19 @@ class data_controls_THREEBRAIN_PRESETS{
     const folder_name = CONSTANTS.FOLDERS[ 'hemisphere-material' ],
           options = ['normal', 'wireframe', 'hidden'];
 
-    const lh_ctrl = this.gui.add_item('Left Hemisphere', 'normal', { args : options, folder_name : folder_name })
+    const lh_ctrl = this.gui.add_item('Left Hemisphere', 'normal',{ args : options, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'material_type_left': v });
         this.fire_change();
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Hemisphere', folder_name);
 
-    const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal', { args : options, folder_name : folder_name })
+    const rh_ctrl = this.gui.add_item('Right Hemisphere', 'normal',{ args : options, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'material_type_right': v });
         this.fire_change();
       });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Hemisphere', folder_name);
 
     const lh_trans = this.gui.add_item('Left Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
@@ -58645,6 +58679,7 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
         this.fire_change();
       });
+    this.gui.add_tooltip( 'shift' + CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Opacity', folder_name);
 
     const rh_trans = this.gui.add_item('Right Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
@@ -58652,6 +58687,7 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
         this.fire_change();
       });
+    this.gui.add_tooltip( 'shift' + CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Opacity', folder_name);
 
     // add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_LEFT, (evt) => {
@@ -58733,13 +58769,13 @@ class data_controls_THREEBRAIN_PRESETS{
     };
 
 
-    this._controller_electrodes = this.gui.add_item('Visibility', initial_value, {
-      args : vis_types,
-      folder_name : folder_name
-    }).onChange((v) => {
-      this.set_electrodes_visibility( v );
-      this.fire_change();
-    });
+    this._controller_electrodes = this.gui.add_item('Visibility', initial_value,
+      {args : vis_types, folder_name : folder_name })
+      .onChange((v) => {
+        this.set_electrodes_visibility( v );
+        this.fire_change();
+      });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY, 'Visibility', folder_name);
 
     // Add shortcuts
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY, (evt) => {
@@ -58962,6 +58998,8 @@ class data_controls_THREEBRAIN_PRESETS{
 
     const ani_name = this.gui.add_item('Display Data', initial, { folder_name : folder_name, args : names })
       .onChange((v) => { _ani_name_onchange( v ); this.fire_change(); });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ANIMATION, 'Display Data', folder_name);
+
     this._ani_name = ani_name;
     const val_range = this.gui.add_item('Display Range', '~', { folder_name : folder_name })
       .onChange((v) => {
@@ -59019,7 +59057,11 @@ class data_controls_THREEBRAIN_PRESETS{
         this._update_canvas();
       });
 
-    this._ani_status = this.gui.add_item('Play/Pause', false, { folder_name : folder_name });
+    this._ani_status = this.gui.add_item( 'Play/Pause', false,
+                                          { folder_name : folder_name },
+                                          CONSTANTS.TOOLTIPS.KEY_TOGGLE_ANIMATION );
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_TOGGLE_ANIMATION, 'Play/Pause', folder_name);
+
     this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
 
     this._ani_speed = this.gui.add_item('Speed', 1, {
@@ -59027,7 +59069,7 @@ class data_controls_THREEBRAIN_PRESETS{
       folder_name : folder_name
     });
 
-    this.gui.add_item('Time', this.animation_time[0], { folder_name : folder_name })
+    this.gui.add_item( 'Time', this.animation_time[0], { folder_name : folder_name })
         .min(this.animation_time[0]).max(this.animation_time[1]).step(step).onChange((v) => {
           this._update_canvas();
         });
@@ -59672,7 +59714,7 @@ class data_controls_THREEBRAIN_CONTROL{
 
 
   // Add item
-  add_item(name, value, options = {}){
+  add_item(name, value, options = {}, tooltip = null){
     let folder_name = options.folder_name || 'Default',
         args = options.args,
         is_color = options.is_color || false;
@@ -59685,20 +59727,26 @@ class data_controls_THREEBRAIN_CONTROL{
 
     this.ctrls[name] = folder_name;
 
+    let _c;
     if(is_color){
-      return(folder.addColor(this.params, name));
+      _c = folder.addColor(this.params, name);
     }else{
       if( args ){
-        return(folder.add(this.params, name, args));
+        _c = folder.add(this.params, name, args);
       }else{
-        return(folder.add(this.params, name));
+        _c = folder.add(this.params, name);
       }
     }
 
-
-    return(undefined);
+    return(_c);
   }
 
+  add_tooltip( tooltip, name, folder ){
+    const _c = this.get_controller( name, folder );
+    if( _c.__li ){
+      _c.__li.setAttribute('viewer-tooltip', tooltip);
+    }
+  }
 
 
 }
@@ -61003,14 +61051,21 @@ function render_curvature(canvas, mesh, curv_type, update_color = false){
     scale = Math.max(curv_data.range[1], -curv_data.range[0]);
 
     // generate color for each vertices
+    const _transform = (v, b = 10 / scale) => {
+      // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
+      let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
+      return( s );
+    };
     curv_data.value.forEach((v) => {
       let col;
-      if( v < 0 ){
+      /*if( v < 0 ){
         col = v / curv_data.range[0] * 54 + 200;
       }else{
         col = (1 - v / curv_data.range[1]) * 128;
-      }
+      }*/
       // col = 127.5 - (v / scale * 127.5);
+      // Make it lighter using sigmoid function
+      col = _transform(v);
       vertex_colors.push( col );
       vertex_colors.push( col );
       vertex_colors.push( col );

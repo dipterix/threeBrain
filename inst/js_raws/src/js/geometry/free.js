@@ -23,14 +23,21 @@ function render_curvature(canvas, mesh, curv_type, update_color = false){
     scale = Math.max(curv_data.range[1], -curv_data.range[0]);
 
     // generate color for each vertices
+    const _transform = (v, b = 10 / scale) => {
+      // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
+      let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
+      return( s );
+    };
     curv_data.value.forEach((v) => {
       let col;
-      if( v < 0 ){
+      /*if( v < 0 ){
         col = v / curv_data.range[0] * 54 + 200;
       }else{
         col = (1 - v / curv_data.range[1]) * 128;
-      }
+      }*/
       // col = 127.5 - (v / scale * 127.5);
+      // Make it lighter using sigmoid function
+      col = _transform(v);
       vertex_colors.push( col );
       vertex_colors.push( col );
       vertex_colors.push( col );
