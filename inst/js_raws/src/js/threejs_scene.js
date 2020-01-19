@@ -2368,16 +2368,18 @@ class THREEBRAIN_CANVAS {
       console.debug('Generating geometry '+g.type);
     }
     let gen_f = GEOMETRY_FACTORY[g.type],
-        m = gen_f(g, this),
+        inst = gen_f(g, this),
         layers = to_array(g.layer);
 
-    if(typeof(m) !== 'object' || m === null){
+    if(typeof(inst) !== 'object' || inst === null){
       return(null);
     }
 
-    if( m.isThreeBrainObject ){
-      this.threebrain_instances.set( g.name, m );
-      m = m.object;
+    let m = inst;
+
+    if( inst.isThreeBrainObject ){
+      this.threebrain_instances.set( g.name, inst );
+      m = inst.object;
     }
 
     let set_layer = (m) => {
@@ -2580,6 +2582,7 @@ class THREEBRAIN_CANVAS {
       }
     }
 
+    inst.finish_init();
   }
 
   _register_datacube( m ){
@@ -2779,10 +2782,16 @@ class THREEBRAIN_CANVAS {
       cached_items.forEach((nm) => {
         let cache_info = g.group_data[nm];
 
-        if(cache_info === undefined || cache_info === null || Array.isArray(cache_info)){
+        if(cache_info === undefined || cache_info === null || Array.isArray(cache_info) ){
           // Already cached
           item_size -= 1;
-        }else{
+        /*}else if( cache_info.lazy ){
+          // lazy-load the data
+          cache_info.loaded = false;
+          cache_info.server_path = cache_folder + g.cache_name + '/' + cache_info.file_name;
+          item_size -= 1;*/
+        } else {
+
 
           // Need to check shiny mode
           let path = cache_folder + g.cache_name + '/' + cache_info.file_name;
@@ -2791,8 +2800,6 @@ class THREEBRAIN_CANVAS {
             path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
           }
           */
-
-
 
           this.load_file(
             path, ( v ) => {
@@ -2834,9 +2841,10 @@ class THREEBRAIN_CANVAS {
   }
 
   // Get data from some geometry. Try to get from geom first, then get from group
-  get_data(data_name, from_geom, group_hint){
+  get_data(data_name, from_geom, group_hint, lazy_onload){
 
     const m = this.mesh.get( from_geom );
+    let re, gp;
 
     if( m ){
       if(m.userData.hasOwnProperty(data_name)){
@@ -2845,23 +2853,67 @@ class THREEBRAIN_CANVAS {
         let g = m.userData.construct_params.group;
         if(g !== null){
           let group_name = g.group_name;
-          let gp = this.group.get( group_name );
-          if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
-            return(gp.userData.group_data[data_name]);
-          }
+          gp = this.group.get( group_name );
+          // set re
         }
       }
     }else if(group_hint !== undefined){
       let group_name = group_hint;
-      let gp = this.group.get( group_name );
-      if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
-        return(gp.userData.group_data[data_name]);
-      }
+      gp = this.group.get( group_name );
+      // set re
 
     }else if(this.DEBUG){
-      console.error('Cannot find geom with name ' + from_geom);
+      console.error('Cannot find data with name ' + from_geom + ' at group ' + group_hint);
     }
-    return(undefined);
+
+    // group exists
+    if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+
+      re = gp.userData.group_data[data_name];
+
+      if( re ){
+        const is_lazy = re.lazy;
+        const tobe_loaded = re.loaded === false;
+
+        // if re is not lazy, run `lazy_onload`,
+        // if re is lazy but loaded, run
+        if( !(is_lazy && tobe_loaded) && typeof lazy_onload === 'function' ){
+          // this means re is loaded. However, data is not overridden or missing
+          // because otherwise re should be the actual object.
+          // return re anyway to see if `lazy_onload` can further handle it
+          lazy_onload( re );
+        }
+
+        if( is_lazy && tobe_loaded ){
+
+          // otherwise load data
+
+          // make sure we never load data again
+          re.loaded = true;
+
+          this.load_file(
+            re.server_path, ( v ) => {
+          	  const keys = Object.keys(v);
+          	  keys.forEach((k) => {
+                gp.userData.group_data[k] = v[k];
+              });
+              // recall function
+              re = gp.userData.group_data[data_name];
+              if( re && typeof lazy_onload === 'function' ){
+                lazy_onload( re );
+              }
+          	},
+          	( url, itemsLoaded, itemsTotal ) => {
+            	console.debug( 'Loading file: ' + url + ' (lazy-load).\nLoaded ' +
+            	              itemsLoaded + ' of ' + itemsTotal + ' files.' );
+            }
+          );
+        }
+
+      }
+    }
+
+    return(re);
   }
 
 

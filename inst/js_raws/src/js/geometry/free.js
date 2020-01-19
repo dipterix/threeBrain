@@ -9,10 +9,34 @@ class FreeMesh extends AbstractThreeBrainObject {
   constructor(g, canvas){
 
     super( g, canvas );
+    // this._params is g
+    // this.name = this._params.name;
+    // this.group_name = this._params.group.group_name;
 
     this.type = 'FreeMesh';
     this.isFreeMesh = true;
 
+    // STEP 1: initial settings
+    // when subject brain is messing, subject_code will be template subject such as N27,
+    // and display_code will be the missing subject
+    // actuall subject
+    this.subject_code = this._params.subject_code;
+    // display subject
+    this.display_code = canvas.get_data('subject_code', this._params.name,
+                                        this.group_name) || this.subject_code;
+    this.hemisphere = this._params.hemisphere || 'left';
+    this.surface_type = this._params.surface_type;
+    this.misc_name = '_misc_' + this.subject_code;
+    this.misc_group_name = '_internal_group_data_' + this.subject_code;
+    this._vertex_cname = this._canvas.get_data(
+      `default_vertex_${ this.hemisphere[0] }h_${ this.surface_type }`, this.name, this.group_name);
+
+    // STEP 2: data settings
+    const vertices = this._canvas.get_data('free_vertices_'+this.name, this.name, this.group_name);
+    const faces = this._canvas.get_data('free_faces_'+g.name, this.name, this.group_name);
+
+
+    // STEP 3: mesh settings
     this._materials = {
       'MeshPhongMaterial' : new THREE.MeshPhongMaterial( MATERIAL_PARAMS ),
       'MeshLambertMaterial': new THREE.MeshLambertMaterial( MATERIAL_PARAMS )
@@ -22,11 +46,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this._geometry = new THREE.BufferGeometry();
 
     // construct geometry
-    const vertices = this._canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name);
-    const faces = this._canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name);
-    const curvature_type = this._canvas.get_data("curvature", g.name, g.group.group_name);
-    const curvature_subject = canvas.get_data('curvature_subject', g.name, g.group.group_name) || g.subject_code;
-    this._curvature_subject = curvature_subject;
+
     const vertex_positions = [], face_orders = [];
     vertices.forEach((v) => {
       vertex_positions.push(v[0], v[1], v[2]);
@@ -54,10 +74,6 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     this._mesh.position.fromArray(g.position);
 
-    if( typeof curvature_type === 'string' ){
-      this.render_curvature(curvature_type, true);
-    }
-
     // register userData to comply with main framework
     this._mesh.userData.construct_params = g;
 
@@ -70,6 +86,10 @@ class FreeMesh extends AbstractThreeBrainObject {
     this.object = this._mesh;
 
     this._link_userData();
+  }
+
+  finish_init(){
+    this.set_vertex_color(this._vertex_cname, true);
   }
 
   _link_userData(){
@@ -85,22 +105,30 @@ class FreeMesh extends AbstractThreeBrainObject {
     this._mesh.userData.instance = this;
   }
 
-  render_curvature( curv_type, update_color = false ){
-    const curvature_subject = this._curvature_subject;
+  // internally used
+  _set_vertex_color( cname, color_data, update_color = false ){
     const g = this._params;
-    const curv_data = this._canvas.get_data(`Curvature - ${g.hemisphere[0]}h.${curv_type} (${curvature_subject})`,
-                                      g.name, g.group.group_name);
-    const vertex_colors = [];
+
+    let colattr = this._geometry.getAttribute('color'),
+        missattr = colattr === undefined;
     let scale = 1;
 
-    if( curv_data && Array.isArray(curv_data.value) &&
-        this._mesh.geometry.attributes.position.count == curv_data.value.length ){
 
-      if( !Array.isArray(curv_data.range) || curv_data.range.length < 2 ){
-        curv_data.range = [-1, 1];
+    if( color_data && Array.isArray(color_data.value) &&
+        this._mesh.geometry.attributes.position.count == color_data.value.length ){
+      // test passed
+      this._vertex_cname = cname;
+
+      if( missattr ){
+        colattr = new THREE.Uint8BufferAttribute( new Uint8Array(color_data.value.length * 3), 3, true );
       }
 
-      scale = Math.max(curv_data.range[1], -curv_data.range[0]);
+
+      if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
+        color_data.range = [-1, 1];
+      }
+
+      scale = Math.max(color_data.range[1], -color_data.range[0]);
 
       // generate color for each vertices
       const _transform = (v, b = 10 / scale) => {
@@ -108,25 +136,19 @@ class FreeMesh extends AbstractThreeBrainObject {
         let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
         return( s );
       };
-      curv_data.value.forEach((v) => {
+      color_data.value.forEach((v, ii) => {
         let col;
-        /*if( v < 0 ){
-          col = v / curv_data.range[0] * 54 + 200;
-        }else{
-          col = (1 - v / curv_data.range[1]) * 128;
-        }*/
-        // col = 127.5 - (v / scale * 127.5);
         // Make it lighter using sigmoid function
         col = _transform(v);
-        vertex_colors.push( col );
-        vertex_colors.push( col );
-        vertex_colors.push( col );
+        colattr.setXYZ(ii, col, col, col);
       });
 
 
       if( update_color ){
         // update color to geometry
-        this._mesh.geometry.addAttribute( 'color', new THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
+        if( missattr ){
+          this._mesh.geometry.addAttribute( 'color', colattr );
+        }
         this._mesh.material.vertexColors = THREE.VertexColors;
         this._mesh.material.needsUpdate = true;
         this._material_color = THREE.VertexColors;
@@ -137,6 +159,20 @@ class FreeMesh extends AbstractThreeBrainObject {
       this._mesh.material.needsUpdate = true;
       this._material_color = THREE.NoColors;
     }
+  }
+
+  set_vertex_color( color_name, update_color = false ){
+
+    let cname = color_name || this._vertex_cname;
+
+    // color data is lazy-loaded
+    this._canvas.get_data(
+      cname, this.misc_name, this.misc_group_name,
+      ( color_data ) => {
+        // window.aaa = color_data;
+        this._set_vertex_color(cname, color_data, update_color);
+      });
+
   }
 
   dispose(){

@@ -463,6 +463,8 @@ Brain2 <- R6::R6Class(
     #Stores a list of BrainElectrodes objects
     electrodes = NULL,
 
+    misc = NULL,
+
     ## Transforms
 
     # Talairach transform. What freesurfer uses by default is linear transform from scanner coords to MNI305 space
@@ -490,6 +492,12 @@ Brain2 <- R6::R6Class(
       self$surfaces = list()
       self$electrodes = BrainElectrodes$new(subject_code = subject_code)
       self$meta = list()
+
+      # TODO: put all brain global data (transform etc...) here
+      self$misc = BlankGeom$new(
+        group = GeomGroup$new(name = sprintf('_internal_group_data_%s', subject_code)),
+        name = sprintf('_misc_%s', subject_code)
+      )
     },
 
     add_surface = function(surface){
@@ -546,6 +554,23 @@ Brain2 <- R6::R6Class(
       volume$set_subject_code( self$subject_code )
       self$volumes[[ volume$volume_type ]] = volume
 
+    },
+
+    # special: must be cached path
+    add_vertex_color = function(name, path, lazy = TRUE){
+      path = normalizePath(path)
+      self$misc$group$set_group_data(
+        name = name,
+        value = list(
+          path = path,
+          absolute_path = path,
+          file_name = filename(path),
+          is_new_cache = FALSE,
+          is_cache = TRUE,
+          lazy = lazy
+        ),
+        is_cached = TRUE
+      )
     },
 
     set_electrodes = function(electrodes){
@@ -777,7 +802,7 @@ Brain2 <- R6::R6Class(
       # global_files =
 
       threejs_brain(
-        .list = geoms,
+        self$misc, .list = geoms,
         symmetric = symmetric, palettes = palettes,
         side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,

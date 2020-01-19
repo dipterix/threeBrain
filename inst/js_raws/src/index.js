@@ -213,7 +213,7 @@ class BrainCanvas{
     this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
 
     	let path = /\/([^/]*)$/.exec(url)[1],
-    	    msg = '<p><small>Loading file: ' + (itemsLoaded + 1) + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
+    	    msg = '<p><small>Loaded file: ' + itemsLoaded + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
 
       if(this.DEBUG){
         console.debug(msg);

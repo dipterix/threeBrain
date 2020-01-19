@@ -231,7 +231,7 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_add_clip( args ){
-    window.aaa = args;
+    // window.aaa = args;
     const clip_name = args.clip_name,
           mesh_name = args.target,
           data_type = args.data_type,

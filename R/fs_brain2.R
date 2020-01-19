@@ -131,7 +131,7 @@ freesurfer_brain2 <- function(
     loaded = FALSE
     surf_group$set_group_data('template_subject', template_subject)
     surf_group$set_group_data('surface_type', surf_t)
-    surf_group$set_group_data('curvature_subject', subject_name)
+    surf_group$set_group_data('subject_code', subject_name)
 
     # check if has cache
     cache_lh = sprintf('%s_std_141_lh_%s.json', subject_name, surf_t)
@@ -156,21 +156,27 @@ freesurfer_brain2 <- function(
       #   # use N27 curv file because 141 brain is surface mapping and share vertex count?
       #   curv_lh = file.path(template_dir, template_subject, 'RAVE',
       #                       sprintf('%s_std_141_lh_%s.json', template_subject, curvature))
-      #   surf_group$set_group_data('curvature_subject', template_subject)
+      #   surf_group$set_group_data('subject_code', template_subject)
       # }
       if( file.exists(curv_lh) ){
-        curv_lh = normalizePath(curv_lh)
-        surf_group$set_group_data(
-          name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name),
-          value = list(
-            path = curv_lh,
-            absolute_path = curv_lh,
-            file_name = filename(curv_lh),
-            is_new_cache = FALSE,
-            is_cache = TRUE
-          ),
-          is_cached = TRUE
+        # curv_lh = normalizePath(curv_lh)
+        # surf_group$set_group_data(
+        #   name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name),
+        #   value = list(
+        #     path = curv_lh,
+        #     absolute_path = curv_lh,
+        #     file_name = filename(curv_lh),
+        #     is_new_cache = FALSE,
+        #     is_cache = TRUE
+        #   ),
+        #   is_cached = TRUE
+        # )
+        vertcolor_name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name)
+        brain$add_vertex_color(
+          name = vertcolor_name,
+          path = curv_lh
         )
+        surf_group$set_group_data(sprintf('default_vertex_lh_%s', surf_t), vertcolor_name)
       }
 
       curv_rh = rave_cached(sprintf('%s_std_141_rh_%s.json', subject_name, curvature))
@@ -179,21 +185,27 @@ freesurfer_brain2 <- function(
       #   # use N27 curv file because 141 brain is surface mapping and share vertex count?
       #   curv_rh = file.path(template_dir, template_subject, 'RAVE',
       #                       sprintf('%s_std_141_rh_%s.json', template_subject, curvature))
-      #   surf_group$set_group_data('curvature_subject', template_subject)
+      #   surf_group$set_group_data('subject_code', template_subject)
       # }
       if( file.exists(curv_rh) ){
-        curv_rh = normalizePath(curv_rh)
-        surf_group$set_group_data(
-          name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name),
-          value = list(
-            path = curv_rh,
-            absolute_path = curv_rh,
-            file_name = filename(curv_rh),
-            is_new_cache = FALSE,
-            is_cache = TRUE
-          ),
-          is_cached = TRUE
+        # curv_rh = normalizePath(curv_rh)
+        # surf_group$set_group_data(
+        #   name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name),
+        #   value = list(
+        #     path = curv_rh,
+        #     absolute_path = curv_rh,
+        #     file_name = filename(curv_rh),
+        #     is_new_cache = FALSE,
+        #     is_cache = TRUE
+        #   ),
+        #   is_cached = TRUE
+        # )
+        vertcolor_name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name)
+        brain$add_vertex_color(
+          name = vertcolor_name,
+          path = curv_rh
         )
+        surf_group$set_group_data(sprintf('default_vertex_rh_%s', surf_t), vertcolor_name)
       }
     }
     if( !loaded ){
@@ -221,34 +233,46 @@ freesurfer_brain2 <- function(
 
         curv_lh = rave_cached(sprintf('%s_fs_lh_%s.json', subject_name, curvature))
         if( file.exists(curv_lh) ){
-          curv_lh = normalizePath(curv_lh)
-          surf_group$set_group_data(
-            name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name),
-            value = list(
-              path = curv_lh,
-              absolute_path = curv_lh,
-              file_name = filename(curv_lh),
-              is_new_cache = FALSE,
-              is_cache = TRUE
-            ),
-            is_cached = TRUE
+          # curv_lh = normalizePath(curv_lh)
+          # surf_group$set_group_data(
+          #   name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name),
+          #   value = list(
+          #     path = curv_lh,
+          #     absolute_path = curv_lh,
+          #     file_name = filename(curv_lh),
+          #     is_new_cache = FALSE,
+          #     is_cache = TRUE
+          #   ),
+          #   is_cached = TRUE
+          # )
+          vertcolor_name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name)
+          brain$add_vertex_color(
+            name = vertcolor_name,
+            path = curv_lh
           )
+          surf_group$set_group_data(sprintf('default_vertex_lh_%s', surf_t), vertcolor_name)
         }
 
         curv_rh = rave_cached(sprintf('%s_fs_rh_%s.json', subject_name, curvature))
         if( file.exists(curv_rh) ){
-          curv_rh = normalizePath(curv_rh)
-          surf_group$set_group_data(
-            name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name),
-            value = list(
-              path = curv_rh,
-              absolute_path = curv_rh,
-              file_name = filename(curv_rh),
-              is_new_cache = FALSE,
-              is_cache = TRUE
-            ),
-            is_cached = TRUE
+          # curv_rh = normalizePath(curv_rh)
+          # surf_group$set_group_data(
+          #   name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name),
+          #   value = list(
+          #     path = curv_rh,
+          #     absolute_path = curv_rh,
+          #     file_name = filename(curv_rh),
+          #     is_new_cache = FALSE,
+          #     is_cache = TRUE
+          #   ),
+          #   is_cached = TRUE
+          # )
+          vertcolor_name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name)
+          brain$add_vertex_color(
+            name = vertcolor_name,
+            path = curv_rh
           )
+          surf_group$set_group_data(sprintf('default_vertex_rh_%s', surf_t), vertcolor_name)
         }
       }
 

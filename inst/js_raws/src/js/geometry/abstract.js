@@ -31,6 +31,8 @@ class AbstractThreeBrainObject {
   add_track_data( track_name, data_type, value, time_stamp = 0 ){
 
   }
+
+  finish_init(){}
 }
 
 export { AbstractThreeBrainObject };
