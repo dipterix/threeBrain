@@ -458,8 +458,9 @@ class THREEBRAIN_PRESETS{
 
     const folder_name = CONSTANTS.FOLDERS[ 'surface-selector' ],
           _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
+          _c = this.canvas.get_surface_types(),
           _mty = this.canvas.state_data.get( 'surface_material_type' ) || 'MeshPhongMaterial',
-          _c = this.canvas.get_surface_types();
+          _mtyc = ['MeshPhongMaterial', 'MeshLambertMaterial'];
 
     if( _c.length === 0 ){
       return(null);
@@ -484,14 +485,27 @@ class THREEBRAIN_PRESETS{
     }, 'gui_surf_type2');
 
 
-    this.gui.add_item('Surface Material', _mty, {
-      args : ['MeshPhongMaterial', 'MeshLambertMaterial'], folder_name : folder_name })
+    const surf_material = this.gui.add_item('Surface Material', _mty, {
+      args : _mtyc, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.state_data.set( 'surface_material_type', v );
         this.fire_change({ 'surface_material' : v });
         this._update_canvas();
       });
     this.fire_change({ 'surface_material' : _mty });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL, 'Surface Material', folder_name);
+
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_MATERIAL, (evt) => {
+      if( has_meta_keys( evt.event, true, false, false ) ){
+        let current_idx = (_mtyc.indexOf( surf_material.getValue() ) + 1) % _mtyc.length;
+        if( current_idx >= 0 ){
+          surf_material.setValue( _mtyc[ current_idx ] );
+        }
+      }
+    }, 'gui_surf_material');
+
+
   }
 
   // 12. Hemisphere material/transparency
@@ -1471,7 +1485,8 @@ class THREEBRAIN_CONTROL{
     const keys = [
       "Background Color", "Display Helpers", "Show Panels", "Coronal (P - A)",
       "Axial (I - S)", "Sagittal (L - R)", "Overlay Coronal", "Overlay Axial", "Overlay Sagittal",
-      "Dist. Threshold", "Surface Type", "Left Hemisphere", "Right Hemisphere", "Left Opacity", "Right Opacity",
+      "Dist. Threshold", "Surface Type", "Surface Material", "Left Hemisphere", "Right Hemisphere",
+      "Left Opacity", "Right Opacity",
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Show Legend", "Show Time"
     ];
