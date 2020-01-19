@@ -61621,7 +61621,7 @@ class free_FreeMesh extends AbstractThreeBrainObject {
   render_curvature( curv_type, update_color = false ){
     const curvature_subject = this._curvature_subject;
     const g = this._params;
-    const curv_data = canvas.get_data(`Curvature - ${g.hemisphere[0]}h.${curv_type} (${curvature_subject})`,
+    const curv_data = this._canvas.get_data(`Curvature - ${g.hemisphere[0]}h.${curv_type} (${curvature_subject})`,
                                       g.name, g.group.group_name);
     const vertex_colors = [];
     let scale = 1;
@@ -61772,7 +61772,7 @@ class free_FreeMesh extends AbstractThreeBrainObject {
 
 
   _check_material( update_canvas = false ){
-    const _mty = canvas.state_data.get('surface_material_type') || this._material_type;
+    const _mty = this._canvas.state_data.get('surface_material_type') || this._material_type;
     if( !this._mesh.material['is' + _mty] ){
       this.switch_material( _mty, update_canvas );
     }
@@ -66010,10 +66010,10 @@ class src_BrainCanvas{
       if( this.DEBUG ){
         this.canvas.add_object( g );
       }else{
-        try {
+        //try {
           this.canvas.add_object(g);
-        } catch (e) {
-        }
+        //} catch (e) {
+        //}
       }
     });
 

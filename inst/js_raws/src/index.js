@@ -316,10 +316,10 @@ class BrainCanvas{
       if( this.DEBUG ){
         this.canvas.add_object( g );
       }else{
-        try {
+        //try {
           this.canvas.add_object(g);
-        } catch (e) {
-        }
+        //} catch (e) {
+        //}
       }
     });
 

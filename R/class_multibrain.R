@@ -61,6 +61,12 @@ MultiBrain2 <- R6::R6Class(
                               use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE)){
       # test
       template_path = file.path(template_dir, template_subject)
+
+      if( template_subject == 'N27' ){
+        check_freesurfer_path(template_path, autoinstall_template = TRUE)
+      }
+
+      # If N27, makesure it's installed
       stopifnot2(check_freesurfer_path(template_path),
                  msg = paste0('Cannot find template subject - ', template_subject,
                               '\nTo install N27 template subject, you can use:\n\n\t',
