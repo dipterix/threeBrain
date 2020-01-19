@@ -46,6 +46,7 @@ class DataCube extends AbstractThreeBrainObject {
     texture.format = THREE.RedFormat;
   	texture.type = THREE.UnsignedByteType;
   	texture.needsUpdate = true;
+  	this._texture = texture;
 
 
     // Shader - XY plane
@@ -191,13 +192,13 @@ class DataCube extends AbstractThreeBrainObject {
   dispose(){
     this._line_material.dispose();
     this._line_geometry.dispose();
-    this._texture.dispose();
     this._material_xy.dispose();
     this._geometry_xy.dispose();
     this._material_yz.dispose();
   	this._geometry_yz.dispose();
   	this._material_yz.dispose();
   	this._geometry_yz.dispose();
+    this._texture.dispose();
   }
 
   get_track_data( track_name, reset_material ){}

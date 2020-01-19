@@ -2258,6 +2258,11 @@ class THREEBRAIN_CANVAS {
     // Remove the rest objects in the scene
     this.remove_object( this.scene );
 
+    // Call dispose method
+    this.threebrain_instances.forEach((el) => {
+      el.dispose();
+    });
+
     // dispose scene
     this.scene.dispose();
     this.scene = null;

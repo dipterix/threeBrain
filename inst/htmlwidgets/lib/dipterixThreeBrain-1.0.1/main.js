@@ -61128,6 +61128,7 @@ class datacube_DataCube extends AbstractThreeBrainObject {
     texture.format = threeplugins_THREE.RedFormat;
   	texture.type = threeplugins_THREE.UnsignedByteType;
   	texture.needsUpdate = true;
+  	this._texture = texture;
 
 
     // Shader - XY plane
@@ -61273,13 +61274,13 @@ class datacube_DataCube extends AbstractThreeBrainObject {
   dispose(){
     this._line_material.dispose();
     this._line_geometry.dispose();
-    this._texture.dispose();
     this._material_xy.dispose();
     this._geometry_xy.dispose();
     this._material_yz.dispose();
   	this._geometry_yz.dispose();
   	this._material_yz.dispose();
   	this._geometry_yz.dispose();
+    this._texture.dispose();
   }
 
   get_track_data( track_name, reset_material ){}
@@ -64416,6 +64417,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // Remove the rest objects in the scene
     this.remove_object( this.scene );
 
+    // Call dispose method
+    this.threebrain_instances.forEach((el) => {
+      el.dispose();
+    });
+
     // dispose scene
     this.scene.dispose();
     this.scene = null;
@@ -66027,10 +66033,9 @@ class src_BrainCanvas{
       if( this.DEBUG ){
         this.canvas.add_object( g );
       }else{
-        //try {
+        try {
           this.canvas.add_object(g);
-        //} catch (e) {
-        //}
+        } catch (e) {}
       }
     });
 
