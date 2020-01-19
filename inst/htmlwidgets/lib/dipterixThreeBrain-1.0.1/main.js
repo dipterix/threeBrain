@@ -58953,7 +58953,7 @@ class data_controls_THREEBRAIN_PRESETS{
     this.gui.add_item('Surface Material', _mty, {
       args : ['MeshPhongMaterial', 'MeshLambertMaterial'], folder_name : folder_name })
       .onChange((v) => {
-        canvas.state_data.set( 'surface_material_type', v );
+        this.canvas.state_data.set( 'surface_material_type', v );
         this.fire_change({ 'surface_material' : v });
         this._update_canvas();
       });
