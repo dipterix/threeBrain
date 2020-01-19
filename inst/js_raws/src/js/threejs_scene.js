@@ -97,6 +97,7 @@ class THREEBRAIN_CANVAS {
 
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
+    this.threebrain_instances = new Map();
 
     // Stores all electrodes
     this.subject_codes = [];
@@ -2302,6 +2303,7 @@ class THREEBRAIN_CANVAS {
       // this.scene.remove( m );
     });
     this.mesh.clear();
+    this.threebrain_instances.clear();
     this.group.clear();
 
     // set default values
@@ -2366,6 +2368,11 @@ class THREEBRAIN_CANVAS {
 
     if(typeof(m) !== 'object' || m === null){
       return(null);
+    }
+
+    if( m.isThreeBrainObject ){
+      this.threebrain_instances.set( g.name, m );
+      m = m.object;
     }
 
     let set_layer = (m) => {

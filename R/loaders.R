@@ -38,8 +38,9 @@ download_template_subject <- function(
   utils::download.file(url = url, destfile = destzip, quiet = F, cacheOK = T)
 
   sub_dir = file.path(dir, subject_code)
+  # sub_dir = dir
 
-  utils::unzip(destzip, exdir = sub_dir, overwrite = TRUE)
+  utils::unzip(destzip, exdir = dir, overwrite = TRUE)
 
   # check if files need move
   if( !'mri' %in% list.dirs(sub_dir, recursive = FALSE, full.names = FALSE) ){
@@ -50,7 +51,9 @@ download_template_subject <- function(
     if( length(mri_dir) ){
       brain_mgz = list.files(file.path(sub_dir, mri_dir), full.names = TRUE, pattern = 'T1.mgz$')
       dir_from = dirname(dirname(brain_mgz))
-      file_move(dir_from, sub_dir, overwrite = TRUE, clean = TRUE, all_files = TRUE)
+      if(length(dir_from)){
+        file_move(dir_from, sub_dir, overwrite = TRUE, clean = TRUE, all_files = TRUE)
+      }
     }
   }
 

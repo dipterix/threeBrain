@@ -6,7 +6,7 @@
 \usage{
 check_freesurfer_path(
   fs_subject_folder,
-  autoinstall_template = TRUE,
+  autoinstall_template = FALSE,
   return_path = FALSE,
   check_volume = FALSE,
   check_surface = FALSE
@@ -15,7 +15,7 @@ check_freesurfer_path(
 \arguments{
 \item{fs_subject_folder}{character, path to `fs` project directory or `RAVE` subject directory}
 
-\item{autoinstall_template}{logical, whether `N27` brain should be installed is missing}
+\item{autoinstall_template}{logical, whether `N27` brain should be installed if missing}
 
 \item{return_path}{logical, whether to return `FreeSurfer` path}
 

@@ -6,6 +6,7 @@ load_nibabel <- function(force_reload = FALSE){
   }
   loaders$tried_nibabel = TRUE
   try({
+    stopifnot2(reticulate::py_module_available('nibabel'), msg = 'nibabel not available')
     loaders$nibabel = reticulate::import('nibabel')
   }, silent = TRUE)
   return(loaders$nibabel)

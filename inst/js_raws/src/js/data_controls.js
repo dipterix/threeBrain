@@ -217,7 +217,7 @@ class THREEBRAIN_PRESETS{
           break;
         case 'inferior':
           this.canvas.main_camera.position.set( 0, 0, -500 );
-          this.canvas.main_camera.up.set( 0, -1, 0 );
+          this.canvas.main_camera.up.set( 0, 1, 0 );
           break;
       }
 
@@ -457,7 +457,8 @@ class THREEBRAIN_PRESETS{
   c_surface_type2(){
 
     const folder_name = CONSTANTS.FOLDERS[ 'surface-selector' ],
-    _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
+          _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
+          _mty = this.canvas.state_data.get( 'surface_material_type' ) || 'MeshPhongMaterial',
           _c = this.canvas.get_surface_types();
 
     if( _c.length === 0 ){
@@ -481,6 +482,16 @@ class THREEBRAIN_PRESETS{
         }
       }
     }, 'gui_surf_type2');
+
+
+    this.gui.add_item('Surface Material', _mty, {
+      args : ['MeshPhongMaterial', 'MeshLambertMaterial'], folder_name : folder_name })
+      .onChange((v) => {
+        canvas.state_data.set( 'surface_material_type', v );
+        this.fire_change({ 'surface_material' : v });
+        this._update_canvas();
+      });
+    this.fire_change({ 'surface_material' : _mty });
   }
 
   // 12. Hemisphere material/transparency
@@ -509,7 +520,7 @@ class THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
         this.fire_change();
       });
-    this.gui.add_tooltip( 'shift' + CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Opacity', folder_name);
+    this.gui.add_tooltip( '⇧' + CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Opacity', folder_name);
 
     const rh_trans = this.gui.add_item('Right Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
@@ -517,7 +528,7 @@ class THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
         this.fire_change();
       });
-    this.gui.add_tooltip( 'shift' + CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Opacity', folder_name);
+    this.gui.add_tooltip( '⇧' + CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Opacity', folder_name);
 
     // add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_LEFT, (evt) => {

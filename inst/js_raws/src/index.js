@@ -162,7 +162,7 @@ class BrainCanvas{
     presets.c_background();
 
     // ---------------------------- Main, side canvas settings is on top
-    this.gui.add_folder('Main Canvas').open();
+    // this.gui.add_folder('Main Canvas').open();
     presets.c_recorder();
     presets.c_reset_camera();
     presets.c_main_camera_position();
@@ -176,7 +176,7 @@ class BrainCanvas{
 
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
-      this.gui.add_folder('Side Canvas').open();
+      // this.gui.add_folder('Side Canvas').open();
       presets.c_toggle_side_panel();
       presets.c_reset_side_panel();
       presets.c_side_depth();

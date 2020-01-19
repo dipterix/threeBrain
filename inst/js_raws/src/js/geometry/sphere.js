@@ -1,5 +1,269 @@
+import { AbstractThreeBrainObject } from './abstract.js';
 import { THREE } from '../threeplugins.js';
 import { to_array, get_or_default } from '../utils.js';
+
+const MATERIAL_PARAMS = { 'transparent' : false };
+
+class Sphere extends AbstractThreeBrainObject {
+  constructor (g, canvas) {
+    super( g, canvas );
+
+    this.type = 'Sphere';
+    this.isSphere = true;
+
+    this._materials = {
+      'MeshBasicMaterial' : new THREE.MeshBasicMaterial( MATERIAL_PARAMS ),
+      'MeshLambertMaterial': new THREE.MeshLambertMaterial( MATERIAL_PARAMS )
+    };
+
+    const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+          values = g.keyframes,
+          n_keyframes = to_array( g.keyframes ).length;
+    this._geometry = gb;
+
+    gb.name = 'geom_sphere_' + g.name;
+
+    // Make material based on value
+    if( n_keyframes > 0 ){
+      // Use the first value
+      this._material_type = 'MeshBasicMaterial';
+    }else{
+      this._material_type = 'MeshLambertMaterial';
+    }
+
+    const mesh = new THREE.Mesh(gb, this._materials[ this._material_type ]);
+    mesh.name = 'mesh_sphere_' + g.name;
+
+    // FIXME: need to use class instead of canvas.mesh
+    let linked = false;
+    if(g.use_link){
+      // This is a linkedSphereGeom which should be attached to a surface mesh
+      let vertex_ind = Math.floor(g.vertex_number - 1),
+          target_name = g.linked_geom,
+          target_mesh = canvas.mesh.get( target_name );
+
+      if(target_mesh && target_mesh.isMesh){
+        let target_pos = target_mesh.geometry.attributes.position.array;
+        mesh.position.set(target_pos[vertex_ind * 3], target_pos[vertex_ind * 3+1], target_pos[vertex_ind * 3+2]);
+        linked = true;
+      }
+    }
+
+    if(!linked){
+      mesh.position.fromArray(g.position);
+    }
+    if( n_keyframes > 0 ){
+      mesh.userData.ani_exists = true;
+    }
+    mesh.userData.ani_active = false;
+    mesh.userData.ani_params = {...values};
+    mesh.userData.ani_name = 'default';
+    mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
+    mesh.userData.display_info = {};
+
+    this._mesh = mesh;
+    this.object = mesh;
+
+    this._link_userData();
+  }
+
+  _link_userData(){
+    // register for compatibility
+    this._mesh.userData.add_track_data = ( track_name, data_type, value, time_stamp = 0 ) => {
+      return( this.add_track_data( track_name, data_type, value, time_stamp ) );
+    };
+    this._mesh.userData.get_track_data = ( track_name, reset_material ) => {
+      return( this.get_track_data( track_name, reset_material ) );
+    };
+    this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+    this._mesh.userData.dispose = () => { this.dispose(); };
+    this._mesh.userData.instance = this;
+  }
+
+  _get_animation_params(){
+    return( this._canvas.animation_controls.get_params() );
+  }
+
+  dispose(){
+    this._mesh.material.dispose();
+    this._mesh.geometry.dispose();
+  }
+
+  pre_render( results ){
+    const canvas = this._canvas,
+          mesh = this._mesh;
+    // 1. whether passed threshold
+    let threshold_test = true;
+    let current_value;
+    const track_name = canvas.state_data.get('threshold_variable');
+
+    if( get_or_default(canvas.state_data, 'threshold_active', false) ){
+      // need to check the threshold
+      threshold_test = false;
+
+      const track = this.get_track_data(track_name, false);
+
+      if(track){
+
+        // obtain current threshold value
+        if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
+          // need to get the value at current time
+          const ani_params = this._get_animation_params();
+
+          for(let idx in track.time){
+            if(track.time[idx] >= ani_params.time){
+              current_value = track.value[ idx ];
+              break;
+            }
+          }
+
+        }else{
+          if(Array.isArray(track.value)){
+            current_value = track.value[0];
+          }else{
+            current_value = track.value;
+          }
+        }
+
+        // get threshold criteria
+        if(current_value !== undefined){
+          const ranges = to_array(canvas.state_data.get('threshold_values'));
+          if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
+            // contunuous
+            threshold_test = false;
+            ranges.forEach((r) => {
+              if(Array.isArray(r) && r.length === 2){
+                if(!threshold_test && r[1] >= current_value && r[0] <= current_value){
+                  threshold_test = true;
+                }
+              }
+            });
+          }else{
+            // discrete
+            threshold_test = ranges.includes( current_value );
+          }
+        }
+      }
+
+    }
+
+    // 2. check if active
+    let active_test = threshold_test & mesh.userData.ani_active;
+
+    // 3. change material, don't use switch_material as that's heavy
+    if( active_test && mesh.material.isMeshLambertMaterial ){
+      mesh.material = this._materials.MeshBasicMaterial;
+    }else if( !active_test && mesh.material.isMeshBasicMaterial ){
+      mesh.material = this._materials.MeshLambertMaterial;
+    }
+
+    // 4. set visibility
+    const vis = get_or_default(canvas.state_data, 'electrode_visibility', 'all visible');
+
+    switch (vis) {
+      case 'all visible':
+        mesh.visible = true;
+        break;
+      case 'hidden':
+        mesh.visible = false;
+        break;
+      case 'hide inactives':
+        // The electrode has no value, hide
+        if( active_test ){
+          mesh.visible = true;
+        }else{
+          mesh.visible = false;
+        }
+        break;
+    }
+    // 5. check if mixer exists, update
+    if( mesh.userData.ani_mixer ){
+      mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+    }
+
+    // 6. if the object is chosen, display information
+    if( mesh === canvas.object_chosen ){
+      mesh.userData.display_info.threshold_name = track_name;
+      mesh.userData.display_info.threshold_value = current_value;
+      mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
+    }
+  }
+
+  switch_material( material_type, update_canvas = false ){
+    if( material_type in this._materials ){
+      const _m = this._materials[ material_type ];
+      this._material_type = material_type;
+      this._mesh.material = _m;
+      this._mesh.material.needsUpdate = true;
+      if( update_canvas ){
+        this._canvas.start_animation( 0 );
+      }
+    }
+  }
+
+
+  add_track_data( track_name, data_type, value, time_stamp = 0 ){
+    let first_value = value, track_value = value;
+    if(Array.isArray(time_stamp)){
+      if(!Array.isArray(value) || time_stamp.length !== value.length ){
+        return;
+      }
+      first_value = value[0];
+    }else if(Array.isArray(value)){
+      first_value = value[0];
+      track_value = first_value;
+    }
+    if( !data_type ){
+      data_type = (typeof first_value === 'number')? 'continuous' : 'discrete';
+    }
+    this._mesh.userData.ani_exists = true;
+    this._mesh.userData.ani_params[track_name] = {
+      "name"      : track_name,
+      "time"      : time_stamp,
+      "value"     : value,
+      "data_type" : data_type,
+      "target"    : ".material.color",
+      "cached"    : false
+    };
+    if( !Array.isArray( this._mesh.userData.ani_all_names ) ){
+      this._mesh.userData.ani_all_names = [];
+    }
+    if(!this._mesh.userData.ani_all_names.includes( track_name )){
+      this._mesh.userData.ani_all_names.push( track_name );
+    }
+  }
+
+  get_track_data( track_name, reset_material ){
+    let re;
+
+    if( this._mesh.userData.ani_exists ){
+      if( track_name === undefined ){ track_name = this._mesh.userData.ani_name; }
+      re = this._mesh.userData.ani_params[ track_name ];
+    }
+
+    if( reset_material ){
+      if( re && re.value !== null ){
+        this._mesh.material = this._materials.MeshBasicMaterial;
+        this._mesh.userData.ani_active = true;
+      }else{
+        this._mesh.material = this._materials.MeshLambertMaterial;
+        this._mesh.userData.ani_active = false;
+      }
+    }
+
+    return( re );
+  }
+
+
+}
+
+
+function gen_sphere(g, canvas){
+  return( new Sphere(g, canvas) );
+}
+
+
+/*
 
 function gen_sphere(g, canvas){
   const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
@@ -206,19 +470,13 @@ function gen_sphere(g, canvas){
 
   };
 
-  /* Add point light
-  const point_light = new THREE.PointLight(0x000000, 1, 6, 1);
-  point_light.visible = false;
-  mesh.userData.point_light = point_light;
-  mesh.add(point_light);
-  */
   mesh.userData.dispose = () => {
     mesh.material.dispose();
     mesh.geometry.dispose();
   };
   return(mesh);
 }
-
+*/
 
 function add_electrode (canvas, number, name, position, surface_type = 'NA',
                         custom_info = '', is_surface_electrode = false,

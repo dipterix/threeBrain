@@ -3618,7 +3618,7 @@ __webpack_require__.d(three_module_namespaceObject, "Skeleton", function() { ret
 __webpack_require__.d(three_module_namespaceObject, "SkeletonHelper", function() { return SkeletonHelper; });
 __webpack_require__.d(three_module_namespaceObject, "SkinnedMesh", function() { return SkinnedMesh; });
 __webpack_require__.d(three_module_namespaceObject, "SmoothShading", function() { return SmoothShading; });
-__webpack_require__.d(three_module_namespaceObject, "Sphere", function() { return Sphere; });
+__webpack_require__.d(three_module_namespaceObject, "Sphere", function() { return three_module_Sphere; });
 __webpack_require__.d(three_module_namespaceObject, "SphereBufferGeometry", function() { return SphereBufferGeometry; });
 __webpack_require__.d(three_module_namespaceObject, "SphereGeometry", function() { return SphereGeometry; });
 __webpack_require__.d(three_module_namespaceObject, "Spherical", function() { return Spherical; });
@@ -10732,14 +10732,14 @@ Object.assign( Box3.prototype, {
 
 var _box;
 
-function Sphere( center, radius ) {
+function three_module_Sphere( center, radius ) {
 
 	this.center = ( center !== undefined ) ? center : new Vector3();
 	this.radius = ( radius !== undefined ) ? radius : 0;
 
 }
 
-Object.assign( Sphere.prototype, {
+Object.assign( three_module_Sphere.prototype, {
 
 	set: function ( center, radius ) {
 
@@ -14347,7 +14347,7 @@ BufferGeometry.prototype = Object.assign( Object.create( EventDispatcher.prototy
 
 			if ( this.boundingSphere === null ) {
 
-				this.boundingSphere = new Sphere();
+				this.boundingSphere = new three_module_Sphere();
 
 			}
 
@@ -15059,7 +15059,7 @@ Mesh.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
 		var inverseMatrix = new Matrix4();
 		var ray = new Ray();
-		var sphere = new Sphere();
+		var sphere = new three_module_Sphere();
 
 		var vA = new Vector3();
 		var vB = new Vector3();
@@ -16069,7 +16069,7 @@ Geometry.prototype = Object.assign( Object.create( EventDispatcher.prototype ), 
 
 		if ( this.boundingSphere === null ) {
 
-			this.boundingSphere = new Sphere();
+			this.boundingSphere = new three_module_Sphere();
 
 		}
 
@@ -18167,7 +18167,7 @@ Object.assign( Frustum.prototype, {
 
 	intersectsObject: function () {
 
-		var sphere = new Sphere();
+		var sphere = new three_module_Sphere();
 
 		return function intersectsObject( object ) {
 
@@ -18187,7 +18187,7 @@ Object.assign( Frustum.prototype, {
 
 	intersectsSprite: function () {
 
-		var sphere = new Sphere();
+		var sphere = new three_module_Sphere();
 
 		return function intersectsSprite( sprite ) {
 
@@ -30765,7 +30765,7 @@ Line.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
 		var inverseMatrix = new Matrix4();
 		var ray = new Ray();
-		var sphere = new Sphere();
+		var sphere = new three_module_Sphere();
 
 		return function raycast( raycaster, intersects ) {
 
@@ -31106,7 +31106,7 @@ Points.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
 		var inverseMatrix = new Matrix4();
 		var ray = new Ray();
-		var sphere = new Sphere();
+		var sphere = new three_module_Sphere();
 
 		return function raycast( raycaster, intersects ) {
 
@@ -42590,7 +42590,7 @@ Object.assign( BufferGeometryLoader.prototype, {
 
 			}
 
-			geometry.boundingSphere = new Sphere( center, boundingSphere.radius );
+			geometry.boundingSphere = new three_module_Sphere( center, boundingSphere.radius );
 
 		}
 
@@ -57393,6 +57393,44 @@ var index = {
 /* harmony default export */ var dat_gui_module = (index);
 //# sourceMappingURL=dat.gui.module.js.map
 
+// CONCATENATED MODULE: ./src/js/geometry/abstract.js
+
+class AbstractThreeBrainObject {
+  constructor(g, canvas){
+    this._params = g;
+    this._canvas = canvas;
+    this.type = 'AbstractThreeBrainObject';
+    this.isThreeBrainObject = true;
+    this.name = g.name;
+    if( typeof g.group === 'object' ){
+      this.group_name = g.group.group_name;
+    }
+
+  }
+
+  warn( s ){
+    console.warn(this._name + ' ' + s);
+  }
+
+  dispose(){
+    this.warn('method dispose() not implemented...');
+  }
+
+  get_track_data( track_name, reset_material ){
+    this.warn('method get_track_data(track_name, reset_material) not implemented...');
+  }
+
+  pre_render( results ){
+    // usually does nothing
+  }
+
+  add_track_data( track_name, data_type, value, time_stamp = 0 ){
+
+  }
+}
+
+
+
 // CONCATENATED MODULE: ./src/js/utils.js
 
 const invertColor = function(hex) {
@@ -57540,12 +57578,276 @@ function debounce(func, wait, immediate) {
 
 
 
+
+const MATERIAL_PARAMS = { 'transparent' : false };
+
+class sphere_Sphere extends AbstractThreeBrainObject {
+  constructor (g, canvas) {
+    super( g, canvas );
+
+    this.type = 'Sphere';
+    this.isSphere = true;
+
+    this._materials = {
+      'MeshBasicMaterial' : new threeplugins_THREE.MeshBasicMaterial( MATERIAL_PARAMS ),
+      'MeshLambertMaterial': new threeplugins_THREE.MeshLambertMaterial( MATERIAL_PARAMS )
+    };
+
+    const gb = new threeplugins_THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+          values = g.keyframes,
+          n_keyframes = to_array( g.keyframes ).length;
+    this._geometry = gb;
+
+    gb.name = 'geom_sphere_' + g.name;
+
+    // Make material based on value
+    if( n_keyframes > 0 ){
+      // Use the first value
+      this._material_type = 'MeshBasicMaterial';
+    }else{
+      this._material_type = 'MeshLambertMaterial';
+    }
+
+    const mesh = new threeplugins_THREE.Mesh(gb, this._materials[ this._material_type ]);
+    mesh.name = 'mesh_sphere_' + g.name;
+
+    // FIXME: need to use class instead of canvas.mesh
+    let linked = false;
+    if(g.use_link){
+      // This is a linkedSphereGeom which should be attached to a surface mesh
+      let vertex_ind = Math.floor(g.vertex_number - 1),
+          target_name = g.linked_geom,
+          target_mesh = canvas.mesh.get( target_name );
+
+      if(target_mesh && target_mesh.isMesh){
+        let target_pos = target_mesh.geometry.attributes.position.array;
+        mesh.position.set(target_pos[vertex_ind * 3], target_pos[vertex_ind * 3+1], target_pos[vertex_ind * 3+2]);
+        linked = true;
+      }
+    }
+
+    if(!linked){
+      mesh.position.fromArray(g.position);
+    }
+    if( n_keyframes > 0 ){
+      mesh.userData.ani_exists = true;
+    }
+    mesh.userData.ani_active = false;
+    mesh.userData.ani_params = {...values};
+    mesh.userData.ani_name = 'default';
+    mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
+    mesh.userData.display_info = {};
+
+    this._mesh = mesh;
+    this.object = mesh;
+
+    this._link_userData();
+  }
+
+  _link_userData(){
+    // register for compatibility
+    this._mesh.userData.add_track_data = ( track_name, data_type, value, time_stamp = 0 ) => {
+      return( this.add_track_data( track_name, data_type, value, time_stamp ) );
+    };
+    this._mesh.userData.get_track_data = ( track_name, reset_material ) => {
+      return( this.get_track_data( track_name, reset_material ) );
+    };
+    this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+    this._mesh.userData.dispose = () => { this.dispose(); };
+    this._mesh.userData.instance = this;
+  }
+
+  _get_animation_params(){
+    return( this._canvas.animation_controls.get_params() );
+  }
+
+  dispose(){
+    this._mesh.material.dispose();
+    this._mesh.geometry.dispose();
+  }
+
+  pre_render( results ){
+    const canvas = this._canvas,
+          mesh = this._mesh;
+    // 1. whether passed threshold
+    let threshold_test = true;
+    let current_value;
+    const track_name = canvas.state_data.get('threshold_variable');
+
+    if( get_or_default(canvas.state_data, 'threshold_active', false) ){
+      // need to check the threshold
+      threshold_test = false;
+
+      const track = this.get_track_data(track_name, false);
+
+      if(track){
+
+        // obtain current threshold value
+        if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
+          // need to get the value at current time
+          const ani_params = this._get_animation_params();
+
+          for(let idx in track.time){
+            if(track.time[idx] >= ani_params.time){
+              current_value = track.value[ idx ];
+              break;
+            }
+          }
+
+        }else{
+          if(Array.isArray(track.value)){
+            current_value = track.value[0];
+          }else{
+            current_value = track.value;
+          }
+        }
+
+        // get threshold criteria
+        if(current_value !== undefined){
+          const ranges = to_array(canvas.state_data.get('threshold_values'));
+          if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
+            // contunuous
+            threshold_test = false;
+            ranges.forEach((r) => {
+              if(Array.isArray(r) && r.length === 2){
+                if(!threshold_test && r[1] >= current_value && r[0] <= current_value){
+                  threshold_test = true;
+                }
+              }
+            });
+          }else{
+            // discrete
+            threshold_test = ranges.includes( current_value );
+          }
+        }
+      }
+
+    }
+
+    // 2. check if active
+    let active_test = threshold_test & mesh.userData.ani_active;
+
+    // 3. change material, don't use switch_material as that's heavy
+    if( active_test && mesh.material.isMeshLambertMaterial ){
+      mesh.material = this._materials.MeshBasicMaterial;
+    }else if( !active_test && mesh.material.isMeshBasicMaterial ){
+      mesh.material = this._materials.MeshLambertMaterial;
+    }
+
+    // 4. set visibility
+    const vis = get_or_default(canvas.state_data, 'electrode_visibility', 'all visible');
+
+    switch (vis) {
+      case 'all visible':
+        mesh.visible = true;
+        break;
+      case 'hidden':
+        mesh.visible = false;
+        break;
+      case 'hide inactives':
+        // The electrode has no value, hide
+        if( active_test ){
+          mesh.visible = true;
+        }else{
+          mesh.visible = false;
+        }
+        break;
+    }
+    // 5. check if mixer exists, update
+    if( mesh.userData.ani_mixer ){
+      mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+    }
+
+    // 6. if the object is chosen, display information
+    if( mesh === canvas.object_chosen ){
+      mesh.userData.display_info.threshold_name = track_name;
+      mesh.userData.display_info.threshold_value = current_value;
+      mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
+    }
+  }
+
+  switch_material( material_type, update_canvas = false ){
+    if( material_type in this._materials ){
+      const _m = this._materials[ material_type ];
+      this._material_type = material_type;
+      this._mesh.material = _m;
+      this._mesh.material.needsUpdate = true;
+      if( update_canvas ){
+        this._canvas.start_animation( 0 );
+      }
+    }
+  }
+
+
+  add_track_data( track_name, data_type, value, time_stamp = 0 ){
+    let first_value = value, track_value = value;
+    if(Array.isArray(time_stamp)){
+      if(!Array.isArray(value) || time_stamp.length !== value.length ){
+        return;
+      }
+      first_value = value[0];
+    }else if(Array.isArray(value)){
+      first_value = value[0];
+      track_value = first_value;
+    }
+    if( !data_type ){
+      data_type = (typeof first_value === 'number')? 'continuous' : 'discrete';
+    }
+    this._mesh.userData.ani_exists = true;
+    this._mesh.userData.ani_params[track_name] = {
+      "name"      : track_name,
+      "time"      : time_stamp,
+      "value"     : value,
+      "data_type" : data_type,
+      "target"    : ".material.color",
+      "cached"    : false
+    };
+    if( !Array.isArray( this._mesh.userData.ani_all_names ) ){
+      this._mesh.userData.ani_all_names = [];
+    }
+    if(!this._mesh.userData.ani_all_names.includes( track_name )){
+      this._mesh.userData.ani_all_names.push( track_name );
+    }
+  }
+
+  get_track_data( track_name, reset_material ){
+    let re;
+
+    if( this._mesh.userData.ani_exists ){
+      if( track_name === undefined ){ track_name = this._mesh.userData.ani_name; }
+      re = this._mesh.userData.ani_params[ track_name ];
+    }
+
+    if( reset_material ){
+      if( re && re.value !== null ){
+        this._mesh.material = this._materials.MeshBasicMaterial;
+        this._mesh.userData.ani_active = true;
+      }else{
+        this._mesh.material = this._materials.MeshLambertMaterial;
+        this._mesh.userData.ani_active = false;
+      }
+    }
+
+    return( re );
+  }
+
+
+}
+
+
 function gen_sphere(g, canvas){
-  const gb = new threeplugins_THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+  return( new sphere_Sphere(g, canvas) );
+}
+
+
+/*
+
+function gen_sphere(g, canvas){
+  const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
       values = g.keyframes,
       n_keyframes = to_array( g.keyframes ).length;
-  let material_basic = new threeplugins_THREE.MeshBasicMaterial({ 'transparent' : false }),
-      material_lambert = new threeplugins_THREE.MeshLambertMaterial({ 'transparent' : false }),
+  let material_basic = new THREE.MeshBasicMaterial({ 'transparent' : false }),
+      material_lambert = new THREE.MeshLambertMaterial({ 'transparent' : false }),
       material;
   gb.name = 'geom_sphere_' + g.name;
 
@@ -57557,7 +57859,7 @@ function gen_sphere(g, canvas){
     material = material_lambert;
   }
 
-  const mesh = new threeplugins_THREE.Mesh(gb, material);
+  const mesh = new THREE.Mesh(gb, material);
   mesh.name = 'mesh_sphere_' + g.name;
 
   let linked = false;
@@ -57745,19 +58047,13 @@ function gen_sphere(g, canvas){
 
   };
 
-  /* Add point light
-  const point_light = new THREE.PointLight(0x000000, 1, 6, 1);
-  point_light.visible = false;
-  mesh.userData.point_light = point_light;
-  mesh.add(point_light);
-  */
   mesh.userData.dispose = () => {
     mesh.material.dispose();
     mesh.geometry.dispose();
   };
   return(mesh);
 }
-
+*/
 
 function add_electrode (canvas, number, name, position, surface_type = 'NA',
                         custom_info = '', is_surface_electrode = false,
@@ -58387,7 +58683,7 @@ class data_controls_THREEBRAIN_PRESETS{
           break;
         case 'inferior':
           this.canvas.main_camera.position.set( 0, 0, -500 );
-          this.canvas.main_camera.up.set( 0, -1, 0 );
+          this.canvas.main_camera.up.set( 0, 1, 0 );
           break;
       }
 
@@ -58627,7 +58923,8 @@ class data_controls_THREEBRAIN_PRESETS{
   c_surface_type2(){
 
     const folder_name = CONSTANTS.FOLDERS[ 'surface-selector' ],
-    _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
+          _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
+          _mty = this.canvas.state_data.get( 'surface_material_type' ) || 'MeshPhongMaterial',
           _c = this.canvas.get_surface_types();
 
     if( _c.length === 0 ){
@@ -58651,6 +58948,16 @@ class data_controls_THREEBRAIN_PRESETS{
         }
       }
     }, 'gui_surf_type2');
+
+
+    this.gui.add_item('Surface Material', _mty, {
+      args : ['MeshPhongMaterial', 'MeshLambertMaterial'], folder_name : folder_name })
+      .onChange((v) => {
+        canvas.state_data.set( 'surface_material_type', v );
+        this.fire_change({ 'surface_material' : v });
+        this._update_canvas();
+      });
+    this.fire_change({ 'surface_material' : _mty });
   }
 
   // 12. Hemisphere material/transparency
@@ -58679,7 +58986,7 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
         this.fire_change();
       });
-    this.gui.add_tooltip( 'shift' + CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Opacity', folder_name);
+    this.gui.add_tooltip( '⇧' + CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Opacity', folder_name);
 
     const rh_trans = this.gui.add_item('Right Opacity', 1.0, { folder_name : folder_name })
     .min( 0.1 ).max( 1 ).step( 0.1 )
@@ -58687,7 +58994,7 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
         this.fire_change();
       });
-    this.gui.add_tooltip( 'shift' + CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Opacity', folder_name);
+    this.gui.add_tooltip( '⇧' + CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Opacity', folder_name);
 
     // add keyboard shortcut
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_LEFT, (evt) => {
@@ -60759,6 +61066,7 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 
 
 
+
 /* WebGL doesn't take transparency into consideration when calculating depth
 https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
 
@@ -60773,11 +61081,207 @@ parts will show.
 
 */
 
+class datacube_DataCube extends AbstractThreeBrainObject {
+  constructor(g, canvas){
+    super(g, canvas);
+
+    this.type = 'DataCube';
+    this.isDataCube = true;
+
+    let mesh, group_name;
+
+    let line_material = new threeplugins_THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
+        line_geometry = new threeplugins_THREE.Geometry();
+    line_material.depthTest = false;
+
+
+    // Cube values Must be from 0 to 1, float
+    const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
+          cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
+          cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
+          cube_center = g.position,
+          volume = {
+            'xLength' : cube_half_size[0]*2,
+            'yLength' : cube_half_size[1]*2,
+            'zLength' : cube_half_size[2]*2
+          };
+
+    // Generate texture
+    let texture = new threeplugins_THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
+    texture.format = threeplugins_THREE.RedFormat;
+  	texture.type = threeplugins_THREE.UnsignedByteType;
+  	texture.needsUpdate = true;
+
+
+    // Shader - XY plane
+  	const shader_xy = threeplugins_THREE.Volume2dArrayShader_xy;
+  	let material_xy = new threeplugins_THREE.ShaderMaterial({
+  	  uniforms : {
+    		diffuse: { value: texture },
+    		depth: { value: cube_half_size[2] },  // initial in the center of data cube
+    		size: { value: new threeplugins_THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
+    		threshold: { value : 0.0 },
+    		renderDepth: { value : 1.0 }
+    	},
+    	vertexShader: shader_xy.vertexShader,
+  		fragmentShader: shader_xy.fragmentShader,
+  		side: threeplugins_THREE.DoubleSide,
+  		transparent: true
+  	});
+  	let geometry_xy = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
+
+
+  	let mesh_xy = new threeplugins_THREE.Mesh( geometry_xy, material_xy );
+  	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
+  	mesh_xy.renderOrder = -1;
+  	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
+  	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
+
+
+  	// Shader - XZ plane
+  	const shader_xz = threeplugins_THREE.Volume2dArrayShader_xz;
+  	let material_xz = new threeplugins_THREE.ShaderMaterial({
+  	  uniforms : {
+    		diffuse: { value: texture },
+    		depth: { value: cube_half_size[1] },  // initial in the center of data cube
+    		size: { value: new threeplugins_THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
+    		threshold: { value : 0.0 },
+    		renderDepth: { value : 1.0 }
+    	},
+    	vertexShader: shader_xz.vertexShader,
+  		fragmentShader: shader_xz.fragmentShader,
+  		side: threeplugins_THREE.DoubleSide,
+  		transparent: true
+  	});
+  	let geometry_xz = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+
+  	let mesh_xz = new threeplugins_THREE.Mesh( geometry_xz, material_xz );
+  	mesh_xz.rotateX( Math.PI / 2 );
+  	mesh_xz.renderOrder = -1;
+  	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
+  	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
+
+
+  	// Shader - YZ plane
+  	const shader_yz = threeplugins_THREE.Volume2dArrayShader_yz;
+  	let material_yz = new threeplugins_THREE.ShaderMaterial({
+  	  uniforms : {
+    		diffuse: { value: texture },
+    		depth: { value: cube_half_size[0] },  // initial in the center of data cube
+    		size: { value: new threeplugins_THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
+    		threshold: { value : 0.0 },
+    		renderDepth: { value : 1.0 }
+    	},
+    	vertexShader: shader_yz.vertexShader,
+  		fragmentShader: shader_yz.fragmentShader,
+  		side: threeplugins_THREE.DoubleSide,
+  		transparent: true
+  	});
+  	let geometry_yz = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+
+  	let mesh_yz = new threeplugins_THREE.Mesh( geometry_yz, material_yz );
+  	mesh_yz.rotateY( Math.PI / 2);
+  	mesh_yz.rotateZ( Math.PI / 2); // Back side
+  	mesh_yz.renderOrder = -1;
+  	mesh_yz.position.copy( CONSTANTS.VEC_ORIGIN );
+  	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
+
+    // coronal (xz), axial (xy), sagittal (yz)
+  	mesh = [ mesh_xz, mesh_xy, mesh_yz ];
+
+  	// generate diagonal line
+  	const _mhw = Math.max( ...cube_half_size );
+
+  	line_geometry.vertices.push(
+    	new threeplugins_THREE.Vector3( -_mhw, -_mhw, 0 ),
+    	new threeplugins_THREE.Vector3( _mhw, _mhw, 0 )
+    );
+    let line_mesh_xz = new threeplugins_THREE.Line( line_geometry, line_material ),
+        line_mesh_xy = new threeplugins_THREE.Line( line_geometry, line_material ),
+        line_mesh_yz = new threeplugins_THREE.Line( line_geometry, line_material );
+    line_mesh_xz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
+    line_mesh_xy.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
+    line_mesh_yz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
+    line_mesh_xz.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
+    line_mesh_xz.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+    line_mesh_xy.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
+    line_mesh_xy.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+    line_mesh_yz.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
+    line_mesh_yz.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
+    mesh_xz.add( line_mesh_xz );
+    mesh_xy.add( line_mesh_xy );
+    mesh_yz.add( line_mesh_yz );
+
+
+    mesh_xy.userData.dispose = () => {
+  	  material_xy.dispose();
+  	  geometry_xy.dispose();
+      line_material.dispose();
+      line_geometry.dispose();
+      texture.dispose();
+    };
+    this._line_material = line_material;
+    this._line_geometry = line_geometry;
+    this._texture = texture;
+
+    this._mesh_xy = mesh_xy;
+    this._material_xy = material_xy;
+    this._geometry_xy = geometry_xy;
+
+    mesh_xz.userData.dispose = () => {
+  	  material_xz.dispose();
+  	  geometry_xz.dispose();
+      line_material.dispose();
+      line_geometry.dispose();
+      texture.dispose();
+    };
+    this._mesh_xz = mesh_xz;
+    this._material_xz = material_xz;
+    this._geometry_xz = geometry_xz;
+
+    mesh_yz.userData.dispose = () => {
+  	  material_yz.dispose();
+  	  geometry_yz.dispose();
+      line_material.dispose();
+      line_geometry.dispose();
+      texture.dispose();
+    };
+    this._mesh_yz = mesh_yz;
+    this._geometry_yz = geometry_yz;
+    this._material_yz = material_yz;
+
+    this.object = mesh;
+  }
+
+  dispose(){
+    this._line_material.dispose();
+    this._line_geometry.dispose();
+    this._texture.dispose();
+    this._material_xy.dispose();
+    this._geometry_xy.dispose();
+    this._material_yz.dispose();
+  	this._geometry_yz.dispose();
+  	this._material_yz.dispose();
+  	this._geometry_yz.dispose();
+  }
+
+  get_track_data( track_name, reset_material ){}
+
+  pre_render( results ){}
+}
+
+
+function gen_datacube(g, canvas){
+  return( new datacube_DataCube(g, canvas) );
+}
+
+/*
+
 function gen_datacube(g, canvas){
   let mesh, group_name;
 
-  let line_material = new threeplugins_THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-      line_geometry = new threeplugins_THREE.Geometry();
+  let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
+      line_geometry = new THREE.Geometry();
   line_material.depthTest = false;
 
 
@@ -60793,31 +61297,31 @@ function gen_datacube(g, canvas){
         };
 
   // Generate texture
-  let texture = new threeplugins_THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-  texture.format = threeplugins_THREE.RedFormat;
-	texture.type = threeplugins_THREE.UnsignedByteType;
+  let texture = new THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
+  texture.format = THREE.RedFormat;
+	texture.type = THREE.UnsignedByteType;
 	texture.needsUpdate = true;
 
 
   // Shader - XY plane
-	const shader_xy = threeplugins_THREE.Volume2dArrayShader_xy;
-	let material_xy = new threeplugins_THREE.ShaderMaterial({
+	const shader_xy = THREE.Volume2dArrayShader_xy;
+	let material_xy = new THREE.ShaderMaterial({
 	  uniforms : {
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-  		size: { value: new threeplugins_THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
+  		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
   		threshold: { value : 0.0 },
   		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_xy.vertexShader,
 		fragmentShader: shader_xy.fragmentShader,
-		side: threeplugins_THREE.DoubleSide,
+		side: THREE.DoubleSide,
 		transparent: true
 	});
-	let geometry_xy = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
+	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
 
 
-	let mesh_xy = new threeplugins_THREE.Mesh( geometry_xy, material_xy );
+	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
 	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
 	mesh_xy.renderOrder = -1;
 	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
@@ -60825,23 +61329,23 @@ function gen_datacube(g, canvas){
 
 
 	// Shader - XZ plane
-	const shader_xz = threeplugins_THREE.Volume2dArrayShader_xz;
-	let material_xz = new threeplugins_THREE.ShaderMaterial({
+	const shader_xz = THREE.Volume2dArrayShader_xz;
+	let material_xz = new THREE.ShaderMaterial({
 	  uniforms : {
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-  		size: { value: new threeplugins_THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
+  		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
   		threshold: { value : 0.0 },
   		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_xz.vertexShader,
 		fragmentShader: shader_xz.fragmentShader,
-		side: threeplugins_THREE.DoubleSide,
+		side: THREE.DoubleSide,
 		transparent: true
 	});
-	let geometry_xz = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+	let geometry_xz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-	let mesh_xz = new threeplugins_THREE.Mesh( geometry_xz, material_xz );
+	let mesh_xz = new THREE.Mesh( geometry_xz, material_xz );
 	mesh_xz.rotateX( Math.PI / 2 );
 	mesh_xz.renderOrder = -1;
 	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
@@ -60849,23 +61353,23 @@ function gen_datacube(g, canvas){
 
 
 	// Shader - YZ plane
-	const shader_yz = threeplugins_THREE.Volume2dArrayShader_yz;
-	let material_yz = new threeplugins_THREE.ShaderMaterial({
+	const shader_yz = THREE.Volume2dArrayShader_yz;
+	let material_yz = new THREE.ShaderMaterial({
 	  uniforms : {
   		diffuse: { value: texture },
   		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-  		size: { value: new threeplugins_THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
+  		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
   		threshold: { value : 0.0 },
   		renderDepth: { value : 1.0 }
   	},
   	vertexShader: shader_yz.vertexShader,
 		fragmentShader: shader_yz.fragmentShader,
-		side: threeplugins_THREE.DoubleSide,
+		side: THREE.DoubleSide,
 		transparent: true
 	});
-	let geometry_yz = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+	let geometry_yz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-	let mesh_yz = new threeplugins_THREE.Mesh( geometry_yz, material_yz );
+	let mesh_yz = new THREE.Mesh( geometry_yz, material_yz );
 	mesh_yz.rotateY( Math.PI / 2);
 	mesh_yz.rotateZ( Math.PI / 2); // Back side
 	mesh_yz.renderOrder = -1;
@@ -60879,12 +61383,12 @@ function gen_datacube(g, canvas){
 	const _mhw = Math.max( ...cube_half_size );
 
 	line_geometry.vertices.push(
-  	new threeplugins_THREE.Vector3( -_mhw, -_mhw, 0 ),
-  	new threeplugins_THREE.Vector3( _mhw, _mhw, 0 )
+  	new THREE.Vector3( -_mhw, -_mhw, 0 ),
+  	new THREE.Vector3( _mhw, _mhw, 0 )
   );
-  let line_mesh_xz = new threeplugins_THREE.Line( line_geometry, line_material ),
-      line_mesh_xy = new threeplugins_THREE.Line( line_geometry, line_material ),
-      line_mesh_yz = new threeplugins_THREE.Line( line_geometry, line_material );
+  let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
+      line_mesh_xy = new THREE.Line( line_geometry, line_material ),
+      line_mesh_yz = new THREE.Line( line_geometry, line_material );
   line_mesh_xz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
   line_mesh_xy.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
   line_mesh_yz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
@@ -60928,6 +61432,7 @@ function gen_datacube(g, canvas){
 
 }
 
+*/
 
 
 // CONCATENATED MODULE: ./src/js/geometry/datacube2.js
@@ -61030,6 +61535,299 @@ function gen_datacube2(g, canvas){
 
 
 
+const free_MATERIAL_PARAMS = { 'transparent' : true, side: threeplugins_THREE.DoubleSide };
+
+class free_FreeMesh extends AbstractThreeBrainObject {
+
+  constructor(g, canvas){
+
+    super( g, canvas );
+
+    this.type = 'FreeMesh';
+    this.isFreeMesh = true;
+
+    this._materials = {
+      'MeshPhongMaterial' : new threeplugins_THREE.MeshPhongMaterial( free_MATERIAL_PARAMS ),
+      'MeshLambertMaterial': new threeplugins_THREE.MeshLambertMaterial( free_MATERIAL_PARAMS )
+    };
+    this._material_color = threeplugins_THREE.NoColors;
+
+    this._geometry = new threeplugins_THREE.BufferGeometry();
+
+    // construct geometry
+    const vertices = this._canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name);
+    const faces = this._canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name);
+    const curvature_type = this._canvas.get_data("curvature", g.name, g.group.group_name);
+    const curvature_subject = canvas.get_data('curvature_subject', g.name, g.group.group_name) || g.subject_code;
+    this._curvature_subject = curvature_subject;
+    const vertex_positions = [], face_orders = [];
+    vertices.forEach((v) => {
+      vertex_positions.push(v[0], v[1], v[2]);
+    });
+    faces.forEach((v) => {
+      face_orders.push(v[0], v[1], v[2]);
+    });
+
+
+    this._geometry.setIndex( face_orders );
+    this._geometry.addAttribute( 'position', new threeplugins_THREE.Float32BufferAttribute( vertex_positions, 3 ) );
+    // gb.addAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
+    // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+
+    this._geometry.computeVertexNormals();
+    this._geometry.computeBoundingBox();
+    this._geometry.computeBoundingSphere();
+    //gb.faces = faces;
+
+    this._geometry.name = 'geom_free_' + g.name;
+
+    this._material_type = this._materials[g.material_type] || 'MeshPhongMaterial';
+    this._mesh = new threeplugins_THREE.Mesh(this._geometry, this._materials[this._material_type]);
+    this._mesh.name = 'mesh_free_' + g.name;
+
+    this._mesh.position.fromArray(g.position);
+
+    if( typeof curvature_type === 'string' ){
+      this.render_curvature(curvature_type, true);
+    }
+
+    // register userData to comply with main framework
+    this._mesh.userData.construct_params = g;
+
+    // animation data
+    this._mesh.userData.ani_name = 'default';
+    this._mesh.userData.ani_all_names = Object.keys( g.keyframes );
+    this._mesh.userData.ani_exists = this._mesh.userData.ani_all_names.length > 0;
+
+    // register object
+    this.object = this._mesh;
+
+    this._link_userData();
+  }
+
+  _link_userData(){
+    // register for compatibility
+    this._mesh.userData.get_track_data = ( track_name, reset_material ) => {
+      return( this.get_track_data( track_name, reset_material ) );
+    };
+    this._mesh.userData.generate_animation = ( track_data, cmap, animation_clips, mixer ) => {
+      return( this.generate_animation( track_data, cmap, animation_clips, mixer ) );
+    };
+    this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+    this._mesh.userData.dispose = () => { this.dispose(); };
+    this._mesh.userData.instance = this;
+  }
+
+  render_curvature( curv_type, update_color = false ){
+    const curvature_subject = this._curvature_subject;
+    const g = this._params;
+    const curv_data = canvas.get_data(`Curvature - ${g.hemisphere[0]}h.${curv_type} (${curvature_subject})`,
+                                      g.name, g.group.group_name);
+    const vertex_colors = [];
+    let scale = 1;
+
+    if( curv_data && Array.isArray(curv_data.value) &&
+        this._mesh.geometry.attributes.position.count == curv_data.value.length ){
+
+      if( !Array.isArray(curv_data.range) || curv_data.range.length < 2 ){
+        curv_data.range = [-1, 1];
+      }
+
+      scale = Math.max(curv_data.range[1], -curv_data.range[0]);
+
+      // generate color for each vertices
+      const _transform = (v, b = 10 / scale) => {
+        // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
+        let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
+        return( s );
+      };
+      curv_data.value.forEach((v) => {
+        let col;
+        /*if( v < 0 ){
+          col = v / curv_data.range[0] * 54 + 200;
+        }else{
+          col = (1 - v / curv_data.range[1]) * 128;
+        }*/
+        // col = 127.5 - (v / scale * 127.5);
+        // Make it lighter using sigmoid function
+        col = _transform(v);
+        vertex_colors.push( col );
+        vertex_colors.push( col );
+        vertex_colors.push( col );
+      });
+
+
+      if( update_color ){
+        // update color to geometry
+        this._mesh.geometry.addAttribute( 'color', new threeplugins_THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
+        this._mesh.material.vertexColors = threeplugins_THREE.VertexColors;
+        this._mesh.material.needsUpdate = true;
+        this._material_color = threeplugins_THREE.VertexColors;
+      }
+
+    }else if( update_color ){
+      this._mesh.material.vertexColors = threeplugins_THREE.NoColors;
+      this._mesh.material.needsUpdate = true;
+      this._material_color = threeplugins_THREE.NoColors;
+    }
+  }
+
+  dispose(){
+    this._mesh.material.dispose();
+    this._mesh.geometry.dispose();
+  }
+
+
+  get_track_data( track_name, reset_material ){
+    const g = this._params;
+    let re, tname = track_name;
+    // this._material_type
+
+    if( this._mesh.userData.ani_exists ){
+      if( tname === undefined ){ tname = this._mesh.userData.ani_name; }
+      re = g.keyframes[ tname ];
+    }else{
+      re = g.keyframes[ tname ];
+    }
+    // remember last choice
+    this._mesh.userData.ani_name = tname;
+
+    if( reset_material !== false ){
+      if( !re ){
+        // track data not found, ignore vertex color
+        this._mesh.material.vertexColors = threeplugins_THREE.NoColors;
+        this._mesh.material.needsUpdate=true;
+      }else {
+        this._mesh.material.vertexColors = threeplugins_THREE.VertexColors;
+        this._mesh.material.needsUpdate=true;
+      }
+    }
+
+    if( !re ){
+      return;
+    }
+    console.log('Using track name ' + tname);
+
+    if( re.cached ){
+      let value = this._canvas.get_data('free_vertex_colors_' + re.name + '_'+g.name, g.name, g.group.group_name);
+      if( !value || typeof value !== 'object' || !Array.isArray(value.value) || value.value.length === 0 ){
+        // value should be cached but not found or invalid
+        return;
+      }
+      re.value = value.value;
+      re.cached = false;
+    }
+    return(re);
+
+  }
+
+
+  generate_animation( track_data, cmap, animation_clips, mixer ){
+    console.log('Using customized animation mixer');
+    // Generate keyframes
+    const _time_min = cmap.time_range[0],
+          _time_max = cmap.time_range[1];
+    // Prepare color map
+    const color_trans = {};
+    cmap.value_names.map((nm, ii) => {
+      color_trans[ nm ] = cmap.lut.getColor(ii);
+    });
+
+    // 1. timeStamps, TODO: get from settings the time range
+    const values = [], time_stamp = [], cvalues = [];
+    to_array( track_data.time ).forEach((v, ii) => {
+      time_stamp.push( v - _time_min );
+      values.push( ii );
+    });
+
+    const _size = track_data.value.length / time_stamp.length;
+    let _value = [];
+
+    track_data.value.forEach((v, ii) => {
+      let _c = color_trans[ v ] || cmap.lut.getColor(v) || {r:0,g:0,b:0};
+      _value.push( _c.r, _c.g, _c.b );
+      if( (ii+1) % _size === 0 && _value.length > 0 ){
+        cvalues.push( _value );
+        _value = [];
+      }
+    });
+
+    if( _value.length > 0 ){
+      cvalues.push( _value );
+      _value = [];
+    }
+    track_data.cvalues = cvalues;
+
+    // We cannot morph vertex colors, but can still use the animation
+    // The key is to set mesh.userData.animationIndex to be value index, and
+    this._mesh.userData.animation_target = track_data.target;
+
+    const keyframe = new threeplugins_THREE.NumberKeyframeTrack(
+      '.userData[animationIndex]',
+      time_stamp, values, threeplugins_THREE.InterpolateDiscrete
+    );
+
+    return( keyframe );
+  }
+
+
+  _check_material( update_canvas = false ){
+    const _mty = canvas.state_data.get('surface_material_type') || this._material_type;
+    if( !this._mesh.material['is' + _mty] ){
+      this.switch_material( _mty, update_canvas );
+    }
+  }
+
+  pre_render( results ){
+    // check material
+    this._check_material( false );
+
+    // console.log( mesh.userData.animationIndex );
+    // get current index
+    let vidx = this._mesh.userData.animationIndex;
+    if( typeof vidx !== 'number' ){ return; }
+
+    // get current track_data
+    const track_data = this._mesh.userData.get_track_data( this._mesh.userData.ani_name, false );
+    if( !track_data ){ return; }
+
+    vidx = Math.floor( vidx );
+    if( vidx < 0 ){ vidx = 0; }
+    if( vidx >= track_data.cvalues.length ){ vidx = track_data.cvalues.length-1; }
+
+    const cvalue = track_data.cvalues[ vidx ];
+
+    // check? TODO
+    for( let ii=0; ii<cvalue.length; ii++ ){
+      this._mesh.geometry.attributes.color.array[ ii ] = cvalue[ ii ];
+    }
+    this._mesh.geometry.attributes.color.needsUpdate=true;
+
+  }
+
+  switch_material( material_type, update_canvas = false ){
+    if( material_type in this._materials ){
+      const _m = this._materials[ material_type ];
+      const _o = this._canvas.state_data.get("surface_opacity_left") || 0;
+      this._material_type = material_type;
+      this._mesh.material = _m;
+      this._mesh.material.vertexColors = this._material_color;
+      this._mesh.material.opacity = _o;
+      this._mesh.material.needsUpdate = true;
+      if( update_canvas ){
+        this._canvas.start_animation( 0 );
+      }
+    }
+  }
+
+}
+
+
+function gen_free(g, canvas){
+  return( new free_FreeMesh(g, canvas) );
+}
+
+/*
 function render_curvature(canvas, mesh, curv_type, update_color = false){
 
   // surf_group$set_group_data('curvature_subject', template_subject)
@@ -61058,11 +61856,6 @@ function render_curvature(canvas, mesh, curv_type, update_color = false){
     };
     curv_data.value.forEach((v) => {
       let col;
-      /*if( v < 0 ){
-        col = v / curv_data.range[0] * 54 + 200;
-      }else{
-        col = (1 - v / curv_data.range[1]) * 128;
-      }*/
       // col = 127.5 - (v / scale * 127.5);
       // Make it lighter using sigmoid function
       col = _transform(v);
@@ -61074,13 +61867,13 @@ function render_curvature(canvas, mesh, curv_type, update_color = false){
 
     if( update_color ){
       // update color to geometry
-      mesh.geometry.addAttribute( 'color', new threeplugins_THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
-      mesh.material.vertexColors = threeplugins_THREE.VertexColors;
+      mesh.geometry.addAttribute( 'color', new THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
+      mesh.material.vertexColors = THREE.VertexColors;
       mesh.material.needsUpdate = true;
     }
 
   }else if( update_color ){
-    mesh.material.vertexColors = threeplugins_THREE.NoColors;
+    mesh.material.vertexColors = THREE.NoColors;
     mesh.material.needsUpdate = true;
   }
 
@@ -61089,7 +61882,7 @@ function render_curvature(canvas, mesh, curv_type, update_color = false){
 
 
 function gen_free(g, canvas){
-  const gb = new threeplugins_THREE.BufferGeometry(),
+  const gb = new THREE.BufferGeometry(),
       vertices = canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name),
       faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name),
       curvature_type = canvas.get_data("curvature", g.name, g.group.group_name);
@@ -61111,7 +61904,7 @@ function gen_free(g, canvas){
   });
 
   gb.setIndex( face_orders );
-  gb.addAttribute( 'position', new threeplugins_THREE.Float32BufferAttribute( vertex_positions, 3 ) );
+  gb.addAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
   // gb.addAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
   // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 
@@ -61124,9 +61917,9 @@ function gen_free(g, canvas){
   gb.name = 'geom_free_' + g.name;
 
   // https://github.com/mrdoob/three.js/issues/3490
-  let material = new threeplugins_THREE.MeshPhongMaterial({ 'transparent' : true, side: threeplugins_THREE.DoubleSide });
+  let material = new THREE.MeshPhongMaterial({ 'transparent' : true, side: THREE.DoubleSide });
 
-  let mesh = new threeplugins_THREE.Mesh(gb, material);
+  let mesh = new THREE.Mesh(gb, material);
   mesh.name = 'mesh_free_' + g.name;
 
   mesh.position.fromArray(g.position);
@@ -61169,10 +61962,10 @@ function gen_free(g, canvas){
     if( reset_material !== false ){
       if( !re ){
         // track data not found, ignore vertex color
-        mesh.material.vertexColors = threeplugins_THREE.NoColors;
+        mesh.material.vertexColors = THREE.NoColors;
         mesh.material.needsUpdate=true;
       }else {
-        mesh.material.vertexColors = threeplugins_THREE.VertexColors;
+        mesh.material.vertexColors = THREE.VertexColors;
         mesh.material.needsUpdate=true;
       }
     }
@@ -61236,9 +62029,9 @@ function gen_free(g, canvas){
     // The key is to set mesh.userData.animationIndex to be value index, and
     mesh.userData.animation_target = track_data.target;
 
-    const keyframe = new threeplugins_THREE.NumberKeyframeTrack(
+    const keyframe = new THREE.NumberKeyframeTrack(
       '.userData[animationIndex]',
-      time_stamp, values, threeplugins_THREE.InterpolateDiscrete
+      time_stamp, values, THREE.InterpolateDiscrete
     );
 
     return( keyframe );
@@ -61271,6 +62064,8 @@ function gen_free(g, canvas){
   return(mesh);
 
 }
+
+*/
 
 
 
@@ -61443,6 +62238,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
+    this.threebrain_instances = new Map();
 
     // Stores all electrodes
     this.subject_codes = [];
@@ -63648,6 +64444,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // this.scene.remove( m );
     });
     this.mesh.clear();
+    this.threebrain_instances.clear();
     this.group.clear();
 
     // set default values
@@ -63712,6 +64509,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     if(typeof(m) !== 'object' || m === null){
       return(null);
+    }
+
+    if( m.isThreeBrainObject ){
+      this.threebrain_instances.set( g.name, m );
+      m = m.object;
     }
 
     let set_layer = (m) => {
@@ -65054,7 +65856,7 @@ class src_BrainCanvas{
     presets.c_background();
 
     // ---------------------------- Main, side canvas settings is on top
-    this.gui.add_folder('Main Canvas').open();
+    // this.gui.add_folder('Main Canvas').open();
     presets.c_recorder();
     presets.c_reset_camera();
     presets.c_main_camera_position();
@@ -65068,7 +65870,7 @@ class src_BrainCanvas{
 
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
-      this.gui.add_folder('Side Canvas').open();
+      // this.gui.add_folder('Side Canvas').open();
       presets.c_toggle_side_panel();
       presets.c_reset_side_panel();
       presets.c_side_depth();
