@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.5</span>
       </span>
     </div>
 
@@ -195,13 +195,13 @@ brain in a short time.</p>
 <span class='no'>mesh</span> <span class='kw'>=</span> <span class='fu'><a href='geom_freemesh.html'>geom_freemesh</a></span>(<span class='st'>'lh'</span>, <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>vertex</span>, <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>face</span>, <span class='kw'>layer</span> <span class='kw'>=</span> <span class='fl'>1</span>)
 <span class='kw pkg'>pryr</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/pryr/man/object_size.html'>object_size</a></span>(<span class='no'>mesh</span>) <span class='co'># ~10 MB</span></div><div class='output co'>#&gt; <span class='message'>Registered S3 method overwritten by 'pryr':</span>
 #&gt; <span class='message'>  method      from</span>
-#&gt; <span class='message'>  print.bytes Rcpp</span></div><div class='output co'>#&gt; 8.4 MB</div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># ~3 seconds to serialize</span>
+#&gt; <span class='message'>  print.bytes Rcpp</span></div><div class='output co'>#&gt; 8.42 MB</div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># ~3 seconds to serialize</span>
 
 <span class='co'># 2. cache</span>
 <span class='co'># Create group, all geometries in this group are relatively positioned</span>
 <span class='no'>tmp_file</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span>()
 <span class='no'>mesh</span> <span class='kw'>=</span> <span class='fu'><a href='geom_freemesh.html'>geom_freemesh</a></span>(<span class='st'>'Left Hemisphere cached'</span>, <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>vertex</span>,
-                     <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>face</span>, <span class='kw'>cache_file</span> <span class='kw'>=</span> <span class='no'>tmp_file</span>)</div><div class='output co'>#&gt; Creating cache data to - /var/folders/rh/4bkfl5z50wgbbjd85xvc695c0000gn/T//RtmpS4pwFz/file27ce19c8a93</div><div class='input'><span class='kw pkg'>pryr</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/pryr/man/object_size.html'>object_size</a></span>(<span class='no'>mesh</span>) <span class='co'># ~0.5 MB</span></div><div class='output co'>#&gt; 328 kB</div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># serialize at once, load in browser</span>
+                     <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>face</span>, <span class='kw'>cache_file</span> <span class='kw'>=</span> <span class='no'>tmp_file</span>)</div><div class='output co'>#&gt; Creating cache data to - /var/folders/rh/4bkfl5z50wgbbjd85xvc695c0000gn/T//RtmpE2c8c2/file17a6b550418</div><div class='input'><span class='kw pkg'>pryr</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/pryr/man/object_size.html'>object_size</a></span>(<span class='no'>mesh</span>) <span class='co'># ~0.5 MB</span></div><div class='output co'>#&gt; 343 kB</div><div class='input'><span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>mesh</span>) <span class='co'># serialize at once, load in browser</span>
 
 
 <span class='co'># }</span></div></pre>

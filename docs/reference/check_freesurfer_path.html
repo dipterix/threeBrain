@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.5</span>
       </span>
     </div>
 
@@ -117,8 +117,13 @@
     <p>Function to check whether `FreeSurfer` folder has everything we need</p>
     </div>
 
-    <pre class="usage"><span class='fu'>check_freesurfer_path</span>(<span class='no'>fs_subject_folder</span>, <span class='kw'>autoinstall_template</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>return_path</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>check_volume</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>check_surface</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>check_freesurfer_path</span>(
+  <span class='no'>fs_subject_folder</span>,
+  <span class='kw'>autoinstall_template</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>return_path</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>check_volume</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>check_surface</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -129,7 +134,7 @@
     </tr>
     <tr>
       <th>autoinstall_template</th>
-      <td><p>logical, whether `N27` brain should be installed is missing</p></td>
+      <td><p>logical, whether `N27` brain should be installed if missing</p></td>
     </tr>
     <tr>
       <th>return_path</th>

@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.5</span>
       </span>
     </div>
 
@@ -109,7 +109,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Read `FreeSurfer` surface and volume files</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/fs_brain.R'><code>R/fs_brain.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/fs_brain.R'><code>R/fs_brain.R</code></a>, <a href='https://github.com/dipterix/threeBrain/blob/master/R/fs_brain2.R'><code>R/fs_brain2.R</code></a></small>
     <div class="hidden name"><code>freesurfer_brain.Rd</code></div>
     </div>
 
@@ -117,9 +117,25 @@
     <p>Read `FreeSurfer` surface and volume files</p>
     </div>
 
-    <pre class="usage"><span class='fu'>freesurfer_brain</span>(<span class='no'>fs_subject_folder</span>, <span class='no'>subject_name</span>,
-  <span class='kw'>additional_surfaces</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>aligned_ct</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>use_cache</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>use_141</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>freesurfer_brain</span>(
+  <span class='no'>fs_subject_folder</span>,
+  <span class='no'>subject_name</span>,
+  <span class='kw'>additional_surfaces</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>aligned_ct</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>use_cache</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>use_141</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"threeBrain.use141"</span>, <span class='fl'>TRUE</span>)
+)
+
+<span class='fu'>freesurfer_brain2</span>(
+  <span class='no'>fs_subject_folder</span>,
+  <span class='no'>subject_name</span>,
+  <span class='kw'>volume_types</span> <span class='kw'>=</span> <span class='st'>"t1"</span>,
+  <span class='kw'>surface_types</span> <span class='kw'>=</span> <span class='st'>"pial"</span>,
+  <span class='kw'>curvature</span> <span class='kw'>=</span> <span class='st'>"sulc"</span>,
+  <span class='kw'>use_cache</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>use_141</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"threeBrain.use141"</span>, <span class='fl'>TRUE</span>),
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -146,7 +162,23 @@
     </tr>
     <tr>
       <th>use_141</th>
-      <td><p>logical, whether to use standard 141 brain for surface file</p></td>
+      <td><p>logical, whether to use standard 141 brain for surface file, default is <code><a href='https://rdrr.io/r/base/options.html'>getOption('threeBrain.use141', TRUE)</a></code></p></td>
+    </tr>
+    <tr>
+      <th>volume_types</th>
+      <td><p>volume types, right now only support T1 image</p></td>
+    </tr>
+    <tr>
+      <th>surface_types</th>
+      <td><p>surface types to load</p></td>
+    </tr>
+    <tr>
+      <th>curvature</th>
+      <td><p>curvature data. Only support <code>"sulc"</code> for current version</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>ignored</p></td>
     </tr>
     </table>
 

@@ -69,7 +69,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.5</span>
       </span>
     </div>
 
@@ -117,16 +117,40 @@
     <p>Create a Threejs Brain and View it in Browsers</p>
     </div>
 
-    <pre class="usage"><span class='fu'>threejs_brain</span>(<span class='no'>...</span>, <span class='kw'>.list</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(), <span class='kw'>width</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>height</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>side_canvas</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>side_zoom</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>side_width</span> <span class='kw'>=</span> <span class='fl'>250</span>,
-  <span class='kw'>side_shift</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>), <span class='kw'>side_display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>control_panel</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>control_presets</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control_display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>camera_center</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>), <span class='kw'>camera_pos</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>500</span>),
-  <span class='kw'>start_zoom</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>coords</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>symmetric</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>default_colormap</span> <span class='kw'>=</span> <span class='st'>"Value"</span>, <span class='kw'>palettes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>val_ranges</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>show_inactive_electrodes</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>widget_id</span> <span class='kw'>=</span> <span class='st'>"threebrain_data"</span>,
-  <span class='kw'>tmp_dirname</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>debug</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>token</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>optionals</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(), <span class='kw'>browser_external</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>global_data</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>())</pre>
+    <pre class="usage"><span class='fu'>threejs_brain</span>(
+  <span class='no'>...</span>,
+  <span class='kw'>.list</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>width</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>height</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>background</span> <span class='kw'>=</span> <span class='st'>"#FFFFFF"</span>,
+  <span class='kw'>cex</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>timestamp</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>side_canvas</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>side_zoom</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>side_width</span> <span class='kw'>=</span> <span class='fl'>250</span>,
+  <span class='kw'>side_shift</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>),
+  <span class='kw'>side_display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>control_panel</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>control_presets</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>control_display</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>camera_center</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>),
+  <span class='kw'>camera_pos</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>500</span>, <span class='fl'>0</span>, <span class='fl'>0</span>),
+  <span class='kw'>start_zoom</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>coords</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>symmetric</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>default_colormap</span> <span class='kw'>=</span> <span class='st'>"Value"</span>,
+  <span class='kw'>palettes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>val_ranges</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>show_inactive_electrodes</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>widget_id</span> <span class='kw'>=</span> <span class='st'>"threebrain_data"</span>,
+  <span class='kw'>tmp_dirname</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>debug</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>token</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>controllers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>browser_external</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>global_data</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>global_files</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>()
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -139,6 +163,18 @@
       <th>width, height</th>
       <td><p>positive integers. Width and height of the widget.
 By default width=`100%`, and height varies.</p></td>
+    </tr>
+    <tr>
+      <th>background</th>
+      <td><p>character, background color such as <code>"#FFFFFF"</code> or <code>"white"</code></p></td>
+    </tr>
+    <tr>
+      <th>cex</th>
+      <td><p>positive number, relative text magnification level</p></td>
+    </tr>
+    <tr>
+      <th>timestamp</th>
+      <td><p>logical, whether to show timestamp at the beginning</p></td>
     </tr>
     <tr>
       <th>side_canvas</th>
@@ -226,16 +262,16 @@ Only use it when you have multiple widgets in one website</p></td>
       <td><p>unique character, internally used to identify widgets in JS localStorage</p></td>
     </tr>
     <tr>
-      <th>optionals</th>
-      <td><p>internally used, to be deprecated</p></td>
+      <th>controllers</th>
+      <td><p>list to override the settings, for example <code>proxy$get_controllers()</code></p></td>
     </tr>
     <tr>
       <th>browser_external</th>
       <td><p>logical, use system default browser (default) or builtin one.</p></td>
     </tr>
     <tr>
-      <th>global_data</th>
-      <td><p>internally use, mainly to store orientation matrices.</p></td>
+      <th>global_data, global_files</th>
+      <td><p>internally use, mainly to store orientation matrices and files.</p></td>
     </tr>
     </table>
 

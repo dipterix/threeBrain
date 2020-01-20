@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to load surface data from `Gifti` files — read_gii2 • threeBrain</title>
+<title>Read FreeSurfer Annotations — read_fs_labels • threeBrain</title>
 
 
 <!-- jquery -->
@@ -35,9 +35,8 @@
 
 
 
-<meta property="og:title" content="Function to load surface data from `Gifti` files — read_gii2" />
-<meta property="og:description" content="The function `read_gii2` is a dynamic wrapper of Python `nibabel` loader.
-If no Python is detected, it will switch to `gifti::readgii`." />
+<meta property="og:title" content="Read FreeSurfer Annotations — read_fs_labels" />
+<meta property="og:description" content="Read FreeSurfer Annotations" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -109,37 +108,36 @@ If no Python is detected, it will switch to `gifti::readgii`." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to load surface data from `Gifti` files</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/zzz.R'><code>R/zzz.R</code></a></small>
-    <div class="hidden name"><code>read_gii2.Rd</code></div>
+    <h1>Read FreeSurfer Annotations</h1>
+    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <div class="hidden name"><code>read_fs_labels.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The function `read_gii2` is a dynamic wrapper of Python `nibabel` loader.
-If no Python is detected, it will switch to `gifti::readgii`.</p>
+    <p>Read FreeSurfer Annotations</p>
     </div>
 
-    <pre class="usage"><span class='fu'>read_gii2</span>(<span class='no'>path</span>)</pre>
+    <pre class="usage"><span class='fu'>read_fs_labels</span>(<span class='no'>path</span>, <span class='no'>vertex_number</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>path</th>
-      <td><p>`Gifti` file path</p></td>
+      <td><p>label path</p></td>
+    </tr>
+    <tr>
+      <th>vertex_number</th>
+      <td><p>force to reset vertex number if raw file is incorrect</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
-
-    <p>An <span style="R">R</span> function acting as safe wrapper for <code>nibabel.load</code>.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#format">Format</a></li>
     </ul>
 
   </div>

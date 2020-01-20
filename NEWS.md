@@ -1,3 +1,21 @@
+threeBrain 0.1.5
+=======
+
+## Changes
+
+* Import `FreeSurfer`  and `SUMA` files `sulc`
+* Control element update
+* Added `brain_proxy` to control in shiny element
+* Separated display and threshold data
+* `FreeMesh` material can be switched between `MeshPhongMaterial` and `MeshLambertMaterial`
+
+### Improvements
+
+* UI will blur focus when clicking on canvas
+* Allow customizing widgets `background`, `cex` (font magnification), `timestamp` (display time)
+* Allow `controllers` (list) to override control UI
+* Added preset `syncviewers` (`threejs_brain(control_presets = ...)`) to synchronize multiple viewers in shiny environment
+
 threeBrain 0.1.4
 =======
 
