@@ -8,6 +8,9 @@
 
 \item{width, height}{width and height of the widget. By default width="100%",
 and height="500px".}
+
+\item{reportSize}{whether to report widget size in shiny
+\code{session$clientData}}
 }
 \description{
 Shiny Output for threeBrain Widgets

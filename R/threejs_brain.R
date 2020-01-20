@@ -235,11 +235,14 @@ threejs_brain <- function(
 #' @param outputId unique identifier for the widget
 #' @param width,height width and height of the widget. By default width="100%",
 #'   and height="500px".
+#' @param reportSize whether to report widget size in shiny
+#' \code{session$clientData}
 NULL
 
 #' @export
-threejsBrainOutput <- function(outputId, width = '100%', height = '500px'){
-  htmlwidgets::shinyWidgetOutput(outputId, "threejs_brain", width, height, package = "threeBrain")
+threejsBrainOutput <- function(outputId, width = '100%', height = '500px', reportSize = TRUE){
+  htmlwidgets::shinyWidgetOutput(outputId, "threejs_brain", width, height, package = "threeBrain",
+                                 reportSize = reportSize, inline = FALSE)
 }
 
 
