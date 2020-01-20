@@ -686,7 +686,7 @@ Brain2 <- R6::R6Class(
 
     get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE){
 
-      geoms = list()
+      geoms = list(self$misc)
 
       if( is.logical(volumes) ){
         if(isTRUE(volumes)){ volumes = self$volume_types }else{ volumes = NULL }
@@ -802,7 +802,7 @@ Brain2 <- R6::R6Class(
       # global_files =
 
       threejs_brain(
-        self$misc, .list = geoms,
+        .list = geoms,
         symmetric = symmetric, palettes = palettes,
         side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
