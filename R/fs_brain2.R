@@ -171,7 +171,7 @@ freesurfer_brain2 <- function(
         #   ),
         #   is_cached = TRUE
         # )
-        vertcolor_name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name)
+        vertcolor_name = sprintf('Curvature - std.141.lh.%s (%s)', curvature, subject_name)
         brain$add_vertex_color(
           name = vertcolor_name,
           path = curv_lh
@@ -200,7 +200,7 @@ freesurfer_brain2 <- function(
         #   ),
         #   is_cached = TRUE
         # )
-        vertcolor_name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name)
+        vertcolor_name = sprintf('Curvature - std.141.rh.%s (%s)', curvature, subject_name)
         brain$add_vertex_color(
           name = vertcolor_name,
           path = curv_rh

@@ -16,7 +16,7 @@
 #' @importFrom utils unzip
 NULL
 
-cache_version = 0
+cache_version = 0.1
 
 #' @title Setup Package, Install Environment
 #' @author Zhengjia Wang

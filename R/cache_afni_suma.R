@@ -111,7 +111,7 @@ import_suma_curv <- function(
   subject_name, fs_path, folder = 'SUMA', curv_name = 'sulc',
   hemisphere = 'l', cache_dir = 'RAVE', quiet = FALSE){
 
-  threebrain_data_ver = 1
+  threebrain_data_ver = 1.1
 
   curve_path = file.path(fs_path, folder)
   rave_dir = file.path(fs_path, cache_dir)
@@ -172,7 +172,7 @@ import_suma_curv <- function(
   # }
 
   # save to cache
-  dset_name = sprintf('Curvature - %sh.%s (%s)', hemisphere, curv_name, subject_name)
+  dset_name = sprintf('Curvature - std.141.%sh.%s (%s)', hemisphere, curv_name, subject_name)
   data = structure(
     list(
       list(
