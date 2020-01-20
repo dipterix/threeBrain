@@ -2841,13 +2841,14 @@ class THREEBRAIN_CANVAS {
   }
 
   // Get data from some geometry. Try to get from geom first, then get from group
-  get_data(data_name, from_geom, group_hint, lazy_onload){
+  get_data(data_name, from_geom, group_hint){
 
     const m = this.mesh.get( from_geom );
     let re, gp;
 
     if( m ){
       if(m.userData.hasOwnProperty(data_name)){
+        // Object itself own the property, no group needs to go to
         return(m.userData[data_name]);
       }else{
         let g = m.userData.construct_params.group;
@@ -2867,10 +2868,10 @@ class THREEBRAIN_CANVAS {
     }
 
     // group exists
-    if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
 
       re = gp.userData.group_data[data_name];
-
+      /*
       if( re ){
         const is_lazy = re.lazy;
         const tobe_loaded = re.loaded === false;
@@ -2910,7 +2911,7 @@ class THREEBRAIN_CANVAS {
           );
         }
 
-      }
+      }*/
     }
 
     return(re);

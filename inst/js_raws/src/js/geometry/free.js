@@ -166,12 +166,9 @@ class FreeMesh extends AbstractThreeBrainObject {
     let cname = color_name || this._vertex_cname;
 
     // color data is lazy-loaded
-    this._canvas.get_data(
-      cname, this.misc_name, this.misc_group_name,
-      ( color_data ) => {
-        // window.aaa = color_data;
-        this._set_vertex_color(cname, color_data, update_color);
-      });
+    const color_data = this._canvas.get_data(cname, this.misc_name, this.misc_group_name);
+
+    this._set_vertex_color(cname, color_data, update_color);
 
   }
 

@@ -15,7 +15,7 @@ import_from_freesurfer <- function(fs_path, subject_name){
   curvatures = c('sulc')
   # Setup progress
   progress = dipsaus::progress2(
-    sprintf('First-time Importing %s', subject_name),
+    sprintf('Importing %s (first time will take seconds)', subject_name),
     max = length(surface_types) * 4 + length(curvatures) * 4 + 3,
     shiny_auto_close = TRUE)
 

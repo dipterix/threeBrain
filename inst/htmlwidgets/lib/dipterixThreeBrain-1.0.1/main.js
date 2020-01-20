@@ -61719,12 +61719,9 @@ class free_FreeMesh extends AbstractThreeBrainObject {
     let cname = color_name || this._vertex_cname;
 
     // color data is lazy-loaded
-    this._canvas.get_data(
-      cname, this.misc_name, this.misc_group_name,
-      ( color_data ) => {
-        // window.aaa = color_data;
-        this._set_vertex_color(cname, color_data, update_color);
-      });
+    const color_data = this._canvas.get_data(cname, this.misc_name, this.misc_group_name);
+
+    this._set_vertex_color(cname, color_data, update_color);
 
   }
 
@@ -65038,13 +65035,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
   }
 
   // Get data from some geometry. Try to get from geom first, then get from group
-  get_data(data_name, from_geom, group_hint, lazy_onload){
+  get_data(data_name, from_geom, group_hint){
 
     const m = this.mesh.get( from_geom );
     let re, gp;
 
     if( m ){
       if(m.userData.hasOwnProperty(data_name)){
+        // Object itself own the property, no group needs to go to
         return(m.userData[data_name]);
       }else{
         let g = m.userData.construct_params.group;
@@ -65064,10 +65062,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
     }
 
     // group exists
-    if(gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
 
       re = gp.userData.group_data[data_name];
-
+      /*
       if( re ){
         const is_lazy = re.lazy;
         const tobe_loaded = re.loaded === false;
@@ -65107,7 +65105,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
           );
         }
 
-      }
+      }*/
     }
 
     return(re);
