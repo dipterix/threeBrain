@@ -4,6 +4,7 @@ import { add_electrode, is_electrode } from './geometry/sphere.js';
 import { invertColor, to_array, get_or_default } from './utils.js';
 import { CONSTANTS } from './constants.js';
 import { CCanvasRecorder } from './capture/CCanvasRecorder.js';
+import * as download from 'downloadjs';
 // Some presets for gui and canvas
 
 
@@ -166,6 +167,13 @@ class THREEBRAIN_PRESETS{
 
 
       });
+
+    this.gui.add_item('Screenshot', () => {
+      const img = this.canvas.domElement.toDataURL('image/png');
+      const _d = new Date().toJSON();
+
+      download(img, `[rave-brain] ${_d}.png`, 'image/png');
+    }, {folder_name: folder_name });
 
   }
 
@@ -653,6 +661,11 @@ class THREEBRAIN_PRESETS{
     const do_mapping = this.gui.add_item('Map Electrodes', false, { folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_template': v });
+        if( v ){
+          this.gui.show_item(['Surface Mapping', 'Volume Mapping'], folder_name);
+        } else {
+          this.gui.hide_item(['Surface Mapping', 'Volume Mapping'], folder_name);
+        }
         this.fire_change();
       });
 
@@ -671,6 +684,9 @@ class THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'map_type_volume': v });
         this.fire_change();
       });
+
+    // hide mapping options
+    this.gui.hide_item(['Surface Mapping', 'Volume Mapping'], folder_name);
 
     // need to check if this is multiple subject case
     if( this.canvas.shared_data.get(".multiple_subjects") ){
@@ -1172,9 +1188,9 @@ class THREEBRAIN_PRESETS{
           el.userData.construct_params.is_surface_electrode = (v === 'Surface');
         }
         if( v === 'Depth' ){
-          this.gui.get_controller('Overlay Coronal', 'Side Canvas').setValue( true );
-          this.gui.get_controller('Overlay Axial', 'Side Canvas').setValue( true );
-          this.gui.get_controller('Overlay Sagittal', 'Side Canvas').setValue( true );
+          this.gui.get_controller('Overlay Coronal', 'Volume Settings').setValue( true );
+          this.gui.get_controller('Overlay Axial', 'Volume Settings').setValue( true );
+          this.gui.get_controller('Overlay Sagittal', 'Volume Settings').setValue( true );
           this.gui.get_controller('Left Hemisphere', 'Geometry').setValue( 'hidden' );
           this.gui.get_controller('Right Hemisphere', 'Geometry').setValue( 'hidden' );
         }else if ( v === 'Surface' ){
@@ -1441,8 +1457,8 @@ class THREEBRAIN_PRESETS{
     }, 'edit-gui_edit_label');*/
 
     // close other folders
-    this.gui.folders["Main Canvas"].close();
-    this.gui.folders["Side Canvas"].close();
+    this.gui.folders["Default"].close();
+    this.gui.folders["Volume Settings"].close();
     this.gui.folders[ folder_name ].open();
 
     // hide 3 planes

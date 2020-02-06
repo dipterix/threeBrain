@@ -88,6 +88,174 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//download.js v4.2, by dandavis; 2008-2016. [MIT] see http://danml.com/download.html for tests/usage
+// v1 landed a FF+Chrome compat way of downloading strings to local un-named files, upgraded to use a hidden frame and optional mime
+// v2 added named files via a[download], msSaveBlob, IE (10+) support, and window.URL support for larger+faster saves than dataURLs
+// v3 added dataURL and Blob Input, bind-toggle arity, and legacy dataURL fallback was improved with force-download mime and base64 support. 3.1 improved safari handling.
+// v4 adds AMD/UMD, commonJS, and plain browser support
+// v4.1 adds url download capability via solo URL argument (same domain/CORS only)
+// v4.2 adds semantic variable names, long (over 2MB) dataURL support, and hidden by default temp anchors
+// https://github.com/rndme/download
+
+(function (root, factory) {
+	if (true) {
+		// AMD. Register as an anonymous module.
+		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	} else {}
+}(this, function () {
+
+	return function download(data, strFileName, strMimeType) {
+
+		var self = window, // this script is only for browsers anyway...
+			defaultMime = "application/octet-stream", // this default mime also triggers iframe downloads
+			mimeType = strMimeType || defaultMime,
+			payload = data,
+			url = !strFileName && !strMimeType && payload,
+			anchor = document.createElement("a"),
+			toString = function(a){return String(a);},
+			myBlob = (self.Blob || self.MozBlob || self.WebKitBlob || toString),
+			fileName = strFileName || "download",
+			blob,
+			reader;
+			myBlob= myBlob.call ? myBlob.bind(self) : Blob ;
+	  
+		if(String(this)==="true"){ //reverse arguments, allowing download.bind(true, "text/xml", "export.xml") to act as a callback
+			payload=[payload, mimeType];
+			mimeType=payload[0];
+			payload=payload[1];
+		}
+
+
+		if(url && url.length< 2048){ // if no filename and no mime, assume a url was passed as the only argument
+			fileName = url.split("/").pop().split("?")[0];
+			anchor.href = url; // assign href prop to temp anchor
+		  	if(anchor.href.indexOf(url) !== -1){ // if the browser determines that it's a potentially valid url path:
+        		var ajax=new XMLHttpRequest();
+        		ajax.open( "GET", url, true);
+        		ajax.responseType = 'blob';
+        		ajax.onload= function(e){ 
+				  download(e.target.response, fileName, defaultMime);
+				};
+        		setTimeout(function(){ ajax.send();}, 0); // allows setting custom ajax headers using the return:
+			    return ajax;
+			} // end if valid url?
+		} // end if url?
+
+
+		//go ahead and download dataURLs right away
+		if(/^data:([\w+-]+\/[\w+.-]+)?[,;]/.test(payload)){
+		
+			if(payload.length > (1024*1024*1.999) && myBlob !== toString ){
+				payload=dataUrlToBlob(payload);
+				mimeType=payload.type || defaultMime;
+			}else{			
+				return navigator.msSaveBlob ?  // IE10 can't do a[download], only Blobs:
+					navigator.msSaveBlob(dataUrlToBlob(payload), fileName) :
+					saver(payload) ; // everyone else can save dataURLs un-processed
+			}
+			
+		}else{//not data url, is it a string with special needs?
+			if(/([\x80-\xff])/.test(payload)){			  
+				var i=0, tempUiArr= new Uint8Array(payload.length), mx=tempUiArr.length;
+				for(i;i<mx;++i) tempUiArr[i]= payload.charCodeAt(i);
+			 	payload=new myBlob([tempUiArr], {type: mimeType});
+			}		  
+		}
+		blob = payload instanceof myBlob ?
+			payload :
+			new myBlob([payload], {type: mimeType}) ;
+
+
+		function dataUrlToBlob(strUrl) {
+			var parts= strUrl.split(/[:;,]/),
+			type= parts[1],
+			decoder= parts[2] == "base64" ? atob : decodeURIComponent,
+			binData= decoder( parts.pop() ),
+			mx= binData.length,
+			i= 0,
+			uiArr= new Uint8Array(mx);
+
+			for(i;i<mx;++i) uiArr[i]= binData.charCodeAt(i);
+
+			return new myBlob([uiArr], {type: type});
+		 }
+
+		function saver(url, winMode){
+
+			if ('download' in anchor) { //html5 A[download]
+				anchor.href = url;
+				anchor.setAttribute("download", fileName);
+				anchor.className = "download-js-link";
+				anchor.innerHTML = "downloading...";
+				anchor.style.display = "none";
+				document.body.appendChild(anchor);
+				setTimeout(function() {
+					anchor.click();
+					document.body.removeChild(anchor);
+					if(winMode===true){setTimeout(function(){ self.URL.revokeObjectURL(anchor.href);}, 250 );}
+				}, 66);
+				return true;
+			}
+
+			// handle non-a[download] safari as best we can:
+			if(/(Version)\/(\d+)\.(\d+)(?:\.(\d+))?.*Safari\//.test(navigator.userAgent)) {
+				if(/^data:/.test(url))	url="data:"+url.replace(/^data:([\w\/\-\+]+)/, defaultMime);
+				if(!window.open(url)){ // popup blocked, offer direct download:
+					if(confirm("Displaying New Document\n\nUse Save As... to download, then click back to return to this page.")){ location.href=url; }
+				}
+				return true;
+			}
+
+			//do iframe dataURL download (old ch+FF):
+			var f = document.createElement("iframe");
+			document.body.appendChild(f);
+
+			if(!winMode && /^data:/.test(url)){ // force a mime that will download:
+				url="data:"+url.replace(/^data:([\w\/\-\+]+)/, defaultMime);
+			}
+			f.src=url;
+			setTimeout(function(){ document.body.removeChild(f); }, 333);
+
+		}//end saver
+
+
+
+
+		if (navigator.msSaveBlob) { // IE10+ : (has Blob, but not a[download] or URL)
+			return navigator.msSaveBlob(blob, fileName);
+		}
+
+		if(self.URL){ // simple fast and modern way using Blob and URL:
+			saver(self.URL.createObjectURL(blob), true);
+		}else{
+			// handle non-Blob()+non-URL browsers:
+			if(typeof blob === "string" || blob.constructor===toString ){
+				try{
+					return saver( "data:" +  mimeType   + ";base64,"  +  self.btoa(blob)  );
+				}catch(y){
+					return saver( "data:" +  mimeType   + "," + encodeURIComponent(blob)  );
+				}
+			}
+
+			// Blob but not URL support:
+			reader=new FileReader();
+			reader.onload=function(e){
+				saver(this.result);
+			};
+			reader.readAsDataURL(blob);
+		}
+		return true;
+	}; /* end download() */
+}));
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.9.1
 //     http://underscorejs.org
 //     (c) 2009-2018 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1785,20 +1953,20 @@
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(7), __webpack_require__(8)(module)))
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module) {
 
 module.exports = JSON.parse("{\"errors\":{\"callbackRequired\":\"A callback is required!\",\"optionsRequired\":\"Options were not passed and are required.\",\"json2csv\":{\"cannotCallOn\":\"Cannot call json2csv on \",\"dataCheckFailure\":\"Data provided was not an array of documents.\",\"notSameSchema\":\"Not all documents have the same schema.\"},\"csv2json\":{\"cannotCallOn\":\"Cannot call csv2json on \",\"dataCheckFailure\":\"CSV is not a string.\"}},\"defaultOptions\":{\"delimiter\":{\"field\":\",\",\"wrap\":\"\\\"\",\"eol\":\"\\n\"},\"excelBOM\":false,\"prependHeader\":true,\"trimHeaderFields\":false,\"trimFieldValues\":false,\"sortHeader\":false,\"parseCsvNumbers\":false,\"keys\":null,\"checkSchemaDifferences\":false,\"expandArrayObjects\":false},\"values\":{\"excelBOM\":\"﻿\"}}");
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-let constants = __webpack_require__(1),
-    _ = __webpack_require__(0);
+let constants = __webpack_require__(2),
+    _ = __webpack_require__(1);
 
 const dateStringRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 
@@ -1982,174 +2150,6 @@ function getNCharacters(str, start, n) {
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//download.js v4.2, by dandavis; 2008-2016. [MIT] see http://danml.com/download.html for tests/usage
-// v1 landed a FF+Chrome compat way of downloading strings to local un-named files, upgraded to use a hidden frame and optional mime
-// v2 added named files via a[download], msSaveBlob, IE (10+) support, and window.URL support for larger+faster saves than dataURLs
-// v3 added dataURL and Blob Input, bind-toggle arity, and legacy dataURL fallback was improved with force-download mime and base64 support. 3.1 improved safari handling.
-// v4 adds AMD/UMD, commonJS, and plain browser support
-// v4.1 adds url download capability via solo URL argument (same domain/CORS only)
-// v4.2 adds semantic variable names, long (over 2MB) dataURL support, and hidden by default temp anchors
-// https://github.com/rndme/download
-
-(function (root, factory) {
-	if (true) {
-		// AMD. Register as an anonymous module.
-		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	} else {}
-}(this, function () {
-
-	return function download(data, strFileName, strMimeType) {
-
-		var self = window, // this script is only for browsers anyway...
-			defaultMime = "application/octet-stream", // this default mime also triggers iframe downloads
-			mimeType = strMimeType || defaultMime,
-			payload = data,
-			url = !strFileName && !strMimeType && payload,
-			anchor = document.createElement("a"),
-			toString = function(a){return String(a);},
-			myBlob = (self.Blob || self.MozBlob || self.WebKitBlob || toString),
-			fileName = strFileName || "download",
-			blob,
-			reader;
-			myBlob= myBlob.call ? myBlob.bind(self) : Blob ;
-	  
-		if(String(this)==="true"){ //reverse arguments, allowing download.bind(true, "text/xml", "export.xml") to act as a callback
-			payload=[payload, mimeType];
-			mimeType=payload[0];
-			payload=payload[1];
-		}
-
-
-		if(url && url.length< 2048){ // if no filename and no mime, assume a url was passed as the only argument
-			fileName = url.split("/").pop().split("?")[0];
-			anchor.href = url; // assign href prop to temp anchor
-		  	if(anchor.href.indexOf(url) !== -1){ // if the browser determines that it's a potentially valid url path:
-        		var ajax=new XMLHttpRequest();
-        		ajax.open( "GET", url, true);
-        		ajax.responseType = 'blob';
-        		ajax.onload= function(e){ 
-				  download(e.target.response, fileName, defaultMime);
-				};
-        		setTimeout(function(){ ajax.send();}, 0); // allows setting custom ajax headers using the return:
-			    return ajax;
-			} // end if valid url?
-		} // end if url?
-
-
-		//go ahead and download dataURLs right away
-		if(/^data:([\w+-]+\/[\w+.-]+)?[,;]/.test(payload)){
-		
-			if(payload.length > (1024*1024*1.999) && myBlob !== toString ){
-				payload=dataUrlToBlob(payload);
-				mimeType=payload.type || defaultMime;
-			}else{			
-				return navigator.msSaveBlob ?  // IE10 can't do a[download], only Blobs:
-					navigator.msSaveBlob(dataUrlToBlob(payload), fileName) :
-					saver(payload) ; // everyone else can save dataURLs un-processed
-			}
-			
-		}else{//not data url, is it a string with special needs?
-			if(/([\x80-\xff])/.test(payload)){			  
-				var i=0, tempUiArr= new Uint8Array(payload.length), mx=tempUiArr.length;
-				for(i;i<mx;++i) tempUiArr[i]= payload.charCodeAt(i);
-			 	payload=new myBlob([tempUiArr], {type: mimeType});
-			}		  
-		}
-		blob = payload instanceof myBlob ?
-			payload :
-			new myBlob([payload], {type: mimeType}) ;
-
-
-		function dataUrlToBlob(strUrl) {
-			var parts= strUrl.split(/[:;,]/),
-			type= parts[1],
-			decoder= parts[2] == "base64" ? atob : decodeURIComponent,
-			binData= decoder( parts.pop() ),
-			mx= binData.length,
-			i= 0,
-			uiArr= new Uint8Array(mx);
-
-			for(i;i<mx;++i) uiArr[i]= binData.charCodeAt(i);
-
-			return new myBlob([uiArr], {type: type});
-		 }
-
-		function saver(url, winMode){
-
-			if ('download' in anchor) { //html5 A[download]
-				anchor.href = url;
-				anchor.setAttribute("download", fileName);
-				anchor.className = "download-js-link";
-				anchor.innerHTML = "downloading...";
-				anchor.style.display = "none";
-				document.body.appendChild(anchor);
-				setTimeout(function() {
-					anchor.click();
-					document.body.removeChild(anchor);
-					if(winMode===true){setTimeout(function(){ self.URL.revokeObjectURL(anchor.href);}, 250 );}
-				}, 66);
-				return true;
-			}
-
-			// handle non-a[download] safari as best we can:
-			if(/(Version)\/(\d+)\.(\d+)(?:\.(\d+))?.*Safari\//.test(navigator.userAgent)) {
-				if(/^data:/.test(url))	url="data:"+url.replace(/^data:([\w\/\-\+]+)/, defaultMime);
-				if(!window.open(url)){ // popup blocked, offer direct download:
-					if(confirm("Displaying New Document\n\nUse Save As... to download, then click back to return to this page.")){ location.href=url; }
-				}
-				return true;
-			}
-
-			//do iframe dataURL download (old ch+FF):
-			var f = document.createElement("iframe");
-			document.body.appendChild(f);
-
-			if(!winMode && /^data:/.test(url)){ // force a mime that will download:
-				url="data:"+url.replace(/^data:([\w\/\-\+]+)/, defaultMime);
-			}
-			f.src=url;
-			setTimeout(function(){ document.body.removeChild(f); }, 333);
-
-		}//end saver
-
-
-
-
-		if (navigator.msSaveBlob) { // IE10+ : (has Blob, but not a[download] or URL)
-			return navigator.msSaveBlob(blob, fileName);
-		}
-
-		if(self.URL){ // simple fast and modern way using Blob and URL:
-			saver(self.URL.createObjectURL(blob), true);
-		}else{
-			// handle non-Blob()+non-URL browsers:
-			if(typeof blob === "string" || blob.constructor===toString ){
-				try{
-					return saver( "data:" +  mimeType   + ";base64,"  +  self.btoa(blob)  );
-				}catch(y){
-					return saver( "data:" +  mimeType   + "," + encodeURIComponent(blob)  );
-				}
-			}
-
-			// Blob but not URL support:
-			reader=new FileReader();
-			reader.onload=function(e){
-				saver(this.result);
-			};
-			reader.readAsDataURL(blob);
-		}
-		return true;
-	}; /* end download() */
-}));
-
-
-/***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2239,7 +2239,7 @@ function computeStateInformation(keyPath) {
 
 let {Json2Csv} = __webpack_require__(6), // Require our json-2-csv code
     {Csv2Json} = __webpack_require__(10), // Require our csv-2-json code
-    utils = __webpack_require__(2);
+    utils = __webpack_require__(3);
 
 module.exports = {
     json2csv: (data, callback, options) => convert(Json2Csv, data, callback, options),
@@ -2314,9 +2314,9 @@ function deprecatedAsync(converter, deprecatedName, replacementName, data, optio
 "use strict";
 
 
-let constants = __webpack_require__(1),
-    utils = __webpack_require__(2),
-    _ = __webpack_require__(0),
+let constants = __webpack_require__(2),
+    utils = __webpack_require__(3),
+    _ = __webpack_require__(1),
     path = __webpack_require__(4),
     deeks = __webpack_require__(9);
 
@@ -2732,7 +2732,7 @@ module.exports = function(module) {
 "use strict";
 
 
-const _ = __webpack_require__(0);
+const _ = __webpack_require__(1);
 
 module.exports = {
     deepKeys: deepKeys,
@@ -2872,9 +2872,9 @@ function mergeOptions(options) {
 "use strict";
 
 
-let constants = __webpack_require__(1),
-    utils = __webpack_require__(2),
-    _ = __webpack_require__(0),
+let constants = __webpack_require__(2),
+    utils = __webpack_require__(3),
+    _ = __webpack_require__(1),
     path = __webpack_require__(4);
 
 const Csv2Json = function(options) {
@@ -58351,20 +58351,21 @@ CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient lig
 CONSTANTS.FOLDERS = {
   'background-color'      : 'Default',
   'sync-viewers'          : 'Default',
-  'video-recorder'        : 'Main Canvas',
-  'reset-main-camera'     : 'Main Canvas',
-  'main-camera-position'  : 'Main Canvas',
-  'toggle-helpper'        : 'Main Canvas',
-  'toggle-side-panels'    : 'Side Canvas',
-  'reset-side-panels'     : 'Side Canvas',
-  'side-three-planes'     : 'Side Canvas',
-  'side-electrode-dist'   : 'Side Canvas',
+  'video-recorder'        : 'Default',
+  'reset-main-camera'     : 'Default',
+  'main-camera-position'  : 'Default',
+  'toggle-helpper'        : 'Default',
+  'toggle-side-panels'    : 'Volume Settings',
+  'reset-side-panels'     : 'Volume Settings',
+  'side-three-planes'     : 'Volume Settings',
+  'side-electrode-dist'   : 'Volume Settings',
   'subject-selector'      : 'Surface Settings',
   'surface-selector'      : 'Surface Settings',
   'hemisphere-material'   : 'Surface Settings',
   'electrode-style'       : 'Electrodes',
   'electrode-mapping'     : 'Electrodes',
-  'animation'             : 'Data Visualization'
+  'animation'             : 'Data Visualization',
+  'highlight-selection'   : 'Data Visualization'
 };
 
 
@@ -58513,7 +58514,11 @@ class CCanvasRecorder_CCanvasRecorder extends CCFrameEncoder{
 
 
 
+// EXTERNAL MODULE: ./node_modules/downloadjs/download.js
+var downloadjs_download = __webpack_require__(0);
+
 // CONCATENATED MODULE: ./src/js/data_controls.js
+
 
 
 
@@ -58682,6 +58687,13 @@ class data_controls_THREEBRAIN_PRESETS{
 
 
       });
+
+    this.gui.add_item('Screenshot', () => {
+      const img = this.canvas.domElement.toDataURL('image/png');
+      const _d = new Date().toJSON();
+
+      downloadjs_download(img, `[rave-brain] ${_d}.png`, 'image/png');
+    }, {folder_name: folder_name });
 
   }
 
@@ -59169,6 +59181,11 @@ class data_controls_THREEBRAIN_PRESETS{
     const do_mapping = this.gui.add_item('Map Electrodes', false, { folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_template': v });
+        if( v ){
+          this.gui.show_item(['Surface Mapping', 'Volume Mapping'], folder_name);
+        } else {
+          this.gui.hide_item(['Surface Mapping', 'Volume Mapping'], folder_name);
+        }
         this.fire_change();
       });
 
@@ -59187,6 +59204,9 @@ class data_controls_THREEBRAIN_PRESETS{
         this.canvas.switch_subject( '/', { 'map_type_volume': v });
         this.fire_change();
       });
+
+    // hide mapping options
+    this.gui.hide_item(['Surface Mapping', 'Volume Mapping'], folder_name);
 
     // need to check if this is multiple subject case
     if( this.canvas.shared_data.get(".multiple_subjects") ){
@@ -59688,9 +59708,9 @@ class data_controls_THREEBRAIN_PRESETS{
           el.userData.construct_params.is_surface_electrode = (v === 'Surface');
         }
         if( v === 'Depth' ){
-          this.gui.get_controller('Overlay Coronal', 'Side Canvas').setValue( true );
-          this.gui.get_controller('Overlay Axial', 'Side Canvas').setValue( true );
-          this.gui.get_controller('Overlay Sagittal', 'Side Canvas').setValue( true );
+          this.gui.get_controller('Overlay Coronal', 'Volume Settings').setValue( true );
+          this.gui.get_controller('Overlay Axial', 'Volume Settings').setValue( true );
+          this.gui.get_controller('Overlay Sagittal', 'Volume Settings').setValue( true );
           this.gui.get_controller('Left Hemisphere', 'Geometry').setValue( 'hidden' );
           this.gui.get_controller('Right Hemisphere', 'Geometry').setValue( 'hidden' );
         }else if ( v === 'Surface' ){
@@ -59957,8 +59977,8 @@ class data_controls_THREEBRAIN_PRESETS{
     }, 'edit-gui_edit_label');*/
 
     // close other folders
-    this.gui.folders["Main Canvas"].close();
-    this.gui.folders["Side Canvas"].close();
+    this.gui.folders["Default"].close();
+    this.gui.folders["Volume Settings"].close();
     this.gui.folders[ folder_name ].open();
 
     // hide 3 planes
@@ -62329,9 +62349,6 @@ class compass_Compass {
 // EXTERNAL MODULE: ./node_modules/json-2-csv/src/converter.js
 var converter = __webpack_require__(5);
 
-// EXTERNAL MODULE: ./node_modules/downloadjs/download.js
-var downloadjs_download = __webpack_require__(3);
-
 // CONCATENATED MODULE: ./src/js/threejs_scene.js
 
 
@@ -64355,15 +64372,13 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
 
     // Line 2: Global position
-    /*
     text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
     const pos = results.selected_object.position;
     this.domContext.fillText(
-      `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+      `Global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
       text_position[ 0 ], text_position[ 1 ]
     );
-    */
 
     // More information:
 
@@ -64375,44 +64390,48 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       const _tn = this.object_chosen.userData.display_info.threshold_name || '[None]';
       let _tv = this.object_chosen.userData.display_info.threshold_value;
-      if( _tv === undefined ){
-        _tv = '<NA>';
-      }else if( typeof _tv === 'number' ){
+      if( typeof _tv === 'number' ){
         _tv = _tv.toPrecision(4);
       }
 
       const _dn = this.object_chosen.userData.display_info.display_name;
       let _dv = results.current_value;
 
-      if( _dv === undefined ){
-        _dv = '<NA>';
-      }else if( typeof _dv === 'number' ){
+      if( typeof _dv === 'number' ){
         _dv = _dv.toPrecision(4);
       }
 
       // Line 3: mapping method & surface type
+      /*
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
       this.domContext.fillText(
-        `surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        `Surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
         text_position[ 0 ], text_position[ 1 ]
       );
+      */
 
       // Line 4:
-      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+      if( _dv !== undefined ){
+        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-      this.domContext.fillText(
-        `display: ${ _dn } (${ _dv })`,
-        text_position[ 0 ], text_position[ 1 ]
-      );
+        this.domContext.fillText(
+          `Display:   ${ _dn } (${ _dv })`,
+          text_position[ 0 ], text_position[ 1 ]
+        );
+      }
+
 
       // Line 5:
-      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+      if( _tv !== undefined ){
+        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-      this.domContext.fillText(
-        `threshold: ${ _tn } (${ _tv })`,
-        text_position[ 0 ], text_position[ 1 ]
-      );
+        this.domContext.fillText(
+          `Threshold: ${ _tn } (${ _tv })`,
+          text_position[ 0 ], text_position[ 1 ]
+        );
+      }
+
 
     }
 

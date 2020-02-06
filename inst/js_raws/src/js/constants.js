@@ -109,20 +109,21 @@ CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient lig
 CONSTANTS.FOLDERS = {
   'background-color'      : 'Default',
   'sync-viewers'          : 'Default',
-  'video-recorder'        : 'Main Canvas',
-  'reset-main-camera'     : 'Main Canvas',
-  'main-camera-position'  : 'Main Canvas',
-  'toggle-helpper'        : 'Main Canvas',
-  'toggle-side-panels'    : 'Side Canvas',
-  'reset-side-panels'     : 'Side Canvas',
-  'side-three-planes'     : 'Side Canvas',
-  'side-electrode-dist'   : 'Side Canvas',
+  'video-recorder'        : 'Default',
+  'reset-main-camera'     : 'Default',
+  'main-camera-position'  : 'Default',
+  'toggle-helpper'        : 'Default',
+  'toggle-side-panels'    : 'Volume Settings',
+  'reset-side-panels'     : 'Volume Settings',
+  'side-three-planes'     : 'Volume Settings',
+  'side-electrode-dist'   : 'Volume Settings',
   'subject-selector'      : 'Surface Settings',
   'surface-selector'      : 'Surface Settings',
   'hemisphere-material'   : 'Surface Settings',
   'electrode-style'       : 'Electrodes',
   'electrode-mapping'     : 'Electrodes',
-  'animation'             : 'Data Visualization'
+  'animation'             : 'Data Visualization',
+  'highlight-selection'   : 'Data Visualization'
 };
 
 

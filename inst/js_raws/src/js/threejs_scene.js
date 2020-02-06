@@ -2020,15 +2020,13 @@ class THREEBRAIN_CANVAS {
     this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
 
     // Line 2: Global position
-    /*
     text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
     const pos = results.selected_object.position;
     this.domContext.fillText(
-      `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+      `Global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
       text_position[ 0 ], text_position[ 1 ]
     );
-    */
 
     // More information:
 
@@ -2040,44 +2038,48 @@ class THREEBRAIN_CANVAS {
 
       const _tn = this.object_chosen.userData.display_info.threshold_name || '[None]';
       let _tv = this.object_chosen.userData.display_info.threshold_value;
-      if( _tv === undefined ){
-        _tv = '<NA>';
-      }else if( typeof _tv === 'number' ){
+      if( typeof _tv === 'number' ){
         _tv = _tv.toPrecision(4);
       }
 
       const _dn = this.object_chosen.userData.display_info.display_name;
       let _dv = results.current_value;
 
-      if( _dv === undefined ){
-        _dv = '<NA>';
-      }else if( typeof _dv === 'number' ){
+      if( typeof _dv === 'number' ){
         _dv = _dv.toPrecision(4);
       }
 
       // Line 3: mapping method & surface type
+      /*
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
       this.domContext.fillText(
-        `surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        `Surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
         text_position[ 0 ], text_position[ 1 ]
       );
+      */
 
       // Line 4:
-      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+      if( _dv !== undefined ){
+        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-      this.domContext.fillText(
-        `display: ${ _dn } (${ _dv })`,
-        text_position[ 0 ], text_position[ 1 ]
-      );
+        this.domContext.fillText(
+          `Display:   ${ _dn } (${ _dv })`,
+          text_position[ 0 ], text_position[ 1 ]
+        );
+      }
+
 
       // Line 5:
-      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+      if( _tv !== undefined ){
+        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-      this.domContext.fillText(
-        `threshold: ${ _tn } (${ _tv })`,
-        text_position[ 0 ], text_position[ 1 ]
-      );
+        this.domContext.fillText(
+          `Threshold: ${ _tn } (${ _tv })`,
+          text_position[ 0 ], text_position[ 1 ]
+        );
+      }
+
 
     }
 
