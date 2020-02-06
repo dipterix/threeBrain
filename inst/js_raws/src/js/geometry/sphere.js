@@ -92,6 +92,14 @@ class Sphere extends AbstractThreeBrainObject {
   pre_render( results ){
     const canvas = this._canvas,
           mesh = this._mesh;
+
+    // 0. check if global position is 0,0,0
+    const const_pos = mesh.userData.construct_params.position;
+    if( is_electrode(mesh) && const_pos[0] === 0 && const_pos[1] === 0 && const_pos[2] === 0 ){
+      mesh.visible = false;
+      return ;
+    }
+
     // 1. whether passed threshold
     let threshold_test = true;
     let current_value;
@@ -128,9 +136,45 @@ class Sphere extends AbstractThreeBrainObject {
         // get threshold criteria
         if(current_value !== undefined){
           const ranges = to_array(canvas.state_data.get('threshold_values'));
+          const opers = canvas.state_data.get('threshold_method');
           if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
             // contunuous
             threshold_test = false;
+
+            // '|v| < T1', '|v| >= T1', 'v < T1',
+            // 'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]'
+            if( ranges.length > 0 && opers >= 0 ){
+              let t1 = ranges[0];
+
+              if( opers === 0 && Math.abs(current_value) < t1 ){
+                threshold_test = true;
+              } else if( opers === 1 && Math.abs(current_value) >= t1 ){
+                threshold_test = true;
+              } else if( opers === 2 && current_value < t1 ){
+                threshold_test = true;
+              } else if( opers === 3 && current_value >= t1 ){
+                threshold_test = true;
+              } else {
+                let t2 = Math.abs(t1);
+                if( ranges.length === 1 ){
+                  t1 = -t2
+                } else {
+                  t2 = ranges[1];
+                  if( t1 > t2 ){
+                    t2 = t1;
+                    t1 = ranges[1];
+                  }
+                }
+                if( opers === 4 && current_value <= t2 && current_value >= t1 ){ threshold_test = true; }
+                if( opers === 5 && ( current_value > t2 || current_value < t1 ) ){ threshold_test = true; }
+              }
+
+            } else {
+              threshold_test = true;
+            }
+
+
+            /*
             ranges.forEach((r) => {
               if(Array.isArray(r) && r.length === 2){
                 if(!threshold_test && r[1] >= current_value && r[0] <= current_value){
@@ -138,6 +182,7 @@ class Sphere extends AbstractThreeBrainObject {
                 }
               }
             });
+            */
           }else{
             // discrete
             threshold_test = ranges.includes( current_value );
@@ -187,6 +232,7 @@ class Sphere extends AbstractThreeBrainObject {
       mesh.userData.display_info.threshold_value = current_value;
       mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
     }
+
   }
 
   switch_material( material_type, update_canvas = false ){

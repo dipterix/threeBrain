@@ -184,20 +184,24 @@ class BrainCanvas{
     }
 
     // ---------------------------- Presets
+    let _ani_control_registered = false;
     to_array( control_presets ).forEach((control_preset) => {
-      if( control_preset === 'animation' ){
-        return(null);
-      }
+
       try {
         presets['c_' + control_preset]();
+        if( control_preset === 'animation' ){
+          _ani_control_registered = true;
+        }
       } catch (e) {
         if(this.DEBUG){
           console.warn(e);
         }
       }
     });
+    if( !_ani_control_registered ){
+      presets.c_animation();
+    }
 
-    presets.c_animation();
 
     return(gui);
 

@@ -634,7 +634,7 @@ class THREEBRAIN_CANVAS {
 
     // root is a green cube that's only visible in side cameras
     mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    mouse_helper.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+    mouse_helper.children.forEach( el => { el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 ); } );
 
     // In side cameras, always render mouse_helper_root on top
     mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
@@ -1053,15 +1053,18 @@ class THREEBRAIN_CANVAS {
 
   highlight( m, reset = false ){
 
+    const highlight_disabled = get_or_default( this.state_data, 'highlight_disabled', false );
+
     // use bounding box with this.focus_box
     if( !m || !m.isObject3D ){ return(null); }
 
     this.focus_box.setFromObject( m );
     if( !this.focus_box.userData.added ){
+      this.focus_box.userData.added = true;
       this.add_to_scene( this.focus_box, true );
     }
 
-    this.focus_box.visible = !reset;
+    this.focus_box.visible = !reset && !highlight_disabled;
 
     // check if there is highlight helper
     if( m.children.length > 0 ){
@@ -1987,11 +1990,12 @@ class THREEBRAIN_CANVAS {
   }
 
   _draw_focused_info( results, x = 10, y = 10, w = 100, h = 100 ){
-    // Add selected object information
-    if( !results.selected_object ){
+    // Add selected object information, or if not showing is set
+    if( !results.selected_object || this.state_data.get( 'info_text_disabled') ){
       // no object selected, discard
       return( null );
     }
+
 
     this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
     this._lineHeight_small = this._lineHeight_small || Math.round( 15 * this.pixel_ratio[0] );
@@ -2006,7 +2010,7 @@ class THREEBRAIN_CANVAS {
       w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
 
       // Make sure it's not hidden by control panel
-      this._lineHeight_normal + this.pixel_ratio[0] * 10
+      this._lineHeight_normal + this._lineHeight_small + this.pixel_ratio[0] * 10
     ];
 
     // Line 1: object name
@@ -2016,6 +2020,7 @@ class THREEBRAIN_CANVAS {
     this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
 
     // Line 2: Global position
+    /*
     text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
     const pos = results.selected_object.position;
@@ -2023,6 +2028,7 @@ class THREEBRAIN_CANVAS {
       `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
       text_position[ 0 ], text_position[ 1 ]
     );
+    */
 
     // More information:
 

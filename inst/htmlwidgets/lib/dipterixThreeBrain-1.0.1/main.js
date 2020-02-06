@@ -57671,6 +57671,14 @@ class sphere_Sphere extends AbstractThreeBrainObject {
   pre_render( results ){
     const canvas = this._canvas,
           mesh = this._mesh;
+
+    // 0. check if global position is 0,0,0
+    const const_pos = mesh.userData.construct_params.position;
+    if( is_electrode(mesh) && const_pos[0] === 0 && const_pos[1] === 0 && const_pos[2] === 0 ){
+      mesh.visible = false;
+      return ;
+    }
+
     // 1. whether passed threshold
     let threshold_test = true;
     let current_value;
@@ -57707,9 +57715,45 @@ class sphere_Sphere extends AbstractThreeBrainObject {
         // get threshold criteria
         if(current_value !== undefined){
           const ranges = to_array(canvas.state_data.get('threshold_values'));
+          const opers = canvas.state_data.get('threshold_method');
           if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
             // contunuous
             threshold_test = false;
+
+            // '|v| < T1', '|v| >= T1', 'v < T1',
+            // 'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]'
+            if( ranges.length > 0 && opers >= 0 ){
+              let t1 = ranges[0];
+
+              if( opers === 0 && Math.abs(current_value) < t1 ){
+                threshold_test = true;
+              } else if( opers === 1 && Math.abs(current_value) >= t1 ){
+                threshold_test = true;
+              } else if( opers === 2 && current_value < t1 ){
+                threshold_test = true;
+              } else if( opers === 3 && current_value >= t1 ){
+                threshold_test = true;
+              } else {
+                let t2 = Math.abs(t1);
+                if( ranges.length === 1 ){
+                  t1 = -t2
+                } else {
+                  t2 = ranges[1];
+                  if( t1 > t2 ){
+                    t2 = t1;
+                    t1 = ranges[1];
+                  }
+                }
+                if( opers === 4 && current_value <= t2 && current_value >= t1 ){ threshold_test = true; }
+                if( opers === 5 && ( current_value > t2 || current_value < t1 ) ){ threshold_test = true; }
+              }
+
+            } else {
+              threshold_test = true;
+            }
+
+
+            /*
             ranges.forEach((r) => {
               if(Array.isArray(r) && r.length === 2){
                 if(!threshold_test && r[1] >= current_value && r[0] <= current_value){
@@ -57717,6 +57761,7 @@ class sphere_Sphere extends AbstractThreeBrainObject {
                 }
               }
             });
+            */
           }else{
             // discrete
             threshold_test = ranges.includes( current_value );
@@ -57766,6 +57811,7 @@ class sphere_Sphere extends AbstractThreeBrainObject {
       mesh.userData.display_info.threshold_value = current_value;
       mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
     }
+
   }
 
   switch_material( material_type, update_canvas = false ){
@@ -58700,7 +58746,7 @@ class data_controls_THREEBRAIN_PRESETS{
   // 5. display anchor
   c_toggle_anchor(){
     const folder_name = CONSTANTS.FOLDERS[ 'toggle-helpper' ];
-    this.gui.add_item('Display Helpers', false, { folder_name: folder_name })
+    this.gui.add_item('Display Coordinates', false, { folder_name: folder_name })
       .onChange((v) => {
         this.canvas.set_cube_anchor_visibility(v);
         this.fire_change();
@@ -59217,11 +59263,17 @@ class data_controls_THREEBRAIN_PRESETS{
     const step = 0.001,
           folder_name = CONSTANTS.FOLDERS[ 'animation' ];
 
-    let names = Object.keys( this.settings.color_maps ),
+    let cnames = Object.keys( this.settings.color_maps ),
+        names = ['[None]'],
         initial = this.settings.default_colormap;
 
     // Make sure the initial value exists, and [None] is included in the option
-    names = [...new Set(['[None]', ...names])];
+    cnames.forEach(n => {
+      if( n === 'Subject' && cnames.includes('[Subject]') ){
+        return;
+      }
+      names.push( n );
+    });
     this._animation_names = names;
 
     if( !initial || !names.includes( initial ) || initial.startsWith('[') ){
@@ -59273,10 +59325,13 @@ class data_controls_THREEBRAIN_PRESETS{
           // reset color-range
           if( cmap.value_type === 'continuous' ){
 
+            val_range.setValue( this.__display_range_continuous || '' );
+
+            /*
              val_range.setValue(
                `${cmap.lut.minV.toPrecision(5)},${cmap.lut.maxV.toPrecision(5)}`
              );
-
+            */
             this.gui.show_item(['Display Range'], folder_name);
           }else{
             val_range.setValue(',');
@@ -59299,36 +59354,73 @@ class data_controls_THREEBRAIN_PRESETS{
         return;
       }
 
+      const previous_type = this.canvas.state_data.get('threshold_type');
+      const previous_value = this.canvas.state_data.get('threshold_type');
+
       // set flags to canvas
       this.canvas.state_data.set('threshold_active', true);
       this.canvas.state_data.set('threshold_variable', v);
 
       if(cmap.value_type === 'continuous'){
         this.canvas.state_data.set('threshold_type', 'continuous');
-        let b;
-        let lb = cmap.value_range[0].toPrecision(5),
-            ub = cmap.value_range[1].toPrecision(5);
-        b = lb.substring(0,6) - 0.1;
-        lb = b.toPrecision(5) + lb.substring(6);
-        b = ub.substring(0,6) - (-0.1);
-        ub = b.toPrecision(5) + ub.substring(6);
+        this.gui.show_item('Threshold Method');
 
-        thres_range.setValue(`${lb},${ub}`);
+        if( previous_type !== 'continuous' ){
+          thres_range.setValue( this.__threshold_values_continuous || '' );
+        }
+
       }else{
         // '' means no threshold
         this.canvas.state_data.set('threshold_type', 'discrete');
         thres_range.setValue(cmap.value_names.join('|'));
+        this.gui.hide_item('Threshold Method');
       }
     };
 
     const ani_name = this.gui.add_item('Display Data', initial, { folder_name : folder_name, args : names })
-      .onChange((v) => { _ani_name_onchange( v ); this.fire_change(); });
+      .onChange((v) => {
+        _ani_name_onchange( v );
+        this.fire_change();
+        this._update_canvas();
+      });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ANIMATION, 'Display Data', folder_name);
 
     this._ani_name = ani_name;
-    const val_range = this.gui.add_item('Display Range', '~', { folder_name : folder_name })
+    const val_range = this.gui.add_item('Display Range', '', { folder_name : folder_name })
       .onChange((v) => {
         let ss = v;
+        v = v.split(',').map(x => {
+          return( parseFloat(x) );
+        }).filter(x => {
+          return( !isNaN(x) );
+        });
+
+
+        if( v.length > 0 ){
+          let v1 = v[0], v2 = Math.abs(v[0]);
+          if( v.length == 1 ){
+            v1 = -v2;
+          }else{
+            v2 = v[1];
+          }
+
+          // Set cmap value range
+          this.__display_range_continuous = ss;
+          this.canvas.switch_colormap( undefined, [v1, v2] );
+          // reset animation tracks
+          this.canvas.generate_animation_clips( ani_name.getValue() , true );
+        } else {
+          const cmap = this.canvas.switch_colormap();
+          if( cmap.value_type === 'continuous' ){
+            this.__display_range_continuous = '';
+            this.canvas.switch_colormap( undefined, [
+              cmap.value_range[0],
+              cmap.value_range[1]
+            ] );
+          }
+
+        }
+        /*
         if( v.match(/[^0-9,-.eE~]/) ){
           // illegal chars
           ss = Array.from(v).map((s) => {
@@ -59340,26 +59432,36 @@ class data_controls_THREEBRAIN_PRESETS{
           vr[0] = parseFloat( vr[0] );
           vr[1] = parseFloat( vr[1] );
         }
+
         if( !isNaN( vr[0] ) && !isNaN( vr[1] ) ){
           // Set cmap value range
           this.canvas.switch_colormap( undefined, vr );
           // reset animation tracks
           this.canvas.generate_animation_clips( ani_name.getValue() , true );
         }
+        */
         this.fire_change();
+        this._update_canvas();
 
       });
 
     const thres_name = this.gui.add_item('Threshold Data', '[None]', { folder_name : folder_name, args : names })
-      .onChange((v) => { _thres_name_onchange( v ); this.fire_change(); });
+      .onChange((v) => {
+        _thres_name_onchange( v );
+        this.fire_change();
+        this._update_canvas();
+      });
     this._thres_name = thres_name;
 
     const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
       .onChange((v) => {
         const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
-        let candidates = v.split('|').map((x) => { return(x.trim()); });
+        let candidates = v.split(/[\|,]/).map((x) => { return(x.trim()); });
 
         if(is_continuous){
+          candidates = candidates.map(x => { return(parseFloat(x)); })
+                                 .filter(x => { return(!isNaN(x)); });
+          /*
           candidates = candidates.map((x) => {
             let s = Array.from(x).map((s) => {
               return( '0123456789.,-eE~'.indexOf(s) === -1 ? '' : s );
@@ -59375,12 +59477,33 @@ class data_controls_THREEBRAIN_PRESETS{
             }
             return(s);
           });
+          */
+          this.__threshold_values_continuous = v;
         }
         // set flag
+
         this.canvas.state_data.set('threshold_values', candidates);
         this.fire_change();
         this._update_canvas();
       });
+
+    const thres_method_names = [ '|v| < T1', '|v| >= T1', 'v < T1',
+                                  'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]' ];
+    const thres_method = this.gui.add_item('Threshold Method', '|v| >= T1', { folder_name : folder_name, args : thres_method_names })
+      .onChange((v) => {
+        const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
+        if( is_continuous ){
+          const op = thres_method_names.indexOf(v);
+          if( op > -1 ){
+            this.canvas.state_data.set('threshold_method', op);
+            this.fire_change();
+            this._update_canvas();
+          }
+        }else{
+          // TODO: handle discrete data
+        }
+      });
+    this.canvas.state_data.set('threshold_method', 1);
 
     this._ani_status = this.gui.add_item( 'Play/Pause', false,
                                           { folder_name : folder_name },
@@ -59455,7 +59578,24 @@ class data_controls_THREEBRAIN_PRESETS{
 
   }
 
-  // 16.
+  // 16. Highlight selected electrodes and info
+  c_display_highlights(){
+    const folder_name = CONSTANTS.FOLDERS['highlight-selection'] || 'Data Visualization';
+    this.gui.add_item('Highlight Box', true, { folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.state_data.set( 'highlight_disabled', !v );
+        this.canvas.focus_object( this.canvas.object_chosen );
+        this.fire_change();
+        this._update_canvas(0);
+      });
+
+    this.gui.add_item('Info Text', true, { folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.state_data.set( 'info_text_disabled', !v );
+        this.fire_change();
+        this._update_canvas(0);
+      });
+  }
 
 
 
@@ -59953,12 +60093,13 @@ class data_controls_THREEBRAIN_CONTROL{
   remember( args ){
 
     const keys = [
-      "Background Color", "Display Helpers", "Show Panels", "Coronal (P - A)",
+      "Background Color", "Camera Position", "Display Coordinates", "Show Panels", "Coronal (P - A)",
       "Axial (I - S)", "Sagittal (L - R)", "Overlay Coronal", "Overlay Axial", "Overlay Sagittal",
       "Dist. Threshold", "Surface Type", "Surface Material", "Left Hemisphere", "Right Hemisphere",
       "Left Opacity", "Right Opacity",
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
-      "Display Range", "Threshold Data", "Threshold Range", "Show Legend", "Show Time"
+      "Display Range", "Threshold Data", "Threshold Range", "Show Legend", "Show Time", "Highlight Box",
+      "Info Text"
     ];
 
     keys.forEach((k) => {
@@ -62828,7 +62969,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // root is a green cube that's only visible in side cameras
     mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    mouse_helper.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+    mouse_helper.children.forEach( el => { el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 ); } );
 
     // In side cameras, always render mouse_helper_root on top
     mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
@@ -63247,15 +63388,18 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   highlight( m, reset = false ){
 
+    const highlight_disabled = get_or_default( this.state_data, 'highlight_disabled', false );
+
     // use bounding box with this.focus_box
     if( !m || !m.isObject3D ){ return(null); }
 
     this.focus_box.setFromObject( m );
     if( !this.focus_box.userData.added ){
+      this.focus_box.userData.added = true;
       this.add_to_scene( this.focus_box, true );
     }
 
-    this.focus_box.visible = !reset;
+    this.focus_box.visible = !reset && !highlight_disabled;
 
     // check if there is highlight helper
     if( m.children.length > 0 ){
@@ -64181,11 +64325,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
   }
 
   _draw_focused_info( results, x = 10, y = 10, w = 100, h = 100 ){
-    // Add selected object information
-    if( !results.selected_object ){
+    // Add selected object information, or if not showing is set
+    if( !results.selected_object || this.state_data.get( 'info_text_disabled') ){
       // no object selected, discard
       return( null );
     }
+
 
     this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
     this._lineHeight_small = this._lineHeight_small || Math.round( 15 * this.pixel_ratio[0] );
@@ -64200,7 +64345,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
 
       // Make sure it's not hidden by control panel
-      this._lineHeight_normal + this.pixel_ratio[0] * 10
+      this._lineHeight_normal + this._lineHeight_small + this.pixel_ratio[0] * 10
     ];
 
     // Line 1: object name
@@ -64210,6 +64355,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
 
     // Line 2: Global position
+    /*
     text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
     const pos = results.selected_object.position;
@@ -64217,6 +64363,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       `global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
       text_position[ 0 ], text_position[ 1 ]
     );
+    */
 
     // More information:
 
@@ -65989,20 +66136,24 @@ class src_BrainCanvas{
     }
 
     // ---------------------------- Presets
+    let _ani_control_registered = false;
     to_array( control_presets ).forEach((control_preset) => {
-      if( control_preset === 'animation' ){
-        return(null);
-      }
+
       try {
         presets['c_' + control_preset]();
+        if( control_preset === 'animation' ){
+          _ani_control_registered = true;
+        }
       } catch (e) {
         if(this.DEBUG){
           console.warn(e);
         }
       }
     });
+    if( !_ani_control_registered ){
+      presets.c_animation();
+    }
 
-    presets.c_animation();
 
     return(gui);
 
