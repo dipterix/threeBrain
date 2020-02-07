@@ -97,7 +97,7 @@ MultiBrain2 <- R6::R6Class(
 
     plot = function(
       additional_subjects = NULL, volumes = TRUE, surfaces = TRUE,
-      symmetric = 0, palettes = NULL,
+      symmetric = 0, palettes = NULL, val_ranges = NULL,
       side_canvas = TRUE, side_width = 250, side_shift = c(0, 0),
       control_presets = NULL, control_panel = TRUE,
       width = NULL, height = NULL,
@@ -131,7 +131,7 @@ MultiBrain2 <- R6::R6Class(
 
       threejs_brain(
         .list = geoms,
-        symmetric = symmetric, palettes = palettes,
+        symmetric = symmetric, palettes = palettes, val_ranges = val_ranges,
         side_canvas = side_canvas, side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
         width = width, height = height, debug = debug, token = token,

@@ -230,6 +230,7 @@ class THREE_BRAIN_SHINY {
     }
   }
 
+  // FIXME: this handler is Broken
   handle_add_clip( args ){
     // window.aaa = args;
     const clip_name = args.clip_name,

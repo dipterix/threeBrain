@@ -1,6 +1,7 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { THREE } from '../threeplugins.js';
 import { to_array, get_or_default } from '../utils.js';
+import { CONSTANTS } from '../constants.js';
 
 const MATERIAL_PARAMS = { 'transparent' : false };
 
@@ -143,16 +144,19 @@ class Sphere extends AbstractThreeBrainObject {
 
             // '|v| < T1', '|v| >= T1', 'v < T1',
             // 'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]'
-            if( ranges.length > 0 && opers >= 0 ){
+            if( ranges.length > 0 && opers >= 0 && opers < CONSTANTS.THRESHOLD_OPERATORS.length ){
+              const opstr = CONSTANTS.THRESHOLD_OPERATORS[ opers ]
               let t1 = ranges[0];
 
-              if( opers === 0 && Math.abs(current_value) < t1 ){
+              if( opstr === 'v = T1' && current_value == t1 ){
                 threshold_test = true;
-              } else if( opers === 1 && Math.abs(current_value) >= t1 ){
+              } else if( opstr === '|v| < T1' && Math.abs(current_value) < t1 ){
                 threshold_test = true;
-              } else if( opers === 2 && current_value < t1 ){
+              } else if( opstr === '|v| >= T1' && Math.abs(current_value) >= t1 ){
                 threshold_test = true;
-              } else if( opers === 3 && current_value >= t1 ){
+              } else if( opstr === 'v < T1' && current_value < t1 ){
+                threshold_test = true;
+              } else if( opstr === 'v >= T1' && current_value >= t1 ){
                 threshold_test = true;
               } else {
                 let t2 = Math.abs(t1);
@@ -165,8 +169,11 @@ class Sphere extends AbstractThreeBrainObject {
                     t1 = ranges[1];
                   }
                 }
-                if( opers === 4 && current_value <= t2 && current_value >= t1 ){ threshold_test = true; }
-                if( opers === 5 && ( current_value > t2 || current_value < t1 ) ){ threshold_test = true; }
+                if( opstr === 'v in [T1, T2]' && current_value <= t2 && current_value >= t1 ){
+                  threshold_test = true;
+                } else if( opstr === 'v not in [T1,T2]' && ( current_value > t2 || current_value < t1 ) ){
+                  threshold_test = true;
+                }
               }
 
             } else {

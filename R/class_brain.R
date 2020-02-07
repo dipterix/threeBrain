@@ -774,7 +774,7 @@ Brain2 <- R6::R6Class(
       # For control panels = TRUE
       control_presets = NULL,
       # Animation, also needs control panels = TRUE
-      time_range = NULL, value_range = NULL, symmetric = 0,
+      time_range = NULL, val_ranges = NULL, symmetric = 0,
 
       width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE, ... ){
 
@@ -806,7 +806,7 @@ Brain2 <- R6::R6Class(
         symmetric = symmetric, palettes = palettes,
         side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
-        control_display = control_display,
+        control_display = control_display, val_ranges = val_ranges,
         default_colormap = default_colormap, side_display = side_display,
         width = width, height = height, debug = debug, token = token,
         browser_external = browser_external, global_data = global_data,

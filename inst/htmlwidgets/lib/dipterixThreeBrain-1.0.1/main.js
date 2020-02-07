@@ -57576,7 +57576,152 @@ function debounce(func, wait, immediate) {
 
 
 
+// CONCATENATED MODULE: ./src/js/constants.js
+
+// Defined all the constants
+
+const CONSTANTS = {};
+
+/* ------------------------------------ Layer setups ------------------------------------
+  Defines for each camera which layers are visible.
+  Protocols are
+    Layers:
+      - 0, 2, 3: Especially reserved for main camera
+      - 1, Shared by all cameras
+      - 4, 5, 6: Reserved for side-cameras
+      - 7: reserved for all, system reserved
+      - 8: main camera only, system reserved
+      - 9 side-cameras 1 only, system reserved
+      - 10 side-cameras 2 only, system reserved
+      - 11 side-cameras 3 only, system reserved
+      - 12 side-cameras 4 only, system reserved
+      - 13 all side cameras, system reserved
+      - 14~31 invisible
+
+*/
+
+CONSTANTS.LAYER_USER_MAIN_CAMERA_0 = 0;           // User use, main camera only
+CONSTANTS.LAYER_USER_ALL_CAMERA_1 = 1;            // User use, all cameras visible
+CONSTANTS.LAYER_USER_ALL_SIDE_CAMERAS_4 = 4;      // User use, all side cameras
+CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 = 7;            // System reserved, all cameras
+CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 = 8;            // System reserved, main cameras only
+CONSTANTS.LAYER_SYS_CORONAL_9 = 9;                // System reserved, coronal camera only
+CONSTANTS.LAYER_SYS_AXIAL_10 = 10;                 // System reserved, axial camera only
+CONSTANTS.LAYER_SYS_SAGITTAL_11 = 11;              // System reserved, sagittal camera only
+CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 = 13;      // System reserved, all side cameras visible
+
+/* ------------------------------------ Global constants ------------------------------------
+*/
+
+// reorder render depth to force renders to render objects with maximum render order first
+CONSTANTS.MAX_RENDER_ORDER = 9999999;
+CONSTANTS.VEC_ORIGIN = new threeplugins_THREE.Vector3( 0, 0, 0 );
+// Anatomcal axis RAS is the normal XYZ, LAI is the other direction
+CONSTANTS.VEC_ANAT_R = new threeplugins_THREE.Vector3( 1, 0, 0 );
+CONSTANTS.VEC_ANAT_A = new threeplugins_THREE.Vector3( 0, 1, 0 );
+CONSTANTS.VEC_ANAT_S = new threeplugins_THREE.Vector3( 0, 0, 1 );
+CONSTANTS.VEC_ANAT_L = new threeplugins_THREE.Vector3( -1, 0, 0 );
+CONSTANTS.VEC_ANAT_P = new threeplugins_THREE.Vector3( 0, -1, 0 );
+CONSTANTS.VEC_ANAT_I = new threeplugins_THREE.Vector3( 0, 0, -1 );
+
+// You can only change which key is pressed. However, you cannot change shift & ctrl or alt
+// To do that you must go into the code
+CONSTANTS.KEY_ZOOM                    = 'KeyZ';         // z for zoom out and Z for zoom in
+CONSTANTS.KEY_CYCLE_LEFT              = 'BracketLeft';  // [ for cycle through left hemisphere material
+CONSTANTS.KEY_CYCLE_RIGHT             = 'BracketRight'; // ] for cycle through right hemisphere material
+CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 'Period';       // "." for choosing next electrodes
+CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 'Comma';        // "," for choosing previous electrodes
+CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = 'KeyV';         // 'v' for cycling through visible, hide inactive, hidden
+CONSTANTS.KEY_CYCLE_SURFACE           = 'KeyP';         // "p" for cycle through surfaces
+CONSTANTS.KEY_CYCLE_MATERIAL          = 'KeyM';         // "M" for cycle through material
+CONSTANTS.KEY_OVERLAY_CORONAL         = 'KeyC';         // 'C' for coronal
+CONSTANTS.KEY_OVERLAY_AXIAL           = 'KeyA';         // 'A' for axial
+CONSTANTS.KEY_OVERLAY_SAGITTAL        = 'KeyS';         // 'S' for sagittal
+CONSTANTS.KEY_MOVE_CORONAL            = 'KeyE';         // 'Q' for moving coronal f/b
+CONSTANTS.KEY_MOVE_AXIAL              = 'KeyQ';         // 'W' for moving axial f/b
+CONSTANTS.KEY_MOVE_SAGITTAL           = 'KeyW';         // 'E' for moving sagittal f/b
+CONSTANTS.KEY_CYCLE_ANIMATION         = 'KeyC';         // 'c' for cycling through animation clips
+CONSTANTS.KEY_TOGGLE_ANIMATION        = 'KeyS';         // 's' for play/paus animation
+CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling through electrodes (localization)
+CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electrode type (surface ot iEEG)
+CONSTANTS.KEY_NEW_ELECTRODE_EDITOR    = 'Digit1';       // '1' new electrode
+CONSTANTS.KEY_LABEL_FOCUS_EDITOR      = 'Digit2';       // '2' for quick edit label
+CONSTANTS.KEY_CYCLE_REMOVE_EDITOR     = 'KeyR';
+
+CONSTANTS.TOOLTIPS = {};
+CONSTANTS.TOOLTIPS.KEY_ZOOM                    = 'z/Z';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT              = '[';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT             = ']';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_NEXT   = '.';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_PREV   = ',';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY   = 'v';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE           = 'p';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL          = '⇧M';
+CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL         = '⇧C';
+CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL           = '⇧A';
+CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL        = '⇧S';
+CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL            = 'e/E';
+CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL              = 'q/Q';
+CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL           = 'w/W';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ANIMATION         = 'c';
+CONSTANTS.TOOLTIPS.KEY_TOGGLE_ANIMATION        = 's';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_EDITOR       = '`';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFTYPE_EDITOR   = '4';
+CONSTANTS.TOOLTIPS.KEY_NEW_ELECTRODE_EDITOR    = '1';
+CONSTANTS.TOOLTIPS.KEY_LABEL_FOCUS_EDITOR      = '2';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_REMOVE_EDITOR     = 'r';
+
+// Regular expressions
+CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - pial (YAB)
+CONSTANTS.REGEXP_VOLUME_GROUP     = /^Volume - (.+) \((.+)\)$/;   // Volume - brain.finalsurfs (YAB)
+CONSTANTS.REGEXP_ELECTRODE_GROUP  = /^Electrodes \((.+)\)$/;                  // Electrodes (YAB)
+CONSTANTS.REGEXP_SURFACE          = /^([\w ]+) (Left|right) Hemisphere - (.+) \((.+)\)$/;   // Standard 141 Left Hemisphere - pial (YAB)
+CONSTANTS.REGEXP_VOLUME           = /^(.+) \((.+)\)$/;                   // brain.finalsurfs (YAB)
+CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - pSYLV12
+
+// Colors
+CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects
+CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient light that lights up all cameras
+
+
+// dat.GUI folders
+CONSTANTS.FOLDERS = {
+  'background-color'      : 'Default',
+  'sync-viewers'          : 'Default',
+  'video-recorder'        : 'Default',
+  'reset-main-camera'     : 'Default',
+  'main-camera-position'  : 'Default',
+  'toggle-helpper'        : 'Default',
+  'toggle-side-panels'    : 'Volume Settings',
+  'reset-side-panels'     : 'Volume Settings',
+  'side-three-planes'     : 'Volume Settings',
+  'side-electrode-dist'   : 'Volume Settings',
+  'subject-selector'      : 'Surface Settings',
+  'surface-selector'      : 'Surface Settings',
+  'hemisphere-material'   : 'Surface Settings',
+  'electrode-style'       : 'Electrodes',
+  'electrode-mapping'     : 'Electrodes',
+  'animation'             : 'Data Visualization',
+  'highlight-selection'   : 'Data Visualization'
+};
+
+CONSTANTS.THRESHOLD_OPERATORS = [
+  'v = T1',
+  '|v| < T1',
+  '|v| >= T1',
+  'v < T1',
+  'v >= T1',
+  'v in [T1, T2]',
+  'v not in [T1,T2]'
+];
+
+
+
+
+
+
 // CONCATENATED MODULE: ./src/js/geometry/sphere.js
+
 
 
 
@@ -57722,16 +57867,19 @@ class sphere_Sphere extends AbstractThreeBrainObject {
 
             // '|v| < T1', '|v| >= T1', 'v < T1',
             // 'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]'
-            if( ranges.length > 0 && opers >= 0 ){
+            if( ranges.length > 0 && opers >= 0 && opers < CONSTANTS.THRESHOLD_OPERATORS.length ){
+              const opstr = CONSTANTS.THRESHOLD_OPERATORS[ opers ]
               let t1 = ranges[0];
 
-              if( opers === 0 && Math.abs(current_value) < t1 ){
+              if( opstr === 'v = T1' && current_value == t1 ){
                 threshold_test = true;
-              } else if( opers === 1 && Math.abs(current_value) >= t1 ){
+              } else if( opstr === '|v| < T1' && Math.abs(current_value) < t1 ){
                 threshold_test = true;
-              } else if( opers === 2 && current_value < t1 ){
+              } else if( opstr === '|v| >= T1' && Math.abs(current_value) >= t1 ){
                 threshold_test = true;
-              } else if( opers === 3 && current_value >= t1 ){
+              } else if( opstr === 'v < T1' && current_value < t1 ){
+                threshold_test = true;
+              } else if( opstr === 'v >= T1' && current_value >= t1 ){
                 threshold_test = true;
               } else {
                 let t2 = Math.abs(t1);
@@ -57744,8 +57892,11 @@ class sphere_Sphere extends AbstractThreeBrainObject {
                     t1 = ranges[1];
                   }
                 }
-                if( opers === 4 && current_value <= t2 && current_value >= t1 ){ threshold_test = true; }
-                if( opers === 5 && ( current_value > t2 || current_value < t1 ) ){ threshold_test = true; }
+                if( opstr === 'v in [T1, T2]' && current_value <= t2 && current_value >= t1 ){
+                  threshold_test = true;
+                } else if( opstr === 'v not in [T1,T2]' && ( current_value > t2 || current_value < t1 ) ){
+                  threshold_test = true;
+                }
               }
 
             } else {
@@ -58236,143 +58387,6 @@ function is_electrode(e) {
     return(false);
   }
 }
-
-
-
-// CONCATENATED MODULE: ./src/js/constants.js
-
-// Defined all the constants
-
-const CONSTANTS = {};
-
-/* ------------------------------------ Layer setups ------------------------------------
-  Defines for each camera which layers are visible.
-  Protocols are
-    Layers:
-      - 0, 2, 3: Especially reserved for main camera
-      - 1, Shared by all cameras
-      - 4, 5, 6: Reserved for side-cameras
-      - 7: reserved for all, system reserved
-      - 8: main camera only, system reserved
-      - 9 side-cameras 1 only, system reserved
-      - 10 side-cameras 2 only, system reserved
-      - 11 side-cameras 3 only, system reserved
-      - 12 side-cameras 4 only, system reserved
-      - 13 all side cameras, system reserved
-      - 14~31 invisible
-
-*/
-
-CONSTANTS.LAYER_USER_MAIN_CAMERA_0 = 0;           // User use, main camera only
-CONSTANTS.LAYER_USER_ALL_CAMERA_1 = 1;            // User use, all cameras visible
-CONSTANTS.LAYER_USER_ALL_SIDE_CAMERAS_4 = 4;      // User use, all side cameras
-CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 = 7;            // System reserved, all cameras
-CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 = 8;            // System reserved, main cameras only
-CONSTANTS.LAYER_SYS_CORONAL_9 = 9;                // System reserved, coronal camera only
-CONSTANTS.LAYER_SYS_AXIAL_10 = 10;                 // System reserved, axial camera only
-CONSTANTS.LAYER_SYS_SAGITTAL_11 = 11;              // System reserved, sagittal camera only
-CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 = 13;      // System reserved, all side cameras visible
-
-/* ------------------------------------ Global constants ------------------------------------
-*/
-
-// reorder render depth to force renders to render objects with maximum render order first
-CONSTANTS.MAX_RENDER_ORDER = 9999999;
-CONSTANTS.VEC_ORIGIN = new threeplugins_THREE.Vector3( 0, 0, 0 );
-// Anatomcal axis RAS is the normal XYZ, LAI is the other direction
-CONSTANTS.VEC_ANAT_R = new threeplugins_THREE.Vector3( 1, 0, 0 );
-CONSTANTS.VEC_ANAT_A = new threeplugins_THREE.Vector3( 0, 1, 0 );
-CONSTANTS.VEC_ANAT_S = new threeplugins_THREE.Vector3( 0, 0, 1 );
-CONSTANTS.VEC_ANAT_L = new threeplugins_THREE.Vector3( -1, 0, 0 );
-CONSTANTS.VEC_ANAT_P = new threeplugins_THREE.Vector3( 0, -1, 0 );
-CONSTANTS.VEC_ANAT_I = new threeplugins_THREE.Vector3( 0, 0, -1 );
-
-// You can only change which key is pressed. However, you cannot change shift & ctrl or alt
-// To do that you must go into the code
-CONSTANTS.KEY_ZOOM                    = 'KeyZ';         // z for zoom out and Z for zoom in
-CONSTANTS.KEY_CYCLE_LEFT              = 'BracketLeft';  // [ for cycle through left hemisphere material
-CONSTANTS.KEY_CYCLE_RIGHT             = 'BracketRight'; // ] for cycle through right hemisphere material
-CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 'Period';       // "." for choosing next electrodes
-CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 'Comma';        // "," for choosing previous electrodes
-CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = 'KeyV';         // 'v' for cycling through visible, hide inactive, hidden
-CONSTANTS.KEY_CYCLE_SURFACE           = 'KeyP';         // "p" for cycle through surfaces
-CONSTANTS.KEY_CYCLE_MATERIAL          = 'KeyM';         // "M" for cycle through material
-CONSTANTS.KEY_OVERLAY_CORONAL         = 'KeyC';         // 'C' for coronal
-CONSTANTS.KEY_OVERLAY_AXIAL           = 'KeyA';         // 'A' for axial
-CONSTANTS.KEY_OVERLAY_SAGITTAL        = 'KeyS';         // 'S' for sagittal
-CONSTANTS.KEY_MOVE_CORONAL            = 'KeyE';         // 'Q' for moving coronal f/b
-CONSTANTS.KEY_MOVE_AXIAL              = 'KeyQ';         // 'W' for moving axial f/b
-CONSTANTS.KEY_MOVE_SAGITTAL           = 'KeyW';         // 'E' for moving sagittal f/b
-CONSTANTS.KEY_CYCLE_ANIMATION         = 'KeyC';         // 'c' for cycling through animation clips
-CONSTANTS.KEY_TOGGLE_ANIMATION        = 'KeyS';         // 's' for play/paus animation
-CONSTANTS.KEY_CYCLE_ELEC_EDITOR       = 'Backquote';    // '`' for cycling through electrodes (localization)
-CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electrode type (surface ot iEEG)
-CONSTANTS.KEY_NEW_ELECTRODE_EDITOR    = 'Digit1';       // '1' new electrode
-CONSTANTS.KEY_LABEL_FOCUS_EDITOR      = 'Digit2';       // '2' for quick edit label
-CONSTANTS.KEY_CYCLE_REMOVE_EDITOR     = 'KeyR';
-
-CONSTANTS.TOOLTIPS = {};
-CONSTANTS.TOOLTIPS.KEY_ZOOM                    = 'z/Z';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT              = '[';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT             = ']';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_NEXT   = '.';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_PREV   = ',';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY   = 'v';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE           = 'p';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL          = '⇧M';
-CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL         = '⇧C';
-CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL           = '⇧A';
-CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL        = '⇧S';
-CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL            = 'e/E';
-CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL              = 'q/Q';
-CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL           = 'w/W';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_ANIMATION         = 'c';
-CONSTANTS.TOOLTIPS.KEY_TOGGLE_ANIMATION        = 's';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_EDITOR       = '`';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFTYPE_EDITOR   = '4';
-CONSTANTS.TOOLTIPS.KEY_NEW_ELECTRODE_EDITOR    = '1';
-CONSTANTS.TOOLTIPS.KEY_LABEL_FOCUS_EDITOR      = '2';
-CONSTANTS.TOOLTIPS.KEY_CYCLE_REMOVE_EDITOR     = 'r';
-
-// Regular expressions
-CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - pial (YAB)
-CONSTANTS.REGEXP_VOLUME_GROUP     = /^Volume - (.+) \((.+)\)$/;   // Volume - brain.finalsurfs (YAB)
-CONSTANTS.REGEXP_ELECTRODE_GROUP  = /^Electrodes \((.+)\)$/;                  // Electrodes (YAB)
-CONSTANTS.REGEXP_SURFACE          = /^([\w ]+) (Left|right) Hemisphere - (.+) \((.+)\)$/;   // Standard 141 Left Hemisphere - pial (YAB)
-CONSTANTS.REGEXP_VOLUME           = /^(.+) \((.+)\)$/;                   // brain.finalsurfs (YAB)
-CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - pSYLV12
-
-// Colors
-CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects
-CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient light that lights up all cameras
-
-
-// dat.GUI folders
-CONSTANTS.FOLDERS = {
-  'background-color'      : 'Default',
-  'sync-viewers'          : 'Default',
-  'video-recorder'        : 'Default',
-  'reset-main-camera'     : 'Default',
-  'main-camera-position'  : 'Default',
-  'toggle-helpper'        : 'Default',
-  'toggle-side-panels'    : 'Volume Settings',
-  'reset-side-panels'     : 'Volume Settings',
-  'side-three-planes'     : 'Volume Settings',
-  'side-electrode-dist'   : 'Volume Settings',
-  'subject-selector'      : 'Surface Settings',
-  'surface-selector'      : 'Surface Settings',
-  'hemisphere-material'   : 'Surface Settings',
-  'electrode-style'       : 'Electrodes',
-  'electrode-mapping'     : 'Electrodes',
-  'animation'             : 'Data Visualization',
-  'highlight-selection'   : 'Data Visualization'
-};
-
-
-
-
-
-
 
 
 
@@ -59507,13 +59521,11 @@ class data_controls_THREEBRAIN_PRESETS{
         this._update_canvas();
       });
 
-    const thres_method_names = [ '|v| < T1', '|v| >= T1', 'v < T1',
-                                  'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]' ];
-    const thres_method = this.gui.add_item('Threshold Method', '|v| >= T1', { folder_name : folder_name, args : thres_method_names })
+    const thres_method = this.gui.add_item('Threshold Method', '|v| >= T1', { folder_name : folder_name, args : CONSTANTS.THRESHOLD_OPERATORS })
       .onChange((v) => {
         const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
         if( is_continuous ){
-          const op = thres_method_names.indexOf(v);
+          const op = CONSTANTS.THRESHOLD_OPERATORS.indexOf(v);
           if( op > -1 ){
             this.canvas.state_data.set('threshold_method', op);
             this.fire_change();
@@ -59523,7 +59535,7 @@ class data_controls_THREEBRAIN_PRESETS{
           // TODO: handle discrete data
         }
       });
-    this.canvas.state_data.set('threshold_method', 1);
+    this.canvas.state_data.set('threshold_method', 2);
 
     this._ani_status = this.gui.add_item( 'Play/Pause', false,
                                           { folder_name : folder_name },
@@ -60479,6 +60491,7 @@ class shiny_tools_THREE_BRAIN_SHINY {
     }
   }
 
+  // FIXME: this handler is Broken
   handle_add_clip( args ){
     // window.aaa = args;
     const clip_name = args.clip_name,
@@ -63611,7 +63624,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
   }
 
   add_colormap( name, value_type, value_names, value_range, time_range,
-                color_keys, color_vals, n_levels ){
+                color_keys, color_vals, n_levels, hard_range ){
 
     const color_name = name + '--'  + this.container_id;
 
@@ -63644,6 +63657,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
       lut.setMax( Math.max( n_levels - 1, 1) );
     }
 
+    // step 3: register hard range
+    let theoretical_range;
+    if( Array.isArray(hard_range) && hard_range.length == 2 ){
+      theoretical_range = [hard_range[0], hard_range[1]];
+    }
+
     this.color_maps.set( name, {
       lut: lut,
       value_type: value_type,
@@ -63651,7 +63670,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
       time_range: time_range,
       n_levels: n_levels,
       // Used for back-up
-      value_range : [ lut.minV, lut.maxV ]
+      value_range : [ lut.minV, lut.maxV ],
+      theoretical_range : theoretical_range
     });
 
   }
@@ -63680,9 +63700,28 @@ class threejs_scene_THREEBRAIN_CANVAS {
     if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
         // Must be continuous color map
         cmap.value_type === 'continuous' ){
+      // Check hard ranges
+      const hard_range = cmap.theoretical_range;
+      let minv = value_range[0],
+          maxv = value_range[1];
+      if( Array.isArray(hard_range) && hard_range.length == 2 ){
+        if( minv < hard_range[0] ){
+          minv = hard_range[0];
+          if( maxv < minv ){
+            maxv = minv + 1e-100;
+          }
+        }
+        if( maxv > hard_range[1] ){
+          maxv = hard_range[1];
+          if( maxv < minv ){
+            minv = maxv - 1e-100;
+          }
+        }
+      }
+
       // set cmap value_range
-      cmap.lut.setMax( value_range[1] );
-      cmap.lut.setMin( value_range[0] );
+      cmap.lut.setMax( maxv );
+      cmap.lut.setMin( minv );
       // Legend needs to be updated
       this.start_animation( 0 );
     }
@@ -64154,6 +64193,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     const cmap = this.switch_colormap();
 
+    // Added: if info text is disabled, then legend should not display
+    // correspoding value
+    const info_disabled = this.state_data.get( 'info_text_disabled');
+
     // whether to draw legend
     const has_color_map = this.render_legend && cmap && (cmap.lut.n !== undefined);
 
@@ -64207,7 +64250,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       let draw_zero = lut.minV < 0 && lut.maxV > 0;
 
-      if( typeof( results.current_value ) === 'number' ){
+      if( !info_disabled && typeof( results.current_value ) === 'number' ){
         // There is a colored object rendered, display it
         let value_height = ( legend_start + (lut.maxV - results.current_value) * legend_height / (lut.maxV - lut.minV)) * h;
 
@@ -64250,8 +64293,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
       let text_offset = Math.round( legend_offset - legend_width ),
           text_start = Math.round( w - text_offset + this._fontSize_legend ),
           text_halfheight = Math.round( this._fontSize_legend * 0.21 );
-      legent_ticks.forEach((tick) => {
 
+
+      legent_ticks.forEach((tick) => {
         if( tick[2] === 1 ){
           this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
           this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
@@ -64323,7 +64367,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
         this.domContext.fillStyle = this.foreground_color;
 
-        if( results.current_value === color_names[ii]){
+        if( !info_disabled && results.current_value === color_names[ii]){
           this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
           this.domContext.fillText(color_names[ii],
             text_start, square_center + text_halfheight, w - text_start - 1
@@ -66247,7 +66291,8 @@ class src_BrainCanvas{
         v.time_range,
         v.color_keys,
         v.color_vals,
-        v.color_levels
+        v.color_levels,
+        v.hard_range
       );
     });
 

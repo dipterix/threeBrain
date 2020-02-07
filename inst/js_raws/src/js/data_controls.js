@@ -987,13 +987,11 @@ class THREEBRAIN_PRESETS{
         this._update_canvas();
       });
 
-    const thres_method_names = [ '|v| < T1', '|v| >= T1', 'v < T1',
-                                  'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]' ];
-    const thres_method = this.gui.add_item('Threshold Method', '|v| >= T1', { folder_name : folder_name, args : thres_method_names })
+    const thres_method = this.gui.add_item('Threshold Method', '|v| >= T1', { folder_name : folder_name, args : CONSTANTS.THRESHOLD_OPERATORS })
       .onChange((v) => {
         const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
         if( is_continuous ){
-          const op = thres_method_names.indexOf(v);
+          const op = CONSTANTS.THRESHOLD_OPERATORS.indexOf(v);
           if( op > -1 ){
             this.canvas.state_data.set('threshold_method', op);
             this.fire_change();
@@ -1003,7 +1001,7 @@ class THREEBRAIN_PRESETS{
           // TODO: handle discrete data
         }
       });
-    this.canvas.state_data.set('threshold_method', 1);
+    this.canvas.state_data.set('threshold_method', 2);
 
     this._ani_status = this.gui.add_item( 'Play/Pause', false,
                                           { folder_name : folder_name },

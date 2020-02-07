@@ -126,8 +126,15 @@ CONSTANTS.FOLDERS = {
   'highlight-selection'   : 'Data Visualization'
 };
 
-
-
+CONSTANTS.THRESHOLD_OPERATORS = [
+  'v = T1',
+  '|v| < T1',
+  '|v| >= T1',
+  'v < T1',
+  'v >= T1',
+  'v in [T1, T2]',
+  'v not in [T1,T2]'
+];
 
 
 

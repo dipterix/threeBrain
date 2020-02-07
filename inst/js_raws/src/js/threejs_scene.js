@@ -1259,7 +1259,7 @@ class THREEBRAIN_CANVAS {
   }
 
   add_colormap( name, value_type, value_names, value_range, time_range,
-                color_keys, color_vals, n_levels ){
+                color_keys, color_vals, n_levels, hard_range ){
 
     const color_name = name + '--'  + this.container_id;
 
@@ -1292,6 +1292,12 @@ class THREEBRAIN_CANVAS {
       lut.setMax( Math.max( n_levels - 1, 1) );
     }
 
+    // step 3: register hard range
+    let theoretical_range;
+    if( Array.isArray(hard_range) && hard_range.length == 2 ){
+      theoretical_range = [hard_range[0], hard_range[1]];
+    }
+
     this.color_maps.set( name, {
       lut: lut,
       value_type: value_type,
@@ -1299,7 +1305,8 @@ class THREEBRAIN_CANVAS {
       time_range: time_range,
       n_levels: n_levels,
       // Used for back-up
-      value_range : [ lut.minV, lut.maxV ]
+      value_range : [ lut.minV, lut.maxV ],
+      theoretical_range : theoretical_range
     });
 
   }
@@ -1328,9 +1335,28 @@ class THREEBRAIN_CANVAS {
     if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
         // Must be continuous color map
         cmap.value_type === 'continuous' ){
+      // Check hard ranges
+      const hard_range = cmap.theoretical_range;
+      let minv = value_range[0],
+          maxv = value_range[1];
+      if( Array.isArray(hard_range) && hard_range.length == 2 ){
+        if( minv < hard_range[0] ){
+          minv = hard_range[0];
+          if( maxv < minv ){
+            maxv = minv + 1e-100;
+          }
+        }
+        if( maxv > hard_range[1] ){
+          maxv = hard_range[1];
+          if( maxv < minv ){
+            minv = maxv - 1e-100;
+          }
+        }
+      }
+
       // set cmap value_range
-      cmap.lut.setMax( value_range[1] );
-      cmap.lut.setMin( value_range[0] );
+      cmap.lut.setMax( maxv );
+      cmap.lut.setMin( minv );
       // Legend needs to be updated
       this.start_animation( 0 );
     }
@@ -1802,6 +1828,10 @@ class THREEBRAIN_CANVAS {
 
     const cmap = this.switch_colormap();
 
+    // Added: if info text is disabled, then legend should not display
+    // correspoding value
+    const info_disabled = this.state_data.get( 'info_text_disabled');
+
     // whether to draw legend
     const has_color_map = this.render_legend && cmap && (cmap.lut.n !== undefined);
 
@@ -1855,7 +1885,7 @@ class THREEBRAIN_CANVAS {
 
       let draw_zero = lut.minV < 0 && lut.maxV > 0;
 
-      if( typeof( results.current_value ) === 'number' ){
+      if( !info_disabled && typeof( results.current_value ) === 'number' ){
         // There is a colored object rendered, display it
         let value_height = ( legend_start + (lut.maxV - results.current_value) * legend_height / (lut.maxV - lut.minV)) * h;
 
@@ -1898,8 +1928,9 @@ class THREEBRAIN_CANVAS {
       let text_offset = Math.round( legend_offset - legend_width ),
           text_start = Math.round( w - text_offset + this._fontSize_legend ),
           text_halfheight = Math.round( this._fontSize_legend * 0.21 );
-      legent_ticks.forEach((tick) => {
 
+
+      legent_ticks.forEach((tick) => {
         if( tick[2] === 1 ){
           this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
           this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
@@ -1971,7 +2002,7 @@ class THREEBRAIN_CANVAS {
 
         this.domContext.fillStyle = this.foreground_color;
 
-        if( results.current_value === color_names[ii]){
+        if( !info_disabled && results.current_value === color_names[ii]){
           this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
           this.domContext.fillText(color_names[ii],
             text_start, square_center + text_halfheight, w - text_start - 1

@@ -276,7 +276,8 @@ class BrainCanvas{
         v.time_range,
         v.color_keys,
         v.color_vals,
-        v.color_levels
+        v.color_levels,
+        v.hard_range
       );
     });
 

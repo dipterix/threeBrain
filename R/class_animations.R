@@ -138,6 +138,9 @@ ColorMap <- R6::R6Class(
     value_type = "continuous",
     time_range = c(0,1),
     value_range = c(-1,1),
+
+    # Theoretical range, like p-value, cannot goes below 0 nor beyond 1, hence (0,1)
+    hard_range = numeric(0),
     value_names = NULL,
     n_colors = 64,
     colors = c('navyblue', '#e2e2e2', 'red'),
@@ -229,7 +232,8 @@ ColorMap <- R6::R6Class(
         # color_hex = colors,
         color_vals = gsub( '^#', '0x', colors ),
         # Mainly used to indicate how many levels
-        color_levels = self$n_colors
+        color_levels = self$n_colors,
+        hard_range = self$hard_range
       )
     }
   )

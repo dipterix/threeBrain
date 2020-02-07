@@ -101,8 +101,11 @@ threejs_brain <- function(
     if( atype %in% pnames ){
       c$set_colors( palettes[[atype]] )
     }
-    if( c$value_type == 'continuous' && length(val_ranges[[atype]]) == 2 ){
-      c$value_range = val_ranges[[atype]]
+    if( c$value_type == 'continuous' && length(val_ranges[[atype]]) >= 2 ){
+      c$value_range = val_ranges[[atype]][c(1,2)]
+      if( length(val_ranges[[atype]]) >= 4 ){
+        c$hard_range = sort(val_ranges[[atype]][c(3,4)])
+      }
     }
     c$to_list()
   }, USE.NAMES = TRUE, simplify = FALSE)
