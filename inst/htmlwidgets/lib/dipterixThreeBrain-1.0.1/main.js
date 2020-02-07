@@ -60130,8 +60130,8 @@ class data_controls_THREEBRAIN_CONTROL{
       "Dist. Threshold", "Surface Type", "Surface Material", "Left Hemisphere", "Right Hemisphere",
       "Left Opacity", "Right Opacity",
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
-      "Display Range", "Threshold Data", "Threshold Range", "Show Legend", "Show Time", "Highlight Box",
-      "Info Text"
+      "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
+      "Show Legend", "Show Time", "Highlight Box", "Info Text"
     ];
 
     keys.forEach((k) => {
