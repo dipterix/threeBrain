@@ -59430,7 +59430,7 @@ class data_controls_THREEBRAIN_PRESETS{
         });
 
 
-        if( v.length > 0 ){
+        if( v.length > 0 && !(v.length === 1 && v[0] === 0) ){
           let v1 = v[0], v2 = Math.abs(v[0]);
           if( v.length == 1 ){
             v1 = -v2;
@@ -59442,7 +59442,7 @@ class data_controls_THREEBRAIN_PRESETS{
           this.__display_range_continuous = ss;
           this.canvas.switch_colormap( undefined, [v1, v2] );
           // reset animation tracks
-          this.canvas.generate_animation_clips( ani_name.getValue() , true );
+
         } else {
           const cmap = this.canvas.switch_colormap();
           if( cmap.value_type === 'continuous' ){
@@ -59474,6 +59474,7 @@ class data_controls_THREEBRAIN_PRESETS{
           this.canvas.generate_animation_clips( ani_name.getValue() , true );
         }
         */
+        this.canvas.generate_animation_clips( ani_name.getValue() , true );
         this.fire_change();
         this._update_canvas();
 
