@@ -1,6 +1,13 @@
 loaders = new.env(parent = emptyenv())
 
+DISABLE_PYTHON = TRUE
+
 load_nibabel <- function(force_reload = FALSE){
+
+  if( DISABLE_PYTHON ){
+    return(NULL)
+  }
+
   if( !force_reload && isTRUE(loaders$tried_nibabel) ){
     return(loaders$nibabel)
   }
