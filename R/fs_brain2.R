@@ -3,12 +3,14 @@
 #' @param volume_types volume types, right now only support T1 image
 #' @param surface_types surface types to load
 #' @param curvature curvature data. Only support \code{"sulc"} for current version
+#' @param ct_path an aligned CT file in NIFTI format
 #' @param ... ignored
 #' @export
 freesurfer_brain2 <- function(
   fs_subject_folder,
   subject_name, volume_types = 't1', surface_types = 'pial',
   curvature = 'sulc',
+  ct_path = NULL, #file.path(fs_subject_folder, 'RAVE', 'coregistration', 'ct2t1.nii.gz'),
   use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE), ...){
 
   mustWork = TRUE
@@ -48,7 +50,8 @@ freesurfer_brain2 <- function(
     dir_create(rave_dir)
   }else{
     common = from_json(from_file = common_file)
-    if( common$subject != subject_name || !isTRUE(cache_version <= common$cache_version) ){
+    if( !isTRUE(common$subject == subject_name) ||
+        !isTRUE(cache_version <= common$cache_version) ){
       has_cache = FALSE
     }
   }
@@ -115,6 +118,61 @@ freesurfer_brain2 <- function(
       volume = geom_brain_t1, position = c(0, 0, 0 ))
 
     brain$add_volume( volume = geom_brain_t1 )
+  }
+
+  if( length(ct_path) == 1 && file.exists(ct_path) ){
+
+    group_ct = GeomGroup$new(name = sprintf('Volume - ct.aligned.t1 (%s)', subject_name))
+    group_ct$subject_code = subject_name
+
+    # Never cache CT
+    # cache_ct = file.path(rave_dir, sprintf('%s_ct_aligned_t1.json', subject_name))
+
+    # Load from original nii
+    ct = read_nii2( ct_path )
+    cache_ct = file.path(rave_dir, sprintf('%s_ct_aligned_t1.json', subject_name))
+    if(file.exists(cache_ct)){
+      unlink(cache_ct)
+    }
+
+    # get volume data
+    ct_data = ct$get_data()
+    ct_shape = as.integer(unlist( ct$get_shape() ))
+
+    # re-orient to RAS
+    ct_data = reorient_volume( ct_data, Norig )
+
+    # If T1 exists
+    if(!is.null(geom_brain_t1)){
+      t1_data = geom_brain_t1$object$group$get_data(
+        sprintf("datacube_value_T1 (%s)", subject_name))
+      t1_dim = geom_brain_t1$object$group$get_data(
+        sprintf("datacube_dim_T1 (%s)", subject_name))
+      dim(t1_data) = t1_dim
+      if(all(t1_dim == ct_shape)){
+        ct_data[t1_data == 0 & ct_data > 0] = 100
+      }
+
+    }
+
+    geom_brain_ct = DataCubeGeom2$new(
+      name = sprintf('ct.aligned.t1 (%s)', subject_name),
+      value = ct_data, dim = ct_shape,
+      half_size = ct_shape / 2, group = group_ct, position = c(0,0,0),
+      cache_file = cache_ct)
+
+    rm( ct, ct_data )
+
+    if( !is.null(geom_brain_ct) ){
+      geom_brain_ct = BrainVolume$new(
+        subject_code = subject_name, volume_type = 'ct.aligned.t1',
+        volume = geom_brain_ct, position = c(0,0,0)
+      )
+      brain$add_volume( volume = geom_brain_ct )
+    }
+
+
+
   }
 
   #### Read surface files ####

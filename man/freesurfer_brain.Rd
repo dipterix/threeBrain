@@ -20,6 +20,7 @@ freesurfer_brain2(
   volume_types = "t1",
   surface_types = "pial",
   curvature = "sulc",
+  ct_path = NULL,
   use_cache = TRUE,
   use_141 = getOption("threeBrain.use141", TRUE),
   ...
@@ -43,6 +44,8 @@ freesurfer_brain2(
 \item{surface_types}{surface types to load}
 
 \item{curvature}{curvature data. Only support \code{"sulc"} for current version}
+
+\item{ct_path}{an aligned CT file in NIFTI format}
 
 \item{...}{ignored}
 }
