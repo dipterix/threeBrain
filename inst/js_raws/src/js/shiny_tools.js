@@ -244,7 +244,8 @@ class THREE_BRAIN_SHINY {
           color_keys = to_array( args.color_keys ),
           color_vals = to_array( args.color_vals ),
           n_levels = args.n_levels,
-          focusui = args.focus || false;
+          focusui = args.focus || false,
+          alias = args.alias;
 
     if(typeof mesh_name !== 'string'){ return; }
 
@@ -255,7 +256,7 @@ class THREE_BRAIN_SHINY {
     mesh.userData.add_track_data( clip_name, data_type, value, time );
 
     // calculate cmap
-    this.canvas.add_colormap( clip_name, data_type, value_names, value_range, time_range,
+    this.canvas.add_colormap( clip_name, alias, data_type, value_names, value_range, time_range,
                 color_keys, color_vals, n_levels );
 
     // Add to gui

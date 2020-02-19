@@ -7,7 +7,8 @@
 #' @param cex positive number, relative text magnification level
 #' @param default_colormap character, which color map name to display at startup
 #' @param palettes named list, names corresponds to color-map names if you want to change color palettes
-#' @param val_ranges named list, similar to \code{palettes}, value range for each values
+#' @param value_ranges named list, similar to \code{palettes}, value range for each values
+#' @param value_alias named list, legend title for corresponding variable
 #' @param show_inactive_electrodes logical, whether to show electrodes with no values
 #' @param timestamp logical, whether to show timestamp at the beginning
 #' @param side_canvas logical, enable side cameras to view objects from fixed perspective
@@ -47,8 +48,9 @@ threejs_brain <- function(
   camera_center = c(0,0,0), camera_pos = c(500,0,0), start_zoom = 1, coords = NULL,
 
   # For colors and animation
-  symmetric = 0, default_colormap = 'Value',
-  palettes = NULL, val_ranges = NULL, show_inactive_electrodes = TRUE,
+  symmetric = 0, default_colormap = 'Value', palettes = NULL,
+  value_ranges = NULL, value_alias = NULL,
+  show_inactive_electrodes = TRUE,
 
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
@@ -94,17 +96,18 @@ threejs_brain <- function(
   animation_types = unique(unlist( lapply(geoms, function(g){ g$animation_types }) ))
   if(!is.list(palettes)){ palettes = list() }
   pnames = names(palettes)
-  if(!is.list(val_ranges)){ val_ranges = list() }
+  if(!is.list(value_ranges)){ value_ranges = list() }
 
   color_maps = sapply(animation_types, function(atype){
-    c = ColorMap$new(name = atype, .list = geoms, symmetric = symmetric)
+    c = ColorMap$new(name = atype, .list = geoms, symmetric = symmetric,
+                     alias = value_alias[[atype]])
     if( atype %in% pnames ){
       c$set_colors( palettes[[atype]] )
     }
-    if( c$value_type == 'continuous' && length(val_ranges[[atype]]) >= 2 ){
-      c$value_range = val_ranges[[atype]][c(1,2)]
-      if( length(val_ranges[[atype]]) >= 4 ){
-        c$hard_range = sort(val_ranges[[atype]][c(3,4)])
+    if( c$value_type == 'continuous' && length(value_ranges[[atype]]) >= 2 ){
+      c$value_range = value_ranges[[atype]][c(1,2)]
+      if( length(value_ranges[[atype]]) >= 4 ){
+        c$hard_range = sort(value_ranges[[atype]][c(3,4)])
       }
     }
     c$to_list()

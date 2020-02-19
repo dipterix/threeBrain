@@ -60506,7 +60506,8 @@ class shiny_tools_THREE_BRAIN_SHINY {
           color_keys = to_array( args.color_keys ),
           color_vals = to_array( args.color_vals ),
           n_levels = args.n_levels,
-          focusui = args.focus || false;
+          focusui = args.focus || false,
+          alias = args.alias;
 
     if(typeof mesh_name !== 'string'){ return; }
 
@@ -60517,7 +60518,7 @@ class shiny_tools_THREE_BRAIN_SHINY {
     mesh.userData.add_track_data( clip_name, data_type, value, time );
 
     // calculate cmap
-    this.canvas.add_colormap( clip_name, data_type, value_names, value_range, time_range,
+    this.canvas.add_colormap( clip_name, alias, data_type, value_names, value_range, time_range,
                 color_keys, color_vals, n_levels );
 
     // Add to gui
@@ -63624,7 +63625,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   }
 
-  add_colormap( name, value_type, value_names, value_range, time_range,
+  add_colormap( name, alias, value_type, value_names, value_range, time_range,
                 color_keys, color_vals, n_levels, hard_range ){
 
     const color_name = name + '--'  + this.container_id;
@@ -63664,14 +63665,22 @@ class threejs_scene_THREEBRAIN_CANVAS {
       theoretical_range = [hard_range[0], hard_range[1]];
     }
 
+    // step 4: set alias
+    let alt_name = alias;
+    if( typeof alt_name !== 'string' || alt_name === '' ){
+      alt_name = name;
+    }
+
     this.color_maps.set( name, {
-      lut: lut,
-      value_type: value_type,
-      value_names: to_array( value_names ),
-      time_range: time_range,
-      n_levels: n_levels,
+      lut               : lut,
+      name              : name,
+      alias             : alt_name,
+      value_type        : value_type,
+      value_names       : to_array( value_names ),
+      time_range        : time_range,
+      n_levels          : n_levels,
       // Used for back-up
-      value_range : [ lut.minV, lut.maxV ],
+      value_range       : [ lut.minV, lut.maxV ],
       theoretical_range : theoretical_range
     });
 
@@ -64207,20 +64216,26 @@ class threejs_scene_THREEBRAIN_CANVAS {
     }
     const lut = cmap.lut,
           color_type = cmap.value_type,
-          color_names = cmap.value_names;
+          color_names = cmap.value_names,
+          legend_title = cmap.alias || '',
+          actual_range = to_array( cmap.value_range );
 
     this._lineHeight_legend = this._lineHeight_legend || Math.round( 15 * this.pixel_ratio[0] );
     this._fontSize_legend = this._fontSize_legend || Math.round( 10 * this.pixel_ratio[0] );
 
     let legend_width = 25 * this.pixel_ratio[0],
-        legend_offset = this._fontSize_legend * 7 + legend_width; // '__-1.231e+5__', more than 16 chars
+        legend_offset = this._fontSize_legend * 7 + legend_width, // '__-1.231e+5__', more than 16 chars
+        title_offset = Math.ceil(
+          legend_title.length * this._fontSize_legend * 0.42 -
+          legend_width / 2 + legend_offset
+        );
 
     // Get color map from lut
     const continuous_cmap = has_color_map && color_type === 'continuous' && lut.n > 1;
     const discrete_cmap = has_color_map && color_type === 'discrete' && lut.n > 0 && Array.isArray(color_names);
 
-    let legend_height = 0.60,                  // Legend takes 60% of the total heights
-        legend_start = 0.25;                  // Legend starts at 20% of the height
+    let legend_height = 0.50,                  // Legend takes 60% of the total heights
+        legend_start = 0.30;                  // Legend starts at 20% of the height
 
     if( continuous_cmap ){
       // Create a linear gradient map
@@ -64242,13 +64257,35 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.domContext.fillStyle = grd;
       this.domContext.fillRect( w - legend_offset , legend_start * h , legend_width , legend_height * h );
 
-      // Add value labels
+      // Add value labels and title
       let legent_ticks = [];
       let zero_height = ( legend_start + lut.maxV * legend_height /
                           (lut.maxV - lut.minV)) * h,
           minV_height = (legend_height + legend_start) * h,
           maxV_height = legend_start * h;
+      //  For ticks
+      let text_offset = Math.round( legend_offset - legend_width ),
+          text_start = Math.round( w - text_offset + this._fontSize_legend ),
+          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
 
+      // title. It should be 2 lines above legend grid
+      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+      this.domContext.fillStyle = this.foreground_color;
+
+      // console.log(`${w - legend_offset}, ${maxV_height - this._lineHeight_legend * 3 + text_halfheight}, ${this.domContext.font}, ${legend_title}`);
+      this.domContext.fillText( legend_title, w - title_offset,
+          maxV_height - this._lineHeight_legend * 2 + text_halfheight );
+
+      if( actual_range.length == 2 ){
+        let vrange = `${actual_range[0].toPrecision(4)} ~ ${actual_range[1].toPrecision(4)}`;
+        vrange = vrange.replace(/\.[0]+\ ~/, ' ~')
+                       .replace(/\.[0]+$/, '').replace(/\.[0]+e/, 'e');
+        this.domContext.fillText( `[${vrange}]`, w - Math.ceil( legend_offset * 1.2 ),
+          minV_height + this._lineHeight_legend * 2 + text_halfheight );
+      }
+
+
+      // ticks
       let draw_zero = lut.minV < 0 && lut.maxV > 0;
 
       if( !info_disabled && typeof( results.current_value ) === 'number' ){
@@ -64290,12 +64327,6 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.domContext.fillStyle = this.foreground_color;
 
       // Fill text
-      //  150 = 200 - 50
-      let text_offset = Math.round( legend_offset - legend_width ),
-          text_start = Math.round( w - text_offset + this._fontSize_legend ),
-          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
-
-
       legent_ticks.forEach((tick) => {
         if( tick[2] === 1 ){
           this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
@@ -64350,9 +64381,15 @@ class threejs_scene_THREEBRAIN_CANVAS {
           text_halfheight = Math.round( this._fontSize_legend * 0.21 );
 
 
+
       this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
       this.domContext.strokeStyle = this.foreground_color;
 
+
+      // Draw title. It should be 1 lines above legend grid
+      this.domContext.fillText( legend_title, w - title_offset, legend_start * h - 50 );
+
+      // Draw Ticks
       for(let ii = 0; ii < n_factors; ii++ ){
         let square_center = (legend_start + legend_step * ii) * h;
         this.domContext.fillStyle = '#' + lut.getColor(ii).getHexString();
@@ -66286,6 +66323,7 @@ class src_BrainCanvas{
     to_array( this.settings.color_maps ).forEach((v) => {
       this.canvas.add_colormap(
         v.name,
+        v.alias,
         v.value_type,
         v.value_names,
         v.value_range,

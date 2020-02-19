@@ -27,7 +27,8 @@ threejs_brain(
   symmetric = 0,
   default_colormap = "Value",
   palettes = NULL,
-  val_ranges = NULL,
+  value_ranges = NULL,
+  value_alias = NULL,
   show_inactive_electrodes = TRUE,
   widget_id = "threebrain_data",
   tmp_dirname = NULL,
@@ -81,7 +82,9 @@ By default width=`100\%`, and height varies.}
 
 \item{palettes}{named list, names corresponds to color-map names if you want to change color palettes}
 
-\item{val_ranges}{named list, similar to \code{palettes}, value range for each values}
+\item{value_ranges}{named list, similar to \code{palettes}, value range for each values}
+
+\item{value_alias}{named list, legend title for corresponding variable}
 
 \item{show_inactive_electrodes}{logical, whether to show electrodes with no values}
 

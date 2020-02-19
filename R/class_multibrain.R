@@ -97,10 +97,11 @@ MultiBrain2 <- R6::R6Class(
 
     plot = function(
       additional_subjects = NULL, volumes = TRUE, surfaces = TRUE,
-      symmetric = 0, palettes = NULL, val_ranges = NULL,
+      palettes = NULL, val_ranges = NULL, value_alias = NULL,
       side_canvas = TRUE, side_width = 250, side_shift = c(0, 0),
-      control_presets = NULL, control_panel = TRUE,
+      control_presets = NULL, control_panel = TRUE, controllers = list(),
       width = NULL, height = NULL,
+      value_ranges = val_ranges,
       optionals = list(), debug = FALSE, token = NULL, browser_external = TRUE, ...
     ){
 
@@ -130,8 +131,8 @@ MultiBrain2 <- R6::R6Class(
                                  'map_template', 'electrodes', control_presets, 'animation', 'display_highlights' ))
 
       threejs_brain(
-        .list = geoms,
-        symmetric = symmetric, palettes = palettes, val_ranges = val_ranges,
+        .list = geoms, controllers = controllers, value_alias = value_alias,
+        palettes = palettes, value_ranges = value_ranges,
         side_canvas = side_canvas, side_width = side_width, side_shift = side_shift,
         control_panel = control_panel, control_presets = control_presets,
         width = width, height = height, debug = debug, token = token,

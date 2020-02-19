@@ -270,6 +270,7 @@ class BrainCanvas{
     to_array( this.settings.color_maps ).forEach((v) => {
       this.canvas.add_colormap(
         v.name,
+        v.alias,
         v.value_type,
         v.value_names,
         v.value_range,

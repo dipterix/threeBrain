@@ -134,6 +134,7 @@ ColorMap <- R6::R6Class(
   cloneable = TRUE,
   public = list(
     name = '',
+    alias = character(0),
 
     value_type = "continuous",
     time_range = c(0,1),
@@ -145,9 +146,12 @@ ColorMap <- R6::R6Class(
     n_colors = 64,
     colors = c('navyblue', '#e2e2e2', 'red'),
 
-    initialize = function(name, ..., .list = NULL, symmetric = NULL){
+    initialize = function(name, ..., .list = NULL, symmetric = NULL, alias = NULL){
 
       self$name = name
+      if(length(alias) == 1){
+        self$alias = alias
+      }
 
       geoms = c(list(...), .list)
 
@@ -233,7 +237,8 @@ ColorMap <- R6::R6Class(
         color_vals = gsub( '^#', '0x', colors ),
         # Mainly used to indicate how many levels
         color_levels = self$n_colors,
-        hard_range = self$hard_range
+        hard_range = self$hard_range,
+        alias = self$alias
       )
     }
   )
