@@ -32,7 +32,7 @@ view_ct_t1 <- function(subject_code, fs_path, ct_path = file.path(fs_path, 'RAVE
                  ))
     })
 
-    observeEvent(input$widget_ct_threshold, {
+    shiny::observeEvent(input$widget_ct_threshold, {
       signal = input$widget_ct_threshold
       current_subject = signal$current_subject
       thred = signal$threshold
@@ -98,7 +98,7 @@ view_ct_t1 <- function(subject_code, fs_path, ct_path = file.path(fs_path, 'RAVE
     })
   }
 
-  shinyApp(ui, server, options = list(launch.browser=TRUE))
+  shiny::shinyApp(ui, server, options = list(launch.browser=TRUE))
 
 }
 
