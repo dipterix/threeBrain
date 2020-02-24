@@ -24,6 +24,7 @@ const GEOMETRY_FACTORY = {
   'blank'     : (g, canvas) => { return(null) }
 };
 
+window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
 /* ------------------------------------ Layer setups ------------------------------------
   Defines for each camera which layers are visible.
   Protocols are
