@@ -177,8 +177,8 @@ freesurfer_brain2 <- function(
 
   #### Read surface files ####
   surface_type = unique(c('pial', surface_types))
-  template_subject = getOption('threeBrain.template_subject', 'N27')
-  template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
+  template_subject = unname(getOption('threeBrain.template_subject', 'N27'))
+  # template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
 
 
   for( surf_t in surface_type ){
