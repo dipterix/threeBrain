@@ -58817,6 +58817,7 @@ class data_controls_THREEBRAIN_PRESETS{
     }, {folder_name: folder_name});
 
     // reset first
+    this.canvas._side_width = side_width;
     this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
   }
 
@@ -62459,6 +62460,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // Side panel initial size in pt
     this.side_width = side_width;
+    this._side_width = side_width;
 
     // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
     this.shiny_mode = shiny_mode;
@@ -63846,11 +63848,15 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.main_camera.updateProjectionMatrix();
   }
   reset_side_canvas( zoom_level, side_width, side_position ){
-    if( side_width ){
-      this.side_width = side_width;
-    }else{
-      side_width = this.side_width;
+    let _sw = side_width;
+    if( !_sw ){
+      _sw = this._side_width;
     }
+    if( _sw * 3 > this.client_height ){
+      _sw = Math.floor( this.client_height / 3 );
+    }
+    this.side_width = _sw;
+    // Resize side canvas, make sure this.side_width is proper
     this.side_canvas.coronal.reset( zoom_level );
     this.side_canvas.axial.reset( zoom_level );
     this.side_canvas.sagittal.reset( zoom_level );
@@ -63862,17 +63868,16 @@ class threejs_scene_THREEBRAIN_CANVAS {
       side_position[1] = Math.max( side_position[1], -el_pos.y );
 
       this.side_canvas.coronal.container.style.top = side_position[1] + 'px';
-      this.side_canvas.axial.container.style.top = (side_position[1] + side_width) + 'px';
-      this.side_canvas.sagittal.container.style.top = (side_position[1] + side_width * 2) + 'px';
+      this.side_canvas.axial.container.style.top = (side_position[1] + _sw) + 'px';
+      this.side_canvas.sagittal.container.style.top = (side_position[1] + _sw * 2) + 'px';
 
       this.side_canvas.coronal.container.style.left = side_position[0] + 'px';
       this.side_canvas.axial.container.style.left = side_position[0] + 'px';
       this.side_canvas.sagittal.container.style.left = side_position[0] + 'px';
     }
 
-
-    // Resize side canvas
     this.handle_resize( undefined, undefined );
+
   }
 
   reset_side_cameras( pos, scale = 300, distance = 500 ){
@@ -66166,12 +66171,16 @@ class src_BrainCanvas{
       // Do nothing! as the canvas is usually invisible
       return(null);
     }
-    console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
+    // console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
     this.el_side.style.maxHeight = height + 'px';
     if(this.hide_controls){
       this.canvas.handle_resize(width, height);
     }else{
       this.canvas.handle_resize(width - 300, height);
+    }
+    if( this._reset_flag ){
+      this._reset_flag = false;
+      this.canvas.reset_side_canvas();
     }
     this.canvas.start_animation(0);
   }
@@ -66427,6 +66436,8 @@ class src_BrainCanvas{
 
       if( this.settings.side_display || false ){
         this.canvas.enable_side_cameras();
+        // reset so that the size is displayed correctly
+        this._reset_flag = true;
       }else{
         this.canvas.disable_side_cameras();
       }

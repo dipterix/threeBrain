@@ -106,12 +106,16 @@ class BrainCanvas{
       // Do nothing! as the canvas is usually invisible
       return(null);
     }
-    console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
+    // console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
     this.el_side.style.maxHeight = height + 'px';
     if(this.hide_controls){
       this.canvas.handle_resize(width, height);
     }else{
       this.canvas.handle_resize(width - 300, height);
+    }
+    if( this._reset_flag ){
+      this._reset_flag = false;
+      this.canvas.reset_side_canvas();
     }
     this.canvas.start_animation(0);
   }
@@ -367,6 +371,8 @@ class BrainCanvas{
 
       if( this.settings.side_display || false ){
         this.canvas.enable_side_cameras();
+        // reset so that the size is displayed correctly
+        this._reset_flag = true;
       }else{
         this.canvas.disable_side_cameras();
       }

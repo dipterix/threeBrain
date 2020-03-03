@@ -283,6 +283,7 @@ class THREEBRAIN_PRESETS{
     }, {folder_name: folder_name});
 
     // reset first
+    this.canvas._side_width = side_width;
     this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
   }
 
