@@ -64441,8 +64441,14 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
 
+    let text_left;
+    if( this.has_side_cameras ){
+      text_left = w - Math.ceil( 50 * this._fontSize_normal * 0.42 );
+    } else {
+      text_left = Math.ceil( this._fontSize_normal * 0.42 * 2 );
+    }
     let text_position = [
-      w - Math.ceil( 50 * this._fontSize_normal * 0.42 ),
+      text_left,
 
       // Make sure it's not hidden by control panel
       this._lineHeight_normal + this._lineHeight_small + this.pixel_ratio[0] * 10
