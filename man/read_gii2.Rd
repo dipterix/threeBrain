@@ -3,7 +3,9 @@
 \name{read_gii2}
 \alias{read_gii2}
 \title{Function to load surface data from `Gifti` files}
-\format{An \R function acting as safe wrapper for \code{nibabel.load}.}
+\format{
+An \R function acting as safe wrapper for \code{nibabel.load}.
+}
 \usage{
 read_gii2(path)
 }

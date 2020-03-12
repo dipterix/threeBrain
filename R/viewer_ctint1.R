@@ -59,7 +59,8 @@ view_ct_t1 <- function(subject_code, fs_path, ct_path = file.path(fs_path, 'RAVE
       cuts = tryCatch({
         stats::cutree(hclust, k = k)
       }, error = function(e){
-        showNotification(p('Number of electrodes set too high. ', br(),e$message),
+        shiny::showNotification(shiny::p('Number of electrodes set too high. ',
+                                         shiny::br(),e$message),
                          duration = NULL, type = 'error')
         NULL
       })

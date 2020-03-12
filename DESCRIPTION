@@ -1,7 +1,7 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 0.1.5.9000
+Version: 0.1.6
 Authors@R: c(
     person("Zhengjia", "Wang", email = "zhengjia.wang@rice.edu", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "jmagnotti@bcm.edu", role = c("aut")),
@@ -26,7 +26,7 @@ Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Roxygen: list(r6 = FALSE)
 Language: en-US
 URL: https://github.com/dipterix/threeBrain

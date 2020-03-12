@@ -1,3 +1,18 @@
+threeBrain 0.1.6
+=======
+
+## Changes
+
+* Implemented `view_ct_t1` to view `CT` aligned to `T1` images 
+* Updated document on how to generate `FreeSurfer` brain
+* Removed dependency to `nibabel` and use native R packages
+* Re-designed legends, added options to show, hide display information
+* Added screenshot to download as image
+
+### Improvements
+
+* Added hints for keyboard shortcuts
+
 threeBrain 0.1.5
 =======
 

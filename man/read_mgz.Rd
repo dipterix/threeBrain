@@ -3,7 +3,9 @@
 \name{read_mgz}
 \alias{read_mgz}
 \title{Function to load `FreeSurfer` `mgz/mgh` file}
-\format{An \R function acting as safe wrapper for \code{nibabel.load}.}
+\format{
+An \R function acting as safe wrapper for \code{nibabel.load}.
+}
 \usage{
 read_mgz(path)
 }
