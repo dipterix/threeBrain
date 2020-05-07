@@ -27,59 +27,60 @@ cache_version = 0.1
 #' @param try_conda try to use `conda` to create `RAVEPy` environment
 #' @export
 brain_setup <- function(continued = FALSE, show_example = TRUE, use_python=FALSE, try_conda = TRUE){
+  use_python <- FALSE
   if( use_python && !continued ){
-    cat2('Step 1: checking python environment', level = 'INFO')
-    info = ravepy_info()
+    # cat2('Step 1: checking python environment', level = 'INFO')
+    # info = ravepy_info()
+    #
+    # if( any(!info) ){
+    #   cat2('Dependencies missing, checking python version', level = 'INFO')
+    #   re = reticulate::py_config()
+    #   print(re$python_versions)
+    #   if( length(re$python_versions) == 0 ){
+    #     stop('Cannot find Python3 installed. Please download Python3 at\n\n\thttps://www.python.org/downloads/\n\nand then come back.')
+    #   }
+    #   if(!any(
+    #     stringr::str_detect(re$python_versions, 'python3$'),
+    #     stringr::str_detect(re$python_versions, 'py3')
+    #   )){
+    #     stop('Cannot find Python3 installed. Please download Python3 at\n\n\thttps://www.python.org/downloads/\n\nand then come back.')
+    #   }
+    # }
 
-    if( any(!info) ){
-      cat2('Dependencies missing, checking python version', level = 'INFO')
-      re = reticulate::py_config()
-      print(re$python_versions)
-      if( length(re$python_versions) == 0 ){
-        stop('Cannot find Python3 installed. Please download Python3 at\n\n\thttps://www.python.org/downloads/\n\nand then come back.')
-      }
-      if(!any(
-        stringr::str_detect(re$python_versions, 'python3$'),
-        stringr::str_detect(re$python_versions, 'py3')
-      )){
-        stop('Cannot find Python3 installed. Please download Python3 at\n\n\thttps://www.python.org/downloads/\n\nand then come back.')
-      }
-    }
+    # # Install RAVEPy
+    # cat2('Step 2: Check whether RAVEPy is installed.', level = 'INFO')
+    # installed = ''
+    # tryCatch({
+    #   installed = ravepy_check(quiet = FALSE)
+    # }, error = function(e){
+    #   cat2('RAVEPy not found')
+    # })
+    #
+    # if( !length(installed) || !installed %in% c('conda', 'virtualenv') ){
+    #   cat2('Configure environment RAVEPy.', level = 'INFO')
+    #   if( try_conda && length( ravepy_find_conda_path(add_to_path = FALSE) ) ){
+    #     ravepy_conda_install()
+    #   }else{
+    #     ravepy_virtualenv_install()
+    #   }
+    # }
+    #
+    # # Try to restart
+    # restarted = FALSE
+    #
+    # if( system.file('', package = 'rstudioapi') != '' ){
+    #   # rstudioapi is installed
+    #   in_rsession = eval(parse(text = 'rstudioapi::isAvailable()'))
+    #   if( in_rsession ){
+    #     # restart
+    #     restarted = TRUE
+    #     eval(parse(text = "rstudioapi::restartSession('threeBrain:::ravepy_info();threeBrain:::cat2(\"Please check if all packages are installed :)\", level = \"INFO\");threeBrain::brain_setup(TRUE, TRUE)')"))
+    #   }
+    # }
 
-    # Install RAVEPy
-    cat2('Step 2: Check whether RAVEPy is installed.', level = 'INFO')
-    installed = ''
-    tryCatch({
-      installed = ravepy_check(quiet = FALSE)
-    }, error = function(e){
-      cat2('RAVEPy not found')
-    })
-
-    if( !length(installed) || !installed %in% c('conda', 'virtualenv') ){
-      cat2('Configure environment RAVEPy.', level = 'INFO')
-      if( try_conda && length( ravepy_find_conda_path(add_to_path = FALSE) ) ){
-        ravepy_conda_install()
-      }else{
-        ravepy_virtualenv_install()
-      }
-    }
-
-    # Try to restart
-    restarted = FALSE
-
-    if( system.file('', package = 'rstudioapi') != '' ){
-      # rstudioapi is installed
-      in_rsession = eval(parse(text = 'rstudioapi::isAvailable()'))
-      if( in_rsession ){
-        # restart
-        restarted = TRUE
-        eval(parse(text = "rstudioapi::restartSession('threeBrain:::ravepy_info();threeBrain:::cat2(\"Please check if all packages are installed :)\", level = \"INFO\");threeBrain::brain_setup(TRUE, TRUE)')"))
-      }
-    }
-
-    if( !restarted ){
-      cat2('Please manually restart R. Go to "Session" > "Restart R", \nthen, enter \n\tthreeBrain::brain_setup(TRUE, TRUE)', level = 'WARNING')
-    }
+    # if( !restarted ){
+    #   cat2('Please manually restart R. Go to "Session" > "Restart R", \nthen, enter \n\tthreeBrain::brain_setup(TRUE, TRUE)', level = 'WARNING')
+    # }
   }else{
 
     if( !use_python ){

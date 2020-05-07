@@ -4,19 +4,21 @@ DISABLE_PYTHON = TRUE
 
 load_nibabel <- function(force_reload = FALSE){
 
-  if( DISABLE_PYTHON ){
-    return(NULL)
-  }
-
-  if( !force_reload && isTRUE(loaders$tried_nibabel) ){
-    return(loaders$nibabel)
-  }
-  loaders$tried_nibabel = TRUE
-  try({
-    stopifnot2(reticulate::py_module_available('nibabel'), msg = 'nibabel not available')
-    loaders$nibabel = reticulate::import('nibabel')
-  }, silent = TRUE)
-  return(loaders$nibabel)
+  # this function is depricated
+  return(NULL)
+  # if( DISABLE_PYTHON ){
+  #   return(NULL)
+  # }
+  #
+  # if( !force_reload && isTRUE(loaders$tried_nibabel) ){
+  #   return(loaders$nibabel)
+  # }
+  # loaders$tried_nibabel = TRUE
+  # try({
+  #   stopifnot2(reticulate::py_module_available('nibabel'), msg = 'nibabel not available')
+  #   loaders$nibabel = reticulate::import('nibabel')
+  # }, silent = TRUE)
+  # return(loaders$nibabel)
 }
 
 
