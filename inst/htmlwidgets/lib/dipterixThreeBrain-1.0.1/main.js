@@ -64030,6 +64030,21 @@ class threejs_scene_THREEBRAIN_CANVAS {
     let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
     let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
+    //let v2v_orig = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
+    let v2v_orig = this.shared_data.get( target_subject ).vox2vox_MNI305;
+    let anterior_commissure = state.get('anterior_commissure') || new threeplugins_THREE.Vector3();
+    anterior_commissure.set(0,0,0);
+
+    let tkRAS_MNI305 = state.get('tkRAS_MNI305') || new threeplugins_THREE.Matrix4();
+    tkRAS_MNI305.set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+    if(Array.isArray(v2v_orig) && v2v_orig.length == 4 && v2v_orig[3].length == 4 ){
+      tkRAS_MNI305.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
+        v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
+        v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
+        v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
+      const MNI305_tkRAS = new threeplugins_THREE.Matrix4().getInverse( tkRAS_MNI305 );
+      anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
+    }
 
     this.switch_volume( target_subject, volume_type );
     this.switch_ct( target_subject, ct_type, ct_threshold );
@@ -64057,6 +64072,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
     state.set( 'map_type_volume', map_type_volume );
     state.set( 'surface_opacity_left', surface_opacity_left );
     state.set( 'surface_opacity_right', surface_opacity_right );
+    state.set( 'anterior_commissure', anterior_commissure );
+
+    // reset origin to AC
+    // this.origin.position.copy( anterior_commissure );
 
     this.start_animation( 0 );
 
@@ -64221,7 +64240,7 @@ mapped = false,
         // always do MNI305 mapping first as calibration
         if( !hide_electrode && volume === 'mni305' ){
           // apply MNI 305 transformation
-          let v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
+          // let v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
           const v2v_targ = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
 
           if( v2v_targ ){
