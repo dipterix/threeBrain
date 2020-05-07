@@ -62534,6 +62534,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
           position        : this.object_chosen.getWorldPosition( new threeplugins_THREE.Vector3() ),
           custom_info     : this.object_chosen.userData.construct_params.custom_info,
           is_electrode    : this.object_chosen.userData.construct_params.is_electrode || false,
+          MNI305_position : this.object_chosen.userData.MNI305_position,
           template_mapping : {
             mapped        : this.object_chosen.userData._template_mapped || false,
             shift         : this.object_chosen.userData._template_shift || 0,
@@ -62916,13 +62917,26 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
 
     // Line 2: Global position
-    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-    const pos = results.selected_object.position;
-    this.domContext.fillText(
-      `Global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-      text_position[ 0 ], text_position[ 1 ]
-    );
+    let pos;
+    if( results.selected_object.is_electrode ){
+      pos = results.selected_object.MNI305_position;
+      if( pos.x !== 0 || pos.y !== 0 || pos.z !== 0 ){
+        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+        this.domContext.fillText(
+          `MNI305 position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+          text_position[ 0 ], text_position[ 1 ]
+        );
+      }
+    } else {
+      pos = results.selected_object.position;
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+      this.domContext.fillText(
+        `Global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+    }
+
 
     // More information:
 
@@ -64175,6 +64189,30 @@ mapped = false,
               // target_volume = this.group.get( `Volume (${target_subject})` ),
               hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
 
+        // Calculate MNI 305 coordinate in template space
+        if( el.userData.MNI305_position === undefined ){
+          el.userData.MNI305_position = new threeplugins_THREE.Vector3().set(0, 0, 0);
+          if(
+            Array.isArray( mni305 ) && mni305.length === 3 &&
+            !( mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0 )
+          ) {
+            el.userData.MNI305_position.fromArray( mni305 );
+          } else {
+            let v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
+            if( v2v_orig ){
+              mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
+                                    v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
+                                    v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
+                                    v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
+              pos_targ.fromArray( origin_position ).applyMatrix4(mat1);
+              el.userData.MNI305_position.fromArray( pos_targ.toArray() );
+            }
+
+          }
+        }
+
+        // mni305_points is always valid (if data is complete).
+        const mni305_points = el.userData.MNI305_position;
         pos_orig.fromArray( origin_position );
 
         let mapped = false,
@@ -64183,7 +64221,7 @@ mapped = false,
         // always do MNI305 mapping first as calibration
         if( !hide_electrode && volume === 'mni305' ){
           // apply MNI 305 transformation
-          const v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
+          let v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
           const v2v_targ = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
 
           if( v2v_targ ){
@@ -64194,14 +64232,11 @@ mapped = false,
 
             mat2.getInverse( mat2 );
 
-            if( Array.isArray( mni305 ) && mni305.length === 3 && !(
-              // not origin
-              mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0
-            ) ){
-              pos_targ.fromArray( mni305 ).applyMatrix4(mat2);
+            if( mni305_points.x !== 0 || mni305_points.y !== 0 || mni305_points.z !== 0 ){
+              pos_targ.set( mni305_points.x, mni305_points.y, mni305_points.z ).applyMatrix4(mat2);
               mapped = true;
             }
-
+            /*
             if( !mapped && v2v_orig ){
               mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
                         v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
@@ -64211,9 +64246,10 @@ mapped = false,
               // target position = inv(mat2) * mat1 * origin_position
               // mat2.multiplyMatrices( mat2, mat1 );
               pos_targ.fromArray( origin_position ).applyMatrix4(mat1);
+
               pos_targ.applyMatrix4( mat2 );
               mapped = true;
-            }
+            }*/
 
             if( mapped ){
               el.position.copy( pos_targ );
@@ -64273,6 +64309,7 @@ mapped = false,
         if( hide_electrode ){
           el.visible = false;
         }
+
       }
     });
 
