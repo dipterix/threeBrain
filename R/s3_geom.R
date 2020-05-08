@@ -49,7 +49,9 @@
 #' threejs_brain(s1, s2)
 #'
 #' # Example 2: cache
-#' \donttest{
+#'
+#' \dontrun{
+#'
 #' # download N27 brain
 #' # Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
 #' # download_N27()
@@ -70,7 +72,6 @@
 #'                      face = face, cache_file = tmp_file)
 #' pryr::object_size(mesh) # ~0.5 MB
 #' threejs_brain(mesh) # serialize at once, load in browser
-#'
 #'
 #' }
 #' @export
