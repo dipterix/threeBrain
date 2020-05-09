@@ -51,7 +51,7 @@
 #' @param use_141 logical, whether to use standard 141 brain for surface file, default is \code{getOption('threeBrain.use141', TRUE)}
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Please run `download_N27()` if `N27` is not at '~/rave_data/others/three_brain/'
 #'
 #' # Import from `FreeSurfer` subject folder

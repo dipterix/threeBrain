@@ -38,7 +38,7 @@ therefore if group is \code{NULL} here, then a group will be generated.
 However, it's always recommended to pass a group to the free mesh.
 }
 \examples{
-\donttest{
+\dontrun{
 # Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
 # threeBrain::download_N27()
 

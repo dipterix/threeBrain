@@ -97,7 +97,7 @@ Currently, only linear `Talairach` transform matrix is supported (located at
 The 3D viewer in this package uses the center of volume as the origin (0, 0, 0).
 }
 \examples{
-\donttest{
+\dontrun{
 # Please run `download_N27()` if `N27` is not at '~/rave_data/others/three_brain/'
 
 # Import from `FreeSurfer` subject folder
