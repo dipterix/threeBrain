@@ -1,3 +1,16 @@
+threeBrain 0.1.7
+=======
+
+## Changes
+
+* Now displays `MNI305` coordinates instead of `tkRAS` coordinates
+* Removed `reticulate` and related functions to support native R functions
+
+### Improvements
+
+* Fixed `MNI305` calculation issues
+* Internally calculates anterior commissure
+
 threeBrain 0.1.6
 =======
 

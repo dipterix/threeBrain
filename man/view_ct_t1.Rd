@@ -15,7 +15,7 @@ view_ct_t1(
 
 \item{fs_path}{FreeSurfer subject path}
 
-\item{ct_path}{where CT file is stored, require NIFTI format}
+\item{ct_path}{where CT file is stored, require 'Nifti' format}
 }
 \description{
 View aligned CT scan with T1 images

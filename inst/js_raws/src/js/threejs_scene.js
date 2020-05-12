@@ -680,6 +680,17 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  dispatch_event( type, data ){
+    let event = new CustomEvent(type, {
+      container_id: this.container_id,
+      detail: data
+    });
+    // elem.addEventListener('build', function (e) { /* ... */ }, false);
+
+    // Dispatch the event.
+    this.el.dispatchEvent(event);
+  }
+
   add_to_scene( m, global = false ){
     if( global ){
       this.scene.add( m );
@@ -3255,12 +3266,35 @@ class THREEBRAIN_CANVAS {
     state.set( 'surface_opacity_left', surface_opacity_left );
     state.set( 'surface_opacity_right', surface_opacity_right );
     state.set( 'anterior_commissure', anterior_commissure );
+    state.set( 'tkRAS_MNI305', tkRAS_MNI305 );
 
     // reset origin to AC
     // this.origin.position.copy( anterior_commissure );
 
+    this.dispatch_event(
+      'switch_subject',
+      {
+        target_subject: target_subject
+      }
+    );
+
     this.start_animation( 0 );
 
+  }
+
+  calculate_mni305(vec, nan_if_trans_not_found = true){
+    if( !vec.isVector3 ){
+      throw('vec must be a THREE.Vector3 instance');
+    }
+
+    const tkRAS_MNI305 = this.state_data.get('tkRAS_MNI305');
+    if( tkRAS_MNI305 && tkRAS_MNI305.isMatrix4 ){
+      // calculate MNI 305 position
+      vec.applyMatrix4(tkRAS_MNI305);
+    } else if( nan_if_trans_not_found ){
+      vec.set(NaN, NaN, NaN);
+    }
+    return(vec);
   }
 
   switch_surface( target_subject, surface_type = 'pial', opacity = [1, 1], material_type = ['normal', 'normal'] ){

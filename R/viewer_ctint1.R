@@ -7,7 +7,7 @@
 #' @description View aligned CT scan with T1 images
 #' @param subject_code subject code
 #' @param fs_path FreeSurfer subject path
-#' @param ct_path where CT file is stored, require NIFTI format
+#' @param ct_path where CT file is stored, require 'Nifti' format
 #' @export
 view_ct_t1 <- function(subject_code, fs_path, ct_path = file.path(fs_path, 'RAVE','coregistration','ct2t1.nii.gz')){
   brain = threeBrain::freesurfer_brain2(

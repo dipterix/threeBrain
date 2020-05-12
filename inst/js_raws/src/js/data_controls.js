@@ -291,12 +291,29 @@ class THREEBRAIN_PRESETS{
   c_side_depth(){
     const folder_name = CONSTANTS.FOLDERS[ 'side-three-planes' ];
 
+    const _calculate_intersection_coord = () => {
+      console.debug('Recalculate MNI305 for plane intersections');
+      // MNI 305 position of the intersection
+      const ints_z = this.canvas.state_data.get( 'axial_posz' ) || 0,
+            ints_y = this.canvas.state_data.get( 'coronal_posy' ) || 0,
+            ints_x = this.canvas.state_data.get( 'sagittal_posx' ) || 0;
+      const point = new THREE.Vector3().set(ints_x, ints_y, ints_z);
+      this.canvas.calculate_mni305( point );
+      // set controller
+      _controller_mni305.setValue(`${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)}`);
+    };
+
+    this.canvas.bind( 'c_side_depth_subject_changed', 'switch_subject', (e) => {
+		  _calculate_intersection_coord();
+		}, this.canvas.el);
+
     // side plane
     const _controller_coronal = this.gui
       .add_item('Coronal (P - A)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_coronal_depth( v );
         this.fire_change({ 'coronal_depth' : v });
+        _calculate_intersection_coord();
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL, 'Coronal (P - A)', folder_name);
 
@@ -305,6 +322,7 @@ class THREEBRAIN_PRESETS{
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_axial_depth( v );
         this.fire_change({ 'axial_depth' : v });
+        _calculate_intersection_coord();
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL, 'Axial (I - S)', folder_name);
 
@@ -313,8 +331,12 @@ class THREEBRAIN_PRESETS{
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_sagittal_depth( v );
         this.fire_change({ 'sagittal_depth' : v });
+        _calculate_intersection_coord();
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL, 'Sagittal (L - R)', folder_name);
+
+    const _controller_mni305 = this.gui
+      .add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
 
     this.fire_change({ 'coronal_depth' : 0 });
     this.fire_change({ 'axial_depth' : 0 });

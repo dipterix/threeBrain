@@ -45,7 +45,7 @@ freesurfer_brain2(
 
 \item{curvature}{curvature data. Only support \code{"sulc"} for current version}
 
-\item{ct_path}{an aligned CT file in NIFTI format}
+\item{ct_path}{an aligned CT file in 'Nifti' format}
 
 \item{...}{ignored}
 }

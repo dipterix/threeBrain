@@ -3,7 +3,7 @@
 #' @param volume_types volume types, right now only support T1 image
 #' @param surface_types surface types to load
 #' @param curvature curvature data. Only support \code{"sulc"} for current version
-#' @param ct_path an aligned CT file in NIFTI format
+#' @param ct_path an aligned CT file in 'Nifti' format
 #' @param ... ignored
 #' @export
 freesurfer_brain2 <- function(

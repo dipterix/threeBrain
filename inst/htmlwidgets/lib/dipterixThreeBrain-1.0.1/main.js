@@ -57275,12 +57275,29 @@ class data_controls_THREEBRAIN_PRESETS{
   c_side_depth(){
     const folder_name = CONSTANTS.FOLDERS[ 'side-three-planes' ];
 
+    const _calculate_intersection_coord = () => {
+      console.debug('Recalculate MNI305 for plane intersections');
+      // MNI 305 position of the intersection
+      const ints_z = this.canvas.state_data.get( 'axial_posz' ) || 0,
+            ints_y = this.canvas.state_data.get( 'coronal_posy' ) || 0,
+            ints_x = this.canvas.state_data.get( 'sagittal_posx' ) || 0;
+      const point = new threeplugins_THREE.Vector3().set(ints_x, ints_y, ints_z);
+      this.canvas.calculate_mni305( point );
+      // set controller
+      _controller_mni305.setValue(`${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)}`);
+    };
+
+    this.canvas.bind( 'c_side_depth_subject_changed', 'switch_subject', (e) => {
+		  _calculate_intersection_coord();
+		}, this.canvas.el);
+
     // side plane
     const _controller_coronal = this.gui
       .add_item('Coronal (P - A)', 0, {folder_name: folder_name})
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_coronal_depth( v );
         this.fire_change({ 'coronal_depth' : v });
+        _calculate_intersection_coord();
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL, 'Coronal (P - A)', folder_name);
 
@@ -57289,6 +57306,7 @@ class data_controls_THREEBRAIN_PRESETS{
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_axial_depth( v );
         this.fire_change({ 'axial_depth' : v });
+        _calculate_intersection_coord();
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL, 'Axial (I - S)', folder_name);
 
@@ -57297,8 +57315,12 @@ class data_controls_THREEBRAIN_PRESETS{
       .min(-128).max(128).step(1).onChange((v) => {
         this.canvas.set_sagittal_depth( v );
         this.fire_change({ 'sagittal_depth' : v });
+        _calculate_intersection_coord();
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL, 'Sagittal (L - R)', folder_name);
+
+    const _controller_mni305 = this.gui
+      .add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
 
     this.fire_change({ 'coronal_depth' : 0 });
     this.fire_change({ 'axial_depth' : 0 });
@@ -61498,6 +61520,17 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   }
 
+  dispatch_event( type, data ){
+    let event = new CustomEvent(type, {
+      container_id: this.container_id,
+      detail: data
+    });
+    // elem.addEventListener('build', function (e) { /* ... */ }, false);
+
+    // Dispatch the event.
+    this.el.dispatchEvent(event);
+  }
+
   add_to_scene( m, global = false ){
     if( global ){
       this.scene.add( m );
@@ -64073,12 +64106,35 @@ class threejs_scene_THREEBRAIN_CANVAS {
     state.set( 'surface_opacity_left', surface_opacity_left );
     state.set( 'surface_opacity_right', surface_opacity_right );
     state.set( 'anterior_commissure', anterior_commissure );
+    state.set( 'tkRAS_MNI305', tkRAS_MNI305 );
 
     // reset origin to AC
     // this.origin.position.copy( anterior_commissure );
 
+    this.dispatch_event(
+      'switch_subject',
+      {
+        target_subject: target_subject
+      }
+    );
+
     this.start_animation( 0 );
 
+  }
+
+  calculate_mni305(vec, nan_if_trans_not_found = true){
+    if( !vec.isVector3 ){
+      throw('vec must be a THREE.Vector3 instance');
+    }
+
+    const tkRAS_MNI305 = this.state_data.get('tkRAS_MNI305');
+    if( tkRAS_MNI305 && tkRAS_MNI305.isMatrix4 ){
+      // calculate MNI 305 position
+      vec.applyMatrix4(tkRAS_MNI305);
+    } else if( nan_if_trans_not_found ){
+      vec.set(NaN, NaN, NaN);
+    }
+    return(vec);
   }
 
   switch_surface( target_subject, surface_type = 'pial', opacity = [1, 1], material_type = ['normal', 'normal'] ){
