@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>A geometry that renders nothing — BlankGeom • threeBrain</title>
+<title>View CT with T1 image — view_ct_t1 • threeBrain</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="A geometry that renders nothing — BlankGeom" />
-<meta property="og:description" content="This is mainly used when you want to upload group data only" />
+<meta property="og:title" content="View CT with T1 image — view_ct_t1" />
+<meta property="og:description" content="View aligned CT scan with T1 images" />
 
 
 
@@ -111,16 +111,37 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>A geometry that renders nothing</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/geom_blank.R'><code>R/geom_blank.R</code></a></small>
-    <div class="hidden name"><code>BlankGeom.Rd</code></div>
+    <h1>View CT with T1 image</h1>
+    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/viewer_ctint1.R'><code>R/viewer_ctint1.R</code></a></small>
+    <div class="hidden name"><code>view_ct_t1.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This is mainly used when you want to upload group data only</p>
+    <p>View aligned CT scan with T1 images</p>
     </div>
 
+    <pre class="usage"><span class='fu'>view_ct_t1</span>(
+  <span class='no'>subject_code</span>,
+  <span class='no'>fs_path</span>,
+  <span class='kw'>ct_path</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>fs_path</span>, <span class='st'>"RAVE"</span>, <span class='st'>"coregistration"</span>, <span class='st'>"ct2t1.nii.gz"</span>)
+)</pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>subject_code</th>
+      <td><p>subject code</p></td>
+    </tr>
+    <tr>
+      <th>fs_path</th>
+      <td><p>FreeSurfer subject path</p></td>
+    </tr>
+    <tr>
+      <th>ct_path</th>
+      <td><p>where CT file is stored, require 'Nifti' format</p></td>
+    </tr>
+    </table>
 
 
   </div>
