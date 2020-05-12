@@ -1,9 +1,13 @@
 # Update logs (for R-cran only)
 
+## 2020-05-12
+
+**Version 0.1.6 (pending)**
+Self check: 0 errors | 0 warnings | 0 notes
+
 ## 2020-03-12
 
 **Version 0.1.6 (passed)**
-Self check: 0 errors | 0 warnings | 0 notes
 
 ## 2020-01-20
 
