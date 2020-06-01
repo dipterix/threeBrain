@@ -108,7 +108,7 @@ class BrainCanvas{
     }
     // console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
     this.el_side.style.maxHeight = height + 'px';
-    if(this.hide_controls){
+    if( this.hide_controls || !this.control_display ){
       this.canvas.handle_resize(width, height);
     }else{
       this.canvas.handle_resize(width - 300, height);
@@ -134,7 +134,7 @@ class BrainCanvas{
     // --------------- Register GUI controller ---------------
     // Set default on close handler
     this.gui.set_closeHandler( (evt) => {
-      this.hide_controls = this.gui.closed;
+      this.control_display = !this.gui.closed;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     });
 
@@ -245,6 +245,7 @@ class BrainCanvas{
     this.shiny.set_token( this.settings.token );
 
     if(this.DEBUG){
+      window.__ctrller = this;
       window.groups = this.groups;
       window.geoms = this.geoms;
       window.settings = this.settings;
@@ -252,6 +253,7 @@ class BrainCanvas{
       window.scene = this.canvas.scene; // chrome debugger seems to need this
       this.canvas._add_stats();
     }else{
+      window.__ctrller = this;
       window.__groups = this.groups;
       window.__geoms = this.geoms;
       window.__settings = this.settings;
@@ -332,6 +334,8 @@ class BrainCanvas{
       }
     });
 
+    let display_controllers = this.control_display;
+
     this._register_gui_control();
     this.shiny.register_gui( this.gui, this.presets );
 
@@ -383,10 +387,26 @@ class BrainCanvas{
 
     // Force render canvas
     // Resize widget in case control panel is hidden
+
+    if( !this.shiny_mode || display_controllers === undefined ){
+      display_controllers = this.settings.control_display;
+    }
+
+    if( !this.hide_controls ){
+      // controller is displayed
+      if( display_controllers ){
+        this.gui.open();
+      } else {
+        this.gui.close();
+      }
+    }
+
+    /*
     this.hide_controls = this.settings.hide_controls || false;
     if( !this.hide_controls && !this.settings.control_display ){
       this.gui.close();
     }
+    */
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
 
     // remember last settings

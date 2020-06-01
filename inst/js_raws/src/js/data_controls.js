@@ -1599,7 +1599,14 @@ class THREEBRAIN_CONTROL{
   close(){
     this._gui.close();
     if( typeof this.__on_closed === 'function' ){
-      this.__on_closed( undefined );
+      this.__on_closed( true );
+    }
+  }
+
+  open(){
+    this._gui.open();
+    if( typeof this.__on_closed === 'function' ){
+      this.__on_closed( false );
     }
   }
 
