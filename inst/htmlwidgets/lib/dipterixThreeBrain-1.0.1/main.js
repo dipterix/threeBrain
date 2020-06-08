@@ -58972,6 +58972,28 @@ class shiny_tools_THREE_BRAIN_SHINY {
     }
   }
 
+  handle_focused_electrode( args ){
+    let subject_code = args.subject_code || '';
+    subject_code = subject_code.trim();
+    // this.canvas.electrodes.get("YAB")["YAB, 14 - G14"]
+    const electrode = parseInt( args.electrode || 0 ),
+          fmt = `${subject_code}, ${electrode} `;
+    let elec_name = Object.keys( this.canvas.electrodes.get(subject_code) || {} )
+      .filter((nm) => {
+        return(nm.startsWith(fmt));
+      });
+    if( elec_name.length > 0 ){
+      // use the first electrode
+      elec_name = elec_name[0];
+      let m = this.canvas.electrodes.get(subject_code)[elec_name];
+      if( is_electrode(m) ){
+        this.canvas.focus_object(m);
+        this.canvas.start_animation(0);
+      }
+    }
+
+  }
+
   // FIXME: this handler is Broken
   handle_add_clip( args ){
     // window.aaa = args;
@@ -62964,7 +62986,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       if( pos.x !== 0 || pos.y !== 0 || pos.z !== 0 ){
         text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
         this.domContext.fillText(
-          `MNI305 position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+          `MNI305 position: (${pos.x.toFixed(0)},${pos.y.toFixed(0)},${pos.z.toFixed(0)})`,
           text_position[ 0 ], text_position[ 1 ]
         );
       }

@@ -97,6 +97,18 @@ ViewerProxy <- R6::R6Class(
       ))
     },
 
+    set_focused_electrode = function( subject_code, electrode ){
+      stopifnot2(
+        is.character(subject_code) && length(subject_code) == 1
+        && length(electrode) == 1,
+        msg = 'subject_code must be character and electrode length must be one.'
+      )
+      private$set_value('focused_electrode', list(
+        subject_code = subject_code,
+        electrode = as.integer(electrode)
+      ))
+    },
+
     set_cex = function( cex = 1 ){
       stopifnot2(cex > 0, msg = 'cex must be positive')
       private$set_value('font_magnification', cex)

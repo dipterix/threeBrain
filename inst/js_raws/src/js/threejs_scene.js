@@ -2117,7 +2117,7 @@ class THREEBRAIN_CANVAS {
       if( pos.x !== 0 || pos.y !== 0 || pos.z !== 0 ){
         text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
         this.domContext.fillText(
-          `MNI305 position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+          `MNI305 position: (${pos.x.toFixed(0)},${pos.y.toFixed(0)},${pos.z.toFixed(0)})`,
           text_position[ 0 ], text_position[ 1 ]
         );
       }

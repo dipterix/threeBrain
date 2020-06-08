@@ -230,6 +230,28 @@ class THREE_BRAIN_SHINY {
     }
   }
 
+  handle_focused_electrode( args ){
+    let subject_code = args.subject_code || '';
+    subject_code = subject_code.trim();
+    // this.canvas.electrodes.get("YAB")["YAB, 14 - G14"]
+    const electrode = parseInt( args.electrode || 0 ),
+          fmt = `${subject_code}, ${electrode} `;
+    let elec_name = Object.keys( this.canvas.electrodes.get(subject_code) || {} )
+      .filter((nm) => {
+        return(nm.startsWith(fmt));
+      });
+    if( elec_name.length > 0 ){
+      // use the first electrode
+      elec_name = elec_name[0];
+      let m = this.canvas.electrodes.get(subject_code)[elec_name];
+      if( is_electrode(m) ){
+        this.canvas.focus_object(m);
+        this.canvas.start_animation(0);
+      }
+    }
+
+  }
+
   // FIXME: this handler is Broken
   handle_add_clip( args ){
     // window.aaa = args;
