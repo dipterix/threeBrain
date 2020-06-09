@@ -1,4 +1,5 @@
 import { to_array, get_element_size, get_or_default } from './utils.js';
+import { CanvasContext2D, PDFContext } from './core/context.js';
 import { Stats } from './libs/stats.min.js';
 import { THREE } from './threeplugins.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
@@ -12,8 +13,7 @@ import { gen_datacube2 } from './geometry/datacube2.js';
 import { gen_free } from './geometry/free.js';
 import { Compass } from './geometry/compass.js';
 import { json2csv } from 'json-2-csv';
-import * as download from 'downloadjs';
-
+import download from 'downloadjs';
 
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
@@ -156,10 +156,13 @@ class THREEBRAIN_CANVAS {
     // Important, this keeps animation clock aligned with real-time PC clock.
     this.clock = new THREE.Clock();
 
+    // Set pixel ratio, separate settings for main and side renderers
+    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
     // Generate a canvas domElement using 2d context to put all elements together
     // Since it's 2d canvas, we might also add customized information onto it
     this.domElement = document.createElement('canvas');
-    this.domContext = this.domElement.getContext('2d');
+    this.domContextWrapper = new CanvasContext2D( this.domElement, this.pixel_ratio[0] );
+    this.domContext = this.domContextWrapper.context;
     this.background_color = '#ffffff'; // white background
     this.foreground_color = '#000000';
     this.domContext.fillStyle = this.background_color;
@@ -213,9 +216,6 @@ class THREEBRAIN_CANVAS {
     ambient_light.name = 'main light - ambient';
     this.add_to_scene( ambient_light, true ); // soft white light
 
-
-    // Set pixel ratio, separate settings for main and side renderers
-    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
 
     // Set Main renderer, strongly recommend WebGL2
     if( this.has_webgl2 ){
@@ -1611,6 +1611,31 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  mapToPDF(){
+    const results = this.inc_time();
+    const _width = this.domElement.width,
+          _height = this.domElement.height;
+    const pdf_wrapper = new PDFContext( this.domElement );
+
+    pdf_wrapper.set_font_color( this.foreground_color );
+
+    // Clear the whole canvas
+    // copy the main_renderer context
+    pdf_wrapper.background_color = this.background_color;
+    pdf_wrapper.draw_image( this.main_renderer.domElement, 0, 0, _width, _height );
+
+    // Draw timestamp on the bottom right corner
+    this._draw_ani( results, 0, 0, _width, _height, pdf_wrapper );
+
+    // Draw focused target information on the top right corner
+    this._draw_focused_info( results, 0, 0, _width, _height, pdf_wrapper, true );
+
+    // Draw legend on the right side
+    this._draw_legend( results, 0, 0, _width, _height, pdf_wrapper );
+
+    return( pdf_wrapper.context );
+  }
+
   mapToCanvas(){
     const _width = this.domElement.width,
           _height = this.domElement.height;
@@ -1776,6 +1801,25 @@ class THREEBRAIN_CANVAS {
 
     }
 
+    // show mesh value info
+    if( results.selected_object && this.object_chosen.userData.ani_exists ){
+
+      const track_type = this.state_data.get("color_map");
+
+      const track_data = this.object_chosen.userData.get_track_data( track_type );
+
+      if( track_data ){
+        const time_stamp = to_array( track_data.time );
+        const values = to_array( track_data.value );
+        let _tmp = - Infinity;
+        for( let ii in time_stamp ){
+          if(time_stamp[ ii ] <= results.current_time && time_stamp[ ii ] > _tmp){
+            results.current_value = values[ ii ];
+            _tmp = time_stamp[ ii ];
+          }
+        }
+      }
+    }
 
     return(results);
 
@@ -1831,7 +1875,7 @@ class THREEBRAIN_CANVAS {
       });
   }
 
-  _draw_ani( results, x = 10, y = 10, w = 100, h = 100  ){
+  _draw_ani_old( results, x = 10, y = 10, w = 100, h = 100  ){
 
     this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
     this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
@@ -1849,7 +1893,31 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _draw_legend( results, x = 10, y = 10, w = 100, h = 100 ){
+  _draw_ani( results, x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
+
+    if( !context_wrapper ){
+      context_wrapper = this.domContextWrapper;
+    }
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+
+    context_wrapper._lineHeight_normal = this._lineHeight_normal;
+    context_wrapper._fontSize_normal = this._fontSize_normal;
+
+    // Add current time to bottom right corner
+    if( this.render_timestamp !== false && typeof(results.current_time) === 'number' ){
+      context_wrapper.set_font( this._fontSize_normal, this._fontType );
+      context_wrapper.fill_text(
+        // Current clock time
+        `${results.current_time.toFixed(3)} s`,
+
+        // offset
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
+    }
+  }
+
+  _draw_legend( results, x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined ){
 
     const cmap = this.switch_colormap();
 
@@ -1864,6 +1932,11 @@ class THREEBRAIN_CANVAS {
     if( !has_color_map ){
       return( null );
     }
+
+    if( !context_wrapper ){
+      context_wrapper = this.domContextWrapper;
+    }
+
     const lut = cmap.lut,
           color_type = cmap.value_type,
           color_names = cmap.value_names,
@@ -1904,8 +1977,11 @@ class THREEBRAIN_CANVAS {
       grd.addColorStop( legend_height + legend_start + 4 / h, this.background_color );
 
       // Fill with gradient
-      this.domContext.fillStyle = grd;
-      this.domContext.fillRect( w - legend_offset , legend_start * h , legend_width , legend_height * h );
+      context_wrapper.fill_gradient(  grd, w - legend_offset ,
+                                      legend_start * h ,
+                                      legend_width , legend_height * h );
+      //this.domContext.fillStyle = grd;
+      //this.domContext.fillRect( w - legend_offset , legend_start * h , legend_width , legend_height * h );
 
       // Add value labels and title
       let legent_ticks = [];
@@ -1919,18 +1995,18 @@ class THREEBRAIN_CANVAS {
           text_halfheight = Math.round( this._fontSize_legend * 0.21 );
 
       // title. It should be 2 lines above legend grid
-      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
-      this.domContext.fillStyle = this.foreground_color;
+      context_wrapper.set_font( this._fontSize_legend, this._fontType );
+      context_wrapper.set_font_color( this.foreground_color );
 
       // console.log(`${w - legend_offset}, ${maxV_height - this._lineHeight_legend * 3 + text_halfheight}, ${this.domContext.font}, ${legend_title}`);
-      this.domContext.fillText( legend_title, w - title_offset,
+      context_wrapper.fill_text( legend_title, w - title_offset,
           maxV_height - this._lineHeight_legend * 2 + text_halfheight );
 
       if( actual_range.length == 2 ){
         let vrange = `${actual_range[0].toPrecision(4)} ~ ${actual_range[1].toPrecision(4)}`;
         vrange = vrange.replace(/\.[0]+\ ~/, ' ~')
                        .replace(/\.[0]+$/, '').replace(/\.[0]+e/, 'e');
-        this.domContext.fillText( `[${vrange}]`, w - Math.ceil( legend_offset * 1.2 ),
+        context_wrapper.fill_text( `[${vrange}]`, w - Math.ceil( legend_offset * 1.2 ),
           minV_height + this._lineHeight_legend * 2 + text_halfheight );
       }
 
@@ -1973,36 +2049,50 @@ class THREEBRAIN_CANVAS {
 
 
       // Draw ticks
-      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
-      this.domContext.fillStyle = this.foreground_color;
+      context_wrapper.set_font( this._fontSize_legend, this._fontType );
+      context_wrapper.set_font_color( this.foreground_color );
 
       // Fill text
       legent_ticks.forEach((tick) => {
         if( tick[2] === 1 ){
-          this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
-          this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
-          this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, true );
+          context_wrapper.fill_text( tick[0], text_start, tick[1] + text_halfheight );
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, false );
         }else{
-          this.domContext.fillText( tick[0], text_start, tick[1] + text_halfheight );
+          context_wrapper.fill_text( tick[0], text_start, tick[1] + text_halfheight );
         }
 
       });
 
       // Fill ticks
       // this.domContext.strokeStyle = this.foreground_color;  // do not set state of stroke if color not changed
-      this.domContext.beginPath();
+      // this.domContext.beginPath();
+      context_wrapper.start_draw_line();
+
       legent_ticks.forEach((tick) => {
         if( tick[2] === 0 ){
-          this.domContext.moveTo( w - text_offset , tick[1] );
-          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] );
+          context_wrapper.draw_line([
+            [ w - text_offset , tick[1] ],
+            [ w - text_offset + text_halfheight , tick[1] ]
+          ]);
+          // this.domContext.moveTo( w - text_offset , tick[1] );
+          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] );
         }else if( tick[2] === 1 ){
-          this.domContext.moveTo( w - text_offset , tick[1] );
-          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] - 2 );
-          this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] + 2 );
-          this.domContext.lineTo( w - text_offset , tick[1] );
+          context_wrapper.draw_line([
+            [ w - text_offset , tick[1] ],
+            [ w - text_offset + text_halfheight , tick[1] - 2 ],
+            [ w - text_offset + text_halfheight , tick[1] + 2 ],
+            [ w - text_offset , tick[1] ]
+          ]);
+          // this.domContext.moveTo( w - text_offset , tick[1] );
+          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] - 2 );
+          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] + 2 );
+          // this.domContext.lineTo( w - text_offset , tick[1] );
         }
       });
-      this.domContext.stroke();
+      // this.domContext.stroke();
+      context_wrapper.stroke_line();
+
 
     }else if( discrete_cmap ){
       // color_names must exists and length must be
@@ -2031,38 +2121,37 @@ class THREEBRAIN_CANVAS {
           text_halfheight = Math.round( this._fontSize_legend * 0.21 );
 
 
-
-      this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
-      this.domContext.strokeStyle = this.foreground_color;
-
+      context_wrapper.set_font( this._fontSize_legend, this._fontType );
+      context_wrapper.set_font_color( this.foreground_color );
 
       // Draw title. It should be 1 lines above legend grid
-      this.domContext.fillText( legend_title, w - title_offset, legend_start * h - 50 );
+      context_wrapper.fill_text( legend_title, w - title_offset, legend_start * h - 50 );
 
       // Draw Ticks
       for(let ii = 0; ii < n_factors; ii++ ){
         let square_center = (legend_start + legend_step * ii) * h;
-        this.domContext.fillStyle = '#' + lut.getColor(ii).getHexString();
-        this.domContext.fillRect(
+        context_wrapper.fill_rect(
+          '#' + lut.getColor(ii).getHexString(),
           w - legend_offset , square_center - square_height / 2 ,
           legend_width , square_height
         );
 
+        /*
         this.domContext.beginPath();
         this.domContext.moveTo( w - text_offset , square_center );
         this.domContext.lineTo( w - text_offset + text_halfheight , square_center );
         this.domContext.stroke();
-
-        this.domContext.fillStyle = this.foreground_color;
+        */
+        context_wrapper.set_font_color( this.foreground_color );
 
         if( !info_disabled && results.current_value === color_names[ii]){
-          this.domContext.font = `bold ${ this._fontSize_legend }px ${ this._fontType }`;
-          this.domContext.fillText(color_names[ii],
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, true );
+          context_wrapper.fill_text(color_names[ii],
             text_start, square_center + text_halfheight, w - text_start - 1
           );
-          this.domContext.font = `${ this._fontSize_legend }px ${ this._fontType }`;
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, false );
         }else{
-          this.domContext.fillText(color_names[ii],
+          context_wrapper.fill_text(color_names[ii],
             text_start, square_center + text_halfheight, w - text_start - 1
           );
         }
@@ -2073,11 +2162,17 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _draw_focused_info( results, x = 10, y = 10, w = 100, h = 100 ){
+  _draw_focused_info( results,
+                      x = 10, y = 10, w = 100, h = 100,
+                      context_wrapper = undefined, force_left = false ){
     // Add selected object information, or if not showing is set
     if( !results.selected_object || this.state_data.get( 'info_text_disabled') ){
       // no object selected, discard
       return( null );
+    }
+
+    if( !context_wrapper ){
+      context_wrapper = this.domContextWrapper;
     }
 
 
@@ -2086,12 +2181,11 @@ class THREEBRAIN_CANVAS {
     this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
     this._fontSize_small = this._fontSize_small || Math.round( 10 * this.pixel_ratio[0] );
 
-    this.domContext.fillStyle = this.foreground_color;
-
-    this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
+    context_wrapper.set_font_color( this.foreground_color );
+    context_wrapper.set_font( this._fontSize_normal, this._fontType );
 
     let text_left;
-    if( this.has_side_cameras ){
+    if( this.has_side_cameras && !force_left ){
       text_left = w - Math.ceil( 50 * this._fontSize_normal * 0.42 );
     } else {
       text_left = Math.ceil( this._fontSize_normal * 0.42 * 2 );
@@ -2104,10 +2198,10 @@ class THREEBRAIN_CANVAS {
     ];
 
     // Line 1: object name
-    this.domContext.fillText( results.selected_object.name, text_position[ 0 ], text_position[ 1 ] );
+    context_wrapper.fill_text( results.selected_object.name, text_position[ 0 ], text_position[ 1 ] );
 
     // Smaller
-    this.domContext.font = `${ this._fontSize_small }px ${ this._fontType }`;
+    context_wrapper.set_font( this._fontSize_small, this._fontType );
 
     // Line 2: Global position
 
@@ -2116,15 +2210,21 @@ class THREEBRAIN_CANVAS {
       pos = results.selected_object.MNI305_position;
       if( pos.x !== 0 || pos.y !== 0 || pos.z !== 0 ){
         text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
-        this.domContext.fillText(
-          `MNI305 position: (${pos.x.toFixed(0)},${pos.y.toFixed(0)},${pos.z.toFixed(0)})`,
+        context_wrapper.fill_text(
+          `MNI305: `,
           text_position[ 0 ], text_position[ 1 ]
         );
+        context_wrapper.set_font( this._fontSize_small, this._fontType, true );
+        context_wrapper.fill_text(
+          `${pos.x.toFixed(0)},${pos.y.toFixed(0)},${pos.z.toFixed(0)}`,
+          text_position[ 0 ] + this._fontSize_small * 5, text_position[ 1 ]
+        );
+        context_wrapper.set_font( this._fontSize_small, this._fontType, false );
       }
     } else {
       pos = results.selected_object.position;
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
-      this.domContext.fillText(
+      context_wrapper.fill_text(
         `Global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
         text_position[ 0 ], text_position[ 1 ]
       );
@@ -2156,7 +2256,7 @@ class THREEBRAIN_CANVAS {
       /*
       text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-      this.domContext.fillText(
+      context_wrapper.fill_text.fillText(
         `Surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
         text_position[ 0 ], text_position[ 1 ]
       );
@@ -2166,7 +2266,7 @@ class THREEBRAIN_CANVAS {
       if( _dv !== undefined ){
         text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-        this.domContext.fillText(
+        context_wrapper.fill_text(
           `Display:   ${ _dn } (${ _dv })`,
           text_position[ 0 ], text_position[ 1 ]
         );
@@ -2177,7 +2277,7 @@ class THREEBRAIN_CANVAS {
       if( _tv !== undefined ){
         text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-        this.domContext.fillText(
+        context_wrapper.fill_text(
           `Threshold: ${ _tn } (${ _tv })`,
           text_position[ 0 ], text_position[ 1 ]
         );
@@ -2189,7 +2289,7 @@ class THREEBRAIN_CANVAS {
     // Line last: customized message
     text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
 
-    this.domContext.fillText(
+    context_wrapper.fill_text(
       results.selected_object.custom_info || '',
       text_position[ 0 ], text_position[ 1 ]
     );
@@ -2226,7 +2326,7 @@ class THREEBRAIN_CANVAS {
 
   		this.render( results );
 
-
+      /*
   		// show mesh value info
       if( results.selected_object && this.object_chosen.userData.ani_exists ){
 
@@ -2245,7 +2345,7 @@ class THREEBRAIN_CANVAS {
             }
           }
         }
-      }
+      } */
 
   		// draw main and side rendered images to this.domElement (2d context)
   		this.mapToCanvas();
@@ -2383,6 +2483,7 @@ class THREEBRAIN_CANVAS {
 
     // How to dispose renderers? Not sure
     this.domContext = null;
+    this.domContextWrapper = null;
     this.main_renderer.dispose();
     this.side_renderer.dispose();
 

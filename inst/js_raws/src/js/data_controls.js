@@ -169,10 +169,13 @@ class THREEBRAIN_PRESETS{
       });
 
     this.gui.add_item('Screenshot', () => {
-      const img = this.canvas.domElement.toDataURL('image/png');
+      /* const img = this.canvas.domElement.toDataURL('image/png');
       const _d = new Date().toJSON();
 
-      download(img, `[rave-brain] ${_d}.png`, 'image/png');
+      download(img, `[rave-brain] ${_d}.png`, 'image/png'); */
+      const _d = new Date().toJSON();
+      const doc = this.canvas.mapToPDF();
+      doc.save(`[rave-brain] ${_d}.pdf`);
     }, {folder_name: folder_name });
 
   }
