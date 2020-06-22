@@ -64,8 +64,36 @@ const to_array = function(x){
   }
 
   return( Object.values(x) );
-}
+};
 
+const min2 = function(x, init = -Infinity){
+  if(x.length === 0){
+    return( init );
+  }
+  let re = Infinity;
+  for(let i in x){
+    let tmp = x[i];
+    if( Array.isArray(tmp) ){
+      tmp = min2(tmp, re, true);
+    }
+    if( tmp < re ){
+      re = tmp;
+    }
+  }
+  return( re );
+};
+
+const sub2 = function(x, val){
+  for(let i in x){
+    let tmp = x[i];
+    if( Array.isArray(tmp) ){
+      sub2(tmp, val);
+    } else {
+      x[i] = tmp - val;
+    }
+  }
+  return( x );
+}
 
 function get_element_size(el){
   const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
@@ -134,7 +162,8 @@ function debounce(func, wait, immediate) {
 
 
 
-export { invertColor, padZero, to_dict, to_array, get_element_size, get_or_default, debounce };
+export { invertColor, padZero, to_dict, to_array,
+  get_element_size, get_or_default, debounce, min2, sub2 };
 
 
 

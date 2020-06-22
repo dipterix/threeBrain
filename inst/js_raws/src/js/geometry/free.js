@@ -1,6 +1,6 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { THREE } from '../threeplugins.js';
-import { to_array } from '../utils.js';
+import { to_array, min2, sub2 } from '../utils.js';
 
 const MATERIAL_PARAMS = { 'transparent' : true, side: THREE.DoubleSide };
 
@@ -35,6 +35,11 @@ class FreeMesh extends AbstractThreeBrainObject {
     const vertices = this._canvas.get_data('free_vertices_'+this.name, this.name, this.group_name);
     const faces = this._canvas.get_data('free_faces_'+g.name, this.name, this.group_name);
 
+    // Make sure face index starts from 0
+    const _face_min = min2(faces, 0);
+    if(_face_min !== 0) {
+      sub2(faces, _face_min);
+    }
 
     // STEP 3: mesh settings
     this._materials = {

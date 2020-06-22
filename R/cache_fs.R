@@ -215,7 +215,7 @@ import_fs_T1 <- function(subject_name, fs_path, folder = 'mri', cache_dir = 'RAV
 import_fs_surf <- function(subject_name, fs_path, folder = 'surf',
                            surf_type = 'pial', hemisphere = 'l',
                            cache_dir = 'RAVE', quiet = FALSE){
-  threebrain_data_ver = 1
+  threebrain_data_ver = 2
 
   surf_path = file.path(fs_path, folder)
   rave_dir = file.path(fs_path, cache_dir)

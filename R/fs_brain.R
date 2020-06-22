@@ -500,10 +500,16 @@ load_surface_asc_gii <- function(file){
     # Use freesurferformats:::read.fs.surface
     tryCatch({
       tmp = freesurferformats::read.fs.surface(file)
+
+      faces <- tmp$faces[, 1:3]
+      fdim <- dim(faces)
+      faces <- as.integer(faces - min(faces))
+      dim(faces) <- fdim
+
       surf = list(
         header = c(nrow(tmp$vertices), nrow(tmp$faces)),
         vertices = tmp$vertices[, 1:3],
-        faces = tmp$faces[, 1:3]
+        faces = faces
       )
     }, error = function(e){
       stop('Unknown type - Only support ASCII, Gifti, or native FS formats (if freesurferformats is installed).')

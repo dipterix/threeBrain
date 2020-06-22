@@ -56273,8 +56273,36 @@ const to_array = function(x){
   }
 
   return( Object.values(x) );
-}
+};
 
+const min2 = function(x, init = -Infinity){
+  if(x.length === 0){
+    return( init );
+  }
+  let re = Infinity;
+  for(let i in x){
+    let tmp = x[i];
+    if( Array.isArray(tmp) ){
+      tmp = min2(tmp, re, true);
+    }
+    if( tmp < re ){
+      re = tmp;
+    }
+  }
+  return( re );
+};
+
+const sub2 = function(x, val){
+  for(let i in x){
+    let tmp = x[i];
+    if( Array.isArray(tmp) ){
+      sub2(tmp, val);
+    } else {
+      x[i] = tmp - val;
+    }
+  }
+  return( x );
+}
 
 function get_element_size(el){
   const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
@@ -60768,6 +60796,11 @@ class free_FreeMesh extends AbstractThreeBrainObject {
     const vertices = this._canvas.get_data('free_vertices_'+this.name, this.name, this.group_name);
     const faces = this._canvas.get_data('free_faces_'+g.name, this.name, this.group_name);
 
+    // Make sure face index starts from 0
+    const _face_min = min2(faces, 0);
+    if(_face_min !== 0) {
+      sub2(faces, _face_min);
+    }
 
     // STEP 3: mesh settings
     this._materials = {
