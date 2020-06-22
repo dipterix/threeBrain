@@ -9,7 +9,7 @@ brain_proxy(outputId, session = shiny::getDefaultReactiveDomain())
 \arguments{
 \item{outputId}{shiny output ID}
 
-\item{session}{shiny session, default is current session (see \code{\link[shiny]{getDefaultReactiveDomain}})}
+\item{session}{shiny session, default is current session (see \code{\link[shiny]{domains}})}
 }
 \value{
 \code{R6} class \code{ViewerProxy}

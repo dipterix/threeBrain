@@ -243,7 +243,7 @@ ViewerProxy <- R6::R6Class(
 
 #' Shiny Proxy for Viewer
 #' @param outputId shiny output ID
-#' @param session shiny session, default is current session (see \code{\link[shiny]{getDefaultReactiveDomain}})
+#' @param session shiny session, default is current session (see \code{\link[shiny]{domains}})
 #' @return \code{R6} class \code{ViewerProxy}
 #' @export
 brain_proxy <- function(outputId, session = shiny::getDefaultReactiveDomain()){
