@@ -1,3 +1,14 @@
+threeBrain 0.1.8
+=======
+
+## Changes
+
+* Screenshot now downloads `pdf` format with text vectorized
+
+### Improvements
+
+* Fixed `freesurferformats` face index starting from 1 instead of 0
+
 threeBrain 0.1.7
 =======
 
