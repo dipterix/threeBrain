@@ -28,16 +28,16 @@ download_template_subject <- function(
   template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
 ){
   dir_create(template_dir)
-  dir = normalizePath(template_dir)
+  dir <- normalizePath(template_dir)
 
   options('threeBrain.template_dir' = dir)
 
   cat2(sprintf('Downloading %s brain from\n\t%s\nto\n\t%s', subject_code, url, dir), level = 'INFO')
 
-  destzip = file.path(dir, sprintf('%s_fs.zip', subject_code))
-  utils::download.file(url = url, destfile = destzip, quiet = F, cacheOK = T)
+  destzip <- file.path(dir, sprintf('%s_fs.zip', subject_code))
+  utils::download.file(url = url, destfile = destzip, quiet = FALSE, cacheOK = TRUE)
 
-  sub_dir = file.path(dir, subject_code)
+  sub_dir <- file.path(dir, subject_code)
   # sub_dir = dir
 
   utils::unzip(destzip, exdir = dir, overwrite = TRUE)
@@ -45,12 +45,12 @@ download_template_subject <- function(
   # check if files need move
   if( !'mri' %in% list.dirs(sub_dir, recursive = FALSE, full.names = FALSE) ){
     # Need to locate this dir
-    dirs = list.dirs(sub_dir, recursive = TRUE, full.names = FALSE)
-    mri_dir = dirs[stringr::str_detect(dirs, 'mri[/]{0}$')]
+    dirs <- list.dirs(sub_dir, recursive = TRUE, full.names = FALSE)
+    mri_dir <- dirs[stringr::str_detect(dirs, 'mri[/]{0}$')]
 
     if( length(mri_dir) ){
-      brain_mgz = list.files(file.path(sub_dir, mri_dir), full.names = TRUE, pattern = 'T1.mgz$')
-      dir_from = dirname(dirname(brain_mgz))
+      brain_mgz <- list.files(file.path(sub_dir, mri_dir), full.names = TRUE, pattern = 'T1.mgz$')
+      dir_from <- dirname(dirname(brain_mgz))
       if(length(dir_from)){
         file_move(dir_from, sub_dir, overwrite = TRUE, clean = TRUE, all_files = TRUE)
       }
@@ -59,7 +59,7 @@ download_template_subject <- function(
 
   cat2('Subject is located at ', sub_dir, '\nChecking the subject', level = 'INFO')
   # Try to load
-  pass_check = check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
+  pass_check <- check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
   if( !isTRUE(pass_check) ){
     cat2('Fail the check. Please make sure the following path exist in\n\t', sub_dir, level = 'ERROR')
     cat2('\nmri/T1.mgz\n', level = 'ERROR')
@@ -88,16 +88,16 @@ download_N27 <- function(make_default = FALSE, ...){
 #' @export
 set_default_template <- function(subject_code, view = TRUE,
                                  template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
-  dir = normalizePath(template_dir, mustWork = TRUE)
-  sub_dir = file.path(dir, subject_code)
-  pass_check = check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
+  dir <- normalizePath(template_dir, mustWork = TRUE)
+  sub_dir <- file.path(dir, subject_code)
+  pass_check <- check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
 
   if( !isTRUE(pass_check) ){
     stop(paste('Fail the check. Please make sure this is FreeSurfer subject folder:\n\t', sub_dir))
   }else{
 
     # try to load template subject
-    x = freesurfer_brain2(fs_subject_folder = sub_dir, subject_name = subject_code)
+    x <- freesurfer_brain2(fs_subject_folder = sub_dir, subject_name = subject_code)
 
     if( !is.null(x) ){
       options('threeBrain.template_dir' = dir)

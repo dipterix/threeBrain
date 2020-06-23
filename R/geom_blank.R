@@ -14,9 +14,9 @@ BlankGeom <- R6::R6Class(
 
     initialize = function(group, name = paste(sample(c(LETTERS, letters, 0:9), 16), collapse = ''), ...){
       super$initialize(name = name, ...)
-      self$layer = 31
-      self$clickable = FALSE
-      self$group = group
+      self$layer <- 31
+      self$clickable <- FALSE
+      self$group <- group
     },
     to_list = function(){
       super$to_list()

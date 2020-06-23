@@ -41,17 +41,17 @@ cat2 <- function(
   )
 ){
   if(!level %in% names(pal)){
-    level = 'DEFAULT'
+    level <- 'DEFAULT'
   }
-  .col = pal[[level]]
+  .col <- pal[[level]]
   if(is.null(.col)){
-    .col = '#000000'
+    .col <- '#000000'
   }
 
   # check if interactive
   if(base::interactive()){
     # use colored console
-    col = crayon::make_style(.col)
+    col <- crayon::make_style(.col)
     if(print_level){
       base::cat('[', level, ']: ', sep = '')
     }
@@ -80,15 +80,15 @@ filename <- function(path){
 
 
 json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header = NULL, ...){
-  digest_path = paste0(path, '.digest')
+  digest_path <- paste0(path, '.digest')
 
   if( digest ){
-    digest_content = as.list(digest_header)
-    digest_content$digest = digest::digest(data)
-    digest_content$header_digest = digest::digest(digest_content)
+    digest_content <- as.list(digest_header)
+    digest_content$digest <- digest::digest(data)
+    digest_content$header_digest <- digest::digest(digest_content)
 
   }
-  cached_digest = list()
+  cached_digest <- list()
 
   if(recache){
     cat2('Re-cache...')
@@ -97,10 +97,10 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
   if(!recache && file.exists(path) && digest){
     # Check digest
     if(!file.exists(digest_path)){
-      recache = TRUE
+      recache <- TRUE
     }else{
-      recache = tryCatch({
-        cached_digest = from_json(digest_path)
+      recache <- tryCatch({
+        cached_digest <- from_json(digest_path)
         !isTRUE(cached_digest$digest == digest_content$digest)
       }, error = function(e){
         TRUE
@@ -113,22 +113,22 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
 
 
 
-  is_new_cache = FALSE
+  is_new_cache <- FALSE
 
   if(recache || !file.exists(path)){
     cat2('Creating cache data to -', path)
 
-    s = to_json(data, ...)
+    s <- to_json(data, ...)
 
-    dir = dirname(path)
+    dir <- dirname(path)
     dir_create(dir)
 
     writeLines(s, path)
-    is_new_cache = TRUE
+    is_new_cache <- TRUE
 
     if( digest ){
       # also check digest_content is changed?
-      rewrite_digest = tryCatch({
+      rewrite_digest <- tryCatch({
         !isTRUE(cached_digest$header_digest == digest_content$header_digest)
       }, error = function(e){
         TRUE
@@ -153,7 +153,7 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
 
 # Define a package-verse standard to serialize and de-seialize jsons
 to_json <- function(x, dataframe = 'rows', matrix = 'rowmajor', null = 'null', na = 'null', ..., to_file = NULL){
-  s = jsonlite::toJSON(x, dataframe = dataframe, matrix = matrix, null = null, na = na, ...)
+  s <- jsonlite::toJSON(x, dataframe = dataframe, matrix = matrix, null = null, na = na, ...)
   if(length(to_file) == 1){
     dir_create(dirname(to_file))
     writeLines(s, con = to_file)
@@ -165,7 +165,7 @@ from_json <- function(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVe
                       simplifyMatrix = simplifyVector, flatten = FALSE, ..., from_file = NULL){
   if(length(from_file) == 1){
     stopifnot2(missing(txt) && file.exists(from_file), msg = 'If you want to load json from a file, do not specify txt, and make sure from_file exists')
-    txt = readLines(from_file)
+    txt <- readLines(from_file)
   }
   jsonlite::fromJSON(txt, simplifyVector = simplifyVector, simplifyDataFrame = simplifyDataFrame,
                      simplifyMatrix = simplifyMatrix, flatten = flatten, ...,)
@@ -176,23 +176,23 @@ from_json <- function(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVe
 #' @return a list of vertices and face indices
 #' @export
 read_fs_asc <- function(file){
-  src = readLines(file)
-  src = src[!stringr::str_detect(src, '^[\\ ]*#')]
+  src <- readLines(file)
+  src <- src[!stringr::str_detect(src, '^[\\ ]*#')]
 
   # header
-  header = as.integer(stringr::str_split_fixed(src[1], '\\ ', 2)) # The first element is vertex and the second one is faces
+  header <- as.integer(stringr::str_split_fixed(src[1], '\\ ', 2)) # The first element is vertex and the second one is faces
 
   # Vertices
-  vertices = stringr::str_split(src[1 + seq_len(header[1])], '[\\ ]+', simplify = T);
-  dim = dim(vertices)
-  vertices = as.numeric(vertices)
-  dim(vertices) = dim
+  vertices <- stringr::str_split(src[1 + seq_len(header[1])], '[\\ ]+', simplify = TRUE)
+  dim <- dim(vertices)
+  vertices <- as.numeric(vertices)
+  dim(vertices) <- dim
 
   # faces
-  faces = stringr::str_split(src[1 + header[1] + seq_len(header[2])], '[\\ ]+', simplify = T);
-  dim = dim(faces)
-  faces = as.integer(faces)
-  dim(faces) = dim
+  faces <- stringr::str_split(src[1 + header[1] + seq_len(header[2])], '[\\ ]+', simplify = TRUE)
+  dim <- dim(faces)
+  faces <- as.integer(faces)
+  dim(faces) <- dim
 
   return(list(
     header = header,
@@ -212,20 +212,20 @@ read_fs_asc <- function(file){
 #' \url{https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense}.
 #' @export
 read_fs_m3z <- function(filename){
-  fp = gzfile(filename, open = 'rb')
+  fp <- gzfile(filename, open = 'rb')
 
   # fdata = readBin(fp, 'raw', 24, endian = 'big')
-  version = readBin(fp, 'numeric', 1, size = 4, endian = 'big');
+  version <- readBin(fp, 'numeric', 1, size = 4, endian = 'big')
 
   if( version != 1 ){
     stop( 'm3z veresion is not 1.' )
   }
 
-  width = readBin(fp, 'integer', 1, endian = 'big');
-  height = readBin(fp, 'integer', 1, endian = 'big');
-  depth = readBin(fp, 'integer', 1, endian = 'big');
-  spacing = readBin(fp, 'integer', 1, endian = 'big');
-  exp_k = readBin(fp, 'numeric', 1, size = 4, endian = 'big');
+  width <- readBin(fp, 'integer', 1, endian = 'big')
+  height <- readBin(fp, 'integer', 1, endian = 'big')
+  depth <- readBin(fp, 'integer', 1, endian = 'big')
+  spacing <- readBin(fp, 'integer', 1, endian = 'big')
+  exp_k <- readBin(fp, 'numeric', 1, size = 4, endian = 'big')
 
   #==--------------------------------------------------------------------==#
 
@@ -233,41 +233,41 @@ read_fs_m3z <- function(filename){
   # typecast into the appropriate data type all at once.
 
   # read all the data (9 numbers per voxel, each at 32 bits, unsigned)
-  buf = readBin(fp, 'integer', width * height * depth * 9 * 4, size = 1, signed = FALSE, endian = 'big');
+  buf <- readBin(fp, 'integer', width * height * depth * 9 * 4, size = 1, signed = FALSE, endian = 'big')
 
-  inds = outer(c(4:1, 8:5, 12:9), 9 * 4 * (seq_len(width * height * depth) - 1), '+')
+  inds <- outer(c(4:1, 8:5, 12:9), 9 * 4 * (seq_len(width * height * depth) - 1), '+')
 
   # extract the three interleaved volumes and permute the result to match the
   # original looped read. the double conversion isn't necessary, but is
   # included to maintain backward compatibility.
 
-  con = rawConnection(raw(0), "r+")
+  con <- rawConnection(raw(0), "r+")
   writeBin(as.raw(as.vector(buf[inds])), con)
   seek(con,0)
-  vol_orig = readBin(con, "numeric", n = prod(c(3, width, height, depth)), size = 4)
-  dim(vol_orig) = c(3, depth, height, width)
-  vol_orig = aperm(vol_orig, c(4,3,2,1))
+  vol_orig <- readBin(con, "numeric", n = prod(c(3, width, height, depth)), size = 4)
+  dim(vol_orig) <- c(3, depth, height, width)
+  vol_orig <- aperm(vol_orig, c(4,3,2,1))
 
-  inds = inds + 12
+  inds <- inds + 12
   seek(con,0)
   writeBin(as.raw(as.vector(buf[inds])), con)
   seek(con,0)
-  vol_dest = readBin(con, "numeric", n = prod(c(3, width, height, depth)), size = 4)
-  dim(vol_dest) = c(3, depth, height, width)
-  vol_dest = aperm(vol_dest, c(4,3,2,1))
+  vol_dest <- readBin(con, "numeric", n = prod(c(3, width, height, depth)), size = 4)
+  dim(vol_dest) <- c(3, depth, height, width)
+  vol_dest <- aperm(vol_dest, c(4,3,2,1))
 
-  inds = inds + 12
+  inds <- inds + 12
   seek(con,0)
   writeBin(as.raw(as.vector(buf[inds])), con)
   seek(con,0)
-  vol_ind0 = readBin(con, "integer", n = prod(c(3, width, height, depth)), size = 4)
-  dim(vol_ind0) = c(3, depth, height, width)
-  vol_ind0 = aperm(vol_ind0, c(4,3,2,1))
+  vol_ind0 <- readBin(con, "integer", n = prod(c(3, width, height, depth)), size = 4)
+  dim(vol_ind0) <- c(3, depth, height, width)
+  vol_ind0 <- aperm(vol_ind0, c(4,3,2,1))
 
   close(con)
-  fpos_dataend = seek(fp, NA)
+  fpos_dataend <- seek(fp, NA)
 
-  tag = readBin(fp, 'integer', 1, endian = 'big');
+  tag <- readBin(fp, 'integer', 1, endian = 'big')
 
   close(fp)
 
@@ -291,96 +291,96 @@ read_fs_mgh_mgz <- function(filename) {
   # filename = '~/rave_data/others/three_brain/N27/mri/T1.mgz'
   # filename = '/Volumes/data/UT/YCQ/iELVis_Localization/YCQ/mri/T1.mgz'
 
-  get_conn = function(){
-    extension = stringr::str_extract(filename, '[^.]+$')
-    extension = stringr::str_to_upper(extension)
+  get_conn <- function(){
+    extension <- stringr::str_extract(filename, '[^.]+$')
+    extension <- stringr::str_to_upper(extension)
     if( extension == 'MGZ' ){
-      con = gzfile(filename , "rb")
+      con <- gzfile(filename , "rb")
     }else{
-      con = file(filename , "rb")
+      con <- file(filename , "rb")
     }
     con
   }
-  con = get_conn()
+  con <- get_conn()
 
   # con = file(filename , "rb")
   on.exit({ close(con) })
 
-  version = readBin(con, integer(), endian = "big")
-  ndim1 = readBin(con, integer(), endian = "big")
-  ndim2 = readBin(con, integer(), endian = "big")
-  ndim3 = readBin(con, integer(), endian = "big")
-  nframes = readBin(con, integer(), endian = "big")
-  type = readBin(con, integer(), endian = "big")
-  dof = readBin(con, integer(), endian = "big")
+  version <- readBin(con, integer(), endian = "big")
+  ndim1 <- readBin(con, integer(), endian = "big")
+  ndim2 <- readBin(con, integer(), endian = "big")
+  ndim3 <- readBin(con, integer(), endian = "big")
+  nframes <- readBin(con, integer(), endian = "big")
+  type <- readBin(con, integer(), endian = "big")
+  dof <- readBin(con, integer(), endian = "big")
 
-  UNUSED_SPACE_SIZE= 256;
-  USED_SPACE_SIZE = (3*4+4*3*4);  # space for ras transform
-  unused_space_size = UNUSED_SPACE_SIZE-2 ;
+  UNUSED_SPACE_SIZE <- 256
+  USED_SPACE_SIZE <- (3*4+4*3*4)  # space for ras transform
+  unused_space_size <- UNUSED_SPACE_SIZE-2
 
   # seek(con, where = 28)
 
 
   #fread(fid, 1, 'short') ;
-  ras_good_flag = readBin(con, integer(), endian = "big", size = 2);
+  ras_good_flag <- readBin(con, integer(), endian = "big", size = 2)
 
-  delta = c(1,1,1)
-  Mdc = matrix(c(-1,0,0,0,0,-1,0,1,0),3)
-  Pxyz_c = c(0,0,0)
-  D = diag(delta);
-  Pcrs_c = c(128,128,128)
-  Pxyz_0 = Pxyz_c - Mdc %*% D %*% Pcrs_c;
-  M = rbind( cbind( Mdc %*% D, Pxyz_0), c(0, 0, 0, 1))
-  ras_xform = rbind(cbind(Mdc, Pxyz_c), c(0, 0, 0, 1))
+  delta <- c(1,1,1)
+  Mdc <- matrix(c(-1,0,0,0,0,-1,0,1,0),3)
+  Pxyz_c <- c(0,0,0)
+  D <- diag(delta)
+  Pcrs_c <- c(128,128,128)
+  Pxyz_0 <- Pxyz_c - Mdc %*% D %*% Pcrs_c
+  M <- rbind( cbind( Mdc %*% D, Pxyz_0), c(0, 0, 0, 1))
+  ras_xform <- rbind(cbind(Mdc, Pxyz_c), c(0, 0, 0, 1))
 
   if (ras_good_flag){
     # fread(fid, 3, 'float32') ;
-    delta  = readBin(con, 'numeric', endian = "big", size = 4, n = 3);
+    delta  <- readBin(con, 'numeric', endian = "big", size = 4, n = 3)
 
     # fread(fid, 9, 'float32') ;
-    Mdc    = readBin(con, 'numeric', endian = "big", size = 4, n = 9);
-    Mdc    = matrix(Mdc, 3, byrow = FALSE)
+    Mdc    <- readBin(con, 'numeric', endian = "big", size = 4, n = 9)
+    Mdc    <- matrix(Mdc, 3, byrow = FALSE)
 
     # fread(fid, 3, 'float32') ;
-    Pxyz_c = readBin(con, 'numeric', endian = "big", size = 4, n = 3);
+    Pxyz_c <- readBin(con, 'numeric', endian = "big", size = 4, n = 3)
 
-    D = diag(delta);
+    D <- diag(delta)
 
-    Pcrs_c = c( ndim1, ndim2, ndim3 ) / 2
+    Pcrs_c <- c( ndim1, ndim2, ndim3 ) / 2
 
-    Pxyz_0 = Pxyz_c - Mdc %*% D %*% Pcrs_c;
+    Pxyz_0 <- Pxyz_c - Mdc %*% D %*% Pcrs_c
 
-    M = rbind( cbind( Mdc %*% D, Pxyz_0), c(0, 0, 0, 1))
+    M <- rbind( cbind( Mdc %*% D, Pxyz_0), c(0, 0, 0, 1))
 
-    ras_xform = rbind(cbind(Mdc, Pxyz_c), c(0, 0, 0, 1))
+    ras_xform <- rbind(cbind(Mdc, Pxyz_c), c(0, 0, 0, 1))
 
-    unused_space_size = unused_space_size - USED_SPACE_SIZE
+    unused_space_size <- unused_space_size - USED_SPACE_SIZE
   }
 
   # fseek(fid, unused_space_size, 'cof') ;
   # seek(con, where = unused_space_size, origin = 'current')
   readBin( con, 'raw', n = unused_space_size, size = 1)
 
-  nv = ndim1 * ndim2 * ndim3 * nframes
-  volsz = c( ndim1, ndim2, ndim3, nframes );
+  nv <- ndim1 * ndim2 * ndim3 * nframes
+  volsz <- c( ndim1, ndim2, ndim3, nframes )
 
-  MRI_UCHAR =  0 ;
-  MRI_INT =    1 ;
-  MRI_LONG =   2 ;
-  MRI_FLOAT =  3 ;
-  MRI_SHORT =  4 ;
-  MRI_BITMAP = 5 ;
+  MRI_UCHAR <-  0
+  MRI_INT <-    1
+  MRI_LONG <-   2
+  MRI_FLOAT <-  3
+  MRI_SHORT <-  4
+  MRI_BITMAP <- 5
 
   # Determine number of bytes per voxel
   # MRI_UCHAR (1), MRI_INT (4), MRI_LONG (??), MRI_FLOAT (4), MRI_SHORT (2), MRI_BITMAP (??)
-  read_param = list(
+  read_param <- list(
     MRI_UCHAR = list( nbytespervox = 1, dtype = 'int', signed = FALSE ),
     MRI_INT = list( nbytespervox = 4, dtype = 'int', signed = TRUE ),
     MRI_FLOAT = list( nbytespervox = 4, dtype = 'numeric', signed = TRUE ),
     MRI_SHORT = list( nbytespervox = 2, dtype = 'int', signed = TRUE )
   )
-  data_type = c('MRI_UCHAR', 'MRI_INT', 'MRI_LONG', 'MRI_FLOAT', 'MRI_SHORT', 'MRI_BITMAP')[type + 1]
-  rparam = read_param[[data_type]]
+  data_type <- c('MRI_UCHAR', 'MRI_INT', 'MRI_LONG', 'MRI_FLOAT', 'MRI_SHORT', 'MRI_BITMAP')[type + 1]
+  rparam <- read_param[[data_type]]
 
   # Read header
   # fseek(fid,nv*nbytespervox,'cof');
@@ -395,7 +395,7 @@ read_fs_mgh_mgz <- function(filename) {
   # nread = prod(dim(vol));
 
 
-  header = list(
+  header <- list(
     # Norig = brain_finalsurf$header$get_vox2ras()
     get_vox2ras = function(){ M },
 
@@ -415,15 +415,15 @@ read_fs_mgh_mgz <- function(filename) {
       }
     },
     get_data = function(){
-      con = get_conn()
+      con <- get_conn()
       on.exit({close(con)})
       readBin( con, n = 284, size = 1, what = 'raw')
-      vol = readBin( con, n = nv, what = rparam$dtype, size = rparam$nbytespervox, signed = rparam$signed )
+      vol <- readBin( con, n = nv, what = rparam$dtype, size = rparam$nbytespervox, signed = rparam$signed )
 
       if( nframes == 1 ){
-        dim( vol ) = c(ndim1, ndim2, ndim3)
+        dim( vol ) <- c(ndim1, ndim2, ndim3)
       }else{
-        dim( vol ) = c(ndim1, ndim2, ndim3, nframes)
+        dim( vol ) <- c(ndim1, ndim2, ndim3, nframes)
       }
       vol
     }
@@ -442,8 +442,8 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
       warning('from not exists.')
     return(FALSE)
   }
-  from = normalizePath(from, mustWork = TRUE)
-  to = normalizePath(to, mustWork = FALSE)
+  from <- normalizePath(from, mustWork = TRUE)
+  to <- normalizePath(to, mustWork = FALSE)
   if(from == to){
     if(show_warnings)
       warning('Nothing done, from is to.')
@@ -469,7 +469,7 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
     # is a dir, move recursively
     dir_create(to, showWarnings = show_warnings)
 
-    to = normalizePath(to, mustWork = TRUE)
+    to <- normalizePath(to, mustWork = TRUE)
     if(from == to){
       if(show_warnings)
         warning('Nothing done, from is to.')
@@ -477,7 +477,7 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
     }
 
     # Copy file by file
-    files = list.files(from, all.files = all_files, full.names = FALSE,
+    files <- list.files(from, all.files = all_files, full.names = FALSE,
                        recursive = TRUE, include.dirs = FALSE, no.. = TRUE)
 
     for(f in files){
@@ -491,20 +491,20 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
     if(clean){
 
       # everything should be moved, check if folder needs to be removed
-      from_vec = stringr::str_split(from, '/|\\\\')[[1]]
-      from_vec = from_vec[from_vec != '']
-      to = stringr::str_split(to, '/|\\\\')[[1]]
-      to = to[to != '']
+      from_vec <- stringr::str_split(from, '/|\\\\')[[1]]
+      from_vec <- from_vec[from_vec != '']
+      to <- stringr::str_split(to, '/|\\\\')[[1]]
+      to <- to[to != '']
 
-      remove_from = FALSE
+      remove_from <- FALSE
       if(length(from_vec) <= length(to)){
         for(ii in seq_along(from_vec)){
           if(from_vec[[ii]] != to[[ii]]){
-            remove_from = TRUE
+            remove_from <- TRUE
           }
         }
       }else{
-        remove_from = TRUE
+        remove_from <- TRUE
       }
 
       if(remove_from){
@@ -521,9 +521,9 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
 
 
 
-safe_write_csv <- function(data, file, ..., quiet = F){
+safe_write_csv <- function(data, file, ..., quiet = FALSE){
   if(file.exists(file)){
-    oldfile = stringr::str_replace(file, '\\.[cC][sS][vV]$', strftime(Sys.time(), '_[%Y%m%d_%H%M%S].csv'))
+    oldfile <- stringr::str_replace(file, '\\.[cC][sS][vV]$', strftime(Sys.time(), '_[%Y%m%d_%H%M%S].csv'))
     if(!quiet){
       cat2('Renaming file ', file, ' >> ', oldfile)
     }
@@ -538,28 +538,29 @@ safe_write_csv <- function(data, file, ..., quiet = F){
 read_fs_labels <- function(path, vertex_number){
   # path = '~/rave_data/data_dir/demo/YAB/fs/label/lh.aparc.annot'
 
-  con = file(path, 'rb')
+  con <- file(path, 'rb')
   on.exit({ close(con) })
 
-  vtxct = readBin(con, 'integer', 1, size = 4, endian = 'big'); vtxct
+  vtxct <- readBin(con, 'integer', 1, size = 4, endian = 'big'); vtxct
   if( !missing(vertex_number) ){
-    vtxct = vertex_number
+    vtxct <- vertex_number
   }
 
   # (B * 256^2) + (G * 256) + (R)
-  vno = readBin(con, 'integer', vtxct * 2, size = 4, endian = 'big'); vno
-  vno = matrix(vno, ncol = 2, byrow = TRUE)
-  vno = as.data.frame(vno, stringsAsFactors=FALSE); names(vno) = c('Vertex', 'Label')
+  vno <- readBin(con, 'integer', vtxct * 2, size = 4, endian = 'big')
+  vno <- matrix(vno, ncol = 2, byrow = TRUE)
+  vno <- as.data.frame(vno, stringsAsFactors=FALSE)
+  names(vno) <- c('Vertex', 'Label')
 
 
-  tag = readBin(con, 'integer', 1, size = 4, endian = 'big'); tag
-  ctabversion = readBin(con, 'integer', 1, size = 4, endian = 'big'); ctabversion
-  maxstruc = readBin(con, 'integer', 1, size = 4, endian = 'big'); maxstruc
-  len = readBin(con, 'integer', 1, size = 4, endian = 'big'); len
-  fname = readBin(con, 'character', n = 1, size = len, endian = 'big'); fname
-  num_entries = readBin(con, 'integer', n = 1, size = 4, endian = 'big'); num_entries
+  tag <- readBin(con, 'integer', 1, size = 4, endian = 'big'); tag
+  ctabversion <- readBin(con, 'integer', 1, size = 4, endian = 'big'); ctabversion
+  maxstruc <- readBin(con, 'integer', 1, size = 4, endian = 'big'); maxstruc
+  len <- readBin(con, 'integer', 1, size = 4, endian = 'big'); len
+  fname <- readBin(con, 'character', n = 1, size = len, endian = 'big'); fname
+  num_entries <- readBin(con, 'integer', n = 1, size = 4, endian = 'big'); num_entries
 
-  entries = list(
+  entries <- list(
     list(
       label = 0,
       name = 'unknown',
@@ -571,12 +572,12 @@ read_fs_labels <- function(path, vertex_number){
 
   if(length(num_entries)){
     for( ii in seq_len(num_entries) ){
-      struct_label = readBin(con, 'integer', 1, size = 4, endian = 'big'); struct_label
-      len = readBin(con, 'integer', 1, size = 4, endian = 'big'); len
-      struct_name = readBin(con, 'character', n = 1, size = len, endian = 'big'); struct_name
-      struct_rgba = readBin(con, 'integer', 4, size = 4, endian = 'big'); struct_rgba
-      struct_rgba[4] = 255 - struct_rgba[4]
-      entries[[ii]] = list(
+      struct_label <- readBin(con, 'integer', 1, size = 4, endian = 'big')
+      len <- readBin(con, 'integer', 1, size = 4, endian = 'big')
+      struct_name <- readBin(con, 'character', n = 1, size = len, endian = 'big')
+      struct_rgba <- readBin(con, 'integer', 4, size = 4, endian = 'big')
+      struct_rgba[4] <- 255 - struct_rgba[4]
+      entries[[ii]] <- list(
         label = struct_label,
         name = struct_name,
         rgba = struct_rgba,
@@ -588,26 +589,26 @@ read_fs_labels <- function(path, vertex_number){
 
 
 
-  ctab = do.call(rbind, lapply(entries, function(x){
+  ctab <- do.call(rbind, lapply(entries, function(x){
     data.frame(x[c('label', 'name', 'color_label', 'color')], stringsAsFactors = FALSE)
   }))
 
-  tmp = merge(vno, ctab, by.x = 'Label', by.y = 'color_label', all.x = TRUE)
+  tmp <- merge(vno, ctab, by.x = 'Label', by.y = 'color_label', all.x = TRUE)
 
   # Check if the first label is unknown
   if( entries[[1]]$name == 'unknown' ){
-    sel = is.na(tmp$name)
-    tmp$label[sel] = 0
-    tmp$name[sel] = 'unknown'
-    tmp$Label[sel] = entries[[1]]$color_label
+    sel <- is.na(tmp$name)
+    tmp$label[sel] <- 0
+    tmp$name[sel] <- 'unknown'
+    tmp$Label[sel] <- entries[[1]]$color_label
   }
 
-  tmp$R = tmp$Label %% 256
-  tmp$G = ((tmp$Label - tmp$R)/256) %% 256
-  tmp$B = ((tmp$Label - tmp$R - tmp$G * 256)/256^2) %% 256
+  tmp$R <- tmp$Label %% 256
+  tmp$G <- ((tmp$Label - tmp$R)/256) %% 256
+  tmp$B <- ((tmp$Label - tmp$R - tmp$G * 256)/256^2) %% 256
 
-  names(tmp) = c('Collabel', 'Vertex', 'AnnotIdx', 'Name', 'hex', 'R', 'G', 'B')
-  tmp = tmp[order(tmp$Vertex), ]
+  names(tmp) <- c('Collabel', 'Vertex', 'AnnotIdx', 'Name', 'hex', 'R', 'G', 'B')
+  tmp <- tmp[order(tmp$Vertex), ]
 
 
   list(
@@ -631,18 +632,18 @@ fill_blanks <- function(volume, replace = 1, threshold = 0, niter=1){
     return(volume)
   }
   # find 0 value voxels within brain
-  dim = dim(volume)
+  dim <- dim(volume)
 
-  mask = volume > threshold
+  mask <- volume > threshold
 
-  mask1 = (mask[-1,-1,-1] + mask[-dim[1], -1, -1] + mask[-1, -dim[2], -1] + mask[-1, -1, -dim[3]] +
+  mask1 <- (mask[-1,-1,-1] + mask[-dim[1], -1, -1] + mask[-1, -dim[2], -1] + mask[-1, -1, -dim[3]] +
     mask[-dim[1], -dim[2], -1] + mask[-1, -dim[2], -dim[3]] + mask[-dim[1], -1, -dim[3]] +
     mask[-dim[1], -dim[2], -dim[3]]) > 0
 
-  mask[-dim[1], -dim[2], -dim[3]] = mask1
-  mask[-1,-1,-1] = mask[-1,-1,-1] | mask1
+  mask[-dim[1], -dim[2], -dim[3]] <- mask1
+  mask[-1,-1,-1] <- mask[-1,-1,-1] | mask1
 
-  volume[(volume <= threshold) & mask] = replace
+  volume[(volume <= threshold) & mask] <- replace
 
   fill_blanks(volume, replace, threshold, niter-1)
 }
@@ -655,17 +656,17 @@ fill_blanks <- function(volume, replace = 1, threshold = 0, niter=1){
 #' @param .list alternative list to supply if file is missing
 get_digest_header <- function(file, key, if_error = NULL, .list = NULL){
   if( !missing(file) ){
-    .list = list()
+    .list <- list()
     try({
-      .list = from_json(from_file = file)
+      .list <- from_json(from_file = file)
     }, silent = TRUE)
   }
-  .list = as.list(.list)
+  .list <- as.list(.list)
 
   if( key %in% names(.list) && !is.null(.list[[key]]) ){
-    re = .list[[key]]
+    re <- .list[[key]]
   }else{
-    re = if_error
+    re <- if_error
   }
   re
 
@@ -677,42 +678,42 @@ digest_file <- function(file){
 }
 
 add_to_digest_file <- function(file, ..., .list = NULL, .append = FALSE){
-  .list = c(.list, list(...))
+  .list <- c(.list, list(...))
   if( !length(.list) ){
     return()
   }
   if( file.exists(file) ){
-    digest = from_json(from_file = file)
+    digest <- from_json(from_file = file)
   }else{
-    digest = list()
+    digest <- list()
   }
 
-  digest$header_digest = NULL
+  digest$header_digest <- NULL
   for(nm in names(.list)){
     if(nm != ''){
       if(.append){
-        digest[[nm]] = c(digest[[nm]], .list[[nm]])
+        digest[[nm]] <- c(digest[[nm]], .list[[nm]])
       }else{
-        digest[[nm]] = .list[[nm]]
+        digest[[nm]] <- .list[[nm]]
       }
     }
   }
 
-  digest$header_digest = digest::digest(digest)
+  digest$header_digest <- digest::digest(digest)
 
   to_json(digest, to_file = file)
 }
 
 load_first_file <- function(files, fun, ..., if_not_found = NULL){
-  if_not_found = substitute(if_not_found)
-  fe = file.exists(files)
+  if_not_found <- substitute(if_not_found)
+  fe <- file.exists(files)
   if( !any(fe) ){
-    parent_env = parent.frame()
-    re = eval(if_not_found, envir = parent_env)
+    parent_env <- parent.frame()
+    re <- eval(if_not_found, envir = parent_env)
     return(re)
   }
 
-  f = files[fe][[1]]
+  f <- files[fe][[1]]
 
   fun(f, ...)
 

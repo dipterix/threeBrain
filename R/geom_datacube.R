@@ -18,18 +18,18 @@ DataCubeGeom <- R6::R6Class(
                             cache_file = NULL,
                             layer = 13, digest = TRUE, ...){
         super$initialize(name, position = position, layer = layer, ...)
-        self$group = group
+        self$group <- group
 
         if(length(cache_file)){
           if(isTRUE(cache_file)){
-            cache_file = tempfile(fileext = '.json')
+            cache_file <- tempfile(fileext = '.json')
           }
 
           if(missing(value)){
             # Use cache file only
             stopifnot2(file.exists(cache_file), msg = 'cache_file does not exist!')
 
-            re = list(
+            re <- list(
               path = cache_file,
               absolute_path = normalizePath(cache_file),
               file_name = filename(cache_file),
@@ -44,16 +44,16 @@ DataCubeGeom <- R6::R6Class(
               length(value) == prod(dim) && length(dim) == 3,
               msg = 'length(value) must equals to prod(dim) and dim must have length 3.')
 
-            value = as.vector(value)
+            value <- as.vector(value)
 
-            data = structure(
+            data <- structure(
               list(value, dim, half_size),
               names = sprintf(c(
                 'datacube_value_%s', 'datacube_dim_%s', 'datacube_half_size_%s'
               ), name)
             )
 
-            re = json_cache(path = cache_file, data = data, digest = digest)
+            re <- json_cache(path = cache_file, data = data, digest = digest)
           }
 
           group$set_group_data(sprintf('datacube_value_%s', name), value = re, is_cached = TRUE)
@@ -64,7 +64,7 @@ DataCubeGeom <- R6::R6Class(
           stopifnot2(length(value) == prod(dim) && length(dim) == 3,
                      msg = 'length(value) must equals to prod(dim) and dim must have length 3.')
 
-          value = as.vector(value)
+          value <- as.vector(value)
 
           self$group$set_group_data(sprintf('datacube_value_%s', self$name), value)
           self$group$set_group_data(sprintf('datacube_dim_%s', self$name), dim)
@@ -86,7 +86,7 @@ DataCubeGeom <- R6::R6Class(
                    msg = 'length(value) must equals to prod(dim) and dim must have length 3.')
 
 
-        value = as.vector(value)
+        value <- as.vector(value)
         self$group$set_group_data(sprintf('datacube_value_%s', self$name), value)
         self$group$set_group_data(sprintf('datacube_dim_%s', self$name), dim)
         self$group$set_group_data(sprintf('datacube_half_size_%s', self$name), half_size)
@@ -94,7 +94,7 @@ DataCubeGeom <- R6::R6Class(
         return(invisible())
       },
       to_list = function(){
-        re = super$to_list()
+        re <- super$to_list()
         re
       },
       get_data = function(key, force_reload = FALSE, ifnotfound = NULL){

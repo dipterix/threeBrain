@@ -16,7 +16,7 @@
 #' @importFrom utils unzip
 NULL
 
-cache_version = 0.1
+cache_version <- 0.1
 
 #' @title Setup Package, Install Environment
 #' @author Zhengjia Wang
@@ -92,12 +92,12 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, use_python=FALSE
 
     cat2('Wrapping up installation...', level = 'INFO')
 
-    template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
+    template_dir <- getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
     import_from_freesurfer(fs_path = file.path(template_dir, 'N27'), subject_name = 'N27')
 
 
     if( show_example ){
-      env = freesurfer_brain2(fs_subject_folder = file.path(template_dir, 'N27'),
+      env <- freesurfer_brain2(fs_subject_folder = file.path(template_dir, 'N27'),
                               subject_name = 'N27', surface_types = c('pial', 'smoothwm'))
       plot(env)
     }

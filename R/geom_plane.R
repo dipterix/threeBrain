@@ -23,7 +23,7 @@ PlaneGeom <- R6::R6Class(
       super$initialize(name, position = position, ...)
 
       # Must specify a group, vertices and faces will be stored within the group
-      self$group = group
+      self$group <- group
 
       if(length(cache_file)){
 
@@ -31,7 +31,7 @@ PlaneGeom <- R6::R6Class(
           # Use cache file only
           stopifnot2(file.exists(cache_file), msg = 'cache_file does not exist!')
 
-          re = list(
+          re <- list(
             path = cache_file,
             absolute_path = normalizePath(cache_file),
             file_name = filename(cache_file),
@@ -45,10 +45,10 @@ PlaneGeom <- R6::R6Class(
           stopifnot2(ncol(vertex) == 3, msg = 'vertex must have 3 columns')
           stopifnot2(ncol(face) == 3, msg = 'face must have 3 columns')
 
-          data = list( vertex = vertex, face = face )
-          names(data) = sprintf(c('free_vertices_%s', 'free_faces_%s'), name)
+          data <- list( vertex = vertex, face = face )
+          names(data) <- sprintf(c('free_vertices_%s', 'free_faces_%s'), name)
 
-          re = json_cache(path = cache_file, data = data)
+          re <- json_cache(path = cache_file, data = data)
         }
 
         group$set_group_data(sprintf('free_vertices_%s', name), value = re, is_cached = TRUE)
@@ -66,12 +66,12 @@ PlaneGeom <- R6::R6Class(
       }
     },
     to_list = function(){
-      re = super$to_list()
-      re$value = NULL
-      re$paricle_location_cube = self$paricle_location_cube
+      re <- super$to_list()
+      re$value <- NULL
+      re$paricle_location_cube <- self$paricle_location_cube
       if(length(self$paricle_location) && length(self$paricle_value)){
-        re$paricle_location = self$paricle_location
-        re$paricle_value = self$paricle_value
+        re$paricle_location <- self$paricle_location
+        re$paricle_value <- self$paricle_value
       }
       re
     },

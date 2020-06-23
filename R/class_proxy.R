@@ -7,22 +7,22 @@ ViewerProxy <- R6::R6Class(
     session = NULL,
     ensure_session = function(){
       if(is.null(private$session)){
-        session = shiny::getDefaultReactiveDomain()
-        private$session = session
+        session <- shiny::getDefaultReactiveDomain()
+        private$session <- session
       }
       stopifnot2(!is.null(private$session), msg = 'cannot find shiny reactive session')
     },
     get_value = function(name, default = NULL){
       private$ensure_session()
-      re = private$session$input[[paste0(private$outputId, '_', name)]]
+      re <- private$session$input[[paste0(private$outputId, '_', name)]]
       if(is.null(re)){
-        re = default
+        re <- default
       }
       re
     },
     set_value = function(name, value){
       private$ensure_session()
-      message_type = sprintf('threeBrain-RtoJS-%s', private$session$ns(private$outputId))
+      message_type <- sprintf('threeBrain-RtoJS-%s', private$session$ns(private$outputId))
 
       private$session$sendCustomMessage(message_type, list(
         name = name,
@@ -47,11 +47,11 @@ ViewerProxy <- R6::R6Class(
       ), sep = '\n')
     },
     initialize = function(outputId, session = shiny::getDefaultReactiveDomain()){
-      private$outputId = outputId
+      private$outputId <- outputId
       if(is.null(session)){
         warning('please run proxy in shiny reactive environment.')
       }else{
-        private$session = session
+        private$session <- session
       }
 
     },
@@ -77,11 +77,11 @@ ViewerProxy <- R6::R6Class(
     },
 
     set_camera = function(position, up){
-      dis = sqrt(sum(position^2))
+      dis <- sqrt(sum(position^2))
       stopifnot2(dis > 0, msg = 'camera position cannot be at origin')
-      position = position / dis
+      position <- position / dis
       if(missing(up)){
-        up = c(0,0,1)
+        up <- c(0,0,1)
       }
       private$set_value('camera', list(
         position = position * 500,
@@ -119,23 +119,23 @@ ViewerProxy <- R6::R6Class(
                            time = ifelse(length(value)==1, 0, stop('time must match length with value')),
                            value_range = NULL, time_range = NULL, value_names = NULL,
                            switch_display = FALSE){
-      data_type = data_type[[1]]
+      data_type <- data_type[[1]]
       stopifnot2(data_type %in% c('continuous', 'discrete'), msg = paste(
         'data_type must be either', sQuote('continuous'), 'or', sQuote('discrete')
       ))
 
-      geom = ElectrodeGeom$new(name = '')
+      geom <- ElectrodeGeom$new(name = '')
       if(length(time) == 1){
-        time = rep(time, length(value))
+        time <- rep(time, length(value))
       }
       geom$set_value(value = value, name = name, time_stamp = time)
-      kf = geom$keyframes[[1]]
-      l = kf$to_list()
-      cmap = ColorMap$new(name = name, symmetric = symmetric, geom)
-      cmap$value_type = data_type
+      kf <- geom$keyframes[[1]]
+      l <- kf$to_list()
+      cmap <- ColorMap$new(name = name, symmetric = symmetric, geom)
+      cmap$value_type <- data_type
 
       cmap$set_colors(colors = palette)
-      cl = cmap$to_list()
+      cl <- cmap$to_list()
 
       # const clip_name = args.clip_name,
       # mesh_name = args.target,
@@ -152,10 +152,10 @@ ViewerProxy <- R6::R6Class(
 
 
       if(length(value_range) < 2 && data_type == 'continuous'){
-        value_range = cl$value_range
+        value_range <- cl$value_range
       }
       if(symmetric && data_type == 'continuous'){
-        value_range = c(-1,1) * max(abs(value_range))
+        value_range <- c(-1,1) * max(abs(value_range))
       }
 
       private$set_value('add_clip', list(
@@ -182,17 +182,17 @@ ViewerProxy <- R6::R6Class(
     },
     # get main camera
     main_camera = function(){
-      camera = private$get_value('main_camera', NULL)
-      if(!is.list(camera)){ camera = list() }
+      camera <- private$get_value('main_camera', NULL)
+      if(!is.list(camera)){ camera <- list() }
 
       # make sure position exists
-      if(length(camera$position) != 3){ camera$position = c(500, 0, 0) }
+      if(length(camera$position) != 3){ camera$position <- c(500, 0, 0) }
 
       # make sure up exists
-      if(length(camera$up) != 3){ camera$position = c(0, 0, 1) }
+      if(length(camera$up) != 3){ camera$position <- c(0, 0, 1) }
 
       # make sure zoom exists
-      if(!length(camera$zoom)){ camera$zoom = 1 }
+      if(!length(camera$zoom)){ camera$zoom <- 1 }
 
       camera
     },
@@ -214,11 +214,11 @@ ViewerProxy <- R6::R6Class(
 
     plane_position = function(){
       private$ensure_session()
-      sagittal_depth = private$get_value('sagittal_depth', 0)
-      coronal_depth = private$get_value('coronal_depth', 0)
-      axial_depth = private$get_value('axial_depth', 0)
-      re = c(sagittal_depth, coronal_depth, axial_depth)
-      names(re) = c('R', 'A', 'S')
+      sagittal_depth <- private$get_value('sagittal_depth', 0)
+      coronal_depth <- private$get_value('coronal_depth', 0)
+      axial_depth <- private$get_value('axial_depth', 0)
+      re <- c(sagittal_depth, coronal_depth, axial_depth)
+      names(re) <- c('R', 'A', 'S')
       re
     },
 

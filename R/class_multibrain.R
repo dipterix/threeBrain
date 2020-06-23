@@ -36,12 +36,12 @@ MultiBrain2 <- R6::R6Class(
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)) ){
 
 
-      l = unlist( c(list(...), .list) )
-      self$objects = list()
+      l <- unlist( c(list(...), .list) )
+      self$objects <- list()
       for( x in l ){
         if( 'rave-brain' %in% class(x) ){
           if( x$subject_code == template_subject ){
-            self$template_object = x
+            self$template_object <- x
           }else{
             self$add_subject( x )
           }
@@ -63,7 +63,7 @@ MultiBrain2 <- R6::R6Class(
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE))
     ){
       # test
-      template_path = file.path(template_dir, template_subject)
+      template_path <- file.path(template_dir, template_subject)
 
       if( template_subject == 'N27' ){
         check_freesurfer_path(template_path, autoinstall_template = TRUE)
@@ -76,20 +76,20 @@ MultiBrain2 <- R6::R6Class(
                               'threeBrain::download_N27(make_default=TRUE)'))
 
       if( !length( surface_types ) ){
-        surface_types = lapply(self$objects, function(x){ x$surface_types })
-        surface_types = unique(unlist(surface_types))
+        surface_types <- lapply(self$objects, function(x){ x$surface_types })
+        surface_types <- unique(unlist(surface_types))
       }else{
-        surface_types = unique(c('pial', unlist( surface_types )))
+        surface_types <- unique(c('pial', unlist( surface_types )))
       }
 
-      self$template_object = freesurfer_brain2(
+      self$template_object <- freesurfer_brain2(
         fs_subject_folder = template_path, subject_name = template_subject,
         surface_types = surface_types, use_cache = use_cache, use_141 = use_141)
     },
 
     add_subject = function(x){
       if( 'rave-brain' %in% class(x) && !x$subject_code %in% self$subject_codes){
-        self$objects[[ x$subject_code ]] = x
+        self$objects[[ x$subject_code ]] <- x
       }
       return(invisible())
     },
@@ -109,28 +109,28 @@ MultiBrain2 <- R6::R6Class(
     ){
 
 
-      geoms = self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
+      geoms <- self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
 
       for( sub in self$subject_codes ){
-        s = self$objects[[ sub ]]
+        s <- self$objects[[ sub ]]
         if( !is.null(s) ){
           if( sub %in% additional_subjects ){
-            geoms = c(geoms, s$get_geometries(
+            geoms <- c(geoms, s$get_geometries(
               volumes = volumes, surfaces = surfaces, electrodes = TRUE ))
           }else{
-            geoms = c(geoms, s$get_geometries(
+            geoms <- c(geoms, s$get_geometries(
               volumes = FALSE, surfaces = FALSE, electrodes = TRUE ))
           }
         }
       }
 
-      geoms = unlist( geoms )
-      is_r6 = vapply(geoms, function(x){ 'AbstractGeom' %in% class(x) }, FALSE)
-      geoms = geoms[is_r6]
-      names(geoms) = NULL
+      geoms <- unlist( geoms )
+      is_r6 <- vapply(geoms, function(x){ 'AbstractGeom' %in% class(x) }, FALSE)
+      geoms <- geoms[is_r6]
+      names(geoms) <- NULL
 
-      global_data = self$global_data
-      control_presets = unique(c('subject2', 'surface_type2', 'hemisphere_material',
+      global_data <- self$global_data
+      control_presets <- unique(c('subject2', 'surface_type2', 'hemisphere_material',
                                  'map_template', 'electrodes', control_presets, 'animation', 'display_highlights' ))
 
       threejs_brain(
@@ -151,29 +151,29 @@ MultiBrain2 <- R6::R6Class(
       stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
                  msg = 'table_or_path must be either data.frame or path to a csv file')
       if(!is.data.frame(table_or_path)){
-        table = read.csv(table_or_path, stringsAsFactors = FALSE)
+        table <- read.csv(table_or_path, stringsAsFactors = FALSE)
       }else{
-        table = table_or_path
+        table <- table_or_path
       }
       stopifnot2(all(c('Electrode', 'Subject') %in% names(table)),
                  msg = 'value table must contains Electrode (integer), Subject (character)')
 
-      table$Electrode = as.integer(table$Electrode)
-      table = table[!is.na(table$Electrode), ]
+      table$Electrode <- as.integer(table$Electrode)
+      table <- table[!is.na(table$Electrode), ]
       if( length(table$Time) ){
-        table = table[!is.na(table$Time), ]
+        table <- table[!is.na(table$Time), ]
       }else{
-        table$Time = 0
+        table$Time <- 0
       }
 
       # Make factor or numeric
-      var_names = names(table)
-      var_names = var_names[ !var_names %in% c('Electrode', 'Time') ]
+      var_names <- names(table)
+      var_names <- var_names[ !var_names %in% c('Electrode', 'Time') ]
 
       # Check values
       for( vn in var_names ){
         if( !is.numeric(table[[vn]]) && !is.factor(table[[vn]]) ){
-          table[[vn]] = as.factor(table[[vn]])
+          table[[vn]] <- as.factor(table[[vn]])
         }
       }
 
@@ -190,23 +190,24 @@ MultiBrain2 <- R6::R6Class(
       self$template_object$subject_code
     },
     subject_codes = function(){
-      re = c( self$template_object$subject_code,
+      re <- c( self$template_object$subject_code,
          sapply(self$objects, function(x){ x$subject_code }, USE.NAMES = FALSE, simplify = TRUE))
-      names(re) = NULL
+      names(re) <- NULL
       re
     },
     surface_types = function(){
-      re = unlist(lapply(self$objects, function(x){ x$surface_types }))
-      re = unique( self$template_object$surface_types, re)
+      re <- unlist(lapply(self$objects, function(x){ x$surface_types }))
+      re <- unique( self$template_object$surface_types, re)
+      re
     },
     global_data = function(){
-      re = list()
+      re <- list()
       for( s in self$subject_codes ){
-        re[[ s ]] = self$objects[[ s ]]$global_data[[ s ]]
+        re[[ s ]] <- self$objects[[ s ]]$global_data[[ s ]]
       }
-      re[[ self$template_subject ]] = self$template_object$global_data[[ self$template_subject ]]
-      re$.multiple_subjects = TRUE
-      re$.template_subjects = self$template_subject
+      re[[ self$template_subject ]] <- self$template_object$global_data[[ self$template_subject ]]
+      re$.multiple_subjects <- TRUE
+      re$.template_subjects <- self$template_subject
       re
     }
   )

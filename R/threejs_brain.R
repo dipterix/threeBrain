@@ -63,7 +63,7 @@ threejs_brain <- function(
   stopifnot2(length(camera_pos) == 3 && is.numeric(camera_pos) && sum(abs(camera_pos)) > 0, msg = 'camera_pos must be a vector length of 3 and cannot be origin')
 
   # Inject global data
-  global_container = BlankGeom$new(name = '__blank__', group = GeomGroup$new(name = '__global_data'))
+  global_container <- BlankGeom$new(name = '__blank__', group = GeomGroup$new(name = '__global_data'))
   sapply( names(global_data), function(nm){
     global_container$group$set_group_data(
       name = sprintf('__global_data__%s', nm),
@@ -71,7 +71,7 @@ threejs_brain <- function(
     )
   })
   sapply( names(global_files), function(nm){
-    file_info = as.list(global_files[[nm]])
+    file_info <- as.list(global_files[[nm]])
     if(all(c("path", "absolute_path", "file_name", "is_new_cache", "is_cache") %in% names(file_info))){
       global_container$group$set_group_data(
         name = sprintf('__global_data__%s', nm),
@@ -84,30 +84,30 @@ threejs_brain <- function(
 
 
   # Create element list
-  geoms = unlist(c(global_container, list(...), .list))
+  geoms <- unlist(c(global_container, list(...), .list))
   # Remove illegal geoms
-  is_geom = vapply(geoms, function(x){ R6::is.R6(x) && ('AbstractGeom' %in% class(x)) }, FUN.VALUE = FALSE)
-  geoms = geoms[is_geom]
+  is_geom <- vapply(geoms, function(x){ R6::is.R6(x) && ('AbstractGeom' %in% class(x)) }, FUN.VALUE = FALSE)
+  geoms <- geoms[is_geom]
 
-  groups = unique(lapply(geoms, '[[', 'group'))
-  groups = groups[!vapply(groups, is.null, FUN.VALUE = FALSE)]
+  groups <- unique(lapply(geoms, '[[', 'group'))
+  groups <- groups[!vapply(groups, is.null, FUN.VALUE = FALSE)]
 
   # get color schema
-  animation_types = unique(unlist( lapply(geoms, function(g){ g$animation_types }) ))
-  if(!is.list(palettes)){ palettes = list() }
-  pnames = names(palettes)
-  if(!is.list(value_ranges)){ value_ranges = list() }
+  animation_types <- unique(unlist( lapply(geoms, function(g){ g$animation_types }) ))
+  if(!is.list(palettes)){ palettes <- list() }
+  pnames <- names(palettes)
+  if(!is.list(value_ranges)){ value_ranges <- list() }
 
-  color_maps = sapply(animation_types, function(atype){
-    c = ColorMap$new(name = atype, .list = geoms, symmetric = symmetric,
+  color_maps <- sapply(animation_types, function(atype){
+    c <- ColorMap$new(name = atype, .list = geoms, symmetric = symmetric,
                      alias = value_alias[[atype]])
     if( atype %in% pnames ){
       c$set_colors( palettes[[atype]] )
     }
     if( c$value_type == 'continuous' && length(value_ranges[[atype]]) >= 2 ){
-      c$value_range = value_ranges[[atype]][c(1,2)]
+      c$value_range <- value_ranges[[atype]][c(1,2)]
       if( length(value_ranges[[atype]]) >= 4 ){
-        c$hard_range = sort(value_ranges[[atype]][c(3,4)])
+        c$hard_range <- sort(value_ranges[[atype]][c(3,4)])
       }
     }
     c$to_list()
@@ -115,50 +115,50 @@ threejs_brain <- function(
 
   if( length(animation_types) ){
     if( !length(default_colormap) || !default_colormap %in% animation_types){
-      default_colormap = animation_types[1]
+      default_colormap <- animation_types[1]
     }
   }else{
-    default_colormap = NULL
+    default_colormap <- NULL
   }
 
   # backgrounds
-  background = dipsaus::col2hexStr(background)
+  background <- dipsaus::col2hexStr(background)
   # side_background = dipsaus::col2hexStr(side_background)
 
 
 
   # Check elements
-  geoms = lapply(geoms, function(g){ g$to_list() })
+  geoms <- lapply(geoms, function(g){ g$to_list() })
 
   # Check lib_path. whether running inside of shiny or standalone
   if(is.null(shiny::getDefaultReactiveDomain())){
-    lib_path = 'lib/'
+    lib_path <- 'lib/'
   }else{
-    lib_path = ''
+    lib_path <- ''
     if(is.null(token)){
-      session = shiny::getDefaultReactiveDomain()
-      token = session$userData$rave_id
+      session <- shiny::getDefaultReactiveDomain()
+      token <- session$userData$rave_id
     }
 
     # If in shiny, token is given or rave_id is given, we use fixed temp path
     # in this way to reduce redundency
     if( !is.null(token) && length(tmp_dirname) != 1 ){
-      tmp_dirname = token
+      tmp_dirname <- token
     }
   }
 
   # Check cached json files
   if(length(tmp_dirname) != 1){
-    tmp_dirname = paste(sample(c(letters, LETTERS, 0:9), 10), collapse = '')
+    tmp_dirname <- paste(sample(c(letters, LETTERS, 0:9), 10), collapse = '')
   }
-  tmp_dir = file.path(tempdir(), 'threebrain_cache', tmp_dirname)
+  tmp_dir <- file.path(tempdir(), 'threebrain_cache', tmp_dirname)
   dir_create(tmp_dir)
 
   lapply(groups, function(g){
     if(length(g$cached_items)){
       dir_create(file.path(tmp_dir, g$cache_name()))
       for(f in g$cached_items){
-        re = g$group_data[[f]]
+        re <- g$group_data[[f]]
         file.copy(re$absolute_path, to = file.path(tmp_dir, g$cache_name(), re$file_name))
       }
     }
@@ -166,9 +166,9 @@ threejs_brain <- function(
 
   # This is a tricky part, if the widget is created from shiny, there might be multiple instance running and we cannot have any cross talk
   # TODO: Need to think on how to resolve conflicts.
-  widget_id = stringr::str_replace_all(widget_id, '[^a-zA-Z0-9]', '_')
+  widget_id <- stringr::str_replace_all(widget_id, '[^a-zA-Z0-9]', '_')
 
-  dependencies = htmltools::htmlDependency(
+  dependencies <- htmltools::htmlDependency(
     name = widget_id,
     version = '0',
     src = tmp_dir,
@@ -176,11 +176,11 @@ threejs_brain <- function(
   )
 
   # Get groups
-  groups = lapply(groups, function(g){ g$to_list() })
+  groups <- lapply(groups, function(g){ g$to_list() })
 
 
   # Generate settings
-  settings = list(
+  settings <- list(
     side_camera = side_canvas,
     side_canvas_zoom = side_zoom,
     side_canvas_width = side_width,
@@ -214,7 +214,7 @@ threejs_brain <- function(
   # }, simplify = F, USE.NAMES = T)
 
 
-  x = list(
+  x <- list(
     groups = groups,
     geoms = geoms,
     settings = settings
@@ -286,19 +286,19 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
   # Need to save json data to datapath. Must be a relative path
   dir_create(file.path(directory, datapath))
   dir_create(file.path(directory, assetpath))
-  datapath = stringr::str_replace_all(datapath, '[/]{0}$', '/')
-  datapath = stringr::str_replace_all(datapath, '[/\\\\]+', '/')
-  datapath = stringr::str_replace_all(datapath, '^/', '')
+  datapath <- stringr::str_replace_all(datapath, '[/]{0}$', '/')
+  datapath <- stringr::str_replace_all(datapath, '[/\\\\]+', '/')
+  datapath <- stringr::str_replace_all(datapath, '^/', '')
 
-  assetpath = stringr::str_replace_all(assetpath, '[/]{0}$', '/')
-  assetpath = stringr::str_replace_all(assetpath, '[/\\\\]+', '/')
-  assetpath = stringr::str_replace_all(assetpath, '^/', '')
+  assetpath <- stringr::str_replace_all(assetpath, '[/]{0}$', '/')
+  assetpath <- stringr::str_replace_all(assetpath, '[/\\\\]+', '/')
+  assetpath <- stringr::str_replace_all(assetpath, '^/', '')
 
-  widget$x$settings$cache_folder = datapath
+  widget$x$settings$cache_folder <- datapath
   htmlwidgets::saveWidget(
     widget,
     file = file.path(directory, filename),
-    selfcontained = F,
+    selfcontained = FALSE,
     title = title,
     libdir = assetpath
   )
@@ -315,33 +315,33 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
   #   dependencies$
   # }
 
-  s = c(
+  s <- c(
     '#!/bin/bash',
     'DIRECTORY=`dirname "$0"`',
     'cd "$DIRECTORY"',
     "Rscript -e '{if(system.file(\"\",package=\"servr\")==\"\"){install.packages(\"servr\",repos=\"https://cloud.r-project.org\")};servr::httd(browser=TRUE)}'"
   )
-  sh_file = file.path(directory, 'launch.sh')
+  sh_file <- file.path(directory, 'launch.sh')
   writeLines(s, sh_file)
-  sh_file = normalizePath(sh_file)
-  system(sprintf('chmod a+x "%s"', sh_file), wait = F)
+  sh_file <- normalizePath(sh_file)
+  system(sprintf('chmod a+x "%s"', sh_file), wait = FALSE)
 
-  sh_file = file.path(directory, 'launch.command')
+  sh_file <- file.path(directory, 'launch.command')
   writeLines(s, sh_file)
-  sh_file = normalizePath(sh_file)
-  system(sprintf('chmod a+x "%s"', sh_file), wait = F)
+  sh_file <- normalizePath(sh_file)
+  system(sprintf('chmod a+x "%s"', sh_file), wait = FALSE)
 
   if(as_zip){
-    wd = getwd()
+    wd <- getwd()
     on.exit({
       setwd(wd)
     })
     setwd(directory)
-    directory = normalizePath(directory)
-    zipfile = 'compressed.zip'
+    directory <- normalizePath(directory)
+    zipfile <- 'compressed.zip'
     utils::zip(zipfile, files = c('./lib', filename, 'launch.sh', 'launch.command'))
   }
-  directory = normalizePath(directory, mustWork = F)
+  directory <- normalizePath(directory, mustWork = FALSE)
   return(structure(list(
     directory = directory,
     index = file.path(directory, filename),
@@ -355,42 +355,42 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
 #' @export
 print.threeBrain_saved <- function(x, ...){
 
-  index = x$index
+  index <- x$index
 
-  grey_col = crayon::make_style('grey60')
-  green_col = crayon::make_style('#1d9f34')
-  red_col = crayon::make_style('#ec942c')
+  grey_col <- crayon::make_style('grey60')
+  green_col <- crayon::make_style('#1d9f34')
+  red_col <- crayon::make_style('#ec942c')
 
   if(!file.exists(index)){
     warning('Cannot find index file at: ', index)
     return(invisible())
   }
-  s = paste(readLines(index), collapse = '\n')
-  s = stringr::str_replace_all(s, '\\n', '')
+  s <- paste(readLines(index), collapse = '\n')
+  s <- stringr::str_replace_all(s, '\\n', '')
 
-  m = stringr::str_match(s, '<head(.*?)</head>')
+  m <- stringr::str_match(s, '<head(.*?)</head>')
   if(length(m)){
-    m = m[1,2]
-    css = unlist(stringr::str_extract_all(m, '<link[^>]*>'))
-    js = unlist(stringr::str_extract_all(m, '<script[^>]*></script>'))
+    m <- m[1,2]
+    css <- unlist(stringr::str_extract_all(m, '<link[^>]*>'))
+    js <- unlist(stringr::str_extract_all(m, '<script[^>]*></script>'))
   }else{
-    css = NULL
-    js = NULL
+    css <- NULL
+    js <- NULL
   }
 
   cat(grey_col('<!---------- Instructions to Embed 3D viewer in your own websites --------->\n'))
 
   cat(grey_col('\n<!-- Step 1: In HTML header (<head>...</head>), add the following lines -->\n'))
-  headers = c(css, js)
+  headers <- c(css, js)
   if(length(headers)){
     cat(green_col(headers), sep = '\n')
   }
 
-  json = stringr::str_match(s, '<script type="application/json" data-for=[^>]*>(.*)</script>')
+  json <- stringr::str_match(s, '<script type="application/json" data-for=[^>]*>(.*)</script>')
   if(length(json)){
-    json = json[1,2]
+    json <- json[1,2]
   }else{
-    json = NULL
+    json <- NULL
   }
 
 

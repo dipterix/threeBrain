@@ -43,8 +43,8 @@ three_scatter <- function(
   x, y, z, size = 1, col = 1, label = NULL, group = 1, timestamp = NULL, pal = NULL,
   scale = 1, axis = TRUE, control_panel = TRUE, control_presets = NULL, camera_pos, ...
 ){
-  maxl = max(length(x),length(y),length(z))
-  rec = function(d, max_len = maxl){
+  maxl <- max(length(x),length(y),length(z))
+  rec <- function(d, max_len = maxl){
     if(length(d) == 0){
       return(seq_len(max_len))
     }
@@ -52,9 +52,9 @@ three_scatter <- function(
       if(nrow(d) > max_len){
         return(d[seq_len(max_len),,drop=FALSE])
       }
-      nrep = ceiling(max_len / nrow(d))
+      nrep <- ceiling(max_len / nrow(d))
       if(nrep > 1){
-        d = apply(d, 2, function(dd){
+        d <- apply(d, 2, function(dd){
           rep(dd, nrep)[seq_len(max_len)]
         })
       }
@@ -62,9 +62,9 @@ three_scatter <- function(
       if(length(d) > max_len){
         return(d[seq_len(max_len)])
       }
-      nrep = ceiling(max_len / length(d))
+      nrep <- ceiling(max_len / length(d))
       if(nrep > 1){
-        d = rep(d, nrep)[seq_len(max_len)]
+        d <- rep(d, nrep)[seq_len(max_len)]
       }
     }
 
@@ -73,45 +73,45 @@ three_scatter <- function(
   }
 
   if(length(scale)){
-    scale = scale[[1]]
+    scale <- scale[[1]]
     if(scale == 'auto'){
-      scale = 50 / max(abs(range(x,y,z)))
+      scale <- 50 / max(abs(range(x,y,z)))
     }
   }else{
-    scale = 1
+    scale <- 1
   }
 
-  x = rec(x)
-  y = rec(y)
-  z = rec(z)
-  size = rec(size)
-  label = rec(label)
-  group = rec(as.character(group))
+  x <- rec(x)
+  y <- rec(y)
+  z <- rec(z)
+  size <- rec(size)
+  label <- rec(label)
+  group <- rec(as.character(group))
 
-  groups = sapply(sort(unique(group)), function(gname){
+  groups <- sapply(sort(unique(group)), function(gname){
     GeomGroup$new(name = gname)
   }, USE.NAMES = TRUE, simplify = FALSE)
 
 
   if(!is.numeric(col)){
-    col = as.factor(col)
+    col <- as.factor(col)
   }
 
-  col = as.matrix(rec(col))
-  timestamp = rec(timestamp, ncol(col))
+  col <- as.matrix(rec(col))
+  timestamp <- rec(timestamp, ncol(col))
 
-  geoms = lapply(seq_len(maxl), function(ii){
+  geoms <- lapply(seq_len(maxl), function(ii){
     if(length(groups) > 1){
-      nm = sprintf('%s (%s)', label[ii], group[[ii]])
+      nm <- sprintf('%s (%s)', label[ii], group[[ii]])
     }else{
-      nm = label[ii]
+      nm <- label[ii]
     }
-    g = SphereGeom$new(name = nm, position = c(x[ii], y[ii], z[ii]) * scale,
+    g <- SphereGeom$new(name = nm, position = c(x[ii], y[ii], z[ii]) * scale,
                        radius = size[ii], group = groups[[group[[ii]]]])
     g$set_value(value = col[ii,], time_stamp = timestamp, name = 'Value')
 
     if(scale != 1){
-      g$custom_info = sprintf('Rescale: %.2f x', 1/scale)
+      g$custom_info <- sprintf('Rescale: %.2f x', 1/scale)
     }
 
 
@@ -119,20 +119,20 @@ three_scatter <- function(
   })
 
 
-  camera_center = c(mean(range(x)),mean(range(y)),mean(range(z))) * scale
+  camera_center <- c(mean(range(x)),mean(range(y)),mean(range(z))) * scale
 
-  span = c(max(x), max(y), max(z))
-  span = sqrt(max(sum(span^2), sum((span - camera_center)^2)))
+  span <- c(max(x), max(y), max(z))
+  span <- sqrt(max(sum(span^2), sum((span - camera_center)^2)))
 
   if(isTRUE(axis)){
-    coords = c(span, span, span)
+    coords <- c(span, span, span)
   }else{
-    coords = NULL
+    coords <- NULL
   }
 
 
   if(missing(camera_pos)){
-    camera_pos = camera_center + c(0,0,2*span)
+    camera_pos <- camera_center + c(0,0,2*span)
   }
 
   threejs_brain(.list = geoms,

@@ -11,10 +11,10 @@ NULL
 import_from_freesurfer <- function(fs_path, subject_name){
   # fs_path = '~/rave_data/others/three_brain/N27/'
   # subject_name = 'N27'
-  surface_types = c('pial', 'white', 'smoothwm', 'pial-outer-smoothed', 'inflated', 'orig', 'sphere')
-  curvatures = c('sulc')
+  surface_types <- c('pial', 'white', 'smoothwm', 'pial-outer-smoothed', 'inflated', 'orig', 'sphere')
+  curvatures <- c('sulc')
   # Setup progress
-  progress = dipsaus::progress2(
+  progress <- dipsaus::progress2(
     sprintf('Importing %s (first time will take seconds)', subject_name),
     max = length(surface_types) * 4 + length(curvatures) * 4 + 3,
     shiny_auto_close = TRUE)
@@ -65,21 +65,21 @@ import_from_freesurfer <- function(fs_path, subject_name){
   # from_json(from_file = '~/rave_data/others/three_brain/N27/RAVE/common.digest')
 
   # Load xfm
-  path_xform = normalizePath(file.path(fs_path, 'mri', 'transforms', 'talairach.xfm'), mustWork = FALSE)
-  xfm = diag(c(1,1,1,1))
+  path_xform <- normalizePath(file.path(fs_path, 'mri', 'transforms', 'talairach.xfm'), mustWork = FALSE)
+  xfm <- diag(c(1,1,1,1))
   if( file.exists(path_xform) ){
-    ss = readLines(path_xform)
-    ss = stringr::str_match(ss, '^([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+)[;]{0,1}$')
-    ss = ss[!is.na(ss[,1]), -1, drop = FALSE]
+    ss <- readLines(path_xform)
+    ss <- stringr::str_match(ss, '^([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+)[;]{0,1}$')
+    ss <- ss[!is.na(ss[,1]), -1, drop = FALSE]
     if( nrow(ss) >= 3 ){
-      ss = ss[1:3,1:4]
+      ss <- ss[1:3,1:4]
     }else{
       cat2('Cannot parse file talairach.xfm properly.', level = 'WARNING')
-      ss = cbind(diag(c(1,1,1)), 0)
+      ss <- cbind(diag(c(1,1,1)), 0)
     }
-    ss = as.numeric(ss)
-    dim(ss) = c(3,4)
-    xfm = rbind(ss, c(0,0,0,1))
+    ss <- as.numeric(ss)
+    dim(ss) <- c(3,4)
+    xfm <- rbind(ss, c(0,0,0,1))
   }
   add_to_digest_file(
     file = file.path(fs_path, 'RAVE', 'common.digest'),

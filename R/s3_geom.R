@@ -152,7 +152,7 @@ geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL
 #' @export
 geom_freemesh <- function(name, vertex = NULL,face = NULL, position = c(0,0,0), layer = 1, cache_file = NULL, group = NULL){
   if(is.null(group)){
-    group = create_group(paste(name, '(group)'))
+    group <- create_group(paste(name, '(group)'))
   }
   if(!is.null(cache_file) && file.exists(cache_file)){
     FreeGeom$new(name = name, position = position, group = group, cache_file = cache_file,layer = layer)

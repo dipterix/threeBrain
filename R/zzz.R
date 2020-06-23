@@ -1,6 +1,6 @@
-loaders = new.env(parent = emptyenv())
+loaders <- new.env(parent = emptyenv())
 
-DISABLE_PYTHON = TRUE
+DISABLE_PYTHON <- TRUE
 
 load_nibabel <- function(force_reload = FALSE){
 
@@ -35,18 +35,18 @@ load_nibabel <- function(force_reload = FALSE){
 #'
 #' @export
 read_mgz <- function(path){
-  path = normalizePath(path, mustWork = FALSE)
+  path <- normalizePath(path, mustWork = FALSE)
   cat2('Loading from: ', path)
 
-  nibabel = load_nibabel()
+  nibabel <- load_nibabel()
 
   if(!is.null(nibabel)){
-    inner_mgz_loader = nibabel$load
+    inner_mgz_loader <- nibabel$load
   }else{
-    inner_mgz_loader = read_fs_mgh_mgz
+    inner_mgz_loader <- read_fs_mgh_mgz
   }
 
-  res = inner_mgz_loader(path)
+  res <- inner_mgz_loader(path)
   return(list(
     header = res$header,
     get_shape = res$get_shape,
@@ -66,23 +66,23 @@ read_mgz <- function(path){
 #'
 #' @export
 read_gii2 <- function(path){
-  path = normalizePath(path, mustWork = FALSE)
+  path <- normalizePath(path, mustWork = FALSE)
 
-  nibabel = load_nibabel()
+  nibabel <- load_nibabel()
   if( !is.null(nibabel) ){
-    tmp = nibabel$load(path)
-    vertices = tmp$darrays[[1]]$data[,1:3]
-    faces = tmp$darrays[[2]]$data[,1:3]
-    surf = list(
+    tmp <- nibabel$load(path)
+    vertices <- tmp$darrays[[1]]$data[,1:3]
+    faces <- tmp$darrays[[2]]$data[,1:3]
+    surf <- list(
       header = c(nrow(vertices), nrow(faces)),
       vertices = vertices,
       faces = faces
     )
   }else{
-    tmp = gifti::readgii(path)
-    vertices = tmp$data$pointset[,1:3]
-    faces = tmp$data$triangle[,1:3]
-    surf = list(
+    tmp <- gifti::readgii(path)
+    vertices <- tmp$data$pointset[,1:3]
+    faces <- tmp$data$triangle[,1:3]
+    surf <- list(
       header = c(nrow(vertices), nrow(faces)),
       vertices = vertices,
       faces = faces
@@ -93,22 +93,22 @@ read_gii2 <- function(path){
 
 
 read_nii2 <- function(path, head_only = FALSE ){
-  path = normalizePath(path, mustWork = FALSE)
+  path <- normalizePath(path, mustWork = FALSE)
 
-  nibabel = load_nibabel()
+  nibabel <- load_nibabel()
   if( !is.null(nibabel) ){
-    tmp = nibabel$load( path )
+    tmp <- nibabel$load( path )
 
-    re = list(
+    re <- list(
       header = tmp$header,
       get_shape = tmp$get_shape,
       get_data = tmp$get_data
     )
 
   }else{
-    nii = oro.nifti::readNIfTI(path, verbose = FALSE, reorient = FALSE, read_data = !head_only)
+    nii <- oro.nifti::readNIfTI(path, verbose = FALSE, reorient = FALSE, read_data = !head_only)
 
-    re = list(
+    re <- list(
       header = nii,
       get_shape = function(){ as.list(dim(nii@.Data)) },
       get_data = function(){ nii@.Data }

@@ -24,33 +24,33 @@ BrainSurface <- R6::R6Class(
     set_subject_code = function( subject_code ){
       if( self$has_hemispheres ){
 
-        self$left_hemisphere$subject_code = subject_code
-        self$right_hemisphere$subject_code = subject_code
-        self$group$subject_code = subject_code
+        self$left_hemisphere$subject_code <- subject_code
+        self$right_hemisphere$subject_code <- subject_code
+        self$group$subject_code <- subject_code
 
         if( self$mesh_type == 'std.141' ){
-          self$left_hemisphere$name = sprintf("Standard 141 Left Hemisphere - %s (%s)",
+          self$left_hemisphere$name <- sprintf("Standard 141 Left Hemisphere - %s (%s)",
                                               self$surface_type, subject_code)
-          self$right_hemisphere$name = sprintf("Standard 141 Right Hemisphere - %s (%s)",
+          self$right_hemisphere$name <- sprintf("Standard 141 Right Hemisphere - %s (%s)",
                                               self$surface_type, subject_code)
         }else{
-          self$left_hemisphere$name = sprintf("FreeSurfer Left Hemisphere - %s (%s)",
+          self$left_hemisphere$name <- sprintf("FreeSurfer Left Hemisphere - %s (%s)",
                                               self$surface_type, subject_code)
-          self$right_hemisphere$name = sprintf("FreeSurfer Right Hemisphere - %s (%s)",
+          self$right_hemisphere$name <- sprintf("FreeSurfer Right Hemisphere - %s (%s)",
                                                self$surface_type, subject_code)
         }
 
-        self$group$name = sprintf("Surface - %s (%s)", self$surface_type, subject_code)
+        self$group$name <- sprintf("Surface - %s (%s)", self$surface_type, subject_code)
 
       }
 
-      self$subject_code = subject_code
+      self$subject_code <- subject_code
     },
 
     set_group_position = function(...){
-      pos = c(...)
+      pos <- c(...)
       stopifnot2(is.numeric(pos) && length(pos) == 3, msg = "Position must be numeric of length 3")
-      self$group$position = pos
+      self$group$position <- pos
     },
 
     initialize = function(
@@ -62,23 +62,23 @@ BrainSurface <- R6::R6Class(
       stopifnot2(mesh_type %in% c('std.141', 'fs'),
                  msg = 'We only support standard 141 brain or FreeSurfer brain')
 
-      left_hemisphere$hemisphere = 'left'
-      left_hemisphere$surface_type = surface_type
-      self$left_hemisphere = left_hemisphere
+      left_hemisphere$hemisphere <- 'left'
+      left_hemisphere$surface_type <- surface_type
+      self$left_hemisphere <- left_hemisphere
 
-      right_hemisphere$hemisphere = 'right'
-      right_hemisphere$surface_type = surface_type
-      self$right_hemisphere = right_hemisphere
+      right_hemisphere$hemisphere <- 'right'
+      right_hemisphere$surface_type <- surface_type
+      self$right_hemisphere <- right_hemisphere
 
       if( !identical(left_hemisphere$group,right_hemisphere$group) ){
         for( nm in names( right_hemisphere$group$group_data ) ){
-          left_hemisphere$group$group_data[[ nm ]] = right_hemisphere$group$group_data[[ nm ]]
+          left_hemisphere$group$group_data[[ nm ]] <- right_hemisphere$group$group_data[[ nm ]]
         }
-        right_hemisphere$group = left_hemisphere$group
+        right_hemisphere$group <- left_hemisphere$group
       }
-      self$group = left_hemisphere$group
-      self$surface_type = surface_type
-      self$mesh_type = mesh_type
+      self$group <- left_hemisphere$group
+      self$surface_type <- surface_type
+      self$mesh_type <- mesh_type
 
       self$set_subject_code( subject_code )
 
@@ -105,16 +105,16 @@ BrainSurface <- R6::R6Class(
   ),
   active = list(
     has_hemispheres = function(){
-      valid = c(FALSE, FALSE)
+      valid <- c(FALSE, FALSE)
       if( !is.null(self$left_hemisphere) &&
           R6::is.R6(self$left_hemisphere) &&
           'FreeGeom' %in% class(self$left_hemisphere)){
-        valid[1] = TRUE
+        valid[1] <- TRUE
       }
       if( !is.null(self$right_hemisphere) &&
           R6::is.R6(self$right_hemisphere) &&
           'FreeGeom' %in% class(self$right_hemisphere)){
-        valid[2] = TRUE
+        valid[2] <- TRUE
       }
 
       return(all(valid))
@@ -141,31 +141,31 @@ BrainVolume <- R6::R6Class(
 
     set_subject_code = function( subject_code ){
       if( self$has_volume ){
-        self$object$subject_code = subject_code
-        self$group$subject_code = subject_code
+        self$object$subject_code <- subject_code
+        self$group$subject_code <- subject_code
 
-        self$object$name = sprintf('%s (%s)', self$volume_type, subject_code)
-        self$group$name = sprintf("Volume - %s (%s)", self$volume_type, subject_code)
+        self$object$name <- sprintf('%s (%s)', self$volume_type, subject_code)
+        self$group$name <- sprintf("Volume - %s (%s)", self$volume_type, subject_code)
       }
 
-      self$subject_code = subject_code
+      self$subject_code <- subject_code
     },
 
     set_group_position = function(...){
-      pos = c(...)
+      pos <- c(...)
       stopifnot2(is.numeric(pos) && length(pos) == 3, msg = "Position must be numeric of length 3")
-      self$group$position = pos
+      self$group$position <- pos
     },
 
     initialize = function(
       subject_code, volume_type, volume, position = NULL
     ){
 
-      self$object = volume
-      self$group = volume$group
+      self$object <- volume
+      self$group <- volume$group
       self$set_subject_code( subject_code )
 
-      self$volume_type = volume_type
+      self$volume_type <- volume_type
 
       # position is set for group
       if( length(position) == 3 ){
@@ -222,24 +222,24 @@ BrainElectrodes <- R6::R6Class(
 
     set_subject_code = function( subject_code ){
       if( !is.null(self$group) ){
-        self$group$name = sprintf('Electrodes (%s)', subject_code)
+        self$group$name <- sprintf('Electrodes (%s)', subject_code)
       }
       self$set_electrodes( self$raw_table )
-      self$subject_code = subject_code
+      self$subject_code <- subject_code
     },
 
     initialize = function(subject_code){
-      self$group = GeomGroup$new(name = sprintf('Electrodes (%s)', subject_code), position = c(0,0,0))
+      self$group <- GeomGroup$new(name = sprintf('Electrodes (%s)', subject_code), position = c(0,0,0))
       self$set_subject_code( subject_code )
     },
 
     apply_electrodes = function(fun, check_valid = TRUE){
-      n_elec = length(self$objects)
+      n_elec <- length(self$objects)
       if(!n_elec){
         return(list())
       }
       lapply(seq_len( n_elec ), function( ii ){
-        el = self$objects[[ii]]
+        el <- self$objects[[ii]]
         if( !is.null(el) || !check_valid ){
           return(fun(el, ii))
         }else{
@@ -256,19 +256,19 @@ BrainElectrodes <- R6::R6Class(
                  msg = 'table_or_path must be either data.frame or path to electrodes.csv')
       if(!is.data.frame(table_or_path)){
         # table_or_path = '~/Downloads/YAB_electrodes.csv'
-        self$raw_table_path = table_or_path
-        table = read.csv(table_or_path, stringsAsFactors = FALSE)
+        self$raw_table_path <- table_or_path
+        table <- read.csv(table_or_path, stringsAsFactors = FALSE)
       }else{
-        self$raw_table_path = NULL
-        table = table_or_path
+        self$raw_table_path <- NULL
+        table <- table_or_path
       }
 
       stopifnot2(all(c('Electrode', 'Coord_x', 'Coord_y', 'Coord_z') %in% names(table)),
                  msg = 'electrode table must contains Electrode (integer), Coord_x,Coord_y,Coord_z in FreeSurfer RAS coordinates')
 
-      table$Electrode = as.integer(table$Electrode)
-      table = table[!is.na(table$Electrode), ]
-      n = nrow(table)
+      table$Electrode <- as.integer(table$Electrode)
+      table <- table[!is.na(table$Electrode), ]
+      n <- nrow(table)
 
       if( n == 0 ){
         return(invisible())
@@ -276,106 +276,106 @@ BrainElectrodes <- R6::R6Class(
 
       # auto generate label
       if( !length(table$Label) ){
-        table$Label = sprintf('NoLabel-%d', seq_len(n))
+        table$Label <- sprintf('NoLabel-%d', seq_len(n))
       }
 
       # Check coordinates
-      table$Coord_x = as.numeric( table$Coord_x )
-      table$Coord_y = as.numeric( table$Coord_y )
-      table$Coord_z = as.numeric( table$Coord_z )
-      na_coord = is.na(table$Coord_x) | is.na(table$Coord_y) | is.na(table$Coord_z)
+      table$Coord_x <- as.numeric( table$Coord_x )
+      table$Coord_y <- as.numeric( table$Coord_y )
+      table$Coord_z <- as.numeric( table$Coord_z )
+      na_coord <- is.na(table$Coord_x) | is.na(table$Coord_y) | is.na(table$Coord_z)
       if( any(na_coord) ){
-        table$Coord_x[ na_coord ] = 0
-        table$Coord_y[ na_coord ] = 0
-        table$Coord_z[ na_coord ] = 0
+        table$Coord_x[ na_coord ] <- 0
+        table$Coord_y[ na_coord ] <- 0
+        table$Coord_z[ na_coord ] <- 0
       }
 
       if( all( paste0('MNI305_', c('x','y','z')) %in% names(table) ) ){
-        table$MNI305_x = as.numeric( table$MNI305_x )
-        table$MNI305_y = as.numeric( table$MNI305_y )
-        table$MNI305_z = as.numeric( table$MNI305_z )
-        na_coord = is.na(table$MNI305_x) | is.na(table$MNI305_y) | is.na(table$MNI305_z)
+        table$MNI305_x <- as.numeric( table$MNI305_x )
+        table$MNI305_y <- as.numeric( table$MNI305_y )
+        table$MNI305_z <- as.numeric( table$MNI305_z )
+        na_coord <- is.na(table$MNI305_x) | is.na(table$MNI305_y) | is.na(table$MNI305_z)
         if( any(na_coord) ){
-          table$MNI305_x[ na_coord ] = 0
-          table$MNI305_y[ na_coord ] = 0
-          table$MNI305_z[ na_coord ] = 0
+          table$MNI305_x[ na_coord ] <- 0
+          table$MNI305_y[ na_coord ] <- 0
+          table$MNI305_z[ na_coord ] <- 0
         }
       }else{
-        table$MNI305_x = 0
-        table$MNI305_y = 0
-        table$MNI305_z = 0
+        table$MNI305_x <- 0
+        table$MNI305_y <- 0
+        table$MNI305_z <- 0
       }
 
       if( length(table$SurfaceElectrode) ){
-        table$SurfaceElectrode = stringr::str_to_upper(table$SurfaceElectrode) %in% c('T', 'TRUE')
+        table$SurfaceElectrode <- stringr::str_to_upper(table$SurfaceElectrode) %in% c('T', 'TRUE')
       }else{
-        table$SurfaceElectrode = FALSE
+        table$SurfaceElectrode <- FALSE
       }
 
       if( !length(table$SurfaceType) ){
-        table$SurfaceType = 'pial'
+        table$SurfaceType <- 'pial'
       }
-      table$SurfaceType = as.character(table$SurfaceType)
+      table$SurfaceType <- as.character(table$SurfaceType)
 
       if( !length(table$Radius) ){
-        table$Radius = 2
+        table$Radius <- 2
       }
-      table$Radius = as.numeric( table$Radius )
-      table$Radius[ is.na(table$Radius) ] = 2
+      table$Radius <- as.numeric( table$Radius )
+      table$Radius[ is.na(table$Radius) ] <- 2
 
       if( !length(table$VertexNumber) ){
-        table$VertexNumber = -1
+        table$VertexNumber <- -1
       }
-      table$VertexNumber = as.integer(table$VertexNumber)
-      table$VertexNumber[ is.na(table$VertexNumber) ] = -1
+      table$VertexNumber <- as.integer(table$VertexNumber)
+      table$VertexNumber[ is.na(table$VertexNumber) ] <- -1
 
       if( !length(table$Hemisphere) ){
-        table$Hemisphere = NA
+        table$Hemisphere <- NA
       }
 
-      self$raw_table = table
+      self$raw_table <- table
 
       # Generate objects
-      self$objects = list()
+      self$objects <- list()
 
 
-      subject_code = self$subject_code
+      subject_code <- self$subject_code
       for( ii in seq_len(n) ){
-        row = table[ii, ]
-        which_side = row$Hemisphere
-        nearest_vertex = row$VertexNumber
-        mni_305 = c( row$MNI305_x, row$MNI305_y, row$MNI305_z );
-        if(length(mni_305)!=3){ mni_305 = c(0,0,0) }
-        surf_type = c(row$SurfaceType, 'pial')[1]
-        if( is.na(surf_type) ){ surf_type = 'NA' }
-        radius = row$Radius
+        row <- table[ii, ]
+        which_side <- row$Hemisphere
+        nearest_vertex <- row$VertexNumber
+        mni_305 <- c( row$MNI305_x, row$MNI305_y, row$MNI305_z )
+        if(length(mni_305)!=3){ mni_305 <- c(0,0,0) }
+        surf_type <- c(row$SurfaceType, 'pial')[1]
+        if( is.na(surf_type) ){ surf_type <- 'NA' }
+        radius <- row$Radius
 
 
-        el = ElectrodeGeom$new(name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
+        el <- ElectrodeGeom$new(name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
                                position = c(row$Coord_x, row$Coord_y, row$Coord_z),
                                radius = radius, group = self$group)
-        el$is_surface_electrode = isTRUE( row$SurfaceElectrode )
-        el$hemisphere = which_side
-        el$surface_type = surf_type
-        el$vertex_number = nearest_vertex
-        el$subject_code = subject_code
-        el$MNI305_position = mni_305
+        el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
+        el$hemisphere <- which_side
+        el$surface_type <- surf_type
+        el$vertex_number <- nearest_vertex
+        el$subject_code <- subject_code
+        el$MNI305_position <- mni_305
         el$set_value( value = as.character(subject_code), name = '[Subject]' )
-        self$objects[[ row$Electrode ]] = el
+        self$objects[[ row$Electrode ]] <- el
       }
     },
 
     # function to set values to electrodes
     set_values = function(table_or_path){
       if( missing(table_or_path) ){
-        table = self$value_table
+        table <- self$value_table
       }else{
         stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
                    msg = 'table_or_path must be either data.frame or path to a csv file')
         if(!is.data.frame(table_or_path)){
-          table = read.csv(table_or_path, stringsAsFactors = FALSE)
+          table <- read.csv(table_or_path, stringsAsFactors = FALSE)
         }else{
-          table = table_or_path
+          table <- table_or_path
         }
       }
       if( !is.data.frame(table) ){
@@ -395,42 +395,42 @@ BrainElectrodes <- R6::R6Class(
                  msg = 'value table must contains Electrode (integer)')
 
       if( length(table$Subject) ){
-        table = table[table$Subject %in% self$subject_code, ]
+        table <- table[table$Subject %in% self$subject_code, ]
       }
-      table$Electrode = as.integer(table$Electrode)
-      table = table[!is.na(table$Electrode), ]
-      var_names = names(table)
+      table$Electrode <- as.integer(table$Electrode)
+      table <- table[!is.na(table$Electrode), ]
+      var_names <- names(table)
 
       if( 'Time' %in% var_names ){
         # Sort by time
-        table = table[!is.na(table$Time), ]
-        table = table[order( table$Time ), ]
+        table <- table[!is.na(table$Time), ]
+        table <- table[order( table$Time ), ]
       }else if( nrow(table) ){
-        table$Time = 0
+        table$Time <- 0
       }
       # Backup table
-      self$value_table = table
+      self$value_table <- table
 
       # Need to figure out what variables to be put into electrodes
 
-      var_names = var_names[ !var_names %in% c('Electrode', 'Time', 'Note') ]
+      var_names <- var_names[ !var_names %in% c('Electrode', 'Time', 'Note') ]
 
       # Check values
       for( vn in var_names ){
         if( !is.numeric(table[[vn]]) && !is.factor(table[[vn]]) ){
-          table[[vn]] = as.factor(table[[vn]])
+          table[[vn]] <- as.factor(table[[vn]])
         }
       }
 
       self$apply_electrodes(function(el, ii){
         # set values
-        sub = table[table$Electrode == ii, ]
+        sub <- table[table$Electrode == ii, ]
         lapply(var_names, function(vn){
           # if no subset, then remove keyframes, else set keyframes
           el$set_value(value = sub[[vn]], time_stamp = sub$Time,
                        name = vn, target = '.material.color')
           if( length(sub$Note) && is.character(sub$Note) ){
-            el$custom_info = sub$Note
+            el$custom_info <- sub$Note
           }
         })
         NULL
@@ -482,19 +482,19 @@ Brain2 <- R6::R6Class(
       stopifnot2( length(Torig) == 16 && length(dim(Torig)) == 2 && sum(dim(Torig)) == 8,
                   msg = 'Torig must be 4x4 matrix')
 
-      private$.subject_code = subject_code
+      private$.subject_code <- subject_code
 
-      self$xfm = xfm
-      self$Norig = Norig
-      self$Torig = Torig
+      self$xfm <- xfm
+      self$Norig <- Norig
+      self$Torig <- Torig
 
-      self$volumes = list()
-      self$surfaces = list()
-      self$electrodes = BrainElectrodes$new(subject_code = subject_code)
-      self$meta = list()
+      self$volumes <- list()
+      self$surfaces <- list()
+      self$electrodes <- BrainElectrodes$new(subject_code = subject_code)
+      self$meta <- list()
 
       # TODO: put all brain global data (transform etc...) here
-      self$misc = BlankGeom$new(
+      self$misc <- BlankGeom$new(
         group = GeomGroup$new(name = sprintf('_internal_group_data_%s', subject_code)),
         name = sprintf('_misc_%s', subject_code)
       )
@@ -509,39 +509,39 @@ Brain2 <- R6::R6Class(
       if( surface$mesh_type == 'std.141' ){
         surface$set_group_position( self$scanner_center )
 
-        offset_x = switch (
+        offset_x <- switch (
           surface$surface_type,
-          'inflated' = { offset_x = 50 },
-          'sphere' = { offset_x = 128 },
+          'inflated' = { offset_x <- 50 },
+          'sphere' = { offset_x <- 128 },
           { 0 }
         )
-        surface$left_hemisphere$position = c(-offset_x, 0, 0)
-        surface$right_hemisphere$position = c(offset_x, 0, 0)
+        surface$left_hemisphere$position <- c(-offset_x, 0, 0)
+        surface$right_hemisphere$position <- c(offset_x, 0, 0)
 
       }else if( surface$mesh_type == 'fs' ){
         surface$set_group_position( 0, 0, 0 )
       }
 
       surface$set_subject_code( self$subject_code )
-      self$surfaces[[ surface$surface_type ]] = surface
+      self$surfaces[[ surface$surface_type ]] <- surface
 
     },
 
     remove_surface = function(surface_types){
       if(missing(surface_types)){
-        surface_types = self$surface_types
+        surface_types <- self$surface_types
       }
       for( s in surface_types){
-        self$surfaces[[ s ]] = NULL
+        self$surfaces[[ s ]] <- NULL
       }
     },
 
     remove_volume = function(volume_types){
       if(missing(volume_types)){
-        volume_types = self$volume_types
+        volume_types <- self$volume_types
       }
       for( s in volume_types){
-        self$volumes[[ s ]] = NULL
+        self$volumes[[ s ]] <- NULL
       }
     },
 
@@ -552,13 +552,13 @@ Brain2 <- R6::R6Class(
       stopifnot2( volume$has_volume, msg = 'volume miss datacube objects')
 
       volume$set_subject_code( self$subject_code )
-      self$volumes[[ volume$volume_type ]] = volume
+      self$volumes[[ volume$volume_type ]] <- volume
 
     },
 
     # special: must be cached path
     add_vertex_color = function(name, path, lazy = TRUE){
-      path = normalizePath(path)
+      path <- normalizePath(path)
       self$misc$group$set_group_data(
         name = name,
         value = list(
@@ -575,7 +575,7 @@ Brain2 <- R6::R6Class(
 
     set_electrodes = function(electrodes){
       if( R6::is.R6(electrodes) && 'brain-electrodes' %in% class(electrodes)){
-        self$electrodes = electrodes
+        self$electrodes <- electrodes
         self$electrodes$set_subject_code( self$subject_code )
       }else{
         self$electrodes$set_electrodes( electrodes )
@@ -587,88 +587,93 @@ Brain2 <- R6::R6Class(
     },
 
     calculate_template_coordinates = function(save_to = 'auto'){
-      table = self$electrodes$raw_table
+      table <- self$electrodes$raw_table
       if( !is.data.frame(table) || !nrow(table) ){
         return(invisible())
       }
       # Electrode   Coord_x   Coord_y  Coord_z Label are guaranteed
-      n = nrow(table)
-      surface_types = self$surface_types
+      n <- nrow(table)
+      surface_types <- self$surface_types
 
-      tempenv = new.env(parent = emptyenv())
-      tempenv$has_change = FALSE
+      tempenv <- new.env(parent = emptyenv())
+      tempenv$has_change <- FALSE
 
-      rows = lapply(seq_len(n), function(ii){
-        row = table[ii, ]
-        fs_position = c(row$Coord_x, row$Coord_y, row$Coord_z)
+      rows <- lapply(seq_len(n), function(ii){
+        row <- table[ii, ]
+        fs_position <- c(row$Coord_x, row$Coord_y, row$Coord_z)
 
         if( all(fs_position == 0) ){
           # this electrode is supposed to be hidden
           return(row)
         }
 
-        is_surface_electrode = row$SurfaceElectrode
-        surf_t = row$SurfaceType
+        is_surface_electrode <- row$SurfaceElectrode
+        surf_t <- row$SurfaceType
 
         if( isTRUE(is_surface_electrode) ){
 
           if( is.na(surf_t) || surf_t == 'NA' ){
-            surf_t = 'pial'
+            surf_t <- 'pial'
           }
 
           # Check if mapped to 141
-          mapped = electrode_mapped_141(position = fs_position, is_surface = TRUE,
+          mapped <- electrode_mapped_141(position = fs_position, is_surface = TRUE,
                                         vertex_number = row$VertexNumber, surf_type = surf_t,
                                         hemisphere = row$Hemisphere)
           if( !mapped && surf_t %in% surface_types ){
             # load vertices
-            lh_vert = self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Left Hemisphere - %s (%s)', surf_t, self$subject_code))
-            rh_vert = self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Right Hemisphere - %s (%s)', surf_t, self$subject_code))
+            lh_vert <- self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Left Hemisphere - %s (%s)', surf_t, self$subject_code))
+            rh_vert <- self$surfaces[[ surf_t ]]$group$get_data(sprintf('free_vertices_Standard 141 Right Hemisphere - %s (%s)', surf_t, self$subject_code))
 
             # Needs to get mesh center from hemisphere group. This step is critical as we need to calculate
             # nearest node from global position
-            mesh_center = self$surfaces[[ surf_t ]]$group$position
-            lh_dist = colSums((t(lh_vert) - (fs_position - mesh_center))^2)
-            rh_dist = colSums((t(rh_vert) - (fs_position - mesh_center))^2)
+            mesh_center <- self$surfaces[[ surf_t ]]$group$position
+            lh_dist <- colSums((t(lh_vert) - (fs_position - mesh_center))^2)
+            rh_dist <- colSums((t(rh_vert) - (fs_position - mesh_center))^2)
 
-            lh_node = which.min(lh_dist); lh_dist = lh_dist[ lh_node ]
-            rh_node = which.min(rh_dist); rh_dist = rh_dist[ rh_node ]
+            lh_node <- which.min(lh_dist)
+            lh_dist <- lh_dist[ lh_node ]
+
+            rh_node <- which.min(rh_dist)
+            rh_dist <- rh_dist[ rh_node ]
 
             # default is right
-            node = rh_node - 1; hemisphere = 'right'
+            node <- rh_node - 1
+            hemisphere <- 'right'
 
             if( lh_dist < rh_dist ){
               # left
-              node = lh_node - 1; hemisphere = 'left'
+              node <- lh_node - 1
+              hemisphere <- 'left'
             }
 
-            row$VertexNumber = node
-            row$Hemisphere = hemisphere
-            tempenv$has_change = TRUE
+            row$VertexNumber <- node
+            row$Hemisphere <- hemisphere
+            tempenv$has_change <- TRUE
           }
         }
 
         # calculate MNI305 position
-        mni_position = c(row$MNI305_x, row$MNI305_y, row$MNI305_z)
+        mni_position <- c(row$MNI305_x, row$MNI305_y, row$MNI305_z)
         if( all(mni_position == 0) ){
           # need to calculate MNI position
-          mni_position = self$vox2vox_MNI305 %*% c(fs_position, 1)
-          row$MNI305_x = mni_position[1]
-          row$MNI305_y = mni_position[2]
-          row$MNI305_z = mni_position[3]
-          tempenv$has_change = TRUE
+          mni_position <- self$vox2vox_MNI305 %*% c(fs_position, 1)
+          row$MNI305_x <- mni_position[1]
+          row$MNI305_y <- mni_position[2]
+          row$MNI305_z <- mni_position[3]
+          tempenv$has_change <- TRUE
         }
         row
       })
 
-      rows = do.call(rbind, rows)
-      nms = unique(c("Electrode","Coord_x","Coord_y","Coord_z","Label","MNI305_x","MNI305_y","MNI305_z",
+      rows <- do.call(rbind, rows)
+      nms <- unique(c("Electrode","Coord_x","Coord_y","Coord_z","Label","MNI305_x","MNI305_y","MNI305_z",
                      "SurfaceElectrode","SurfaceType","Radius","VertexNumber","Hemisphere", names(rows)))
-      rows = rows[, nms]
+      rows <- rows[, nms]
 
-      raw_path = self$electrodes$raw_table_path
+      raw_path <- self$electrodes$raw_table_path
       if( isTRUE( save_to == 'auto' ) ){
-        save_to = raw_path
+        save_to <- raw_path
       }
 
       if(tempenv$has_change && length(save_to) == 1 && is.character(save_to)){
@@ -679,36 +684,36 @@ Brain2 <- R6::R6Class(
       }
 
       self$electrodes$set_electrodes(rows)
-      self$electrodes$raw_table_path = raw_path
+      self$electrodes$raw_table_path <- raw_path
 
       invisible(rows)
     },
 
     get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE){
 
-      geoms = list(self$misc)
+      geoms <- list(self$misc)
 
       if( is.logical(volumes) ){
-        if(isTRUE(volumes)){ volumes = self$volume_types }else{ volumes = NULL }
+        if(isTRUE(volumes)){ volumes <- self$volume_types }else{ volumes <- NULL }
       }else{
-        volumes = volumes[ volumes %in% self$volume_types ]
+        volumes <- volumes[ volumes %in% self$volume_types ]
       }
 
-      for( v in volumes ){ geoms = c( geoms , self$volumes[[ v ]]$object ) }
+      for( v in volumes ){ geoms <- c( geoms , self$volumes[[ v ]]$object ) }
 
       if( is.logical(surfaces) ){
-        if(isTRUE(surfaces)){ surfaces = self$surface_types }else{ surfaces = NULL }
+        if(isTRUE(surfaces)){ surfaces <- self$surface_types }else{ surfaces <- NULL }
       }else{
-        surfaces = surfaces[ surfaces %in% self$surface_types ]
+        surfaces <- surfaces[ surfaces %in% self$surface_types ]
       }
 
       for( s in surfaces ){
-        geoms = c( geoms , self$surfaces[[ s ]]$left_hemisphere, self$surfaces[[ s ]]$right_hemisphere )
+        geoms <- c( geoms , self$surfaces[[ s ]]$left_hemisphere, self$surfaces[[ s ]]$right_hemisphere )
       }
 
       if( isTRUE(electrodes) && !is.null(self$electrodes) ){
         # self$electrodes$set_values()
-        geoms = c(geoms, self$electrodes$objects)
+        geoms <- c(geoms, self$electrodes$objects)
       }
 
       return( unlist( geoms ) )
@@ -733,12 +738,12 @@ Brain2 <- R6::R6Class(
 
       cat(sprintf('Surface information (total count %d)\n', length( self$surfaces )))
       lapply( self$surfaces, function( surface ){
-        s = sprintf( '  %s [ %s ]',  surface$surface_type, surface$mesh_type)
-        v = 'invalid'
-        level = 'WARNING'
+        s <- sprintf( '  %s [ %s ]',  surface$surface_type, surface$mesh_type)
+        v <- 'invalid'
+        level <- 'WARNING'
         if( surface$has_hemispheres ){
-          v = ''
-          level = 'INFO'
+          v <- ''
+          level <- 'INFO'
         }
         cat2(s, v , level = level)
         invisible()
@@ -746,12 +751,12 @@ Brain2 <- R6::R6Class(
 
       cat(sprintf('Volume information (total count %d)\n', length( self$volumes )))
       lapply( self$volumes, function( volume ){
-        s = sprintf( '  %s',  volume$volume_type)
-        v = 'invalid'
-        level = 'WARNING'
+        s <- sprintf( '  %s',  volume$volume_type)
+        v <- 'invalid'
+        level <- 'WARNING'
         if( volume$has_volume ){
-          v = ''
-          level = 'INFO'
+          v <- ''
+          level <- 'INFO'
         }
         cat2(s, v , level = level)
         invisible()
@@ -782,22 +787,22 @@ Brain2 <- R6::R6Class(
 
 
       # collect volume information
-      geoms = self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
+      geoms <- self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
 
-      is_r6 = vapply(geoms, function(x){ 'AbstractGeom' %in% class(x) }, FALSE)
-      geoms = geoms[is_r6]
-      names(geoms) = NULL
+      is_r6 <- vapply(geoms, function(x){ 'AbstractGeom' %in% class(x) }, FALSE)
+      geoms <- geoms[is_r6]
+      names(geoms) <- NULL
 
-      global_data = self$global_data
+      global_data <- self$global_data
 
 
-      control_presets = unique(
+      control_presets <- unique(
         c( 'subject2', 'surface_type2', 'hemisphere_material',
            'map_template', 'electrodes', control_presets, 'animation', 'display_highlights')
       )
 
       if( !length(self$volumes) ){
-        side_display = FALSE
+        side_display <- FALSE
       }
 
       # # check if curvature files exist

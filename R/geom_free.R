@@ -28,31 +28,31 @@ FreeGeom <- R6::R6Class(
       # Check length
       if(length(value) == 0){
         # Delete animation keyframe
-        self$keyframes[[name]] = NULL
+        self$keyframes[[name]] <- NULL
         return(invisible())
       }
-      value = as.vector(value)
+      value <- as.vector(value)
 
-      kf = KeyFrame2$new(name = name, value = value, time = time_stamp,
+      kf <- KeyFrame2$new(name = name, value = value, time = time_stamp,
                         dtype = ifelse( isTRUE(is.numeric(value)), 'continuous', 'discrete'),
                         target = '.geometry.attributes.color.array', ...)
 
 
       if(length(self$cache_file)){
-        cf = stringr::str_replace(self$cache_file, '\\.json$', paste0('__', name, '.json'))
+        cf <- stringr::str_replace(self$cache_file, '\\.json$', paste0('__', name, '.json'))
       }
 
-      dname = sprintf('free_vertex_colors_%s_%s', name, self$name)
+      dname <- sprintf('free_vertex_colors_%s_%s', name, self$name)
       kf$use_cache(path = cf, name = dname)
 
-      re = list(
+      re <- list(
         path = cf,
         absolute_path = normalizePath(cf),
         file_name = filename(cf),
         is_new_cache = FALSE,
         is_cache = TRUE
       )
-      self$keyframes[[name]] = kf
+      self$keyframes[[name]] <- kf
       self$group$set_group_data(dname, value = re, is_cached = TRUE)
 
     },
@@ -65,16 +65,16 @@ FreeGeom <- R6::R6Class(
       super$initialize(name, position = position, ...)
 
       # Must specify a group, vertices and faces will be stored within the group
-      self$group = group
+      self$group <- group
 
       if(length(cache_file)){
-        self$cache_file = cache_file
+        self$cache_file <- cache_file
 
         if(missing(vertex) || missing(face)){
           # Use cache file only
           stopifnot2(file.exists(cache_file), msg = 'cache_file does not exist!')
 
-          re = list(
+          re <- list(
             path = cache_file,
             absolute_path = normalizePath(cache_file),
             file_name = filename(cache_file),
@@ -88,10 +88,10 @@ FreeGeom <- R6::R6Class(
           stopifnot2(ncol(vertex) == 3, msg = 'vertex must have 3 columns')
           stopifnot2(ncol(face) == 3, msg = 'face must have 3 columns')
 
-          data = list( vertex = vertex, face = face )
-          names(data) = sprintf(c('free_vertices_%s', 'free_faces_%s'), name)
+          data <- list( vertex = vertex, face = face )
+          names(data) <- sprintf(c('free_vertices_%s', 'free_faces_%s'), name)
 
-          re = json_cache(path = cache_file, data = data)
+          re <- json_cache(path = cache_file, data = data)
         }
 
         group$set_group_data(sprintf('free_vertices_%s', name), value = re, is_cached = TRUE)
@@ -117,9 +117,9 @@ FreeGeom <- R6::R6Class(
 
     },
     to_list = function(){
-      re = super$to_list()
-      re$hemisphere = self$hemisphere
-      re$surface_type = self$surface_type
+      re <- super$to_list()
+      re$hemisphere <- self$hemisphere
+      re$surface_type <- self$surface_type
       return( re )
     }
   )

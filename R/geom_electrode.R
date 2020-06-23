@@ -25,7 +25,7 @@ ElectrodeGeom <- R6::R6Class(
 
     # ------------ G ------------
     to_list = function(){
-      re = c(
+      re <- c(
         super$to_list(),
         list(
           is_electrode = TRUE,
@@ -47,14 +47,14 @@ ElectrodeGeom <- R6::R6Class(
     sub_cortical = function(v){
       cat2('sub_cortical is deprecated, use is_surface_electrode instead.', level = 'WARNING')
       if(!missing(v)){
-        self$is_surface_electrode = !isTRUE(v)
+        self$is_surface_electrode <- !isTRUE(v)
       }
       return(!self$is_surface_electrode)
     },
     search_geoms = function(v){
       cat2('search_geoms is deprecated, use hemisphere instead.', level = 'WARNING')
       if(!missing(v)){
-        self$hemisphere = v
+        self$hemisphere <- v
       }
       return(self$hemisphere)
     }

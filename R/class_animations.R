@@ -18,18 +18,18 @@ KeyFrame <- R6::R6Class(
     initialize = function(name, time, value, dtype = 'continuous', target = '.material.color', ...){
 
       if( dtype == 'continuous' ){
-        private$.dtype = 'continuous'
-        value = as.numeric(value)
-        sel = !is.na(value)
-        time = time[ sel ]
-        value = value[ sel ]
+        private$.dtype <- 'continuous'
+        value <- as.numeric(value)
+        sel <- !is.na(value)
+        time <- time[ sel ]
+        value <- value[ sel ]
       }else{
         # factor?
-        private$.dtype = 'discrete'
+        private$.dtype <- 'discrete'
 
         # If is factor, then do not remake factor as we need to keep the levels
         if(!is.factor(value)){
-          value = factor(value, ...)
+          value <- factor(value, ...)
         }
       }
 
@@ -37,11 +37,11 @@ KeyFrame <- R6::R6Class(
       stopifnot2(length(value) == length(time), msg = 'Value, time lengths must equal')
       stopifnot2(is.numeric(time), msg = 'Time must be numerical')
 
-      self$name = name
-      self$target = target
+      self$name <- name
+      self$target <- target
 
-      private$.time = time
-      private$.values = value
+      private$.time <- time
+      private$.values <- value
     },
 
     to_list = function(){
@@ -57,13 +57,13 @@ KeyFrame <- R6::R6Class(
 
     use_cache = function(path, name){
       if(self$cached){ return() }
-      self$cached = TRUE
+      self$cached <- TRUE
 
       json_cache(path = path, data = structure(list(self$to_list()), names = name))
       if(self$is_continuous){
-        private$.values = range(private$.values)
+        private$.values <- range(private$.values)
       }else{
-        private$.values = unique(private$.values)
+        private$.values <- unique(private$.values)
       }
 
     }
@@ -97,19 +97,19 @@ KeyFrame2 <- R6::R6Class(
 
     initialize = function(name, time, value, dtype = 'continuous', target = '.material.color', ...){
       if( dtype == 'continuous' ){
-        private$.dtype = 'continuous'
+        private$.dtype <- 'continuous'
         # Please make sure vakue and time are valid, no checks here
-        value = as.numeric(value)
+        value <- as.numeric(value)
         # sel = !is.na(value)
         # time = time[ sel ]
         # value = value[ sel ]
       }else{
         # factor?
-        private$.dtype = 'discrete'
+        private$.dtype <- 'discrete'
 
         # If is factor, then do not remake factor as we need to keep the levels
         if(!is.factor(value)){
-          value = factor(value, ...)
+          value <- factor(value, ...)
         }
       }
 
@@ -117,11 +117,11 @@ KeyFrame2 <- R6::R6Class(
       stopifnot2(nrow(value) == length(time), msg = 'nrow(Value), length(time) must equal')
       stopifnot2(is.numeric(time), msg = 'Time must be numerical')
 
-      self$name = name
-      self$target = target
+      self$name <- name
+      self$target <- target
 
-      private$.time = time
-      private$.values = value
+      private$.time <- time
+      private$.values <- value
     }
 
   )
@@ -148,49 +148,49 @@ ColorMap <- R6::R6Class(
 
     initialize = function(name, ..., .list = NULL, symmetric = NULL, alias = NULL){
 
-      self$name = name
+      self$name <- name
       if(length(alias) == 1){
-        self$alias = alias
+        self$alias <- alias
       }
 
-      geoms = c(list(...), .list)
+      geoms <- c(list(...), .list)
 
       # get all animation names
       # animation_types = unlist( lapply(geoms, function(g){ g$animation_types }) )
       # animation_types = unique(animation_types)
 
       # get time range
-      time_range = unlist(lapply(geoms, function(g){
+      time_range <- unlist(lapply(geoms, function(g){
         g$animation_time_range( name )
       }))
-      if(!length( time_range )){ time_range = c(0,1) }
-      if( length( time_range ) == 1 ){ time_range = c(time_range-1,time_range) }
-      self$time_range = range(time_range)
+      if(!length( time_range )){ time_range <- c(0,1) }
+      if( length( time_range ) == 1 ){ time_range <- c(time_range-1,time_range) }
+      self$time_range <- range(time_range)
 
       # get value range
-      value_range = unlist(lapply(geoms, function(g){
+      value_range <- unlist(lapply(geoms, function(g){
         g$animation_value_range( name )
       }))
-      if(!length( value_range )){ value_range = c(0,1) }
-      if( length( value_range ) == 1 ){ value_range = c(value_range-1,value_range) }
-      value_range = range(value_range)
+      if(!length( value_range )){ value_range <- c(0,1) }
+      if( length( value_range ) == 1 ){ value_range <- c(value_range-1,value_range) }
+      value_range <- range(value_range)
       if(length(symmetric) == 1){
-        value_range = max(abs( value_range - symmetric )) * c(-1, 1) + symmetric
+        value_range <- max(abs( value_range - symmetric )) * c(-1, 1) + symmetric
       }
-      self$value_range = value_range
+      self$value_range <- value_range
 
       # get value names
-      value_names = unlist(lapply(geoms, function(g){
+      value_names <- unlist(lapply(geoms, function(g){
         g$animation_value_names( name )
       }))
-      self$value_names = unique( value_names )
+      self$value_names <- unique( value_names )
 
       if( length(self$value_names) ){
-        self$value_type = 'discrete'
-        self$colors = grDevices::palette()
+        self$value_type <- 'discrete'
+        self$colors <- grDevices::palette()
       }else{
-        self$value_type = 'continuous'
-        self$colors = c('navyblue', '#e2e2e2', 'red')
+        self$value_type <- 'continuous'
+        self$colors <- c('navyblue', '#e2e2e2', 'red')
       }
 
       self$set_colors()
@@ -198,19 +198,19 @@ ColorMap <- R6::R6Class(
 
     set_colors = function( colors = NULL ){
       if( !length(colors) ){
-        colors = self$colors
+        colors <- self$colors
       }
 
       if(self$value_type == 'continuous'){
-        self$colors = colors
-        self$n_colors = max(64, self$n_colors)
+        self$colors <- colors
+        self$n_colors <- max(64, self$n_colors)
       }else{
         # discrete, ncolors must equals to number of colors must equal to value_names
-        self$n_colors = length( self$value_names )
+        self$n_colors <- length( self$value_names )
         if( self$n_colors > length(colors) ){
-          self$colors = grDevices::colorRampPalette(colors)(self$n_colors)
+          self$colors <- grDevices::colorRampPalette(colors)(self$n_colors)
         }else{
-          self$colors = colors[seq_len(self$n_colors)]
+          self$colors <- colors[seq_len(self$n_colors)]
         }
       }
     },
@@ -218,12 +218,12 @@ ColorMap <- R6::R6Class(
     to_list = function(){
 
       # Threejs Lut works best with 2^x number of colors
-      ncols = max(16 , 2^ceiling(log2(self$n_colors)) )
-      colors = grDevices::colorRampPalette(self$colors)(ncols)
+      ncols <- max(16 , 2^ceiling(log2(self$n_colors)) )
+      colors <- grDevices::colorRampPalette(self$colors)(ncols)
       if( self$value_type == 'continuous' ){
-        color_keys = seq( self$value_range[1], self$value_range[2], length.out = ncols )
+        color_keys <- seq( self$value_range[1], self$value_range[2], length.out = ncols )
       }else{
-        color_keys = seq_len( ncols )
+        color_keys <- seq_len( ncols )
       }
 
       list(

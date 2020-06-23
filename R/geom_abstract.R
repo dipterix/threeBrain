@@ -37,58 +37,58 @@ GeomGroup <- R6::R6Class(
     },
     set_transform = function(mat = NULL){
       if(!length(mat)){
-        self$trans_mat = NULL
+        self$trans_mat <- NULL
       }else{
         stopifnot2(length(mat) == 16 && nrow(mat) == 4, msg = 'mat must be a 4x4 matrix')
-        self$trans_mat = mat
+        self$trans_mat <- mat
       }
     },
     initialize = function(name, layer = 0, position = c(0,0,0),
                           cache_path = tempfile(), parent = NULL){
-      self$name = name
+      self$name <- name
 
       stopifnot2(all(layer %in% 0:13), msg = 'Layer(s) must be from 0 to 12, use 0 for main camera-only, 1 for all cameras, 13 is invisible.')
-      self$layer = layer
+      self$layer <- layer
 
       if( !is.null(parent) ){
         if(R6::is.R6(parent)){
-          parent = parent$name
+          parent <- parent$name
         }
-        self$parent_group = parent
+        self$parent_group <- parent
       }
 
 
       stopifnot2(length(position) == 3, msg = 'position must have length of 3.')
-      self$position = position
+      self$position <- position
 
-      self$cache_env = new.env(parent = emptyenv())
+      self$cache_env <- new.env(parent = emptyenv())
 
-      self$cache_path = cache_path
+      self$cache_path <- cache_path
     },
     set_group_data = function(name, value, is_cached = FALSE, cache_if_not_exists = FALSE){
       if(is.null(self$group_data)){
-        self$group_data = list()
+        self$group_data <- list()
       }
 
       if(cache_if_not_exists && !is_cached){
         dir_create(self$cache_path)
         # cache file path
-        path = file.path(self$cache_path, stringr::str_replace_all(name, '[^\\w.]', '_'))
+        path <- file.path(self$cache_path, stringr::str_replace_all(name, '[^\\w.]', '_'))
         if(!file.exists(path)){
-          value = json_cache(path, structure(list(value), names = name))
-          is_cached = TRUE
+          value <- json_cache(path, structure(list(value), names = name))
+          is_cached <- TRUE
         }
       }
 
-      self$group_data[[name]] = value
+      self$group_data[[name]] <- value
       if(is_cached){
-        self$cached_items = c(self$cached_items, name)
+        self$cached_items <- c(self$cached_items, name)
       }
 
 
     },
     get_data = function(key, force_reload = FALSE, ifnotfound = NULL){
-      re = self$group_data[[key]]
+      re <- self$group_data[[key]]
 
       if(is.null(re)){
         return(ifnotfound)
@@ -103,10 +103,10 @@ GeomGroup <- R6::R6Class(
 
         # load cache
         cat2('Loading from cache')
-        d = from_json(from_file = re$absolute_path)
+        d <- from_json(from_file = re$absolute_path)
 
         for(nm in names(d)){
-          self$cache_env[[nm]] = d[[nm]]
+          self$cache_env[[nm]] <- d[[nm]]
         }
 
         # This is a very special case which shouldn't happen
@@ -120,9 +120,9 @@ GeomGroup <- R6::R6Class(
     },
     to_list = function(){
       if(!is.null(self$trans_mat)){
-        trans_mat = as.vector(t(self$trans_mat))
+        trans_mat <- as.vector(t(self$trans_mat))
       }else{
-        trans_mat = NULL
+        trans_mat <- NULL
       }
       list(
         name = self$name,
@@ -169,17 +169,17 @@ AbstractGeom <- R6::R6Class(
     custom_info = '',
     subject_code = NULL,
     initialize = function(name, position = c(0,0,0), group = NULL, layer = 0, ...){
-      self$name = name
+      self$name <- name
       # self$time_stamp = time_stamp
       self$set_position(position)
-      self$group = group
+      self$group <- group
       stopifnot2(all(layer %in% 0:13), msg = 'Layer(s) must be from 0 to 13, use 0 for main camera-only, 1 for all cameras, 13 is invisible.')
-      self$layer = layer
+      self$layer <- layer
     },
     set_position = function(...){
-      pos = c(...)
+      pos <- c(...)
       stopifnot2(length(pos) == 3, msg = 'Position must be a length of 3 - X,Y,Z')
-      self$position = pos
+      self$position <- pos
     },
     # set_value = function(value = NULL, time_stamp = NULL){
     #   .NotYetImplemented()
@@ -193,40 +193,40 @@ AbstractGeom <- R6::R6Class(
       }else{
         if(length(value) == 0){
           # Delete animation keyframe
-          self$keyframes[[name]] = NULL
+          self$keyframes[[name]] <- NULL
           return(invisible())
         }else if (length(time_stamp) != 1){
-          time_stamp = 0
+          time_stamp <- 0
         }
       }
-      is_na = is.na(value)
+      is_na <- is.na(value)
       if(all(is_na)){
-        self$keyframes[[name]] = NULL
+        self$keyframes[[name]] <- NULL
         return(invisible())
       }else{
-        value = value[!is_na]
-        time_stamp = time_stamp[!is_na]
+        value <- value[!is_na]
+        time_stamp <- time_stamp[!is_na]
       }
 
 
-      kf = KeyFrame$new(name = name, value = value, time = time_stamp,
+      kf <- KeyFrame$new(name = name, value = value, time = time_stamp,
                         dtype = ifelse( isTRUE(is.numeric(value)), 'continuous', 'discrete'),
                         target = '.material.color', ...)
 
-      self$keyframes[[name]] = kf
+      self$keyframes[[name]] <- kf
 
     },
     to_list = function(){
-      group_info = NULL
-      subject_code = self$subject_code
+      group_info <- NULL
+      subject_code <- self$subject_code
       if(!is.null(self$group)){
-        group_info = list(
+        group_info <- list(
           group_name = self$group$name,
           group_layer = self$group$layer,
           group_position = as.numeric(self$group$position)
         )
         if(is.null( subject_code )){
-          subject_code = self$group$subject_code
+          subject_code <- self$group$subject_code
         }
       }
 
@@ -256,21 +256,21 @@ AbstractGeom <- R6::R6Class(
       return(ifnotfound)
     },
     animation_time_range = function( ani_name ){
-      kf = self$keyframes[[ ani_name ]]
+      kf <- self$keyframes[[ ani_name ]]
       if(length(kf)){
         return(kf$time_range)
       }
       return(NULL)
     },
     animation_value_range = function( ani_name ){
-      kf = self$keyframes[[ ani_name ]]
+      kf <- self$keyframes[[ ani_name ]]
       if(length(kf) && kf$is_continuous){
         return(as.numeric(kf$value_range))
       }
       return(NULL)
     },
     animation_value_names = function( ani_name ){
-      kf = self$keyframes[[ ani_name ]]
+      kf <- self$keyframes[[ ani_name ]]
       if(length(kf) && !kf$is_continuous){
         return(kf$value_names)
       }
