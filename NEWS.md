@@ -3,7 +3,7 @@ threeBrain 0.1.8
 
 ## Changes
 
-* Screenshot now downloads `pdf` format with text vectorized
+* Screenshot now downloads `pdf` format
 
 ### Improvements
 
