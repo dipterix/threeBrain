@@ -110,3 +110,59 @@ set_default_template <- function(subject_code, view = TRUE,
     }
   }
 }
+
+
+
+#' @rdname template_subject
+#' @param upgrade whether to check and download 'N27' brain interactively.
+#' Choices are 'ask', 'always', and 'never'
+#' @export
+threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never')){
+  upgrade <- match.arg(upgrade)
+
+  template_dir <- getOption('threeBrain.template_dir', normalizePath('~/rave_data/others/three_brain'))
+  n27 <- file.path(template_dir, 'N27')
+
+  has_n27 <- tryCatch({
+    check_freesurfer_path(n27, check_volume = TRUE, check_surface = TRUE)
+  }, error = function(e){
+    FALSE
+  })
+
+  if(has_n27 && upgrade %in% c('never')){
+    dipsaus::cat2('N27 brain has been installed', level = 'DEFAULT')
+    return(invisible())
+  }
+
+  if(has_n27 && upgrade %in% c('ask')){
+
+    reinst <- tryCatch({
+      dipsaus::ask_yesno('N27 template brain detected at \n  ', template_dir,
+                         '\nDo you want to reinstall?', error_if_canceled = FALSE)
+    }, error = function(e){
+      FALSE
+    })
+
+    if(!isTRUE(reinst)){
+      dipsaus::cat2('N27 template brain... skip', level = 'DEFAULT')
+      return(invisible())
+    }
+  }
+
+  # install N27 brain
+
+  code <- sprintf(
+  "{
+  dipsaus::cat2('Installing N27 template brain...', level = 'INFO')
+  threeBrain::download_N27(template_dir = '%s')
+
+  # load N27
+  dipsaus::cat2('Expand the template, creating cache...', level = 'INFO')
+  threeBrain::merge_brain(template_subject = 'N27')
+  }", template_dir)
+
+  dipsaus::rs_exec(parse(text = code)[[1]], name = 'Finalize threeBrain N27 installation', quoted = TRUE)
+
+  return(invisible())
+}
+

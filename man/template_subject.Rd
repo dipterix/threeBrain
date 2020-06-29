@@ -6,6 +6,7 @@
 \alias{download_template_subject}
 \alias{download_N27}
 \alias{set_default_template}
+\alias{threebrain_finalize_installation}
 \title{Download and Manage Template Subjects}
 \usage{
 download_template_subject(
@@ -21,6 +22,8 @@ set_default_template(
   view = TRUE,
   template_dir = getOption("threeBrain.template_dir", "~/rave_data/others/three_brain")
 )
+
+threebrain_finalize_installation(upgrade = c("ask", "always", "never"))
 }
 \arguments{
 \item{subject_code}{character with only letters and numbers (Important). Default is `N27`}
@@ -34,6 +37,9 @@ set_default_template(
 \item{...}{more to pass to \code{download_template_subject}}
 
 \item{view}{whether to view the subject}
+
+\item{upgrade}{whether to check and download 'N27' brain interactively.
+Choices are 'ask', 'always', and 'never'}
 }
 \description{
 Download and Manage Template Subjects
