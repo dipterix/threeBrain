@@ -337,7 +337,7 @@ function computeStateInformation(keyPath) {
 /* 2 */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"errors\":{\"callbackRequired\":\"A callback is required!\",\"optionsRequired\":\"Options were not passed and are required.\",\"json2csv\":{\"cannotCallOn\":\"Cannot call json2csv on \",\"dataCheckFailure\":\"Data provided was not an array of documents.\",\"notSameSchema\":\"Not all documents have the same schema.\"},\"csv2json\":{\"cannotCallOn\":\"Cannot call csv2json on \",\"dataCheckFailure\":\"CSV is not a string.\"}},\"defaultOptions\":{\"delimiter\":{\"field\":\",\",\"wrap\":\"\\\"\",\"eol\":\"\\n\"},\"excelBOM\":false,\"prependHeader\":true,\"trimHeaderFields\":false,\"trimFieldValues\":false,\"sortHeader\":false,\"parseCsvNumbers\":false,\"keys\":null,\"checkSchemaDifferences\":false,\"expandArrayObjects\":false,\"unwindArrays\":false},\"values\":{\"excelBOM\":\"﻿\"}}");
+module.exports = JSON.parse("{\"errors\":{\"callbackRequired\":\"A callback is required!\",\"optionsRequired\":\"Options were not passed and are required.\",\"json2csv\":{\"cannotCallOn\":\"Cannot call json2csv on \",\"dataCheckFailure\":\"Data provided was not an array of documents.\",\"notSameSchema\":\"Not all documents have the same schema.\"},\"csv2json\":{\"cannotCallOn\":\"Cannot call csv2json on \",\"dataCheckFailure\":\"CSV is not a string.\"}},\"defaultOptions\":{\"delimiter\":{\"field\":\",\",\"wrap\":\"\\\"\",\"eol\":\"\\n\"},\"excelBOM\":false,\"prependHeader\":true,\"trimHeaderFields\":false,\"trimFieldValues\":false,\"sortHeader\":false,\"parseCsvNumbers\":false,\"keys\":null,\"checkSchemaDifferences\":false,\"expandArrayObjects\":false,\"unwindArrays\":false,\"useLocaleFormat\":false},\"values\":{\"excelBOM\":\"﻿\"}}");
 
 /***/ }),
 /* 3 */
@@ -361,6 +361,7 @@ module.exports = {
     removeEmptyFields,
     getNCharacters,
     unwind,
+    isInvalid,
 
     // underscore replacements:
     isString,
@@ -561,11 +562,15 @@ function unwindItem(accumulator, item, fieldPath) {
     const valueToUnwind = path.evaluatePath(item, fieldPath);
     let cloned = deepCopy(item);
 
-    if (Array.isArray(valueToUnwind)) {
+    if (Array.isArray(valueToUnwind) && valueToUnwind.length) {
         valueToUnwind.forEach((val) => {
             cloned = deepCopy(item);
             accumulator.push(path.setPath(cloned, fieldPath, val));
         });
+    } else if (Array.isArray(valueToUnwind) && valueToUnwind.length === 0) {
+        // Push an empty string so the value is empty since there are no values
+        path.setPath(cloned, fieldPath, '');
+        accumulator.push(cloned);
     } else {
         accumulator.push(cloned);
     }
@@ -627,6 +632,15 @@ function unique(array) {
 
 function flatten(array) {
     return [].concat(...array);
+}
+
+/**
+ * Used to help avoid incorrect values returned by JSON.parse when converting
+ * CSV back to JSON, such as '39e1804' which JSON.parse converts to Infinity
+ */
+function isInvalid(parsedJson) {
+    return parsedJson === Infinity ||
+        parsedJson === -Infinity;
 }
 
 
@@ -1316,7 +1330,7 @@ const Json2Csv = function(options) {
         } else if (utils.isNull(fieldValue)) {
             return 'null';
         } else {
-            return fieldValue.toString();
+            return !options.useLocaleFormat ? fieldValue.toString() : fieldValue.toLocaleString();
         }
     }
 
@@ -1764,6 +1778,16 @@ const Csv2Json = function(options) {
                 stateVariables.startIndex = index + eolDelimiterLength;
                 stateVariables.parsingValue = true;
                 stateVariables.insideWrapDelimiter = charAfter === options.delimiter.wrap;
+            } else if (index === lastCharacterIndex && character === options.delimiter.field) {
+                // If we reach the end of the CSV and the current character is a field delimiter
+
+                // Parse the previously seen value and add it to the line
+                let parsedValue = csv.substring(stateVariables.startIndex, index);
+                splitLine.push(parsedValue);
+
+                // Then add an empty string to the line since the last character being a field delimiter indicates an empty field
+                splitLine.push('');
+                lines.push(splitLine);
             } else if (index === lastCharacterIndex || nextNChar === options.delimiter.eol &&
                 // if we aren't inside wrap delimiters or if we are but the character before was a wrap delimiter and we didn't just see two
                 (!stateVariables.insideWrapDelimiter ||
@@ -1788,7 +1812,7 @@ const Csv2Json = function(options) {
                 stateVariables.insideWrapDelimiter = false;
                 stateVariables.parsingValue = false;
                 // Next iteration will substring, add the value to the line, and push the line onto the array of lines
-            } else if (character === options.delimiter.wrap && (index === 0 || utils.getNCharacters(csv, index - 1, eolDelimiterLength) === options.delimiter.eol)) {
+            } else if (character === options.delimiter.wrap && (index === 0 || utils.getNCharacters(csv, index - eolDelimiterLength, eolDelimiterLength) === options.delimiter.eol)) {
                 // If the line starts with a wrap delimiter (ie. "*)
 
                 stateVariables.insideWrapDelimiter = true;
@@ -1882,7 +1906,7 @@ const Csv2Json = function(options) {
         let parsedJson = parseValue(fieldValue);
         // If parsedJson is anything aside from an error, then we want to use the parsed value
         // This allows us to interpret values like 'null' --> null, 'false' --> false
-        if (!utils.isError(parsedJson)) {
+        if (!utils.isError(parsedJson) && !utils.isInvalid(parsedJson)) {
             fieldValue = parsedJson;
         } else if (fieldValue === 'undefined') {
             fieldValue = undefined;
