@@ -62,9 +62,9 @@ class FreeMesh extends AbstractThreeBrainObject {
 
 
     this._geometry.setIndex( face_orders );
-    this._geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
-    // gb.addAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
-    // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+    this._geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
+    // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
+    // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 
     this._geometry.computeVertexNormals();
     this._geometry.computeBoundingBox();
@@ -152,7 +152,7 @@ class FreeMesh extends AbstractThreeBrainObject {
       if( update_color ){
         // update color to geometry
         if( missattr ){
-          this._mesh.geometry.addAttribute( 'color', colattr );
+          this._mesh.geometry.setAttribute( 'color', colattr );
         }
         this._mesh.material.vertexColors = THREE.VertexColors;
         this._mesh.material.needsUpdate = true;
@@ -372,7 +372,7 @@ function render_curvature(canvas, mesh, curv_type, update_color = false){
 
     if( update_color ){
       // update color to geometry
-      mesh.geometry.addAttribute( 'color', new THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
+      mesh.geometry.setAttribute( 'color', new THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
       mesh.material.vertexColors = THREE.VertexColors;
       mesh.material.needsUpdate = true;
     }
@@ -409,9 +409,9 @@ function gen_free(g, canvas){
   });
 
   gb.setIndex( face_orders );
-  gb.addAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
-  // gb.addAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
-  // gb.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+  gb.setAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
+  // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
+  // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 
   gb.computeVertexNormals();
   gb.computeBoundingBox();

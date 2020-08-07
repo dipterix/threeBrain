@@ -644,6 +644,7 @@ class THREEBRAIN_CANVAS {
     // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
     mouse_helper.add( mouse_helper_root );
+
     this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
@@ -915,12 +916,13 @@ class THREEBRAIN_CANVAS {
         return({
           pass  : ['click', 'dblclick'].includes( evt.action ) ||
                   ( evt.action === 'mousedown' && evt.event.button === 2 ),
-          type  : 'clickable'
+          type  : 'clickable' //this.scene.children //'clickable'
         });
       },
       ( res, evt ) => {
         const first_item = res.first_item;
         if( first_item ){
+
           const target_object = res.target_object,
                 from = first_item.point,
                 direction = first_item.face.normal.normalize();
@@ -1118,10 +1120,17 @@ class THREEBRAIN_CANVAS {
 
     this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
 
+    this.mouse_raycaster.layers.disableAll();
+
     if( request_type === undefined || request_type === true || request_type === 'clickable' ){
       // intersect with all clickables
+      // set raycaster to be layer 14
+      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
       items = this.mouse_raycaster.intersectObjects( to_array( this.clickable ) );
+      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
     }else if( request_type.isObject3D || Array.isArray( request_type ) ){
+      // set raycaster to be layer 8 (main camera)
+      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       items = this.mouse_raycaster.intersectObjects( to_array( request_type ), true );
     }
 
@@ -2594,6 +2603,11 @@ class THREEBRAIN_CANVAS {
       m = inst.object;
     }
 
+    // set clickable layer
+    if( g.clickable === true ){
+      layers.push( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
+    }
+
     let set_layer = (m) => {
       // Normal 3D object
       m.layers.set( 31 );
@@ -3806,6 +3820,7 @@ mapped = false,
 
         // Make sure layer 8 (main camera can see these electrodes)
         e.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+        e.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
 
         // get offsets
         e.getWorldPosition( diff ).sub( plane_pos );

@@ -30,6 +30,7 @@ CONSTANTS.LAYER_SYS_CORONAL_9 = 9;                // System reserved, coronal ca
 CONSTANTS.LAYER_SYS_AXIAL_10 = 10;                 // System reserved, axial camera only
 CONSTANTS.LAYER_SYS_SAGITTAL_11 = 11;              // System reserved, sagittal camera only
 CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 = 13;      // System reserved, all side cameras visible
+CONSTANTS.LAYER_SYS_RAYCASTER_14 = 14;               // System reserved, raycaster use
 
 /* ------------------------------------ Global constants ------------------------------------
 */
