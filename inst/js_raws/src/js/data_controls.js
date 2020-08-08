@@ -875,7 +875,7 @@ class THREEBRAIN_PRESETS{
       const cmap = this.canvas.color_maps.get(v);
       if(!cmap){
         // this is not a value we can refer to
-        thres_range.setValue('Cannot threshold on this variable');
+        thres_range.setValue('');
         this.canvas.state_data.set('threshold_active', false);
         return;
       }
