@@ -54772,7 +54772,7 @@ const register_volumeShader1 = function(THREE){
   	  threshold_lb: { value: 0 },
   	  threshold_ub: { value: 1 },
   	  alpha : { value: 1.0 },
-  	  steps: { value: 400 },
+  	  steps: { value: 300 },
   	  scale: { value: new THREE.Vector3() }
   	},
 		vertexShader: [
@@ -54818,6 +54818,8 @@ const register_volumeShader1 = function(THREE){
 			'uniform float steps;',
 			'uniform vec3 scale;',
 
+			'vec3 fcolor;',
+
 			'vec2 hitBox( vec3 orig, vec3 dir ) {',
 				'const vec3 box_min = vec3( - 0.5 );',
 				'const vec3 box_max = vec3( 0.5 );',
@@ -54837,27 +54839,29 @@ const register_volumeShader1 = function(THREE){
 			'}',
 
 			'float sample1( vec3 p ) {',
-				'return texture( map, p ).r;',
+				'return texture( map, p + 0.5 ).r;',
 			'}',
 			'vec3 sample2( vec3 p ) {',
-				'return normalize( texture( cmap, p.xyz ).rgb );',
+				'return normalize( texture( cmap, p + 0.5 ) ).rgb;',
 			'}',
 
 			'#define epsilon .0001',
 
 			// Make color, to be changed
-			'vec3 normal( vec3 coord ) {',
-				'if ( coord.x < epsilon ) return vec3( 1.0, 0.0, 0.0 );',
-				'if ( coord.y < epsilon ) return vec3( 0.0, 1.0, 0.0 );',
-				'if ( coord.z < epsilon ) return vec3( 0.0, 0.0, 1.0 );',
-				'if ( coord.x > 1.0 - epsilon ) return vec3( - 1.0, 0.0, 0.0 );',
-				'if ( coord.y > 1.0 - epsilon ) return vec3( 0.0, - 1.0, 0.0 );',
-				'if ( coord.z > 1.0 - epsilon ) return vec3( 0.0, 0.0, - 1.0 );',
-				'float step = 0.01;',
-				'float x = sample1( coord + vec3( - step, 0.0, 0.0 ) ) - sample1( coord + vec3( step, 0.0, 0.0 ) );',
-				'float y = sample1( coord + vec3( 0.0, - step, 0.0 ) ) - sample1( coord + vec3( 0.0, step, 0.0 ) );',
-				'float z = sample1( coord + vec3( 0.0, 0.0, - step ) ) - sample1( coord + vec3( 0.0, 0.0, step ) );',
-				'return normalize( vec3( x, y, z ) );',
+			'vec3 get_normal( vec3 p ) {',
+				'vec3 inv = 1.0 / scale;',
+				'float d = sample1( p );',
+				'vec3 re = vec3( 0.0 );',
+				'for( float xidx = -1.0; xidx <= 1.0; xidx += 1.0 ){',
+				  'for( float yidx = -1.0; yidx <= 1.0; yidx += 1.0 ){',
+				    'for( float zidx = -1.0; zidx <= 1.0; zidx += 1.0 ){',
+				      'if( texture( map, p + 0.5 + ( inv * vec3( xidx, yidx, zidx) ) ).r == d ){',
+				        're -= inv * vec3( xidx, yidx, zidx);',
+				      '}',
+				    '}',
+				  '}',
+				'}',
+				'return normalize( re );',
 			'}',
 
 			'void main(){',
@@ -54872,16 +54876,32 @@ const register_volumeShader1 = function(THREE){
 				'float delta = min( inc.x, min( inc.y, inc.z ) );',
 				'delta /= steps;',
 
-				// ray marching
-				'for ( float t = bounds.x; t < bounds.y; t += delta ) {',
-					'float d = sample1( p + 0.5 );',
-					'if ( d > threshold_lb && d <= threshold_ub ) {',
-						'color.rgb = sample2( p + 0.5 );',
-						'if( !(color.r == 0.0 && color.g == 0.0 && color.b == 0.0) ){',
-						  'color.a = alpha;',
+				// Calculate depth (linear)
+				// 'float depth_start = getDepth( p );',
+				// 'float depth_inc = getDepth( p + rayDir * delta ) - depth_start;',
+				// 'float depth_p = depth_start;',
 
-  						'gl_FragDepth = getDepth( p );',
-  						'break;',
+				// ray marching
+				'float nn = 0.0;',
+				'float mix_factor = 1.0;',
+				'vec3 last_color = vec3( 0.0, 0.0, 0.0 );',
+				'for ( float t = bounds.x; t < bounds.y; t += delta ) {',
+					'float d = sample1( p );',
+					'if ( d > threshold_lb && d <= threshold_ub ) {',
+						'fcolor = sample2( p );',
+						'if( !(fcolor.r == 0.0 && fcolor.g == 0.0 && fcolor.b == 0.0) && fcolor != last_color ){',
+              'if( nn == 0.0 ){',
+                'color.a = alpha;',
+  						  'gl_FragDepth = getDepth( p );',
+  						  'color.rgb = fcolor * max( dot(-rayDir, get_normal( p )) , 0.0 );',
+              '}',
+              'if( nn > 0.0 && alpha < 1.0 ){',
+                'color.rgb = mix(color.rgb, fcolor, mix_factor);',
+              '}',
+              'nn += 1.0;',
+              'mix_factor *= 1.0 - alpha;',
+              'last_color = fcolor;',
+  						// 'break;',
 						'}',
 					'}',
 					'p += rayDir * delta;',
@@ -60036,6 +60056,18 @@ class data_controls_THREEBRAIN_PRESETS{
     this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Atlas Type', folder_name);
 
+
+    const atlas_alpha = this.gui.add_item('Atlas Transparency', 1.0, { folder_name : folder_name })
+      .min(0).max(1).step(0.1)
+      .onChange((v) => {
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
+        mesh.material.uniforms.alpha.value = v;
+        this._update_canvas();
+        this.fire_change({ 'atlas_alpha' : v });
+      });
+
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
         let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
@@ -60045,7 +60077,26 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     }, 'gui_atlas_type');
 
-    //const atlas_thred = this.gui.add_item('Atlas Label', )
+    let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+    const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
+      .min(0).max(max_colorID).step(1)
+      .onChange((v) => {
+        let lb, ub;
+        if(v === 0){
+          lb = 0;
+          ub = 1;
+        } else {
+          lb = (v - 0.5) / max_colorID;
+          ub = (v + 0.5) / max_colorID;
+        }
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
+        mesh.material.uniforms.threshold_lb.value = lb;
+        mesh.material.uniforms.threshold_ub.value = ub;
+        this._update_canvas();
+      });
+
     /*
     const surf_material = this.gui.add_item('Surface Material', _mty, {
       args : _mtyc, folder_name : folder_name })

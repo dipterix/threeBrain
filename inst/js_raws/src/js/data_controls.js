@@ -1142,6 +1142,18 @@ class THREEBRAIN_PRESETS{
     this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Atlas Type', folder_name);
 
+
+    const atlas_alpha = this.gui.add_item('Atlas Transparency', 1.0, { folder_name : folder_name })
+      .min(0).max(1).step(0.1)
+      .onChange((v) => {
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
+        mesh.material.uniforms.alpha.value = v;
+        this._update_canvas();
+        this.fire_change({ 'atlas_alpha' : v });
+      });
+
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
         let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
@@ -1151,7 +1163,26 @@ class THREEBRAIN_PRESETS{
       }
     }, 'gui_atlas_type');
 
-    //const atlas_thred = this.gui.add_item('Atlas Label', )
+    let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+    const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
+      .min(0).max(max_colorID).step(1)
+      .onChange((v) => {
+        let lb, ub;
+        if(v === 0){
+          lb = 0;
+          ub = 1;
+        } else {
+          lb = (v - 0.5) / max_colorID;
+          ub = (v + 0.5) / max_colorID;
+        }
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
+        mesh.material.uniforms.threshold_lb.value = lb;
+        mesh.material.uniforms.threshold_ub.value = ub;
+        this._update_canvas();
+      });
+
     /*
     const surf_material = this.gui.add_item('Surface Material', _mty, {
       args : _mtyc, folder_name : folder_name })
