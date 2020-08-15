@@ -31,7 +31,7 @@ const register_volumeShader1 = function(THREE){
 				// IMPORTANT: this takes me literally 24 hr to figure out, learnt how to write shaders and  properties of different camera
 				// Orthopgraphic camera, vDirection must be parallel to camera (ortho-projection, camera position in theory is at infinite)
 				'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos + position, 1.0 ) ).xyz / scale;',
-				'vDirection = position / scale - vOrigin;',
+				'vDirection = normalize( position / scale - vOrigin );',
 				'gl_Position = projectionMatrix * worldPosition;',
 			'}'
 		].join( '\n' ),
@@ -102,7 +102,7 @@ const register_volumeShader1 = function(THREE){
 			'}',
 
 			'void main(){',
-				'vec3 rayDir = normalize( vDirection );',
+				'vec3 rayDir = vDirection;',
 				'vec2 bounds = hitBox( vOrigin, rayDir );',
 				'if ( bounds.x > bounds.y ) discard;',
 
@@ -138,12 +138,17 @@ const register_volumeShader1 = function(THREE){
               'nn += 1.0;',
               'mix_factor *= 1.0 - alpha;',
               'last_color = fcolor;',
-  						// 'break;',
+
+              //  optimize, do not march to the hell
+              'if( nn >= 4.0 || alpha >= 0.99999 ){',
+  						  'break;',
+              '}',
 						'}',
 					'}',
 					'p += rayDir * delta;',
 				'}',
-				'if ( color.a == 0.0 ) discard;',
+				'if ( nn == 0.0 || color.a == 0.0 ) discard;',
+				'color.rgb /= (nn - 1.0) / 2.0 + 1.0;',
 			'}'
   	].join( '\n' )
   };
