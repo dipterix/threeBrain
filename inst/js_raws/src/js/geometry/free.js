@@ -2,7 +2,11 @@ import { AbstractThreeBrainObject } from './abstract.js';
 import { THREE } from '../threeplugins.js';
 import { to_array, min2, sub2 } from '../utils.js';
 
-const MATERIAL_PARAMS = { 'transparent' : true, side: THREE.DoubleSide };
+const MATERIAL_PARAMS = {
+  'transparent' : true,
+  'side': THREE.DoubleSide,
+  'wireframeLinewidth' : 0.1
+};
 
 class FreeMesh extends AbstractThreeBrainObject {
 

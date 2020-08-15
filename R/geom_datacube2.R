@@ -20,10 +20,16 @@ DataCubeGeom2 <- R6::R6Class(
                           cache_file = NULL,
                           layer = 8, digest = TRUE, ...){
       # Make sure value is from 0 to 255
-      value <- floor((value - min(value)) / (max(value) - min(value)) * 255)
-      super$initialize(name = name, value = value, dim = dim, half_size = half_size,
-                       group = group, position = position, cache_file = cache_file,
-                       layer = layer, digest = digest, ...)
+      if(missing(value)){
+        super$initialize(name = name, dim = dim, half_size = half_size,
+                         group = group, position = position, cache_file = cache_file,
+                         layer = layer, digest = digest, ...)
+      } else {
+        value <- as.integer(value)
+        super$initialize(name = name, value = value, dim = dim, half_size = half_size,
+                         group = group, position = position, cache_file = cache_file,
+                         layer = layer, digest = digest, ...)
+      }
     },
 
     to_list = function(){

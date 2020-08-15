@@ -80,7 +80,11 @@ class THREEBRAIN_PRESETS{
   // 9. Electrode visibility in side canvas
   // 10. subject code
   // 11. surface type
-
+  // 12. Hemisphere material/transparency
+  // 13. electrode visibility, highlight, groups
+  // 14. electrode mapping
+  // 15. animation, play/pause, speed, clips...
+  // 16. Highlight selected electrodes and info
 
   // 1. Background colors
   c_background(){
@@ -1123,7 +1127,54 @@ class THREEBRAIN_PRESETS{
   }
 
 
+  c_atlas(){
+    const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
+          _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
+          _c = ['none', 'aparc_aseg'];
 
+    const atlas_type = this.gui.add_item('Atlas Type', _atype, {args : _c, folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', {
+          'atlas_type': v
+        });
+        this.fire_change({ 'atlas_type' : v });
+      });
+    this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Atlas Type', folder_name);
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
+      if( has_meta_keys( evt.event, false, false, false ) ){
+        let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
+        if( current_idx >= 0 ){
+          atlas_type.setValue( _c[ current_idx ] );
+        }
+      }
+    }, 'gui_atlas_type');
+
+    //const atlas_thred = this.gui.add_item('Atlas Label', )
+    /*
+    const surf_material = this.gui.add_item('Surface Material', _mty, {
+      args : _mtyc, folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.state_data.set( 'surface_material_type', v );
+        this.fire_change({ 'surface_material' : v });
+        this._update_canvas();
+      });
+    this.fire_change({ 'surface_material' : _mty });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL, 'Surface Material', folder_name);
+
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_MATERIAL, (evt) => {
+      if( has_meta_keys( evt.event, true, false, false ) ){
+        let current_idx = (_mtyc.indexOf( surf_material.getValue() ) + 1) % _mtyc.length;
+        if( current_idx >= 0 ){
+          surf_material.setValue( _mtyc[ current_idx ] );
+        }
+      }
+    }, 'gui_surf_material');
+    */
+
+  }
 
   // -------------------------- New version --------------------------
 
