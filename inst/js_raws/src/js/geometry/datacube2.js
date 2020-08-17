@@ -49,6 +49,8 @@ class DataCube2 extends AbstractThreeBrainObject {
 
       // Debug use
       let i = 0, ii = 0, tmp;
+      let bounding_min = Math.min(cube_dim[0], cube_dim[1], cube_dim[2]) / 2,
+          bounding_max = bounding_min;
       for ( let z = 0; z < cube_dim[0]; z ++ ) {
 					for ( let y = 0; y < cube_dim[1]; y ++ ) {
 						for ( let x = 0; x < cube_dim[2]; x ++ ) {
@@ -59,6 +61,14 @@ class DataCube2 extends AbstractThreeBrainObject {
 						    color[ 3 * ii ] = tmp.R;
 						    color[ 3 * ii + 1 ] = tmp.G;
 						    color[ 3 * ii + 2 ] = tmp.B;
+
+						    if( Math.min(x,y,z) < bounding_min ){
+						      bounding_min = Math.min(x,y,z);
+						    }
+						    if( Math.max(x,y,z) > bounding_max ){
+						      bounding_max = Math.max(x,y,z);
+						    }
+
 						  } else {
 						    i = 0;
 						  }
@@ -115,6 +125,14 @@ class DataCube2 extends AbstractThreeBrainObject {
     	uniforms.threshold_ub.value = 1;
     	uniforms.alpha.value = 1.0;
     	uniforms.scale.value.set(volume.xLength, volume.yLength, volume.zLength);
+
+    	let bounding = Math.max(
+    	  bounding_max / Math.min(...cube_dim) - 0.5,
+    	  0.5 - bounding_min / Math.max(...cube_dim),
+    	  0.0
+    	);
+    	bounding = Math.min(bounding, 0.5);
+    	uniforms.bounding.value = bounding;
 
       let material = new THREE.RawShaderMaterial( {
     		uniforms: uniforms,

@@ -46,6 +46,9 @@ freesurfer_brain2(
 
 \item{curvature}{curvature data. Only support \code{"sulc"} for current version}
 
+\item{atlas_types}{atlas types to be loaded, choices are \code{'aparc+aseg'},
+\code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'}, \code{'aseg'}}
+
 \item{ct_path}{an aligned CT file in 'Nifti' format}
 
 \item{...}{ignored}

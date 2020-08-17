@@ -10,7 +10,8 @@ const register_volumeShader1 = function(THREE){
   	  threshold_ub: { value: 1 },
   	  alpha : { value: 1.0 },
   	  steps: { value: 300 },
-  	  scale: { value: new THREE.Vector3() }
+  	  scale: { value: new THREE.Vector3() },
+  	  bounding: { value : 0.5 }
   	},
 		vertexShader: [
 		  '#version 300 es',
@@ -63,12 +64,13 @@ const register_volumeShader1 = function(THREE){
 			'uniform float alpha;',
 			'uniform float steps;',
 			'uniform vec3 scale;',
+			'uniform float bounding;',
 
 			'vec3 fcolor;',
 
 			'vec2 hitBox( vec3 orig, vec3 dir ) {',
-				'const vec3 box_min = vec3( - 0.5 );',
-				'const vec3 box_max = vec3( 0.5 );',
+				'vec3 box_min = vec3( - bounding );',
+				'vec3 box_max = vec3( bounding );',
 				'vec3 inv_dir = 1.0 / dir;',
 				'vec3 tmin_tmp = ( box_min - orig ) * inv_dir;',
 				'vec3 tmax_tmp = ( box_max - orig ) * inv_dir;',
@@ -136,7 +138,7 @@ const register_volumeShader1 = function(THREE){
 						'if( !(fcolor.r == 0.0 && fcolor.g == 0.0 && fcolor.b == 0.0) && fcolor != last_color ){',
               'if( nn == 0.0 ){',
                 'color.a = alpha;',
-  						  'gl_FragDepth = getDepth( p - rayDir * (delta * 0.5) );',
+  						  'gl_FragDepth = getDepth( p );',
   						  'color.rgb = fcolor * max( dot(-rayDir, getNormal( p )) , 0.0 );',
               '}',
               'if( nn > 0.0 && alpha < 1.0 ){',

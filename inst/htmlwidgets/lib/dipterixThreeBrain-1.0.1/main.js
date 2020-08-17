@@ -54773,7 +54773,8 @@ const register_volumeShader1 = function(THREE){
   	  threshold_ub: { value: 1 },
   	  alpha : { value: 1.0 },
   	  steps: { value: 300 },
-  	  scale: { value: new THREE.Vector3() }
+  	  scale: { value: new THREE.Vector3() },
+  	  bounding: { value : 0.5 }
   	},
 		vertexShader: [
 		  '#version 300 es',
@@ -54826,12 +54827,13 @@ const register_volumeShader1 = function(THREE){
 			'uniform float alpha;',
 			'uniform float steps;',
 			'uniform vec3 scale;',
+			'uniform float bounding;',
 
 			'vec3 fcolor;',
 
 			'vec2 hitBox( vec3 orig, vec3 dir ) {',
-				'const vec3 box_min = vec3( - 0.5 );',
-				'const vec3 box_max = vec3( 0.5 );',
+				'vec3 box_min = vec3( - bounding );',
+				'vec3 box_max = vec3( bounding );',
 				'vec3 inv_dir = 1.0 / dir;',
 				'vec3 tmin_tmp = ( box_min - orig ) * inv_dir;',
 				'vec3 tmax_tmp = ( box_max - orig ) * inv_dir;',
@@ -54899,7 +54901,7 @@ const register_volumeShader1 = function(THREE){
 						'if( !(fcolor.r == 0.0 && fcolor.g == 0.0 && fcolor.b == 0.0) && fcolor != last_color ){',
               'if( nn == 0.0 ){',
                 'color.a = alpha;',
-  						  'gl_FragDepth = getDepth( p - rayDir * (delta * 0.5) );',
+  						  'gl_FragDepth = getDepth( p );',
   						  'color.rgb = fcolor * max( dot(-rayDir, getNormal( p )) , 0.0 );',
               '}',
               'if( nn > 0.0 && alpha < 1.0 ){',
@@ -62387,6 +62389,8 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
 
       // Debug use
       let i = 0, ii = 0, tmp;
+      let bounding_min = Math.min(cube_dim[0], cube_dim[1], cube_dim[2]) / 2,
+          bounding_max = bounding_min;
       for ( let z = 0; z < cube_dim[0]; z ++ ) {
 					for ( let y = 0; y < cube_dim[1]; y ++ ) {
 						for ( let x = 0; x < cube_dim[2]; x ++ ) {
@@ -62397,6 +62401,14 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
 						    color[ 3 * ii ] = tmp.R;
 						    color[ 3 * ii + 1 ] = tmp.G;
 						    color[ 3 * ii + 2 ] = tmp.B;
+
+						    if( Math.min(x,y,z) < bounding_min ){
+						      bounding_min = Math.min(x,y,z);
+						    }
+						    if( Math.max(x,y,z) > bounding_max ){
+						      bounding_max = Math.max(x,y,z);
+						    }
+
 						  } else {
 						    i = 0;
 						  }
@@ -62453,6 +62465,14 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
     	uniforms.threshold_ub.value = 1;
     	uniforms.alpha.value = 1.0;
     	uniforms.scale.value.set(volume.xLength, volume.yLength, volume.zLength);
+
+    	let bounding = Math.max(
+    	  bounding_max / Math.min(...cube_dim) - 0.5,
+    	  0.5 - bounding_min / Math.max(...cube_dim),
+    	  0.0
+    	);
+    	bounding = Math.min(bounding, 0.5);
+    	uniforms.bounding.value = bounding;
 
       let material = new THREE.RawShaderMaterial( {
     		uniforms: uniforms,
