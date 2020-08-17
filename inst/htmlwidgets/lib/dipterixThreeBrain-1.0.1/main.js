@@ -60049,7 +60049,7 @@ class data_controls_THREEBRAIN_PRESETS{
   c_atlas(){
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
           _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
-          _c = ['none', 'aparc_aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
+          _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 
     const atlas_type = this.gui.add_item('Atlas Type', _atype, {args : _c, folder_name : folder_name })
       .onChange((v) => {
@@ -62361,9 +62361,9 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
           cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
           cube_dim = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
           volume = {
-            'xLength' : cube_half_size[0]*2 * (254/256),
-            'yLength' : cube_half_size[1]*2 * (254/256),
-            'zLength' : cube_half_size[2]*2 * (254/256)
+            'xLength' : cube_half_size[0]*2,
+            'yLength' : cube_half_size[1]*2,
+            'zLength' : cube_half_size[2]*2,
           },
           fslut = canvas.global_data('__global_data__FreeSurferColorLUT'),
           max_colID = canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
@@ -62477,8 +62477,6 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
       */
       mesh.position.fromArray( g.position );
       // TODO: need to check how threejs handle texture 3D to know why the s
-      mesh.position.y -= 4;
-      mesh.position.z -= 0.5;
 
       mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
       mesh.userData.dispose = () => { this.dispose(); };
@@ -66522,7 +66520,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     state.set( 'target_subject', target_subject );
 
     let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
-    let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'aparc_aseg';
+    let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
 
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';

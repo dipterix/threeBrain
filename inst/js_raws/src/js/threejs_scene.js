@@ -3355,7 +3355,7 @@ class THREEBRAIN_CANVAS {
     state.set( 'target_subject', target_subject );
 
     let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
-    let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'aparc_aseg';
+    let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
 
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';

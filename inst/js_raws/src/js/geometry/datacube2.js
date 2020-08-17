@@ -30,9 +30,9 @@ class DataCube2 extends AbstractThreeBrainObject {
           cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
           cube_dim = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
           volume = {
-            'xLength' : cube_half_size[0]*2 * (254/256),
-            'yLength' : cube_half_size[1]*2 * (254/256),
-            'zLength' : cube_half_size[2]*2 * (254/256)
+            'xLength' : cube_half_size[0]*2,
+            'yLength' : cube_half_size[1]*2,
+            'zLength' : cube_half_size[2]*2,
           },
           fslut = canvas.global_data('__global_data__FreeSurferColorLUT'),
           max_colID = canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
@@ -146,8 +146,6 @@ class DataCube2 extends AbstractThreeBrainObject {
       */
       mesh.position.fromArray( g.position );
       // TODO: need to check how threejs handle texture 3D to know why the s
-      mesh.position.y -= 4;
-      mesh.position.z -= 0.5;
 
       mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
       mesh.userData.dispose = () => { this.dispose(); };

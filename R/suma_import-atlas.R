@@ -1,14 +1,14 @@
 #' @export
-import_fs.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype,
+import_suma.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype,
                                    sub_type = c('aparc+aseg', 'aparc.a2009s+aseg', 'aparc.DKTatlas+aseg', 'aseg'), hemisphere, ...){
   fs_path <- normalizePath(fs_path)
   sub_type <- match.arg(sub_type)
-  fname <- sprintf('%s.mgz', sub_type)
-  src <- file.path(fs_path, 'mri', fname)
+  fname <- sprintf('%s.nii', sub_type)
+  src <- file.path(fs_path, 'SUMA', fname)
   sub_type <- stringr::str_replace_all(sub_type, '[^\\w]', '_')
   if( ! file.exists(src) ) {
     if(!quiet){
-      cat2(sprintf("  * mri/%s is missing\n", fname), level = 'WARNING')
+      cat2(sprintf("  * SUMA/%s is missing\n", fname), level = 'WARNING')
     }
     return( FALSE )
   }
@@ -23,7 +23,7 @@ import_fs.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype,
   }
 
   # Load file
-  dat <- read_mgz(src)
+  dat <- read_nifti(src)
   Norig <- dat$header$get_vox2ras()
   Torig <- dat$header$get_vox2ras_tkr()
   volume_shape <- as.integer(dat$get_shape())
@@ -69,6 +69,6 @@ import_fs.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype,
 }
 
 
-# import_fs('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'atlas_volume', sub_type = 'aparc+aseg')
-# import_fs('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'atlas_volume', sub_type = 'aparc.a2009s+aseg')
-# import_fs('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'atlas_volume', sub_type = 'aparc.DKTatlas+aseg')
+# import_suma('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'atlas_volume', sub_type = 'aparc+aseg')
+# import_suma('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'atlas_volume', sub_type = 'aparc.a2009s+aseg')
+# import_suma('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'atlas_volume', sub_type = 'aparc.DKTatlas+aseg')

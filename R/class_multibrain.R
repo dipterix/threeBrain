@@ -99,7 +99,7 @@ MultiBrain2 <- R6::R6Class(
     },
 
     plot = function(
-      additional_subjects = NULL, volumes = TRUE, surfaces = TRUE,
+      additional_subjects = NULL, volumes = TRUE, surfaces = TRUE, atlases = 'aparc+aseg',
       palettes = NULL, val_ranges = NULL, value_alias = NULL,
       side_canvas = TRUE, side_width = 250, side_shift = c(0, 0),
       control_presets = NULL, control_panel = TRUE, controllers = list(),
@@ -111,15 +111,17 @@ MultiBrain2 <- R6::R6Class(
 
       geoms <- self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
 
+      atlases <- stringr::str_replace_all(atlases, '\\W', '_')
+
       for( sub in self$subject_codes ){
         s <- self$objects[[ sub ]]
         if( !is.null(s) ){
           if( sub %in% additional_subjects ){
             geoms <- c(geoms, s$get_geometries(
-              volumes = volumes, surfaces = surfaces, electrodes = TRUE ))
+              volumes = volumes, surfaces = surfaces, electrodes = TRUE, atlases = atlases ))
           }else{
             geoms <- c(geoms, s$get_geometries(
-              volumes = FALSE, surfaces = FALSE, electrodes = TRUE ))
+              volumes = FALSE, surfaces = FALSE, electrodes = TRUE, atlases = FALSE ))
           }
         }
       }
@@ -131,7 +133,7 @@ MultiBrain2 <- R6::R6Class(
 
       global_data <- self$global_data
       control_presets <- unique(c('subject2', 'surface_type2', 'hemisphere_material',
-                                 'map_template', 'electrodes', control_presets, 'animation', 'display_highlights' ))
+                                 'map_template', 'electrodes', 'atlas', control_presets, 'animation', 'display_highlights' ))
 
       threejs_brain(
         .list = geoms, controllers = controllers, value_alias = value_alias,

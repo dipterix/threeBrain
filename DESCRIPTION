@@ -35,6 +35,7 @@ Imports:
     grDevices,
     graphics,
     dipsaus,
+    xml2,
     shiny (>= 1.2.0),
     digest (>= 0.6.22),
     freesurferformats (>= 0.1.7),

@@ -28,7 +28,6 @@ const register_volumeShader1 = function(THREE){
 				// For perspective camera, vorigin is camera
 				// 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
 
-				// IMPORTANT: this takes me literally 24 hr to figure out, learnt how to write shaders and  properties of different camera
 				// Orthopgraphic camera, vDirection must be parallel to camera (ortho-projection, camera position in theory is at infinite)
 				'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos + position, 1.0 ) ).xyz / scale;',
 				'vDirection = normalize( position / scale - vOrigin );',

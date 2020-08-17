@@ -1130,7 +1130,7 @@ class THREEBRAIN_PRESETS{
   c_atlas(){
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
           _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
-          _c = ['none', 'aparc_aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
+          _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 
     const atlas_type = this.gui.add_item('Atlas Type', _atype, {args : _c, folder_name : folder_name })
       .onChange((v) => {

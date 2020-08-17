@@ -83,6 +83,26 @@ read_mgz <- function(path){
   res
 }
 
+
+read_nifti <- function(path){
+  dat <- oro.nifti::readNIfTI(path, reorient = FALSE)
+  vox2ras <- oro.nifti::qform(dat)
+  vox2ras_tkr <- cbind(vox2ras[,-4], cbind(-vox2ras[,-4], c(0,0,0,1)) %*% c(128,128,128,1))
+  dat <- dat@.Data
+  if(length(dim(dat)) == 4 && dim(dat)[[4]] == 1){
+    dat = dat[,,,1, drop = TRUE]
+  }
+  list(
+    data = dat,
+    header = list(
+      get_vox2ras = function(){ vox2ras },
+      get_vox2ras_tkr = function(){ vox2ras_tkr }
+    ),
+    get_shape = function(){ dim(dat) },
+    get_data = function(){ dat }
+  )
+}
+
 #' Function to load surface data from `Gifti` files
 #'
 #' The function `read_gii2` is a dynamic wrapper of Python `nibabel` loader.

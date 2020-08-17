@@ -21,12 +21,31 @@ validate_digest <- function(src, target){
   structure(has_cache, digest = file_digest)
 }
 
+#' Import 'FreeSurfer' or 'SUMA' files into the viewer structure
+#' @description Import 'T1-MRI', surface files, curvature/'sulcus', atlas, and
+#' 'Talairach' transform matrix into 'json' format. These functions are not
+#' intended to be called directly, use \code{\link{import_from_freesurfer}}
+#' instead.
+#' @param subject_name character, subject code
+#' @param fs_path path to 'FreeSurfer' folder
+#' @param dtype data type to import, choices are \code{'T1'}, \code{'surface'},
+#' \code{'curv'}, \code{'atlas_volume'}, \code{'atlas_surface'}, \code{'xform'}
+#' @param sub_type detailed files to import. \code{'atlas_surface'}
+#' is not supported for now
+#' @param hemisphere which hemisphere to import, ignored when \code{dtype} is in
+#' \code{'T1'}, \code{'atlas_volume'}, \code{'atlas_surface'}, \code{'xform'}.
+#' @param quiet,... passed from or to other methods.
+#' @return logical, \code{TRUE} if the file is or has been cached, or
+#' \code{FALSE} if the file is missing.
+#' @name import-fs-suma
+NULL
 
+#' @rdname import-fs-suma
 #' @export
 import_fs <- function(
   subject_name, fs_path, quiet = FALSE,
-  dtype = c('volume', 'surface', 'curv', 'atlas_volume', 'atlas_surface'),
-  sub_type = NULL, ...){
+  dtype = c('T1', 'surface', 'curv', 'atlas_volume', 'atlas_surface', 'xform'),
+  sub_type = NULL, hemisphere = c('l', 'r'), ...){
   dtype <- match.arg(dtype)
 
   # Make sure at least folder structure exists
@@ -38,6 +57,26 @@ import_fs <- function(
     }
   }
   UseMethod('import_fs', structure(subject_name, class = dtype))
+}
+
+
+#' @rdname import-fs-suma
+#' @export
+import_suma <- function(
+  subject_name, fs_path, quiet = FALSE,
+  dtype = c('T1', 'surface', 'curv', 'atlas_volume', 'atlas_surface', 'xform'),
+  sub_type = NULL, hemisphere = c('l', 'r'), ...){
+  dtype <- match.arg(dtype)
+
+  # Make sure at least folder structure exists
+
+  mri_path <- file.path(fs_path, c('RAVE', 'SUMA'))
+  for(p in mri_path){
+    if( !dir.exists(p) ){
+      dir_create(p)
+    }
+  }
+  UseMethod('import_suma', structure(subject_name, class = dtype))
 }
 
 
