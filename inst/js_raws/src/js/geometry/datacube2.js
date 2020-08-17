@@ -62,12 +62,11 @@ class DataCube2 extends AbstractThreeBrainObject {
 						  } else {
 						    i = 0;
 						  }
-						  i = i / max_colID;
 						  // unknown fs color ID
-              if(i > 1 || i < 0){
+              if(i > max_colID || i < 0){
                 i = 0;
               }
-              data[ ii ] = i;
+              data[ ii ] = i / max_colID;
 						  ii += 1;
 						}
 					}
@@ -125,11 +124,11 @@ class DataCube2 extends AbstractThreeBrainObject {
     		transparent : true
     	} );
 
-    	//let geometry = new THREE.SphereBufferGeometry(
-    	//  new THREE.Vector3().fromArray(cube_half_size).length() * 2.0, 29, 14
-    	//);
+    	let geometry = new THREE.SphereBufferGeometry(
+    	  new THREE.Vector3().fromArray(cube_half_size).length(), 29, 14
+    	);
 
-      let geometry = new THREE.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
+      // let geometry = new THREE.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
 
     	// This translate will make geometry rendered correctly

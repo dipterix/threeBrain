@@ -19,12 +19,24 @@ threeBrain::merge_brain(b)$plot()
 
 
 import_from_freesurfer('~/rave_data/others/templates/fsaverage/', subject_name = 'fsaverage')
-b <- freesurfer_brain2('~/rave_data/others/templates/fsaverage/', subject_name = 'fsaverage', use_141 = TRUE, surface_types = 'white', atlas_types = 'aseg')
+b <- freesurfer_brain2('~/rave_data/others/templates/fsaverage/', subject_name = 'fsaverage', use_141 = TRUE, atlas_types = 'aseg')
 b$plot()
 
 
 
 import_from_freesurfer('~/rave_data/others/templates/N27/fs', subject_name = 'N27')
-n27 <- freesurfer_brain2('~/rave_data/others/templates/N27/fs', subject_name = 'N27', use_141 = TRUE, surface_types = 'white', atlas_types = 'aparc+aseg')
+n27 <- freesurfer_brain2('~/rave_data/others/templates/N27/fs', subject_name = 'N27', use_141 = TRUE, atlas_types = 'aparc+aseg')
 n27$atlas_types
 n27$plot()
+
+
+import_from_freesurfer('~/rave_data/others/templates/KC', subject_name = 'KC')
+kc<- freesurfer_brain2('~/rave_data/others/templates/KC', subject_name = 'KC', use_141 = TRUE, atlas_types = 'aparc+aseg')
+kc$atlas_types
+kc$plot()
+
+
+import_from_freesurfer('~/rave_data/others/templates/YAB', subject_name = 'YAB')
+YAB<- freesurfer_brain2('~/rave_data/others/templates/YAB', subject_name = 'YAB', use_141 = TRUE, atlas_types = 'aparc+aseg')
+YAB$atlas_types
+YAB$plot()

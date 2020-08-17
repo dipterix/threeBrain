@@ -54779,23 +54779,33 @@ const register_volumeShader1 = function(THREE){
 		  '#version 300 es',
 		  'precision highp float;',
 		  'in vec3 position;',
-			'uniform mat4 modelMatrix;',
+			// 'uniform mat4 modelMatrix;',
 			'uniform mat4 modelViewMatrix;',
 			'uniform mat4 projectionMatrix;',
 			'uniform vec3 cameraPos;',
 			'uniform vec3 scale;',
+
+			'out mat4 pmv;',
 			'out vec3 vOrigin;',
 			'out vec3 vDirection;',
 			'void main() {',
-				'vec4 worldPosition = modelViewMatrix * vec4( position, 1.0 );',
+				'pmv = projectionMatrix * modelViewMatrix;',
 				// For perspective camera, vorigin is camera
 				// 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
+				// 'vDirection = position / scale - vOrigin;',
 
-				// IMPORTANT: this takes me literally 24 hr to figure out, learnt how to write shaders and  properties of different camera
-				// Orthopgraphic camera, vDirection must be parallel to camera (ortho-projection, camera position in theory is at infinite)
-				'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos + position, 1.0 ) ).xyz / scale;',
-				'vDirection = normalize( position / scale - vOrigin );',
-				'gl_Position = projectionMatrix * worldPosition;',
+				// Orthopgraphic camera, camera position in theory is at infinite
+				// instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
+				// Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
+				// obtains Orthopgraphic direction, which can be directly used as ray direction
+
+				// 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
+				'vDirection = inverse( pmv )[3].xyz / scale;',
+
+				// Previous test code, seems to be poor because camera position is not well-calculated?
+				// 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
+				'vOrigin = position / scale - vDirection; ',
+				'gl_Position = pmv * vec4( position, 1.0 );',
 			'}'
 		].join( '\n' ),
   	fragmentShader: [
@@ -54803,12 +54813,11 @@ const register_volumeShader1 = function(THREE){
 			'precision highp float;',
 			'precision highp sampler3D;',
 
-			'uniform mat4 modelViewMatrix;',
-			'uniform mat4 projectionMatrix;',
-
 			'in vec3 vOrigin;',
 			'in vec3 vDirection;',
+			'in mat4 pmv;',
 			'out vec4 color;',
+
 
 			'uniform sampler3D map;',
 			'uniform sampler3D cmap;',
@@ -54834,7 +54843,7 @@ const register_volumeShader1 = function(THREE){
 			'}',
 
 			'float getDepth( vec3 p ){',
-			  'vec4 frag2 = projectionMatrix * modelViewMatrix * vec4( p * scale, 1.0 );',
+			  'vec4 frag2 = pmv * vec4( p, 1.0 / scale );',
 			  'return (frag2.z / frag2.w / 2.0 + 0.5);',
 			'}',
 
@@ -54845,17 +54854,15 @@ const register_volumeShader1 = function(THREE){
 				'return normalize( texture( cmap, p + 0.5 ) ).rgb;',
 			'}',
 
-			'#define epsilon .0001',
-
 			// Make color, to be changed
-			'vec3 get_normal( vec3 p ) {',
+			'vec3 getNormal( vec3 p ) {',
 				'vec3 inv = 1.0 / scale;',
 				'float d = sample1( p );',
 				'vec3 re = vec3( 0.0 );',
 				'for( float xidx = -1.0; xidx <= 1.0; xidx += 1.0 ){',
 				  'for( float yidx = -1.0; yidx <= 1.0; yidx += 1.0 ){',
 				    'for( float zidx = -1.0; zidx <= 1.0; zidx += 1.0 ){',
-				      'if( texture( map, p + 0.5 + ( inv * vec3( xidx, yidx, zidx) ) ).r == d ){',
+				      'if( sample1( p + inv * vec3( xidx, yidx, zidx) ) == d ){',
 				        're -= inv * vec3( xidx, yidx, zidx);',
 				      '}',
 				    '}',
@@ -54865,7 +54872,7 @@ const register_volumeShader1 = function(THREE){
 			'}',
 
 			'void main(){',
-				'vec3 rayDir = vDirection;',
+				'vec3 rayDir = normalize( vDirection );',
 				'vec2 bounds = hitBox( vOrigin, rayDir );',
 				'if ( bounds.x > bounds.y ) discard;',
 
@@ -54892,8 +54899,8 @@ const register_volumeShader1 = function(THREE){
 						'if( !(fcolor.r == 0.0 && fcolor.g == 0.0 && fcolor.b == 0.0) && fcolor != last_color ){',
               'if( nn == 0.0 ){',
                 'color.a = alpha;',
-  						  'gl_FragDepth = getDepth( p );',
-  						  'color.rgb = fcolor * max( dot(-rayDir, get_normal( p )) , 0.0 );',
+  						  'gl_FragDepth = getDepth( p - rayDir * (delta * 0.5) );',
+  						  'color.rgb = fcolor * max( dot(-rayDir, getNormal( p )) , 0.0 );',
               '}',
               'if( nn > 0.0 && alpha < 1.0 ){',
                 'color.rgb = mix(color.rgb, fcolor, mix_factor);',
@@ -62393,12 +62400,11 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
 						  } else {
 						    i = 0;
 						  }
-						  i = i / max_colID;
 						  // unknown fs color ID
-              if(i > 1 || i < 0){
+              if(i > max_colID || i < 0){
                 i = 0;
               }
-              data[ ii ] = i;
+              data[ ii ] = i / max_colID;
 						  ii += 1;
 						}
 					}
@@ -62456,11 +62462,11 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
     		transparent : true
     	} );
 
-    	//let geometry = new THREE.SphereBufferGeometry(
-    	//  new THREE.Vector3().fromArray(cube_half_size).length() * 2.0, 29, 14
-    	//);
+    	let geometry = new THREE.SphereBufferGeometry(
+    	  new THREE.Vector3().fromArray(cube_half_size).length(), 29, 14
+    	);
 
-      let geometry = new THREE.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
+      // let geometry = new THREE.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
 
     	// This translate will make geometry rendered correctly
