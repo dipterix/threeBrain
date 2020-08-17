@@ -67437,27 +67437,31 @@ class src_BrainCanvas{
     // Register some callbacks
     this._set_loader_callbacks();
 
+    let promises = this.groups.map( (g) => {
+      return(new Promise( (resolve) => {
+        this.canvas.add_group(g, this.settings.cache_folder);
+        resolve( true );
+      }));
+    });
+
+    Promise.all(promises).then((values) => {
+      if( !this.canvas.loader_triggered ){
+        this.finalize_render();
+      }
+    });
+
+    /*
     this.groups.forEach((g) => {
 
       this.canvas.add_group(g, this.settings.cache_folder);
 
     });
 
-    // Load fonts
-    /*
-    this.canvas.load_file(
-      this.settings.lib_path + 'threejs-0.101.1/fonts/helvetiker_regular.typeface.json',
-      (v) => {
-        this.canvas.font_library = v;
-      }, 'font_loader'
-    );
-    */
-
     // Make sure the data loading process is on
     if( !this.canvas.loader_triggered ){
       this.finalize_render();
     }
-
+    */
   }
 
 
