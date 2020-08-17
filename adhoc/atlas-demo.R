@@ -31,9 +31,15 @@ n27$plot()
 
 
 import_from_freesurfer('~/rave_data/others/templates/KC', subject_name = 'KC')
-kc<- freesurfer_brain2('~/rave_data/others/templates/KC', subject_name = 'KC', use_141 = TRUE, atlas_types = 'aparc+aseg')
+kc<- freesurfer_brain2('~/rave_data/others/templates/KC', subject_name = 'KC', use_141 = TRUE, atlas_types = 'aparc+aseg', surface_types = c('pial', 'smoothwm'))
 kc$atlas_types
-kc$plot()
+wg <- kc$plot(controllers = list('Atlas Type' = 'aparc_aseg', 'Atlas Transparency' = 0.8, 'Atlas Label' = 4,
+                           'Overlay Coronal' = TRUE, 'Overlay Axial' = TRUE, 'Overlay Sagittal' = TRUE,
+                           'Left Opacity' = 0.2,
+                           'Left Hemisphere' = 'wireframe', 'Background Color' = '#000000'))
+wg
+
+threeBrain::save_brain(wg, '~/Desktop/junk/raymarching', as_zip = TRUE)
 
 
 import_from_freesurfer('~/rave_data/others/templates/YAB', subject_name = 'YAB')

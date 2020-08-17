@@ -1713,7 +1713,8 @@ class THREEBRAIN_CONTROL{
       "Left Opacity", "Right Opacity",
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
-      "Show Legend", "Show Time", "Highlight Box", "Info Text"
+      "Show Legend", "Show Time", "Highlight Box", "Info Text",
+      "Atlas Type", "Atlas Label", "Atlas Transparency"
     ];
 
     keys.forEach((k) => {
