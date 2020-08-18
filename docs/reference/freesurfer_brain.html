@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.9</span>
       </span>
     </div>
 
@@ -135,6 +135,7 @@
   <span class='kw'>volume_types</span> <span class='kw'>=</span> <span class='st'>"t1"</span>,
   <span class='kw'>surface_types</span> <span class='kw'>=</span> <span class='st'>"pial"</span>,
   <span class='kw'>curvature</span> <span class='kw'>=</span> <span class='st'>"sulc"</span>,
+  <span class='kw'>atlas_types</span> <span class='kw'>=</span> <span class='st'>"aparc+aseg"</span>,
   <span class='kw'>ct_path</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>use_cache</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>use_141</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span>(<span class='st'>"threeBrain.use141"</span>, <span class='fl'>TRUE</span>),
@@ -179,6 +180,11 @@
     <tr>
       <th>curvature</th>
       <td><p>curvature data. Only support <code>"sulc"</code> for current version</p></td>
+    </tr>
+    <tr>
+      <th>atlas_types</th>
+      <td><p>atlas types to be loaded, choices are <code>'aparc+aseg'</code>,
+<code>'aparc.a2009s+aseg'</code>, <code>'aparc.DKTatlas+aseg'</code>, <code>'aseg'</code></p></td>
     </tr>
     <tr>
       <th>ct_path</th>

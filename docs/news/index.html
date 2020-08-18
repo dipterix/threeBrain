@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.9</span>
       </span>
     </div>
 
@@ -114,15 +114,15 @@
       <small>Source: <a href='https://github.com/dipterix/threeBrain/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="threebrain-0-1-8" class="section level1">
+    <div id="threebrain-018" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.8">
-<a href="#threebrain-0-1-8" class="anchor"></a>threeBrain 0.1.8<small> Unreleased </small>
+<a href="#threebrain-018" class="anchor"></a>threeBrain 0.1.8<small> 2020-06-23 </small>
 </h1>
 <div id="changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#changes" class="anchor"></a>Changes</h2>
 <ul>
-<li>Screenshot now downloads <code>pdf</code> format with text vectorized</li>
+<li>Screenshot now downloads <code>pdf</code> format</li>
 </ul>
 <div id="improvements" class="section level3">
 <h3 class="hasAnchor">
@@ -133,9 +133,9 @@
 </div>
 </div>
 </div>
-    <div id="threebrain-0-1-7" class="section level1">
+    <div id="threebrain-017" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.7">
-<a href="#threebrain-0-1-7" class="anchor"></a>threeBrain 0.1.7<small> 2020-05-12 </small>
+<a href="#threebrain-017" class="anchor"></a>threeBrain 0.1.7<small> 2020-05-12 </small>
 </h1>
 <div id="changes-1" class="section level2">
 <h2 class="hasAnchor">
@@ -154,9 +154,9 @@
 </div>
 </div>
 </div>
-    <div id="threebrain-0-1-6" class="section level1">
+    <div id="threebrain-016" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.6">
-<a href="#threebrain-0-1-6" class="anchor"></a>threeBrain 0.1.6<small> Unreleased </small>
+<a href="#threebrain-016" class="anchor"></a>threeBrain 0.1.6<small> Unreleased </small>
 </h1>
 <div id="changes-2" class="section level2">
 <h2 class="hasAnchor">
@@ -177,9 +177,9 @@
 </div>
 </div>
 </div>
-    <div id="threebrain-0-1-5" class="section level1">
+    <div id="threebrain-015" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.5">
-<a href="#threebrain-0-1-5" class="anchor"></a>threeBrain 0.1.5<small> 2020-01-20 </small>
+<a href="#threebrain-015" class="anchor"></a>threeBrain 0.1.5<small> 2020-01-20 </small>
 </h1>
 <div id="changes-3" class="section level2">
 <h2 class="hasAnchor">
@@ -206,9 +206,9 @@
 </div>
 </div>
 </div>
-    <div id="threebrain-0-1-4" class="section level1">
+    <div id="threebrain-014" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.4">
-<a href="#threebrain-0-1-4" class="anchor"></a>threeBrain 0.1.4<small> 2019-10-18 </small>
+<a href="#threebrain-014" class="anchor"></a>threeBrain 0.1.4<small> 2019-10-18 </small>
 </h1>
 <div id="changes-4" class="section level2">
 <h2 class="hasAnchor">
@@ -218,7 +218,7 @@
 <li>Added alternative methods to read <code>.nii</code> files, <code>nibabel</code> is now optional</li>
 <li>Customized color palettes and value range for better visualizations with outliers</li>
 <li>Only requires <code>T1.mgz</code> or <code>brainmask</code> of <code>brain.finalsurf</code> is not found. This allows users only run <code>FreeSurfer</code> to the first stage, which only takes around 8 to 10 minutes instead of 6 hours.</li>
-<li>Fully compatible with <code>htmlwidgets</code> in <code>shiny</code> mode. When calling <code>threejsBrainOutput</code> under <code><a href="https://rdrr.io/pkg/shiny/man/renderUI.html">shiny::renderUI</a></code>, the <code>DOM</code> element might get reset by <code>shiny</code>, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn’t reset correctly. A cache is created and now is reusing the canvas.</li>
+<li>Fully compatible with <code>htmlwidgets</code> in <code>shiny</code> mode. When calling <code>threejsBrainOutput</code> under <code><a href="https://shiny.rstudio.com/reference/shiny/latest/renderUI.html">shiny::renderUI</a></code>, the <code>DOM</code> element might get reset by <code>shiny</code>, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn’t reset correctly. A cache is created and now is reusing the canvas.</li>
 </ul>
 <div id="improvements-4" class="section level3">
 <h3 class="hasAnchor">
@@ -239,9 +239,9 @@
 </div>
 </div>
 </div>
-    <div id="threebrain-0-1-3" class="section level1">
+    <div id="threebrain-013" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.3">
-<a href="#threebrain-0-1-3" class="anchor"></a>threeBrain 0.1.3<small> 2019-09-10 </small>
+<a href="#threebrain-013" class="anchor"></a>threeBrain 0.1.3<small> 2019-09-10 </small>
 </h1>
 <div id="changes-5" class="section level2">
 <h2 class="hasAnchor">
@@ -269,9 +269,9 @@
 </div>
 </div>
 </div>
-    <div id="threebrain-0-1-2" class="section level1">
+    <div id="threebrain-012" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.2">
-<a href="#threebrain-0-1-2" class="anchor"></a>threeBrain 0.1.2<small> 2019-06-28 </small>
+<a href="#threebrain-012" class="anchor"></a>threeBrain 0.1.2<small> 2019-06-28 </small>
 </h1>
 <div id="changes-6" class="section level2">
 <h2 class="hasAnchor">
@@ -295,9 +295,9 @@
 </div>
 </div>
 </div>
-    <div id="threebrain-0-1-1" class="section level1">
+    <div id="threebrain-011" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.1">
-<a href="#threebrain-0-1-1" class="anchor"></a>threeBrain 0.1.1<small> Unreleased </small>
+<a href="#threebrain-011" class="anchor"></a>threeBrain 0.1.1<small> Unreleased </small>
 </h1>
 <ul>
 <li>Implemented three types of geometries: plane, sphere and free. A free geometry takes arbitrary geometry vertices and faces to form a 3D mesh object.</li>
@@ -306,9 +306,9 @@
 <li>Implemented D3 side-widget</li>
 </ul>
 </div>
-    <div id="threebrain-0-1-0" class="section level1">
+    <div id="threebrain-010" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.0">
-<a href="#threebrain-0-1-0" class="anchor"></a>threeBrain 0.1.0<small> Unreleased </small>
+<a href="#threebrain-010" class="anchor"></a>threeBrain 0.1.0<small> Unreleased </small>
 </h1>
 <ul>
 <li>Initial private beta release!</li>

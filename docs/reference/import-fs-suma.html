@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to reshape data to `RAS` order — reorient_volume • threeBrain</title>
+<title>Import 'FreeSurfer' or 'SUMA' files into the viewer structure — import-fs-suma • threeBrain</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,11 @@
 
 
 
-<meta property="og:title" content="Function to reshape data to `RAS` order — reorient_volume" />
-<meta property="og:description" content="Function to reshape data to `RAS` order" />
+<meta property="og:title" content="Import 'FreeSurfer' or 'SUMA' files into the viewer structure — import-fs-suma" />
+<meta property="og:description" content="Import 'T1-MRI', surface files, curvature/'sulcus', atlas, and
+'Talairach' transform matrix into 'json' format. These functions are not
+intended to be called directly, use import_from_freesurfer
+instead." />
 
 
 
@@ -111,33 +114,74 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to reshape data to `RAS` order</h1>
-    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/utils_orient.R'><code>R/utils_orient.R</code></a></small>
-    <div class="hidden name"><code>reorient_volume.Rd</code></div>
+    <h1>Import 'FreeSurfer' or 'SUMA' files into the viewer structure</h1>
+    <small class="dont-index">Source: <a href='https://github.com/dipterix/threeBrain/blob/master/R/fs_import.R'><code>R/fs_import.R</code></a></small>
+    <div class="hidden name"><code>import-fs-suma.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Function to reshape data to `RAS` order</p>
+    <p>Import 'T1-MRI', surface files, curvature/'sulcus', atlas, and
+'Talairach' transform matrix into 'json' format. These functions are not
+intended to be called directly, use <code><a href='import_from_freesurfer.html'>import_from_freesurfer</a></code>
+instead.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>reorient_volume</span>(<span class='no'>volume</span>, <span class='no'>Norig</span>)</pre>
+    <pre class="usage"><span class='fu'>import_fs</span>(
+  <span class='no'>subject_name</span>,
+  <span class='no'>fs_path</span>,
+  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>dtype</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"T1"</span>, <span class='st'>"surface"</span>, <span class='st'>"curv"</span>, <span class='st'>"atlas_volume"</span>, <span class='st'>"atlas_surface"</span>, <span class='st'>"xform"</span>),
+  <span class='kw'>sub_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>hemisphere</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"l"</span>, <span class='st'>"r"</span>),
+  <span class='no'>...</span>
+)
+
+<span class='fu'>import_suma</span>(
+  <span class='no'>subject_name</span>,
+  <span class='no'>fs_path</span>,
+  <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>dtype</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"T1"</span>, <span class='st'>"surface"</span>, <span class='st'>"curv"</span>, <span class='st'>"atlas_volume"</span>, <span class='st'>"atlas_surface"</span>, <span class='st'>"xform"</span>),
+  <span class='kw'>sub_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>hemisphere</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"l"</span>, <span class='st'>"r"</span>),
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>volume, </th>
-      <td><p>3-mode tensor (voxels), usually from `mgz`, `nii`, or `BRIK` files</p></td>
+      <th>subject_name</th>
+      <td><p>character, subject code</p></td>
     </tr>
     <tr>
-      <th>Norig</th>
-      <td><p>a <code>4x4</code> transform matrix mapping volume (`CRS`) to `RAS`</p></td>
+      <th>fs_path</th>
+      <td><p>path to 'FreeSurfer' folder</p></td>
+    </tr>
+    <tr>
+      <th>quiet, ...</th>
+      <td><p>passed from or to other methods.</p></td>
+    </tr>
+    <tr>
+      <th>dtype</th>
+      <td><p>data type to import, choices are <code>'T1'</code>, <code>'surface'</code>,
+<code>'curv'</code>, <code>'atlas_volume'</code>, <code>'atlas_surface'</code>, <code>'xform'</code></p></td>
+    </tr>
+    <tr>
+      <th>sub_type</th>
+      <td><p>detailed files to import. <code>'atlas_surface'</code>
+is not supported for now</p></td>
+    </tr>
+    <tr>
+      <th>hemisphere</th>
+      <td><p>which hemisphere to import, ignored when <code>dtype</code> is in
+<code>'T1'</code>, <code>'atlas_volume'</code>, <code>'atlas_surface'</code>, <code>'xform'</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Reshaped tensor with dimensions corresponding to `R`, `A`, and `S`</p>
+    <p>logical, <code>TRUE</code> if the file is or has been cached, or
+<code>FALSE</code> if the file is missing.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

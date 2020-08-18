@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.9</span>
       </span>
     </div>
 
@@ -120,7 +120,7 @@
     <p>Import from `FreeSurfer` and create `JSON` cache for 3D viewer</p>
     </div>
 
-    <pre class="usage"><span class='fu'>import_from_freesurfer</span>(<span class='no'>fs_path</span>, <span class='no'>subject_name</span>)</pre>
+    <pre class="usage"><span class='fu'>import_from_freesurfer</span>(<span class='no'>fs_path</span>, <span class='no'>subject_name</span>, <span class='kw'>quiet</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -132,6 +132,10 @@
     <tr>
       <th>subject_name</th>
       <td><p>subject code</p></td>
+    </tr>
+    <tr>
+      <th>quiet</th>
+      <td><p>whether to suppress message or not</p></td>
     </tr>
     </table>
 
