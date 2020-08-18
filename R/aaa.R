@@ -23,11 +23,11 @@ cache_version <- 0.1
 #' @param continued logical, there are two phases of setting up environment. You
 #' probably need to restart R session after the first phase and continue setting up.
 #' @param show_example whether to show example of `N27` subject at the end.
-#' @param use_python whether to install python toolbox (recommended, but not by default)
-#' @param try_conda try to use `conda` to create `RAVEPy` environment
+#' @param ... ignored
 #' @export
-brain_setup <- function(continued = FALSE, show_example = TRUE, use_python=FALSE, try_conda = TRUE){
+brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
   use_python <- FALSE
+  try_conda <- FALSE
   if( use_python && !continued ){
     # cat2('Step 1: checking python environment', level = 'INFO')
     # info = ravepy_info()
@@ -83,11 +83,7 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, use_python=FALSE
     # }
   }else{
 
-    if( !use_python ){
-      cat2('Skipping step 1-2...', level = 'INFO')
-    }
-
-    cat2('Step 3: Downloading N27 brain from the Internet.', level = 'INFO')
+    cat2('Downloading N27 brain from the Internet.', level = 'INFO')
     download_N27()
 
     cat2('Wrapping up installation...', level = 'INFO')
