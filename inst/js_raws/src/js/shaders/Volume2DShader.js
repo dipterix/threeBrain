@@ -16,7 +16,7 @@ const register_volume2DShader1 = function(THREE){
 			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
-      '#version 300 es',
+      // '#version 300 es',
       'uniform vec3 size;',
       'out vec2 vUv;',
       'void main() {',
@@ -28,7 +28,7 @@ const register_volume2DShader1 = function(THREE){
       '}'
 		].join( '\n' ),
     fragmentShader: [
-      '#version 300 es',
+      // '#version 300 es',
 
       'precision highp float;',
       'precision highp int;',
@@ -39,7 +39,7 @@ const register_volume2DShader1 = function(THREE){
       'uniform int depth;',
       'uniform float threshold;',
       'uniform float renderDepth;',
-      'out vec4 out_FragColor;',
+      // 'out vec4 out_FragColor;',
 
       'void main() {',
 
@@ -51,7 +51,7 @@ const register_volume2DShader1 = function(THREE){
       'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
+      'gl_FragColor = vec4( color.rrr, is_opaque );',
 
       '}'
     ].join( '\n' )
@@ -69,7 +69,7 @@ const register_volume2DShader1 = function(THREE){
 			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
-      '#version 300 es',
+      // '#version 300 es',
       'uniform vec3 size;',
       'out vec2 vUv;',
       'void main() {',
@@ -82,7 +82,7 @@ const register_volume2DShader1 = function(THREE){
       '}'
 		].join( '\n' ),
     fragmentShader: [
-      '#version 300 es',
+      // '#version 300 es',
 
       'precision highp float;',
       'precision highp int;',
@@ -94,7 +94,7 @@ const register_volume2DShader1 = function(THREE){
       'uniform float depth;',
       'uniform float threshold;',
       'uniform float renderDepth;',
-      'out vec4 out_FragColor;',
+      // 'out vec4 out_FragColor;',
 
       'void main() {',
 
@@ -105,7 +105,7 @@ const register_volume2DShader1 = function(THREE){
       'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
+      'gl_FragColor = vec4( color.rrr, is_opaque );',
 
       '}'
     ].join( '\n' )
@@ -120,7 +120,7 @@ const register_volume2DShader1 = function(THREE){
 			renderDepth: { value : 1.0 }
 		},
 		vertexShader: [
-      '#version 300 es',
+      // '#version 300 es',
       'uniform vec3 size;',
       'out vec2 vUv;',
       'void main() {',
@@ -133,7 +133,7 @@ const register_volume2DShader1 = function(THREE){
       '}'
 		].join( '\n' ),
     fragmentShader: [
-      '#version 300 es',
+      // '#version 300 es',
 
       'precision highp float;',
       'precision highp int;',
@@ -145,7 +145,7 @@ const register_volume2DShader1 = function(THREE){
       'uniform float depth;',
       'uniform float threshold;',
       'uniform float renderDepth;',
-      'out vec4 out_FragColor;',
+      // 'out vec4 out_FragColor;',
 
       'void main() {',
 
@@ -156,7 +156,7 @@ const register_volume2DShader1 = function(THREE){
       'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
 
       // lighten a bit
-      'out_FragColor = vec4( color.rrr * 1.5, is_opaque );',
+      'gl_FragColor = vec4( color.rrr, is_opaque );',
 
       '}'
     ].join( '\n' )

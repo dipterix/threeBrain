@@ -3,17 +3,20 @@
 #' @param volume_types volume types, right now only support T1 image
 #' @param surface_types surface types to load
 #' @param curvature curvature data. Only support \code{"sulc"} for current version
+#' @param atlas_types atlas types to be loaded, choices are \code{'aparc+aseg'},
+#' \code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'}, \code{'aseg'}
 #' @param ct_path an aligned CT file in 'Nifti' format
 #' @param ... ignored
 #' @export
 freesurfer_brain2 <- function(
-  fs_subject_folder,
-  subject_name, volume_types = 't1', surface_types = 'pial',
-  curvature = 'sulc',
+  fs_subject_folder, subject_name,
+  volume_types = 't1', surface_types = 'pial', curvature = 'sulc',
+  atlas_types = 'aparc+aseg',
   ct_path = NULL, #file.path(fs_subject_folder, 'RAVE', 'coregistration', 'ct2t1.nii.gz'),
   use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE), ...){
 
   mustWork <- TRUE
+  atlas_types <- atlas_types[atlas_types %in% c('aparc+aseg', 'aparc.a2009s+aseg', 'aparc.DKTatlas+aseg', 'aseg')]
 
   # Find folders
   if( dir.exists(file.path(fs_subject_folder, 'surf')) ){
@@ -40,6 +43,9 @@ freesurfer_brain2 <- function(
   # Check if subjet is cached
   rave_dir <- file.path(path_subject, 'RAVE')
   common_file <- file.path(rave_dir, 'common.digest')
+
+  # check cache files
+  # cached <- validate_digest(src, target)
   rave_cached <- function(fname){
     file.path(rave_dir, fname)
   }
@@ -51,7 +57,10 @@ freesurfer_brain2 <- function(
   }else{
     common <- from_json(from_file = common_file)
     if( !isTRUE(common$subject == subject_name) ||
-        !isTRUE(cache_version <= common$cache_version) ){
+        !(
+          isTRUE(cache_version <= common$cache_version) ||
+          isTRUE(THREEBRAIN_DATA_VER <= common$THREEBRAIN_DATA_VER)
+        ) ){
       has_cache <- FALSE
     }
   }
@@ -345,6 +354,57 @@ freesurfer_brain2 <- function(
   }
 
   surface_type <- brain$surface_types
+
+
+  for(atlas_t in atlas_types){
+    # check if cache exists
+
+    has_atlas <- FALSE
+    atlas_t_alt <- stringr::str_replace_all(atlas_t, '[\\W]', '_')
+    atlas_json <- sprintf('%s_%s.json', subject_name, atlas_t_alt)
+    atlas_digest <- rave_cached(paste0(atlas_json, '.digest'))
+    if(atlas_json %in% common$fs_atlas_files){
+      # Atlas is cached and valid (?)
+      atlas_header <- from_json(from_file = atlas_digest)
+      fname_atlas <- atlas_header$source_name
+      Norig <- atlas_header$Norig
+      Torig <- atlas_header$Torig
+      has_atlas <- TRUE
+    }
+
+    geom_atlas <- NULL
+
+    if( has_atlas ){
+      atlas_shape <- atlas_header$shape
+      group_atlas <- GeomGroup$new(name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name))
+      group_atlas$subject_code <- subject_name
+      cache_atlas <- normalizePath(file.path(rave_dir, atlas_json))
+
+      geom_atlas <- DataCubeGeom2$new(
+        name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name), dim = atlas_shape,
+        half_size = c(1,1,1), group = group_atlas, position = c(0,0,0),
+        cache_file = cache_atlas)
+
+      geom_atlas$subject_code <- subject_name
+      geom_atlas <- BrainAtlas$new(
+        subject_code = subject_name, atlas_type = atlas_t_alt,
+        atlas = geom_atlas, position = c(0, 0, 0 ))
+
+      brain$add_atlas( atlas = geom_atlas )
+    }
+  }
+
+  # Atlas files
+  # group_volume <- GeomGroup$new(name = sprintf('Atlas - %s (%s)', atlas_type, subject_name))
+  # group_volume$subject_code <- subject_name
+  #
+  # # Create a datacube geom to force cache
+  # dc2 <- DataCubeGeom2$new(
+  #   name = sprintf('Atlas - %s (%s)', atlas_type, subject_name), dim = c(256,256,256),
+  #   half_size = c(1,1,1), group = group_volume, position = c(0,0,0),
+  #   cache_file = sprintf('~/rave_data/others/fs/RAVE/YCQ_%s.json', atlas_type))
+
+
 
 
   # #### Load aligned CT if required ####

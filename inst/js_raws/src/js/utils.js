@@ -83,6 +83,23 @@ const min2 = function(x, init = -Infinity){
   return( re );
 };
 
+const max2 = function(x, init = Infinity){
+  if(x.length === 0){
+    return( init );
+  }
+  let re = -Infinity;
+  for(let i in x){
+    let tmp = x[i];
+    if( Array.isArray(tmp) ){
+      tmp = max2(tmp, re, true);
+    }
+    if( tmp > re ){
+      re = tmp;
+    }
+  }
+  return( re );
+};
+
 const sub2 = function(x, val){
   for(let i in x){
     let tmp = x[i];

@@ -7,7 +7,7 @@
 
 <img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />
 
-A live [demo]() is under construction!
+<div style = 'text-align:center; font-size: 20px'><a href="https://dipterix.github.io/" target="_blank">A live demo is live NOW! (Recommended: view it with Chrome)</a></div>
 
 * Click [here](https://dipterix.github.io/threeBrain/news/index.html) for the news
 * For function usage, check [Reference page](https://dipterix.github.io/threeBrain/reference/index.html)

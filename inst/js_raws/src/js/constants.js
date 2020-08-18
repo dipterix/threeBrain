@@ -30,6 +30,7 @@ CONSTANTS.LAYER_SYS_CORONAL_9 = 9;                // System reserved, coronal ca
 CONSTANTS.LAYER_SYS_AXIAL_10 = 10;                 // System reserved, axial camera only
 CONSTANTS.LAYER_SYS_SAGITTAL_11 = 11;              // System reserved, sagittal camera only
 CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 = 13;      // System reserved, all side cameras visible
+CONSTANTS.LAYER_SYS_RAYCASTER_14 = 14;               // System reserved, raycaster use
 
 /* ------------------------------------ Global constants ------------------------------------
 */
@@ -68,6 +69,7 @@ CONSTANTS.KEY_CYCLE_SURFTYPE_EDITOR   = 'Digit4';       // '4' for toggle electr
 CONSTANTS.KEY_NEW_ELECTRODE_EDITOR    = 'Digit1';       // '1' new electrode
 CONSTANTS.KEY_LABEL_FOCUS_EDITOR      = 'Digit2';       // '2' for quick edit label
 CONSTANTS.KEY_CYCLE_REMOVE_EDITOR     = 'KeyR';
+CONSTANTS.KEY_CYCLE_ATLAS             = 'KeyL';         // "l" show/hide atlas
 
 CONSTANTS.TOOLTIPS = {};
 CONSTANTS.TOOLTIPS.KEY_ZOOM                    = 'z/Z';
@@ -91,12 +93,14 @@ CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFTYPE_EDITOR   = '4';
 CONSTANTS.TOOLTIPS.KEY_NEW_ELECTRODE_EDITOR    = '1';
 CONSTANTS.TOOLTIPS.KEY_LABEL_FOCUS_EDITOR      = '2';
 CONSTANTS.TOOLTIPS.KEY_CYCLE_REMOVE_EDITOR     = 'r';
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS             = 'l';
 
 // Regular expressions
 CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - pial (YAB)
 CONSTANTS.REGEXP_VOLUME_GROUP     = /^Volume - (.+) \((.+)\)$/;   // Volume - brain.finalsurfs (YAB)
 CONSTANTS.REGEXP_ELECTRODE_GROUP  = /^Electrodes \((.+)\)$/;                  // Electrodes (YAB)
 CONSTANTS.REGEXP_SURFACE          = /^([\w ]+) (Left|right) Hemisphere - (.+) \((.+)\)$/;   // Standard 141 Left Hemisphere - pial (YAB)
+CONSTANTS.REGEXP_ATLAS_GROUP      = /^Atlas - (.+) \\((.*)\\)$/;  // Atlas - aparc_aseg (YAB)
 CONSTANTS.REGEXP_VOLUME           = /^(.+) \((.+)\)$/;                   // brain.finalsurfs (YAB)
 CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - pSYLV12
 
@@ -117,6 +121,7 @@ CONSTANTS.FOLDERS = {
   'reset-side-panels'     : 'Volume Settings',
   'side-three-planes'     : 'Volume Settings',
   'side-electrode-dist'   : 'Volume Settings',
+  'atlas'                 : 'Volume Settings',
   'subject-selector'      : 'Surface Settings',
   'surface-selector'      : 'Surface Settings',
   'hemisphere-material'   : 'Surface Settings',

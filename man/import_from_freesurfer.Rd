@@ -4,12 +4,14 @@
 \alias{import_from_freesurfer}
 \title{Import from `FreeSurfer` and create `JSON` cache for 3D viewer}
 \usage{
-import_from_freesurfer(fs_path, subject_name)
+import_from_freesurfer(fs_path, subject_name, quiet = FALSE)
 }
 \arguments{
 \item{fs_path}{`FreeSurfer` subject directory}
 
 \item{subject_name}{subject code}
+
+\item{quiet}{whether to suppress message or not}
 }
 \value{
 None.

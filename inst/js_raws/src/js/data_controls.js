@@ -80,7 +80,11 @@ class THREEBRAIN_PRESETS{
   // 9. Electrode visibility in side canvas
   // 10. subject code
   // 11. surface type
-
+  // 12. Hemisphere material/transparency
+  // 13. electrode visibility, highlight, groups
+  // 14. electrode mapping
+  // 15. animation, play/pause, speed, clips...
+  // 16. Highlight selected electrodes and info
 
   // 1. Background colors
   c_background(){
@@ -875,7 +879,7 @@ class THREEBRAIN_PRESETS{
       const cmap = this.canvas.color_maps.get(v);
       if(!cmap){
         // this is not a value we can refer to
-        thres_range.setValue('Cannot threshold on this variable');
+        thres_range.setValue('');
         this.canvas.state_data.set('threshold_active', false);
         return;
       }
@@ -1123,7 +1127,85 @@ class THREEBRAIN_PRESETS{
   }
 
 
+  c_atlas(){
+    const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
+          _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
+          _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 
+    const atlas_type = this.gui.add_item('Atlas Type', _atype, {args : _c, folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.switch_subject( '/', {
+          'atlas_type': v
+        });
+        this.fire_change({ 'atlas_type' : v });
+      });
+    this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Atlas Type', folder_name);
+
+
+    const atlas_alpha = this.gui.add_item('Atlas Transparency', 1.0, { folder_name : folder_name })
+      .min(0).max(1).step(0.1)
+      .onChange((v) => {
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
+        mesh.material.uniforms.alpha.value = v;
+        this._update_canvas();
+        this.fire_change({ 'atlas_alpha' : v });
+      });
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
+      if( has_meta_keys( evt.event, false, false, false ) ){
+        let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
+        if( current_idx >= 0 ){
+          atlas_type.setValue( _c[ current_idx ] );
+        }
+      }
+    }, 'gui_atlas_type');
+
+    let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+    const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
+      .min(0).max(max_colorID).step(1)
+      .onChange((v) => {
+        let lb, ub;
+        if(v === 0){
+          lb = 0;
+          ub = 1;
+        } else {
+          lb = (v - 0.5) / max_colorID;
+          ub = (v + 0.5) / max_colorID;
+        }
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
+        mesh.material.uniforms.threshold_lb.value = lb;
+        mesh.material.uniforms.threshold_ub.value = ub;
+        this._update_canvas();
+      });
+
+    /*
+    const surf_material = this.gui.add_item('Surface Material', _mty, {
+      args : _mtyc, folder_name : folder_name })
+      .onChange((v) => {
+        this.canvas.state_data.set( 'surface_material_type', v );
+        this.fire_change({ 'surface_material' : v });
+        this._update_canvas();
+      });
+    this.fire_change({ 'surface_material' : _mty });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL, 'Surface Material', folder_name);
+
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_MATERIAL, (evt) => {
+      if( has_meta_keys( evt.event, true, false, false ) ){
+        let current_idx = (_mtyc.indexOf( surf_material.getValue() ) + 1) % _mtyc.length;
+        if( current_idx >= 0 ){
+          surf_material.setValue( _mtyc[ current_idx ] );
+        }
+      }
+    }, 'gui_surf_material');
+    */
+
+  }
 
   // -------------------------- New version --------------------------
 
@@ -1631,7 +1713,8 @@ class THREEBRAIN_CONTROL{
       "Left Opacity", "Right Opacity",
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
-      "Show Legend", "Show Time", "Highlight Box", "Info Text"
+      "Show Legend", "Show Time", "Highlight Box", "Info Text",
+      "Atlas Type", "Atlas Label", "Atlas Transparency"
     ];
 
     keys.forEach((k) => {

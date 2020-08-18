@@ -79,7 +79,7 @@ filename <- function(path){
 }
 
 
-json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header = NULL, ...){
+json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header = NULL, quiet = getOption('threeBrain.quiet', FALSE), ...){
   digest_path <- paste0(path, '.digest')
 
   if( digest ){
@@ -90,7 +90,7 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
   }
   cached_digest <- list()
 
-  if(recache){
+  if(recache && !quiet){
     cat2('Re-cache...')
   }
 
@@ -106,7 +106,7 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
         TRUE
       })
     }
-    if( recache ){
+    if( recache && !quiet ){
       cat2('Digest not match, re-cache...')
     }
   }
@@ -116,7 +116,9 @@ json_cache <- function(path, data, recache=FALSE, digest = TRUE, digest_header =
   is_new_cache <- FALSE
 
   if(recache || !file.exists(path)){
-    cat2('Creating cache data to -', path)
+    if( !quiet ){
+      cat2('Creating cache data to -', path)
+    }
 
     s <- to_json(data, ...)
 
@@ -521,7 +523,7 @@ file_move <- function(from, to, clean = TRUE, show_warnings = FALSE, overwrite =
 
 
 
-safe_write_csv <- function(data, file, ..., quiet = FALSE){
+safe_write_csv <- function(data, file, ..., quiet = getOption('threeBrain.quiet', FALSE)){
   if(file.exists(file)){
     oldfile <- stringr::str_replace(file, '\\.[cC][sS][vV]$', strftime(Sys.time(), '_[%Y%m%d_%H%M%S].csv'))
     if(!quiet){

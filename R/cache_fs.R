@@ -212,6 +212,8 @@ import_fs_T1 <- function(subject_name, fs_path, folder = 'mri', cache_dir = 'RAV
 }
 
 
+
+
 import_fs_surf <- function(subject_name, fs_path, folder = 'surf',
                            surf_type = 'pial', hemisphere = 'l',
                            cache_dir = 'RAVE', quiet = FALSE){
@@ -440,3 +442,4 @@ import_fs_curv <- function(
 
 
 }
+

@@ -81,6 +81,18 @@ threejs_brain <- function(
       )
     }
   })
+  global_container$group$set_group_data(
+    name = '__global_data__FreeSurferColorLUT',
+    value = list(
+      'path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
+      'absolute_path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
+      'file_name' = 'FreeSurferColorLUT.json',
+      'is_new_cache' = FALSE,
+      'is_cache' = TRUE
+    ),
+    is_cached = TRUE,
+    cache_if_not_exists = FALSE
+  )
 
 
   # Create element list

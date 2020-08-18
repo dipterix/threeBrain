@@ -20,6 +20,7 @@ freesurfer_brain2(
   volume_types = "t1",
   surface_types = "pial",
   curvature = "sulc",
+  atlas_types = "aparc+aseg",
   ct_path = NULL,
   use_cache = TRUE,
   use_141 = getOption("threeBrain.use141", TRUE),
@@ -44,6 +45,9 @@ freesurfer_brain2(
 \item{surface_types}{surface types to load}
 
 \item{curvature}{curvature data. Only support \code{"sulc"} for current version}
+
+\item{atlas_types}{atlas types to be loaded, choices are \code{'aparc+aseg'},
+\code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'}, \code{'aseg'}}
 
 \item{ct_path}{an aligned CT file in 'Nifti' format}
 

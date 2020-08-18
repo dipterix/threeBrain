@@ -106,6 +106,7 @@ class THREEBRAIN_CANVAS {
     this.electrodes = new Map();
     this.volumes = new Map();
     this.ct_scan = new Map();
+    this.atlases = new Map();
     this._show_ct = false;
     this.surfaces = new Map();
     this.state_data = new Map();
@@ -188,6 +189,8 @@ class THREEBRAIN_CANVAS {
           up: 0,1,0 ( heads up )
     */
     this.main_camera = new THREE.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
+    // this.main_camera = new THREE.PerspectiveCamera( 20, width / height, 0.1, 10000 );
+
 		this.main_camera.position.x = 500;
 		this.main_camera.userData.pos = [500,0,0];
 		this.main_camera.up.set(0,0,1);
@@ -644,6 +647,7 @@ class THREEBRAIN_CANVAS {
     // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
     mouse_helper.add( mouse_helper_root );
+
     this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
@@ -915,12 +919,13 @@ class THREEBRAIN_CANVAS {
         return({
           pass  : ['click', 'dblclick'].includes( evt.action ) ||
                   ( evt.action === 'mousedown' && evt.event.button === 2 ),
-          type  : 'clickable'
+          type  : 'clickable' //this.scene.children //'clickable'
         });
       },
       ( res, evt ) => {
         const first_item = res.first_item;
         if( first_item ){
+
           const target_object = res.target_object,
                 from = first_item.point,
                 direction = first_item.face.normal.normalize();
@@ -1118,10 +1123,17 @@ class THREEBRAIN_CANVAS {
 
     this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
 
+    this.mouse_raycaster.layers.disableAll();
+
     if( request_type === undefined || request_type === true || request_type === 'clickable' ){
       // intersect with all clickables
+      // set raycaster to be layer 14
+      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
       items = this.mouse_raycaster.intersectObjects( to_array( this.clickable ) );
+      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
     }else if( request_type.isObject3D || Array.isArray( request_type ) ){
+      // set raycaster to be layer 8 (main camera)
+      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       items = this.mouse_raycaster.intersectObjects( to_array( request_type ), true );
     }
 
@@ -1678,7 +1690,6 @@ class THREEBRAIN_CANVAS {
         current_time_delta  : 0
       };
     }
-
 
     // double-buffer to make sure depth renderings
     //this.main_renderer.setClearColor( renderer_colors[0] );
@@ -2500,6 +2511,7 @@ class THREEBRAIN_CANVAS {
     this.volumes.clear();
     this.ct_scan.clear();
     this.surfaces.clear();
+    this.atlases.clear();
 
     this.state_data.clear();
     this.shared_data.clear();
@@ -2594,6 +2606,11 @@ class THREEBRAIN_CANVAS {
       m = inst.object;
     }
 
+    // set clickable layer
+    if( g.clickable === true ){
+      layers.push( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
+    }
+
     let set_layer = (m) => {
       // Normal 3D object
       m.layers.set( 31 );
@@ -2622,6 +2639,7 @@ class THREEBRAIN_CANVAS {
       this.volumes.set( subject_code, {} );
       this.ct_scan.set( subject_code, {} );
       this.surfaces.set(subject_code, {} );
+      this.atlases.set(subject_code, {} );
     }
 
 
@@ -2685,8 +2703,8 @@ class THREEBRAIN_CANVAS {
       m.userData.construct_params = g;
       m.updateMatrixWorld();
 
-      get_or_default( this.ct_scan, subject_code, {} )[ g.name ] = m;
-
+      // get_or_default( this.ct_scan, subject_code, {} )[ g.name ] = m;
+      get_or_default( this.atlases, subject_code, {} )[ g.name ] = m;
 
 
     }else if( g.type === 'sphere' && g.is_electrode ){
@@ -3012,6 +3030,7 @@ class THREEBRAIN_CANVAS {
             path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
           }
           */
+          console.debug(path);
 
           this.load_file(
             path, ( v ) => {
@@ -3049,6 +3068,19 @@ class THREEBRAIN_CANVAS {
     };
 
     return(check);
+
+  }
+
+  global_data(data_name){
+    const gp = this.group.get("__global_data");
+    let re = null;
+    // group exists
+    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+
+      re = gp.userData.group_data[data_name];
+    }
+
+    return(re);
 
   }
 
@@ -3247,6 +3279,21 @@ class THREEBRAIN_CANVAS {
     return( Object.keys( re ) );
   }
 
+  get_atlas_types(){
+    const re = { 'none' : 1 }; // always put none
+
+    this.group.forEach( (gp, g) => {
+      // Atlas - aparc_aseg (%s)
+      // let res = new RegExp('^Atlas - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
+      const res = CONSTANTS.REGEXP_ATLAS_GROUP.exec(g);
+      if( res && res.length === 3 ){
+        re[ res[1] ] = 1;
+      }
+    });
+
+    return( Object.keys( re ) );
+  }
+
   get_volume_types(){
     const re = {};
 
@@ -3308,6 +3355,7 @@ class THREEBRAIN_CANVAS {
     state.set( 'target_subject', target_subject );
 
     let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
+    let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
 
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
@@ -3324,8 +3372,8 @@ class THREEBRAIN_CANVAS {
     let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
     let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
-    //let v2v_orig = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
-    let v2v_orig = this.shared_data.get( target_subject ).vox2vox_MNI305;
+    let v2v_orig = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
+    // let v2v_orig = this.shared_data.get( target_subject ).vox2vox_MNI305;
     let anterior_commissure = state.get('anterior_commissure') || new THREE.Vector3();
     anterior_commissure.set(0,0,0);
 
@@ -3342,6 +3390,7 @@ class THREEBRAIN_CANVAS {
 
     this.switch_volume( target_subject, volume_type );
     this.switch_ct( target_subject, ct_type, ct_threshold );
+    this.switch_atlas( target_subject, atlas_type );
     this.switch_surface( target_subject, surface_type,
                           [surface_opacity_left, surface_opacity_right],
                           [material_type_left, material_type_right] );
@@ -3356,6 +3405,7 @@ class THREEBRAIN_CANVAS {
     this.set_side_visibility();
 
     state.set( 'surface_type', surface_type );
+    state.set( 'atlas_type', atlas_type );
     state.set( 'material_type_left', material_type_left );
     state.set( 'material_type_right', material_type_right );
     state.set( 'volume_type', volume_type );
@@ -3463,6 +3513,19 @@ class THREEBRAIN_CANVAS {
     });
 
     this.start_animation( 0 );
+  }
+
+  switch_atlas( target_subject, atlas_type ){
+    this.atlases.forEach( (al, subject_code) => {
+      for( let atlas_name in al ){
+        const m = al[ atlas_name ];
+        if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
+          m.visible = true;
+        }else{
+          m.visible = false;
+        }
+      }
+    });
   }
 
   switch_ct( target_subject, ct_type = 'ct.aligned.t1', ct_threshold = 0.8 ){
@@ -3806,6 +3869,7 @@ mapped = false,
 
         // Make sure layer 8 (main camera can see these electrodes)
         e.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+        e.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
 
         // get offsets
         e.getWorldPosition( diff ).sub( plane_pos );

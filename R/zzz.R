@@ -36,22 +36,71 @@ load_nibabel <- function(force_reload = FALSE){
 #' @export
 read_mgz <- function(path){
   path <- normalizePath(path, mustWork = FALSE)
-  cat2('Loading from: ', path)
 
-  nibabel <- load_nibabel()
-
-  if(!is.null(nibabel)){
-    inner_mgz_loader <- nibabel$load
-  }else{
-    inner_mgz_loader <- read_fs_mgh_mgz
+  if(FALSE){
+    res <- read_fs_mgh_mgz(path)
+    return(list(
+      header = res$header,
+      get_shape = res$get_shape,
+      get_data = res$get_data
+    ))
   }
+  # Use freesurferformats instead
+  res <- freesurferformats::read.fs.mgh(path, with_header = TRUE,
+                                        flatten = FALSE, drop_empty_dims = FALSE)
+  res$get_data <- function(){
+    dm <- dim(res$data)
+    if(dm[[4]] == 1){
+      drop(res$data)
+    } else {
+      res$data
+    }
+  }
+  res$get_shape <- function(){
+    dm <- dim(res$data)
+    if(dm[[4]] == 1){
+      dm <- dm[-4]
+    }
+    dm
+  }
+  default_mat <- matrix(c(-1,0,0,128, 0,0,1,-128, 0,-1,0,128, 0,0,0,1), byrow = TRUE, nrow = 4)
+  res$header$get_vox2ras <- function(){
+    if(res$header$ras_good_flag == 1){
+      res$header$internal$M
+    } else {
+      default_mat
+    }
+  }
+  res$header$get_vox2ras_tkr <- function(){
+    if(res$header$ras_good_flag == 1){
+      Mdc <- res$header$internal$Mdc
+      Pcrs_c <- res$header$internal$Pcrs_c
+      rbind(cbind(Mdc, - Mdc %*% Pcrs_c), c(0,0,0,1))
+    } else {
+      default_mat
+    }
+  }
+  res
+}
 
-  res <- inner_mgz_loader(path)
-  return(list(
-    header = res$header,
-    get_shape = res$get_shape,
-    get_data = res$get_data
-  ))
+
+read_nifti <- function(path){
+  dat <- oro.nifti::readNIfTI(path, reorient = FALSE)
+  vox2ras <- oro.nifti::qform(dat)
+  vox2ras_tkr <- cbind(vox2ras[,-4], cbind(-vox2ras[,-4], c(0,0,0,1)) %*% c(128,128,128,1))
+  dat <- dat@.Data
+  if(length(dim(dat)) == 4 && dim(dat)[[4]] == 1){
+    dat = dat[,,,1, drop = TRUE]
+  }
+  list(
+    data = dat,
+    header = list(
+      get_vox2ras = function(){ vox2ras },
+      get_vox2ras_tkr = function(){ vox2ras_tkr }
+    ),
+    get_shape = function(){ dim(dat) },
+    get_data = function(){ dat }
+  )
 }
 
 #' Function to load surface data from `Gifti` files
