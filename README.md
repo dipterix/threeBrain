@@ -43,7 +43,8 @@ Let's view this subject. The following commands all go to `RStudio` console.
 
 1. Import subject
 ```r
-n27 = freesurfer_brain(
+# freesurfer_brain is deprecated, use freesurfer_brain2 instead
+n27 = freesurfer_brain2(
     fs_subject_folder = '~/rave_data/others/three_brain/N27',
     subject_name = 'N27',
     additional_surfaces = c('white', 'smoothwm')
