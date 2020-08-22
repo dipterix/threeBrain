@@ -1,6 +1,7 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { THREE } from '../threeplugins.js';
 import { CONSTANTS } from '../constants.js';
+import { get_or_default } from '../utils.js';
 
 class DataCube2 extends AbstractThreeBrainObject {
 
@@ -189,6 +190,22 @@ class DataCube2 extends AbstractThreeBrainObject {
 
   pre_render( results ){
     this._mesh.material.uniforms.cameraPos.value.copy( this._canvas.main_camera.position );
+  }
+
+  finish_init(){
+    // this.object
+
+    // Finalize setups
+    super.finish_init();
+
+    // data cube 2 must have groups and group parent is scene
+    let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    this._canvas.origin.remove( gp );
+    this._canvas.scene.add( gp );
+
+    this.register_object( ['atlases'] );
+
   }
 }
 

@@ -1,3 +1,4 @@
+require(threeBrain)
 subject_name <- 'YCQ'
 atlas_type <- 'aparc_a2009s_aseg'
 group_volume <- GeomGroup$new(name = sprintf('Atlas - %s (%s)', atlas_type, subject_name))
@@ -27,7 +28,7 @@ b$plot()
 import_from_freesurfer('~/rave_data/others/templates/N27/fs', subject_name = 'N27')
 n27 <- freesurfer_brain2('~/rave_data/others/templates/N27/fs', subject_name = 'N27', use_141 = TRUE, atlas_types = 'aparc+aseg')
 n27$atlas_types
-n27$plot()
+n27$plot(debug = TRUE)
 
 
 import_from_freesurfer('~/rave_data/others/templates/KC', subject_name = 'KC')

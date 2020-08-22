@@ -1,6 +1,7 @@
 import { THREE } from './threeplugins.js';
 import * as dat from './libs/dat.gui.module.js';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
+import { to_dict } from './utils.js';
 import { invertColor, to_array, get_or_default } from './utils.js';
 import { CONSTANTS } from './constants.js';
 import { CCanvasRecorder } from './capture/CCanvasRecorder.js';
@@ -941,7 +942,7 @@ class THREEBRAIN_PRESETS{
 
         } else {
           const cmap = this.canvas.switch_colormap();
-          if( cmap.value_type === 'continuous' ){
+          if( cmap && cmap.value_type === 'continuous' ){
             this.__display_range_continuous = '';
             this.canvas.switch_colormap( undefined, [
               cmap.value_range[0],
@@ -1177,9 +1178,12 @@ class THREEBRAIN_PRESETS{
         }
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
-        mesh.material.uniforms.threshold_lb.value = lb;
-        mesh.material.uniforms.threshold_ub.value = ub;
+        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        if( inst && inst.isDataCube2 ){
+          inst.object.material.uniforms.threshold_lb.value = lb;
+          inst.object.material.uniforms.threshold_ub.value = ub;
+        }
+
         this._update_canvas();
       });
 
@@ -1716,10 +1720,13 @@ class THREEBRAIN_CONTROL{
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Atlas Type", "Atlas Label", "Atlas Transparency"
     ];
+    const args_dict = to_dict( args );
+
 
     keys.forEach((k) => {
-      if( args[k] !== undefined ){
-        this.get_controller(k).setValue( args[k] );
+      if( args_dict[k] !== undefined ){
+        console.debug("Setting " + k);
+        this.get_controller(k).setValue( args_dict[k] );
       }
     });
 

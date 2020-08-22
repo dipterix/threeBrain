@@ -308,6 +308,80 @@ class Sphere extends AbstractThreeBrainObject {
   }
 
 
+  finish_init(){
+
+    super.finish_init();
+
+    if( is_electrode( this.object ) ){
+
+      const g = this._params,
+            subject_code = this.subject_code;
+
+      this.register_object( ['electrodes'] );
+      // electrodes must be clickable, ignore the default settings
+      this._canvas.clickable.set( this.name, this.object );
+
+
+      let gp_position = this.get_group_object().position.clone();
+
+      // For electrode, we need some calculation
+      // g = this.object.userData.construct_params
+
+      if( (
+            !g.vertex_number || g.vertex_number < 0 ||
+            !g.hemisphere || !['left', 'right'].includes( g.hemisphere )
+          ) && g.is_surface_electrode ){
+        // surface electrode, need to calculate nearest node
+        const snap_surface = g.surface_type,
+              search_group = this.group.get( `Surface - ${snap_surface} (${subject_code})` );
+
+        // Search 141 only
+        if( search_group && search_group.userData ){
+          const lh_vertices = search_group.userData.group_data[
+            `free_vertices_Standard 141 Left Hemisphere - ${snap_surface} (${subject_code})`];
+          const rh_vertices = search_group.userData.group_data[
+            `free_vertices_Standard 141 Right Hemisphere - ${snap_surface} (${subject_code})`];
+          const mesh_center = search_group.getWorldPosition( gp_position );
+          if( lh_vertices && rh_vertices ){
+            // calculate
+            let _tmp = new THREE.Vector3(),
+                node_idx = -1,
+                min_dist = Infinity,
+                side = '',
+                _dist = 0;
+
+            lh_vertices.forEach((v, ii) => {
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( this.object.position );
+              if( _dist < min_dist ){
+                min_dist = _dist;
+                node_idx = ii;
+                side = 'left';
+              }
+            });
+            rh_vertices.forEach((v, ii) => {
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( this.object.position );
+              if( _dist < min_dist ){
+                min_dist = _dist;
+                node_idx = ii;
+                side = 'right';
+              }
+            });
+
+            if( node_idx >= 0 ){
+              g.vertex_number = node_idx;
+              g.hemisphere = side;
+            }
+            console.log(`Electrode ${this.object.name}: ${node_idx}, ${side}`);
+          }
+        }
+
+      }
+
+    }
+
+
+  }
+
 }
 
 

@@ -57736,46 +57736,6 @@ var index = {
 /* harmony default export */ var dat_gui_module = (index);
 //# sourceMappingURL=dat.gui.module.js.map
 
-// CONCATENATED MODULE: ./src/js/geometry/abstract.js
-
-class AbstractThreeBrainObject {
-  constructor(g, canvas){
-    this._params = g;
-    this._canvas = canvas;
-    this.type = 'AbstractThreeBrainObject';
-    this.isThreeBrainObject = true;
-    this.name = g.name;
-    if( typeof g.group === 'object' ){
-      this.group_name = g.group.group_name;
-    }
-
-  }
-
-  warn( s ){
-    console.warn(this._name + ' ' + s);
-  }
-
-  dispose(){
-    this.warn('method dispose() not implemented...');
-  }
-
-  get_track_data( track_name, reset_material ){
-    this.warn('method get_track_data(track_name, reset_material) not implemented...');
-  }
-
-  pre_render( results ){
-    // usually does nothing
-  }
-
-  add_track_data( track_name, data_type, value, time_stamp = 0 ){
-
-  }
-
-  finish_init(){}
-}
-
-
-
 // CONCATENATED MODULE: ./src/js/utils.js
 
 const invertColor = function(hex) {
@@ -58113,6 +58073,111 @@ CONSTANTS.THRESHOLD_OPERATORS = [
 
 
 
+// CONCATENATED MODULE: ./src/js/geometry/abstract.js
+
+
+
+class abstract_AbstractThreeBrainObject {
+  constructor(g, canvas){
+    this._params = g;
+    this._canvas = canvas;
+    this.type = 'AbstractThreeBrainObject';
+    this.isThreeBrainObject = true;
+    this.name = g.name;
+    if( typeof g.group === 'object' ){
+      this.group_name = g.group.group_name;
+    }
+    this.subject_code = g.subject_code || '';
+    canvas.threebrain_instances.set( this.name, this );
+    this.clickable = g.clickable === true;
+  }
+
+  set_layer( addition = [], object = null ){
+    let obj = object || this.object;
+    if( obj ){
+      let layers = to_array( this._params.layer );
+      let more_layers = to_array(addition);
+      // set clickable layer
+      if( this._params.clickable === true ){
+        layers.push( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
+      }
+      layers.concat( more_layers );
+
+      // Normal 3D object
+      obj.layers.set( 31 );
+      if( layers.length > 1 ){
+        layers.forEach((ii) => {
+          obj.layers.enable(ii);
+          console.debug( this.name + ' is enabled layer ' + ii );
+        });
+      }else if(layers.length === 0 || layers[0] > 20){
+        if(this.DEBUG){
+          console.debug( this.name + ' is set invisible.' );
+        }
+        obj.layers.set( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
+        obj.visible = false;
+      }else{
+        obj.layers.set( layers[0] );
+      }
+    }
+  }
+
+  warn( s ){
+    console.warn(this._name + ' ' + s);
+  }
+
+  dispose(){
+    this.warn('method dispose() not implemented...');
+  }
+
+  get_track_data( track_name, reset_material ){
+    this.warn('method get_track_data(track_name, reset_material) not implemented...');
+  }
+
+  pre_render( results ){
+    // usually does nothing
+  }
+
+  add_track_data( track_name, data_type, value, time_stamp = 0 ){
+
+  }
+
+  get_group_object(){
+    return(this._canvas.group.get( this.group_name ));
+  }
+
+  register_object( names ){
+    to_array(names).forEach((nm) => {
+      get_or_default( this._canvas[ nm ], this.subject_code, {} )[ this.name ] = this.object;
+    });
+  }
+
+  finish_init(){
+    if( this.object ){
+      this.set_layer();
+      this.object.userData.construct_params = this._params;
+
+      this._canvas.mesh.set( this.name, this.object );
+      if( this.clickable ){
+        this._canvas.clickable.set( this.name, this.object );
+      }
+
+      if( this.group_name ){
+        this.get_group_object().add( this.object );
+      } else {
+        this._canvas.add_to_scene( this.object );
+      }
+
+      if( this.object.isMesh ){
+        this.object.updateMatrixWorld();
+      }
+
+    }
+  }
+}
+
+
+
 // CONCATENATED MODULE: ./src/js/geometry/sphere.js
 
 
@@ -58121,7 +58186,7 @@ CONSTANTS.THRESHOLD_OPERATORS = [
 
 const MATERIAL_PARAMS = { 'transparent' : false };
 
-class sphere_Sphere extends AbstractThreeBrainObject {
+class sphere_Sphere extends abstract_AbstractThreeBrainObject {
   constructor (g, canvas) {
     super( g, canvas );
 
@@ -58423,6 +58488,80 @@ class sphere_Sphere extends AbstractThreeBrainObject {
     return( re );
   }
 
+
+  finish_init(){
+
+    super.finish_init();
+
+    if( is_electrode( this.object ) ){
+
+      const g = this._params,
+            subject_code = this.subject_code;
+
+      this.register_object( ['electrodes'] );
+      // electrodes must be clickable, ignore the default settings
+      this._canvas.clickable.set( this.name, this.object );
+
+
+      let gp_position = this.get_group_object().position.clone();
+
+      // For electrode, we need some calculation
+      // g = this.object.userData.construct_params
+
+      if( (
+            !g.vertex_number || g.vertex_number < 0 ||
+            !g.hemisphere || !['left', 'right'].includes( g.hemisphere )
+          ) && g.is_surface_electrode ){
+        // surface electrode, need to calculate nearest node
+        const snap_surface = g.surface_type,
+              search_group = this.group.get( `Surface - ${snap_surface} (${subject_code})` );
+
+        // Search 141 only
+        if( search_group && search_group.userData ){
+          const lh_vertices = search_group.userData.group_data[
+            `free_vertices_Standard 141 Left Hemisphere - ${snap_surface} (${subject_code})`];
+          const rh_vertices = search_group.userData.group_data[
+            `free_vertices_Standard 141 Right Hemisphere - ${snap_surface} (${subject_code})`];
+          const mesh_center = search_group.getWorldPosition( gp_position );
+          if( lh_vertices && rh_vertices ){
+            // calculate
+            let _tmp = new THREE.Vector3(),
+                node_idx = -1,
+                min_dist = Infinity,
+                side = '',
+                _dist = 0;
+
+            lh_vertices.forEach((v, ii) => {
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( this.object.position );
+              if( _dist < min_dist ){
+                min_dist = _dist;
+                node_idx = ii;
+                side = 'left';
+              }
+            });
+            rh_vertices.forEach((v, ii) => {
+              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( this.object.position );
+              if( _dist < min_dist ){
+                min_dist = _dist;
+                node_idx = ii;
+                side = 'right';
+              }
+            });
+
+            if( node_idx >= 0 ){
+              g.vertex_number = node_idx;
+              g.hemisphere = side;
+            }
+            console.log(`Electrode ${this.object.name}: ${node_idx}, ${side}`);
+          }
+        }
+
+      }
+
+    }
+
+
+  }
 
 }
 
@@ -58926,6 +59065,7 @@ var downloadjs_download = __webpack_require__(0);
 var download_default = /*#__PURE__*/__webpack_require__.n(downloadjs_download);
 
 // CONCATENATED MODULE: ./src/js/data_controls.js
+
 
 
 
@@ -59869,7 +60009,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
         } else {
           const cmap = this.canvas.switch_colormap();
-          if( cmap.value_type === 'continuous' ){
+          if( cmap && cmap.value_type === 'continuous' ){
             this.__display_range_continuous = '';
             this.canvas.switch_colormap( undefined, [
               cmap.value_range[0],
@@ -60105,9 +60245,12 @@ class data_controls_THREEBRAIN_PRESETS{
         }
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
-        mesh.material.uniforms.threshold_lb.value = lb;
-        mesh.material.uniforms.threshold_ub.value = ub;
+        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        if( inst && inst.isDataCube2 ){
+          inst.object.material.uniforms.threshold_lb.value = lb;
+          inst.object.material.uniforms.threshold_ub.value = ub;
+        }
+
         this._update_canvas();
       });
 
@@ -60644,10 +60787,13 @@ class data_controls_THREEBRAIN_CONTROL{
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Atlas Type", "Atlas Label", "Atlas Transparency"
     ];
+    const args_dict = to_dict( args );
+
 
     keys.forEach((k) => {
-      if( args[k] !== undefined ){
-        this.get_controller(k).setValue( args[k] );
+      if( args_dict[k] !== undefined ){
+        console.debug("Setting " + k);
+        this.get_controller(k).setValue( args_dict[k] );
       }
     });
 
@@ -61049,7 +61195,10 @@ class shiny_tools_THREE_BRAIN_SHINY {
 
     mesh.userData.add_track_data( clip_name, data_type, value, time );
 
-    // calculate cmap
+    // calculate cmap, add time range so that the last value is always displayed
+    if( time_range.length == 2 ){
+      time_range[1] += 1.0;
+    }
     this.canvas.add_colormap( clip_name, alias, data_type, value_names, value_range, time_range,
                 color_keys, color_vals, n_levels );
 
@@ -61969,6 +62118,7 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 
 
 
+
 /* WebGL doesn't take transparency into consideration when calculating depth
 https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
 
@@ -61983,7 +62133,7 @@ parts will show.
 
 */
 
-class datacube_DataCube extends AbstractThreeBrainObject {
+class datacube_DataCube extends abstract_AbstractThreeBrainObject {
   constructor(g, canvas){
     super(g, canvas);
 
@@ -62171,6 +62321,51 @@ class datacube_DataCube extends AbstractThreeBrainObject {
   get_track_data( track_name, reset_material ){}
 
   pre_render( results ){}
+
+  finish_init(){
+    // Special, as m is a array of three planes
+    // this.object = mesh = [ mesh_xz, mesh_xy, mesh_yz ];
+
+    this._canvas.mesh.set( '_coronal_' + this.name, this._mesh_xz );
+    this._canvas.mesh.set( '_axial_' + this.name, this._mesh_xy );
+    this._canvas.mesh.set( '_sagittal_' + this.name, this._mesh_yz );
+
+    if( this.clickable ){
+      this._canvas.clickable.set( '_coronal_' + this.name, this._mesh_xz );
+      this._canvas.clickable.set( '_axial_' + this.name, this._mesh_xy );
+      this._canvas.clickable.set( '_sagittal_' + this.name, this._mesh_yz );
+    }
+
+    // data cube must have groups
+    let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    this._canvas.origin.remove( gp );
+    this._canvas.scene.add( gp );
+
+    // set layer, add tp group
+    this.object.forEach((plane) => {
+
+      this.set_layer( [], plane );
+
+      gp.add( plane );
+      plane.userData.construct_params = this._params;
+      plane.updateMatrixWorld();
+    });
+
+    this.register_object( ['volumes'] );
+
+    // flaw there, if volume has no subject, then subject_code is '',
+    // if two volumes with '' exists, we lose track of the first volume
+    // and switch_volume will fail in setting this cube invisible
+    // TODO: force subject_code for all volumes or use random string as subject_code
+    // or parse subject_code from volume name
+    if( !this._canvas._has_datacube_registered ){
+      this._canvas._register_datacube( this.object );
+      this._canvas._has_datacube_registered = true;
+    }
+
+  }
+
 }
 
 
@@ -62178,164 +62373,6 @@ function gen_datacube(g, canvas){
   return( new datacube_DataCube(g, canvas) );
 }
 
-/*
-
-function gen_datacube(g, canvas){
-  let mesh, group_name;
-
-  let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-      line_geometry = new THREE.Geometry();
-  line_material.depthTest = false;
-
-
-  // Cube values Must be from 0 to 1, float
-  const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-        cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
-        cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-        cube_center = g.position,
-        volume = {
-          'xLength' : cube_half_size[0]*2,
-          'yLength' : cube_half_size[1]*2,
-          'zLength' : cube_half_size[2]*2
-        };
-
-  // Generate texture
-  let texture = new THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-  texture.format = THREE.RedFormat;
-	texture.type = THREE.UnsignedByteType;
-	texture.needsUpdate = true;
-
-
-  // Shader - XY plane
-	const shader_xy = THREE.Volume2dArrayShader_xy;
-	let material_xy = new THREE.ShaderMaterial({
-	  uniforms : {
-  		diffuse: { value: texture },
-  		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
-  		threshold: { value : 0.0 },
-  		renderDepth: { value : 1.0 }
-  	},
-  	vertexShader: shader_xy.vertexShader,
-		fragmentShader: shader_xy.fragmentShader,
-		side: THREE.DoubleSide,
-		transparent: true
-	});
-	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
-
-
-	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
-	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
-	mesh_xy.renderOrder = -1;
-	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
-	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
-
-
-	// Shader - XZ plane
-	const shader_xz = THREE.Volume2dArrayShader_xz;
-	let material_xz = new THREE.ShaderMaterial({
-	  uniforms : {
-  		diffuse: { value: texture },
-  		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
-  		threshold: { value : 0.0 },
-  		renderDepth: { value : 1.0 }
-  	},
-  	vertexShader: shader_xz.vertexShader,
-		fragmentShader: shader_xz.fragmentShader,
-		side: THREE.DoubleSide,
-		transparent: true
-	});
-	let geometry_xz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-	let mesh_xz = new THREE.Mesh( geometry_xz, material_xz );
-	mesh_xz.rotateX( Math.PI / 2 );
-	mesh_xz.renderOrder = -1;
-	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
-	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
-
-
-	// Shader - YZ plane
-	const shader_yz = THREE.Volume2dArrayShader_yz;
-	let material_yz = new THREE.ShaderMaterial({
-	  uniforms : {
-  		diffuse: { value: texture },
-  		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-  		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
-  		threshold: { value : 0.0 },
-  		renderDepth: { value : 1.0 }
-  	},
-  	vertexShader: shader_yz.vertexShader,
-		fragmentShader: shader_yz.fragmentShader,
-		side: THREE.DoubleSide,
-		transparent: true
-	});
-	let geometry_yz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-	let mesh_yz = new THREE.Mesh( geometry_yz, material_yz );
-	mesh_yz.rotateY( Math.PI / 2);
-	mesh_yz.rotateZ( Math.PI / 2); // Back side
-	mesh_yz.renderOrder = -1;
-	mesh_yz.position.copy( CONSTANTS.VEC_ORIGIN );
-	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
-
-  // coronal (xz), axial (xy), sagittal (yz)
-	mesh = [ mesh_xz, mesh_xy, mesh_yz ];
-
-	// generate diagonal line
-	const _mhw = Math.max( ...cube_half_size );
-
-	line_geometry.vertices.push(
-  	new THREE.Vector3( -_mhw, -_mhw, 0 ),
-  	new THREE.Vector3( _mhw, _mhw, 0 )
-  );
-  let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
-      line_mesh_xy = new THREE.Line( line_geometry, line_material ),
-      line_mesh_yz = new THREE.Line( line_geometry, line_material );
-  line_mesh_xz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-  line_mesh_xy.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-  line_mesh_yz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-  line_mesh_xz.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
-  line_mesh_xz.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-  line_mesh_xy.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
-  line_mesh_xy.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-  line_mesh_yz.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
-  line_mesh_yz.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
-  mesh_xz.add( line_mesh_xz );
-  mesh_xy.add( line_mesh_xy );
-  mesh_yz.add( line_mesh_yz );
-
-
-  mesh_xy.userData.dispose = () => {
-	  material_xy.dispose();
-	  geometry_xy.dispose();
-    line_material.dispose();
-    line_geometry.dispose();
-    texture.dispose();
-  };
-
-  mesh_xz.userData.dispose = () => {
-	  material_xz.dispose();
-	  geometry_xz.dispose();
-    line_material.dispose();
-    line_geometry.dispose();
-    texture.dispose();
-  };
-
-  mesh_yz.userData.dispose = () => {
-	  material_yz.dispose();
-	  geometry_yz.dispose();
-    line_material.dispose();
-    line_geometry.dispose();
-    texture.dispose();
-  };
-
-
-	return(mesh);
-
-}
-
-*/
 
 
 // CONCATENATED MODULE: ./src/js/geometry/datacube2.js
@@ -62343,7 +62380,8 @@ function gen_datacube(g, canvas){
 
 
 
-class datacube2_DataCube2 extends AbstractThreeBrainObject {
+
+class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
   _set_palette(pal){
     // pal must be a dict or array
@@ -62531,6 +62569,22 @@ class datacube2_DataCube2 extends AbstractThreeBrainObject {
   pre_render( results ){
     this._mesh.material.uniforms.cameraPos.value.copy( this._canvas.main_camera.position );
   }
+
+  finish_init(){
+    // this.object
+
+    // Finalize setups
+    super.finish_init();
+
+    // data cube 2 must have groups and group parent is scene
+    let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    this._canvas.origin.remove( gp );
+    this._canvas.scene.add( gp );
+
+    this.register_object( ['atlases'] );
+
+  }
 }
 
 
@@ -62553,7 +62607,7 @@ const free_MATERIAL_PARAMS = {
   'wireframeLinewidth' : 0.1
 };
 
-class free_FreeMesh extends AbstractThreeBrainObject {
+class free_FreeMesh extends abstract_AbstractThreeBrainObject {
 
   constructor(g, canvas){
 
@@ -62643,6 +62697,13 @@ class free_FreeMesh extends AbstractThreeBrainObject {
   }
 
   finish_init(){
+
+    super.finish_init();
+
+    // Need to registr surface
+    // instead of using surface name, use
+    this.register_object( ['surfaces'] );
+
     this.set_vertex_color(this._vertex_cname, true);
   }
 
@@ -65791,39 +65852,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
       return(null);
     }
 
-    let m = inst;
-
-    if( inst.isThreeBrainObject ){
-      this.threebrain_instances.set( g.name, inst );
-      m = inst.object;
-    }
-
-    // set clickable layer
-    if( g.clickable === true ){
-      layers.push( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
-    }
-
-    let set_layer = (m) => {
-      // Normal 3D object
-      m.layers.set( 31 );
-      if(layers.length > 1){
-        layers.forEach((ii) => {
-          m.layers.enable(ii);
-          console.debug(g.name + ' is enabled layer ' + ii);
-        });
-      }else if(layers.length === 0 || layers[0] > 20){
-        if(this.DEBUG){
-          console.debug(g.name + ' is set invisible.');
-        }
-        m.layers.set( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
-        m.visible = false;
-      }else{
-        m.layers.set( layers[0] );
-      }
-    };
-
     // make sure subject array exists
-    const subject_code = g.subject_code || '';
+    const subject_code = inst.subject_code;
 
     if( ! this.subject_codes.includes( subject_code ) ){
       this.subject_codes.push( subject_code );
@@ -65834,175 +65864,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.atlases.set(subject_code, {} );
     }
 
-
-    if( g.type === 'datacube' ){
-      // Special, as m is a array of three planes
-      this.mesh.set( '_coronal_' + g.name, m[0] );
-      this.mesh.set( '_axial_' + g.name, m[1] );
-      this.mesh.set( '_sagittal_' + g.name, m[2] );
-
-      if(g.clickable){
-        this.clickable.set( '_coronal_' + g.name, m[0] );
-        this.clickable.set( '_axial_' + g.name, m[1] );
-        this.clickable.set( '_sagittal_' + g.name, m[2] );
-      }
-
-
-      // data cube must have groups
-      let gp = this.group.get( g.group.group_name );
-      // Move gp to global scene as its center is always 0,0,0
-      this.origin.remove( gp );
-      this.scene.add( gp );
-
-
-      m.forEach((plane) => {
-
-        gp.add( plane );
-
-        set_layer( plane );
-        plane.userData.construct_params = g;
-        plane.updateMatrixWorld();
-      });
-
-      get_or_default( this.volumes, subject_code, {} )[ g.name ] = m;
-
-      // flaw there, if volume has no subject, then subject_code is '',
-      // if two volumes with '' exists, we lose track of the first volume
-      // and switch_volume will fail in setting this cube invisible
-      // TODO: force subject_code for all volumes or use random string as subject_code
-      // or parse subject_code from volume name
-      if( !this._has_datacube_registered ){
-        this._register_datacube( m );
-        this._has_datacube_registered = true;
-      }
-
-
-    }else if( g.type === 'datacube2' ){
-      this.mesh.set( g.name, m );
-
-      if(g.clickable){
-        this.clickable.set( g.name, m );
-      }
-
-      // data cube 2 must have groups
-      let gp = this.group.get( g.group.group_name );
-      // Move gp to global scene as its center is always 0,0,0
-      this.origin.remove( gp );
-      this.scene.add( gp );
-
-      gp.add( m );
-      set_layer( m );
-      m.userData.construct_params = g;
-      m.updateMatrixWorld();
-
-      // get_or_default( this.ct_scan, subject_code, {} )[ g.name ] = m;
-      get_or_default( this.atlases, subject_code, {} )[ g.name ] = m;
-
-
-    }else if( g.type === 'sphere' && g.is_electrode ){
-      set_layer( m );
-      m.userData.construct_params = g;
-      this.mesh.set( g.name, m );
-      get_or_default( this.electrodes, subject_code, {} )[g.name] = m;
-
-      // electrodes must be clickable, ignore the default settings
-      this.clickable.set( g.name, m );
-      let gp_position;
-      if(g.group === null){
-        this.add_to_scene(m);
-      }else{
-        let gp = this.group.get( g.group.group_name );
-        gp.add(m);
-        gp_position = gp.position.clone();
-      }
-      m.updateMatrixWorld();
-
-      // For electrode, there needs some calculation
-      // g = m.userData.construct_params
-      if( (
-            !g.vertex_number || g.vertex_number < 0 ||
-            !g.hemisphere || !['left', 'right'].includes( g.hemisphere )
-          ) && g.is_surface_electrode ){
-        // surface electrode, need to calculate nearest node
-        const snap_surface = g.surface_type,
-              search_group = this.group.get( `Surface - ${snap_surface} (${subject_code})` );
-
-        // Search 141 only
-        if( search_group && search_group.userData ){
-          const lh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Left Hemisphere - ${snap_surface} (${subject_code})`];
-          const rh_vertices = search_group.userData.group_data[`free_vertices_Standard 141 Right Hemisphere - ${snap_surface} (${subject_code})`];
-          const mesh_center = search_group.getWorldPosition( gp_position );
-          if( lh_vertices && rh_vertices ){
-            // calculate
-            let _tmp = new THREE.Vector3(),
-                node_idx = -1,
-                min_dist = Infinity,
-                side = '',
-                _dist = 0;
-
-            lh_vertices.forEach((v, ii) => {
-              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( m.position );
-              if( _dist < min_dist ){
-                min_dist = _dist;
-                node_idx = ii;
-                side = 'left';
-              }
-            });
-            rh_vertices.forEach((v, ii) => {
-              _dist = _tmp.fromArray( v ).add( mesh_center ).distanceToSquared( m.position );
-              if( _dist < min_dist ){
-                min_dist = _dist;
-                node_idx = ii;
-                side = 'right';
-              }
-            });
-
-            if( node_idx >= 0 ){
-              g.vertex_number = node_idx;
-              g.hemisphere = side;
-            }
-            console.log(`Electrode ${m.name}: ${node_idx}, ${side}`);
-          }
-        }
-
-      }
-
-
-
-    }else if( g.type === 'free' ){
-      set_layer( m );
-      m.userData.construct_params = g;
-      this.mesh.set( g.name, m );
-      if(g.clickable){ this.clickable.set( g.name, m ); }
-      // freemesh must have group
-      let gp = this.group.get( g.group.group_name ); gp.add(m);
-      m.updateMatrixWorld();
-
-      // Need to registr surface
-      // instead of using surface name, use
-      get_or_default( this.surfaces, subject_code, {} )[ g.name ] = m;
-
-    }else{
-
-      set_layer( m );
-      m.userData.construct_params = g;
-      this.mesh.set( g.name, m );
-
-      if(g.clickable){
-        this.clickable.set( g.name, m );
-      }
-
-      if(g.group === null){
-        this.add_to_scene(m);
-      }else{
-        let gp = this.group.get( g.group.group_name );
-        gp.add(m);
-      }
-
-      if(m.isMesh){
-        m.updateMatrixWorld();
-      }
-    }
+    let m = inst;
 
     inst.finish_init();
   }

@@ -98,6 +98,13 @@ class FreeMesh extends AbstractThreeBrainObject {
   }
 
   finish_init(){
+
+    super.finish_init();
+
+    // Need to registr surface
+    // instead of using surface name, use
+    this.register_object( ['surfaces'] );
+
     this.set_vertex_color(this._vertex_cname, true);
   }
 

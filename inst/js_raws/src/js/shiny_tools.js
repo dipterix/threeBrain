@@ -277,7 +277,10 @@ class THREE_BRAIN_SHINY {
 
     mesh.userData.add_track_data( clip_name, data_type, value, time );
 
-    // calculate cmap
+    // calculate cmap, add time range so that the last value is always displayed
+    if( time_range.length == 2 ){
+      time_range[1] += 1.0;
+    }
     this.canvas.add_colormap( clip_name, alias, data_type, value_names, value_range, time_range,
                 color_keys, color_vals, n_levels );
 
