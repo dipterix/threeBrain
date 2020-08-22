@@ -274,13 +274,18 @@ class BrainCanvas{
     this.canvas.clear_all();
 
     to_array( this.settings.color_maps ).forEach((v) => {
+      // calculate cmap, add time range so that the last value is always displayed
+      let tr = v.time_range;
+      if( tr.length == 2 ){
+        tr[1] += 1.0;
+      }
       this.canvas.add_colormap(
         v.name,
         v.alias,
         v.value_type,
         v.value_names,
         v.value_range,
-        v.time_range,
+        tr,
         v.color_keys,
         v.color_vals,
         v.color_levels,

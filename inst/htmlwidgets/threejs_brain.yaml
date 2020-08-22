@@ -1,24 +1,9 @@
 dependencies:
-  - name: bootstrap
-    version: 4.1.1
-    src: htmlwidgets/lib/bootstrap-4.1.1
-    style:
-      - bootstrap.min.css
-  - name: jquery
-    version: 3.3.1
-    src: htmlwidgets/lib/jQuery-3.3.1
-    script:
-      - jquery.min.js
   - name: threejs
     version: 0.101.1
     src: htmlwidgets/lib/threejs-0.101.1
     style:
       - css/dat.gui.css
-  - name: webmwriter
-    version: 0.2.0
-    src: htmlwidgets/lib/webmwriter-0.2.0
-    script:
-      - webm-writer-0.2.0.js
   - name: dipterixThreeBrain
     version: 1.0.1
     src: htmlwidgets/lib/dipterixThreeBrain-1.0.1
