@@ -118,7 +118,6 @@ class FreeMesh extends AbstractThreeBrainObject {
     };
     this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
     this._mesh.userData.dispose = () => { this.dispose(); };
-    this._mesh.userData.instance = this;
   }
 
   // internally used

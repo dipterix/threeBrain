@@ -10,6 +10,7 @@ import { generate_animation_default } from './Math/animations.js';
 import { gen_sphere } from './geometry/sphere.js';
 import { gen_datacube } from './geometry/datacube.js';
 import { gen_datacube2 } from './geometry/datacube2.js';
+import { gen_tube } from './geometry/tube.js';
 import { gen_free } from './geometry/free.js';
 import { Compass } from './geometry/compass.js';
 import { json2csv } from 'json-2-csv';
@@ -21,6 +22,7 @@ const GEOMETRY_FACTORY = {
   'free'      : gen_free,
   'datacube'  : gen_datacube,
   'datacube2' : gen_datacube2,
+  'tube'     : gen_tube,
   'blank'     : (g, canvas) => { return(null) }
 };
 
@@ -1687,7 +1689,8 @@ class THREEBRAIN_CANVAS {
     if( !results ){
       results = {
         current_time        : 0,
-        current_time_delta  : 0
+        current_time_delta  : 0,
+        elapsed_time : this.clock.getElapsedTime()
       };
     }
 
@@ -1748,7 +1751,8 @@ class THREEBRAIN_CANVAS {
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
     let results = {
-      current_time_delta  : 0
+      current_time_delta  : 0,
+      elapsed_time : this.clock.getElapsedTime()
     };
 
     const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
@@ -2219,7 +2223,7 @@ class THREEBRAIN_CANVAS {
     let pos;
     if( results.selected_object.is_electrode ){
       pos = results.selected_object.MNI305_position;
-      if( pos.x !== 0 || pos.y !== 0 || pos.z !== 0 ){
+      if( pos && (pos.x !== 0 || pos.y !== 0 || pos.z !== 0) ){
         text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
         context_wrapper.fill_text(
           `MNI305: `,
@@ -2599,6 +2603,10 @@ class THREEBRAIN_CANVAS {
       return(null);
     }
 
+    if( !inst.object ){
+      return(null);
+    }
+
     // make sure subject array exists
     const subject_code = inst.subject_code;
 
@@ -2611,7 +2619,6 @@ class THREEBRAIN_CANVAS {
       this.atlases.set(subject_code, {} );
     }
 
-    let m = inst;
 
     inst.finish_init();
   }

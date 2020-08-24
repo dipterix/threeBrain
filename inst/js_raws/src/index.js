@@ -333,6 +333,10 @@ class BrainCanvas{
     // this.el_text2.innerHTML = '';
     this.el_text.style.display = 'none';
 
+    this.geoms.sort((a, b) => {
+      return( a.render_order - b.render_order );
+    });
+
     this.geoms.forEach((g) => {
       if( this.DEBUG ){
         this.canvas.add_object( g );

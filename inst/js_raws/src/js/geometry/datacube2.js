@@ -167,7 +167,6 @@ class DataCube2 extends AbstractThreeBrainObject {
 
       mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
       mesh.userData.dispose = () => { this.dispose(); };
-      mesh.userData.instance = this;
 
     }
     this._mesh = mesh;

@@ -153,6 +153,7 @@ AbstractGeom <- R6::R6Class(
   public = list(
     name = '',
     type = 'abstract',
+    render_order = 1,
 
     # time_stamp and value are deprecated! use keyframe instead
     time_stamp = NULL,
@@ -234,6 +235,7 @@ AbstractGeom <- R6::R6Class(
       list(
         name = self$name,
         type = self$type,
+        render_order = self$render_order,
         time_stamp = as.numeric(self$time_stamp),
         position = as.vector(self$position),
         value = as.vector(self$value),

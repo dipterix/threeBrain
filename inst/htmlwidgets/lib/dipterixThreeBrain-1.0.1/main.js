@@ -2059,7 +2059,7 @@ __webpack_require__.r(__webpack_exports__);
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, "BrainCanvas", function() { return /* binding */ src_BrainCanvas; });
 
-// NAMESPACE OBJECT: ./src/threejs/three.module.js
+// NAMESPACE OBJECT: ./src/build/three.module.js
 var three_module_namespaceObject = {};
 __webpack_require__.r(three_module_namespaceObject);
 __webpack_require__.d(three_module_namespaceObject, "ACESFilmicToneMapping", function() { return ACESFilmicToneMapping; });
@@ -2762,7 +2762,7 @@ const WEBGL = {
 
 
 
-// CONCATENATED MODULE: ./src/threejs/three.module.js
+// CONCATENATED MODULE: ./src/build/three.module.js
 // Polyfills
 
 if ( Number.EPSILON === undefined ) {
@@ -55207,13 +55207,13 @@ function add_text_sprite(THREE){
 
 
 
-let THREE = register_lut( three_module_namespaceObject );
+let threeplugins_THREE = register_lut( three_module_namespaceObject );
 
-THREE = register_orthographic_controls( THREE );
+threeplugins_THREE = register_orthographic_controls( threeplugins_THREE );
 // THREE = register_octree( THREE );
-THREE = register_volumeShader1( THREE );
-THREE = register_volume2DShader1( THREE );
-THREE = add_text_sprite( THREE );
+threeplugins_THREE = register_volumeShader1( threeplugins_THREE );
+threeplugins_THREE = register_volume2DShader1( threeplugins_THREE );
+threeplugins_THREE = add_text_sprite( threeplugins_THREE );
 
 
 
@@ -57964,14 +57964,14 @@ CONSTANTS.LAYER_SYS_RAYCASTER_14 = 14;               // System reserved, raycast
 
 // reorder render depth to force renders to render objects with maximum render order first
 CONSTANTS.MAX_RENDER_ORDER = 9999999;
-CONSTANTS.VEC_ORIGIN = new THREE.Vector3( 0, 0, 0 );
+CONSTANTS.VEC_ORIGIN = new threeplugins_THREE.Vector3( 0, 0, 0 );
 // Anatomcal axis RAS is the normal XYZ, LAI is the other direction
-CONSTANTS.VEC_ANAT_R = new THREE.Vector3( 1, 0, 0 );
-CONSTANTS.VEC_ANAT_A = new THREE.Vector3( 0, 1, 0 );
-CONSTANTS.VEC_ANAT_S = new THREE.Vector3( 0, 0, 1 );
-CONSTANTS.VEC_ANAT_L = new THREE.Vector3( -1, 0, 0 );
-CONSTANTS.VEC_ANAT_P = new THREE.Vector3( 0, -1, 0 );
-CONSTANTS.VEC_ANAT_I = new THREE.Vector3( 0, 0, -1 );
+CONSTANTS.VEC_ANAT_R = new threeplugins_THREE.Vector3( 1, 0, 0 );
+CONSTANTS.VEC_ANAT_A = new threeplugins_THREE.Vector3( 0, 1, 0 );
+CONSTANTS.VEC_ANAT_S = new threeplugins_THREE.Vector3( 0, 0, 1 );
+CONSTANTS.VEC_ANAT_L = new threeplugins_THREE.Vector3( -1, 0, 0 );
+CONSTANTS.VEC_ANAT_P = new threeplugins_THREE.Vector3( 0, -1, 0 );
+CONSTANTS.VEC_ANAT_I = new threeplugins_THREE.Vector3( 0, 0, -1 );
 
 // You can only change which key is pressed. However, you cannot change shift & ctrl or alt
 // To do that you must go into the code
@@ -58084,12 +58084,13 @@ class abstract_AbstractThreeBrainObject {
     this.type = 'AbstractThreeBrainObject';
     this.isThreeBrainObject = true;
     this.name = g.name;
-    if( typeof g.group === 'object' ){
+    if( g.group && typeof g.group === 'object' ){
       this.group_name = g.group.group_name;
     }
     this.subject_code = g.subject_code || '';
     canvas.threebrain_instances.set( this.name, this );
     this.clickable = g.clickable === true;
+    this.world_position = new THREE.Vector3();
   }
 
   set_layer( addition = [], object = null ){
@@ -58126,6 +58127,19 @@ class abstract_AbstractThreeBrainObject {
     console.warn(this._name + ' ' + s);
   }
 
+  get_world_position( results ){
+    if( results && this._last_rendered === results.elapsed_time ) {
+      return( this.world_position );
+    }
+    if( this.object ){
+      this.object.getWorldPosition( this.world_position );
+    }
+    if( results ){
+      this._last_rendered = results.elapsed_time;
+    }
+    return( this.world_position );
+  }
+
   dispose(){
     this.warn('method dispose() not implemented...');
   }
@@ -58135,7 +58149,8 @@ class abstract_AbstractThreeBrainObject {
   }
 
   pre_render( results ){
-    // usually does nothing
+    this.get_world_position( results );
+    this._last_rendered = results.elapsed_time;
   }
 
   add_track_data( track_name, data_type, value, time_stamp = 0 ){
@@ -58154,6 +58169,7 @@ class abstract_AbstractThreeBrainObject {
 
   finish_init(){
     if( this.object ){
+      console.debug(`Finalizing ${ this.name }`);
       this.set_layer();
       this.object.userData.construct_params = this._params;
 
@@ -58170,6 +58186,12 @@ class abstract_AbstractThreeBrainObject {
 
       if( this.object.isMesh ){
         this.object.updateMatrixWorld();
+      }
+
+      if( this.object.isObject3D ){
+        this.object.userData.instance = this;
+        this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+        this.object.userData.dispose = () => { this.dispose(); };
       }
 
     }
@@ -58194,11 +58216,11 @@ class sphere_Sphere extends abstract_AbstractThreeBrainObject {
     this.isSphere = true;
 
     this._materials = {
-      'MeshBasicMaterial' : new THREE.MeshBasicMaterial( MATERIAL_PARAMS ),
-      'MeshLambertMaterial': new THREE.MeshLambertMaterial( MATERIAL_PARAMS )
+      'MeshBasicMaterial' : new threeplugins_THREE.MeshBasicMaterial( MATERIAL_PARAMS ),
+      'MeshLambertMaterial': new threeplugins_THREE.MeshLambertMaterial( MATERIAL_PARAMS )
     };
 
-    const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+    const gb = new threeplugins_THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
           values = g.keyframes,
           n_keyframes = to_array( g.keyframes ).length;
     this._geometry = gb;
@@ -58213,7 +58235,7 @@ class sphere_Sphere extends abstract_AbstractThreeBrainObject {
       this._material_type = 'MeshLambertMaterial';
     }
 
-    const mesh = new THREE.Mesh(gb, this._materials[ this._material_type ]);
+    const mesh = new threeplugins_THREE.Mesh(gb, this._materials[ this._material_type ]);
     mesh.name = 'mesh_sphere_' + g.name;
 
     // FIXME: need to use class instead of canvas.mesh
@@ -58259,7 +58281,6 @@ class sphere_Sphere extends abstract_AbstractThreeBrainObject {
     };
     this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
     this._mesh.userData.dispose = () => { this.dispose(); };
-    this._mesh.userData.instance = this;
   }
 
   _get_animation_params(){
@@ -58272,6 +58293,9 @@ class sphere_Sphere extends abstract_AbstractThreeBrainObject {
   }
 
   pre_render( results ){
+
+    super.pre_render( results );
+
     const canvas = this._canvas,
           mesh = this._mesh;
 
@@ -58525,7 +58549,7 @@ class sphere_Sphere extends abstract_AbstractThreeBrainObject {
           const mesh_center = search_group.getWorldPosition( gp_position );
           if( lh_vertices && rh_vertices ){
             // calculate
-            let _tmp = new THREE.Vector3(),
+            let _tmp = new threeplugins_THREE.Vector3(),
                 node_idx = -1,
                 min_dist = Infinity,
                 side = '',
@@ -58826,8 +58850,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
     const scode = canvas.state_data.get("target_subject");
     const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
 
-    const gp_position = new THREE.Vector3(),
-          _mpos = new THREE.Vector3();
+    const gp_position = new threeplugins_THREE.Vector3(),
+          _mpos = new threeplugins_THREE.Vector3();
     _mpos.fromArray( position );
 
     // Search 141 nodes
@@ -58846,7 +58870,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       const mesh_center = search_group.getWorldPosition( gp_position );
       if( lh_vertices && rh_vertices ){
         // calculate
-        let _tmp = new THREE.Vector3(),
+        let _tmp = new threeplugins_THREE.Vector3(),
             node_idx = -1,
             min_dist = Infinity,
             side = '',
@@ -58883,8 +58907,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       }
     }
     // calculate MNI305 coordinate
-    const mat1 = new THREE.Matrix4(),
-          pos_targ = new THREE.Vector3();
+    const mat1 = new threeplugins_THREE.Matrix4(),
+          pos_targ = new threeplugins_THREE.Vector3();
     const v2v_orig = get_or_default( canvas.shared_data, scode, {} ).vox2vox_MNI305;
 
     if( v2v_orig ){
@@ -59372,7 +59396,7 @@ class data_controls_THREEBRAIN_PRESETS{
       const ints_z = this.canvas.state_data.get( 'axial_posz' ) || 0,
             ints_y = this.canvas.state_data.get( 'coronal_posy' ) || 0,
             ints_x = this.canvas.state_data.get( 'sagittal_posx' ) || 0;
-      const point = new THREE.Vector3().set(ints_x, ints_y, ints_z);
+      const point = new threeplugins_THREE.Vector3().set(ints_x, ints_y, ints_z);
       this.canvas.calculate_mni305( point );
       // set controller
       _controller_mni305.setValue(`${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)}`);
@@ -60962,7 +60986,7 @@ class shiny_tools_THREE_BRAIN_SHINY {
     this.shiny_mode = shiny_mode;
     this.shinyId = outputId + '__shiny';
     this.canvas = canvas;
-    this.uuid = THREE.Math.generateUUID();
+    this.uuid = threeplugins_THREE.Math.generateUUID();
 
     this.stack = [];
 
@@ -60992,7 +61016,7 @@ class shiny_tools_THREE_BRAIN_SHINY {
 
     // 2. click callback
     // finalize registering
-    const pos = new THREE.Vector3();
+    const pos = new threeplugins_THREE.Vector3();
     this.canvas.add_mouse_callback(
       (evt) => {
         return({
@@ -61342,7 +61366,7 @@ class shiny_tools_THREE_BRAIN_SHINY {
             this.clear_electrode_group( '__localization__' );
           }
           const _es = to_array( data.data );
-          const _col = new THREE.Color();
+          const _col = new threeplugins_THREE.Color();
           _es.forEach((d) => {
             _col.setStyle( d.color || '#FF0000' );
             this.loc_add_electrode( d.electrode, d.label, d.position,
@@ -62103,9 +62127,9 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 
       });
     }
-    const keyframe = new THREE.ColorKeyframeTrack(
+    const keyframe = new threeplugins_THREE.ColorKeyframeTrack(
       track_data.target || '.material.color',
-      time_stamp, colors, THREE.InterpolateDiscrete
+      time_stamp, colors, threeplugins_THREE.InterpolateDiscrete
     );
 
     return(keyframe);
@@ -62142,8 +62166,8 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
 
     let mesh, group_name;
 
-    let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-        line_geometry = new THREE.Geometry();
+    let line_material = new threeplugins_THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
+        line_geometry = new threeplugins_THREE.Geometry();
     line_material.depthTest = false;
 
 
@@ -62159,32 +62183,32 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
           };
 
     // Generate texture
-    let texture = new THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-    texture.format = THREE.RedFormat;
-  	texture.type = THREE.UnsignedByteType;
+    let texture = new threeplugins_THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
+    texture.format = threeplugins_THREE.RedFormat;
+  	texture.type = threeplugins_THREE.UnsignedByteType;
   	texture.needsUpdate = true;
   	this._texture = texture;
 
 
     // Shader - XY plane
-  	const shader_xy = THREE.Volume2dArrayShader_xy;
-  	let material_xy = new THREE.ShaderMaterial({
+  	const shader_xy = threeplugins_THREE.Volume2dArrayShader_xy;
+  	let material_xy = new threeplugins_THREE.ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-    		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
+    		size: { value: new threeplugins_THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_xy.vertexShader,
   		fragmentShader: shader_xy.fragmentShader,
-  		side: THREE.DoubleSide,
+  		side: threeplugins_THREE.DoubleSide,
   		transparent: true
   	});
-  	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
+  	let geometry_xy = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
 
 
-  	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
+  	let mesh_xy = new threeplugins_THREE.Mesh( geometry_xy, material_xy );
   	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
   	mesh_xy.renderOrder = -1;
   	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
@@ -62192,23 +62216,23 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
 
 
   	// Shader - XZ plane
-  	const shader_xz = THREE.Volume2dArrayShader_xz;
-  	let material_xz = new THREE.ShaderMaterial({
+  	const shader_xz = threeplugins_THREE.Volume2dArrayShader_xz;
+  	let material_xz = new threeplugins_THREE.ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-    		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
+    		size: { value: new threeplugins_THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_xz.vertexShader,
   		fragmentShader: shader_xz.fragmentShader,
-  		side: THREE.DoubleSide,
+  		side: threeplugins_THREE.DoubleSide,
   		transparent: true
   	});
-  	let geometry_xz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+  	let geometry_xz = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-  	let mesh_xz = new THREE.Mesh( geometry_xz, material_xz );
+  	let mesh_xz = new threeplugins_THREE.Mesh( geometry_xz, material_xz );
   	mesh_xz.rotateX( Math.PI / 2 );
   	mesh_xz.renderOrder = -1;
   	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
@@ -62216,23 +62240,23 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
 
 
   	// Shader - YZ plane
-  	const shader_yz = THREE.Volume2dArrayShader_yz;
-  	let material_yz = new THREE.ShaderMaterial({
+  	const shader_yz = threeplugins_THREE.Volume2dArrayShader_yz;
+  	let material_yz = new threeplugins_THREE.ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-    		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
+    		size: { value: new threeplugins_THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_yz.vertexShader,
   		fragmentShader: shader_yz.fragmentShader,
-  		side: THREE.DoubleSide,
+  		side: threeplugins_THREE.DoubleSide,
   		transparent: true
   	});
-  	let geometry_yz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+  	let geometry_yz = new threeplugins_THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-  	let mesh_yz = new THREE.Mesh( geometry_yz, material_yz );
+  	let mesh_yz = new threeplugins_THREE.Mesh( geometry_yz, material_yz );
   	mesh_yz.rotateY( Math.PI / 2);
   	mesh_yz.rotateZ( Math.PI / 2); // Back side
   	mesh_yz.renderOrder = -1;
@@ -62246,12 +62270,12 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
   	const _mhw = Math.max( ...cube_half_size );
 
   	line_geometry.vertices.push(
-    	new THREE.Vector3( -_mhw, -_mhw, 0 ),
-    	new THREE.Vector3( _mhw, _mhw, 0 )
+    	new threeplugins_THREE.Vector3( -_mhw, -_mhw, 0 ),
+    	new threeplugins_THREE.Vector3( _mhw, _mhw, 0 )
     );
-    let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
-        line_mesh_xy = new THREE.Line( line_geometry, line_material ),
-        line_mesh_yz = new THREE.Line( line_geometry, line_material );
+    let line_mesh_xz = new threeplugins_THREE.Line( line_geometry, line_material ),
+        line_mesh_xy = new threeplugins_THREE.Line( line_geometry, line_material ),
+        line_mesh_yz = new threeplugins_THREE.Line( line_geometry, line_material );
     line_mesh_xz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
     line_mesh_xy.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
     line_mesh_yz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
@@ -62273,6 +62297,7 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
       line_geometry.dispose();
       texture.dispose();
     };
+    mesh_xy.userData.instance = this;
     this._line_material = line_material;
     this._line_geometry = line_geometry;
     this._texture = texture;
@@ -62288,6 +62313,7 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
       line_geometry.dispose();
       texture.dispose();
     };
+    mesh_xz.userData.instance = this;
     this._mesh_xz = mesh_xz;
     this._material_xz = material_xz;
     this._geometry_xz = geometry_xz;
@@ -62299,6 +62325,7 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
       line_geometry.dispose();
       texture.dispose();
     };
+    mesh_yz.userData.instance = this;
     this._mesh_yz = mesh_yz;
     this._geometry_yz = geometry_yz;
     this._material_yz = material_yz;
@@ -62462,28 +62489,28 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       }
 
       // 3D texture
-      let texture = new THREE.DataTexture3D(
+      let texture = new threeplugins_THREE.DataTexture3D(
         data, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
-      texture.minFilter = THREE.NearestFilter;
-      texture.magFilter = THREE.NearestFilter;
-      texture.format = THREE.RedFormat;
-      texture.type = THREE.FloatType;
+      texture.minFilter = threeplugins_THREE.NearestFilter;
+      texture.magFilter = threeplugins_THREE.NearestFilter;
+      texture.format = threeplugins_THREE.RedFormat;
+      texture.type = threeplugins_THREE.FloatType;
       texture.unpackAlignment = 1;
 
       texture.needsUpdate = true;
       this._data_texture = texture;
 
       // Color texture - used to render colors
-      let color_texture = new THREE.DataTexture3D(
+      let color_texture = new threeplugins_THREE.DataTexture3D(
         color, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
-      color_texture.minFilter = THREE.NearestFilter;
-      color_texture.magFilter = THREE.NearestFilter;
-      color_texture.format = THREE.RGBFormat;
-      color_texture.type = THREE.UnsignedByteType;
+      color_texture.minFilter = threeplugins_THREE.NearestFilter;
+      color_texture.magFilter = threeplugins_THREE.NearestFilter;
+      color_texture.format = threeplugins_THREE.RGBFormat;
+      color_texture.type = threeplugins_THREE.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
       color_texture.needsUpdate = true;
@@ -62491,10 +62518,10 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
 
     	// Material
-    	const shader = THREE.VolumeRenderShader1;
+    	const shader = threeplugins_THREE.VolumeRenderShader1;
 
 
-    	let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+    	let uniforms = threeplugins_THREE.UniformsUtils.clone( shader.uniforms );
     	uniforms.map.value = texture;
     	uniforms.cmap.value = color_texture;
     	//uniforms.threshold_lb.value = 0.023;
@@ -62513,16 +62540,16 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
     	bounding = Math.min(bounding, 0.5);
     	uniforms.bounding.value = bounding;
 
-      let material = new THREE.RawShaderMaterial( {
+      let material = new threeplugins_THREE.RawShaderMaterial( {
     		uniforms: uniforms,
     		vertexShader: shader.vertexShader,
     		fragmentShader: shader.fragmentShader,
-    		side: THREE.BackSide, // The volume shader uses the backface as its "reference point"
+    		side: threeplugins_THREE.BackSide, // The volume shader uses the backface as its "reference point"
     		transparent : true
     	} );
 
-    	let geometry = new THREE.SphereBufferGeometry(
-    	  new THREE.Vector3().fromArray(cube_half_size).length(), 29, 14
+    	let geometry = new threeplugins_THREE.SphereBufferGeometry(
+    	  new threeplugins_THREE.Vector3().fromArray(cube_half_size).length(), 29, 14
     	);
 
       // let geometry = new THREE.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
@@ -62531,7 +62558,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
     	// This translate will make geometry rendered correctly
     	// geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
 
-    	mesh = new THREE.Mesh( geometry, material );
+    	mesh = new threeplugins_THREE.Mesh( geometry, material );
     	mesh.name = 'mesh_datacube_' + g.name;
 
       /*mesh.position.fromArray([
@@ -62545,7 +62572,6 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
       mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
       mesh.userData.dispose = () => { this.dispose(); };
-      mesh.userData.instance = this;
 
     }
     this._mesh = mesh;
@@ -62596,6 +62622,390 @@ function gen_datacube2(g, canvas){
 
 
 
+// CONCATENATED MODULE: ./src/js/ext/geometries/TubeBufferGeometry2.js
+
+
+// TubeBufferGeometry2
+
+class TubeBufferGeometry2_TubeBufferGeometry2 extends BufferGeometry {
+  constructor ( path, tubularSegments, radius, radialSegments, closed ) {
+
+    super();
+
+  	this.type = 'TubeBufferGeometry2';
+
+  	this.parameters = {
+  		path: path,
+  		tubularSegments: tubularSegments,
+  		radius: radius,
+  		radialSegments: radialSegments,
+  		closed: closed
+  	};
+
+  	tubularSegments = tubularSegments || 64;
+  	radius = radius || 1;
+  	radialSegments = radialSegments || 8;
+  	closed = closed || false;
+
+
+  	this.tubularSegments = tubularSegments;
+  	this.radialSegments = radialSegments;
+  	this.radius = radius;
+  	this.closed = closed;
+
+  	// expose internals
+  	this.computeFrenetFrames();
+
+  	// helper variables
+
+  	this._vertex = new Vector3();
+  	this._normal = new Vector3();
+  	this._uv = new Vector2();
+  	this._P = new Vector3();
+
+  	// buffer
+
+  	const arr_vertices = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 3 ).fill(0);
+  	const arr_normals = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 3 ).fill(0);
+  	const arr_uvs = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 2 ).fill(0);
+
+  	this._indices = new Array( this.radialSegments * this.tubularSegments * 6 ).fill(0);
+  	this._vertices = new Float32BufferAttribute( arr_vertices, 3 );
+  	this._normals = new Float32BufferAttribute( arr_normals, 3 );
+  	this._uvs = new Float32BufferAttribute( arr_uvs, 2 );
+
+  	// create buffer data
+
+  	this.generateBufferData( true, true, true, false );
+
+  	// build geometry
+  	this.setIndex( this._indices );
+  	this.setAttribute( 'position', this._vertices );
+  	this.setAttribute( 'normal', this._normals );
+  	this.setAttribute( 'uv', this._uvs );
+
+
+  }
+
+  computeFrenetFrames(){
+    const frames = this.parameters.path.computeFrenetFrames( this.tubularSegments, this.closed );
+
+  	this.tangents = frames.tangents;
+  	this.normals = frames.normals;
+  	this.binormals = frames.binormals;
+  }
+
+
+
+  generateBufferData( vertices = true, uvs = false, indices = false, check_normal = false ) {
+
+    if( check_normal ){
+      if( !this.normals || this.normals.length < 1 || this.normals[ 0 ].length() === 0 ){
+        // normal is generated wrong, need to update
+        this.computeFrenetFrames();
+      }
+
+    }
+
+    if( vertices ){
+  		for ( let i = 0; i < this.tubularSegments; i ++ ) {
+
+  			this.generateSegment( i );
+
+  		}
+
+  		// if the geometry is not closed, generate the last row of vertices and normals
+  		// at the regular position on the given path
+  		//
+  		// if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
+
+  		this.generateSegment( ( this.closed === false ) ? this.tubularSegments : 0 );
+
+  		this._vertices.needsUpdate = true;
+    }
+
+
+    if( uvs ){
+
+		  // uvs are generated in a separate function.
+  		// this makes it easy compute correct values for closed geometries
+
+  		this.generateUVs();
+
+  		this._uvs.needsUpdate = true;
+    }
+
+
+    if( indices ){
+  		// finally create faces
+
+  		this.generateIndices();
+
+    }
+
+	}
+
+  generateSegment( i ) {
+
+		// we use getPointAt to sample evenly distributed points from the given path
+
+		this._P = this.parameters.path.getPoint( i / this.tubularSegments, this._P );
+
+
+		const N = this.normals[ i ];
+		const B = this.binormals[ i ];
+
+		// generate normals and vertices for the current segment
+
+		for ( let j = 0; j <= this.radialSegments; j ++ ) {
+
+			const v = j / this.radialSegments * Math.PI * 2;
+
+			const sin = Math.sin( v );
+			const cos = - Math.cos( v );
+
+			// normal
+
+			this._normal.x = ( cos * N.x + sin * B.x );
+			this._normal.y = ( cos * N.y + sin * B.y );
+			this._normal.z = ( cos * N.z + sin * B.z );
+			this._normal.normalize();
+
+			this._normals.setXYZ(
+			  ( this.radialSegments + 1 ) * i + j,
+			  this._normal.x, this._normal.y, this._normal.z
+			);
+
+			// vertex
+
+			this._vertex.x = this._P.x + this.radius * this._normal.x;
+			this._vertex.y = this._P.y + this.radius * this._normal.y;
+			this._vertex.z = this._P.z + this.radius * this._normal.z;
+
+      this._vertices.setXYZ(
+        ( this.radialSegments + 1 ) * i + j,
+        this._vertex.x, this._vertex.y, this._vertex.z
+      );
+
+		}
+
+	}
+
+	generateUVs() {
+
+		for ( let i = 0; i <= this.tubularSegments; i ++ ) {
+
+			for ( let j = 0; j <= this.radialSegments; j ++ ) {
+
+				this._uv.x = i / this.tubularSegments;
+				this._uv.y = j / this.radialSegments;
+
+				this._uvs.setXY( ( this.radialSegments + 1 ) * i + j, this._uv.x, this._uv.y );
+
+			}
+
+		}
+
+	}
+
+	generateIndices() {
+
+		for ( let j = 1; j <= this.tubularSegments; j ++ ) {
+
+			for ( let i = 1; i <= this.radialSegments; i ++ ) {
+
+				const a = ( this.radialSegments + 1 ) * ( j - 1 ) + ( i - 1 );
+				const b = ( this.radialSegments + 1 ) * j + ( i - 1 );
+				const c = ( this.radialSegments + 1 ) * j + i;
+				const d = ( this.radialSegments + 1 ) * ( j - 1 ) + i;
+
+				// faces
+        const idx = (j - 1) * this.radialSegments + i - 1;
+        this._indices[ idx * 6 ] = a;
+        this._indices[ idx * 6 + 1 ] = b;
+        this._indices[ idx * 6 + 2 ] = d;
+
+        this._indices[ idx * 6 + 3 ] = b;
+        this._indices[ idx * 6 + 4 ] = c;
+        this._indices[ idx * 6 + 5 ] = d;
+
+				// this.indices.push( a, b, d );
+				// this.indices.push( b, c, d );
+
+			}
+
+		}
+
+	}
+
+
+  toJSON () {
+    const data = super.toJSON();
+
+  	data.path = this.parameters.path.toJSON();
+
+  	return data;
+  }
+}
+
+
+
+
+// CONCATENATED MODULE: ./src/js/geometry/tube.js
+
+
+
+
+
+// construct curve
+function CustomLine( targets ) {
+	threeplugins_THREE.Curve.call( this );
+	this.targets = targets;
+	this._cached = targets.map((v) => {
+	  return(new threeplugins_THREE.Vector3());
+	});
+}
+CustomLine.prototype = Object.create( threeplugins_THREE.Curve.prototype );
+CustomLine.prototype.constructor = CustomLine;
+CustomLine.prototype.getPoint = function ( t, optionalTarget ) {
+  const tp = optionalTarget || new threeplugins_THREE.Vector3();
+	tp.x = this.targets[0].x * (1.0 - t) + this.targets[1].x * t;
+  tp.y = this.targets[0].y * (1.0 - t) + this.targets[1].y * t;
+  tp.z = this.targets[0].z * (1.0 - t) + this.targets[1].z * t;
+  return( tp );
+};
+CustomLine.prototype._changed = function() {
+
+  return(this.targets.every((v, ii) => {
+    const _c = this._cached[ii];
+    if( _c && _c.isVector3 ){
+      if( v.equals(_c) ){
+        return(true);
+      }
+      this._cached[ii].copy( v );
+    } else {
+      this._cached[ii] = v.clone();
+    }
+
+    return( false );
+
+  }));
+
+};
+
+
+class tube_TubeMesh extends abstract_AbstractThreeBrainObject {
+
+  constructor(g, canvas){
+
+    super( g, canvas );
+    // this._params is g
+    // this.name = this._params.name;
+    // this.group_name = this._params.group.group_name;
+
+    this.type = 'TubeMesh';
+    this.isTubeMesh = true;
+
+    this.radius = g.radius || 0.4;
+    this.tubularSegments = g.tubular_segments || 3;
+    this.radialSegments = g.radial_egments || 6;
+    this.is_closed = g.is_closed || false;
+
+    this.path_names = g.paths;
+
+    // TODO: validate paths
+    let t1;
+    this._targets = this.path_names.map((name) => {
+      t1 = canvas.threebrain_instances.get( name );
+      if( t1 && t1.isThreeBrainObject ){
+        return( t1 );
+      } else {
+        throw( `Cannot find object ${ name }.` );
+      }
+    });
+    this._target_positions = [
+      this._targets[0].world_position,
+      this._targets[1].world_position
+    ];
+
+
+
+
+    this._curve = new CustomLine( this._target_positions );
+
+    this._geometry = new TubeBufferGeometry2_TubeBufferGeometry2( this._curve, this.tubularSegments,
+                                              this.radius, this.radialSegments, this.is_closed );
+
+    this._material = new threeplugins_THREE.MeshLambertMaterial();
+
+    this.object = new threeplugins_THREE.Mesh( this._geometry, this._material );
+    this._mesh = this.object;
+
+
+    this._geometry.name = 'geom_tube2_' + g.name;
+    this._mesh.name = 'mesh_tube2_' + g.name;
+
+    // cache
+  	this._cached_position = [];
+
+  }
+
+
+  finish_init(){
+
+    super.finish_init();
+
+    // data cube 2 must have groups and group parent is scene
+    let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    gp.remove( this.object );
+    this._canvas.scene.add( this.object );
+
+  }
+
+  dispose(){
+    this._targets.length = 0;
+    this._mesh.material.dispose();
+    this._mesh.geometry.dispose();
+  }
+
+
+  pre_render( results ){
+
+    if( this.object ){
+      this._targets.forEach( (v, ii) => {
+        if( v._last_rendered !== results.elapsed_time ){
+          v.get_world_position( results );
+        }
+      } );
+
+      /*
+      if(
+        this._cached_position[0] !== this._target_positions[0] ||
+        this._cached_position[1] !== this._target_positions[1]
+      ) {
+        // position changed
+      }
+      */
+
+      // update positions
+      this._geometry.generateBufferData( true, false, false, true );
+    }
+  }
+
+
+}
+
+
+function gen_tube(g, canvas){
+  return( new tube_TubeMesh(g, canvas) );
+}
+
+
+
+
+
+
 // CONCATENATED MODULE: ./src/js/geometry/free.js
 
 
@@ -62603,7 +63013,7 @@ function gen_datacube2(g, canvas){
 
 const free_MATERIAL_PARAMS = {
   'transparent' : true,
-  'side': THREE.DoubleSide,
+  'side': threeplugins_THREE.DoubleSide,
   'wireframeLinewidth' : 0.1
 };
 
@@ -62646,12 +63056,12 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
 
     // STEP 3: mesh settings
     this._materials = {
-      'MeshPhongMaterial' : new THREE.MeshPhongMaterial( free_MATERIAL_PARAMS ),
-      'MeshLambertMaterial': new THREE.MeshLambertMaterial( free_MATERIAL_PARAMS )
+      'MeshPhongMaterial' : new threeplugins_THREE.MeshPhongMaterial( free_MATERIAL_PARAMS ),
+      'MeshLambertMaterial': new threeplugins_THREE.MeshLambertMaterial( free_MATERIAL_PARAMS )
     };
-    this._material_color = THREE.NoColors;
+    this._material_color = threeplugins_THREE.NoColors;
 
-    this._geometry = new THREE.BufferGeometry();
+    this._geometry = new threeplugins_THREE.BufferGeometry();
 
     // construct geometry
 
@@ -62665,7 +63075,7 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
 
 
     this._geometry.setIndex( face_orders );
-    this._geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
+    this._geometry.setAttribute( 'position', new threeplugins_THREE.Float32BufferAttribute( vertex_positions, 3 ) );
     // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
     // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 
@@ -62677,7 +63087,7 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
     this._geometry.name = 'geom_free_' + g.name;
 
     this._material_type = this._materials[g.material_type] || 'MeshPhongMaterial';
-    this._mesh = new THREE.Mesh(this._geometry, this._materials[this._material_type]);
+    this._mesh = new threeplugins_THREE.Mesh(this._geometry, this._materials[this._material_type]);
     this._mesh.name = 'mesh_free_' + g.name;
 
     this._mesh.position.fromArray(g.position);
@@ -62717,7 +63127,6 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
     };
     this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
     this._mesh.userData.dispose = () => { this.dispose(); };
-    this._mesh.userData.instance = this;
   }
 
   // internally used
@@ -62735,7 +63144,7 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
       this._vertex_cname = cname;
 
       if( missattr ){
-        colattr = new THREE.Uint8BufferAttribute( new Uint8Array(color_data.value.length * 3), 3, true );
+        colattr = new threeplugins_THREE.Uint8BufferAttribute( new Uint8Array(color_data.value.length * 3), 3, true );
       }
 
 
@@ -62764,15 +63173,15 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
         if( missattr ){
           this._mesh.geometry.setAttribute( 'color', colattr );
         }
-        this._mesh.material.vertexColors = THREE.VertexColors;
+        this._mesh.material.vertexColors = threeplugins_THREE.VertexColors;
         this._mesh.material.needsUpdate = true;
-        this._material_color = THREE.VertexColors;
+        this._material_color = threeplugins_THREE.VertexColors;
       }
 
     }else if( update_color ){
-      this._mesh.material.vertexColors = THREE.NoColors;
+      this._mesh.material.vertexColors = threeplugins_THREE.NoColors;
       this._mesh.material.needsUpdate = true;
-      this._material_color = THREE.NoColors;
+      this._material_color = threeplugins_THREE.NoColors;
     }
   }
 
@@ -62810,10 +63219,10 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
     if( reset_material !== false ){
       if( !re ){
         // track data not found, ignore vertex color
-        this._mesh.material.vertexColors = THREE.NoColors;
+        this._mesh.material.vertexColors = threeplugins_THREE.NoColors;
         this._mesh.material.needsUpdate=true;
       }else {
-        this._mesh.material.vertexColors = THREE.VertexColors;
+        this._mesh.material.vertexColors = threeplugins_THREE.VertexColors;
         this._mesh.material.needsUpdate=true;
       }
     }
@@ -62877,9 +63286,9 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
     // The key is to set mesh.userData.animationIndex to be value index, and
     this._mesh.userData.animation_target = track_data.target;
 
-    const keyframe = new THREE.NumberKeyframeTrack(
+    const keyframe = new threeplugins_THREE.NumberKeyframeTrack(
       '.userData[animationIndex]',
-      time_stamp, values, THREE.InterpolateDiscrete
+      time_stamp, values, threeplugins_THREE.InterpolateDiscrete
     );
 
     return( keyframe );
@@ -63197,14 +63606,14 @@ class compass_Compass {
     this._control = control;
     this._text = text;
 
-    this.container = new THREE.Group();
+    this.container = new threeplugins_THREE.Group();
 
     for( let ii in text ){
-      let geom = new THREE.CylinderGeometry( 0.5, 0.5, 3, 8 );
+      let geom = new threeplugins_THREE.CylinderGeometry( 0.5, 0.5, 3, 8 );
       let _c = [0,0,0];
       _c[ ii ] = 1;
-      let color = new THREE.Color().fromArray( _c );
-      let line = new THREE.Mesh( geom, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }) );
+      let color = new threeplugins_THREE.Color().fromArray( _c );
+      let line = new threeplugins_THREE.Mesh( geom, new threeplugins_THREE.MeshBasicMaterial({ color: color, side: threeplugins_THREE.DoubleSide }) );
       line.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
 
       let _tmp = ['rotateZ', null, 'rotateX'][ii];
@@ -63215,7 +63624,7 @@ class compass_Compass {
       this.container.add( line );
 
       _c[ ii ] = 255;
-      let sprite = new THREE.TextSprite(text[ ii ], 3, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
+      let sprite = new threeplugins_THREE.TextSprite(text[ ii ], 3, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
       _c[ ii ] = 5;
       sprite.position.fromArray( _c );
       sprite.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
@@ -63268,12 +63677,14 @@ var converter = __webpack_require__(5);
 
 
 
+
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
   'sphere'    : gen_sphere,
   'free'      : gen_free,
   'datacube'  : gen_datacube,
   'datacube2' : gen_datacube2,
+  'tube'     : gen_tube,
   'blank'     : (g, canvas) => { return(null) }
 };
 
@@ -63408,7 +63819,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.animation_clips = new Map();
     this.color_maps = new Map();
     // Important, this keeps animation clock aligned with real-time PC clock.
-    this.clock = new THREE.Clock();
+    this.clock = new threeplugins_THREE.Clock();
 
     // Set pixel ratio, separate settings for main and side renderers
     this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
@@ -63424,8 +63835,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // General scene.
     // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another to set render order
-    this.scene = new THREE.Scene();
-    this.origin = new THREE.Object3D();
+    this.scene = new threeplugins_THREE.Scene();
+    this.origin = new threeplugins_THREE.Object3D();
     this.origin.position.copy( CONSTANTS.VEC_ORIGIN );
     this.scene.add( this.origin );
 
@@ -63441,7 +63852,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
           center/lookat: origin (0,0,0)
           up: 0,1,0 ( heads up )
     */
-    this.main_camera = new THREE.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
+    this.main_camera = new threeplugins_THREE.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
     // this.main_camera = new THREE.PerspectiveCamera( 20, width / height, 0.1, 10000 );
 
 		this.main_camera.position.x = 500;
@@ -63457,7 +63868,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
 		// Maybe we should get rid of directional light as it will cause reflactions?
-    const main_light = new THREE.DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
+    const main_light = new threeplugins_THREE.DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
     main_light.position.copy( CONSTANTS.VEC_ANAT_I );
     main_light.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
     main_light.name = 'main light - directional';
@@ -63467,7 +63878,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.add_to_scene( this.main_camera, true );
 
     // Add ambient light to make scene soft
-    const ambient_light = new THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT, 1.0 );
+    const ambient_light = new threeplugins_THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT, 1.0 );
     ambient_light.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
     ambient_light.name = 'main light - ambient';
     this.add_to_scene( ambient_light, true ); // soft white light
@@ -63478,11 +63889,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // We need to use webgl2 for VolumeRenderShader1 to work
       let main_canvas_el = document.createElement('canvas'),
           main_context = main_canvas_el.getContext( 'webgl2' );
-    	this.main_renderer = new THREE.WebGLRenderer({
+    	this.main_renderer = new threeplugins_THREE.WebGLRenderer({
     	  antialias: false, alpha: true, canvas: main_canvas_el, context: main_context
     	});
     }else{
-    	this.main_renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+    	this.main_renderer = new threeplugins_THREE.WebGLRenderer({ antialias: false, alpha: true });
     }
   	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
@@ -63496,13 +63907,13 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // We need to use webgl2 for VolumeRenderShader1 to work
       let side_canvas_el = document.createElement('canvas'),
           side_context = side_canvas_el.getContext( 'webgl2' );
-    	this.side_renderer = new THREE.WebGLRenderer({
+    	this.side_renderer = new threeplugins_THREE.WebGLRenderer({
     	  antialias: false, alpha: true,
     	  canvas: side_canvas_el, context: side_context,
     	  depths: false
     	});
     }else{
-    	this.side_renderer = new THREE.WebGLRenderer( { antialias: false, alpha: true } );
+    	this.side_renderer = new threeplugins_THREE.WebGLRenderer( { antialias: false, alpha: true } );
     }
 
   	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
@@ -63644,9 +64055,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 
 			// Add cameras
-			const camera = new THREE.OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
+			const camera = new threeplugins_THREE.OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
 			// Side light is needed so that side views are visible.
-			const side_light = new THREE.DirectionalLight( 0xefefef, 0.5 );
+			const side_light = new threeplugins_THREE.DirectionalLight( 0xefefef, 0.5 );
 
 			if( idx === 0 ){
 			  // coronal (FB)
@@ -63671,7 +64082,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 			  side_light.layers.set( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
 			}
 
-			camera.lookAt( new THREE.Vector3(0,0,0) );
+			camera.lookAt( new threeplugins_THREE.Vector3(0,0,0) );
 			camera.aspect = 1;
 			camera.updateProjectionMatrix();
 			[1, 4, 5, 6, 7, 13].forEach((ly) => {
@@ -63739,7 +64150,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
             // this._axial_depth = -_y;
           }
           // Also set main_camera
-          const _d = new THREE.Vector3(
+          const _d = new threeplugins_THREE.Vector3(
             // this._sagittal_depth || 0,
             this.state_data.get( 'sagittal_depth' ),
 
@@ -63754,7 +64165,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
           }
 
           if( e.shiftKey ){
-            const heads_up = new THREE.Vector3(0, 0, 1);
+            const heads_up = new threeplugins_THREE.Vector3(0, 0, 1);
             // calculate camera up
             let _cp = this.main_camera.position.clone().cross( heads_up ).cross( _d ).normalize();
             if( _cp.length() < 0.5 ){
@@ -63847,7 +64258,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // Controls
     // First, it should be a OrthographicTrackballControls to ignore distance information
     // Second, it need main canvas, hence main canvas Must be added to dom element
-    this.controls = new THREE.OrthographicTrackballControls( this.main_camera, this.main_canvas );
+    this.controls = new threeplugins_THREE.OrthographicTrackballControls( this.main_camera, this.main_canvas );
   	this.controls.zoomSpeed = 0.02;
   	// You cannot use pan in perspective camera. So if you are using PerspectiveCamera, this needs to be true
   	this.controls.noPan = false;
@@ -63882,12 +64293,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 
     // Mouse helpers
-    const mouse_pointer = new THREE.Vector2(),
-        mouse_raycaster = new THREE.Raycaster(),
-        mouse_helper = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-        mouse_helper_root = new THREE.Mesh(
-          new THREE.BoxBufferGeometry( 4,4,4 ),
-          new THREE.MeshBasicMaterial({ color : 0xff0000 })
+    const mouse_pointer = new threeplugins_THREE.Vector2(),
+        mouse_raycaster = new threeplugins_THREE.Raycaster(),
+        mouse_helper = new threeplugins_THREE.ArrowHelper(new threeplugins_THREE.Vector3( 0, 0, 1 ), new threeplugins_THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
+        mouse_helper_root = new threeplugins_THREE.Mesh(
+          new threeplugins_THREE.BoxBufferGeometry( 4,4,4 ),
+          new threeplugins_THREE.MeshBasicMaterial({ color : 0xff0000 })
         );
 
     // root is a green cube that's only visible in side cameras
@@ -63907,7 +64318,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     this.add_to_scene(mouse_helper, true);
 
-    this.focus_box = new THREE.BoxHelper();
+    this.focus_box = new threeplugins_THREE.BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
     this.bounding_box = this.focus_box.clone();
@@ -63916,7 +64327,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 		// File loader
     this.loader_triggered = false;
-    this.loader_manager = new THREE.LoadingManager();
+    this.loader_manager = new threeplugins_THREE.LoadingManager();
     this.loader_manager.onStart = () => {
       this.loader_triggered = true;
       console.debug( 'Loading start!');
@@ -63932,8 +64343,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
     };
     this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
 
-    this.json_loader = new THREE.FileLoader( this.loader_manager );
-    this.font_loader = new THREE.FontLoader( this.loader_manager );
+    this.json_loader = new threeplugins_THREE.FileLoader( this.loader_manager );
+    this.font_loader = new threeplugins_THREE.FontLoader( this.loader_manager );
 
   }
 
@@ -63995,7 +64406,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   get_main_camera_params(){
     return({
-      'target' : this.main_camera.localToWorld(new THREE.Vector3(
+      'target' : this.main_camera.localToWorld(new threeplugins_THREE.Vector3(
         -this.main_camera.userData.pos[0],
         -this.main_camera.userData.pos[1],
         -this.main_camera.userData.pos[2]
@@ -64008,15 +64419,15 @@ class threejs_scene_THREEBRAIN_CANVAS {
   draw_axis( x , y , z ){
     if( !this._coordinates ){
       this._coordinates = {};
-      const origin = new THREE.Vector3( 0, 0, 0 );
+      const origin = new threeplugins_THREE.Vector3( 0, 0, 0 );
       // x
-      this._coordinates.x = new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ),
+      this._coordinates.x = new threeplugins_THREE.ArrowHelper( new threeplugins_THREE.Vector3( 1, 0, 0 ),
               origin, x === 0 ? 1: x, 0xff0000 );
 
-      this._coordinates.y = new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ),
+      this._coordinates.y = new threeplugins_THREE.ArrowHelper( new threeplugins_THREE.Vector3( 0, 1, 0 ),
               origin, y === 0 ? 1: y, 0x00ff00 );
 
-      this._coordinates.z = new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ),
+      this._coordinates.z = new threeplugins_THREE.ArrowHelper( new threeplugins_THREE.Vector3( 0, 0, 1 ),
               origin, z === 0 ? 1: z, 0x0000ff );
       this._coordinates.x.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
       this._coordinates.y.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
@@ -64187,7 +64598,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
           direction.transformDirection( target_object.matrixWorld );
           let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
           if(back){
-            direction.applyMatrix3(new THREE.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
+            direction.applyMatrix3(new threeplugins_THREE.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
           }
 
           this.mouse_helper.position.fromArray( to_array(from) );
@@ -64542,10 +64953,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
     const color_name = name + '--'  + this.container_id;
 
     // Step 1: register to THREE.ColorMapKeywords
-    if(THREE.ColorMapKeywords[color_name] === undefined){
-      THREE.ColorMapKeywords[color_name] = [];
+    if(threeplugins_THREE.ColorMapKeywords[color_name] === undefined){
+      threeplugins_THREE.ColorMapKeywords[color_name] = [];
     }else{
-      THREE.ColorMapKeywords[color_name].length = 0;
+      threeplugins_THREE.ColorMapKeywords[color_name].length = 0;
     }
 
     // n_color is number of colors in Lut, not the true levels of colors
@@ -64553,9 +64964,9 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // Step 2:
     for( let ii=0; ii < n_color; ii++ ){
-      THREE.ColorMapKeywords[color_name].push([ ii / (n_color-1) , color_vals[ii] ]);
+      threeplugins_THREE.ColorMapKeywords[color_name].push([ ii / (n_color-1) , color_vals[ii] ]);
     }
-    const lut = new THREE.Lut( color_name , n_color );
+    const lut = new threeplugins_THREE.Lut( color_name , n_color );
 
     // min and max cannot be the same, otherwise colors will not be rendered
     if( value_type === 'continuous' ){
@@ -64940,7 +65351,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
     if( !results ){
       results = {
         current_time        : 0,
-        current_time_delta  : 0
+        current_time_delta  : 0,
+        elapsed_time : this.clock.getElapsedTime()
       };
     }
 
@@ -65001,7 +65413,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
     let results = {
-      current_time_delta  : 0
+      current_time_delta  : 0,
+      elapsed_time : this.clock.getElapsedTime()
     };
 
     const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
@@ -65013,7 +65426,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
         results.selected_object = {
           name            : this.object_chosen.userData.construct_params.name,
-          position        : this.object_chosen.getWorldPosition( new THREE.Vector3() ),
+          position        : this.object_chosen.getWorldPosition( new threeplugins_THREE.Vector3() ),
           custom_info     : this.object_chosen.userData.construct_params.custom_info,
           is_electrode    : this.object_chosen.userData.construct_params.is_electrode || false,
           MNI305_position : this.object_chosen.userData.MNI305_position,
@@ -65472,7 +65885,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     let pos;
     if( results.selected_object.is_electrode ){
       pos = results.selected_object.MNI305_position;
-      if( pos.x !== 0 || pos.y !== 0 || pos.z !== 0 ){
+      if( pos && (pos.x !== 0 || pos.y !== 0 || pos.z !== 0) ){
         text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
         context_wrapper.fill_text(
           `MNI305: `,
@@ -65852,6 +66265,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
       return(null);
     }
 
+    if( !inst.object ){
+      return(null);
+    }
+
     // make sure subject array exists
     const subject_code = inst.subject_code;
 
@@ -65864,7 +66281,6 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.atlases.set(subject_code, {} );
     }
 
-    let m = inst;
 
     inst.finish_init();
   }
@@ -66036,16 +66452,16 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
   // Add geom groups
   add_group(g, cache_folder = 'threebrain_data', onProgress = null){
-    var gp = new THREE.Object3D();
+    var gp = new threeplugins_THREE.Object3D();
 
     gp.name = 'group_' + g.name;
     to_array(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
     gp.position.fromArray( g.position );
 
     if(g.trans_mat !== null){
-      let trans = new THREE.Matrix4();
+      let trans = new threeplugins_THREE.Matrix4();
       trans.set(...g.trans_mat);
-      let inverse_trans = new THREE.Matrix4().getInverse( trans );
+      let inverse_trans = new threeplugins_THREE.Matrix4().getInverse( trans );
 
       gp.userData.trans_mat = trans;
       gp.userData.inv_trans_mat = inverse_trans;
@@ -66287,7 +66703,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       let clip = this.animation_clips.get( clip_name ), new_clip = false;
 
       if( !clip ){
-        clip = new THREE.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
+        clip = new threeplugins_THREE.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
         this.animation_clips.set( clip_name, clip );
         new_clip = true;
       }else{
@@ -66301,7 +66717,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       if( m.userData.ani_mixer ){
         m.userData.ani_mixer.stopAllAction();
       }
-      m.userData.ani_mixer = new THREE.AnimationMixer( m );
+      m.userData.ani_mixer = new threeplugins_THREE.AnimationMixer( m );
       m.userData.ani_mixer.stopAllAction();
 
       // Step 4: combine mixer with clip
@@ -66428,17 +66844,17 @@ class threejs_scene_THREEBRAIN_CANVAS {
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
     let v2v_orig = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
     // let v2v_orig = this.shared_data.get( target_subject ).vox2vox_MNI305;
-    let anterior_commissure = state.get('anterior_commissure') || new THREE.Vector3();
+    let anterior_commissure = state.get('anterior_commissure') || new threeplugins_THREE.Vector3();
     anterior_commissure.set(0,0,0);
 
-    let tkRAS_MNI305 = state.get('tkRAS_MNI305') || new THREE.Matrix4();
+    let tkRAS_MNI305 = state.get('tkRAS_MNI305') || new threeplugins_THREE.Matrix4();
     tkRAS_MNI305.set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
     if(Array.isArray(v2v_orig) && v2v_orig.length == 4 && v2v_orig[3].length == 4 ){
       tkRAS_MNI305.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
         v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
         v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
         v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-      const MNI305_tkRAS = new THREE.Matrix4().getInverse( tkRAS_MNI305 );
+      const MNI305_tkRAS = new threeplugins_THREE.Matrix4().getInverse( tkRAS_MNI305 );
       anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
     }
 
@@ -66623,10 +67039,10 @@ mapped = false,
     */
 
 
-    const pos_targ = new THREE.Vector3(),
-          pos_orig = new THREE.Vector3(),
-          mat1 = new THREE.Matrix4(),
-          mat2 = new THREE.Matrix4();
+    const pos_targ = new threeplugins_THREE.Vector3(),
+          pos_orig = new threeplugins_THREE.Vector3(),
+          mat1 = new threeplugins_THREE.Matrix4(),
+          mat2 = new threeplugins_THREE.Matrix4();
 
     this.electrodes.forEach( (els, origin_subject) => {
       for( let el_name in els ){
@@ -66644,7 +67060,7 @@ mapped = false,
 
         // Calculate MNI 305 coordinate in template space
         if( el.userData.MNI305_position === undefined ){
-          el.userData.MNI305_position = new THREE.Vector3().set(0, 0, 0);
+          el.userData.MNI305_position = new threeplugins_THREE.Vector3().set(0, 0, 0);
           if(
             Array.isArray( mni305 ) && mni305.length === 3 &&
             !( mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0 )
@@ -66782,8 +67198,8 @@ mapped = false,
             // _regexp = CONSTANTS.REGEXP_ELECTRODE,
             _v2v = get_or_default( this.shared_data, subject_code, {} ).vox2vox_MNI305,
             re = [],
-            mat = new THREE.Matrix4(),
-            pos = new THREE.Vector3();
+            mat = new threeplugins_THREE.Matrix4(),
+            pos = new threeplugins_THREE.Vector3();
       let row = {};
       let parsed, e, g;
 
@@ -66913,8 +67329,8 @@ mapped = false,
     const _x = get_or_default( this.state_data, 'sagittal_posx', 0);
     const _y = get_or_default( this.state_data, 'coronal_posy', 0);
     const _z = get_or_default( this.state_data, 'axial_posz', 0);
-    const plane_pos = new THREE.Vector3().set( _x, _y, _z );
-    const diff = new THREE.Vector3();
+    const plane_pos = new threeplugins_THREE.Vector3().set( _x, _y, _z );
+    const diff = new threeplugins_THREE.Vector3();
 
     this.electrodes.forEach((li, subcode) => {
 
@@ -67338,6 +67754,10 @@ class src_BrainCanvas{
     // this.el_text2.innerHTML = '';
     this.el_text.style.display = 'none';
 
+    this.geoms.sort((a, b) => {
+      return( a.render_order - b.render_order );
+    });
+
     this.geoms.forEach((g) => {
       if( this.DEBUG ){
         this.canvas.add_object( g );
@@ -67436,7 +67856,7 @@ class src_BrainCanvas{
 }
 
 window.BrainCanvas = src_BrainCanvas;
-window.THREE = THREE;
+window.THREE = threeplugins_THREE;
 window.download = download;
 window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 

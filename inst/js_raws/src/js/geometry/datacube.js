@@ -157,6 +157,7 @@ class DataCube extends AbstractThreeBrainObject {
       line_geometry.dispose();
       texture.dispose();
     };
+    mesh_xy.userData.instance = this;
     this._line_material = line_material;
     this._line_geometry = line_geometry;
     this._texture = texture;
@@ -172,6 +173,7 @@ class DataCube extends AbstractThreeBrainObject {
       line_geometry.dispose();
       texture.dispose();
     };
+    mesh_xz.userData.instance = this;
     this._mesh_xz = mesh_xz;
     this._material_xz = material_xz;
     this._geometry_xz = geometry_xz;
@@ -183,6 +185,7 @@ class DataCube extends AbstractThreeBrainObject {
       line_geometry.dispose();
       texture.dispose();
     };
+    mesh_yz.userData.instance = this;
     this._mesh_yz = mesh_yz;
     this._geometry_yz = geometry_yz;
     this._material_yz = material_yz;

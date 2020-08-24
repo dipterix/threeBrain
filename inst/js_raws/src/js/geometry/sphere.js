@@ -78,7 +78,6 @@ class Sphere extends AbstractThreeBrainObject {
     };
     this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
     this._mesh.userData.dispose = () => { this.dispose(); };
-    this._mesh.userData.instance = this;
   }
 
   _get_animation_params(){
@@ -91,6 +90,9 @@ class Sphere extends AbstractThreeBrainObject {
   }
 
   pre_render( results ){
+
+    super.pre_render( results );
+
     const canvas = this._canvas,
           mesh = this._mesh;
 
