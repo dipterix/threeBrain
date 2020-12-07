@@ -340,7 +340,7 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
   for(f in fnames){
     sh_file <- file.path(directory, f)
     file.copy(file.path(cmd_folders, f), sh_file)
-    if(!endsWith(f, "tar.gz")){
+    if(!endsWith(f, "zip")){
       system(sprintf('chmod a+x "%s"', normalizePath(sh_file)), wait = FALSE)
     }
   }
