@@ -21,7 +21,12 @@
     "dev": "npm-run-all --parallel start build"
   },
   "main": "index.js",
-  "keywords": ["rave-brain", "neuroscience", "threejs", "WebGL"],
+  "keywords": [
+    "rave-brain",
+    "neuroscience",
+    "threejs",
+    "WebGL"
+  ],
   "author": "Zhengjia Wang",
   "license": "MIT",
   "description": "Library to visualize brain in modern web browsers via WebGL"
