@@ -1814,7 +1814,10 @@ class THREEBRAIN_CANVAS {
       */
 
       // set timer
-      this.animation_controls.set_time( current_time );
+      if( is_playing ){
+        this.animation_controls.set_time( current_time );
+      }
+
 
     }
 

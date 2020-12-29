@@ -736,14 +736,13 @@ class THREEBRAIN_PRESETS{
         v = this.animation_time[0];
       }
       this._ani_time.setValue( v );
-      this._ani_time._current_time = v;
     }
   }
   get_animation_params(){
     if(this._ani_time && this._ani_speed && this._ani_status){
       return({
         play : this._ani_status.getValue(),
-        time : this._ani_time._current_time || 0, //this._ani_time.getValue(),
+        time : this.__current_time || 0, //this._ani_time.getValue(),
         speed : this._ani_speed.getValue(),
         min : this.animation_time[0],
         max : this.animation_time[1],
