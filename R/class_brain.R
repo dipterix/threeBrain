@@ -168,7 +168,7 @@ Brain2 <- R6::R6Class(
       self$electrodes$set_values(table_or_path = table_or_path)
     },
 
-    calculate_template_coordinates = function(save_to = 'auto'){
+    calculate_template_coordinates = function(save_to = 'auto', hemisphere = TRUE){
       table <- self$electrodes$raw_table
       if( !is.data.frame(table) || !nrow(table) ){
         return(invisible())
@@ -219,19 +219,34 @@ Brain2 <- R6::R6Class(
             rh_node <- which.min(rh_dist)
             rh_dist <- rh_dist[ rh_node ]
 
-            # default is right
-            node <- rh_node - 1
-            hemisphere <- 'right'
+            if(hemisphere || !isTRUE(row$Hemisphere %in% c('left', 'right'))){
+              # need to calculate hemisphere
+              # default is right
+              node <- rh_node - 1
+              hemisphere <- 'right'
 
-            if( lh_dist < rh_dist ){
-              # left
-              node <- lh_node - 1
-              hemisphere <- 'left'
+              if( lh_dist < rh_dist ){
+                # left
+                node <- lh_node - 1
+                hemisphere <- 'left'
+              }
+
+
+            } else {
+              # do not override hemisphere
+              hemisphere <- row$Hemisphere
+
+              if(hemisphere == 'right'){
+                node <- rh_node - 1
+              } else {
+                node <- lh_node - 1
+              }
             }
 
-            row$VertexNumber <- node
             row$Hemisphere <- hemisphere
+            row$VertexNumber <- node
             tempenv$has_change <- TRUE
+
           }
         }
 
