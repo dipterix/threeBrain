@@ -59827,13 +59827,14 @@ class data_controls_THREEBRAIN_PRESETS{
         v = this.animation_time[0];
       }
       this._ani_time.setValue( v );
+      this._ani_time._current_time = v;
     }
   }
   get_animation_params(){
     if(this._ani_time && this._ani_speed && this._ani_status){
       return({
         play : this._ani_status.getValue(),
-        time : this._ani_time.getValue(),
+        time : this._ani_time._current_time || 0, //this._ani_time.getValue(),
         speed : this._ani_speed.getValue(),
         min : this.animation_time[0],
         max : this.animation_time[1],
@@ -60140,6 +60141,10 @@ class data_controls_THREEBRAIN_PRESETS{
 
     this.gui.add_item( 'Time', this.animation_time[0], { folder_name : folder_name })
         .min(this.animation_time[0]).max(this.animation_time[1]).step(step).onChange((v) => {
+          if(typeof this.__current_time !== 'number' ||
+             Math.abs(this.__current_time - v) >= 0.001){
+            this.__current_time = v;
+          }
           this._update_canvas();
         });
     this._ani_time = this.gui.get_controller('Time', folder_name);
