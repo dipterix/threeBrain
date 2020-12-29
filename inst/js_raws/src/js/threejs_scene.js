@@ -1690,7 +1690,8 @@ class THREEBRAIN_CANVAS {
       results = {
         current_time        : 0,
         current_time_delta  : 0,
-        elapsed_time : this.clock.getElapsedTime()
+        elapsed_time : // this.clock.getElapsedTime()
+          (this.clock.oldTime - this.clock.startTime) / 1000
       };
     }
 
@@ -1750,10 +1751,12 @@ class THREEBRAIN_CANVAS {
   inc_time(){
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
-    let results = {
-      current_time_delta  : 0,
-      elapsed_time : this.clock.getElapsedTime()
-    };
+    let clock_time_delta = this.clock.getDelta(),
+        results = {
+          current_time_delta  : 0,
+          elapsed_time : //this.clock.getElapsedTime()
+            (this.clock.oldTime - this.clock.startTime) / 1000
+        };
 
     const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
     results.time_range_min = time_range_min;
@@ -1790,8 +1793,7 @@ class THREEBRAIN_CANVAS {
           last_time = params.time,
           speed = params.speed,
           time_start = params.min,
-          time_end = params.max,
-          clock_time_delta = this.clock.getDelta();
+          time_end = params.max;
 
       // next_time =
       //  1. if not is_playing, last_time
