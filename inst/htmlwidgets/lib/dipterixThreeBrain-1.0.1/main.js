@@ -59826,6 +59826,7 @@ class data_controls_THREEBRAIN_PRESETS{
       if(typeof(v) !== 'number'){
         v = this.animation_time[0];
       }
+      this.__current_time = v;
       this._ani_time.setValue( v );
     }
   }
@@ -67705,17 +67706,14 @@ class src_BrainCanvas{
 
     to_array( this.settings.color_maps ).forEach((v) => {
       // calculate cmap, add time range so that the last value is always displayed
-      let tr = v.time_range;
-      if( tr.length == 2 ){
-        tr[1] += 1.0;
-      }
+      // let tr = v.time_range;
       this.canvas.add_colormap(
         v.name,
         v.alias,
         v.value_type,
         v.value_names,
         v.value_range,
-        tr,
+        v.time_range,
         v.color_keys,
         v.color_vals,
         v.color_levels,

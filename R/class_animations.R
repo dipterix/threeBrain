@@ -70,7 +70,17 @@ KeyFrame <- R6::R6Class(
   ),
   active = list(
     is_continuous = function(){ private$.dtype == 'continuous' },
-    time_range = function(){ range(private$.time) },
+    time_range = function(){
+      rg <- range(private$.time, na.rm = TRUE)
+      if(rg[2] == rg[1]) {
+        rg[2] = rg[1] + 1
+      } else {
+        nframes <- length(private$.values)
+        if(nframes <= 2){ nframes <- 2 }
+        rg[2] <- (rg[2] - rg[1]) * nframes / (nframes - 1) + rg[1]
+      }
+      return(rg)
+    },
     value_range = function(){
       if( self$is_continuous ){ range(private$.values) }else{ NULL }
     },

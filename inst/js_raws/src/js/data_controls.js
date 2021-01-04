@@ -735,6 +735,7 @@ class THREEBRAIN_PRESETS{
       if(typeof(v) !== 'number'){
         v = this.animation_time[0];
       }
+      this.__current_time = v;
       this._ani_time.setValue( v );
     }
   }
