@@ -1044,7 +1044,7 @@ class THREEBRAIN_PRESETS{
     this._ani_status.onChange((v) => { if(v){ this._update_canvas(2); }else{ this._update_canvas(-2); } });
 
     this._ani_speed = this.gui.add_item('Speed', 1, {
-      args : { 'x 0.001' : 0.001, 'x 0.01' : 0.01, 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2, 'x 5':5},
+      args : { 'x 0.01' : 0.01, 'x 0.05' : 0.05, 'x 0.1' : 0.1, 'x 0.2': 0.2, 'x 0.5': 0.5, 'x 1': 1, 'x 2':2, 'x 5':5},
       folder_name : folder_name
     });
 
