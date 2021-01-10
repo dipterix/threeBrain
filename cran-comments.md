@@ -1,8 +1,11 @@
 # Update logs (for R-cran only)
 
-## 2020-06-23
-**Version 0.1.8 (pending)**
+## 2021-01-09
+**Version 0.1.9 (pending)**
 Self check: 0 errors | 0 warnings | 0 notes
+
+## 2020-06-23
+**Version 0.1.8 (passed)**
 
 ## 2020-05-12
 

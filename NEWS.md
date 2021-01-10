@@ -1,3 +1,17 @@
+threeBrain 0.1.9
+=======
+
+## Changes
+
+* Added backend engine for volume rendering to show atlas files
+* Standalone viewers now use native system tools for `Mac` and `Linux` (On `Windows`, it still needs `R` to be installed)
+
+### Improvements
+
+* Allows super slow play speed to show animations in millisecond level
+* Bumped `threejs` to a newer version and fixed compatibility issues
+* Animation time range is more reasonable
+
 threeBrain 0.1.8
 =======
 

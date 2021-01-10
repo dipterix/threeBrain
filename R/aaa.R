@@ -103,3 +103,19 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
 
 }
 
+get_os <- function(){
+  os <- R.version$os
+  if(stringr::str_detect(os, '^darwin')){
+    return('darwin')
+  }
+  if(stringr::str_detect(os, '^linux')){
+    return('linux')
+  }
+  if(stringr::str_detect(os, '^solaris')){
+    return('solaris')
+  }
+  if(stringr::str_detect(os, '^win')){
+    return('windows')
+  }
+  return('unknown')
+}
