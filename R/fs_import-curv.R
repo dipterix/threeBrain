@@ -15,7 +15,7 @@ import_fs.curv <- function(
     }
     return( FALSE )
   }
-  which_exists = which(file.exists(src))[[1]]
+  which_exists <- which(file.exists(src))[[1]]
   src <- normalizePath(src[[which_exists]])
 
   tname <- sprintf('%s_fs_%sh_%s.json', subject_name, hemisphere, sub_type)

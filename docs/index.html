@@ -106,14 +106,17 @@
 </li>
 <li>Open <code>RStudio</code>, enter from its console:</li>
 </ol>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"threeBrain"</span>)</pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"threeBrain"</span><span class="op">)</span></code></pre></div>
 <p>If you want to install <code>dev</code> version from <em>Github</em>, then use:</p>
-<div class="sourceCode" id="cb2"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"devtools"</span>)
-<span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"dipterix/threeBrain"</span>)</pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"dipterix/threeBrain"</span><span class="op">)</span></code></pre></div>
 <ol>
 <li>(Optional) Setups: after installation, in <code>RStudio</code> console, type the following command</li>
 </ol>
-<div class="sourceCode" id="cb3"><pre class="r"><span class="kw pkg">threeBrain</span><span class="kw ns">::</span><span class="fu"><a href="reference/brain_setup.html">brain_setup</a></span>()</pre></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="reference/brain_setup.html">brain_setup</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p>and follow the instructions.</p>
 </div>
 <div id="b-basic-brain-viewer" class="section level2">
@@ -121,21 +124,23 @@
 <a href="#b-basic-brain-viewer" class="anchor"></a>B. Basic Brain Viewer</h2>
 <p>Once finishing setting up of <code>threeBrain</code>, there will be a template subject <code>N27</code> (Collin’s 27) created at</p>
 <pre><code>~/rave_data/others/three_brain/N27</code></pre>
-<p><code>~</code> is your home directory. For example on my laptop, it’s <code>/Users/dipterix/</code>. On Windows, it’s <code>C:\Users\dipterix\</code>.</p>
+<p><code><a href="https://rdrr.io/r/base/tilde.html">~</a></code> is your home directory. For example on my laptop, it’s <code>/Users/dipterix/</code>. On Windows, it’s <code>C:\Users\dipterix\</code>.</p>
 <p>Let’s view this subject. The following commands all go to <code>RStudio</code> console.</p>
 <ol>
 <li>Import subject</li>
 </ol>
-<div class="sourceCode" id="cb5"><pre class="r"><span class="co"># freesurfer_brain is deprecated, use freesurfer_brain2 instead</span>
-<span class="no">n27</span> <span class="kw">=</span> <span class="fu"><a href="reference/freesurfer_brain.html">freesurfer_brain2</a></span>(
-    <span class="kw">fs_subject_folder</span> <span class="kw">=</span> <span class="st">'~/rave_data/others/three_brain/N27'</span>,
-    <span class="kw">subject_name</span> <span class="kw">=</span> <span class="st">'N27'</span>,
-    <span class="kw">surface_types</span> <span class="kw">=</span> <span class="st">'pial'</span>
-)</pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># freesurfer_brain is deprecated, use freesurfer_brain2 instead</span>
+<span class="va">n27</span> <span class="op">=</span> <span class="fu"><a href="reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span>
+    fs_subject_folder <span class="op">=</span> <span class="st">'~/rave_data/others/three_brain/N27'</span>,
+    subject_name <span class="op">=</span> <span class="st">'N27'</span>,
+    surface_types <span class="op">=</span> <span class="st">'pial'</span>
+<span class="op">)</span></code></pre></div>
 <ol>
 <li>Visualize</li>
 </ol>
-<div class="sourceCode" id="cb6"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">x</span>)       <span class="co"># alternatively, you can use `x$plot()`</span></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>       <span class="co"># alternatively, you can use `x$plot()`</span></code></pre></div>
 </div>
 <div id="c-directory-setup" class="section level2">
 <h2 class="hasAnchor">
@@ -146,7 +151,8 @@
 <h2 class="hasAnchor">
 <a href="#d-addrender-electrodes" class="anchor"></a>D. Add/Render Electrodes</h2>
 <p>If you have electrode file, you can import it before calling <code>plot</code> function. Please make sure it’s in <code>csv</code> format.</p>
-<div class="sourceCode" id="cb7"><pre class="r"><span class="no">x</span>$<span class="fu">set_electrodes</span>(<span class="kw">electrodes</span> <span class="kw">=</span> <span class="st">"[PATH to ELECTRODE FILE]"</span>)</pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">x</span><span class="op">$</span><span class="fu">set_electrodes</span><span class="op">(</span>electrodes <span class="op">=</span> <span class="st">"[PATH to ELECTRODE FILE]"</span><span class="op">)</span></code></pre></div>
 <p>Here is an example of electrode csv file. Only the first five columns (<strong>case-sensitive</strong>) are mandatory: <code>Electrode (integer)</code>, <code>Coord_x</code>, <code>Coord_y</code>, <code>Coord_z</code>, and <code>Label (character)</code>. <code>Coord_*</code> is <code>RAS</code> location from <code>FreeSurfer</code> coordinates.</p>
 <pre><code>| Electrode| Coord_x| Coord_y| Coord_z|Label  | MNI305_x|  MNI305_y|  MNI305_z|SurfaceElectrode |SurfaceType | Radius| VertexNumber|Hemisphere |
 |---------:|-------:|-------:|-------:|:------|--------:|---------:|---------:|:----------------|:-----------|------:|------------:|:----------|
@@ -157,7 +163,8 @@
 |         5|    47.0|    -6.8|   -32.6|RMHCH5 | 49.45370| -15.35431| -21.31272|FALSE            |pial        |      2|           -1|right      |
 |         ...</code></pre>
 <p>To assign values to electrodes, run</p>
-<div class="sourceCode" id="cb9"><pre class="r"><span class="no">x</span>$<span class="fu">set_electrode_values</span>(<span class="kw">electrodes</span> <span class="kw">=</span> <span class="st">"[PATH to ELECTRODE VALUE FILE]"</span>)</pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">x</span><span class="op">$</span><span class="fu">set_electrode_values</span><span class="op">(</span>electrodes <span class="op">=</span> <span class="st">"[PATH to ELECTRODE VALUE FILE]"</span><span class="op">)</span></code></pre></div>
 <p>The electrode value file is also a csv like:</p>
 <pre><code>| Electrode| Subject| Project|    Time| ValueName| ValueName2|  ...|
 |---------:|-------:|-------:|-------:|:---------|----------:|-----|
@@ -173,11 +180,12 @@
 <h2 class="hasAnchor">
 <a href="#e-merge-subjects-and-template-mapping" class="anchor"></a>E. Merge Subjects and Template mapping</h2>
 <p>If you have your own subjects with <code>FreeSurfer</code> output, for example, I have two subjects <code>YAB</code> and <code>YCQ</code>. To merge these two subjects and show them on <code>N27</code> template,</p>
-<div class="sourceCode" id="cb11"><pre class="r"><span class="co"># yab = ... (see section B for import a single subject)</span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># yab = ... (see section B for import a single subject)</span>
 <span class="co"># ycq = ...</span>
-<span class="no">template_n27</span> <span class="kw">=</span> <span class="kw pkg">threeBrain</span><span class="kw ns">::</span><span class="fu"><a href="reference/merge_brain.html">merge_brain</a></span>(<span class="no">yab</span>, <span class="no">ycq</span>, <span class="kw">template_subject</span> <span class="kw">=</span> <span class="st">'N27'</span>)
+<span class="va">template_n27</span> <span class="op">=</span> <span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="reference/merge_brain.html">merge_brain</a></span><span class="op">(</span><span class="va">yab</span>, <span class="va">ycq</span>, template_subject <span class="op">=</span> <span class="st">'N27'</span><span class="op">)</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>( <span class="no">template_n27</span> )</pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span> <span class="va">template_n27</span> <span class="op">)</span></code></pre></div>
 <p>The viewer will be in <code>N27</code> template, and electrodes of these two subjects can be mapped via <code>MNI305</code> (for surface and stereo EEG) or <code>std.141</code> (for surface-only).</p>
 </div>
 </div>
@@ -232,7 +240,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

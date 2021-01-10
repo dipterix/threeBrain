@@ -120,15 +120,15 @@
     <p>Creates any mesh geometry given vertices and face indices</p>
     </div>
 
-    <pre class="usage"><span class='fu'>geom_freemesh</span>(
-  <span class='no'>name</span>,
-  <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>face</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>position</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>),
-  <span class='kw'>layer</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>cache_file</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>group</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>geom_freemesh</span><span class='op'>(</span>
+  <span class='va'>name</span>,
+  vertex <span class='op'>=</span> <span class='cn'>NULL</span>,
+  face <span class='op'>=</span> <span class='cn'>NULL</span>,
+  position <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>,
+  layer <span class='op'>=</span> <span class='fl'>1</span>,
+  cache_file <span class='op'>=</span> <span class='cn'>NULL</span>,
+  group <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -168,43 +168,47 @@
     <p>When generating a free mesh internally, a group must be specified,
 therefore if group is <code>NULL</code> here, then a group will be generated.
 However, it's always recommended to pass a group to the free mesh.</p>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p>Zhengjia Wang</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='co'># Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27</span>
 <span class='co'># threeBrain::download_N27()</span>
 
-<span class='no'>n27_dir</span> <span class='kw'>=</span> <span class='st'>'~/rave_data/others/three_brain/N27/'</span>
-<span class='no'>surf_type</span> <span class='kw'>=</span> <span class='st'>'pial'</span>
+<span class='va'>n27_dir</span> <span class='op'>=</span> <span class='st'>'~/rave_data/others/three_brain/N27/'</span>
+<span class='va'>surf_type</span> <span class='op'>=</span> <span class='st'>'pial'</span>
 
 <span class='co'># Locate mesh files</span>
-<span class='no'>lh</span> <span class='kw'>=</span> <span class='fu'><a href='read_fs_asc.html'>read_fs_asc</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>n27_dir</span>, <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span>(<span class='st'>'surf/lh.%s.asc'</span>, <span class='no'>surf_type</span>)))
-<span class='no'>rh</span> <span class='kw'>=</span> <span class='fu'><a href='read_fs_asc.html'>read_fs_asc</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>n27_dir</span>, <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span>(<span class='st'>'surf/rh.%s.asc'</span>, <span class='no'>surf_type</span>)))
+<span class='va'>lh</span> <span class='op'>=</span> <span class='fu'><a href='read_fs_asc.html'>read_fs_asc</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>n27_dir</span>, <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span><span class='op'>(</span><span class='st'>'surf/lh.%s.asc'</span>, <span class='va'>surf_type</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>rh</span> <span class='op'>=</span> <span class='fu'><a href='read_fs_asc.html'>read_fs_asc</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>n27_dir</span>, <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span><span class='op'>(</span><span class='st'>'surf/rh.%s.asc'</span>, <span class='va'>surf_type</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 
 <span class='co'># Create groups</span>
-<span class='no'>group</span> <span class='kw'>=</span> <span class='fu'><a href='create_group.html'>create_group</a></span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span>(<span class='st'>'Surface - %s (N27)'</span>, <span class='no'>surf_type</span>))
+<span class='va'>group</span> <span class='op'>=</span> <span class='fu'><a href='create_group.html'>create_group</a></span><span class='op'>(</span>name <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span><span class='op'>(</span><span class='st'>'Surface - %s (N27)'</span>, <span class='va'>surf_type</span><span class='op'>)</span><span class='op'>)</span>
 
 <span class='co'># create mesh</span>
-<span class='no'>lh_mesh</span> <span class='kw'>=</span> <span class='fu'>geom_freemesh</span>(
-  <span class='kw'>name</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span>(<span class='st'>'FreeSurfer Left Hemisphere - %s (N27)'</span>, <span class='no'>surf_type</span>),
-  <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>lh</span>$<span class='no'>vertices</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>],
-  <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>lh</span>$<span class='no'>faces</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>],
-  <span class='kw'>group</span> <span class='kw'>=</span> <span class='no'>group</span>
-)
-<span class='no'>rh_mesh</span> <span class='kw'>=</span> <span class='fu'>geom_freemesh</span>(
-  <span class='kw'>name</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span>(<span class='st'>'FreeSurfer Right Hemisphere - %s (N27)'</span>, <span class='no'>surf_type</span>),
-  <span class='kw'>vertex</span> <span class='kw'>=</span> <span class='no'>rh</span>$<span class='no'>vertices</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>],
-  <span class='kw'>face</span> <span class='kw'>=</span> <span class='no'>rh</span>$<span class='no'>faces</span>[,<span class='fl'>1</span>:<span class='fl'>3</span>],
-  <span class='kw'>group</span> <span class='kw'>=</span> <span class='no'>group</span>
-)
+<span class='va'>lh_mesh</span> <span class='op'>=</span> <span class='fu'>geom_freemesh</span><span class='op'>(</span>
+  name <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span><span class='op'>(</span><span class='st'>'FreeSurfer Left Hemisphere - %s (N27)'</span>, <span class='va'>surf_type</span><span class='op'>)</span>,
+  vertex <span class='op'>=</span> <span class='va'>lh</span><span class='op'>$</span><span class='va'>vertices</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>,
+  face <span class='op'>=</span> <span class='va'>lh</span><span class='op'>$</span><span class='va'>faces</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>,
+  group <span class='op'>=</span> <span class='va'>group</span>
+<span class='op'>)</span>
+<span class='va'>rh_mesh</span> <span class='op'>=</span> <span class='fu'>geom_freemesh</span><span class='op'>(</span>
+  name <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sprintf.html'>sprintf</a></span><span class='op'>(</span><span class='st'>'FreeSurfer Right Hemisphere - %s (N27)'</span>, <span class='va'>surf_type</span><span class='op'>)</span>,
+  vertex <span class='op'>=</span> <span class='va'>rh</span><span class='op'>$</span><span class='va'>vertices</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>,
+  face <span class='op'>=</span> <span class='va'>rh</span><span class='op'>$</span><span class='va'>faces</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>,
+  group <span class='op'>=</span> <span class='va'>group</span>
+<span class='op'>)</span>
 
 
 <span class='co'># Render</span>
-<span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span>(<span class='no'>lh_mesh</span>, <span class='no'>rh_mesh</span>)
+<span class='fu'><a href='threejs_brain.html'>threejs_brain</a></span><span class='op'>(</span><span class='va'>lh_mesh</span>, <span class='va'>rh_mesh</span><span class='op'>)</span>
 
 
 
-}</div></pre>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -220,7 +224,7 @@ However, it's always recommended to pass a group to the free mesh.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -90,7 +90,7 @@ read_nifti <- function(path){
   vox2ras_tkr <- cbind(vox2ras[,-4], cbind(-vox2ras[,-4], c(0,0,0,1)) %*% c(128,128,128,1))
   dat <- dat@.Data
   if(length(dim(dat)) == 4 && dim(dat)[[4]] == 1){
-    dat = dat[,,,1, drop = TRUE]
+    dat <- dat[,,,1, drop = TRUE]
   }
   list(
     data = dat,

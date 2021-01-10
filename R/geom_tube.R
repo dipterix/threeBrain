@@ -57,7 +57,7 @@ TubeGeom <- R6::R6Class(
 
     set_start = function( start_geom ){
       if(inherits( start_geom, c('character', 'AbstractGeom' ) )){
-        self$starts = start_geom
+        self$starts <- start_geom
       } else {
         stop('TubeGeom$set_start accepts only character or threeBrain geometry object.')
       }
@@ -65,7 +65,7 @@ TubeGeom <- R6::R6Class(
 
     set_end = function( end_geom ){
       if(inherits( end_geom, c('character', 'AbstractGeom' ) )){
-        self$ends = end_geom
+        self$ends <- end_geom
       } else {
         stop('TubeGeom$end_geom accepts only character or threeBrain geometry object.')
       }
