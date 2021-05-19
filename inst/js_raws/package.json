@@ -6,7 +6,7 @@
     "ajv": "^6.12.3",
     "downloadjs": "^1.4.7",
     "json-2-csv": "^3.7.6",
-    "jspdf": "^1.5.3"
+    "jspdf": "^2.3.1"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5",

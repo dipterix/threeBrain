@@ -1176,17 +1176,14 @@ class THREEBRAIN_PRESETS{
         let lb, ub;
         if(v === 0){
           lb = 0;
-          ub = 1;
         } else {
-          lb = (v - 0.5) / max_colorID;
-          ub = (v + 0.5) / max_colorID;
+          lb = v;
         }
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
         const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
           inst.object.material.uniforms.threshold_lb.value = lb;
-          inst.object.material.uniforms.threshold_ub.value = ub;
         }
 
         this._update_canvas();

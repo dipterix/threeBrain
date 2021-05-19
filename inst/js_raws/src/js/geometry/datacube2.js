@@ -3,6 +3,67 @@ import { THREE } from '../threeplugins.js';
 import { CONSTANTS } from '../constants.js';
 import { get_or_default } from '../utils.js';
 
+// source: https://github.com/mrdoob/three.js/blob/790811db742ea9d7c54fe28f83865d7576f14134/examples/jsm/loaders/RGBELoader.js#L352-L396
+const float_to_int32 = ( function () {
+
+	// Source: http://gamedev.stackexchange.com/questions/17326/conversion-of-a-number-from-single-precision-floating-point-representation-to-a/17410#17410
+
+	var floatView = new Float32Array( 1 );
+	var int32View = new Int32Array( floatView.buffer );
+
+	/* This method is faster than the OpenEXR implementation (very often
+	 * used, eg. in Ogre), with the additional benefit of rounding, inspired
+	 * by James Tursa?s half-precision code. */
+	function toHalf( val ) {
+
+		floatView[ 0 ] = val;
+		var x = int32View[ 0 ];
+
+		var bits = ( x >> 16 ) & 0x8000; /* Get the sign */
+		var m = ( x >> 12 ) & 0x07ff; /* Keep one extra bit for rounding */
+		var e = ( x >> 23 ) & 0xff; /* Using int is faster here */
+
+		/* If zero, or denormal, or exponent underflows too much for a denormal
+		 * half, return signed zero. */
+		if ( e < 103 ) return bits;
+
+		/* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
+		if ( e > 142 ) {
+
+			bits |= 0x7c00;
+			/* If exponent was 0xff and one mantissa bit was set, it means NaN,
+					 * not Inf, so make sure we set one mantissa bit too. */
+			bits |= ( ( e == 255 ) ? 0 : 1 ) && ( x & 0x007fffff );
+			return bits;
+
+		}
+
+		/* If exponent underflows but not too much, return a denormal */
+		if ( e < 113 ) {
+
+			m |= 0x0800;
+			/* Extra rounding may overflow and set mantissa to 0 and exponent
+			 * to 1, which is OK. */
+			bits |= ( m >> ( 114 - e ) ) + ( ( m >> ( 113 - e ) ) & 1 );
+			return bits;
+
+		}
+
+		bits |= ( ( e - 112 ) << 10 ) | ( m >> 1 );
+		/* Extra rounding. An overflow will set mantissa to 0 and increment
+		 * the exponent, which is OK. */
+		bits += m & 1;
+		return bits;
+
+	}
+
+	return toHalf;
+
+} )();
+
+
+
+
 class DataCube2 extends AbstractThreeBrainObject {
 
   _set_palette(pal){
@@ -42,7 +103,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._cube_values = cube_values;
-      const data = new Float32Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
+      const data = new Uint16Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
       const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 3 );
 
       this._map_data = data;
@@ -77,7 +138,9 @@ class DataCube2 extends AbstractThreeBrainObject {
               if(i > max_colID || i < 0){
                 i = 0;
               }
-              data[ ii ] = i / max_colID;
+              // risky as the target type is int32 signed but uint16 is desired
+              // however value range is from 0 to 1 so should be fine?
+              data[ ii ] = float_to_int32(i / max_colID);
 						  ii += 1;
 						}
 					}
@@ -91,7 +154,8 @@ class DataCube2 extends AbstractThreeBrainObject {
       texture.minFilter = THREE.NearestFilter;
       texture.magFilter = THREE.NearestFilter;
       texture.format = THREE.RedFormat;
-      texture.type = THREE.FloatType;
+      // texture.type = THREE.FloatType;
+      texture.type = THREE.HalfFloatType;
       texture.unpackAlignment = 1;
 
       texture.needsUpdate = true;
@@ -119,11 +183,12 @@ class DataCube2 extends AbstractThreeBrainObject {
     	let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
     	uniforms.map.value = texture;
     	uniforms.cmap.value = color_texture;
+
     	//uniforms.threshold_lb.value = 0.023;
-    	//uniforms.threshold_ub.value = 0.024;
 
       uniforms.threshold_lb.value = 0;
-    	uniforms.threshold_ub.value = 1;
+    	// uniforms.threshold_ub.value = 1;
+    	uniforms.value_scale.value = max_colID;
     	uniforms.alpha.value = 1.0;
     	uniforms.scale.value.set(volume.xLength, volume.yLength, volume.zLength);
 
