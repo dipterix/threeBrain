@@ -103,8 +103,8 @@ class DataCube2 extends AbstractThreeBrainObject {
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._cube_values = cube_values;
-      const data = new Uint16Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
-      const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 3 );
+      const data = new Float32Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
+      const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 4 );
 
       this._map_data = data;
       this._map_color = color;
@@ -120,9 +120,10 @@ class DataCube2 extends AbstractThreeBrainObject {
 
 						  tmp = fslut[i];
 						  if(tmp && (i !== 0)){
-						    color[ 3 * ii ] = tmp.R;
-						    color[ 3 * ii + 1 ] = tmp.G;
-						    color[ 3 * ii + 2 ] = tmp.B;
+						    color[ 4 * ii ] = tmp.R;
+						    color[ 4 * ii + 1 ] = tmp.G;
+						    color[ 4 * ii + 2 ] = tmp.B;
+						    color[ 4 * ii + 3 ] = 1;
 
 						    if( Math.min(x,y,z) < bounding_min ){
 						      bounding_min = Math.min(x,y,z);
@@ -140,7 +141,7 @@ class DataCube2 extends AbstractThreeBrainObject {
               }
               // risky as the target type is int32 signed but uint16 is desired
               // however value range is from 0 to 1 so should be fine?
-              data[ ii ] = float_to_int32(i / max_colID);
+              data[ ii ] = i; //float_to_int32(i / max_colID);
 						  ii += 1;
 						}
 					}
@@ -154,8 +155,8 @@ class DataCube2 extends AbstractThreeBrainObject {
       texture.minFilter = THREE.NearestFilter;
       texture.magFilter = THREE.NearestFilter;
       texture.format = THREE.RedFormat;
-      // texture.type = THREE.FloatType;
-      texture.type = THREE.HalfFloatType;
+      texture.type = THREE.FloatType;
+      // texture.type = THREE.HalfFloatType;
       texture.unpackAlignment = 1;
 
       texture.needsUpdate = true;
@@ -168,7 +169,8 @@ class DataCube2 extends AbstractThreeBrainObject {
 
       color_texture.minFilter = THREE.NearestFilter;
       color_texture.magFilter = THREE.NearestFilter;
-      color_texture.format = THREE.RGBFormat;
+      // color_texture.format = THREE.RGBFormat;
+      color_texture.format = THREE.RGBAFormat;
       color_texture.type = THREE.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
@@ -184,11 +186,6 @@ class DataCube2 extends AbstractThreeBrainObject {
     	uniforms.map.value = texture;
     	uniforms.cmap.value = color_texture;
 
-    	//uniforms.threshold_lb.value = 0.023;
-
-      uniforms.threshold_lb.value = 0;
-    	// uniforms.threshold_ub.value = 1;
-    	uniforms.value_scale.value = max_colID;
     	uniforms.alpha.value = 1.0;
     	uniforms.scale.value.set(volume.xLength, volume.yLength, volume.zLength);
 

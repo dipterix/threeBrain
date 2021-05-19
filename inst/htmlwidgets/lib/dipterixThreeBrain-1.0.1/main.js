@@ -56926,8 +56926,6 @@ const register_volumeShader1 = function(THREE){
   	  cmap: { value: null },
   	  mask: { value: null },
   	  cameraPos: { value: new THREE.Vector3() },
-  	  threshold_lb: { value: 0 },
-  	  value_scale: { value: 1 },
   	  alpha : { value: 1.0 },
   	  steps: { value: 300 },
   	  scale: { value: new THREE.Vector3() },
@@ -56979,14 +56977,12 @@ const register_volumeShader1 = function(THREE){
 
 			'uniform sampler3D map;',
 			'uniform sampler3D cmap;',
-			'uniform float threshold_lb;',
-			'uniform float value_scale;',
 			'uniform float alpha;',
 			'uniform float steps;',
 			'uniform vec3 scale;',
 			'uniform float bounding;',
 
-			'vec3 fcolor;',
+			'vec4 fcolor;',
 
 			'vec2 hitBox( vec3 orig, vec3 dir ) {',
 				'vec3 box_min = vec3( - bounding );',
@@ -57009,8 +57005,8 @@ const register_volumeShader1 = function(THREE){
 			'float sample1( vec3 p ) {',
 				'return texture( map, p + 0.5 ).r;',
 			'}',
-			'vec3 sample2( vec3 p ) {',
-				'return normalize( texture( cmap, p + 0.5 ) ).rgb;',
+			'vec4 sample2( vec3 p ) {',
+				'return normalize( texture( cmap, p + 0.5 ) ).rgba;',
 			'}',
 
 			// Make color, to be changed
@@ -57050,19 +57046,20 @@ const register_volumeShader1 = function(THREE){
 				// ray marching
 				'float nn = 0.0;',
 				'float mix_factor = 1.0;',
-				'vec3 last_color = vec3( 0.0, 0.0, 0.0 );',
+				'vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );',
+				'vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );',
 				'for ( float t = bounds.x; t < bounds.y; t += delta ) {',
-					'float d = sample1( p ) * value_scale;',
-					'if ( abs(d - threshold_lb) < 0.5 ) {',
+					'float d = sample1( p );',
+					'if ( d > 0.0 ) {',
 						'fcolor = sample2( p );',
-						'if( !(fcolor.r == 0.0 && fcolor.g == 0.0 && fcolor.b == 0.0) && fcolor != last_color ){',
+						'if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb && fcolor != last_color ){',
               'if( nn == 0.0 ){',
                 'color.a = alpha;',
   						  'gl_FragDepth = getDepth( p );',
-  						  'color.rgb = fcolor * max( dot(-rayDir, getNormal( p )) , 0.0 );',
+  						  'color.rgb = fcolor.rgb * max( dot(-rayDir, getNormal( p )) , 0.0 );',
               '}',
               'if( nn > 0.0 && alpha < 1.0 ){',
-                'color.rgb = mix(color.rgb, fcolor, mix_factor);',
+                'color.rgb = mix(color.rgb, fcolor.rgb, mix_factor);',
               '}',
               'nn += 1.0;',
               'mix_factor *= 1.0 - alpha;',
@@ -62421,20 +62418,28 @@ class data_controls_THREEBRAIN_PRESETS{
     const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
       .min(0).max(max_colorID).step(1)
       .onChange((v) => {
-        let lb, ub;
-        if(v === 0){
-          lb = 0;
-        } else {
-          lb = v;
-        }
+
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
         const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
-          inst.object.material.uniforms.threshold_lb.value = lb;
+
+          // might be large?
+          new Promise( () => {
+            for( let idx = 0; idx < inst._map_data.length; idx++ ){
+              if(v == 0 || inst._map_data[idx] == v){
+                inst._map_color[idx * 4 + 3] = 1;
+              } else {
+                inst._map_color[idx * 4 + 3] = 0;
+              }
+            }
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this._update_canvas();
+          })
+
         }
 
-        this._update_canvas();
+
       });
 
     /*
@@ -64666,8 +64671,8 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._cube_values = cube_values;
-      const data = new Uint16Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
-      const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 3 );
+      const data = new Float32Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
+      const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 4 );
 
       this._map_data = data;
       this._map_color = color;
@@ -64683,9 +64688,10 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
 						  tmp = fslut[i];
 						  if(tmp && (i !== 0)){
-						    color[ 3 * ii ] = tmp.R;
-						    color[ 3 * ii + 1 ] = tmp.G;
-						    color[ 3 * ii + 2 ] = tmp.B;
+						    color[ 4 * ii ] = tmp.R;
+						    color[ 4 * ii + 1 ] = tmp.G;
+						    color[ 4 * ii + 2 ] = tmp.B;
+						    color[ 4 * ii + 3 ] = 1;
 
 						    if( Math.min(x,y,z) < bounding_min ){
 						      bounding_min = Math.min(x,y,z);
@@ -64703,7 +64709,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
               }
               // risky as the target type is int32 signed but uint16 is desired
               // however value range is from 0 to 1 so should be fine?
-              data[ ii ] = float_to_int32(i / max_colID);
+              data[ ii ] = i; //float_to_int32(i / max_colID);
 						  ii += 1;
 						}
 					}
@@ -64717,8 +64723,8 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       texture.minFilter = threeplugins_THREE.NearestFilter;
       texture.magFilter = threeplugins_THREE.NearestFilter;
       texture.format = threeplugins_THREE.RedFormat;
-      // texture.type = THREE.FloatType;
-      texture.type = threeplugins_THREE.HalfFloatType;
+      texture.type = threeplugins_THREE.FloatType;
+      // texture.type = THREE.HalfFloatType;
       texture.unpackAlignment = 1;
 
       texture.needsUpdate = true;
@@ -64731,7 +64737,8 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
       color_texture.minFilter = threeplugins_THREE.NearestFilter;
       color_texture.magFilter = threeplugins_THREE.NearestFilter;
-      color_texture.format = threeplugins_THREE.RGBFormat;
+      // color_texture.format = THREE.RGBFormat;
+      color_texture.format = threeplugins_THREE.RGBAFormat;
       color_texture.type = threeplugins_THREE.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
@@ -64747,11 +64754,6 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
     	uniforms.map.value = texture;
     	uniforms.cmap.value = color_texture;
 
-    	//uniforms.threshold_lb.value = 0.023;
-
-      uniforms.threshold_lb.value = 0;
-    	// uniforms.threshold_ub.value = 1;
-    	uniforms.value_scale.value = max_colID;
     	uniforms.alpha.value = 1.0;
     	uniforms.scale.value.set(volume.xLength, volume.yLength, volume.zLength);
 

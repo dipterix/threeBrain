@@ -1173,20 +1173,28 @@ class THREEBRAIN_PRESETS{
     const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
       .min(0).max(max_colorID).step(1)
       .onChange((v) => {
-        let lb, ub;
-        if(v === 0){
-          lb = 0;
-        } else {
-          lb = v;
-        }
+
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
         const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
-          inst.object.material.uniforms.threshold_lb.value = lb;
+
+          // might be large?
+          new Promise( () => {
+            for( let idx = 0; idx < inst._map_data.length; idx++ ){
+              if(v == 0 || inst._map_data[idx] == v){
+                inst._map_color[idx * 4 + 3] = 1;
+              } else {
+                inst._map_color[idx * 4 + 3] = 0;
+              }
+            }
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this._update_canvas();
+          })
+
         }
 
-        this._update_canvas();
+
       });
 
     /*
