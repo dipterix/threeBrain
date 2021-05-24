@@ -7,7 +7,8 @@ Authors@R: c(
     person("John", "Magnotti", email = "jmagnotti@bcm.edu", role = c("aut")),
     person("Brian", "Metzger", email = "Brian.Metzger@bcm.edu", role = c("aut")),
     person("Elizabeth", "Nesbitt", email = "Elizabeth.Nesbitt@bcm.edu", role = c("res")),
-    person("Michael", "Beauchamp", email = "michael.beauchamp@bcm.edu", role = c("aut", "dtc", "fnd"))
+    person("Meng", "Li", email = "meng@rice.edu", role = c("ths")),
+    person("Michael", "Beauchamp", email = "michael.beauchamp@bcm.edu", role = c("aut", "dtc"))
     )
 Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain. 
     However, it takes efforts to interact and share the viewer to others. In 

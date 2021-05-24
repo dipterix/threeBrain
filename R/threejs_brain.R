@@ -345,17 +345,18 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
     }
   }
 
+  directory <- normalizePath(directory)
   if(as_zip){
     wd <- getwd()
     on.exit({
       setwd(wd)
     })
     setwd(directory)
-    directory <- normalizePath(directory)
     zipfile <- 'compressed.zip'
-    utils::zip(zipfile, files = c('./lib', filename, 'launch.sh', 'launch.command'))
+    utils::zip(zipfile, files = c(
+      './lib', filename, 'linux.sh', 'mac.command', 'windows.bat', 'launch.zip',
+      'simple_server.py'))
   }
-  directory <- normalizePath(directory, mustWork = FALSE)
   return(structure(list(
     directory = directory,
     index = file.path(directory, filename),

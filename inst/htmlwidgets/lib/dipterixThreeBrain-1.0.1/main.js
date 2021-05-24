@@ -60071,6 +60071,65 @@ function debounce(func, wait, immediate) {
 };
 
 
+// source: https://github.com/mrdoob/three.js/blob/790811db742ea9d7c54fe28f83865d7576f14134/examples/jsm/loaders/RGBELoader.js#L352-L396
+const float_to_int32 = ( function () {
+
+	// Source: http://gamedev.stackexchange.com/questions/17326/conversion-of-a-number-from-single-precision-floating-point-representation-to-a/17410#17410
+
+	var floatView = new Float32Array( 1 );
+	var int32View = new Int32Array( floatView.buffer );
+
+	/* This method is faster than the OpenEXR implementation (very often
+	 * used, eg. in Ogre), with the additional benefit of rounding, inspired
+	 * by James Tursa?s half-precision code. */
+	function toHalf( val ) {
+
+		floatView[ 0 ] = val;
+		var x = int32View[ 0 ];
+
+		var bits = ( x >> 16 ) & 0x8000; /* Get the sign */
+		var m = ( x >> 12 ) & 0x07ff; /* Keep one extra bit for rounding */
+		var e = ( x >> 23 ) & 0xff; /* Using int is faster here */
+
+		/* If zero, or denormal, or exponent underflows too much for a denormal
+		 * half, return signed zero. */
+		if ( e < 103 ) return bits;
+
+		/* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
+		if ( e > 142 ) {
+
+			bits |= 0x7c00;
+			/* If exponent was 0xff and one mantissa bit was set, it means NaN,
+					 * not Inf, so make sure we set one mantissa bit too. */
+			bits |= ( ( e == 255 ) ? 0 : 1 ) && ( x & 0x007fffff );
+			return bits;
+
+		}
+
+		/* If exponent underflows but not too much, return a denormal */
+		if ( e < 113 ) {
+
+			m |= 0x0800;
+			/* Extra rounding may overflow and set mantissa to 0 and exponent
+			 * to 1, which is OK. */
+			bits |= ( m >> ( 114 - e ) ) + ( ( m >> ( 113 - e ) ) & 1 );
+			return bits;
+
+		}
+
+		bits |= ( ( e - 112 ) << 10 ) | ( m >> 1 );
+		/* Extra rounding. An overflow will set mantissa to 0 and increment
+		 * the exponent, which is OK. */
+		bits += m & 1;
+		return bits;
+
+	}
+
+	return toHalf;
+
+} )();
+
+
 
 
 
@@ -62415,6 +62474,52 @@ class data_controls_THREEBRAIN_PRESETS{
     }, 'gui_atlas_type');
 
     let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+
+    //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
+    const atlas_thred_text = this.gui.add_item('Atlas Label', "0", { folder_name : folder_name })
+      .onChange((v) => {
+
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        if( inst && inst.isDataCube2 ){
+
+          // might be large?
+          new Promise( () => {
+
+            const candidates = v.split(",")
+              .map((v) => {return parseInt(v)})
+              .filter((v) => {return !isNaN(v)});
+
+            // check if 0 is in candidates, if so, show all
+            if(candidates.length === 0 || candidates.includes(0)){
+              for( let idx = 0; idx < inst._map_data.length; idx++ ){
+                if(inst._map_data[idx] == 0){
+                  inst._map_color[idx * 4 + 3] = 0;
+                } else {
+                  inst._map_color[idx * 4 + 3] = 1;
+                }
+              }
+            } else {
+              for( let idx = 0; idx < inst._map_data.length; idx++ ){
+                if(candidates.indexOf( inst._map_data[idx] ) != -1){
+                  inst._map_color[idx * 4 + 3] = 1;
+                } else {
+                  inst._map_color[idx * 4 + 3] = 0;
+                }
+              }
+            }
+
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this._update_canvas();
+          })
+
+        }
+
+
+      });
+
+    /*
     const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
       .min(0).max(max_colorID).step(1)
       .onChange((v) => {
@@ -62441,28 +62546,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
 
       });
-
-    /*
-    const surf_material = this.gui.add_item('Surface Material', _mty, {
-      args : _mtyc, folder_name : folder_name })
-      .onChange((v) => {
-        this.canvas.state_data.set( 'surface_material_type', v );
-        this.fire_change({ 'surface_material' : v });
-        this._update_canvas();
-      });
-    this.fire_change({ 'surface_material' : _mty });
-    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL, 'Surface Material', folder_name);
-
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_MATERIAL, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
-        let current_idx = (_mtyc.indexOf( surf_material.getValue() ) + 1) % _mtyc.length;
-        if( current_idx >= 0 ){
-          surf_material.setValue( _mtyc[ current_idx ] );
-        }
-      }
-    }, 'gui_surf_material');
-    */
+      */
 
   }
 
@@ -64568,66 +64652,6 @@ function gen_datacube(g, canvas){
 // CONCATENATED MODULE: ./src/js/geometry/datacube2.js
 
 
-
-
-
-// source: https://github.com/mrdoob/three.js/blob/790811db742ea9d7c54fe28f83865d7576f14134/examples/jsm/loaders/RGBELoader.js#L352-L396
-const float_to_int32 = ( function () {
-
-	// Source: http://gamedev.stackexchange.com/questions/17326/conversion-of-a-number-from-single-precision-floating-point-representation-to-a/17410#17410
-
-	var floatView = new Float32Array( 1 );
-	var int32View = new Int32Array( floatView.buffer );
-
-	/* This method is faster than the OpenEXR implementation (very often
-	 * used, eg. in Ogre), with the additional benefit of rounding, inspired
-	 * by James Tursa?s half-precision code. */
-	function toHalf( val ) {
-
-		floatView[ 0 ] = val;
-		var x = int32View[ 0 ];
-
-		var bits = ( x >> 16 ) & 0x8000; /* Get the sign */
-		var m = ( x >> 12 ) & 0x07ff; /* Keep one extra bit for rounding */
-		var e = ( x >> 23 ) & 0xff; /* Using int is faster here */
-
-		/* If zero, or denormal, or exponent underflows too much for a denormal
-		 * half, return signed zero. */
-		if ( e < 103 ) return bits;
-
-		/* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
-		if ( e > 142 ) {
-
-			bits |= 0x7c00;
-			/* If exponent was 0xff and one mantissa bit was set, it means NaN,
-					 * not Inf, so make sure we set one mantissa bit too. */
-			bits |= ( ( e == 255 ) ? 0 : 1 ) && ( x & 0x007fffff );
-			return bits;
-
-		}
-
-		/* If exponent underflows but not too much, return a denormal */
-		if ( e < 113 ) {
-
-			m |= 0x0800;
-			/* Extra rounding may overflow and set mantissa to 0 and exponent
-			 * to 1, which is OK. */
-			bits |= ( m >> ( 114 - e ) ) + ( ( m >> ( 113 - e ) ) & 1 );
-			return bits;
-
-		}
-
-		bits |= ( ( e - 112 ) << 10 ) | ( m >> 1 );
-		/* Extra rounding. An overflow will set mantissa to 0 and increment
-		 * the exponent, which is OK. */
-		bits += m & 1;
-		return bits;
-
-	}
-
-	return toHalf;
-
-} )();
 
 
 

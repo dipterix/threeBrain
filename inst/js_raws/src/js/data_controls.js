@@ -1170,6 +1170,52 @@ class THREEBRAIN_PRESETS{
     }, 'gui_atlas_type');
 
     let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+
+    //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
+    const atlas_thred_text = this.gui.add_item('Atlas Label', "0", { folder_name : folder_name })
+      .onChange((v) => {
+
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        if( inst && inst.isDataCube2 ){
+
+          // might be large?
+          new Promise( () => {
+
+            const candidates = v.split(",")
+              .map((v) => {return parseInt(v)})
+              .filter((v) => {return !isNaN(v)});
+
+            // check if 0 is in candidates, if so, show all
+            if(candidates.length === 0 || candidates.includes(0)){
+              for( let idx = 0; idx < inst._map_data.length; idx++ ){
+                if(inst._map_data[idx] == 0){
+                  inst._map_color[idx * 4 + 3] = 0;
+                } else {
+                  inst._map_color[idx * 4 + 3] = 1;
+                }
+              }
+            } else {
+              for( let idx = 0; idx < inst._map_data.length; idx++ ){
+                if(candidates.indexOf( inst._map_data[idx] ) != -1){
+                  inst._map_color[idx * 4 + 3] = 1;
+                } else {
+                  inst._map_color[idx * 4 + 3] = 0;
+                }
+              }
+            }
+
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this._update_canvas();
+          })
+
+        }
+
+
+      });
+
+    /*
     const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
       .min(0).max(max_colorID).step(1)
       .onChange((v) => {
@@ -1196,28 +1242,7 @@ class THREEBRAIN_PRESETS{
 
 
       });
-
-    /*
-    const surf_material = this.gui.add_item('Surface Material', _mty, {
-      args : _mtyc, folder_name : folder_name })
-      .onChange((v) => {
-        this.canvas.state_data.set( 'surface_material_type', v );
-        this.fire_change({ 'surface_material' : v });
-        this._update_canvas();
-      });
-    this.fire_change({ 'surface_material' : _mty });
-    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL, 'Surface Material', folder_name);
-
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_MATERIAL, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
-        let current_idx = (_mtyc.indexOf( surf_material.getValue() ) + 1) % _mtyc.length;
-        if( current_idx >= 0 ){
-          surf_material.setValue( _mtyc[ current_idx ] );
-        }
-      }
-    }, 'gui_surf_material');
-    */
+      */
 
   }
 
