@@ -23,7 +23,10 @@ set_default_template(
   template_dir = getOption("threeBrain.template_dir", "~/rave_data/others/three_brain")
 )
 
-threebrain_finalize_installation(upgrade = c("ask", "always", "never"))
+threebrain_finalize_installation(
+  upgrade = c("ask", "always", "never"),
+  async = TRUE
+)
 }
 \arguments{
 \item{subject_code}{character with only letters and numbers (Important). Default is `N27`}
@@ -40,6 +43,8 @@ threebrain_finalize_installation(upgrade = c("ask", "always", "never"))
 
 \item{upgrade}{whether to check and download 'N27' brain interactively.
 Choices are 'ask', 'always', and 'never'}
+
+\item{async}{whether to run the job in parallel to others; default is true}
 }
 \description{
 Download and Manage Template Subjects
