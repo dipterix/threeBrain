@@ -31,7 +31,7 @@ CONSTANTS.LAYER_SYS_AXIAL_10 = 10;                 // System reserved, axial cam
 CONSTANTS.LAYER_SYS_SAGITTAL_11 = 11;              // System reserved, sagittal camera only
 CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 = 13;      // System reserved, all side cameras visible
 CONSTANTS.LAYER_SYS_RAYCASTER_14 = 14;               // System reserved, raycaster use
-
+CONSTANTS.LAYER_INVISIBLE_31 = 31;                   // invisible layer, but keep rendered
 /* ------------------------------------ Global constants ------------------------------------
 */
 

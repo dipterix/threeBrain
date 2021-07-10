@@ -661,6 +661,8 @@ class THREEBRAIN_CANVAS {
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
     this.bounding_box = this.focus_box.clone();
+    this.bounding_box.layers.set( CONSTANTS.LAYER_INVISIBLE_31 )
+
 
     this.set_font_size();
 
