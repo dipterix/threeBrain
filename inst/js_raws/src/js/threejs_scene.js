@@ -129,6 +129,7 @@ class THREEBRAIN_CANVAS {
 
     // All mesh/geoms in this store will be calculated when raycasting
     this.clickable = new Map();
+    this.clickable_array = [];
 
     // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
@@ -1147,7 +1148,8 @@ class THREEBRAIN_CANVAS {
 
       // Only raycast with visible
       items = this.mouse_raycaster.intersectObjects(
-        to_array( this.clickable ).filter((e) => { return(e.visible === true) })
+        // to_array( this.clickable )
+        this.clickable_array.filter((e) => { return(e.visible === true) })
       );
       // items = this.mouse_raycaster.intersectObjects( this.scene.children );
     }else if( request_type.isObject3D || Array.isArray( request_type ) ){
@@ -2531,6 +2533,7 @@ class THREEBRAIN_CANVAS {
     // Stop showing information of any selected objects
     this.object_chosen=undefined;
     this.clickable.clear();
+    this.clickable_array.length = 0;
 
     this.subject_codes.length = 0;
     this.electrodes.clear();
@@ -2643,6 +2646,19 @@ class THREEBRAIN_CANVAS {
 
 
     inst.finish_init();
+  }
+
+  add_clickable( name, obj ){
+    if( this.clickable.has( name ) ){
+      // remove from this.clickable_array
+      const sub = this.clickable.get( name ),
+            idx = this.clickable_array.indexOf( sub );
+      if( idx > -1 ){
+        this.clickable_array.splice(idx, 1);
+      }
+    }
+    this.clickable.set( name, obj );
+    this.clickable_array.push( obj );
   }
 
   _register_datacube( m ){

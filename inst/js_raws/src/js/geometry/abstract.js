@@ -99,7 +99,7 @@ class AbstractThreeBrainObject {
 
       this._canvas.mesh.set( this.name, this.object );
       if( this.clickable ){
-        this._canvas.clickable.set( this.name, this.object );
+        this._canvas.add_clickable( this.name, this.object );
       }
 
       if( this.group_name ){

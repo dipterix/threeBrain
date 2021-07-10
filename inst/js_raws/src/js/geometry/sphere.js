@@ -321,7 +321,7 @@ class Sphere extends AbstractThreeBrainObject {
 
       this.register_object( ['electrodes'] );
       // electrodes must be clickable, ignore the default settings
-      this._canvas.clickable.set( this.name, this.object );
+      this._canvas.add_clickable( this.name, this.object );
 
 
       let gp_position = this.get_group_object().position.clone();

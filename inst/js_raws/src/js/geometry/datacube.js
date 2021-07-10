@@ -218,9 +218,9 @@ class DataCube extends AbstractThreeBrainObject {
     this._canvas.mesh.set( '_sagittal_' + this.name, this._mesh_yz );
 
     if( this.clickable ){
-      this._canvas.clickable.set( '_coronal_' + this.name, this._mesh_xz );
-      this._canvas.clickable.set( '_axial_' + this.name, this._mesh_xy );
-      this._canvas.clickable.set( '_sagittal_' + this.name, this._mesh_yz );
+      this._canvas.add_clickable( '_coronal_' + this.name, this._mesh_xz );
+      this._canvas.add_clickable( '_axial_' + this.name, this._mesh_xy );
+      this._canvas.add_clickable( '_sagittal_' + this.name, this._mesh_yz );
     }
 
     // data cube must have groups
