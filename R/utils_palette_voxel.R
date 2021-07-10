@@ -76,7 +76,7 @@ create_voxel_palette_discrete <- function(
     ), class = c("voxel_palette_discrete", "voxel_palette"))
 
   if(length(con)){
-    jsonlite::write_json(unclass(re), conauto_unbox = TRUE)
+    jsonlite::write_json(unclass(re), path = con, conauto_unbox = TRUE)
     return(invisible(re))
   }
   return(re)
@@ -120,7 +120,7 @@ create_voxel_palette_continuous <- function(
     ), class = c("voxel_palette_continuous", "voxel_palette"))
 
   if(length(con)){
-    jsonlite::write_json(unclass(re), conauto_unbox = TRUE)
+    jsonlite::write_json(unclass(re), path = con, conauto_unbox = TRUE)
     return(invisible(re))
   }
   return(re)

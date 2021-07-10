@@ -23,6 +23,8 @@ jsonlite::write_json(structure(
   )),
   'inst/palettes/datacube2/FreeSurferColorLUT.json', auto_unbox = TRUE)
 
+freeserfer_palette('inst/palettes/datacube2/FreeSurferColorLUT.json')
+
 freeserfer_palette <- function(write_to = NULL){
   file <- 'https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT?action=raw'
   s <- readLines(file)[-c(1:6, 1439:1441)]
