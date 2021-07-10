@@ -62439,6 +62439,10 @@ class data_controls_THREEBRAIN_PRESETS{
 
   c_voxel(){
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
+          lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
+          lut_map = lut.map,
+          lut_alpha = lut.mapAlpha[0],
+          lut_type = lut.mapDataType[0],
           _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
           _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 
@@ -62452,6 +62456,15 @@ class data_controls_THREEBRAIN_PRESETS{
     this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
 
+    // register key callbacks
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
+      if( has_meta_keys( evt.event, false, false, false ) ){
+        let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
+        if( current_idx >= 0 ){
+          atlas_type.setValue( _c[ current_idx ] );
+        }
+      }
+    }, 'gui_atlas_type');
 
     const atlas_alpha = this.gui.add_item('Voxel Opacity', 1.0, { folder_name : folder_name })
       .min(0).max(1).step(0.1)
@@ -62464,19 +62477,73 @@ class data_controls_THREEBRAIN_PRESETS{
         this.fire_change({ 'atlas_alpha' : v });
       });
 
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
-      if( has_meta_keys( evt.event, false, false, false ) ){
-        let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
-        if( current_idx >= 0 ){
-          atlas_type.setValue( _c[ current_idx ] );
-        }
-      }
-    }, 'gui_atlas_type');
-
-    let max_colorID = this.canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
+    // this.gui.hide_item("Voxel Opacity")
 
     //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
-    const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
+    if( lut_type === "continuous" ){
+
+      const cmap_array = Object.values(lut_map);
+      const voxel_value_range = to_array( lut.mapValueRange );
+      const voxel_minmax = (l, u) => {
+        let atlas_type = this.canvas.state_data.get("atlas_type");
+        const sub = this.canvas.state_data.get("target_subject");
+        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        if( inst && inst.isDataCube2 ){
+
+          // might be large?
+          new Promise( () => {
+
+            let tmp;
+            const candidates = cmap_array.filter((e) => {
+              tmp = parseFloat(e.Label[0]);
+              if(isNaN(tmp)){ return(false); }
+              if( tmp >= l & tmp <= u ){ return(true); }
+              return(false);
+            }).map( (e) => {
+              return(e.ColorID[0]);
+            });
+
+            // check if 0 is in candidates, if so, show all
+            if(candidates.length === 0 ){
+              for( let idx = 0; idx < inst._map_data.length; idx++ ){
+                inst._map_color[idx * 4 + 3] = 0;
+              }
+            } else {
+              for( let idx = 0; idx < inst._map_data.length; idx++ ){
+                if(candidates.indexOf( inst._map_data[idx] ) != -1){
+                  inst._map_color[idx * 4 + 3] = 1;
+                } else {
+                  inst._map_color[idx * 4 + 3] = 0;
+                }
+              }
+            }
+
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this._update_canvas();
+          })
+
+        }
+      }
+      if(cmap_array.length > 0){
+        let vmin = voxel_value_range[0],
+            vmax = voxel_value_range[1];
+        this.gui.add_item('Voxel Min', vmin, { folder_name : folder_name })
+          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
+          .onChange((v) => {
+            vmin = v;
+            voxel_minmax(vmin, vmax);
+          });
+
+        this.gui.add_item('Voxel Max', vmax, { folder_name : folder_name })
+          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
+          .onChange((v) => {
+            vmax = v;
+            voxel_minmax(vmin, vmax);
+          });
+      }
+
+    } else {
+      const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
       .onChange((v) => {
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
@@ -62518,10 +62585,12 @@ class data_controls_THREEBRAIN_PRESETS{
 
 
       });
+    }
+
 
     /*
     const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
-      .min(0).max(max_colorID).step(1)
+      .min(0).max(lut_maxColorID).step(1)
       .onChange((v) => {
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
@@ -63057,7 +63126,7 @@ class data_controls_THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Voxel Type", "Voxel Label", "Voxel Opacity"
+      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max'
     ];
     const args_dict = to_dict( args );
 
@@ -64658,13 +64727,48 @@ function gen_datacube(g, canvas){
 
 class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
-  _set_palette(pal){
-    // pal must be a dict or array
+  _reset_palette(){
+    if( this._canvas.has_webgl2 ){
 
-    // this muse be a valid cube
-    if(!Array.isArray(this._cube_values)){ return; }
+      let bounding_min = Math.min(this._cube_dim[0], this._cube_dim[1], this._cube_dim[2]) / 2,
+          bounding_max = bounding_min;
+      let i = 0, ii = 0, tmp;
 
+      for ( let z = 0; z < this._cube_dim[0]; z ++ ) {
+  			for ( let y = 0; y < this._cube_dim[1]; y ++ ) {
+  				for ( let x = 0; x < this._cube_dim[2]; x ++ ) {
+  				  i = parseInt(this._cube_values[ii]);
 
+  				  tmp = this._lut.map[i];
+  				  if(tmp && (i !== 0)){
+  				    this._map_color[ 4 * ii ] = tmp.R;
+  				    this._map_color[ 4 * ii + 1 ] = tmp.G;
+  				    this._map_color[ 4 * ii + 2 ] = tmp.B;
+  				    this._map_color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : (tmp.A / 255);
+
+  				    if( Math.min(x,y,z) < bounding_min ){
+  				      bounding_min = Math.min(x,y,z);
+  				    }
+  				    if( Math.max(x,y,z) > bounding_max ){
+  				      bounding_max = Math.max(x,y,z);
+  				    }
+
+  				  } else {
+  				    i = 0;
+  				  }
+  				  // unknown fs color ID
+            if(i > this._lut.mapMaxColorID || i < 0){
+              i = 0;
+            }
+            // risky as the target type is int32 signed but uint16 is desired
+            // however value range is from 0 to 1 so should be fine?
+            this._map_data[ ii ] = i; //float_to_int32(i / max_colID);
+  				  ii += 1;
+  				}
+  			}
+      }
+
+    }
   }
 
   constructor(g, canvas){
@@ -64688,13 +64792,19 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
             'yLength' : cube_half_size[1]*2,
             'zLength' : cube_half_size[2]*2,
           },
-          fslut = canvas.global_data('__global_data__VolumeColorLUT'),
-          max_colID = canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
+          lut = canvas.global_data('__global_data__.VolumeColorLUT'),
+          fslut = lut.map,
+          max_colID = lut.mapMaxColorID;
+          // fslut = canvas.global_data('__global_data__VolumeColorLUT'),
+          // max_colID = canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
+
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._cube_values = cube_values;
+      this._lut = lut;
+      this._cube_dim = cube_dim;
       const data = new Float32Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
       const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 4 );
 
@@ -64702,42 +64812,44 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       this._map_color = color;
 
       // Debug use
-      let i = 0, ii = 0, tmp;
+
       let bounding_min = Math.min(cube_dim[0], cube_dim[1], cube_dim[2]) / 2,
           bounding_max = bounding_min;
+      let i = 0, ii = 0, tmp;
       for ( let z = 0; z < cube_dim[0]; z ++ ) {
-					for ( let y = 0; y < cube_dim[1]; y ++ ) {
-						for ( let x = 0; x < cube_dim[2]; x ++ ) {
-						  i = parseInt(cube_values[ii]);
+				for ( let y = 0; y < cube_dim[1]; y ++ ) {
+					for ( let x = 0; x < cube_dim[2]; x ++ ) {
+					  i = parseInt(cube_values[ii]);
 
-						  tmp = fslut[i];
-						  if(tmp && (i !== 0)){
-						    color[ 4 * ii ] = tmp.R;
-						    color[ 4 * ii + 1 ] = tmp.G;
-						    color[ 4 * ii + 2 ] = tmp.B;
-						    color[ 4 * ii + 3 ] = 1;
+					  tmp = fslut[i];
+					  if(tmp && (i !== 0)){
+					    color[ 4 * ii ] = tmp.R;
+					    color[ 4 * ii + 1 ] = tmp.G;
+					    color[ 4 * ii + 2 ] = tmp.B;
+					    color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : tmp.A;
 
-						    if( Math.min(x,y,z) < bounding_min ){
-						      bounding_min = Math.min(x,y,z);
-						    }
-						    if( Math.max(x,y,z) > bounding_max ){
-						      bounding_max = Math.max(x,y,z);
-						    }
+					    if( Math.min(x,y,z) < bounding_min ){
+					      bounding_min = Math.min(x,y,z);
+					    }
+					    if( Math.max(x,y,z) > bounding_max ){
+					      bounding_max = Math.max(x,y,z);
+					    }
 
-						  } else {
-						    i = 0;
-						  }
-						  // unknown fs color ID
-              if(i > max_colID || i < 0){
-                i = 0;
-              }
-              // risky as the target type is int32 signed but uint16 is desired
-              // however value range is from 0 to 1 so should be fine?
-              data[ ii ] = i; //float_to_int32(i / max_colID);
-						  ii += 1;
-						}
+					  } else {
+					    i = 0;
+					  }
+					  // unknown fs color ID
+            if(i > max_colID || i < 0){
+              i = 0;
+            }
+            // risky as the target type is int32 signed but uint16 is desired
+            // however value range is from 0 to 1 so should be fine?
+            data[ ii ] = i; //float_to_int32(i / max_colID);
+					  ii += 1;
 					}
+				}
       }
+      //this._reset_palette();
 
       // 3D texture
       let texture = new threeplugins_THREE.DataTexture3D(

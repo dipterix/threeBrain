@@ -86,7 +86,7 @@ threejs_brain <- function(
   })
 
   global_container$group$set_group_data(
-    name = '__global_data__VolumeColorLUT',
+    name = '__global_data__.VolumeColorLUT',
     value = list(
       'path' = voxel_palette,
       'absolute_path' = normalizePath(voxel_palette, mustWork = FALSE),

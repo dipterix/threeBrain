@@ -7,7 +7,9 @@
 \alias{create_voxel_palette_continuous}
 \title{Creates color palettes for volume data (\code{\link{DataCubeGeom2}})}
 \usage{
-freeserfer_palette(write_to = NULL)
+freeserfer_palette(
+  write_to = "inst/palettes/datacube2/FreeSurferColorLUT.json"
+)
 
 create_voxel_palette_discrete(
   key,

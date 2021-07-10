@@ -26,7 +26,10 @@ NULL
 
 #' @rdname voxel_palette
 #' @export
-freeserfer_palette <- function(write_to = NULL){
+freeserfer_palette <- function(write_to = 'inst/palettes/datacube2/FreeSurferColorLUT.json'){
+  if(isTRUE(write_to == 'inst/palettes/datacube2/FreeSurferColorLUT.json')){
+    if(!file.exists(write_to)){ write_to <- NULL }
+  }
   file <- 'https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT?action=raw'
   s <- readLines(file)[-c(1:6, 1439:1441)]
   s <- s[!stringr::str_detect(s, '^[ ]{0,}#')]
@@ -45,6 +48,7 @@ freeserfer_palette <- function(write_to = NULL){
 #' @export
 create_voxel_palette_discrete <- function(
   key, color, label = NULL, alpha = FALSE, con = NULL, ...){
+  alpha <- isTRUE(alpha)
   if(!length(label)){
     label <- key
   }
@@ -67,16 +71,15 @@ create_voxel_palette_discrete <- function(
   ss <- jsonlite::fromJSON(ss, simplifyDataFrame = FALSE)
   names(ss) <- tbl$ColorID
   re <- structure(
-    list(ss, min(tbl$ColorID), max(tbl$ColorID), "discrete", 1.0), names = c(
-      '__global_data__VolumeColorLUT',
-      '__global_data__VolumeColorLUTMinColorID',
-      '__global_data__VolumeColorLUTMaxColorID',
-      '__global_data__VolumeColorLUTDataType',
-      '__global_data__VolumeColorLUTVersion'
+    list(ss, alpha, min(tbl$ColorID), max(tbl$ColorID), "discrete", 1.0), names = c(
+      'map', 'mapAlpha', 'mapMinColorID',
+      'mapMaxColorID', 'mapDataType', 'mapVersion'
     ), class = c("voxel_palette_discrete", "voxel_palette"))
 
   if(length(con)){
-    jsonlite::write_json(unclass(re), path = con, conauto_unbox = TRUE)
+    jsonlite::write_json(list(
+      "__global_data__.VolumeColorLUT" = unclass(re)
+    ), path = con, conauto_unbox = TRUE)
     return(invisible(re))
   }
   return(re)
@@ -86,6 +89,7 @@ create_voxel_palette_discrete <- function(
 #' @export
 create_voxel_palette_continuous <- function(
   key, color, value = NULL, alpha = FALSE, con = NULL, ...){
+  alpha <- isTRUE(alpha)
   if(!length(value)){
     value <- key
   }
@@ -108,19 +112,17 @@ create_voxel_palette_continuous <- function(
   ss <- jsonlite::fromJSON(ss, simplifyDataFrame = FALSE)
   names(ss) <- tbl$ColorID
   re <- structure(
-    list(ss, min(tbl$ColorID), max(tbl$ColorID),
+    list(ss, alpha, min(tbl$ColorID), max(tbl$ColorID),
          range(value, na.rm = TRUE),
          "continuous", 1.0), names = c(
-      '__global_data__VolumeColorLUT',
-      '__global_data__VolumeColorLUTMinColorID',
-      '__global_data__VolumeColorLUTMaxColorID',
-      '__global_data__VolumeColorLUTValueRange',
-      '__global_data__VolumeColorLUTDataType',
-      '__global_data__VolumeColorLUTVersion'
+      'map', 'mapAlpha', 'mapMinColorID', 'mapMaxColorID',
+      'mapValueRange', 'mapDataType', 'mapVersion'
     ), class = c("voxel_palette_continuous", "voxel_palette"))
 
   if(length(con)){
-    jsonlite::write_json(unclass(re), path = con, conauto_unbox = TRUE)
+    jsonlite::write_json(list(
+      "__global_data__.VolumeColorLUT" = unclass(re)
+    ), path = con, conauto_unbox = TRUE)
     return(invisible(re))
   }
   return(re)
@@ -134,18 +136,20 @@ print.voxel_palette <- function(x, ...){
       "<Voxel color palette>",
       "  Version: %.1f",
       "  Type: %s",
+      "  Transparent: %s",
       "  # of keys: %d",
       "  Min key: %.0f",
       "  Max key: %.0f\n"
     ), collapse = '\n'),
-    x[['__global_data__VolumeColorLUTVersion']],
-    x[['__global_data__VolumeColorLUTDataType']],
-    length(x[['__global_data__VolumeColorLUT']]),
-    x[['__global_data__VolumeColorLUTMinColorID']],
-    x[['__global_data__VolumeColorLUTMaxColorID']]
+    x[['mapVersion']],
+    x[['mapDataType']],
+    x[['mapAlpha']],
+    length(x[['map']]),
+    x[['mapMinColorID']],
+    x[['mapMaxColorID']]
   ))
-  if(isTRUE(x[['__global_data__VolumeColorLUTDataType']] == "continuous")){
-    rg <- x[['__global_data__VolumeColorLUTValueRange']]
+  if(isTRUE(x[['mapDataType']] == "continuous")){
+    rg <- x[['mapValueRange']]
     cat("  Value Range: ", rg[[1]], " ~ ", rg[[2]], "\n", sep = '')
   }
   invisible(x)

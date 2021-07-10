@@ -6,13 +6,48 @@ import { get_or_default } from '../utils.js';
 
 class DataCube2 extends AbstractThreeBrainObject {
 
-  _set_palette(pal){
-    // pal must be a dict or array
+  _reset_palette(){
+    if( this._canvas.has_webgl2 ){
 
-    // this muse be a valid cube
-    if(!Array.isArray(this._cube_values)){ return; }
+      let bounding_min = Math.min(this._cube_dim[0], this._cube_dim[1], this._cube_dim[2]) / 2,
+          bounding_max = bounding_min;
+      let i = 0, ii = 0, tmp;
 
+      for ( let z = 0; z < this._cube_dim[0]; z ++ ) {
+  			for ( let y = 0; y < this._cube_dim[1]; y ++ ) {
+  				for ( let x = 0; x < this._cube_dim[2]; x ++ ) {
+  				  i = parseInt(this._cube_values[ii]);
 
+  				  tmp = this._lut.map[i];
+  				  if(tmp && (i !== 0)){
+  				    this._map_color[ 4 * ii ] = tmp.R;
+  				    this._map_color[ 4 * ii + 1 ] = tmp.G;
+  				    this._map_color[ 4 * ii + 2 ] = tmp.B;
+  				    this._map_color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : (tmp.A / 255);
+
+  				    if( Math.min(x,y,z) < bounding_min ){
+  				      bounding_min = Math.min(x,y,z);
+  				    }
+  				    if( Math.max(x,y,z) > bounding_max ){
+  				      bounding_max = Math.max(x,y,z);
+  				    }
+
+  				  } else {
+  				    i = 0;
+  				  }
+  				  // unknown fs color ID
+            if(i > this._lut.mapMaxColorID || i < 0){
+              i = 0;
+            }
+            // risky as the target type is int32 signed but uint16 is desired
+            // however value range is from 0 to 1 so should be fine?
+            this._map_data[ ii ] = i; //float_to_int32(i / max_colID);
+  				  ii += 1;
+  				}
+  			}
+      }
+
+    }
   }
 
   constructor(g, canvas){
@@ -36,13 +71,19 @@ class DataCube2 extends AbstractThreeBrainObject {
             'yLength' : cube_half_size[1]*2,
             'zLength' : cube_half_size[2]*2,
           },
-          fslut = canvas.global_data('__global_data__VolumeColorLUT'),
-          max_colID = canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
+          lut = canvas.global_data('__global_data__.VolumeColorLUT'),
+          fslut = lut.map,
+          max_colID = lut.mapMaxColorID;
+          // fslut = canvas.global_data('__global_data__VolumeColorLUT'),
+          // max_colID = canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
+
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._cube_values = cube_values;
+      this._lut = lut;
+      this._cube_dim = cube_dim;
       const data = new Float32Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
       const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 4 );
 
@@ -50,42 +91,44 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._map_color = color;
 
       // Debug use
-      let i = 0, ii = 0, tmp;
+
       let bounding_min = Math.min(cube_dim[0], cube_dim[1], cube_dim[2]) / 2,
           bounding_max = bounding_min;
+      let i = 0, ii = 0, tmp;
       for ( let z = 0; z < cube_dim[0]; z ++ ) {
-					for ( let y = 0; y < cube_dim[1]; y ++ ) {
-						for ( let x = 0; x < cube_dim[2]; x ++ ) {
-						  i = parseInt(cube_values[ii]);
+				for ( let y = 0; y < cube_dim[1]; y ++ ) {
+					for ( let x = 0; x < cube_dim[2]; x ++ ) {
+					  i = parseInt(cube_values[ii]);
 
-						  tmp = fslut[i];
-						  if(tmp && (i !== 0)){
-						    color[ 4 * ii ] = tmp.R;
-						    color[ 4 * ii + 1 ] = tmp.G;
-						    color[ 4 * ii + 2 ] = tmp.B;
-						    color[ 4 * ii + 3 ] = 1;
+					  tmp = fslut[i];
+					  if(tmp && (i !== 0)){
+					    color[ 4 * ii ] = tmp.R;
+					    color[ 4 * ii + 1 ] = tmp.G;
+					    color[ 4 * ii + 2 ] = tmp.B;
+					    color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : tmp.A;
 
-						    if( Math.min(x,y,z) < bounding_min ){
-						      bounding_min = Math.min(x,y,z);
-						    }
-						    if( Math.max(x,y,z) > bounding_max ){
-						      bounding_max = Math.max(x,y,z);
-						    }
+					    if( Math.min(x,y,z) < bounding_min ){
+					      bounding_min = Math.min(x,y,z);
+					    }
+					    if( Math.max(x,y,z) > bounding_max ){
+					      bounding_max = Math.max(x,y,z);
+					    }
 
-						  } else {
-						    i = 0;
-						  }
-						  // unknown fs color ID
-              if(i > max_colID || i < 0){
-                i = 0;
-              }
-              // risky as the target type is int32 signed but uint16 is desired
-              // however value range is from 0 to 1 so should be fine?
-              data[ ii ] = i; //float_to_int32(i / max_colID);
-						  ii += 1;
-						}
+					  } else {
+					    i = 0;
+					  }
+					  // unknown fs color ID
+            if(i > max_colID || i < 0){
+              i = 0;
+            }
+            // risky as the target type is int32 signed but uint16 is desired
+            // however value range is from 0 to 1 so should be fine?
+            data[ ii ] = i; //float_to_int32(i / max_colID);
+					  ii += 1;
 					}
+				}
       }
+      //this._reset_palette();
 
       // 3D texture
       let texture = new THREE.DataTexture3D(
