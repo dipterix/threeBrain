@@ -974,7 +974,10 @@ class THREEBRAIN_CANVAS {
 
       for( let _nm of this.mesh.keys() ){
         this_obj = this.mesh.get( _nm );
-        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
           if( !m ){
             this.focus_object( this_obj, true );
             return(null);
@@ -1012,7 +1015,10 @@ class THREEBRAIN_CANVAS {
 
       for( let _nm of this.mesh.keys() ){
         this_obj = this.mesh.get( _nm );
-        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
           if( m && last_obj && m.name == this_obj.name ){
             this.focus_object( last_obj, true );
             return(null);
@@ -1071,9 +1077,16 @@ class THREEBRAIN_CANVAS {
     }
   }
 
+  /*
+  * @param reset whether to reset (hide) box that is snapped to m
+  */
   highlight( m, reset = false ){
 
-    const highlight_disabled = get_or_default( this.state_data, 'highlight_disabled', false );
+    const highlight_disabled = get_or_default(
+      this.state_data,
+      'highlight_disabled',
+      false
+    );
 
     // use bounding box with this.focus_box
     if( !m || !m.isObject3D ){ return(null); }
@@ -1131,7 +1144,11 @@ class THREEBRAIN_CANVAS {
       // intersect with all clickables
       // set raycaster to be layer 14
       this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
-      items = this.mouse_raycaster.intersectObjects( to_array( this.clickable ) );
+
+      // Only raycast with visible
+      items = this.mouse_raycaster.intersectObjects(
+        to_array( this.clickable ).filter((e) => { return(e.visible === true) })
+      );
       // items = this.mouse_raycaster.intersectObjects( this.scene.children );
     }else if( request_type.isObject3D || Array.isArray( request_type ) ){
       // set raycaster to be layer 8 (main camera)
