@@ -1,15 +1,28 @@
 
 #' @name voxel_palette
 #' @title Creates color palettes for volume data (\code{\link{DataCubeGeom2}})
-#' @param key integer vector corresponding to voxel values. If the actual
-#' values are not integer, please also assign \code{value}
+#' @param key non-negative integer vector corresponding to voxel values;
+#' its length must exceed 1; see 'Details'
 #' @param color characters, corresponding to color strings for each key
 #' @param label name for each key, discrete palettes only
 #' @param value actual value for each key, continuous palettes only
 #' @param alpha whether to respect transparency
 #' @param con,write_to a file path to write results to. The file path can be
 #' passed as \code{voxel_palette} into \code{\link{threejs_brain}}.
-#' @param ... ignored
+#' @param ... used by continuous palette, passed to
+#' \code{\link[grDevices]{colorRampPalette}}. Ignored by others
+#'
+#' @details
+#' Internal 'JavaScript' shader implementation uses integer \code{key} to
+#' connect data and color palettes. The keys must be non-negative. These keys
+#' should coincide with data values used by \code{\link{DataCubeGeom2}}.
+#' Each key stands for a value or label indicated by \code{value} or
+#' \code{label}.
+#'
+#' Zero key is a special color key. If a \code{\link{DataCubeGeom2}} voxel
+#' value is 0, then this voxel will be hidden. This is hard-coded into
+#' material shader.
+#'
 #' @return A list of palette information
 #'
 #' @examples
@@ -49,6 +62,9 @@ freeserfer_palette <- function(write_to = 'inst/palettes/datacube2/FreeSurferCol
 create_voxel_palette_discrete <- function(
   key, color, label = NULL, alpha = FALSE, con = NULL, ...){
   alpha <- isTRUE(alpha)
+  key <- as.integer(key)
+  stopifnot(length(key) > 1)
+  stopifnot(!any(is.na(key)))
   if(!length(label)){
     label <- key
   }
@@ -90,11 +106,14 @@ create_voxel_palette_discrete <- function(
 create_voxel_palette_continuous <- function(
   key, color, value = NULL, alpha = FALSE, con = NULL, ...){
   alpha <- isTRUE(alpha)
+  key <- as.integer(key)
+  stopifnot(length(key) > 1)
+  stopifnot(!any(is.na(key)))
   if(!length(value)){
     value <- key
   }
   if(length(color) != length(key)){
-    stop("length of colors does not match with keys")
+    color <- grDevices::colorRampPalette(color, alpha = alpha, ...)(length(key))
   }
   rgb <- col2rgb(color, alpha = alpha)
   if(alpha){

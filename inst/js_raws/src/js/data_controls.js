@@ -1137,8 +1137,8 @@ class THREEBRAIN_PRESETS{
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
           lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
-          lut_alpha = lut.mapAlpha[0],
-          lut_type = lut.mapDataType[0],
+          lut_alpha = lut.mapAlpha,
+          lut_type = lut.mapDataType,
           _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
           _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 

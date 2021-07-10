@@ -9,8 +9,6 @@ class DataCube2 extends AbstractThreeBrainObject {
   _reset_palette(){
     if( this._canvas.has_webgl2 ){
 
-      let bounding_min = Math.min(this._cube_dim[0], this._cube_dim[1], this._cube_dim[2]) / 2,
-          bounding_max = bounding_min;
       let i = 0, ii = 0, tmp;
 
       for ( let z = 0; z < this._cube_dim[0]; z ++ ) {
@@ -23,15 +21,7 @@ class DataCube2 extends AbstractThreeBrainObject {
   				    this._map_color[ 4 * ii ] = tmp.R;
   				    this._map_color[ 4 * ii + 1 ] = tmp.G;
   				    this._map_color[ 4 * ii + 2 ] = tmp.B;
-  				    this._map_color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : (tmp.A / 255);
-
-  				    if( Math.min(x,y,z) < bounding_min ){
-  				      bounding_min = Math.min(x,y,z);
-  				    }
-  				    if( Math.max(x,y,z) > bounding_max ){
-  				      bounding_max = Math.max(x,y,z);
-  				    }
-
+  				    this._map_color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : (tmp.A / 255);
   				  } else {
   				    i = 0;
   				  }
@@ -105,7 +95,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 					    color[ 4 * ii ] = tmp.R;
 					    color[ 4 * ii + 1 ] = tmp.G;
 					    color[ 4 * ii + 2 ] = tmp.B;
-					    color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : tmp.A;
+					    color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
 
 					    if( Math.min(x,y,z) < bounding_min ){
 					      bounding_min = Math.min(x,y,z);
@@ -128,7 +118,6 @@ class DataCube2 extends AbstractThreeBrainObject {
 					}
 				}
       }
-      //this._reset_palette();
 
       // 3D texture
       let texture = new THREE.DataTexture3D(
@@ -157,8 +146,8 @@ class DataCube2 extends AbstractThreeBrainObject {
       color_texture.type = THREE.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
-      color_texture.needsUpdate = true;
       this._color_texture = texture;
+      this._color_texture.needsUpdate = true;
 
 
     	// Material
