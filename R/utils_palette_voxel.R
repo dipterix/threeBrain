@@ -79,7 +79,7 @@ create_voxel_palette_discrete <- function(
   if(length(con)){
     jsonlite::write_json(list(
       "__global_data__.VolumeColorLUT" = unclass(re)
-    ), path = con, conauto_unbox = TRUE)
+    ), path = con, auto_unbox = TRUE)
     return(invisible(re))
   }
   return(re)
@@ -122,7 +122,7 @@ create_voxel_palette_continuous <- function(
   if(length(con)){
     jsonlite::write_json(list(
       "__global_data__.VolumeColorLUT" = unclass(re)
-    ), path = con, conauto_unbox = TRUE)
+    ), path = con, auto_unbox = TRUE)
     return(invisible(re))
   }
   return(re)
