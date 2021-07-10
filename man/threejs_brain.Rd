@@ -30,6 +30,8 @@ threejs_brain(
   value_ranges = NULL,
   value_alias = NULL,
   show_inactive_electrodes = TRUE,
+  voxel_palette = system.file("palettes", "datacube2", "FreeSurferColorLUT.json",
+    package = "threeBrain"),
   widget_id = "threebrain_data",
   tmp_dirname = NULL,
   debug = FALSE,

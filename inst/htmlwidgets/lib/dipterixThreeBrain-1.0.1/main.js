@@ -60171,7 +60171,7 @@ CONSTANTS.LAYER_SYS_AXIAL_10 = 10;                 // System reserved, axial cam
 CONSTANTS.LAYER_SYS_SAGITTAL_11 = 11;              // System reserved, sagittal camera only
 CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 = 13;      // System reserved, all side cameras visible
 CONSTANTS.LAYER_SYS_RAYCASTER_14 = 14;               // System reserved, raycaster use
-
+CONSTANTS.LAYER_INVISIBLE_31 = 31;                   // invisible layer, but keep rendered
 /* ------------------------------------ Global constants ------------------------------------
 */
 
@@ -60388,7 +60388,7 @@ class abstract_AbstractThreeBrainObject {
 
       this._canvas.mesh.set( this.name, this.object );
       if( this.clickable ){
-        this._canvas.clickable.set( this.name, this.object );
+        this._canvas.add_clickable( this.name, this.object );
       }
 
       if( this.group_name ){
@@ -60737,7 +60737,7 @@ class sphere_Sphere extends abstract_AbstractThreeBrainObject {
 
       this.register_object( ['electrodes'] );
       // electrodes must be clickable, ignore the default settings
-      this._canvas.clickable.set( this.name, this.object );
+      this._canvas.add_clickable( this.name, this.object );
 
 
       let gp_position = this.get_group_object().position.clone();
@@ -62437,12 +62437,12 @@ class data_controls_THREEBRAIN_PRESETS{
   }
 
 
-  c_atlas(){
+  c_voxel(){
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
           _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
           _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 
-    const atlas_type = this.gui.add_item('Atlas Type', _atype, {args : _c, folder_name : folder_name })
+    const atlas_type = this.gui.add_item('Voxel Type', _atype, {args : _c, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', {
           'atlas_type': v
@@ -62450,10 +62450,10 @@ class data_controls_THREEBRAIN_PRESETS{
         this.fire_change({ 'atlas_type' : v });
       });
     this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
-    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Atlas Type', folder_name);
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
 
 
-    const atlas_alpha = this.gui.add_item('Atlas Transparency', 1.0, { folder_name : folder_name })
+    const atlas_alpha = this.gui.add_item('Voxel Opacity', 1.0, { folder_name : folder_name })
       .min(0).max(1).step(0.1)
       .onChange((v) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
@@ -62473,10 +62473,10 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     }, 'gui_atlas_type');
 
-    let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+    let max_colorID = this.canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
 
     //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
-    const atlas_thred_text = this.gui.add_item('Atlas Label', "0", { folder_name : folder_name })
+    const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
       .onChange((v) => {
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
@@ -63057,7 +63057,7 @@ class data_controls_THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Atlas Type", "Atlas Label", "Atlas Transparency"
+      "Voxel Type", "Voxel Label", "Voxel Opacity"
     ];
     const args_dict = to_dict( args );
 
@@ -63705,6 +63705,8 @@ var jspdf_es_min = __webpack_require__(5);
 
 // CONCATENATED MODULE: ./src/js/core/context.js
 
+// var jsPDF = require('jspdf');
+window.jsPDF = jspdf_es_min["a" /* default */];
 
 class context_PDFContext {
   constructor( base_canvas ){
@@ -63724,18 +63726,16 @@ class context_PDFContext {
     this.font_style = 'Courier';
   }
 
+  /**
+   * parameter type is ignored as only limited fonts are supported
+   */
   set_font( size, type, bold = false ){
     // TODO: check font
     // this.font_type = type || this.font_type;
     this.context.setFontSize( size );
-    this.context.setFont( this.font_type );
-    if( bold ){
-      this.context.setFontStyle( "bold" );
-    } else {
-      this.context.setFontStyle( "normal" );
-    }
-    this.context.setFont( this.font_type );
-
+    // this.context.setFont( this.font_type );
+    const font_weight = bold ? "bold" : "normal";
+    this.context.setFont("courier", font_weight)
   }
 
   set_font_color( color ){
@@ -64605,9 +64605,9 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
     this._canvas.mesh.set( '_sagittal_' + this.name, this._mesh_yz );
 
     if( this.clickable ){
-      this._canvas.clickable.set( '_coronal_' + this.name, this._mesh_xz );
-      this._canvas.clickable.set( '_axial_' + this.name, this._mesh_xy );
-      this._canvas.clickable.set( '_sagittal_' + this.name, this._mesh_yz );
+      this._canvas.add_clickable( '_coronal_' + this.name, this._mesh_xz );
+      this._canvas.add_clickable( '_axial_' + this.name, this._mesh_xy );
+      this._canvas.add_clickable( '_sagittal_' + this.name, this._mesh_yz );
     }
 
     // data cube must have groups
@@ -64688,8 +64688,8 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
             'yLength' : cube_half_size[1]*2,
             'zLength' : cube_half_size[2]*2,
           },
-          fslut = canvas.global_data('__global_data__FreeSurferColorLUT'),
-          max_colID = canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+          fslut = canvas.global_data('__global_data__VolumeColorLUT'),
+          max_colID = canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
@@ -66040,6 +66040,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
     // All mesh/geoms in this store will be calculated when raycasting
     this.clickable = new Map();
+    this.clickable_array = [];
 
     // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
@@ -66571,6 +66572,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
     this.bounding_box = this.focus_box.clone();
+    this.bounding_box.layers.set( CONSTANTS.LAYER_INVISIBLE_31 )
+
 
     this.set_font_size();
 
@@ -66885,7 +66888,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       for( let _nm of this.mesh.keys() ){
         this_obj = this.mesh.get( _nm );
-        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
           if( !m ){
             this.focus_object( this_obj, true );
             return(null);
@@ -66923,7 +66929,10 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
       for( let _nm of this.mesh.keys() ){
         this_obj = this.mesh.get( _nm );
-        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
           if( m && last_obj && m.name == this_obj.name ){
             this.focus_object( last_obj, true );
             return(null);
@@ -66982,9 +66991,16 @@ class threejs_scene_THREEBRAIN_CANVAS {
     }
   }
 
+  /*
+  * @param reset whether to reset (hide) box that is snapped to m
+  */
   highlight( m, reset = false ){
 
-    const highlight_disabled = get_or_default( this.state_data, 'highlight_disabled', false );
+    const highlight_disabled = get_or_default(
+      this.state_data,
+      'highlight_disabled',
+      false
+    );
 
     // use bounding box with this.focus_box
     if( !m || !m.isObject3D ){ return(null); }
@@ -67042,7 +67058,12 @@ class threejs_scene_THREEBRAIN_CANVAS {
       // intersect with all clickables
       // set raycaster to be layer 14
       this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
-      items = this.mouse_raycaster.intersectObjects( to_array( this.clickable ) );
+
+      // Only raycast with visible
+      items = this.mouse_raycaster.intersectObjects(
+        // to_array( this.clickable )
+        this.clickable_array.filter((e) => { return(e.visible === true) })
+      );
       // items = this.mouse_raycaster.intersectObjects( this.scene.children );
     }else if( request_type.isObject3D || Array.isArray( request_type ) ){
       // set raycaster to be layer 8 (main camera)
@@ -68425,6 +68446,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     // Stop showing information of any selected objects
     this.object_chosen=undefined;
     this.clickable.clear();
+    this.clickable_array.length = 0;
 
     this.subject_codes.length = 0;
     this.electrodes.clear();
@@ -68537,6 +68559,19 @@ class threejs_scene_THREEBRAIN_CANVAS {
 
 
     inst.finish_init();
+  }
+
+  add_clickable( name, obj ){
+    if( this.clickable.has( name ) ){
+      // remove from this.clickable_array
+      const sub = this.clickable.get( name ),
+            idx = this.clickable_array.indexOf( sub );
+      if( idx > -1 ){
+        this.clickable_array.splice(idx, 1);
+      }
+    }
+    this.clickable.set( name, obj );
+    this.clickable_array.push( obj );
   }
 
   _register_datacube( m ){

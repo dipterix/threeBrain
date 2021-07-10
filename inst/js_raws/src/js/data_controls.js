@@ -1133,12 +1133,12 @@ class THREEBRAIN_PRESETS{
   }
 
 
-  c_atlas(){
+  c_voxel(){
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
           _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
           _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 
-    const atlas_type = this.gui.add_item('Atlas Type', _atype, {args : _c, folder_name : folder_name })
+    const atlas_type = this.gui.add_item('Voxel Type', _atype, {args : _c, folder_name : folder_name })
       .onChange((v) => {
         this.canvas.switch_subject( '/', {
           'atlas_type': v
@@ -1146,10 +1146,10 @@ class THREEBRAIN_PRESETS{
         this.fire_change({ 'atlas_type' : v });
       });
     this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
-    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Atlas Type', folder_name);
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
 
 
-    const atlas_alpha = this.gui.add_item('Atlas Transparency', 1.0, { folder_name : folder_name })
+    const atlas_alpha = this.gui.add_item('Voxel Opacity', 1.0, { folder_name : folder_name })
       .min(0).max(1).step(0.1)
       .onChange((v) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
@@ -1169,10 +1169,10 @@ class THREEBRAIN_PRESETS{
       }
     }, 'gui_atlas_type');
 
-    let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+    let max_colorID = this.canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
 
     //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
-    const atlas_thred_text = this.gui.add_item('Atlas Label', "0", { folder_name : folder_name })
+    const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
       .onChange((v) => {
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
@@ -1753,7 +1753,7 @@ class THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Atlas Type", "Atlas Label", "Atlas Transparency"
+      "Voxel Type", "Voxel Label", "Voxel Opacity"
     ];
     const args_dict = to_dict( args );
 

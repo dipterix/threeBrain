@@ -51,6 +51,9 @@ threejs_brain <- function(
   symmetric = 0, default_colormap = 'Value', palettes = NULL,
   value_ranges = NULL, value_alias = NULL,
   show_inactive_electrodes = TRUE,
+  # color palettes for volume rendering (datacube2)
+  voxel_palette = system.file(
+    'palettes', 'datacube2', 'FreeSurferColorLUT.json', package = 'threeBrain'),
 
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
@@ -81,18 +84,31 @@ threejs_brain <- function(
       )
     }
   })
+
   global_container$group$set_group_data(
-    name = '__global_data__FreeSurferColorLUT',
+    name = '__global_data__VolumeColorLUT',
     value = list(
-      'path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
-      'absolute_path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
-      'file_name' = 'FreeSurferColorLUT.json',
+      'path' = voxel_palette,
+      'absolute_path' = normalizePath(voxel_palette, mustWork = FALSE),
+      'file_name' = filename(voxel_palette),
       'is_new_cache' = FALSE,
       'is_cache' = TRUE
     ),
     is_cached = TRUE,
     cache_if_not_exists = FALSE
   )
+  # global_container$group$set_group_data(
+  #   name = '__global_data__FreeSurferColorLUT',
+  #   value = list(
+  #     'path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
+  #     'absolute_path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
+  #     'file_name' = 'FreeSurferColorLUT.json',
+  #     'is_new_cache' = FALSE,
+  #     'is_cache' = TRUE
+  #   ),
+  #   is_cached = TRUE,
+  #   cache_if_not_exists = FALSE
+  # )
 
 
   # Create element list
