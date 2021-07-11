@@ -6,35 +6,64 @@ import { get_or_default } from '../utils.js';
 
 class DataCube2 extends AbstractThreeBrainObject {
 
-  _reset_palette(){
+  _set_palette( color_ids, skip ){
     if( this._canvas.has_webgl2 ){
 
-      let i = 0, ii = 0, tmp;
+      // WARNING, no check on color_ids to speed up
+      // I assume color_ids is always array of integers
+      if( color_ids !== undefined ){
+        this._color_ids.length = 0;
+        for( let jj = 0; jj < color_ids.length; jj++ ) {
+          this._color_ids[ color_ids[ jj ] ] = true;
+        }
+        if( this._color_ids[0] ){
+          this._color_ids_length = 0;
+        } else {
+          this._color_ids_length = color_ids.length;
+        }
+      }
+      if( typeof(skip) === "number" ){
+        this._value_index_skip = Math.floor( skip );
+      }
 
-      for ( let z = 0; z < this._cube_dim[0]; z ++ ) {
-  			for ( let y = 0; y < this._cube_dim[1]; y ++ ) {
-  				for ( let x = 0; x < this._cube_dim[2]; x ++ ) {
-  				  i = parseInt(this._cube_values[ii]);
+      let i = 0, ii = this._value_index_skip * this._map_data.length, tmp;
 
-  				  tmp = this._lut.map[i];
-  				  if(tmp && (i !== 0)){
-  				    this._map_color[ 4 * ii ] = tmp.R;
-  				    this._map_color[ 4 * ii + 1 ] = tmp.G;
-  				    this._map_color[ 4 * ii + 2 ] = tmp.B;
-  				    this._map_color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : (tmp.A / 255);
-  				  } else {
-  				    i = 0;
-  				  }
-  				  // unknown fs color ID
-            if(i > this._lut.mapMaxColorID || i < 0){
-              i = 0;
-            }
-            // risky as the target type is int32 signed but uint16 is desired
-            // however value range is from 0 to 1 so should be fine?
-            this._map_data[ ii ] = i; //float_to_int32(i / max_colID);
-  				  ii += 1;
-  				}
-  			}
+      for( let ii = this._value_index_skip * this._map_data.length;
+           ii < (this._value_index_skip + 1) * this._map_data.length;
+           ii++ ){
+        // Math.round is faster for numerical values
+			  // i = Math.round(this._cube_values[ii]);
+			  // no need to round up as this has been done in the constructor
+			  i = this._cube_values[ii];
+
+			  if( i !== 0 ){
+
+			    tmp = this._lut_map[i];
+
+			    if( tmp ){
+			      this._map_color[ 4 * ii ] = tmp.R;
+				    this._map_color[ 4 * ii + 1 ] = tmp.G;
+				    this._map_color[ 4 * ii + 2 ] = tmp.B;
+
+				    if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
+				      this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+
+				      this._map_data[ ii ] = i;
+				      continue;
+
+				    } else {
+
+				      // voxel is invisible, no need to render! hence data is 0
+				      this._map_color[ 4 * ii + 3 ] = 0;
+				    }
+
+			    }
+
+			    this._map_data[ ii ] = 0;
+
+			  }
+
+
       }
 
     }
@@ -62,59 +91,69 @@ class DataCube2 extends AbstractThreeBrainObject {
             'zLength' : cube_half_size[2]*2,
           },
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
-          fslut = lut.map,
+          lut_map = lut.map,
           max_colID = lut.mapMaxColorID;
-          // fslut = canvas.global_data('__global_data__VolumeColorLUT'),
-          // max_colID = canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
 
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
-      this._cube_values = cube_values;
-      this._lut = lut;
-      this._cube_dim = cube_dim;
       const data = new Float32Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
       const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 4 );
 
+      this._cube_values = cube_values;
+      this._lut = lut;
+      this._lut_map = lut_map;
+      this._cube_dim = cube_dim;
       this._map_data = data;
       this._map_color = color;
-
-      // Debug use
+      this._map_alpha = lut.mapAlpha;
+      this._color_ids = [];
+      this._color_ids_length = 0;
+      this._value_index_skip = 0;
 
       let bounding_min = Math.min(cube_dim[0], cube_dim[1], cube_dim[2]) / 2,
           bounding_max = bounding_min;
+
+      // Change cube_values so all elements are integers (non-negative)
+      cube_values.forEach( (el, ii) => {
+        if( el > max_colID || el < 0 ){
+          cube_values[ ii ] = 0;
+          return;
+        }
+        if ( !Number.isInteger( el ) ) {
+          cube_values[ ii ] = Math.round( el );
+        }
+      });
+
       let i = 0, ii = 0, tmp;
       for ( let z = 0; z < cube_dim[0]; z ++ ) {
 				for ( let y = 0; y < cube_dim[1]; y ++ ) {
 					for ( let x = 0; x < cube_dim[2]; x ++ ) {
-					  i = parseInt(cube_values[ii]);
+					  i = cube_values[ii];
 
-					  tmp = fslut[i];
-					  if(tmp && (i !== 0)){
-					    color[ 4 * ii ] = tmp.R;
-					    color[ 4 * ii + 1 ] = tmp.G;
-					    color[ 4 * ii + 2 ] = tmp.B;
-					    color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+					  if( i !== 0 ){
+					    tmp = lut_map[i];
+					    if( tmp ) {
+					      color[ 4 * ii ] = tmp.R;
+  					    color[ 4 * ii + 1 ] = tmp.G;
+  					    color[ 4 * ii + 2 ] = tmp.B;
+  					    color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
 
-					    if( Math.min(x,y,z) < bounding_min ){
-					      bounding_min = Math.min(x,y,z);
+  					    if( Math.min(x,y,z) < bounding_min ){
+  					      bounding_min = Math.min(x,y,z);
+  					    }
+  					    if( Math.max(x,y,z) > bounding_max ){
+  					      bounding_max = Math.max(x,y,z);
+  					    }
+  					    data[ ii ] = i;
 					    }
-					    if( Math.max(x,y,z) > bounding_max ){
-					      bounding_max = Math.max(x,y,z);
-					    }
-
-					  } else {
-					    i = 0;
 					  }
-					  // unknown fs color ID
-            if(i > max_colID || i < 0){
-              i = 0;
-            }
-            // risky as the target type is int32 signed but uint16 is desired
-            // however value range is from 0 to 1 so should be fine?
-            data[ ii ] = i; //float_to_int32(i / max_colID);
-					  ii += 1;
+					  /**
+					   * No need to assign data if keys are invalid
+					   * data are initialized with 0 according to js specifications
+					   */
+					  ii++;
 					}
 				}
       }

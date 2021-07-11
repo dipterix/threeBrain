@@ -339,8 +339,10 @@ class BrainCanvas{
         this.canvas.add_object( g );
       }else{
         try {
-          this.canvas.add_object(g);
-        } catch (e) {}
+          this.canvas.add_object( g );
+        } catch (e) {
+          console.warn(e);
+        }
       }
     });
 

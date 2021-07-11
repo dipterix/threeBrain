@@ -56926,7 +56926,7 @@ const register_volumeShader1 = function(THREE){
   	  cmap: { value: null },
   	  mask: { value: null },
   	  cameraPos: { value: new THREE.Vector3() },
-  	  alpha : { value: 1.0 },
+  	  alpha : { value: -1.0 },
   	  steps: { value: 300 },
   	  scale: { value: new THREE.Vector3() },
   	  bounding: { value : 0.5 }
@@ -57044,35 +57044,68 @@ const register_volumeShader1 = function(THREE){
 				// 'float depth_p = depth_start;',
 
 				// ray marching
+
+				// nn is used to keep track when number of different colors along the line
 				'float nn = 0.0;',
 				'float mix_factor = 1.0;',
 				'vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );',
 				'vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );',
-				'for ( float t = bounds.x; t < bounds.y; t += delta ) {',
-					'float d = sample1( p );',
-					'if ( d > 0.0 ) {',
-						'fcolor = sample2( p );',
-						'if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb && fcolor != last_color ){',
-              'if( nn == 0.0 ){',
-                'color.a = alpha;',
-  						  'gl_FragDepth = getDepth( p );',
-  						  'color.rgb = fcolor.rgb * max( dot(-rayDir, getNormal( p )) , 0.0 );',
-              '}',
-              'if( nn > 0.0 && alpha < 1.0 ){',
-                'color.rgb = mix(color.rgb, fcolor.rgb, mix_factor);',
-              '}',
-              'nn += 1.0;',
-              'mix_factor *= 1.0 - alpha;',
-              'last_color = fcolor;',
 
-              //  optimize, do not march to the hell
-              'if( nn >= 4.0 || alpha >= 0.99999 ){',
-  						  'break;',
-              '}',
-						'}',
-					'}',
-					'p += rayDir * delta;',
-				'}',
+				// Check if alpha < 0.. If so, do not override alpha values
+				'if ( alpha < 0.0 ) {',
+				  'for ( float t = bounds.x; t < bounds.y; t += delta ) {',
+  					'float d = sample1( p );',
+  					'if ( d > 0.0 ) {',
+  						'fcolor = sample2( p );',
+  						'if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb && fcolor.rgb != last_color.rgb ){',
+                'if( nn == 0.0 ){',
+    						  'gl_FragDepth = getDepth( p );',
+                  'color.a = fcolor.a;',
+    						  'color.rgb = fcolor.rgb * max( dot(-rayDir, getNormal( p )) , 0.0 );',
+                '}',
+                'if( nn > 0.0 ){',
+                  'color = mix(color, fcolor, mix_factor);',
+                '}',
+                'nn += 1.0;',
+                'mix_factor *= 1.0 - color.a;',
+                'last_color = fcolor;',
+
+                //  optimize, do not march to the hell
+                'if( nn >= 4.0 || color.a >= 0.99999 ){',
+    						  'break;',
+                '}',
+  						'}',
+  					'}',
+  					'p += rayDir * delta;',
+  				'}',
+				'} else {',
+				// alpha >= 0, override alpha
+  				'for ( float t = bounds.x; t < bounds.y; t += delta ) {',
+  					'float d = sample1( p );',
+  					'if ( d > 0.0 ) {',
+  						'fcolor = sample2( p );',
+  						'if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb && fcolor != last_color ){',
+                'if( nn == 0.0 ){',
+                  'color.a = alpha;',
+    						  'gl_FragDepth = getDepth( p );',
+    						  'color.rgb = fcolor.rgb * max( dot(-rayDir, getNormal( p )) , 0.0 );',
+                '}',
+                'if( nn > 0.0 && alpha < 1.0 ){',
+                  'color.rgb = mix(color.rgb, fcolor.rgb, mix_factor);',
+                '}',
+                'nn += 1.0;',
+                'mix_factor *= 1.0 - alpha;',
+                'last_color = fcolor;',
+
+                //  optimize, do not march to the hell
+                'if( nn >= 4.0 || alpha >= 0.99999 ){',
+    						  'break;',
+                '}',
+  						'}',
+  					'}',
+  					'p += rayDir * delta;',
+  				'}',
+  			'}',
 				'if ( nn == 0.0 || color.a == 0.0 ) discard;',
 				'color.rgb /= (nn - 1.0) / 2.0 + 1.0;',
 			'}'
@@ -62441,8 +62474,8 @@ class data_controls_THREEBRAIN_PRESETS{
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
           lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
-          lut_alpha = lut.mapAlpha[0],
-          lut_type = lut.mapDataType[0],
+          lut_alpha = lut.mapAlpha,
+          lut_type = lut.mapDataType,
           _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
           _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
 
@@ -62466,15 +62499,25 @@ class data_controls_THREEBRAIN_PRESETS{
       }
     }, 'gui_atlas_type');
 
-    const atlas_alpha = this.gui.add_item('Voxel Opacity', 1.0, { folder_name : folder_name })
+    // If color map supports alpha, add override option
+    const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
       .min(0).max(1).step(0.1)
       .onChange((v) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
-        mesh.material.uniforms.alpha.value = v;
+        const sub = this.canvas.state_data.get("target_subject"),
+              // mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`],
+              inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+              opa = v < 0.001 ? -1 : v;
+        // mesh.material.uniforms.alpha.value = opa;
+        if( inst && inst.isDataCube2 ){
+          inst.object.material.uniforms.alpha.value = opa;
+          if( opa < 0 ){
+            inst._set_palette();
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+          }
+        }
         this._update_canvas();
-        this.fire_change({ 'atlas_alpha' : v });
+        this.fire_change({ 'atlas_alpha' : opa });
       });
 
     // this.gui.hide_item("Voxel Opacity")
@@ -62495,28 +62538,15 @@ class data_controls_THREEBRAIN_PRESETS{
 
             let tmp;
             const candidates = cmap_array.filter((e) => {
-              tmp = parseFloat(e.Label[0]);
+              tmp = parseFloat(e.Label);
               if(isNaN(tmp)){ return(false); }
-              if( tmp >= l & tmp <= u ){ return(true); }
+              if( tmp >= l && tmp <= u ){ return(true); }
               return(false);
             }).map( (e) => {
-              return(e.ColorID[0]);
+              return(e.ColorID);
             });
 
-            // check if 0 is in candidates, if so, show all
-            if(candidates.length === 0 ){
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                inst._map_color[idx * 4 + 3] = 0;
-              }
-            } else {
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                if(candidates.indexOf( inst._map_data[idx] ) != -1){
-                  inst._map_color[idx * 4 + 3] = 1;
-                } else {
-                  inst._map_color[idx * 4 + 3] = 0;
-                }
-              }
-            }
+            inst._set_palette( candidates );
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
@@ -62558,6 +62588,8 @@ class data_controls_THREEBRAIN_PRESETS{
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});
 
+            inst._set_palette( candidates );
+            /*
             // check if 0 is in candidates, if so, show all
             if(candidates.length === 0 || candidates.includes(0)){
               for( let idx = 0; idx < inst._map_data.length; idx++ ){
@@ -62575,7 +62607,7 @@ class data_controls_THREEBRAIN_PRESETS{
                   inst._map_color[idx * 4 + 3] = 0;
                 }
               }
-            }
+            }*/
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
@@ -64727,45 +64759,64 @@ function gen_datacube(g, canvas){
 
 class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
-  _reset_palette(){
+  _set_palette( color_ids, skip ){
     if( this._canvas.has_webgl2 ){
 
-      let bounding_min = Math.min(this._cube_dim[0], this._cube_dim[1], this._cube_dim[2]) / 2,
-          bounding_max = bounding_min;
-      let i = 0, ii = 0, tmp;
+      // WARNING, no check on color_ids to speed up
+      // I assume color_ids is always array of integers
+      if( color_ids !== undefined ){
+        this._color_ids.length = 0;
+        for( let jj = 0; jj < color_ids.length; jj++ ) {
+          this._color_ids[ color_ids[ jj ] ] = true;
+        }
+        if( this._color_ids[0] ){
+          this._color_ids_length = 0;
+        } else {
+          this._color_ids_length = color_ids.length;
+        }
+      }
+      if( typeof(skip) === "number" ){
+        this._value_index_skip = Math.floor( skip );
+      }
 
-      for ( let z = 0; z < this._cube_dim[0]; z ++ ) {
-  			for ( let y = 0; y < this._cube_dim[1]; y ++ ) {
-  				for ( let x = 0; x < this._cube_dim[2]; x ++ ) {
-  				  i = parseInt(this._cube_values[ii]);
+      let i = 0, ii = this._value_index_skip * this._map_data.length, tmp;
 
-  				  tmp = this._lut.map[i];
-  				  if(tmp && (i !== 0)){
-  				    this._map_color[ 4 * ii ] = tmp.R;
-  				    this._map_color[ 4 * ii + 1 ] = tmp.G;
-  				    this._map_color[ 4 * ii + 2 ] = tmp.B;
-  				    this._map_color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : (tmp.A / 255);
+      for( let ii = this._value_index_skip * this._map_data.length;
+           ii < (this._value_index_skip + 1) * this._map_data.length;
+           ii++ ){
+        // Math.round is faster for numerical values
+			  // i = Math.round(this._cube_values[ii]);
+			  // no need to round up as this has been done in the constructor
+			  i = this._cube_values[ii];
 
-  				    if( Math.min(x,y,z) < bounding_min ){
-  				      bounding_min = Math.min(x,y,z);
-  				    }
-  				    if( Math.max(x,y,z) > bounding_max ){
-  				      bounding_max = Math.max(x,y,z);
-  				    }
+			  if( i !== 0 ){
 
-  				  } else {
-  				    i = 0;
-  				  }
-  				  // unknown fs color ID
-            if(i > this._lut.mapMaxColorID || i < 0){
-              i = 0;
-            }
-            // risky as the target type is int32 signed but uint16 is desired
-            // however value range is from 0 to 1 so should be fine?
-            this._map_data[ ii ] = i; //float_to_int32(i / max_colID);
-  				  ii += 1;
-  				}
-  			}
+			    tmp = this._lut_map[i];
+
+			    if( tmp ){
+			      this._map_color[ 4 * ii ] = tmp.R;
+				    this._map_color[ 4 * ii + 1 ] = tmp.G;
+				    this._map_color[ 4 * ii + 2 ] = tmp.B;
+
+				    if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
+				      this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+
+				      this._map_data[ ii ] = i;
+				      continue;
+
+				    } else {
+
+				      // voxel is invisible, no need to render! hence data is 0
+				      this._map_color[ 4 * ii + 3 ] = 0;
+				    }
+
+			    }
+
+			    this._map_data[ ii ] = 0;
+
+			  }
+
+
       }
 
     }
@@ -64793,63 +64844,72 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
             'zLength' : cube_half_size[2]*2,
           },
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
-          fslut = lut.map,
+          lut_map = lut.map,
           max_colID = lut.mapMaxColorID;
-          // fslut = canvas.global_data('__global_data__VolumeColorLUT'),
-          // max_colID = canvas.global_data('__global_data__VolumeColorLUTMaxColorID');
 
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
-      this._cube_values = cube_values;
-      this._lut = lut;
-      this._cube_dim = cube_dim;
       const data = new Float32Array( cube_dim[0] * cube_dim[1] * cube_dim[2] );
       const color = new Uint8Array( cube_dim[0] * cube_dim[1] * cube_dim[2] * 4 );
 
+      this._cube_values = cube_values;
+      this._lut = lut;
+      this._lut_map = lut_map;
+      this._cube_dim = cube_dim;
       this._map_data = data;
       this._map_color = color;
-
-      // Debug use
+      this._map_alpha = lut.mapAlpha;
+      this._color_ids = [];
+      this._color_ids_length = 0;
+      this._value_index_skip = 0;
 
       let bounding_min = Math.min(cube_dim[0], cube_dim[1], cube_dim[2]) / 2,
           bounding_max = bounding_min;
+
+      // Change cube_values so all elements are integers (non-negative)
+      cube_values.forEach( (el, ii) => {
+        if( el > max_colID || el < 0 ){
+          cube_values[ ii ] = 0;
+          return;
+        }
+        if ( !Number.isInteger( el ) ) {
+          cube_values[ ii ] = Math.round( el );
+        }
+      });
+
       let i = 0, ii = 0, tmp;
       for ( let z = 0; z < cube_dim[0]; z ++ ) {
 				for ( let y = 0; y < cube_dim[1]; y ++ ) {
 					for ( let x = 0; x < cube_dim[2]; x ++ ) {
-					  i = parseInt(cube_values[ii]);
+					  i = cube_values[ii];
 
-					  tmp = fslut[i];
-					  if(tmp && (i !== 0)){
-					    color[ 4 * ii ] = tmp.R;
-					    color[ 4 * ii + 1 ] = tmp.G;
-					    color[ 4 * ii + 2 ] = tmp.B;
-					    color[ 4 * ii + 3 ] = 1; //tmp.A === undefined ? 1 : tmp.A;
+					  if( i !== 0 ){
+					    tmp = lut_map[i];
+					    if( tmp ) {
+					      color[ 4 * ii ] = tmp.R;
+  					    color[ 4 * ii + 1 ] = tmp.G;
+  					    color[ 4 * ii + 2 ] = tmp.B;
+  					    color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
 
-					    if( Math.min(x,y,z) < bounding_min ){
-					      bounding_min = Math.min(x,y,z);
+  					    if( Math.min(x,y,z) < bounding_min ){
+  					      bounding_min = Math.min(x,y,z);
+  					    }
+  					    if( Math.max(x,y,z) > bounding_max ){
+  					      bounding_max = Math.max(x,y,z);
+  					    }
+  					    data[ ii ] = i;
 					    }
-					    if( Math.max(x,y,z) > bounding_max ){
-					      bounding_max = Math.max(x,y,z);
-					    }
-
-					  } else {
-					    i = 0;
 					  }
-					  // unknown fs color ID
-            if(i > max_colID || i < 0){
-              i = 0;
-            }
-            // risky as the target type is int32 signed but uint16 is desired
-            // however value range is from 0 to 1 so should be fine?
-            data[ ii ] = i; //float_to_int32(i / max_colID);
-					  ii += 1;
+					  /**
+					   * No need to assign data if keys are invalid
+					   * data are initialized with 0 according to js specifications
+					   */
+					  ii++;
 					}
 				}
       }
-      //this._reset_palette();
 
       // 3D texture
       let texture = new threeplugins_THREE.DataTexture3D(
@@ -64878,8 +64938,8 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       color_texture.type = threeplugins_THREE.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
-      color_texture.needsUpdate = true;
       this._color_texture = texture;
+      this._color_texture.needsUpdate = true;
 
 
     	// Material
@@ -70161,8 +70221,10 @@ class src_BrainCanvas{
         this.canvas.add_object( g );
       }else{
         try {
-          this.canvas.add_object(g);
-        } catch (e) {}
+          this.canvas.add_object( g );
+        } catch (e) {
+          console.warn(e);
+        }
       }
     });
 

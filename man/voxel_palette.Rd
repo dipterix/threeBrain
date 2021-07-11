@@ -30,8 +30,8 @@ create_voxel_palette_continuous(
 )
 }
 \arguments{
-\item{key}{integer vector corresponding to voxel values. If the actual
-values are not integer, please also assign \code{value}}
+\item{key}{non-negative integer vector corresponding to voxel values;
+its length must exceed 1; see 'Details'}
 
 \item{color}{characters, corresponding to color strings for each key}
 
@@ -42,7 +42,8 @@ values are not integer, please also assign \code{value}}
 \item{con, write_to}{a file path to write results to. The file path can be
 passed as \code{voxel_palette} into \code{\link{threejs_brain}}.}
 
-\item{...}{ignored}
+\item{...}{used by continuous palette, passed to
+\code{\link[grDevices]{colorRampPalette}}. Ignored by others}
 
 \item{value}{actual value for each key, continuous palettes only}
 }
@@ -51,6 +52,17 @@ A list of palette information
 }
 \description{
 Creates color palettes for volume data (\code{\link{DataCubeGeom2}})
+}
+\details{
+Internal 'JavaScript' shader implementation uses integer \code{key} to
+connect data and color palettes. The keys must be non-negative. These keys
+should coincide with data values used by \code{\link{DataCubeGeom2}}.
+Each key stands for a value or label indicated by \code{value} or
+\code{label}.
+
+Zero key is a special color key. If a \code{\link{DataCubeGeom2}} voxel
+value is 0, then this voxel will be hidden. This is hard-coded into
+material shader.
 }
 \examples{
 

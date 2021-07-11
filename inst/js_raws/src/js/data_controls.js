@@ -1162,15 +1162,25 @@ class THREEBRAIN_PRESETS{
       }
     }, 'gui_atlas_type');
 
-    const atlas_alpha = this.gui.add_item('Voxel Opacity', 1.0, { folder_name : folder_name })
+    // If color map supports alpha, add override option
+    const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
       .min(0).max(1).step(0.1)
       .onChange((v) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
-        mesh.material.uniforms.alpha.value = v;
+        const sub = this.canvas.state_data.get("target_subject"),
+              // mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`],
+              inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+              opa = v < 0.001 ? -1 : v;
+        // mesh.material.uniforms.alpha.value = opa;
+        if( inst && inst.isDataCube2 ){
+          inst.object.material.uniforms.alpha.value = opa;
+          if( opa < 0 ){
+            inst._set_palette();
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+          }
+        }
         this._update_canvas();
-        this.fire_change({ 'atlas_alpha' : v });
+        this.fire_change({ 'atlas_alpha' : opa });
       });
 
     // this.gui.hide_item("Voxel Opacity")
@@ -1191,28 +1201,15 @@ class THREEBRAIN_PRESETS{
 
             let tmp;
             const candidates = cmap_array.filter((e) => {
-              tmp = parseFloat(e.Label[0]);
+              tmp = parseFloat(e.Label);
               if(isNaN(tmp)){ return(false); }
-              if( tmp >= l & tmp <= u ){ return(true); }
+              if( tmp >= l && tmp <= u ){ return(true); }
               return(false);
             }).map( (e) => {
-              return(e.ColorID[0]);
+              return(e.ColorID);
             });
 
-            // check if 0 is in candidates, if so, show all
-            if(candidates.length === 0 ){
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                inst._map_color[idx * 4 + 3] = 0;
-              }
-            } else {
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                if(candidates.indexOf( inst._map_data[idx] ) != -1){
-                  inst._map_color[idx * 4 + 3] = 1;
-                } else {
-                  inst._map_color[idx * 4 + 3] = 0;
-                }
-              }
-            }
+            inst._set_palette( candidates );
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
@@ -1254,6 +1251,8 @@ class THREEBRAIN_PRESETS{
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});
 
+            inst._set_palette( candidates );
+            /*
             // check if 0 is in candidates, if so, show all
             if(candidates.length === 0 || candidates.includes(0)){
               for( let idx = 0; idx < inst._map_data.length; idx++ ){
@@ -1271,7 +1270,7 @@ class THREEBRAIN_PRESETS{
                   inst._map_color[idx * 4 + 3] = 0;
                 }
               }
-            }
+            }*/
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
