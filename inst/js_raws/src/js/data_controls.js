@@ -1164,7 +1164,7 @@ class THREEBRAIN_PRESETS{
 
     // If color map supports alpha, add override option
     const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
-      .min(0).max(1).step(0.1)
+      .min(0).max(1).step(0.01)
       .onChange((v) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject"),
