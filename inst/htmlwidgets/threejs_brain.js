@@ -64,8 +64,29 @@ HTMLWidgets.widget({
     return {
       // "find", "renderError", "clearError", "sizing", "name", "type", "initialize", "renderValue", "resize"
 
-      renderValue: (x) => {
-        handlers.render_value( x );
+      renderValue: (v) => {
+
+        // read
+        const xobj = new XMLHttpRequest();
+        // path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
+        // lib/threebrain_data-0/config.json
+        let path;
+
+        path = v.data_directory + v.config;
+
+        console.log( 'Reading configuration file from: ' + path );
+
+        xobj.overrideMimeType("application/json");
+
+        xobj.onreadystatechange = () => {
+          if (xobj.readyState == 4 && xobj.status == "200") {
+            let x = JSON.parse(xobj.responseText);
+            handlers.render_value( x );
+          }
+        };
+        xobj.open('GET', path, true);
+        xobj.send(null);
+
       },
 
       resize: (width, height) => {

@@ -163,6 +163,11 @@ to_json <- function(x, dataframe = 'rows', matrix = 'rowmajor', null = 'null', n
   s
 }
 
+to_json2 <- function(...){
+  toJSON <- asNamespace('htmlwidgets')$toJSON
+  toJSON(...)
+}
+
 from_json <- function(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVector,
                       simplifyMatrix = simplifyVector, flatten = FALSE, ..., from_file = NULL){
   if(length(from_file) == 1){
@@ -719,4 +724,8 @@ load_first_file <- function(files, fun, ..., if_not_found = NULL){
 
   fun(f, ...)
 
+}
+
+rand_string <- function(length = 50){
+  paste(sample(c(letters, LETTERS, 0:9), length, replace = TRUE), collapse = '')
 }

@@ -30,7 +30,7 @@ threejs_brain(
   value_ranges = NULL,
   value_alias = NULL,
   show_inactive_electrodes = TRUE,
-  voxel_palette = system.file("palettes", "datacube2", "FreeSurferColorLUT.json",
+  voxel_colormap = system.file("palettes", "datacube2", "FreeSurferColorLUT.json",
     package = "threeBrain"),
   widget_id = "threebrain_data",
   tmp_dirname = NULL,
@@ -90,8 +90,8 @@ By default width=`100\%`, and height varies.}
 
 \item{show_inactive_electrodes}{logical, whether to show electrodes with no values}
 
-\item{widget_id}{character, internally used as unique identifiers for widgets.
-Only use it when you have multiple widgets in one website}
+\item{widget_id}{character, internally used as unique identifiers for widgets;
+only use it when you have multiple widgets in one website}
 
 \item{tmp_dirname}{character path, internally used, where to store temporary files}
 

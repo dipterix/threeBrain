@@ -30,8 +30,8 @@
 #' @param controllers list to override the settings, for example \code{proxy$get_controllers()}
 #' @param browser_external logical, use system default browser (default) or builtin one.
 #' @param global_data,global_files internally use, mainly to store orientation matrices and files.
-#' @param widget_id character, internally used as unique identifiers for widgets.
-#'   Only use it when you have multiple widgets in one website
+#' @param widget_id character, internally used as unique identifiers for widgets;
+#' only use it when you have multiple widgets in one website
 #' @export
 threejs_brain <- function(
   ..., .list = list(), width = NULL, height = NULL, background = "#FFFFFF",
@@ -52,7 +52,7 @@ threejs_brain <- function(
   value_ranges = NULL, value_alias = NULL,
   show_inactive_electrodes = TRUE,
   # color palettes for volume rendering (datacube2)
-  voxel_palette = system.file(
+  voxel_colormap = system.file(
     'palettes', 'datacube2', 'FreeSurferColorLUT.json', package = 'threeBrain'),
 
   # Builds, additional data, etc (misc)
@@ -88,9 +88,9 @@ threejs_brain <- function(
   global_container$group$set_group_data(
     name = '__global_data__.VolumeColorLUT',
     value = list(
-      'path' = voxel_palette,
-      'absolute_path' = normalizePath(voxel_palette, mustWork = FALSE),
-      'file_name' = filename(voxel_palette),
+      'path' = voxel_colormap,
+      'absolute_path' = normalizePath(voxel_colormap, mustWork = FALSE),
+      'file_name' = filename(voxel_colormap),
       'is_new_cache' = FALSE,
       'is_cache' = TRUE
     ),
@@ -177,7 +177,7 @@ threejs_brain <- function(
 
   # Check cached json files
   if(length(tmp_dirname) != 1){
-    tmp_dirname <- paste(sample(c(letters, LETTERS, 0:9), 10), collapse = '')
+    tmp_dirname <- rand_string(10)
   }
   tmp_dir <- file.path(tempdir(), 'threebrain_cache', tmp_dirname)
   dir_create(tmp_dir)
@@ -250,8 +250,17 @@ threejs_brain <- function(
 
   attr(x, 'TOJSON_ARGS') <- list(null = 'null', na = 'null')
 
+  # Save x to $tmp_dir/config.json
+  config_fname <- sprintf("config_%s.json", digest::digest(x))
+  config_path <- file.path(tmp_dir, config_fname)
+
+  writeLines(to_json2(x), config_path)
+
   htmlwidgets::createWidget(
-    name = 'threejs_brain', x = x, width = width, height = height, package = 'threeBrain', sizingPolicy = htmlwidgets::sizingPolicy(
+    name = 'threejs_brain', x = list(
+      data_directory = settings$cache_folder,
+      config = config_fname
+    ), width = width, height = height, package = 'threeBrain', sizingPolicy = htmlwidgets::sizingPolicy(
       defaultWidth = '100%',
       browser.external = browser_external,
       defaultHeight = '100vh',
