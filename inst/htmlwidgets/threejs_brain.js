@@ -80,8 +80,10 @@ HTMLWidgets.widget({
 
         xobj.onreadystatechange = () => {
           if (xobj.readyState == 4 && xobj.status == "200") {
-            let x = JSON.parse(xobj.responseText);
-            handlers.render_value( x );
+            new Promise( () => {
+              let x = JSON.parse(xobj.responseText);
+              handlers.render_value( x );
+            });
           }
         };
         xobj.open('GET', path, true);

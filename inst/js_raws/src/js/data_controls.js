@@ -1213,7 +1213,7 @@ class THREEBRAIN_PRESETS{
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
-          })
+          });
 
         }
       }
@@ -1274,7 +1274,7 @@ class THREEBRAIN_PRESETS{
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
-          })
+          });
 
         }
 
@@ -1304,7 +1304,7 @@ class THREEBRAIN_PRESETS{
             }
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
-          })
+          });
 
         }
 

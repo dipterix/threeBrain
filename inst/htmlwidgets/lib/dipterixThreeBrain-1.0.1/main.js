@@ -62515,7 +62515,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
-          })
+          });
 
         }
       }
@@ -62576,7 +62576,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
-          })
+          });
 
         }
 
@@ -62606,7 +62606,7 @@ class data_controls_THREEBRAIN_PRESETS{
             }
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
-          })
+          });
 
         }
 
@@ -64772,6 +64772,11 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       }
     }
 
+    if( this._normals_texture ){
+      this._normals_texture.needsUpdate = true;
+    }
+
+
   }
 
   _set_palette( color_ids, skip, compute_boundingbox = false ){
@@ -64866,8 +64871,10 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
         this.object.material.uniformsNeedUpdate = true
       }
 
-      this._color_texture.needsUpdate = true;
-      // this._data_texture.needsUpdate = true;
+      if( this._color_texture ){
+        this._color_texture.needsUpdate = true;
+      }
+      // this._normals_texture.needsUpdate = true;
 
 
     }

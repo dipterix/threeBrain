@@ -54,6 +54,11 @@ class DataCube2 extends AbstractThreeBrainObject {
       }
     }
 
+    if( this._normals_texture ){
+      this._normals_texture.needsUpdate = true;
+    }
+
+
   }
 
   _set_palette( color_ids, skip, compute_boundingbox = false ){
@@ -148,8 +153,10 @@ class DataCube2 extends AbstractThreeBrainObject {
         this.object.material.uniformsNeedUpdate = true
       }
 
-      this._color_texture.needsUpdate = true;
-      // this._data_texture.needsUpdate = true;
+      if( this._color_texture ){
+        this._color_texture.needsUpdate = true;
+      }
+      // this._normals_texture.needsUpdate = true;
 
 
     }
