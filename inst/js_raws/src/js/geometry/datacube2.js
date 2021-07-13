@@ -45,9 +45,9 @@ class DataCube2 extends AbstractThreeBrainObject {
             nml.normalize()
 
 
-            this._map_normals[ ii * 3 ] = (nml.x / 2.0 + 1.0) * 127.5;
-            this._map_normals[ ii * 3 + 1 ] = (nml.y / 2.0 + 1.0) * 127.5;
-            this._map_normals[ ii * 3 + 2 ] = (nml.z / 2.0 + 1.0) * 127.5;
+            this._map_normals[ ii * 3 ] = (nml.x / 2.0 + 1.0) * 127;
+            this._map_normals[ ii * 3 + 1 ] = (nml.y / 2.0 + 1.0) * 127;
+            this._map_normals[ ii * 3 + 2 ] = (nml.z / 2.0 + 1.0) * 127;
 
           }
         }

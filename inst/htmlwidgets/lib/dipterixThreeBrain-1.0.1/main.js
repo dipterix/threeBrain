@@ -56974,6 +56974,7 @@ in mat4 pmv;
 out vec4 color;
 uniform sampler3D map;
 uniform sampler3D cmap;
+uniform sampler3D nmap;
 uniform float alpha;
 uniform float steps;
 uniform vec3 scale_inv;
@@ -57003,17 +57004,18 @@ vec4 sample2( vec3 p ) {
   // return normalize( texture( cmap, p + 0.5 ) ).rgba;
 }
 vec3 getNormal( vec3 p ) {
-  float d = sample1( p );
-  vec3 re = vec3( 0.0 );
-  for( float xidx = -1.0; xidx <= 1.0; xidx += 1.0 ){
-    for( float yidx = -1.0; yidx <= 1.0; yidx += 1.0 ){
-      for( float zidx = -1.0; zidx <= 1.0; zidx += 1.0 ){
-        if( sample1( p + scale_inv * vec3( xidx, yidx, zidx) ) == d ){
-          re -= scale_inv * vec3( xidx, yidx, zidx);
-        }
-      }
-    }
-  }
+  //vec3 re = vec3( 0.0 );
+  //float d = sample1( p );
+  //for( float xidx = -1.0; xidx <= 1.0; xidx += 1.0 ){
+  //  for( float yidx = -1.0; yidx <= 1.0; yidx += 1.0 ){
+  //    for( float zidx = -1.0; zidx <= 1.0; zidx += 1.0 ){
+  //      if( sample1( p + scale_inv * vec3( xidx, yidx, zidx) ) == d ){
+  //        re -= scale_inv * vec3( xidx, yidx, zidx);
+  //      }
+  //    }
+  //  }
+  //}
+  vec3 re = vec3( texture( nmap, p + 0.5 ).rgb *  255.0 - 127.0 );
   return normalize( re );
 }
 
@@ -64781,9 +64783,9 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
             nml.normalize()
 
 
-            this._map_normals[ ii * 3 ] = (nml.x / 2.0 + 1.0) * 127.5;
-            this._map_normals[ ii * 3 + 1 ] = (nml.y / 2.0 + 1.0) * 127.5;
-            this._map_normals[ ii * 3 + 2 ] = (nml.z / 2.0 + 1.0) * 127.5;
+            this._map_normals[ ii * 3 ] = (nml.x / 2.0 + 1.0) * 127;
+            this._map_normals[ ii * 3 + 1 ] = (nml.y / 2.0 + 1.0) * 127;
+            this._map_normals[ ii * 3 + 2 ] = (nml.z / 2.0 + 1.0) * 127;
 
           }
         }
