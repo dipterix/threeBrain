@@ -56998,7 +56998,8 @@ float sample1( vec3 p ) {
   return texture( map, p + 0.5 ).r;
 }
 vec4 sample2( vec3 p ) {
-  return normalize( texture( cmap, p + 0.5 ) ).rgba;
+  return texture( cmap, p + 0.5 );
+  // return normalize( texture( cmap, p + 0.5 ) ).rgba;
 }
 vec3 getNormal( vec3 p ) {
   vec3 inv = 1.0 / scale;
@@ -57029,88 +57030,59 @@ void main(){
   int nn = 0;
   int valid_voxel = 0;
   float mix_factor = 1.0;
-  float alpha2 = alpha;
   vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
   vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
 
-  if ( alpha < 0.0 ) {
-    for ( float t = bounds.x; t < bounds.y; t += delta ) {
-      float d = sample1( p );
-      if ( d > 0.0 ) {
-        fcolor = sample2( p );
-        if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb && fcolor.rgb != last_color.rgb ){
+  for ( float t = bounds.x; t < bounds.y; t += delta ) {
+    float d = sample1( p );
+    if ( d > 0.0 ) {
+      fcolor = sample2( p );
+
+      // Hit voxel
+      if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
+
+        if( alpha >= 0.0 ){
+          fcolor.a = alpha;
+        }
+
+
+        if( fcolor.rgb != last_color.rgb ){
+          // We are right on the surface
+
+          last_color = fcolor;
+
+          // reflect light
+          fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
+
           if( nn == 0 ){
             gl_FragDepth = getDepth( p );
-            color.a = fcolor.a;
-            color.rgb = fcolor.rgb * max( dot(-rayDir, getNormal( p )) , 0.5 );
+            color = fcolor;
+            color.a = max( color.a, 0.2 );
+          } else {
+            // blend
+            color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
+            color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
+            // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
           }
-          if( nn > 0 ){
-            color = mix(color, fcolor, mix_factor);
-          }
+
           nn++;
-          mix_factor *= 1.0 - color.a;
-          last_color.rgb = fcolor.rgb;
-          if( nn >= 4 || color.a >= 0.99999 ){
-            break;
-          }
+
         }
-      }
-      p += rayDir * delta;
-    }
-  } else {
-    for ( float t = bounds.x; t < bounds.y; t += delta ) {
-      float d = sample1( p );
-      if ( d > 0.0 ) {
-        fcolor = sample2( p );
 
-        // Hit voxel
-        if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
+        valid_voxel = 1;
 
-          fcolor.a = alpha2;
-
-
-          if( fcolor.rgb != last_color.rgb ){
-            // We are right on the surface
-
-            last_color = fcolor;
-
-            // reflect light
-            fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
-
-            if( nn == 0 ){
-              gl_FragDepth = getDepth( p );
-              color = fcolor;
-              color.a = max( color.a, 0.2 );
-            } else {
-              // blend
-              color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
-              color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
-              // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
-            }
-
-            nn++;
-
-            //if( nn >= 4 || alpha >= 0.99999 ){
-            //  break;
-            //}
-          }
-
-          valid_voxel = 1;
-
-          if( nn >= 4 || color.a > 0.95 ){
-            break;
-          }
-
-        } else if ( valid_voxel > 0 ) {
-
-          // Leaving the structure reset states
-          last_color.rgb = zero_rgb;
-          valid_voxel = 0;
+        if( nn >= 4 || color.a > 0.95 ){
+          break;
         }
-      }
-      p += rayDir * delta;
-    }
 
+      } else if ( valid_voxel > 0 ) {
+
+        // Leaving the structure reset states
+        last_color.rgb = zero_rgb;
+        valid_voxel = 0;
+      }
+    }
+    p += rayDir * delta;
   }
   if ( nn == 0 || color.a == 0.0 ) discard;
 
@@ -64949,7 +64921,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       color_texture.type = threeplugins_THREE.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
-      this._color_texture = texture;
+      this._color_texture = color_texture;
       this._color_texture.needsUpdate = true;
 
 
@@ -64961,7 +64933,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
     	uniforms.map.value = texture;
     	uniforms.cmap.value = color_texture;
 
-    	uniforms.alpha.value = 1.0;
+    	uniforms.alpha.value = -1.0;
     	uniforms.scale.value.set(volume.xLength, volume.yLength, volume.zLength);
 
     	let bounding = Math.max(

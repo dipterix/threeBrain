@@ -185,7 +185,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       color_texture.type = THREE.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
-      this._color_texture = texture;
+      this._color_texture = color_texture;
       this._color_texture.needsUpdate = true;
 
 
@@ -197,7 +197,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     	uniforms.map.value = texture;
     	uniforms.cmap.value = color_texture;
 
-    	uniforms.alpha.value = 1.0;
+    	uniforms.alpha.value = -1.0;
     	uniforms.scale.value.set(volume.xLength, volume.yLength, volume.zLength);
 
     	let bounding = Math.max(
