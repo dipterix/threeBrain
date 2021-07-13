@@ -135,7 +135,7 @@ void main(){
 
       valid_voxel = 1;
 
-      if( nn >= 4 || color.a > 0.95 ){
+      if( nn >= 10 || color.a > 0.95 ){
         break;
       }
 
