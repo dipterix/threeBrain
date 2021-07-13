@@ -64735,9 +64735,9 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
           xdim = this._cube_dim[2],
           pad = 1;
 
-    for ( z = pad; z < zdim - pad; z += pad ) {
-      for ( y = pad; y < ydim - pad; y += pad ) {
-        for ( x = pad; x < xdim - pad; x += pad ) {
+    for ( z = pad; z < zdim - pad; z += 1 ) {
+      for ( y = pad; y < ydim - pad; y += 1 ) {
+        for ( x = pad; x < xdim - pad; x += 1 ) {
 
           ii = x + xdim * ( y + ydim * z );
 
@@ -64747,12 +64747,12 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
             nml.set( 0, 0, 0 );
 
-            for( a = -pad; a <= pad; a+=pad ){
-              for( b = -pad; b <= pad; b+=pad ){
-                for( c = -pad; c <= pad; c+=pad ){
+            for( a = -pad; a <= pad; a+=1 ){
+              for( b = -pad; b <= pad; b+=1 ){
+                for( c = -pad; c <= pad; c+=1 ){
 
                   if( this._cube_values[ jj + a + (b + c * ydim) * xdim ] != i ) {
-                    u.set( a, b, c );
+                    u.set( a, b, c ).normalize();
                     nml.add( u );
                   }
 
@@ -65008,7 +65008,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
         normals, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
-      normals_texture.minFilter = threeplugins_THREE.NearestFilter;
+      normals_texture.minFilter = threeplugins_THREE.LinearFilter;
       normals_texture.magFilter = threeplugins_THREE.NearestFilter;
       normals_texture.format = threeplugins_THREE.RGBFormat;
       normals_texture.type = threeplugins_THREE.UnsignedByteType;
