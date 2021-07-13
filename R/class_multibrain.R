@@ -1,3 +1,37 @@
+#' @title Default Directory to Store Template Brain
+#' @return A directory path where template brain is stored at; see also
+#' \code{\link{download_N27}}
+#' @details When \code{threeBrain.template_dir} is not set or invalid, the
+#' function checks 'RAVE' (R Analysis and Visualization for 'iEEG',
+#' \url{https://openwetware.org/wiki/RAVE}) folder at home directory. If
+#' this folder is missing, then returns results from
+#' \code{R_user_dir('threeBrain', 'data')}. To override the default behavior,
+#' use \code{options(threeBrain.template_dir=...)}.
+#' @examples
+#'
+#' default_template_directory()
+#'
+#' @export
+default_template_directory <- function(){
+
+  re <- unname(getOption('threeBrain.template_dir', NULL), force = TRUE)
+
+  if(!isTRUE(dir.exists(re))){
+    # If rave data dir exists, use rave directory
+    if(dir.exists('~/rave_data/others/three_brain')){
+      re <- '~/rave_data/others/three_brain'
+    } else {
+      re <- R_user_dir('threeBrain', 'data')
+      re <- file.path(re, 'templates')
+      if(!dir.exists(re)){
+        dir_create(re)
+      }
+    }
+  }
+
+  normalizePath(re, mustWork = FALSE)
+
+}
 
 #' @title Create Multi-subject Template
 #' @author Zhengjia Wang
@@ -10,7 +44,7 @@ merge_brain <- function(
   ..., .list = NULL,
   template_surface_types = NULL,
   template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
-  template_dir = unname(getOption('threeBrain.template_dir', '~/rave_data/others/three_brain'))
+  template_dir = default_template_directory()
 ){
   MultiBrain2$new( ... , .list = .list, template_subject = template_subject,
                    template_dir = template_dir, template_surface_types = template_surface_types)
@@ -32,7 +66,7 @@ MultiBrain2 <- R6::R6Class(
       ..., .list = NULL,
       template_surface_types = NULL,
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
-      template_dir = unname(getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')),
+      template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)) ){
 
 
@@ -59,7 +93,7 @@ MultiBrain2 <- R6::R6Class(
     alter_template = function(
       surface_types = NULL,
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
-      template_dir = unname(getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')),
+      template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE))
     ){
       # test

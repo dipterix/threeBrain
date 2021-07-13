@@ -66,10 +66,14 @@ threejs_brain(s1, s2)
 \dontrun{
 
 # download N27 brain
-# Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
+# Make sure you have N27 brain downloaded to `default_template_directory()`
 # download_N27()
 
-dat = threeBrain::read_fs_asc('~/rave_data/others/three_brain/N27/surf/lh.pial.asc')
+template_dir <- default_template_directory()
+
+dat = threeBrain::read_fs_asc(
+  file.path(template_dir, 'N27/surf/lh.pial.asc')
+)
 vertex = dat$vertices[,1:3]
 face = dat$faces[,1:3]
 

@@ -12,7 +12,7 @@
 download_template_subject(
   subject_code = "N27",
   url = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip",
-  template_dir = getOption("threeBrain.template_dir", "~/rave_data/others/three_brain")
+  template_dir = default_template_directory()
 )
 
 download_N27(make_default = FALSE, ...)
@@ -20,7 +20,7 @@ download_N27(make_default = FALSE, ...)
 set_default_template(
   subject_code,
   view = TRUE,
-  template_dir = getOption("threeBrain.template_dir", "~/rave_data/others/three_brain")
+  template_dir = default_template_directory()
 )
 
 threebrain_finalize_installation(

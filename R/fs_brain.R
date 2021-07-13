@@ -52,11 +52,12 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Please run `download_N27()` if `N27` is not at '~/rave_data/others/three_brain/'
+#' # Please run `download_N27()` if `N27` is not at `default_template_directory()`
 #'
 #' # Import from `FreeSurfer` subject folder
 #' brain = threeBrain::freesurfer_brain(
-#'   fs_subject_folder = '~/rave_data/others/three_brain/N27/', subject_name = 'N27',
+#'   fs_subject_folder = file.path(default_template_directory(), 'N27'),
+#'   subject_name = 'N27',
 #'   additional_surfaces = c('white', 'smoothwm')
 #' )
 #'

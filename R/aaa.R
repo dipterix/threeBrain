@@ -91,7 +91,7 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
 
     cat2('Wrapping up installation...', level = 'INFO')
 
-    template_dir <- getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
+    template_dir <- default_template_directory()
     import_from_freesurfer(fs_path = file.path(template_dir, 'N27'), subject_name = 'N27')
 
 
