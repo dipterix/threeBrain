@@ -48,7 +48,11 @@ freeserfer_palette <- function(write_to = 'inst/palettes/datacube2/FreeSurferCol
   s <- s[!stringr::str_detect(s, '^[ ]{0,}#')]
   s <- stringr::str_trim(s)
   s <- s[s!='']
-  tbl <- data.table::fread(paste(s, collapse = '\n'))
+  s <- stringr::str_replace_all(s, "[ \t]+", "\t")
+  f <- tempfile()
+  writeLines(s, f)
+  tbl <- utils::read.table(f, header = FALSE, sep = '\t')
+  # tbl <- data.table::fread(paste(s, collapse = '\n'))
   names(tbl) <- c('ColorID', 'Label', 'R', 'G', 'B', 'A')
   col <- rgb(tbl$R, tbl$G, tbl$B, maxColorValue = 255)
   create_voxel_palette_discrete(
