@@ -106,7 +106,7 @@ class DataCube2 extends AbstractThreeBrainObject {
                 if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
                   this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
 
-                  this._map_data[ ii ] = i;
+                  // this._map_data[ ii ] = i;
 
                   if( compute_boundingbox ){
                     // set bounding box
@@ -128,7 +128,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 
             }
             // voxel is invisible, no need to render! hence data is 0
-            this._map_data[ ii ] = 0;
+            // this._map_data[ ii ] = 0;
             this._map_color[ 4 * ii + 3 ] = 0;
             ii++;
             jj++;
@@ -186,7 +186,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._voxel_length = cube_dim[0] * cube_dim[1] * cube_dim[2];
-      const data = new Float32Array( this._voxel_length );
+      // const data = new Float32Array( this._voxel_length );
       const color = new Uint8Array( this._voxel_length * 4 );
       const normals = new Uint8Array( this._voxel_length * 3 );
 
@@ -194,7 +194,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._lut = lut;
       this._lut_map = lut_map;
       this._cube_dim = cube_dim;
-      this._map_data = data;
+      // this._map_data = data;
       this._map_color = color;
       this._map_normals = normals;
       this._map_alpha = lut.mapAlpha;
@@ -236,7 +236,7 @@ class DataCube2 extends AbstractThreeBrainObject {
                 if( Math.max(x,y,z) > bounding_max ){
                   bounding_max = Math.max(x,y,z);
                 }
-                this._map_data[ ii ] = i;
+                // this._map_data[ ii ] = i;
               }
             }
             /**
@@ -251,17 +251,17 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._compute_normals();
 
       // 3D texture
-      let texture = new THREE.DataTexture3D(
+      /*let data_texture = new THREE.DataTexture3D(
         this._map_data, cube_dim[0], cube_dim[1], cube_dim[2]
       );
-      texture.minFilter = THREE.NearestFilter;
-      texture.magFilter = THREE.NearestFilter;
-      texture.format = THREE.RedFormat;
-      texture.type = THREE.FloatType;
-      texture.unpackAlignment = 1;
-      texture.needsUpdate = true;
-      this._data_texture = texture;
-      this._data_texture.needsUpdate = true;
+      data_texture.minFilter = THREE.NearestFilter;
+      data_texture.magFilter = THREE.NearestFilter;
+      data_texture.format = THREE.RedFormat;
+      data_texture.type = THREE.FloatType;
+      data_texture.unpackAlignment = 1;
+      data_texture.needsUpdate = true;
+      this._data_texture = data_texture;
+      this._data_texture.needsUpdate = true;*/
 
 
       // Color texture - used to render colors
@@ -297,7 +297,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 
 
       let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-      uniforms.map.value = texture;
+      // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
       uniforms.nmap.value = normals_texture;
 
@@ -356,7 +356,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     if( this._canvas.has_webgl2 && this._mesh ){
       this._mesh.material.dispose();
       this._mesh.geometry.dispose();
-      this._data_texture.dispose();
+      // this._data_texture.dispose();
       this._color_texture.dispose();
       this._normals_texture.dispose();
 

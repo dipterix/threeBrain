@@ -56922,7 +56922,6 @@ const register_volumeShader1 = function(THREE){
 
   THREE.VolumeRenderShader1 = {
     uniforms: {
-      map: { value: null },
       cmap: { value: null },
       nmap: { value: null },
       mask: { value: null },
@@ -56972,7 +56971,6 @@ in vec3 vOrigin;
 in vec3 vDirection;
 in mat4 pmv;
 out vec4 color;
-uniform sampler3D map;
 uniform sampler3D cmap;
 uniform sampler3D nmap;
 uniform float alpha;
@@ -56996,25 +56994,10 @@ float getDepth( vec3 p ){
   vec4 frag2 = pmv * vec4( p, scale_inv );
   return (frag2.z / frag2.w / 2.0 + 0.5);
 }
-float sample1( vec3 p ) {
-  return texture( map, p + 0.5 ).r;
-}
 vec4 sample2( vec3 p ) {
   return texture( cmap, p + 0.5 );
-  // return normalize( texture( cmap, p + 0.5 ) ).rgba;
 }
 vec3 getNormal( vec3 p ) {
-  //vec3 re = vec3( 0.0 );
-  //float d = sample1( p );
-  //for( float xidx = -1.0; xidx <= 1.0; xidx += 1.0 ){
-  //  for( float yidx = -1.0; yidx <= 1.0; yidx += 1.0 ){
-  //    for( float zidx = -1.0; zidx <= 1.0; zidx += 1.0 ){
-  //      if( sample1( p + scale_inv * vec3( xidx, yidx, zidx) ) == d ){
-  //        re -= scale_inv * vec3( xidx, yidx, zidx);
-  //      }
-  //    }
-  //  }
-  //}
   vec3 re = vec3( texture( nmap, p + 0.5 ).rgb *  255.0 - 127.0 );
   return normalize( re );
 }
@@ -57036,53 +57019,50 @@ void main(){
   vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
 
   for ( float t = bounds.x; t < bounds.y; t += delta ) {
-    float d = sample1( p );
-    if ( d > 0.0 ) {
-      fcolor = sample2( p );
+    fcolor = sample2( p );
 
-      // Hit voxel
-      if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
+    // Hit voxel
+    if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
 
-        if( alpha >= 0.0 ){
-          fcolor.a = alpha;
-        }
-
-
-        if( fcolor.rgb != last_color.rgb ){
-          // We are right on the surface
-
-          last_color = fcolor;
-
-          // reflect light
-          fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
-
-          if( nn == 0 ){
-            gl_FragDepth = getDepth( p );
-            color = fcolor;
-            color.a = max( color.a, 0.2 );
-          } else {
-            // blend
-            color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
-            color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
-            // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
-          }
-
-          nn++;
-
-        }
-
-        valid_voxel = 1;
-
-        if( nn >= 4 || color.a > 0.95 ){
-          break;
-        }
-
-      } else if ( valid_voxel > 0 ) {
-
-        // Leaving the structure reset states
-        last_color.rgb = zero_rgb;
-        valid_voxel = 0;
+      if( alpha >= 0.0 ){
+        fcolor.a = alpha;
       }
+
+
+      if( fcolor.rgb != last_color.rgb ){
+        // We are right on the surface
+
+        last_color = fcolor;
+
+        // reflect light
+        fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
+
+        if( nn == 0 ){
+          gl_FragDepth = getDepth( p );
+          color = fcolor;
+          color.a = max( color.a, 0.2 );
+        } else {
+          // blend
+          color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
+          color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
+          // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
+        }
+
+        nn++;
+
+      }
+
+      valid_voxel = 1;
+
+      if( nn >= 4 || color.a > 0.95 ){
+        break;
+      }
+
+    } else if ( valid_voxel > 0 ) {
+
+      // Leaving the structure reset states
+      last_color.rgb = zero_rgb;
+      valid_voxel = 0;
     }
     p += rayDir * delta;
   }
@@ -64844,7 +64824,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
                 if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
                   this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
 
-                  this._map_data[ ii ] = i;
+                  // this._map_data[ ii ] = i;
 
                   if( compute_boundingbox ){
                     // set bounding box
@@ -64866,7 +64846,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
             }
             // voxel is invisible, no need to render! hence data is 0
-            this._map_data[ ii ] = 0;
+            // this._map_data[ ii ] = 0;
             this._map_color[ 4 * ii + 3 ] = 0;
             ii++;
             jj++;
@@ -64924,7 +64904,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._voxel_length = cube_dim[0] * cube_dim[1] * cube_dim[2];
-      const data = new Float32Array( this._voxel_length );
+      // const data = new Float32Array( this._voxel_length );
       const color = new Uint8Array( this._voxel_length * 4 );
       const normals = new Uint8Array( this._voxel_length * 3 );
 
@@ -64932,7 +64912,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       this._lut = lut;
       this._lut_map = lut_map;
       this._cube_dim = cube_dim;
-      this._map_data = data;
+      // this._map_data = data;
       this._map_color = color;
       this._map_normals = normals;
       this._map_alpha = lut.mapAlpha;
@@ -64974,7 +64954,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
                 if( Math.max(x,y,z) > bounding_max ){
                   bounding_max = Math.max(x,y,z);
                 }
-                this._map_data[ ii ] = i;
+                // this._map_data[ ii ] = i;
               }
             }
             /**
@@ -64989,17 +64969,17 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       this._compute_normals();
 
       // 3D texture
-      let texture = new threeplugins_THREE.DataTexture3D(
+      /*let data_texture = new THREE.DataTexture3D(
         this._map_data, cube_dim[0], cube_dim[1], cube_dim[2]
       );
-      texture.minFilter = threeplugins_THREE.NearestFilter;
-      texture.magFilter = threeplugins_THREE.NearestFilter;
-      texture.format = threeplugins_THREE.RedFormat;
-      texture.type = threeplugins_THREE.FloatType;
-      texture.unpackAlignment = 1;
-      texture.needsUpdate = true;
-      this._data_texture = texture;
-      this._data_texture.needsUpdate = true;
+      data_texture.minFilter = THREE.NearestFilter;
+      data_texture.magFilter = THREE.NearestFilter;
+      data_texture.format = THREE.RedFormat;
+      data_texture.type = THREE.FloatType;
+      data_texture.unpackAlignment = 1;
+      data_texture.needsUpdate = true;
+      this._data_texture = data_texture;
+      this._data_texture.needsUpdate = true;*/
 
 
       // Color texture - used to render colors
@@ -65035,7 +65015,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
 
 
       let uniforms = threeplugins_THREE.UniformsUtils.clone( shader.uniforms );
-      uniforms.map.value = texture;
+      // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
       uniforms.nmap.value = normals_texture;
 
@@ -65094,7 +65074,7 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
     if( this._canvas.has_webgl2 && this._mesh ){
       this._mesh.material.dispose();
       this._mesh.geometry.dispose();
-      this._data_texture.dispose();
+      // this._data_texture.dispose();
       this._color_texture.dispose();
       this._normals_texture.dispose();
 

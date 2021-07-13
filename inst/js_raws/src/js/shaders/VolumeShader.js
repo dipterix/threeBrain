@@ -3,7 +3,6 @@ const register_volumeShader1 = function(THREE){
 
   THREE.VolumeRenderShader1 = {
     uniforms: {
-      map: { value: null },
       cmap: { value: null },
       nmap: { value: null },
       mask: { value: null },
@@ -53,7 +52,6 @@ in vec3 vOrigin;
 in vec3 vDirection;
 in mat4 pmv;
 out vec4 color;
-uniform sampler3D map;
 uniform sampler3D cmap;
 uniform sampler3D nmap;
 uniform float alpha;
@@ -77,25 +75,10 @@ float getDepth( vec3 p ){
   vec4 frag2 = pmv * vec4( p, scale_inv );
   return (frag2.z / frag2.w / 2.0 + 0.5);
 }
-float sample1( vec3 p ) {
-  return texture( map, p + 0.5 ).r;
-}
 vec4 sample2( vec3 p ) {
   return texture( cmap, p + 0.5 );
-  // return normalize( texture( cmap, p + 0.5 ) ).rgba;
 }
 vec3 getNormal( vec3 p ) {
-  //vec3 re = vec3( 0.0 );
-  //float d = sample1( p );
-  //for( float xidx = -1.0; xidx <= 1.0; xidx += 1.0 ){
-  //  for( float yidx = -1.0; yidx <= 1.0; yidx += 1.0 ){
-  //    for( float zidx = -1.0; zidx <= 1.0; zidx += 1.0 ){
-  //      if( sample1( p + scale_inv * vec3( xidx, yidx, zidx) ) == d ){
-  //        re -= scale_inv * vec3( xidx, yidx, zidx);
-  //      }
-  //    }
-  //  }
-  //}
   vec3 re = vec3( texture( nmap, p + 0.5 ).rgb *  255.0 - 127.0 );
   return normalize( re );
 }
@@ -117,53 +100,50 @@ void main(){
   vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
 
   for ( float t = bounds.x; t < bounds.y; t += delta ) {
-    float d = sample1( p );
-    if ( d > 0.0 ) {
-      fcolor = sample2( p );
+    fcolor = sample2( p );
 
-      // Hit voxel
-      if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
+    // Hit voxel
+    if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
 
-        if( alpha >= 0.0 ){
-          fcolor.a = alpha;
-        }
-
-
-        if( fcolor.rgb != last_color.rgb ){
-          // We are right on the surface
-
-          last_color = fcolor;
-
-          // reflect light
-          fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
-
-          if( nn == 0 ){
-            gl_FragDepth = getDepth( p );
-            color = fcolor;
-            color.a = max( color.a, 0.2 );
-          } else {
-            // blend
-            color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
-            color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
-            // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
-          }
-
-          nn++;
-
-        }
-
-        valid_voxel = 1;
-
-        if( nn >= 4 || color.a > 0.95 ){
-          break;
-        }
-
-      } else if ( valid_voxel > 0 ) {
-
-        // Leaving the structure reset states
-        last_color.rgb = zero_rgb;
-        valid_voxel = 0;
+      if( alpha >= 0.0 ){
+        fcolor.a = alpha;
       }
+
+
+      if( fcolor.rgb != last_color.rgb ){
+        // We are right on the surface
+
+        last_color = fcolor;
+
+        // reflect light
+        fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
+
+        if( nn == 0 ){
+          gl_FragDepth = getDepth( p );
+          color = fcolor;
+          color.a = max( color.a, 0.2 );
+        } else {
+          // blend
+          color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
+          color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
+          // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
+        }
+
+        nn++;
+
+      }
+
+      valid_voxel = 1;
+
+      if( nn >= 4 || color.a > 0.95 ){
+        break;
+      }
+
+    } else if ( valid_voxel > 0 ) {
+
+      // Leaving the structure reset states
+      last_color.rgb = zero_rgb;
+      valid_voxel = 0;
     }
     p += rayDir * delta;
   }
