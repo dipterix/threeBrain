@@ -5,11 +5,12 @@ const register_volumeShader1 = function(THREE){
     uniforms: {
       map: { value: null },
       cmap: { value: null },
+      nmap: { value: null },
       mask: { value: null },
       cameraPos: { value: new THREE.Vector3() },
       alpha : { value: -1.0 },
       steps: { value: 300 },
-      scale: { value: new THREE.Vector3() },
+      scale_inv: { value: new THREE.Vector3() },
       bounding: { value : 0.5 }
     },
     vertexShader: [
@@ -20,7 +21,7 @@ const register_volumeShader1 = function(THREE){
       'uniform mat4 modelViewMatrix;',
       'uniform mat4 projectionMatrix;',
       'uniform vec3 cameraPos;',
-      'uniform vec3 scale;',
+      'uniform vec3 scale_inv;',
 
       'out mat4 pmv;',
       'out vec3 vOrigin;',
@@ -37,11 +38,11 @@ const register_volumeShader1 = function(THREE){
         // obtains Orthopgraphic direction, which can be directly used as ray direction
 
         // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-        'vDirection = inverse( pmv )[3].xyz / scale;',
+        'vDirection = inverse( pmv )[3].xyz * scale_inv;',
 
         // Previous test code, seems to be poor because camera position is not well-calculated?
         // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-        'vOrigin = position / scale - vDirection; ',
+        'vOrigin = position * scale_inv - vDirection; ',
         'gl_Position = pmv * vec4( position, 1.0 );',
       '}'
     ].join( '\n' ),
@@ -56,7 +57,7 @@ uniform sampler3D map;
 uniform sampler3D cmap;
 uniform float alpha;
 uniform float steps;
-uniform vec3 scale;
+uniform vec3 scale_inv;
 uniform float bounding;
 vec4 fcolor;
 vec2 hitBox( vec3 orig, vec3 dir ) {
@@ -72,7 +73,7 @@ vec2 hitBox( vec3 orig, vec3 dir ) {
   return vec2( t0, t1 );
 }
 float getDepth( vec3 p ){
-  vec4 frag2 = pmv * vec4( p, 1.0 / scale );
+  vec4 frag2 = pmv * vec4( p, scale_inv );
   return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 float sample1( vec3 p ) {
@@ -83,14 +84,13 @@ vec4 sample2( vec3 p ) {
   // return normalize( texture( cmap, p + 0.5 ) ).rgba;
 }
 vec3 getNormal( vec3 p ) {
-  vec3 inv = 1.0 / scale;
   float d = sample1( p );
   vec3 re = vec3( 0.0 );
   for( float xidx = -1.0; xidx <= 1.0; xidx += 1.0 ){
     for( float yidx = -1.0; yidx <= 1.0; yidx += 1.0 ){
       for( float zidx = -1.0; zidx <= 1.0; zidx += 1.0 ){
-        if( sample1( p + inv * vec3( xidx, yidx, zidx) ) == d ){
-          re -= inv * vec3( xidx, yidx, zidx);
+        if( sample1( p + scale_inv * vec3( xidx, yidx, zidx) ) == d ){
+          re -= scale_inv * vec3( xidx, yidx, zidx);
         }
       }
     }
