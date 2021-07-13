@@ -5,6 +5,8 @@
 [![license](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![R-CMD-check](https://github.com/dipterix/threeBrain/workflows/R-CMD-check/badge.svg)](https://github.com/dipterix/threeBrain/actions)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![DOI](https://img.shields.io/badge/DOI-10.1016/j.neuroimage.2020.117341-blue)](https://doi.org/10.1016/j.neuroimage.2020.117341)
+
 <!-- badges: end -->
 
 <img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />
@@ -111,3 +113,24 @@ template_n27 = threeBrain::merge_brain(yab, ycq, template_subject = 'N27')
 plot( template_n27 )
 ```
 The viewer will be in `N27` template, and electrodes of these two subjects can be mapped via `MNI305` (for surface and stereo EEG) or `std.141` (for surface-only).
+
+
+## Citation
+
+To cite threeBrain in publications use:
+
+> Magnotti, JF, Wang, Z, Beauchamp, MS. RAVE: comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data.
+
+A BibTeX entry for LaTeX users:
+
+```
+  @Article{,
+    title = {{RAVE}: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data},
+    author = {John F. Magnotti and Zhengjia Wang and Michael S. Beauchamp},
+    journal = {NeuroImage},
+    year = {2020},
+    volume = {223},
+    doi = {10.1016/j.neuroimage.2020.117341},
+    pages = {117341},
+  }
+```
