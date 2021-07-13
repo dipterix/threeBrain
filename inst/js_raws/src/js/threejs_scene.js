@@ -7,7 +7,7 @@ import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
 import { CONSTANTS } from './constants.js';
 import { generate_animation_default } from './Math/animations.js';
-import { gen_sphere } from './geometry/sphere.js';
+import { gen_sphere, is_electrode } from './geometry/sphere.js';
 import { gen_datacube } from './geometry/datacube.js';
 import { gen_datacube2 } from './geometry/datacube2.js';
 import { gen_tube } from './geometry/tube.js';
@@ -660,7 +660,9 @@ class THREEBRAIN_CANVAS {
     this.focus_box = new THREE.BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
-    this.bounding_box = this.focus_box.clone();
+    this.bounding_box = new THREE.BoxHelper();
+    this.bounding_box.material.color.setRGB( 0, 0, 1 );
+    this.bounding_box.userData.added = false;
     this.bounding_box.layers.set( CONSTANTS.LAYER_INVISIBLE_31 )
 
 
