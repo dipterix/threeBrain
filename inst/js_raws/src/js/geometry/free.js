@@ -77,7 +77,8 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     this._geometry.name = 'geom_free_' + g.name;
 
-    this._material_type = this._materials[g.material_type] || 'MeshPhongMaterial';
+    this._material_type = g.material_type || 'MeshPhongMaterial';
+    this._compile_material( this._material_type );
     this._mesh = new THREE.Mesh(this._geometry, this._materials[this._material_type]);
     this._mesh.name = 'mesh_free_' + g.name;
 
@@ -320,10 +321,28 @@ class FreeMesh extends AbstractThreeBrainObject {
 
   }
 
+  _compile_material( material_type ){
+    if( material_type in this._materials ){
+      const material = this._materials[ material_type ];
+      if( !material.userData.compiled ){
+        // compile
+        material.onBeforeCompile = ( shader , renderer ) => {
+          if( renderer === this._canvas.main_renderer ){
+            window.sssssss=shader;
+          }
+        }
+        material.userData.compiled = true;
+      }
+    }
+  }
+
   switch_material( material_type, update_canvas = false ){
     if( material_type in this._materials ){
       const _m = this._materials[ material_type ];
       const _o = this._canvas.state_data.get("surface_opacity_left") || 0;
+
+      this._compile_material( material_type );
+
       this._material_type = material_type;
       this._mesh.material = _m;
       this._mesh.material.vertexColors = this._material_color;

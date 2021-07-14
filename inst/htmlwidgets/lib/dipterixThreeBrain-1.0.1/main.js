@@ -61551,6 +61551,23 @@ class data_controls_THREEBRAIN_PRESETS{
 
       this._update_canvas();
     });
+    // initialize Settings
+    const inital_camera_pos = new threeplugins_THREE.Vector3().fromArray(
+      this.settings.camera_pos
+    );
+    if (inital_camera_pos.length() > 0){
+      this.canvas.main_camera.position.set(
+        inital_camera_pos.x,
+        inital_camera_pos.y,
+        inital_camera_pos.z
+      )
+      if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
+        this.canvas.main_camera.up.set( 0, 0, 1 );
+      } else {
+        this.canvas.main_camera.up.set( 0, 1, 0 );
+      }
+    }
+    this._update_canvas();
   }
 
   // 5. display anchor
@@ -65591,7 +65608,8 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
 
     this._geometry.name = 'geom_free_' + g.name;
 
-    this._material_type = this._materials[g.material_type] || 'MeshPhongMaterial';
+    this._material_type = g.material_type || 'MeshPhongMaterial';
+    this._compile_material( this._material_type );
     this._mesh = new threeplugins_THREE.Mesh(this._geometry, this._materials[this._material_type]);
     this._mesh.name = 'mesh_free_' + g.name;
 
@@ -65834,10 +65852,28 @@ class free_FreeMesh extends abstract_AbstractThreeBrainObject {
 
   }
 
+  _compile_material( material_type ){
+    if( material_type in this._materials ){
+      const material = this._materials[ material_type ];
+      if( !material.userData.compiled ){
+        // compile
+        material.onBeforeCompile = ( shader , renderer ) => {
+          if( renderer === this._canvas.main_renderer ){
+            window.sssssss=shader;
+          }
+        }
+        material.userData.compiled = true;
+      }
+    }
+  }
+
   switch_material( material_type, update_canvas = false ){
     if( material_type in this._materials ){
       const _m = this._materials[ material_type ];
       const _o = this._canvas.state_data.get("surface_opacity_left") || 0;
+
+      this._compile_material( material_type );
+
       this._material_type = material_type;
       this._mesh.material = _m;
       this._mesh.material.vertexColors = this._material_color;
