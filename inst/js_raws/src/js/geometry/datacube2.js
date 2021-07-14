@@ -344,12 +344,6 @@ class DataCube2 extends AbstractThreeBrainObject {
       mesh = new THREE.Mesh( geometry, material );
       mesh.name = 'mesh_datacube_' + g.name;
 
-      /*mesh.position.fromArray([
-        g.position[0] - cube_half_size[0],
-        g.position[1] - cube_half_size[1],
-        g.position[2] - cube_half_size[2]
-      ]);
-      */
       mesh.position.fromArray( g.position );
       // TODO: need to check how threejs handle texture 3D to know why the s
 

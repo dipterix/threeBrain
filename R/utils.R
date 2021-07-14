@@ -786,3 +786,37 @@ R_user_dir <- function (package, which = c("data", "config", "cache")) {
   })
   file.path(path, "R", package)
 }
+
+#' @title Default Directory to Store Template Brain
+#' @return A directory path where template brain is stored at; see also
+#' \code{\link{download_N27}}
+#' @details When \code{threeBrain.template_dir} is not set or invalid, the
+#' function checks 'RAVE' (R Analysis and Visualization for 'iEEG',
+#' \url{https://openwetware.org/wiki/RAVE}) folder at home directory. If
+#' this folder is missing, then returns results from
+#' \code{R_user_dir('threeBrain', 'data')}. To override the default behavior,
+#' use \code{options(threeBrain.template_dir=...)}.
+#' @examples
+#'
+#' default_template_directory()
+#'
+#' @export
+default_template_directory <- function(){
+
+  re <- unname(getOption('threeBrain.template_dir', NULL), force = TRUE)
+  if(length(re) != 1 || !isTRUE(dir.exists(re))){
+    # If rave data dir exists, use rave directory
+    if(dir.exists('~/rave_data/others/three_brain')){
+      re <- '~/rave_data/others/three_brain'
+    } else {
+      re <- R_user_dir('threeBrain', 'data')
+      re <- file.path(re, 'templates')
+      if(!dir.exists(re)){
+        dir_create(re)
+      }
+    }
+  }
+
+  normalizePath(re, mustWork = FALSE)
+
+}

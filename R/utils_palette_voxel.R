@@ -7,6 +7,7 @@
 #' @param label name for each key, discrete palettes only
 #' @param value actual value for each key, continuous palettes only
 #' @param alpha whether to respect transparency
+#' @param x voxel palette object to be saved
 #' @param con,write_to a file path to write results to. The file path can be
 #' passed as \code{voxel_palette} into \code{\link{threejs_brain}}.
 #' @param ... used by continuous palette, passed to
@@ -31,9 +32,15 @@
 #' # The color range is -10 to 10
 #' # The colors are 'blue','white','red' for these keys
 #'
-#' create_voxel_palette_continuous(
+#' pal <- create_voxel_palette_continuous(
 #'   key = c(1,2,3), value = c(-10,0,10),
 #'   color = c('blue','white','red'))
+#'
+#' print( pal )
+#'
+#' f <- tempfile( fileext = '.json' )
+#' save_voxel_palette( pal, f )
+#' cat(readLines(f), sep = '\n')
 #'
 NULL
 
@@ -103,6 +110,17 @@ create_voxel_palette_discrete <- function(
     return(invisible(re))
   }
   return(re)
+}
+
+#' @rdname voxel_palette
+#' @export
+save_voxel_palette <- function(x, con){
+  if(!'voxel_palette' %in% class(x)){
+    stop('`x` is not a voxel palette object')
+  }
+  jsonlite::write_json(list(
+    "__global_data__.VolumeColorLUT" = unclass(x)
+  ), path = con, auto_unbox = TRUE)
 }
 
 #' @rdname voxel_palette

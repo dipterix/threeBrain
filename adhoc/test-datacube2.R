@@ -29,6 +29,6 @@ wg <- yab$plot(
   )
 
 )
-# wg
-threeBrain::save_brain(wg, '~/Desktop/3dtest', as_zip = TRUE)
+wg
+# threeBrain::save_brain(wg, '~/Desktop/3dtest', as_zip = TRUE)
 # yab$plot(debug = TRUE, voxel_palette = "inst/palettes/datacube2/ContinuousSample.json")

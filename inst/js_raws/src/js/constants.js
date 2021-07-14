@@ -141,7 +141,14 @@ CONSTANTS.THRESHOLD_OPERATORS = [
   'v not in [T1,T2]'
 ];
 
-
+/**
+ * .renderOrder : Number
+This value allows the default rendering order of scene graph objects to be overridden although opaque and transparent objects remain sorted independently. When this property is set for an instance of Group, all descendants objects will be sorted and rendered together. Sorting is from lowest to highest renderOrder. Default value is 0.
+ */
+CONSTANTS.RENDER_ORDER = {
+  'DataCube2' : -1,
+  'DataCube'  : CONSTANTS.MAX_RENDER_ORDER - 1
+}
 
 
 export { CONSTANTS };

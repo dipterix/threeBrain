@@ -4,6 +4,7 @@
 \alias{voxel_palette}
 \alias{freeserfer_palette}
 \alias{create_voxel_palette_discrete}
+\alias{save_voxel_palette}
 \alias{create_voxel_palette_continuous}
 \title{Creates color palettes for volume data (\code{\link{DataCubeGeom2}})}
 \usage{
@@ -19,6 +20,8 @@ create_voxel_palette_discrete(
   con = NULL,
   ...
 )
+
+save_voxel_palette(x, con)
 
 create_voxel_palette_continuous(
   key,
@@ -45,6 +48,8 @@ passed as \code{voxel_palette} into \code{\link{threejs_brain}}.}
 \item{...}{used by continuous palette, passed to
 \code{\link[grDevices]{colorRampPalette}}. Ignored by others}
 
+\item{x}{voxel palette object to be saved}
+
 \item{value}{actual value for each key, continuous palettes only}
 }
 \value{
@@ -70,8 +75,14 @@ material shader.
 # The color range is -10 to 10
 # The colors are 'blue','white','red' for these keys
 
-create_voxel_palette_continuous(
+pal <- create_voxel_palette_continuous(
   key = c(1,2,3), value = c(-10,0,10),
   color = c('blue','white','red'))
+
+print( pal )
+
+f <- tempfile( fileext = '.json' )
+save_voxel_palette( pal, f )
+cat(readLines(f), sep = '\n')
 
 }

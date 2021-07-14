@@ -60279,7 +60279,14 @@ CONSTANTS.THRESHOLD_OPERATORS = [
   'v not in [T1,T2]'
 ];
 
-
+/**
+ * .renderOrder : Number
+This value allows the default rendering order of scene graph objects to be overridden although opaque and transparent objects remain sorted independently. When this property is set for an instance of Group, all descendants objects will be sorted and rendered together. Sorting is from lowest to highest renderOrder. Default value is 0.
+ */
+CONSTANTS.RENDER_ORDER = {
+  'DataCube2' : -1,
+  'DataCube'  : CONSTANTS.MAX_RENDER_ORDER - 1
+}
 
 
 
@@ -60403,6 +60410,7 @@ class abstract_AbstractThreeBrainObject {
         this.object.userData.instance = this;
         this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
         this.object.userData.dispose = () => { this.dispose(); };
+        this.object.renderOrder = CONSTANTS.RENDER_ORDER[ this.type ] || 0;
       }
 
     }
@@ -64589,9 +64597,9 @@ class datacube_DataCube extends abstract_AbstractThreeBrainObject {
     let line_mesh_xz = new threeplugins_THREE.Line( line_geometry, line_material ),
         line_mesh_xy = new threeplugins_THREE.Line( line_geometry, line_material ),
         line_mesh_yz = new threeplugins_THREE.Line( line_geometry, line_material );
-    line_mesh_xz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-    line_mesh_xy.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-    line_mesh_yz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
+    line_mesh_xz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    line_mesh_xy.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    line_mesh_yz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
     line_mesh_xz.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
     line_mesh_xz.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
     line_mesh_xy.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
@@ -65008,6 +65016,8 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
         normals, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
+      // magFilter must be nearest
+      // minFilter can be locally smoothed
       normals_texture.minFilter = threeplugins_THREE.LinearFilter;
       normals_texture.magFilter = threeplugins_THREE.NearestFilter;
       normals_texture.format = threeplugins_THREE.RGBFormat;
@@ -65060,12 +65070,6 @@ class datacube2_DataCube2 extends abstract_AbstractThreeBrainObject {
       mesh = new threeplugins_THREE.Mesh( geometry, material );
       mesh.name = 'mesh_datacube_' + g.name;
 
-      /*mesh.position.fromArray([
-        g.position[0] - cube_half_size[0],
-        g.position[1] - cube_half_size[1],
-        g.position[2] - cube_half_size[2]
-      ]);
-      */
       mesh.position.fromArray( g.position );
       // TODO: need to check how threejs handle texture 3D to know why the s
 

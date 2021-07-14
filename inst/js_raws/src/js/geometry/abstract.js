@@ -116,6 +116,7 @@ class AbstractThreeBrainObject {
         this.object.userData.instance = this;
         this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
         this.object.userData.dispose = () => { this.dispose(); };
+        this.object.renderOrder = CONSTANTS.RENDER_ORDER[ this.type ] || 0;
       }
 
     }

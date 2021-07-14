@@ -136,9 +136,9 @@ class DataCube extends AbstractThreeBrainObject {
     let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
         line_mesh_xy = new THREE.Line( line_geometry, line_material ),
         line_mesh_yz = new THREE.Line( line_geometry, line_material );
-    line_mesh_xz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-    line_mesh_xy.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-    line_mesh_yz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
+    line_mesh_xz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    line_mesh_xy.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    line_mesh_yz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
     line_mesh_xz.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
     line_mesh_xz.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
     line_mesh_xy.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
