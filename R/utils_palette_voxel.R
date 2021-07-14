@@ -1,16 +1,16 @@
 
-#' @name voxel_palette
-#' @title Creates color palettes for volume data (\code{\link{DataCubeGeom2}})
+#' @name voxel_colormap
+#' @title Creates color maps for volume data (\code{\link{DataCubeGeom2}})
 #' @param key non-negative integer vector corresponding to voxel values;
 #' its length must exceed 1; see 'Details'
 #' @param color characters, corresponding to color strings for each key
 #' @param label name for each key, discrete palettes only
 #' @param value actual value for each key, continuous palettes only
 #' @param alpha whether to respect transparency
-#' @param x voxel palette object to be saved
+#' @param x voxel color map object to be saved
 #' @param con,write_to a file path to write results to. The file path can be
-#' passed as \code{voxel_palette} into \code{\link{threejs_brain}}.
-#' @param ... used by continuous palette, passed to
+#' passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.
+#' @param ... used by continuous color maps, passed to
 #' \code{\link[grDevices]{colorRampPalette}}. Ignored by others
 #'
 #' @details
@@ -24,30 +24,32 @@
 #' value is 0, then this voxel will be hidden. This is hard-coded into
 #' material shader.
 #'
-#' @return A list of palette information
+#' @return A list of color map information
 #'
 #' @examples
 #'
-#' # Creates a symmetric continuous palette with 3 keys
+#' # Creates a symmetric continuous colormap with 3 keys
 #' # The color range is -10 to 10
 #' # The colors are 'blue','white','red' for these keys
 #'
-#' pal <- create_voxel_palette_continuous(
+#' pal <- create_voxel_colormap_continuous(
 #'   key = c(1,2,3), value = c(-10,0,10),
 #'   color = c('blue','white','red'))
 #'
 #' print( pal )
 #'
 #' f <- tempfile( fileext = '.json' )
-#' save_voxel_palette( pal, f )
+#' save_voxel_colormap( pal, f )
 #' cat(readLines(f), sep = '\n')
 #'
 NULL
 
-#' @rdname voxel_palette
+#' @rdname voxel_colormap
 #' @export
-freeserfer_palette <- function(write_to = 'inst/palettes/datacube2/FreeSurferColorLUT.json'){
-  if(isTRUE(write_to == 'inst/palettes/datacube2/FreeSurferColorLUT.json')){
+freeserfer_colormap <- function(write_to){
+  if(missing(write_to)){
+    # for my use
+    write_to <- 'inst/palettes/datacube2/FreeSurferColorLUT.json'
     if(!file.exists(write_to)){ write_to <- NULL }
   }
   file <- 'https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT?action=raw'
@@ -62,15 +64,15 @@ freeserfer_palette <- function(write_to = 'inst/palettes/datacube2/FreeSurferCol
   # tbl <- data.table::fread(paste(s, collapse = '\n'))
   names(tbl) <- c('ColorID', 'Label', 'R', 'G', 'B', 'A')
   col <- rgb(tbl$R, tbl$G, tbl$B, maxColorValue = 255)
-  create_voxel_palette_discrete(
+  create_voxel_colormap_discrete(
     color = col, label = tbl$Label, key = tbl$ColorID,
     alpha = FALSE, con = write_to
   )
 }
 
-#' @rdname voxel_palette
+#' @rdname voxel_colormap
 #' @export
-create_voxel_palette_discrete <- function(
+create_voxel_colormap_discrete <- function(
   key, color, label = NULL, alpha = FALSE, con = NULL, ...){
   alpha <- isTRUE(alpha)
   key <- as.integer(key)
@@ -101,7 +103,7 @@ create_voxel_palette_discrete <- function(
     list(ss, alpha, min(tbl$ColorID), max(tbl$ColorID), "discrete", 1.0), names = c(
       'map', 'mapAlpha', 'mapMinColorID',
       'mapMaxColorID', 'mapDataType', 'mapVersion'
-    ), class = c("voxel_palette_discrete", "voxel_palette"))
+    ), class = c("voxel_colormap_discrete", "voxel_colormap"))
 
   if(length(con)){
     jsonlite::write_json(list(
@@ -112,20 +114,10 @@ create_voxel_palette_discrete <- function(
   return(re)
 }
 
-#' @rdname voxel_palette
-#' @export
-save_voxel_palette <- function(x, con){
-  if(!'voxel_palette' %in% class(x)){
-    stop('`x` is not a voxel palette object')
-  }
-  jsonlite::write_json(list(
-    "__global_data__.VolumeColorLUT" = unclass(x)
-  ), path = con, auto_unbox = TRUE)
-}
 
-#' @rdname voxel_palette
+#' @rdname voxel_colormap
 #' @export
-create_voxel_palette_continuous <- function(
+create_voxel_colormap_continuous <- function(
   key, color, value = NULL, alpha = FALSE, con = NULL, ...){
   alpha <- isTRUE(alpha)
   key <- as.integer(key)
@@ -158,7 +150,7 @@ create_voxel_palette_continuous <- function(
          "continuous", 1.0), names = c(
       'map', 'mapAlpha', 'mapMinColorID', 'mapMaxColorID',
       'mapValueRange', 'mapDataType', 'mapVersion'
-    ), class = c("voxel_palette_continuous", "voxel_palette"))
+    ), class = c("voxel_colormap_continuous", "voxel_colormap"))
 
   if(length(con)){
     jsonlite::write_json(list(
@@ -169,12 +161,33 @@ create_voxel_palette_continuous <- function(
   return(re)
 }
 
+#' @rdname voxel_colormap
+#' @export
+save_voxel_colormap <- function(x, con){
+  if(!'voxel_colormap' %in% class(x)){
+    stop('`x` is not a voxel colormap object')
+  }
+  jsonlite::write_json(list(
+    "__global_data__.VolumeColorLUT" = unclass(x)
+  ), path = con, auto_unbox = TRUE)
+}
+
+
+#' @rdname voxel_colormap
+#' @export
+create_voxel_palette_discrete <- create_voxel_colormap_discrete
+
+#' @rdname voxel_colormap
+#' @export
+create_voxel_palette_continuous <- create_voxel_colormap_continuous
+
+
 
 #' @export
-print.voxel_palette <- function(x, ...){
+print.voxel_colormap <- function(x, ...){
   cat(sprintf(
     paste(sep = "", c(
-      "<Voxel color palette>",
+      "<Voxel color colormap>",
       "  Version: %.1f",
       "  Type: %s",
       "  Transparent: %s",

@@ -88,7 +88,7 @@ threejs_brain <- function(
 
   if( 'voxel_palette' %in% class(voxel_colormap) ){
     f <- tempfile(fileext = '.json', pattern = "palette_")
-    save_voxel_palette( voxel_colormap )
+    save_voxel_colormap( voxel_colormap )
     voxel_colormap <- normalizePath(f)
   }
   global_container$group$set_group_data(
