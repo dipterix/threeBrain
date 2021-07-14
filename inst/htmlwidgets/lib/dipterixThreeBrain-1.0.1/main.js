@@ -61560,7 +61560,7 @@ class data_controls_THREEBRAIN_PRESETS{
         inital_camera_pos.x,
         inital_camera_pos.y,
         inital_camera_pos.z
-      )
+      ).normalize().multiplyScalar(500);
       if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
         this.canvas.main_camera.up.set( 0, 0, 1 );
       } else {
