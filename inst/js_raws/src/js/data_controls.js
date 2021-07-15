@@ -1203,7 +1203,6 @@ class THREEBRAIN_PRESETS{
     this._ctl_voxel_type_options = ['none'];
     this._ctl_voxel_type_callback = (v) => {
       if( v ){
-        console.log(v);
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
@@ -1236,8 +1235,8 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject"),
-              // mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`],
-              inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+              // mesh = this.canvas.atlases.get(sub)[`${atlas_type} (${sub})`],
+              inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`),
               opa = v < 0.001 ? -1 : v;
         // mesh.material.uniforms.alpha.value = opa;
         if( inst && inst.isDataCube2 ){
@@ -1261,7 +1260,7 @@ class THREEBRAIN_PRESETS{
       const voxel_minmax = (l, u) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -1309,7 +1308,7 @@ class THREEBRAIN_PRESETS{
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -1358,7 +1357,7 @@ class THREEBRAIN_PRESETS{
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
 
           // might be large?
