@@ -5,6 +5,7 @@
 \alias{freeserfer_colormap}
 \alias{create_voxel_colormap_discrete}
 \alias{create_voxel_colormap_continuous}
+\alias{load_voxel_colormap}
 \alias{save_voxel_colormap}
 \alias{create_voxel_palette_discrete}
 \alias{create_voxel_palette_continuous}
@@ -29,6 +30,8 @@ create_voxel_colormap_continuous(
   con = NULL,
   ...
 )
+
+load_voxel_colormap(con)
 
 save_voxel_colormap(x, con)
 
@@ -60,8 +63,8 @@ its length must exceed 1; see 'Details'}
 
 \item{alpha}{whether to respect transparency}
 
-\item{con, write_to}{a file path to write results to. The file path can be
-passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.}
+\item{con, write_to}{a file path to write results to or to read from. The
+file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.}
 
 \item{...}{used by continuous color maps, passed to
 \code{\link[grDevices]{colorRampPalette}}. Ignored by others}

@@ -8,8 +8,8 @@
 #' @param value actual value for each key, continuous palettes only
 #' @param alpha whether to respect transparency
 #' @param x voxel color map object to be saved
-#' @param con,write_to a file path to write results to. The file path can be
-#' passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.
+#' @param con,write_to a file path to write results to or to read from. The
+#' file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.
 #' @param ... used by continuous color maps, passed to
 #' \code{\link[grDevices]{colorRampPalette}}. Ignored by others
 #'
@@ -111,7 +111,7 @@ create_voxel_colormap_discrete <- function(
     ), path = con, auto_unbox = TRUE)
     return(invisible(re))
   }
-  return(re)
+  return(register_get_key(re))
 }
 
 
@@ -158,7 +158,49 @@ create_voxel_colormap_continuous <- function(
     ), path = con, auto_unbox = TRUE)
     return(invisible(re))
   }
-  return(re)
+  return(register_get_key(re))
+}
+
+register_get_key <- function(re){
+  if(re$mapDataType == 'continuous'){
+    re$get_key <- function(value, max_delta = Inf){
+      map <- sapply(re$map, function(x){
+        c(x$ColorID, x$Label)
+      })
+
+      k <- sapply(value, function(v){
+        if(is.na(v)){ return(0) }
+        ii <- which.min(abs(map[, 2] - v))
+        if(abs(map[ii, 2]) > max_delta) { return(0) }
+        map[ii, 1]
+      })
+      as.integer(k)
+    }
+    class(re) <- c("voxel_colormap_continuous", "voxel_colormap")
+  } else {
+    re$get_key <- function(label){
+      sapply(label, function(v){
+        if(is.na(v)){ return(0) }
+        dipsaus::forelse(re$map, function(x){
+          if(x$Label == v){
+            return(x$ColorID)
+          }
+          return()
+        }, 0L)
+      })
+    }
+    class(re) <- c("voxel_colormap_discrete", "voxel_colormap")
+  }
+  re
+}
+
+#' @rdname voxel_colormap
+#' @export
+load_voxel_colormap <- function(con){
+  re <- jsonlite::read_json(con)
+  stopifnot("__global_data__.VolumeColorLUT" %in% names(re))
+  re <- re$`__global_data__.VolumeColorLUT`
+  return(register_get_key(re))
 }
 
 #' @rdname voxel_colormap
@@ -167,6 +209,7 @@ save_voxel_colormap <- function(x, con){
   if(!'voxel_colormap' %in% class(x)){
     stop('`x` is not a voxel colormap object')
   }
+  x$get_key <- NULL
   jsonlite::write_json(list(
     "__global_data__.VolumeColorLUT" = unclass(x)
   ), path = con, auto_unbox = TRUE)

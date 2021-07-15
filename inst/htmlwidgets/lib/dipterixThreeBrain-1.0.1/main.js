@@ -1432,6 +1432,14 @@ return( THREE );
 
 // CONCATENATED MODULE: ./src/js/shaders/VolumeShader.js
 
+const remove_comments = (s) => {
+  return(s.split("\n").map((e) => {
+      return(
+        e.replaceAll(/\/\/.*/g, "")
+      );
+    }).join("\n"));
+}
+
 const register_volumeShader1 = function(THREE){
 
   THREE.VolumeRenderShader1 = {
@@ -1445,40 +1453,39 @@ const register_volumeShader1 = function(THREE){
       scale_inv: { value: new THREE.Vector3() },
       bounding: { value : 0.5 }
     },
-    vertexShader: [
-      '#version 300 es',
-      'precision highp float;',
-      'in vec3 position;',
-      // 'uniform mat4 modelMatrix;',
-      'uniform mat4 modelViewMatrix;',
-      'uniform mat4 projectionMatrix;',
-      'uniform vec3 cameraPos;',
-      'uniform vec3 scale_inv;',
+    vertexShader: remove_comments(`#version 300 es
+precision highp float;
+in vec3 position;
+// uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec3 cameraPos;
+uniform vec3 scale_inv;
 
-      'out mat4 pmv;',
-      'out vec3 vOrigin;',
-      'out vec3 vDirection;',
-      'void main() {',
-        'pmv = projectionMatrix * modelViewMatrix;',
-        // For perspective camera, vorigin is camera
-        // 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
-        // 'vDirection = position / scale - vOrigin;',
+out mat4 pmv;
+out vec3 vOrigin;
+out vec3 vDirection;
+void main() {
+  pmv = projectionMatrix * modelViewMatrix;
 
-        // Orthopgraphic camera, camera position in theory is at infinite
-        // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
-        // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
-        // obtains Orthopgraphic direction, which can be directly used as ray direction
+  // For perspective camera, vorigin is camera
+  // 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
+  // 'vDirection = position / scale - vOrigin;',
 
-        // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-        'vDirection = inverse( pmv )[3].xyz * scale_inv;',
+  // Orthopgraphic camera, camera position in theory is at infinite
+  // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
+  // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
+  // obtains Orthopgraphic direction, which can be directly used as ray direction
 
-        // Previous test code, seems to be poor because camera position is not well-calculated?
-        // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-        'vOrigin = position * scale_inv - vDirection; ',
-        'gl_Position = pmv * vec4( position, 1.0 );',
-      '}'
-    ].join( '\n' ),
-    fragmentShader: `#version 300 es
+  // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
+  vDirection = inverse( pmv )[3].xyz * scale_inv;
+
+  // Previous test code, seems to be poor because camera position is not well-calculated?
+  // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
+  vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  gl_Position = pmv * vec4( position, 1.0 );
+}`),
+    fragmentShader: remove_comments(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
@@ -1522,7 +1529,7 @@ void main(){
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
   // 0-255 need to be 0.5-255.5
-  vec3 p = vOrigin + bounds.x * rayDir + scale_inv * vec3(0.5,-0.5,0.5);
+  vec3 p = vOrigin + bounds.x * rayDir;
   vec3 inc = 1.0 / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
   delta /= steps;
@@ -1584,13 +1591,7 @@ void main(){
   if ( nn == 0 || color.a == 0.0 ) discard;
 
   // calculate alpha at depth
-}
-    `.split("\n").map((e) => {
-      return(
-        e.replaceAll(/\/\/.*/g, "")
-      );
-    }).join("\n")
-  };
+}`)};
 
   return(THREE);
 
@@ -61553,7 +61554,6 @@ class data_controls_THREEBRAIN_PRESETS{
     this._ctl_voxel_type_options = ['none'];
     this._ctl_voxel_type_callback = (v) => {
       if( v ){
-        console.log(v);
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
@@ -61586,8 +61586,8 @@ class data_controls_THREEBRAIN_PRESETS{
       .onChange((v) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject"),
-              // mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`],
-              inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+              // mesh = this.canvas.atlases.get(sub)[`${atlas_type} (${sub})`],
+              inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`),
               opa = v < 0.001 ? -1 : v;
         // mesh.material.uniforms.alpha.value = opa;
         if( inst && inst.isDataCube2 ){
@@ -61611,7 +61611,7 @@ class data_controls_THREEBRAIN_PRESETS{
       const voxel_minmax = (l, u) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -61659,7 +61659,7 @@ class data_controls_THREEBRAIN_PRESETS{
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -61699,38 +61699,8 @@ class data_controls_THREEBRAIN_PRESETS{
 
       });
     }
-
-
-    /*
-    const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
-      .min(0).max(lut_maxColorID).step(1)
-      .onChange((v) => {
-
-        let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
-        if( inst && inst.isDataCube2 ){
-
-          // might be large?
-          new Promise( () => {
-            for( let idx = 0; idx < inst._map_data.length; idx++ ){
-              if(v == 0 || inst._map_data[idx] == v){
-                inst._map_color[idx * 4 + 3] = 1;
-              } else {
-                inst._map_color[idx * 4 + 3] = 0;
-              }
-            }
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
-            this._update_canvas();
-          });
-
-        }
-
-
-      });
-      */
-
   }
+
 
   // -------------------------- New version --------------------------
 

@@ -1,4 +1,12 @@
 
+const remove_comments = (s) => {
+  return(s.split("\n").map((e) => {
+      return(
+        e.replaceAll(/\/\/.*/g, "")
+      );
+    }).join("\n"));
+}
+
 const register_volumeShader1 = function(THREE){
 
   THREE.VolumeRenderShader1 = {
@@ -12,40 +20,39 @@ const register_volumeShader1 = function(THREE){
       scale_inv: { value: new THREE.Vector3() },
       bounding: { value : 0.5 }
     },
-    vertexShader: [
-      '#version 300 es',
-      'precision highp float;',
-      'in vec3 position;',
-      // 'uniform mat4 modelMatrix;',
-      'uniform mat4 modelViewMatrix;',
-      'uniform mat4 projectionMatrix;',
-      'uniform vec3 cameraPos;',
-      'uniform vec3 scale_inv;',
+    vertexShader: remove_comments(`#version 300 es
+precision highp float;
+in vec3 position;
+// uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec3 cameraPos;
+uniform vec3 scale_inv;
 
-      'out mat4 pmv;',
-      'out vec3 vOrigin;',
-      'out vec3 vDirection;',
-      'void main() {',
-        'pmv = projectionMatrix * modelViewMatrix;',
-        // For perspective camera, vorigin is camera
-        // 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
-        // 'vDirection = position / scale - vOrigin;',
+out mat4 pmv;
+out vec3 vOrigin;
+out vec3 vDirection;
+void main() {
+  pmv = projectionMatrix * modelViewMatrix;
 
-        // Orthopgraphic camera, camera position in theory is at infinite
-        // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
-        // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
-        // obtains Orthopgraphic direction, which can be directly used as ray direction
+  // For perspective camera, vorigin is camera
+  // 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
+  // 'vDirection = position / scale - vOrigin;',
 
-        // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-        'vDirection = inverse( pmv )[3].xyz * scale_inv;',
+  // Orthopgraphic camera, camera position in theory is at infinite
+  // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
+  // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
+  // obtains Orthopgraphic direction, which can be directly used as ray direction
 
-        // Previous test code, seems to be poor because camera position is not well-calculated?
-        // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-        'vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection; ',
-        'gl_Position = pmv * vec4( position, 1.0 );',
-      '}'
-    ].join( '\n' ),
-    fragmentShader: `#version 300 es
+  // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
+  vDirection = inverse( pmv )[3].xyz * scale_inv;
+
+  // Previous test code, seems to be poor because camera position is not well-calculated?
+  // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
+  vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  gl_Position = pmv * vec4( position, 1.0 );
+}`),
+    fragmentShader: remove_comments(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
@@ -151,13 +158,7 @@ void main(){
   if ( nn == 0 || color.a == 0.0 ) discard;
 
   // calculate alpha at depth
-}
-    `.split("\n").map((e) => {
-      return(
-        e.replaceAll(/\/\/.*/g, "")
-      );
-    }).join("\n")
-  };
+}`)};
 
   return(THREE);
 
