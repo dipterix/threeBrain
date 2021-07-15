@@ -47,7 +47,7 @@ const register_volumeShader1 = function(THREE){
     ].join( '\n' ),
     fragmentShader: `#version 300 es
 precision highp float;
-precision highp sampler3D;
+precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vDirection;
 in mat4 pmv;
@@ -88,7 +88,8 @@ void main(){
   vec2 bounds = hitBox( vOrigin, rayDir );
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
-  vec3 p = vOrigin + bounds.x * rayDir;
+  // 0-255 need to be 0.5-255.5
+  vec3 p = vOrigin + bounds.x * rayDir + scale_inv * vec3(0.5,-0.5,0.5);
   vec3 inc = 1.0 / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
   delta /= steps;

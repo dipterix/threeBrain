@@ -51,6 +51,29 @@ class FreeMesh extends AbstractThreeBrainObject {
       'MeshLambertMaterial': new THREE.MeshLambertMaterial( MATERIAL_PARAMS )
     };
     this._material_color = THREE.NoColors;
+    this._shader_uniforms_use_volume_map = { value : false };
+    this._volume_margin_size = 128;
+    this._volume_length = 2097152;
+    this._shader_uniforms_scale_inv = {
+      value : new THREE.Vector3(
+        1 / this._volume_margin_size, 1 / this._volume_margin_size,
+        1 / this._volume_margin_size
+      )
+    };
+    this._shader_uniforms_shift = { value : new THREE.Vector3() };
+    this._shader_uniforms_sampler_bias = { value : 3.0 };
+    this._shader_uniforms_sampler_step = { value : 1.5 };
+    this._volume_array = new Uint8Array( 32 );
+    // fake texture, will update later
+    this._volume_texture = new THREE.DataTexture3D(
+      this._volume_array, 2, 2, 2
+    );
+    this._volume_texture.minFilter = THREE.NearestFilter;
+    this._volume_texture.magFilter = THREE.LinearFilter;
+    this._volume_texture.format = THREE.RGBAFormat;
+    this._volume_texture.type = THREE.UnsignedByteType;
+    this._volume_texture.unpackAlignment = 1;
+    this._shader_uniforms_volume_map = { value : this._volume_texture };
 
     this._geometry = new THREE.BufferGeometry();
 
@@ -107,6 +130,11 @@ class FreeMesh extends AbstractThreeBrainObject {
     this.register_object( ['surfaces'] );
 
     this.set_vertex_color(this._vertex_cname, true);
+
+    // calculates global position to align with volume data
+    // this._mesh.getWorldPosition( this._shader_uniforms_shift.value );
+    // this._shader_uniforms_shift.value.copy( this._mesh.parent.position );
+
   }
 
   _link_userData(){
@@ -318,6 +346,8 @@ class FreeMesh extends AbstractThreeBrainObject {
       this._mesh.geometry.attributes.color.array[ ii ] = cvalue[ ii ];
     }
     this._mesh.geometry.attributes.color.needsUpdate=true;
+    //this._mesh.getWorldPosition( this._shader_uniforms_shift.value );
+    // this._shader_uniforms_shift.value.copy( this._mesh.parent.position );
 
   }
 
@@ -328,12 +358,186 @@ class FreeMesh extends AbstractThreeBrainObject {
         // compile
         material.onBeforeCompile = ( shader , renderer ) => {
           if( renderer === this._canvas.main_renderer ){
-            window.sssssss=shader;
+            shader.uniforms.use_volume_map = this._shader_uniforms_use_volume_map;
+            shader.uniforms.volume_map = this._shader_uniforms_volume_map;
+            shader.uniforms.scale_inv = this._shader_uniforms_scale_inv;
+            shader.uniforms.shift = this._shader_uniforms_shift;
+            shader.uniforms.sampler_bias = this._shader_uniforms_sampler_bias;
+            shader.uniforms.sampler_step = this._shader_uniforms_sampler_step;
+
+            shader.vertexShader =
+            `
+precision mediump sampler3D;
+uniform bool use_volume_map;
+uniform sampler3D volume_map;
+uniform vec3 scale_inv;
+uniform vec3 shift;
+uniform float sampler_bias;
+uniform float sampler_step;
+vec3 zeros = vec3( 0.0 );
+vec4 sample1(vec3 p) {
+  float count = 0.0;
+  vec3 dta = vec3( 0.0 );
+  vec4 re = vec4( 0.0, 0.0, 0.0, 0.0 );
+  vec4 tmp = vec4( 0.0 );
+  for(dta.x = -sampler_bias; dta.x <= sampler_bias; dta.x+=sampler_step){
+    for(dta.y = -sampler_bias; dta.y <= sampler_bias; dta.y+=sampler_step){
+      for(dta.z = -sampler_bias; dta.z <= sampler_bias; dta.z+=sampler_step){
+        tmp = texture( volume_map, p + dta * scale_inv );
+        if( tmp.a > 0.0 && tmp.rgb != zeros ){
+          if( count == 0.0 ){
+            re = tmp;
+          } else {
+            re = mix( re, tmp, 1.0 / count );
+          }
+          count += 1.0;
+        }
+      }
+    }
+  }
+  if( re.a == 0.0 ){
+    re.r = 0.5;
+    re.g = 0.5;
+    re.b = 0.5;
+  }
+  return( re );
+}
+` + shader.vertexShader;
+  					shader.vertexShader = shader.vertexShader.replace(
+  						'#include <fog_vertex>',`
+#include <fog_vertex>
+if( use_volume_map ){
+  // default vertex attributes provided by Geometry and BufferGeometry
+  // attribute vec3 position;
+  vec3 data_position = (position + shift) * scale_inv + 0.5;
+  vec4 data_color0 = sample1( data_position - scale_inv * vec3(0.5,-0.5,0.5) );
+#if defined( USE_COLOR_ALPHA )
+	vColor = data_color0;
+#elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
+	vColor.rgb = data_color0.rgb;
+#endif
+}
+  						`.split("\n").map((e) => {
+                return(
+                  e.replaceAll(/\/\/.*/g, "")
+                );
+              }).join("\n")
+  					);
+
+  					material.userData.shader = shader;
+
           }
         }
         material.userData.compiled = true;
       }
     }
+  }
+
+  _set_color_from_datacube2( m, bias = 3.0 ){
+    if( !m || !m.isDataCube2 ){
+      this._shader_uniforms_use_volume_map.value = false;
+      return;
+    }
+
+
+    this._volume_texture.image = m._color_texture.image;
+
+    this._shader_uniforms_scale_inv.value.set(
+      1 / m._cube_dim[0],
+      1 / m._cube_dim[1],
+      1 / m._cube_dim[2]
+    )
+    this._shader_uniforms_shift.value.copy( this._mesh.parent.position );
+    this._volume_texture.needsUpdate = true;
+    this._shader_uniforms_use_volume_map.value = true;
+    this._shader_uniforms_sampler_bias.value = bias;
+    this._shader_uniforms_sampler_step.value = bias / 2;
+
+    /*
+    // this._shader_uniforms_use_volume_map = { value : false };
+    // this._shader_uniforms_volume_map = { value : null };
+    // this._shader_uniforms_scale_inv = { value : new THREE.Vector3() };
+    // this._shader_uniforms_shift = { value : new THREE.Vector3() };
+    // color_texture.format = THREE.RGBAFormat;
+    // this._volume_array
+    // this._volume_dim
+
+    let x, y, z, ii, pad = 2;
+
+    const src = m._color_texture.image.data;
+    const dst = this._volume_array;
+    const shift = this.object.parent.position;
+    // new THREE.Quaternion
+    const torig = new THREE.Matrix4().set(
+      1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1
+    )
+    const torig_inv = new THREE.Matrix4().set(
+      1,0,0,128,0,1,0,128,0,0,1,128,0,0,0,1
+    )
+    const vertex_pos = this._mesh.geometry.attributes.position,
+          p = new THREE.Vector3(),
+          cx = m._cube_dim[0],
+          cy = m._cube_dim[1],
+          cz = m._cube_dim[2];
+    const fct = new THREE.Vector3(
+      cx / this._volume_dim[0],
+      cy / this._volume_dim[1],
+      cz / this._volume_dim[2]
+    );
+    let idx, alpha, skp, skp_max, a,b,c,s, d,e,f;
+    const js_texture = (ii) => {
+
+      skp_max = Math.min(p.x,p.y,p.z,cx-p.x,cy-p.y,cz-p.z, 5);
+
+      for(skp = 0; skp < skp_max; skp++){
+        for(a = -skp; a <= skp; a++){
+          for(b = -skp; b <= skp; b++){
+            if(Math.max(a,b,-a,-b) === skp){
+              s = 1;
+            } else {
+              s = 2 * skp;
+            }
+            for(c = -skp; c <= skp; c+=s){
+              idx = (p.x + a) + cx * ((p.y + b) + cy * (p.z + c));
+              alpha = src[ idx * 4 + 3 ];
+              d = src[ idx * 4 ];
+              e = src[ idx * 4 + 1 ];
+              f = src[ idx * 4 + 2 ];
+              if( alpha > 0 && (d+e+f) > 0 ){
+                // valid voxel
+                idx = (p.x) + this._volume_dim[0] * ((p.y) + this._volume_dim[1] * (p.z));
+                dst[ idx * 4 ] = d;
+                dst[ idx * 4 + 1 ] = e;
+                dst[ idx * 4 + 2 ] = f;
+                dst[ idx * 4 + 3 ] = alpha;
+                return(1);
+              }
+            }
+          }
+        }
+      }
+      return(0);
+    };
+
+    let count = 0;
+    for( ii = 0; ii < vertex_pos.count; ii++ ){
+      p.set(
+          vertex_pos.getX(ii),
+          vertex_pos.getY(ii),
+          vertex_pos.getZ(ii)
+        ).sub( shift ).applyMatrix4(torig_inv).multiply( fct );
+      p.x = Math.round(p.x);
+      p.y = Math.round(p.y);
+      p.z = Math.round(p.z);
+      if( p.x < 0 || p.x >= cx){ continue; }
+      if( p.y < 0 || p.y >= cy){ continue; }
+      if( p.z < 0 || p.z >= cz){ continue; }
+      // src[ p.x + cx * (p.y + cy * p.z)]
+      count += js_texture( ii );
+    }
+    console.log(count);
+    */
+
   }
 
   switch_material( material_type, update_canvas = false ){
@@ -360,245 +564,5 @@ class FreeMesh extends AbstractThreeBrainObject {
 function gen_free(g, canvas){
   return( new FreeMesh(g, canvas) );
 }
-
-/*
-function render_curvature(canvas, mesh, curv_type, update_color = false){
-
-  // surf_group$set_group_data('curvature_subject', template_subject)
-  const g = mesh.userData.construct_params,
-        curvature_subject = canvas.get_data('curvature_subject', g.name, g.group.group_name) || g.subject_code;
-
-  const curv_data = canvas.get_data(`Curvature - ${g.hemisphere[0]}h.${curv_type} (${curvature_subject})`,
-                                    g.name, g.group.group_name);
-  const vertex_colors = [];
-  let scale = 1;
-
-  if( curv_data && Array.isArray(curv_data.value) &&
-      mesh.geometry.attributes.position.count == curv_data.value.length ){
-
-    if( !Array.isArray(curv_data.range) || curv_data.range.length < 2 ){
-      curv_data.range = [-1, 1];
-    }
-
-    scale = Math.max(curv_data.range[1], -curv_data.range[0]);
-
-    // generate color for each vertices
-    const _transform = (v, b = 10 / scale) => {
-      // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
-      let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
-      return( s );
-    };
-    curv_data.value.forEach((v) => {
-      let col;
-      // col = 127.5 - (v / scale * 127.5);
-      // Make it lighter using sigmoid function
-      col = _transform(v);
-      vertex_colors.push( col );
-      vertex_colors.push( col );
-      vertex_colors.push( col );
-    });
-
-
-    if( update_color ){
-      // update color to geometry
-      mesh.geometry.setAttribute( 'color', new THREE.Uint8BufferAttribute( vertex_colors, 3, true ) );
-      mesh.material.vertexColors = THREE.VertexColors;
-      mesh.material.needsUpdate = true;
-    }
-
-  }else if( update_color ){
-    mesh.material.vertexColors = THREE.NoColors;
-    mesh.material.needsUpdate = true;
-  }
-
-}
-
-
-
-function gen_free(g, canvas){
-  const gb = new THREE.BufferGeometry(),
-      vertices = canvas.get_data('free_vertices_'+g.name, g.name, g.group.group_name),
-      faces = canvas.get_data('free_faces_'+g.name, g.name, g.group.group_name),
-      curvature_type = canvas.get_data("curvature", g.name, g.group.group_name);
-
-  const vertex_positions = [],
-        // vertex_colors = [],
-        face_orders = [];
-      //normals = [];
-
-
-  vertices.forEach((v) => {
-    vertex_positions.push(v[0], v[1], v[2]);
-    // normals.push(0,0,1);
-    // vertex_colors.push( 0, 0, 0);
-  });
-
-  faces.forEach((v) => {
-    face_orders.push(v[0], v[1], v[2]);
-  });
-
-  gb.setIndex( face_orders );
-  gb.setAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
-  // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
-  // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-
-  gb.computeVertexNormals();
-  gb.computeBoundingBox();
-  gb.computeBoundingSphere();
-  //gb.computeFaceNormals();
-  //gb.faces = faces;
-
-  gb.name = 'geom_free_' + g.name;
-
-  // https://github.com/mrdoob/three.js/issues/3490
-  let material = new THREE.MeshPhongMaterial({ 'transparent' : true, side: THREE.DoubleSide });
-
-  let mesh = new THREE.Mesh(gb, material);
-  mesh.name = 'mesh_free_' + g.name;
-
-  mesh.position.fromArray(g.position);
-
-  // mesh.userData.ani_value = values;
-  // mesh.userData.ani_time = to_array(g.time_stamp);
-
-  // have to assign construct_params to use render_curvature
-  mesh.userData.construct_params = g;
-
-  if( typeof curvature_type === 'string' ){
-    render_curvature(canvas, mesh, curvature_type, true);
-  }
-
-
-  mesh.userData.dispose = () => {
-    mesh.material.dispose();
-    mesh.geometry.dispose();
-  };
-
-
-  // animation data
-  mesh.userData.ani_name = 'default';
-  mesh.userData.ani_all_names = Object.keys( g.keyframes );
-
-  mesh.userData.ani_exists = mesh.userData.ani_all_names.length > 0;
-
-  mesh.userData.get_track_data = ( track_name, reset_material ) => {
-    let re, tname = track_name;
-
-    if( mesh.userData.ani_exists ){
-      if( tname === undefined ){ tname = mesh.userData.ani_name; }
-      re = g.keyframes[ tname ];
-    }else{
-      re = g.keyframes[ tname ];
-    }
-    // remember last choice
-    mesh.userData.ani_name = tname;
-
-    if( reset_material !== false ){
-      if( !re ){
-        // track data not found, ignore vertex color
-        mesh.material.vertexColors = THREE.NoColors;
-        mesh.material.needsUpdate=true;
-      }else {
-        mesh.material.vertexColors = THREE.VertexColors;
-        mesh.material.needsUpdate=true;
-      }
-    }
-
-    if( !re ){
-      return;
-    }
-    console.log('Using track name ' + tname);
-
-    if( re.cached ){
-      let value = canvas.get_data('free_vertex_colors_' + re.name + '_'+g.name, g.name, g.group.group_name);
-      if( !value || typeof value !== 'object' || !Array.isArray(value.value) || value.value.length === 0 ){
-        // value should be cached but not found or invalid
-        return;
-      }
-      re.value = value.value;
-      re.cached = false;
-    }
-    return(re);
-
-  };
-
-
-  mesh.userData.generate_animation = (track_data, cmap, animation_clips, mixer) => {
-    console.log('Using customized animation mixer');
-
-    // Generate keyframes
-    const _time_min = cmap.time_range[0],
-          _time_max = cmap.time_range[1];
-    // Prepare color map
-    const color_trans = {};
-    cmap.value_names.map((nm, ii) => {
-      color_trans[ nm ] = cmap.lut.getColor(ii);
-    });
-
-    // 1. timeStamps, TODO: get from settings the time range
-    const values = [], time_stamp = [], cvalues = [];
-    to_array( track_data.time ).forEach((v, ii) => {
-      time_stamp.push( v - _time_min );
-      values.push( ii );
-    });
-
-    const _size = track_data.value.length / time_stamp.length;
-    let _value = [];
-
-    track_data.value.forEach((v, ii) => {
-      let _c = color_trans[ v ] || cmap.lut.getColor(v) || {r:0,g:0,b:0};
-      _value.push( _c.r, _c.g, _c.b );
-      if( (ii+1) % _size === 0 && _value.length > 0 ){
-        cvalues.push( _value );
-        _value = [];
-      }
-    });
-    if( _value.length > 0 ){
-      cvalues.push( _value );
-      _value = [];
-    }
-    track_data.cvalues = cvalues;
-
-    // We cannot morph vertex colors, but can still use the animation
-    // The key is to set mesh.userData.animationIndex to be value index, and
-    mesh.userData.animation_target = track_data.target;
-
-    const keyframe = new THREE.NumberKeyframeTrack(
-      '.userData[animationIndex]',
-      time_stamp, values, THREE.InterpolateDiscrete
-    );
-
-    return( keyframe );
-  };
-
-  mesh.userData.pre_render = ( results ) => {
-    // console.log( mesh.userData.animationIndex );
-    // get current index
-    let vidx = mesh.userData.animationIndex;
-    if( typeof vidx !== 'number' ){ return; }
-
-    // get current track_data
-    const track_data = mesh.userData.get_track_data( mesh.userData.ani_name, false );
-    if( !track_data ){ return; }
-
-    vidx = Math.floor( vidx );
-    if( vidx < 0 ){ vidx = 0; }
-    if( vidx >= track_data.cvalues.length ){ vidx = track_data.cvalues.length-1; }
-
-    const cvalue = track_data.cvalues[ vidx ];
-
-    // check? TODO
-    for( let ii=0; ii<cvalue.length; ii++ ){
-      mesh.geometry.attributes.color.array[ ii ] = cvalue[ ii ];
-    }
-    mesh.geometry.attributes.color.needsUpdate=true;
-
-  };
-
-  return(mesh);
-
-}
-
-*/
 
 export { gen_free };

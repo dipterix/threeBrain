@@ -430,6 +430,16 @@ class BrainCanvas{
     this.canvas.render();
 
     this.canvas.start_animation(0);
+
+    // run customized js code
+    if( this.settings.custom_javascript &&
+        this.settings.custom_javascript !== ''){
+      let s = `
+      window.canvas = this.canvas;
+      ` + this.settings.custom_javascript;
+      console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
+      eval( s );
+    }
   }
 }
 

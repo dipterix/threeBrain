@@ -39,7 +39,8 @@ threejs_brain(
   controllers = list(),
   browser_external = TRUE,
   global_data = list(),
-  global_files = list()
+  global_files = list(),
+  custom_javascript = NULL
 )
 }
 \arguments{
