@@ -377,24 +377,28 @@ uniform float sampler_bias;
 uniform float sampler_step;
 vec3 zeros = vec3( 0.0 );
 vec4 sample1(vec3 p) {
-  float count = 0.0;
-  vec3 dta = vec3( 0.0 );
   vec4 re = vec4( 0.0, 0.0, 0.0, 0.0 );
-  vec4 tmp = vec4( 0.0 );
-  for(dta.x = -sampler_bias; dta.x <= sampler_bias; dta.x+=sampler_step){
-    for(dta.y = -sampler_bias; dta.y <= sampler_bias; dta.y+=sampler_step){
-      for(dta.z = -sampler_bias; dta.z <= sampler_bias; dta.z+=sampler_step){
-        tmp = texture( volume_map, p + dta * scale_inv );
-        if( tmp.a > 0.0 && tmp.rgb != zeros ){
-          if( count == 0.0 ){
-            re = tmp;
-          } else {
-            re = mix( re, tmp, 1.0 / count );
+  if( sampler_bias > 0.0 ){
+    vec3 dta = vec3( 0.0 );
+    vec4 tmp = vec4( 0.0 );
+    float count = 0.0;
+    for(dta.x = -sampler_bias; dta.x <= sampler_bias; dta.x+=sampler_step){
+      for(dta.y = -sampler_bias; dta.y <= sampler_bias; dta.y+=sampler_step){
+        for(dta.z = -sampler_bias; dta.z <= sampler_bias; dta.z+=sampler_step){
+          tmp = texture( volume_map, p + dta * scale_inv );
+          if( tmp.a > 0.0 && tmp.rgb != zeros ){
+            if( count == 0.0 ){
+              re = tmp;
+            } else {
+              re = mix( re, tmp, 1.0 / count );
+            }
+            count += 1.0;
           }
-          count += 1.0;
         }
       }
     }
+  } else {
+    re = texture( volume_map, p );
   }
   if( re.a == 0.0 ){
     re.r = 0.5;
