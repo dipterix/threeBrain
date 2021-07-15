@@ -3130,18 +3130,24 @@ class THREEBRAIN_CANVAS {
   }
 
   get_atlas_types(){
-    const re = { 'none' : 1 }; // always put none
-
-    this.group.forEach( (gp, g) => {
-      // Atlas - aparc_aseg (%s)
-      // let res = new RegExp('^Atlas - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
-      const res = CONSTANTS.REGEXP_ATLAS_GROUP.exec(g);
-      if( res && res.length === 3 ){
-        re[ res[1] ] = 1;
+    const current_subject = this.state_data.get('target_subject') || "";
+    let atlases = this.atlases.get( current_subject );
+    if( !atlases ) {
+      return([]);
+    }
+    atlases = Object.keys( atlases );
+    const re = atlases.map((v) => {
+      const m = CONSTANTS.REGEXP_ATLAS.exec( v );
+      if( m && m.length >= 2 ){
+        return( m[1] );
       }
-    });
+      return( null );
+    }).filter((v) => {
+      return( typeof(v) === 'string' );
+    })
 
-    return( Object.keys( re ) );
+
+    return( to_array( re ) );
   }
 
   get_volume_types(){
@@ -3184,10 +3190,14 @@ class THREEBRAIN_CANVAS {
 
     const state = this.state_data;
 
+    // not actually switch subjects, only reset some options
     if( !this.subject_codes.includes( target_subject ) ){
 
+      // get current subject
       target_subject = state.get('target_subject');
 
+
+      // no subject initiated, use template if multiple subjects
       if( !target_subject || !this.subject_codes.includes( target_subject ) ){
         // This happends when subjects are just loaded
         if( this.shared_data.get(".multiple_subjects") ){
@@ -3195,18 +3205,17 @@ class THREEBRAIN_CANVAS {
         }
       }
 
+      // error-proof
       if( !target_subject || !this.subject_codes.includes( target_subject ) ){
         target_subject = this.subject_codes[0];
       }
 
-
-
     }
+    let subject_changed = state.get('target_subject') === target_subject;
     state.set( 'target_subject', target_subject );
 
     let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
     let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
-
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
     let volume_type = args.volume_type || state.get( 'volume_type' ) || 'T1';
@@ -3365,11 +3374,18 @@ class THREEBRAIN_CANVAS {
     this.start_animation( 0 );
   }
 
+  // used to switch atlas, but can also switch other datacube2
   switch_atlas( target_subject, atlas_type ){
+    /*if( subject_changed ) {
+      let atlas_types = to_array( this.atlases.get(target_subject) );
+
+    }*/
+    console.debug(`Setting volume data cube: ${atlas_type} (${target_subject})`);
+
     this.atlases.forEach( (al, subject_code) => {
       for( let atlas_name in al ){
         const m = al[ atlas_name ];
-        if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
+        if( subject_code === target_subject && atlas_name === `${atlas_type} (${subject_code})`){
           m.visible = true;
         }else{
           m.visible = false;

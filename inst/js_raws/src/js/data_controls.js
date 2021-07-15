@@ -1,8 +1,7 @@
 import { THREE } from './threeplugins.js';
 import * as dat from './libs/dat.gui.module.js';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
-import { to_dict } from './utils.js';
-import { invertColor, to_array, get_or_default } from './utils.js';
+import { invertColor, to_array, get_or_default, to_dict } from './utils.js';
 import { CONSTANTS } from './constants.js';
 import { CCanvasRecorder } from './capture/CCanvasRecorder.js';
 import * as download from 'downloadjs';
@@ -39,6 +38,49 @@ class THREEBRAIN_PRESETS{
 
     this.cache = {};
 
+    this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
+      (evt) => {
+        this.update_self();
+      }, this.canvas.el );
+
+  }
+
+  // update gui controllers
+  update_self(){
+    // check if subject has changed? state.get('target_subject')
+    let c, v, flag;
+
+    if( this._ctl_voxel_type_options ){
+      c = this.gui.get_controller("Voxel Type");
+      if( !c.isfake ){
+
+        let atlases = this.canvas.get_atlas_types();
+        atlases.unshift("none");
+        if( this._ctl_voxel_type_options.length !== atlases.length ){
+          flag = true;
+        } else {
+          flag = false;
+          this._ctl_voxel_type_options.forEach((v, ii) => {
+            if( atlases[ii] !== v ){
+              flag = true;
+            }
+          })
+        }
+        if( flag ){
+          flag = this.gui.alter_item("Voxel Type", atlases, () => {
+            this._ctl_voxel_type_options = atlases;
+          })
+        }
+      }
+
+    }
+
+
+    if( typeof(this._calculate_intersection_coord) === 'function' ){
+      this._calculate_intersection_coord();
+    }
+
+    this._update_canvas();
   }
 
   /**
@@ -327,10 +369,11 @@ class THREEBRAIN_PRESETS{
       // set controller
       _controller_mni305.setValue(`${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)}`);
     };
+    this._calculate_intersection_coord = _calculate_intersection_coord;
 
-    this.canvas.bind( 'c_side_depth_subject_changed', 'switch_subject', (e) => {
+    /*this.canvas.bind( 'c_side_depth_subject_changed', 'switch_subject', (e) => {
 		  _calculate_intersection_coord();
-		}, this.canvas.el);
+		}, this.canvas.el);*/
 
     // side plane
     const _controller_coronal = this.gui
@@ -1155,26 +1198,34 @@ class THREEBRAIN_PRESETS{
           lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
           lut_alpha = lut.mapAlpha,
-          lut_type = lut.mapDataType,
-          _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
-          _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
-
-    const atlas_type = this.gui.add_item('Voxel Type', _atype, {args : _c, folder_name : folder_name })
-      .onChange((v) => {
+          lut_type = lut.mapDataType;
+          // _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none';  //_s
+    this._ctl_voxel_type_options = ['none'];
+    this._ctl_voxel_type_callback = (v) => {
+      if( v ){
+        console.log(v);
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
         this.fire_change({ 'atlas_type' : v });
-      });
-    this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
+      }
+    }
+
+    this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
+      .onChange( this._ctl_voxel_type_callback );
+
+    this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
 
     // register key callbacks
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
-        let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
+        // have to update dynamically because it could change
+        const ctl = this.gui.get_controller("Voxel Type");
+        const _c = this._ctl_voxel_type_options;
+        let current_idx = (_c.indexOf( ctl.getValue() ) + 1) % _c.length;
         if( current_idx >= 0 ){
-          atlas_type.setValue( _c[ current_idx ] );
+          ctl.setValue( _c[ current_idx ] );
         }
       }
     }, 'gui_atlas_type');
@@ -1902,6 +1953,7 @@ class THREEBRAIN_CONTROL{
     const re = {};
     re.onChange = (callback) => {};
     re.setValue = (v) => {};
+    re.isfake = true;
 
     return( re );
   }
@@ -1948,6 +2000,31 @@ class THREEBRAIN_CONTROL{
     }
 
     return(_c);
+  }
+
+  alter_item(name, options, onSucceed = null, folder_name = 'Default'){
+    let c = this.get_controller(name, folder_name);
+    if( c.getValue && c.options ){
+      console.log("Altering " + name);
+      // will unlink listeners
+      const v = c.getValue(),
+            o = to_array( options ),
+            callback = c.__onChange;
+      if( !o.includes(v) && o.length > 0 ){
+        v = o[0];
+      }
+      c.options( options );
+
+      c = this.get_controller(name, folder_name);
+      c.__onChange = undefined;
+      c.setValue( v );
+      c.__onChange = callback;
+      if( typeof(onSucceed) === 'function' ){
+        onSucceed();
+      }
+      return( true );
+    }
+    return( false );
   }
 
   add_tooltip( tooltip, name, folder ){

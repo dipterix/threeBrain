@@ -63,6 +63,10 @@ const to_array = function(x){
     return( [...x.values()] );
   }
 
+  if( Object.prototype.toString.call(x) === "[object Map Iterator]" ) {
+    return( [...x] );
+  }
+
   return( Object.values(x) );
 };
 

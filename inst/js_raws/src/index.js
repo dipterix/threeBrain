@@ -423,9 +423,9 @@ class BrainCanvas{
 
     // remember last settings
     if( this.gui ){
+      this.presets.update_self();
       this.gui.remember( this.default_controllers );
     }
-
 
     this.canvas.render();
 
