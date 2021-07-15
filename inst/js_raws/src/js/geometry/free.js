@@ -219,6 +219,7 @@ class FreeMesh extends AbstractThreeBrainObject {
   dispose(){
     this._mesh.material.dispose();
     this._mesh.geometry.dispose();
+    this._volume_texture.dispose();
   }
 
 
