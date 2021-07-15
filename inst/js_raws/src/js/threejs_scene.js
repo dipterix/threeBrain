@@ -3385,7 +3385,7 @@ class THREEBRAIN_CANVAS {
     this.atlases.forEach( (al, subject_code) => {
       for( let atlas_name in al ){
         const m = al[ atlas_name ];
-        if( subject_code === target_subject && atlas_name === `${atlas_type} (${subject_code})`){
+        if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
           m.visible = true;
         }else{
           m.visible = false;

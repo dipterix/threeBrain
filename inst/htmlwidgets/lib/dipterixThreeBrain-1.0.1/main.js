@@ -1995,7 +1995,7 @@ CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - p
 CONSTANTS.REGEXP_VOLUME_GROUP     = /^Volume - (.+) \((.+)\)$/;   // Volume - brain.finalsurfs (YAB)
 CONSTANTS.REGEXP_ELECTRODE_GROUP  = /^Electrodes \((.+)\)$/;                  // Electrodes (YAB)
 CONSTANTS.REGEXP_SURFACE          = /^([\w ]+) (Left|right) Hemisphere - (.+) \((.+)\)$/;   // Standard 141 Left Hemisphere - pial (YAB)
-CONSTANTS.REGEXP_ATLAS            = /^([^\(\)]+)\s\(/;  // Atlas - aparc_aseg (YAB)
+CONSTANTS.REGEXP_ATLAS            = /^Atlas - ([^\(\)]+)\s\(/;  // Atlas - aparc_aseg (YAB)
 CONSTANTS.REGEXP_VOLUME           = /^(.+) \((.+)\)$/;                   // brain.finalsurfs (YAB)
 CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - pSYLV12
 
@@ -68712,7 +68712,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.atlases.forEach( (al, subject_code) => {
       for( let atlas_name in al ){
         const m = al[ atlas_name ];
-        if( subject_code === target_subject && atlas_name === `${atlas_type} (${subject_code})`){
+        if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
           m.visible = true;
         }else{
           m.visible = false;
