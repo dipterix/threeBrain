@@ -41,7 +41,7 @@ const register_volumeShader1 = function(THREE){
 
         // Previous test code, seems to be poor because camera position is not well-calculated?
         // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-        'vOrigin = position * scale_inv - vDirection; ',
+        'vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection; ',
         'gl_Position = pmv * vec4( position, 1.0 );',
       '}'
     ].join( '\n' ),
@@ -89,7 +89,7 @@ void main(){
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
   // 0-255 need to be 0.5-255.5
-  vec3 p = vOrigin + bounds.x * rayDir + scale_inv * vec3(0.5,-0.5,0.5);
+  vec3 p = vOrigin + bounds.x * rayDir;
   vec3 inc = 1.0 / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
   delta /= steps;
