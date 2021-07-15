@@ -149,7 +149,7 @@ freesurfer_brain2 <- function(
     ct_shape <- as.integer(unlist( ct$get_shape() ))
 
     # re-orient to RAS
-    ct_data <- reorient_volume( ct_data, Norig )
+    ct_data <- reorient_volume( ct_data, Torig )
 
     # If T1 exists
     if(!is.null(geom_brain_t1)){
@@ -444,7 +444,7 @@ freesurfer_brain2 <- function(
   #     ct_shape = as.integer(unlist( ct$get_shape() ))
   #
   #     # re-orient to RAS
-  #     ct_data = reorient_volume( ct_data, Norig )
+  #     ct_data = reorient_volume( ct_data, Torig )
   #
   #     geom_brain_ct = DataCubeGeom2$new(
   #       name = sprintf('ct.aligned.t1 (%s)', subject_name),

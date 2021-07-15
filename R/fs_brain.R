@@ -203,7 +203,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
       # volume = aperm(volume, abs(order_index))
       # sub = sprintf(c('%d:1', '1:%d')[(sign(order_index) + 3) / 2], dim(volume))
       # volume = eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
-      volume <- reorient_volume( volume, Norig )
+      volume <- reorient_volume( volume, Torig )
 
       geom_brain_t1 <- DataCubeGeom$new(
         name = sprintf('T1 (%s)', subject_name), value = volume, dim = volume_shape,
@@ -260,7 +260,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
       ct_shape <- as.integer(unlist( ct$get_shape() ))
 
       # re-orient to RAS
-      ct_data <- reorient_volume( ct_data, Norig )
+      ct_data <- reorient_volume( ct_data, Torig )
 
       geom_brain_ct <- DataCubeGeom2$new(
         name = sprintf('ct.aligned.t1 (%s)', subject_name),
