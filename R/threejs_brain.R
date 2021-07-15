@@ -59,7 +59,10 @@ threejs_brain <- function(
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
   debug = FALSE, token = NULL, controllers = list(),
-  browser_external = TRUE, global_data = list(), global_files = list()
+  browser_external = TRUE, global_data = list(), global_files = list(),
+
+  # customized js code
+  custom_javascript = NULL
 ){
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
@@ -239,7 +242,8 @@ threejs_brain <- function(
     coords = coords,
     show_inactive_electrodes = isTRUE(show_inactive_electrodes),
     side_display = side_display,
-    control_display = control_display
+    control_display = control_display,
+    custom_javascript = custom_javascript
   )
 
   # Generate external file
