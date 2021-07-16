@@ -1,5 +1,6 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { THREE } from '../threeplugins.js';
+import { CONSTANTS } from '../constants.js';
 import { to_array, min2, sub2 } from '../utils.js';
 
 const MATERIAL_PARAMS = {
@@ -7,6 +8,12 @@ const MATERIAL_PARAMS = {
   'side': THREE.DoubleSide,
   'wireframeLinewidth' : 0.1
 };
+
+// freemesh
+// CONSTANTS.NO_COLOR = 0;
+// CONSTANTS.VERTEX_COLOR = 1;
+// CONSTANTS.VOXEL_COLOR = 2;
+// CONSTANTS.ELECTRODE_COLOR = 3;
 
 class FreeMesh extends AbstractThreeBrainObject {
 
@@ -50,8 +57,9 @@ class FreeMesh extends AbstractThreeBrainObject {
       'MeshPhongMaterial' : new THREE.MeshPhongMaterial( MATERIAL_PARAMS ),
       'MeshLambertMaterial': new THREE.MeshLambertMaterial( MATERIAL_PARAMS )
     };
-    this._material_color = THREE.NoColors;
-    this._shader_uniforms_use_volume_map = { value : false };
+    this._shader_uniforms_which_map = { value : CONSTANTS.NO_COLOR };
+
+    // For volume colors
     this._volume_margin_size = 128;
     this._volume_length = 2097152;
     this._shader_uniforms_scale_inv = {
@@ -79,17 +87,23 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     // construct geometry
 
-    const vertex_positions = [], face_orders = [];
-    vertices.forEach((v) => {
-      vertex_positions.push(v[0], v[1], v[2]);
+    const vertex_positions = new Float32Array( vertices.length * 3 ),
+          track_color = new Uint8Array( vertices.length * 3 ),
+          face_orders = new Uint32Array( faces.length * 3 );
+    vertices.forEach((v, ii) => {
+      vertex_positions[ ii * 3 ] = v[0];
+      vertex_positions[ ii * 3 + 1 ] = v[1];
+      vertex_positions[ ii * 3 + 2 ] = v[2];
     });
-    faces.forEach((v) => {
-      face_orders.push(v[0], v[1], v[2]);
+    faces.forEach((v, ii) => {
+      face_orders[ ii * 3 ] = v[0];
+      face_orders[ ii * 3 + 1 ] = v[1];
+      face_orders[ ii * 3 + 2 ] = v[2];
     });
 
-
-    this._geometry.setIndex( face_orders );
-    this._geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertex_positions, 3 ) );
+    this._geometry.setIndex( new THREE.BufferAttribute(face_orders, 1) );
+    this._geometry.setAttribute( 'position', new THREE.BufferAttribute(vertex_positions, 3) );
+    this._geometry.setAttribute( 'track_color', new THREE.BufferAttribute( track_color, 3 ) );
     // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
     // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 
@@ -195,13 +209,11 @@ class FreeMesh extends AbstractThreeBrainObject {
         }
         this._mesh.material.vertexColors = THREE.VertexColors;
         this._mesh.material.needsUpdate = true;
-        this._material_color = THREE.VertexColors;
       }
 
     }else if( update_color ){
       this._mesh.material.vertexColors = THREE.NoColors;
       this._mesh.material.needsUpdate = true;
-      this._material_color = THREE.NoColors;
     }
   }
 
@@ -308,7 +320,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this._mesh.userData.animation_target = track_data.target;
 
     const keyframe = new THREE.NumberKeyframeTrack(
-      '.userData[animationIndex]',
+      '.userData["animationIndex"]',
       time_stamp, values, THREE.InterpolateDiscrete
     );
 
@@ -359,7 +371,7 @@ class FreeMesh extends AbstractThreeBrainObject {
         // compile
         material.onBeforeCompile = ( shader , renderer ) => {
           if( renderer === this._canvas.main_renderer ){
-            shader.uniforms.use_volume_map = this._shader_uniforms_use_volume_map;
+            shader.uniforms.which_map = this._shader_uniforms_which_map;
             shader.uniforms.volume_map = this._shader_uniforms_volume_map;
             shader.uniforms.scale_inv = this._shader_uniforms_scale_inv;
             shader.uniforms.shift = this._shader_uniforms_shift;
@@ -369,7 +381,7 @@ class FreeMesh extends AbstractThreeBrainObject {
             shader.vertexShader =
             `
 precision mediump sampler3D;
-uniform bool use_volume_map;
+uniform int which_map;
 uniform sampler3D volume_map;
 uniform vec3 scale_inv;
 uniform vec3 shift;
@@ -378,6 +390,7 @@ uniform float sampler_step;
 vec3 zeros = vec3( 0.0 );
 vec4 sample1(vec3 p) {
   vec4 re = vec4( 0.0, 0.0, 0.0, 0.0 );
+  vec3 threshold = vec3( 0.007843137, 0.007843137, 0.007843137 );
   if( sampler_bias > 0.0 ){
     vec3 dta = vec3( 0.0 );
     vec4 tmp = vec4( 0.0 );
@@ -386,7 +399,12 @@ vec4 sample1(vec3 p) {
       for(dta.y = -sampler_bias; dta.y <= sampler_bias; dta.y+=sampler_step){
         for(dta.z = -sampler_bias; dta.z <= sampler_bias; dta.z+=sampler_step){
           tmp = texture( volume_map, p + dta * scale_inv );
-          if( tmp.a > 0.0 && tmp.rgb != zeros ){
+          if(
+            tmp.a > 0.0 &&
+            (tmp.r > threshold.r ||
+            tmp.g > threshold.g ||
+            tmp.b > threshold.b)
+          ){
             if( count == 0.0 ){
               re = tmp;
             } else {
@@ -411,15 +429,15 @@ vec4 sample1(vec3 p) {
   					shader.vertexShader = shader.vertexShader.replace(
   						'#include <fog_vertex>',`
 #include <fog_vertex>
-if( use_volume_map ){
+if( which_map == 2 ){
   // default vertex attributes provided by Geometry and BufferGeometry
   // attribute vec3 position;
   vec3 data_position = (position + shift) * scale_inv + 0.5;
   vec4 data_color0 = sample1( data_position - scale_inv * vec3(0.5,-0.5,0.5) );
 #if defined( USE_COLOR_ALPHA )
-	vColor = data_color0;
+	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, 0.4 );
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
-	vColor.rgb = data_color0.rgb;
+	vColor.rgb = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0.rgb, 0.4 );
 #endif
 }
   						`.split("\n").map((e) => {
@@ -440,7 +458,7 @@ if( use_volume_map ){
 
   _set_color_from_datacube2( m, bias = 3.0 ){
     if( !m || !m.isDataCube2 ){
-      this._shader_uniforms_use_volume_map.value = false;
+      this._shader_uniforms_which_map.value = CONSTANTS.NO_COLOR;
       return;
     }
 
@@ -454,12 +472,12 @@ if( use_volume_map ){
     )
     this._shader_uniforms_shift.value.copy( this._mesh.parent.position );
     this._volume_texture.needsUpdate = true;
-    this._shader_uniforms_use_volume_map.value = true;
+    this._shader_uniforms_which_map.value = CONSTANTS.VOXEL_COLOR;
     this._shader_uniforms_sampler_bias.value = bias;
     this._shader_uniforms_sampler_step.value = bias / 2;
 
     /*
-    // this._shader_uniforms_use_volume_map = { value : false };
+    // this._shader_uniforms_which_map = { value : false };
     // this._shader_uniforms_volume_map = { value : null };
     // this._shader_uniforms_scale_inv = { value : new THREE.Vector3() };
     // this._shader_uniforms_shift = { value : new THREE.Vector3() };
@@ -554,7 +572,7 @@ if( use_volume_map ){
 
       this._material_type = material_type;
       this._mesh.material = _m;
-      this._mesh.material.vertexColors = this._material_color;
+      this._mesh.material.vertexColors = THREE.VertexColors;
       this._mesh.material.opacity = _o;
       this._mesh.material.needsUpdate = true;
       if( update_canvas ){
