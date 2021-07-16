@@ -1725,12 +1725,13 @@ class THREEBRAIN_CANVAS {
     // Pre render all meshes
     this.mesh.forEach((m) => {
       if( typeof m.userData.pre_render === 'function' ){
-        m.userData.pre_render( results );
-        /*
+        //m.userData.pre_render( results );
         try {
-          m.userData.pre_render();
-        } catch (e) {}
-        */
+          m.userData.pre_render( results );
+        } catch (e) {
+          console.warn(`Pre-render encountering error: ${e.message}`);
+          console.log(e.stack);
+        }
       }
     });
 
