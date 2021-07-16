@@ -33,7 +33,7 @@ wg <- yab$plot(
   window.m=canvas.threebrain_instances.get("Atlas - aparc_aseg (N27)");
   window.m1=canvas.threebrain_instances.get("Standard 141 Left Hemisphere - pial (N27)");
   window.m2=canvas.threebrain_instances.get("Standard 141 Right Hemisphere - pial (N27)");
-  m1._set_color_from_datacube2(m, 3);
+  // m1._set_color_from_datacube2(m, 3);
   m2._set_color_from_datacube2(m, 3);
   //this.gui.get_controller("Screenshot").domElement.click();
   )'

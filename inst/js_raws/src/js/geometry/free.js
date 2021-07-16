@@ -6,11 +6,12 @@ import { to_array, min2, sub2 } from '../utils.js';
 const MATERIAL_PARAMS = {
   'transparent' : true,
   'side': THREE.DoubleSide,
-  'wireframeLinewidth' : 0.1
+  'wireframeLinewidth' : 0.1,
+  'vertexColors' : THREE.VertexColors
 };
 
 // freemesh
-// CONSTANTS.NO_COLOR = 0;
+// CONSTANTS.DEFAULT_COLOR = 0;
 // CONSTANTS.VERTEX_COLOR = 1;
 // CONSTANTS.VOXEL_COLOR = 2;
 // CONSTANTS.ELECTRODE_COLOR = 3;
@@ -54,10 +55,10 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     // STEP 3: mesh settings
     this._materials = {
-      'MeshPhongMaterial' : new THREE.MeshPhongMaterial( MATERIAL_PARAMS ),
+      'MeshPhongMaterial' : new THREE.MeshPhongMaterial( MATERIAL_PARAMS),
       'MeshLambertMaterial': new THREE.MeshLambertMaterial( MATERIAL_PARAMS )
     };
-    this._shader_uniforms_which_map = { value : CONSTANTS.NO_COLOR };
+    this._shader_uniforms_which_map = { value : CONSTANTS.DEFAULT_COLOR };
 
     // For volume colors
     this._volume_margin_size = 128;
@@ -89,7 +90,12 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     const vertex_positions = new Float32Array( vertices.length * 3 ),
           track_color = new Uint8Array( vertices.length * 3 ),
-          face_orders = new Uint32Array( faces.length * 3 );
+          face_orders = new Uint32Array( faces.length * 3 ),
+          vertex_color = new Uint8Array( vertices.length * 3 ).fill(255);
+
+    this._track_color = track_color;
+    this._vertex_color = vertex_color;
+
     vertices.forEach((v, ii) => {
       vertex_positions[ ii * 3 ] = v[0];
       vertex_positions[ ii * 3 + 1 ] = v[1];
@@ -103,7 +109,10 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     this._geometry.setIndex( new THREE.BufferAttribute(face_orders, 1) );
     this._geometry.setAttribute( 'position', new THREE.BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'track_color', new THREE.BufferAttribute( track_color, 3 ) );
+    this._geometry.setAttribute( 'track_color', new THREE.BufferAttribute( track_color, 3, true ) );
+    this._geometry.setAttribute( 'color', new THREE.BufferAttribute( vertex_color, 3, true ) );
+
+
     // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
     // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 
@@ -124,7 +133,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     // register userData to comply with main framework
     this._mesh.userData.construct_params = g;
 
-    // animation data
+    // animation data (compatibility issue)
     this._mesh.userData.ani_name = 'default';
     this._mesh.userData.ani_all_names = Object.keys( g.keyframes );
     this._mesh.userData.ani_exists = this._mesh.userData.ani_all_names.length > 0;
@@ -143,7 +152,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     // instead of using surface name, use
     this.register_object( ['surfaces'] );
 
-    this.set_vertex_color(this._vertex_cname, true);
+    this.set_primary_color(this._vertex_cname, true);
 
     // calculates global position to align with volume data
     // this._mesh.getWorldPosition( this._shader_uniforms_shift.value );
@@ -164,67 +173,95 @@ class FreeMesh extends AbstractThreeBrainObject {
   }
 
   // internally used
-  _set_vertex_color( cname, color_data, update_color = false ){
-    const g = this._params;
+  // primary colors are gray-based (like sulc, curv...)
+  _set_track( cname, color_data, update_color = false, make_primary = false ){
 
-    let colattr = this._geometry.getAttribute('color'),
-        missattr = colattr === undefined;
-    let scale = 1;
-
-
-    if( color_data && Array.isArray(color_data.value) &&
-        this._mesh.geometry.attributes.position.count == color_data.value.length ){
-      // test passed
-      this._vertex_cname = cname;
-
-      if( missattr ){
-        colattr = new THREE.Uint8BufferAttribute( new Uint8Array(color_data.value.length * 3), 3, true );
-      }
-
-
-      if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
-        color_data.range = [-1, 1];
-      }
-
-      scale = Math.max(color_data.range[1], -color_data.range[0]);
-
-      // generate color for each vertices
-      const _transform = (v, b = 10 / scale) => {
-        // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
-        let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
-        return( s );
-      };
-      color_data.value.forEach((v, ii) => {
-        let col;
-        // Make it lighter using sigmoid function
-        col = _transform(v);
-        colattr.setXYZ(ii, col, col, col);
-      });
-
-
+    if( !(color_data && Array.isArray(color_data.value)) ){
       if( update_color ){
-        // update color to geometry
-        if( missattr ){
-          this._mesh.geometry.setAttribute( 'color', colattr );
-        }
-        this._mesh.material.vertexColors = THREE.VertexColors;
         this._mesh.material.needsUpdate = true;
       }
+      return;
+    }
 
-    }else if( update_color ){
-      this._mesh.material.vertexColors = THREE.NoColors;
+    const g = this._params;
+    const nvertices = this._mesh.geometry.attributes.position.count;
+    let scale = 1;
+
+    let colattr = make_primary? this._vertex_color : this._track_color;
+
+    if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
+      color_data.range = [-1, 1];
+    }
+
+    scale = Math.max(color_data.range[1], -color_data.range[0]);
+
+    // generate color for each vertices
+    const _transform = (v, b = 10 / scale) => {
+      // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
+      let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
+      return( s );
+    };
+
+    color_data.value.forEach((v, ii) => {
+      if( ii >= nvertices ){ return; }
+      let col;
+      // Make it lighter using sigmoid function
+      col = _transform(v);
+      colattr.setXYZ(ii, col, col, col);
+    });
+
+
+    this._vertex_cname = cname;
+    if( update_color ){
+      // update color to geometry
       this._mesh.material.needsUpdate = true;
     }
+
   }
 
-  set_vertex_color( color_name, update_color = false ){
+  // Primary color (Curv, sulc...)
+  set_primary_color( color_name, update_color = false ){
 
     let cname = color_name || this._vertex_cname;
 
     // color data is lazy-loaded
     const color_data = this._canvas.get_data(cname, this.misc_name, this.misc_group_name);
 
-    this._set_vertex_color(cname, color_data, update_color);
+    if( !(color_data && Array.isArray(color_data.value)) ){
+      if( update_color ){
+        this._mesh.material.needsUpdate = true;
+      }
+      return;
+    }
+
+    const g = this._params;
+    const nvertices = this._mesh.geometry.attributes.position.count;
+    if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
+      color_data.range = [-1, 1];
+    }
+
+    let scale = Math.max(color_data.range[1], -color_data.range[0]);
+
+    // generate color for each vertices
+    const _transform = (v, b = 10 / scale) => {
+      // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
+      let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
+      return( s );
+    };
+
+    color_data.value.forEach((v, ii) => {
+      if( ii >= nvertices ){ return; }
+      // Make it lighter using sigmoid function
+      let col = _transform(v);
+      this._vertex_color[ ii * 3 ] = col;
+      this._vertex_color[ ii * 3 + 1 ] = col;
+      this._vertex_color[ ii * 3 + 2 ] = col;
+    });
+
+    if( update_color ){
+      // update color to geometry
+      this._mesh.material.needsUpdate = true;
+    }
 
   }
 
@@ -251,12 +288,8 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     if( reset_material !== false ){
       if( !re ){
-        // track data not found, ignore vertex color
-        this._mesh.material.vertexColors = THREE.NoColors;
-        this._mesh.material.needsUpdate=true;
-      }else {
-        this._mesh.material.vertexColors = THREE.VertexColors;
-        this._mesh.material.needsUpdate=true;
+        // track data not found, reset track color
+        this._track_color.fill( 0 );
       }
     }
 
@@ -458,7 +491,7 @@ if( which_map == 2 ){
 
   _set_color_from_datacube2( m, bias = 3.0 ){
     if( !m || !m.isDataCube2 ){
-      this._shader_uniforms_which_map.value = CONSTANTS.NO_COLOR;
+      this._shader_uniforms_which_map.value = CONSTANTS.DEFAULT_COLOR;
       return;
     }
 

@@ -109,7 +109,7 @@ CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera
 CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient light that lights up all cameras
 
 // freemesh
-CONSTANTS.NO_COLOR = 0;
+CONSTANTS.DEFAULT_COLOR = 0;
 CONSTANTS.VERTEX_COLOR = 1;
 CONSTANTS.VOXEL_COLOR = 2;
 CONSTANTS.ELECTRODE_COLOR = 3;
