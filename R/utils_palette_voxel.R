@@ -134,13 +134,13 @@ create_colormap <- function(
 #' @export
 save_colormap <- function(cmap, con){
   stopifnot2('colormap' %in% class(cmap), msg = "`save_colormap`: cmap must be a color map.")
-  dtype <- x$mapDataType
+  dtype <- cmap$mapDataType
+  cmap$get_key <- NULL
   x <- switch (
     cmap$mapGeomType,
     'volume' = { list("__global_data__.VolumeColorLUT" = unclass(cmap)) },
     'surface' = { list("__global_data__.SurfaceColorLUT" = unclass(cmap)) },
   )
-  x$get_key <- NULL
   jsonlite::write_json(x, path = con, auto_unbox = TRUE)
   return(invisible(normalizePath(con)))
 }
