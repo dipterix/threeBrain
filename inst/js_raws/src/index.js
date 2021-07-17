@@ -438,7 +438,12 @@ class BrainCanvas{
       window.canvas = this.canvas;
       ` + this.settings.custom_javascript;
       console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
-      eval( s );
+      try {
+        eval( s );
+      } catch (e) {
+        console.warn(e);
+      }
+
     }
   }
 }

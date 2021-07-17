@@ -892,6 +892,15 @@ class THREEBRAIN_PRESETS{
     const _ani_name_onchange = (v) => {
       // Generate animations
       this.canvas.generate_animation_clips( v, true, (cmap) => {
+
+        // update time_range
+        if( this.canvas.__min_t === undefined ) {
+          this.canvas.update_time_range();
+        }
+        this._ani_time.min( this.canvas.__min_t ).max( this.canvas.__max_t );
+        this.animation_time[0] = this.canvas.__min_t;
+        this.animation_time[1] = this.canvas.__max_t;
+
         if( !cmap ){
           legend_visible.setValue(false);
           if( v === '[None]' ){
@@ -902,11 +911,6 @@ class THREEBRAIN_PRESETS{
             });
           }
         }else{
-          this._ani_time.min( cmap.time_range[0] ).max( cmap.time_range[1] );
-          // min = cmap.time_range[0];
-          // max = cmap.time_range[1];
-          this.animation_time[0] = cmap.time_range[0];
-          this.animation_time[1] = cmap.time_range[1];
           this.set_animation_time( this.animation_time[0] );
           legend_visible.setValue(true);
 

@@ -5,20 +5,22 @@ yab <- rave::rave_brain2('demo/YAB',surfaces = 'smoothwm')
 yab$set_electrode_values(data.frame(
   Subject = 'YAB',
   Electrode = 14,
-  Color = 'aa'
+  Color = -1:1,
+  Time = c(0.5,3,4)
 ))
 yab <- threeBrain::merge_brain(yab)
-yab$template_object$surfaces$pial$left_hemisphere$set_value(1:10, temporary = TRUE)
-# yab$plot(
-#   debug = TRUE, controllers = list(
-#     'Left Hemisphere' = 'hidden',
-#     'Right Hemisphere' = 'hidden',
-#     'Voxel Type' = 'aparc_aseg',
-#     'Voxel Opacity' = 0.76,
-#     # 'Voxel Label' = '1026, 1002, 1023, 1010, 2026, 2002, 2023, 2010,1012, 1014, 1027, 1032, 2012, 2014, 2027, 2032,18, 54,1035, 2035',
-#     'Show Panels' = FALSE
-#   )
-# )
+
+col <- matrix(NA, 198812, 20)
+tmp <- rep(1:255,each = ceiling(198812/255))
+for(ii in 1:20){
+  skip <- floor(198812/20) * (ii-1)
+  col[(skip + 1):198812,ii] <- tmp[1:(198812-skip)]
+}
+
+yab$template_object$surfaces$pial$left_hemisphere$set_value(key = as.vector(col), time_stamp = seq(0, 5, length.out = 20))
+yab$template_object$surfaces$pial$left_hemisphere$time_stamp
+
+
 wg <- yab$plot(
   # voxel_colormap = "inst/palettes/datacube2/ContinuousSample.json",
   debug = TRUE, controllers = list(
@@ -35,6 +37,9 @@ wg <- yab$plot(
   window.m2=canvas.threebrain_instances.get("Standard 141 Right Hemisphere - pial (N27)");
   // m1._set_color_from_datacube2(m, 3);
   m2._set_color_from_datacube2(m, 3);
+  m1.object.material.userData.shader.uniforms.which_map.value=1;
+  //m1.object.geometry.attributes.track_color.needsUpdate=true;
+  //m1.object.material.needsUpdate=true;
   //this.gui.get_controller("Screenshot").domElement.click();
   )'
 

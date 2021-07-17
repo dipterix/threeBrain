@@ -1376,6 +1376,8 @@ class THREEBRAIN_CANVAS {
 
       cmap = this.color_maps.get( name );
 
+      // also need to query surface & datacube2 to check the time range
+
       if( cmap ){
         this.state_data.set( 'time_range_min', cmap.time_range[0] );
         this.state_data.set( 'time_range_max', cmap.time_range[1] );
@@ -1383,7 +1385,6 @@ class THREEBRAIN_CANVAS {
         this.state_data.set( 'time_range_min', 0 );
         this.state_data.set( 'time_range_max', 1 );
       }
-      // return(cmap);
 
     }else{
       name = get_or_default( this.state_data, 'color_map', '' );
@@ -1417,6 +1418,12 @@ class THREEBRAIN_CANVAS {
       cmap.lut.setMin( minv );
       // Legend needs to be updated
       this.start_animation( 0 );
+    }
+
+    this.update_time_range();
+    if( cmap ){
+      cmap.time_range[0] = this.__min_t;
+      cmap.time_range[1] = this.__max_t;
     }
     return( cmap );
   }
@@ -1729,8 +1736,11 @@ class THREEBRAIN_CANVAS {
         try {
           m.userData.pre_render( results );
         } catch (e) {
-          console.warn(`Pre-render encountering error: ${e.message}`);
-          console.log(e.stack);
+          if( !this.__render_error ) {
+            console.warn(e);
+            console.log( results );
+            this.__render_error = true;
+          }
         }
       }
     });
@@ -1772,6 +1782,23 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  update_time_range(){
+    let min_t0 = this.state_data.get( 'time_range_min0' );
+    let max_t0 = this.state_data.get( 'time_range_max0' );
+    let min_t = get_or_default( this.state_data, 'time_range_min', 0 );
+    let max_t = get_or_default( this.state_data, 'time_range_max', 0 );
+
+    if( min_t0 !== undefined ){
+      min_t = Math.min( min_t, min_t0 );
+    }
+
+    if( max_t0 !== undefined ){
+      max_t = Math.max( max_t, max_t0 );
+    }
+    this.__min_t = min_t;
+    this.__max_t = max_t;
+  }
+
   inc_time(){
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
@@ -1782,7 +1809,8 @@ class THREEBRAIN_CANVAS {
             (this.clock.oldTime - this.clock.startTime) / 1000
         };
 
-    const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
+    // const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
+    const time_range_min = this.__min_t;
     results.time_range_min = time_range_min;
 
     // show mesh value info

@@ -12,8 +12,8 @@ FreeGeom <- R6::R6Class(
 
     type = 'free',
 
-    # not yet implemented
     value = NULL,
+    time_stamp = NULL,
 
     clickable = FALSE,
 
@@ -21,7 +21,12 @@ FreeGeom <- R6::R6Class(
     hemisphere = NULL,
     surface_type = NULL,
 
-    set_value = function(value = NULL, time_stamp = 0, name = 'Value',
+    set_value = function(value, colormap, time_stamp = 0, key = colormap$get_key(value)){
+      self$value <- as.integer(key)
+      self$time_stamp <- time_stamp
+    },
+
+    set_value2 = function(value = NULL, time_stamp = 0, name = 'Value',
                          target = '.geometry.attributes.color.array',
                          temporary = FALSE, ...){
       stopifnot2(name != '[None]', msg = 'name cannot be "[None]", it\'s reserved')

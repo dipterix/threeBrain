@@ -2,56 +2,28 @@
 % Please edit documentation in R/utils_palette_voxel.R
 \name{voxel_colormap}
 \alias{voxel_colormap}
+\alias{create_colormap}
+\alias{save_colormap}
 \alias{freeserfer_colormap}
-\alias{create_voxel_colormap_discrete}
-\alias{create_voxel_colormap_continuous}
-\alias{load_voxel_colormap}
-\alias{save_voxel_colormap}
-\alias{create_voxel_palette_discrete}
-\alias{create_voxel_palette_continuous}
+\alias{load_colormap}
 \title{Creates color maps for volume data (\code{\link{DataCubeGeom2}})}
 \usage{
-freeserfer_colormap(write_to)
-
-create_voxel_colormap_discrete(
+create_colormap(
+  gtype = c("surface", "volume"),
+  dtype = c("continuous", "discrete"),
   key,
   color,
-  label = NULL,
+  value,
   alpha = FALSE,
   con = NULL,
   ...
 )
 
-create_voxel_colormap_continuous(
-  key,
-  color,
-  value = NULL,
-  alpha = FALSE,
-  con = NULL,
-  ...
-)
+save_colormap(cmap, con)
 
-load_voxel_colormap(con)
+freeserfer_colormap(con)
 
-save_voxel_colormap(x, con)
-
-create_voxel_palette_discrete(
-  key,
-  color,
-  label = NULL,
-  alpha = FALSE,
-  con = NULL,
-  ...
-)
-
-create_voxel_palette_continuous(
-  key,
-  color,
-  value = NULL,
-  alpha = FALSE,
-  con = NULL,
-  ...
-)
+load_colormap(con)
 }
 \arguments{
 \item{key}{non-negative integer vector corresponding to voxel values;
@@ -59,17 +31,17 @@ its length must exceed 1; see 'Details'}
 
 \item{color}{characters, corresponding to color strings for each key}
 
-\item{label}{name for each key, discrete palettes only}
+\item{value}{actual value for each key, continuous palettes only}
 
 \item{alpha}{whether to respect transparency}
 
-\item{con, write_to}{a file path to write results to or to read from. The
+\item{con}{a file path to write results to or to read from. The
 file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.}
 
 \item{...}{used by continuous color maps, passed to
 \code{\link[grDevices]{colorRampPalette}}. Ignored by others}
 
-\item{value}{actual value for each key, continuous palettes only}
+\item{label}{name for each key, discrete palettes only}
 
 \item{x}{voxel color map object to be saved}
 }
