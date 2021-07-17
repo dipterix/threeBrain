@@ -1961,7 +1961,7 @@ class THREEBRAIN_CANVAS {
         `${results.current_time.toFixed(3)} s`,
 
         // offset
-        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 1);
     }
   }
 
@@ -2891,7 +2891,8 @@ class THREEBRAIN_CANVAS {
       cached_items.forEach((nm) => {
         let cache_info = g.group_data[nm];
 
-        if(cache_info === undefined || cache_info === null || Array.isArray(cache_info) ){
+        if(cache_info === undefined || cache_info === null ||
+          Array.isArray(cache_info) || cache_info.file_name === undefined ){
           // Already cached
           item_size -= 1;
         /*}else if( cache_info.lazy ){
