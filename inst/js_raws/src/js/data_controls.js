@@ -1240,7 +1240,7 @@ class THREEBRAIN_PRESETS{
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject"),
               // mesh = this.canvas.atlases.get(sub)[`${atlas_type} (${sub})`],
-              inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`),
+              inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
               opa = v < 0.001 ? -1 : v;
         // mesh.material.uniforms.alpha.value = opa;
         if( inst && inst.isDataCube2 ){
@@ -1264,7 +1264,7 @@ class THREEBRAIN_PRESETS{
       const voxel_minmax = (l, u) => {
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`);
+        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -1312,7 +1312,7 @@ class THREEBRAIN_PRESETS{
 
         let atlas_type = this.canvas.state_data.get("atlas_type");
         const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`${atlas_type} (${sub})`);
+        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
         if( inst && inst.isDataCube2 ){
 
           // might be large?
