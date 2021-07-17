@@ -283,22 +283,30 @@ class THREEBRAIN_PRESETS{
 
       this._update_canvas();
     });
-    // initialize Settings
-    const inital_camera_pos = new THREE.Vector3().fromArray(
-      this.settings.camera_pos
-    );
-    if (inital_camera_pos.length() > 0){
-      this.canvas.main_camera.position.set(
-        inital_camera_pos.x,
-        inital_camera_pos.y,
-        inital_camera_pos.z
-      ).normalize().multiplyScalar(500);
-      if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
-        this.canvas.main_camera.up.set( 0, 0, 1 );
-      } else {
-        this.canvas.main_camera.up.set( 0, 1, 0 );
+    /**
+     * initialize camera position. This requires `__reset_flag` from Canvas
+     * If __reset_flag=false, this means we are in shiny_mode and the widget
+     * has already been loaded once
+     */
+
+    if( this.canvas.__reset_flag ){
+      const inital_camera_pos = new THREE.Vector3().fromArray(
+        this.settings.camera_pos
+      );
+      if (inital_camera_pos.length() > 0){
+        this.canvas.main_camera.position.set(
+          inital_camera_pos.x,
+          inital_camera_pos.y,
+          inital_camera_pos.z
+        ).normalize().multiplyScalar(500);
+        if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+        } else {
+          this.canvas.main_camera.up.set( 0, 1, 0 );
+        }
       }
     }
+
     this._update_canvas();
   }
 

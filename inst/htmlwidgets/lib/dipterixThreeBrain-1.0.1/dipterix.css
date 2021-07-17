@@ -270,3 +270,39 @@
   font-size: 0.85em;
 }
 
+.threejs-brain-blank-container {
+  background-color: #eee;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.threejs-brain-blank-container:hover {
+  background-color: #666;
+}
+.threejs-brain-modal {
+  margin:0 auto;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  font-size: 2em;
+  transition: color 0.3s;
+}
+
+.threejs-brain-blank-container:hover .threejs-brain-modal{
+  color: #eee;
+}
+
+
+.threejs-brain-loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: threejs-brain-loader-spin 2s linear infinite;
+}
+
+@keyframes threejs-brain-loader-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

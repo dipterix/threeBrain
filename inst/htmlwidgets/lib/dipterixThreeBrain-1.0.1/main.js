@@ -59374,22 +59374,30 @@ class data_controls_THREEBRAIN_PRESETS{
 
       this._update_canvas();
     });
-    // initialize Settings
-    const inital_camera_pos = new threeplugins["a" /* THREE */].Vector3().fromArray(
-      this.settings.camera_pos
-    );
-    if (inital_camera_pos.length() > 0){
-      this.canvas.main_camera.position.set(
-        inital_camera_pos.x,
-        inital_camera_pos.y,
-        inital_camera_pos.z
-      ).normalize().multiplyScalar(500);
-      if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
-        this.canvas.main_camera.up.set( 0, 0, 1 );
-      } else {
-        this.canvas.main_camera.up.set( 0, 1, 0 );
+    /**
+     * initialize camera position. This requires `__reset_flag` from Canvas
+     * If __reset_flag=false, this means we are in shiny_mode and the widget
+     * has already been loaded once
+     */
+
+    if( this.canvas.__reset_flag ){
+      const inital_camera_pos = new threeplugins["a" /* THREE */].Vector3().fromArray(
+        this.settings.camera_pos
+      );
+      if (inital_camera_pos.length() > 0){
+        this.canvas.main_camera.position.set(
+          inital_camera_pos.x,
+          inital_camera_pos.y,
+          inital_camera_pos.z
+        ).normalize().multiplyScalar(500);
+        if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+        } else {
+          this.canvas.main_camera.up.set( 0, 1, 0 );
+        }
       }
     }
+
     this._update_canvas();
   }
 
@@ -65958,7 +65966,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
         `${results.current_time.toFixed(3)} s`,
 
         // offset
-        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 1);
     }
   }
 
@@ -66888,7 +66896,8 @@ class threejs_scene_THREEBRAIN_CANVAS {
       cached_items.forEach((nm) => {
         let cache_info = g.group_data[nm];
 
-        if(cache_info === undefined || cache_info === null || Array.isArray(cache_info) ){
+        if(cache_info === undefined || cache_info === null ||
+          Array.isArray(cache_info) || cache_info.file_name === undefined ){
           // Already cached
           item_size -= 1;
         /*}else if( cache_info.lazy ){
@@ -67903,7 +67912,8 @@ __webpack_require__.r(__webpack_exports__);
 // import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 
 class BrainCanvas{
-  constructor(el, width, height, shiny_mode = false, viewer_mode = false, cache = false, DEBUG = true){
+  constructor(el, width, height, shiny_mode = false, viewer_mode = false,
+    cache = false, DEBUG = true){
     // Make sure to resize widget in the viewer model because its parent element is absolute in position and setting height, width to 100% won't work.
     this.el = el;
     if(viewer_mode){
@@ -68097,9 +68107,9 @@ class BrainCanvas{
 
   }
 
-  _set_loader_callbacks(){
+  _set_loader_callbacks( callback ){
     this.canvas.loader_manager.onLoad = () => {
-      this.finalize_render();
+      this.finalize_render( callback );
     };
 
     this.el_text.style.display = 'block';
@@ -68119,7 +68129,7 @@ class BrainCanvas{
   }
 
 
-  render_value( x ){
+  render_value( x, reset = false, callback = undefined ){
     this.geoms = x.geoms;
     this.settings = x.settings;
     this.default_controllers = x.settings.default_controllers || {},
@@ -68128,6 +68138,7 @@ class BrainCanvas{
     this.DEBUG = x.settings.debug || false;
 
     this.canvas.DEBUG = this.DEBUG;
+    this.canvas.__reset_flag = reset === true;
     this.shiny.set_token( this.settings.token );
 
     if(this.DEBUG){
@@ -68181,7 +68192,7 @@ class BrainCanvas{
     this.canvas.loader_triggered = false;
 
     // Register some callbacks
-    this._set_loader_callbacks();
+    this._set_loader_callbacks( callback );
 
     let promises = this.groups.map( (g) => {
       return(new Promise( (resolve) => {
@@ -68192,7 +68203,7 @@ class BrainCanvas{
 
     Promise.all(promises).then((values) => {
       if( !this.canvas.loader_triggered ){
-        this.finalize_render();
+        this.finalize_render( callback );
       }
     });
 
@@ -68211,7 +68222,7 @@ class BrainCanvas{
   }
 
 
-  finalize_render(){
+  finalize_render( callback ){
     console.debug(this.outputId + ' - Finished loading. Adding object');
     // this.el_text2.innerHTML = '';
     this.el_text.style.display = 'none';
@@ -68317,6 +68328,13 @@ class BrainCanvas{
 
     this.canvas.start_animation(0);
 
+    if( typeof( callback ) === 'function' ){
+      try {
+        callback();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
     // run customized js code
     if( this.settings.custom_javascript &&
         this.settings.custom_javascript !== ''){

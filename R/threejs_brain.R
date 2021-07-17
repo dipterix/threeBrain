@@ -65,8 +65,23 @@ threejs_brain <- function(
   browser_external = TRUE, global_data = list(), global_files = list(),
 
   # customized js code
-  custom_javascript = NULL
+  custom_javascript = NULL,
+  show_modal = "auto"
 ){
+  if(isTRUE(show_modal == 'auto')){
+    if( is.null(shiny::getDefaultReactiveDomain()) ){
+      show_modal <- FALSE
+    } else {
+      # check if rave is launched
+      if( isNamespaceLoaded("rave") ){
+        show_modal <- FALSE
+      } else {
+        show_modal <- TRUE
+      }
+    }
+  } else {
+    show_modal <- isTRUE(as.logical(show_modal))
+  }
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
   stopifnot2(length(coords) == 0 || (length(coords) == 3 && is.numeric(coords)), msg = 'corrds must be NULL or a vector length of 3')
@@ -291,7 +306,8 @@ threejs_brain <- function(
   htmlwidgets::createWidget(
     name = 'threejs_brain', x = list(
       data_filename = data_filename,
-      settings = settings
+      settings = settings,
+      force_render = !show_modal
     ), width = width, height = height, package = 'threeBrain', sizingPolicy = htmlwidgets::sizingPolicy(
       defaultWidth = '100%',
       browser.external = browser_external,

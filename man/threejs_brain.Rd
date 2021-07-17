@@ -42,7 +42,8 @@ threejs_brain(
   browser_external = TRUE,
   global_data = list(),
   global_files = list(),
-  custom_javascript = NULL
+  custom_javascript = NULL,
+  show_modal = "auto"
 )
 }
 \arguments{
