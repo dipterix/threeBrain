@@ -2870,7 +2870,7 @@ class THREEBRAIN_CANVAS {
     if(g.trans_mat !== null){
       let trans = new THREE.Matrix4();
       trans.set(...g.trans_mat);
-      let inverse_trans = new THREE.Matrix4().getInverse( trans );
+      let inverse_trans = new THREE.Matrix4().copy( trans ).invert();
 
       gp.userData.trans_mat = trans;
       gp.userData.inv_trans_mat = inverse_trans;
@@ -3272,7 +3272,7 @@ class THREEBRAIN_CANVAS {
         v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
         v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
         v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-      const MNI305_tkRAS = new THREE.Matrix4().getInverse( tkRAS_MNI305 );
+      const MNI305_tkRAS = new THREE.Matrix4().copy( tkRAS_MNI305 ).invert();
       anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
     }
 
@@ -3524,7 +3524,8 @@ mapped = false,
                       v2v_targ[2][0], v2v_targ[2][1], v2v_targ[2][2], v2v_targ[2][3],
                       v2v_targ[3][0], v2v_targ[3][1], v2v_targ[3][2], v2v_targ[3][3] );
 
-            mat2.getInverse( mat2 );
+            // mat2.getInverse( mat2 );
+            mat2.invert();
 
             if( mni305_points.x !== 0 || mni305_points.y !== 0 || mni305_points.z !== 0 ){
               pos_targ.set( mni305_points.x, mni305_points.y, mni305_points.z ).applyMatrix4(mat2);

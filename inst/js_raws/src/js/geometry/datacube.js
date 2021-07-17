@@ -27,7 +27,7 @@ class DataCube extends AbstractThreeBrainObject {
     let mesh, group_name;
 
     let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-        line_geometry = new THREE.Geometry();
+        line_geometry = new THREE.BufferGeometry();
     line_material.depthTest = false;
 
 
@@ -129,10 +129,13 @@ class DataCube extends AbstractThreeBrainObject {
   	// generate diagonal line
   	const _mhw = Math.max( ...cube_half_size );
 
-  	line_geometry.vertices.push(
+    const line_vert = [];
+  	line_vert.push(
     	new THREE.Vector3( -_mhw, -_mhw, 0 ),
     	new THREE.Vector3( _mhw, _mhw, 0 )
     );
+    line_geometry.setFromPoints( line_vert );
+
     let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
         line_mesh_xy = new THREE.Line( line_geometry, line_material ),
         line_mesh_yz = new THREE.Line( line_geometry, line_material );
