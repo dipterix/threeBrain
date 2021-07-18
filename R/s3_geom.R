@@ -53,10 +53,14 @@
 #' \dontrun{
 #'
 #' # download N27 brain
-#' # Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
+#' # Make sure you have N27 brain downloaded to `default_template_directory()`
 #' # download_N27()
 #'
-#' dat = threeBrain::read_fs_asc('~/rave_data/others/three_brain/N27/surf/lh.pial.asc')
+#' template_dir <- default_template_directory()
+#'
+#' dat = threeBrain::read_fs_asc(
+#'   file.path(template_dir, 'N27/surf/lh.pial.asc')
+#' )
 #' vertex = dat$vertices[,1:3]
 #' face = dat$faces[,1:3]
 #'
@@ -115,10 +119,10 @@ geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL
 #' However, it's always recommended to pass a group to the free mesh.
 #' @examples
 #' \dontrun{
-#' # Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
+#' # Make sure you have N27 brain downloaded to `default_template_directory()`
 #' # threeBrain::download_N27()
 #'
-#' n27_dir = '~/rave_data/others/three_brain/N27/'
+#' n27_dir = file.path(default_template_directory(), "N27")
 #' surf_type = 'pial'
 #'
 #' # Locate mesh files

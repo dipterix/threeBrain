@@ -7,7 +7,7 @@ import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
 import { CONSTANTS } from './constants.js';
 import { generate_animation_default } from './Math/animations.js';
-import { gen_sphere } from './geometry/sphere.js';
+import { gen_sphere, is_electrode } from './geometry/sphere.js';
 import { gen_datacube } from './geometry/datacube.js';
 import { gen_datacube2 } from './geometry/datacube2.js';
 import { gen_tube } from './geometry/tube.js';
@@ -129,6 +129,7 @@ class THREEBRAIN_CANVAS {
 
     // All mesh/geoms in this store will be calculated when raycasting
     this.clickable = new Map();
+    this.clickable_array = [];
 
     // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
@@ -659,7 +660,11 @@ class THREEBRAIN_CANVAS {
     this.focus_box = new THREE.BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
-    this.bounding_box = this.focus_box.clone();
+    this.bounding_box = new THREE.BoxHelper();
+    this.bounding_box.material.color.setRGB( 0, 0, 1 );
+    this.bounding_box.userData.added = false;
+    this.bounding_box.layers.set( CONSTANTS.LAYER_INVISIBLE_31 )
+
 
     this.set_font_size();
 
@@ -684,6 +689,11 @@ class THREEBRAIN_CANVAS {
     this.json_loader = new THREE.FileLoader( this.loader_manager );
     this.font_loader = new THREE.FontLoader( this.loader_manager );
 
+  }
+
+  finish_init(){
+    // finalizing initialization of each geom
+    this.dispatch_event( "canvas_finish_init" );
   }
 
   dispatch_event( type, data ){
@@ -974,7 +984,10 @@ class THREEBRAIN_CANVAS {
 
       for( let _nm of this.mesh.keys() ){
         this_obj = this.mesh.get( _nm );
-        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
           if( !m ){
             this.focus_object( this_obj, true );
             return(null);
@@ -1012,7 +1025,10 @@ class THREEBRAIN_CANVAS {
 
       for( let _nm of this.mesh.keys() ){
         this_obj = this.mesh.get( _nm );
-        if( this_obj.isMesh && this_obj.userData.construct_params.is_electrode ){
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
           if( m && last_obj && m.name == this_obj.name ){
             this.focus_object( last_obj, true );
             return(null);
@@ -1071,9 +1087,16 @@ class THREEBRAIN_CANVAS {
     }
   }
 
+  /*
+  * @param reset whether to reset (hide) box that is snapped to m
+  */
   highlight( m, reset = false ){
 
-    const highlight_disabled = get_or_default( this.state_data, 'highlight_disabled', false );
+    const highlight_disabled = get_or_default(
+      this.state_data,
+      'highlight_disabled',
+      false
+    );
 
     // use bounding box with this.focus_box
     if( !m || !m.isObject3D ){ return(null); }
@@ -1131,7 +1154,12 @@ class THREEBRAIN_CANVAS {
       // intersect with all clickables
       // set raycaster to be layer 14
       this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
-      items = this.mouse_raycaster.intersectObjects( to_array( this.clickable ) );
+
+      // Only raycast with visible
+      items = this.mouse_raycaster.intersectObjects(
+        // to_array( this.clickable )
+        this.clickable_array.filter((e) => { return(e.visible === true) })
+      );
       // items = this.mouse_raycaster.intersectObjects( this.scene.children );
     }else if( request_type.isObject3D || Array.isArray( request_type ) ){
       // set raycaster to be layer 8 (main camera)
@@ -1353,6 +1381,8 @@ class THREEBRAIN_CANVAS {
 
       cmap = this.color_maps.get( name );
 
+      // also need to query surface & datacube2 to check the time range
+
       if( cmap ){
         this.state_data.set( 'time_range_min', cmap.time_range[0] );
         this.state_data.set( 'time_range_max', cmap.time_range[1] );
@@ -1360,7 +1390,6 @@ class THREEBRAIN_CANVAS {
         this.state_data.set( 'time_range_min', 0 );
         this.state_data.set( 'time_range_max', 1 );
       }
-      // return(cmap);
 
     }else{
       name = get_or_default( this.state_data, 'color_map', '' );
@@ -1394,6 +1423,12 @@ class THREEBRAIN_CANVAS {
       cmap.lut.setMin( minv );
       // Legend needs to be updated
       this.start_animation( 0 );
+    }
+
+    this.update_time_range();
+    if( cmap ){
+      cmap.time_range[0] = this.__min_t;
+      cmap.time_range[1] = this.__max_t;
     }
     return( cmap );
   }
@@ -1702,12 +1737,16 @@ class THREEBRAIN_CANVAS {
     // Pre render all meshes
     this.mesh.forEach((m) => {
       if( typeof m.userData.pre_render === 'function' ){
-        m.userData.pre_render( results );
-        /*
+        //m.userData.pre_render( results );
         try {
-          m.userData.pre_render();
-        } catch (e) {}
-        */
+          m.userData.pre_render( results );
+        } catch (e) {
+          if( !this.__render_error ) {
+            console.warn(e);
+            console.log( results );
+            this.__render_error = true;
+          }
+        }
       }
     });
 
@@ -1748,6 +1787,23 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  update_time_range(){
+    let min_t0 = this.state_data.get( 'time_range_min0' );
+    let max_t0 = this.state_data.get( 'time_range_max0' );
+    let min_t = get_or_default( this.state_data, 'time_range_min', 0 );
+    let max_t = get_or_default( this.state_data, 'time_range_max', 0 );
+
+    if( min_t0 !== undefined ){
+      min_t = Math.min( min_t, min_t0 );
+    }
+
+    if( max_t0 !== undefined ){
+      max_t = Math.max( max_t, max_t0 );
+    }
+    this.__min_t = min_t;
+    this.__max_t = max_t;
+  }
+
   inc_time(){
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
@@ -1758,7 +1814,8 @@ class THREEBRAIN_CANVAS {
             (this.clock.oldTime - this.clock.startTime) / 1000
         };
 
-    const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
+    // const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
+    const time_range_min = this.__min_t;
     results.time_range_min = time_range_min;
 
     // show mesh value info
@@ -1909,7 +1966,7 @@ class THREEBRAIN_CANVAS {
         `${results.current_time.toFixed(3)} s`,
 
         // offset
-        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 1);
     }
   }
 
@@ -2514,6 +2571,7 @@ class THREEBRAIN_CANVAS {
     // Stop showing information of any selected objects
     this.object_chosen=undefined;
     this.clickable.clear();
+    this.clickable_array.length = 0;
 
     this.subject_codes.length = 0;
     this.electrodes.clear();
@@ -2621,11 +2679,24 @@ class THREEBRAIN_CANVAS {
       this.volumes.set( subject_code, {} );
       this.ct_scan.set( subject_code, {} );
       this.surfaces.set(subject_code, {} );
-      this.atlases.set(subject_code, {} );
+      this.atlases.set( subject_code, {} );
     }
 
 
     inst.finish_init();
+  }
+
+  add_clickable( name, obj ){
+    if( this.clickable.has( name ) ){
+      // remove from this.clickable_array
+      const sub = this.clickable.get( name ),
+            idx = this.clickable_array.indexOf( sub );
+      if( idx > -1 ){
+        this.clickable_array.splice(idx, 1);
+      }
+    }
+    this.clickable.set( name, obj );
+    this.clickable_array.push( obj );
   }
 
   _register_datacube( m ){
@@ -2804,7 +2875,7 @@ class THREEBRAIN_CANVAS {
     if(g.trans_mat !== null){
       let trans = new THREE.Matrix4();
       trans.set(...g.trans_mat);
-      let inverse_trans = new THREE.Matrix4().getInverse( trans );
+      let inverse_trans = new THREE.Matrix4().copy( trans ).invert();
 
       gp.userData.trans_mat = trans;
       gp.userData.inv_trans_mat = inverse_trans;
@@ -2825,7 +2896,8 @@ class THREEBRAIN_CANVAS {
       cached_items.forEach((nm) => {
         let cache_info = g.group_data[nm];
 
-        if(cache_info === undefined || cache_info === null || Array.isArray(cache_info) ){
+        if(cache_info === undefined || cache_info === null ||
+          Array.isArray(cache_info) || cache_info.file_name === undefined ){
           // Already cached
           item_size -= 1;
         /*}else if( cache_info.lazy ){
@@ -3093,18 +3165,24 @@ class THREEBRAIN_CANVAS {
   }
 
   get_atlas_types(){
-    const re = { 'none' : 1 }; // always put none
-
-    this.group.forEach( (gp, g) => {
-      // Atlas - aparc_aseg (%s)
-      // let res = new RegExp('^Atlas - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
-      const res = CONSTANTS.REGEXP_ATLAS_GROUP.exec(g);
-      if( res && res.length === 3 ){
-        re[ res[1] ] = 1;
+    const current_subject = this.state_data.get('target_subject') || "";
+    let atlases = this.atlases.get( current_subject );
+    if( !atlases ) {
+      return([]);
+    }
+    atlases = Object.keys( atlases );
+    const re = atlases.map((v) => {
+      const m = CONSTANTS.REGEXP_ATLAS.exec( v );
+      if( m && m.length >= 2 ){
+        return( m[1] );
       }
-    });
+      return( null );
+    }).filter((v) => {
+      return( typeof(v) === 'string' );
+    })
 
-    return( Object.keys( re ) );
+
+    return( to_array( re ) );
   }
 
   get_volume_types(){
@@ -3147,10 +3225,14 @@ class THREEBRAIN_CANVAS {
 
     const state = this.state_data;
 
+    // not actually switch subjects, only reset some options
     if( !this.subject_codes.includes( target_subject ) ){
 
+      // get current subject
       target_subject = state.get('target_subject');
 
+
+      // no subject initiated, use template if multiple subjects
       if( !target_subject || !this.subject_codes.includes( target_subject ) ){
         // This happends when subjects are just loaded
         if( this.shared_data.get(".multiple_subjects") ){
@@ -3158,18 +3240,17 @@ class THREEBRAIN_CANVAS {
         }
       }
 
+      // error-proof
       if( !target_subject || !this.subject_codes.includes( target_subject ) ){
         target_subject = this.subject_codes[0];
       }
 
-
-
     }
+    let subject_changed = state.get('target_subject') === target_subject;
     state.set( 'target_subject', target_subject );
 
     let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
     let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
-
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
     let volume_type = args.volume_type || state.get( 'volume_type' ) || 'T1';
@@ -3197,7 +3278,7 @@ class THREEBRAIN_CANVAS {
         v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
         v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
         v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-      const MNI305_tkRAS = new THREE.Matrix4().getInverse( tkRAS_MNI305 );
+      const MNI305_tkRAS = new THREE.Matrix4().copy( tkRAS_MNI305 ).invert();
       anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
     }
 
@@ -3328,7 +3409,14 @@ class THREEBRAIN_CANVAS {
     this.start_animation( 0 );
   }
 
+  // used to switch atlas, but can also switch other datacube2
   switch_atlas( target_subject, atlas_type ){
+    /*if( subject_changed ) {
+      let atlas_types = to_array( this.atlases.get(target_subject) );
+
+    }*/
+    console.debug(`Setting volume data cube: ${atlas_type} (${target_subject})`);
+
     this.atlases.forEach( (al, subject_code) => {
       for( let atlas_name in al ){
         const m = al[ atlas_name ];
@@ -3442,7 +3530,8 @@ mapped = false,
                       v2v_targ[2][0], v2v_targ[2][1], v2v_targ[2][2], v2v_targ[2][3],
                       v2v_targ[3][0], v2v_targ[3][1], v2v_targ[3][2], v2v_targ[3][3] );
 
-            mat2.getInverse( mat2 );
+            // mat2.getInverse( mat2 );
+            mat2.invert();
 
             if( mni305_points.x !== 0 || mni305_points.y !== 0 || mni305_points.z !== 0 ){
               pos_targ.set( mni305_points.x, mni305_points.y, mni305_points.z ).applyMatrix4(mat2);

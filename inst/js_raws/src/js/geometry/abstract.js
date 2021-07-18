@@ -99,7 +99,7 @@ class AbstractThreeBrainObject {
 
       this._canvas.mesh.set( this.name, this.object );
       if( this.clickable ){
-        this._canvas.clickable.set( this.name, this.object );
+        this._canvas.add_clickable( this.name, this.object );
       }
 
       if( this.group_name ){
@@ -116,6 +116,7 @@ class AbstractThreeBrainObject {
         this.object.userData.instance = this;
         this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
         this.object.userData.dispose = () => { this.dispose(); };
+        this.object.renderOrder = CONSTANTS.RENDER_ORDER[ this.type ] || 0;
       }
 
     }

@@ -1,8 +1,7 @@
 import { THREE } from './threeplugins.js';
 import * as dat from './libs/dat.gui.module.js';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
-import { to_dict } from './utils.js';
-import { invertColor, to_array, get_or_default } from './utils.js';
+import { invertColor, to_array, get_or_default, to_dict } from './utils.js';
 import { CONSTANTS } from './constants.js';
 import { CCanvasRecorder } from './capture/CCanvasRecorder.js';
 import * as download from 'downloadjs';
@@ -39,6 +38,23 @@ class THREEBRAIN_PRESETS{
 
     this.cache = {};
 
+    this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
+      (evt) => {
+        this.update_self();
+      }, this.canvas.el );
+
+  }
+
+  // update gui controllers
+  update_self(){
+    this.update_voxel_type();
+    this.set_surface_ctype( true );
+
+    if( typeof(this._calculate_intersection_coord) === 'function' ){
+      this._calculate_intersection_coord();
+    }
+
+    this._update_canvas();
   }
 
   /**
@@ -241,6 +257,31 @@ class THREEBRAIN_PRESETS{
 
       this._update_canvas();
     });
+    /**
+     * initialize camera position. This requires `__reset_flag` from Canvas
+     * If __reset_flag=false, this means we are in shiny_mode and the widget
+     * has already been loaded once
+     */
+
+    if( this.canvas.__reset_flag ){
+      const inital_camera_pos = new THREE.Vector3().fromArray(
+        this.settings.camera_pos
+      );
+      if (inital_camera_pos.length() > 0){
+        this.canvas.main_camera.position.set(
+          inital_camera_pos.x,
+          inital_camera_pos.y,
+          inital_camera_pos.z
+        ).normalize().multiplyScalar(500);
+        if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
+          this.canvas.main_camera.up.set( 0, 0, 1 );
+        } else {
+          this.canvas.main_camera.up.set( 0, 1, 0 );
+        }
+      }
+    }
+
+    this._update_canvas();
   }
 
   // 5. display anchor
@@ -310,10 +351,11 @@ class THREEBRAIN_PRESETS{
       // set controller
       _controller_mni305.setValue(`${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)}`);
     };
+    this._calculate_intersection_coord = _calculate_intersection_coord;
 
-    this.canvas.bind( 'c_side_depth_subject_changed', 'switch_subject', (e) => {
+    /*this.canvas.bind( 'c_side_depth_subject_changed', 'switch_subject', (e) => {
 		  _calculate_intersection_coord();
-		}, this.canvas.el);
+		}, this.canvas.el);*/
 
     // side plane
     const _controller_coronal = this.gui
@@ -611,6 +653,123 @@ class THREEBRAIN_PRESETS{
     }, 'gui_right_cycle');
   }
 
+  get_surface_ctype(){
+    const _c = this.gui.get_controller( 'Surface Color' );
+    if( _c.isfake ){ return( "none" ); }
+    return( _c.getValue() );
+  }
+  set_surface_ctype( t, sigma, blend ){
+
+    if( !this._surface_ctype_map ){ return; }
+
+    if (t === undefined){ return; }
+    let ctype = t;
+    if( t === true ){
+      // refresh
+      ctype = this._current_surface_ctype;
+    }
+    if( !ctype ){ ctype = "vertices"; }
+    this._current_surface_ctype = ctype;
+
+    let _c;
+    if( sigma === undefined ){
+      _c = this.gui.get_controller( 'Sigma' );
+      if( _c.isfake ){ sigma = 3.0; } else { sigma = _c.getValue(); }
+    }
+    if( blend === undefined ){
+      _c = this.gui.get_controller( 'Blend Factor' );
+      if( _c.isfake ){ blend = 0.4; } else { blend = _c.getValue(); }
+    }
+
+    let col_code = this._surface_ctype_map[ ctype ];
+    if( col_code === undefined ){
+      col_code = CONSTANTS.VERTEX_COLOR;
+      this._current_surface_ctype = "vertices";
+    }
+    let f = (el) => {
+      if( !(el.isFreeMesh && el._material_options) ){ return; }
+      el._material_options.which_map.value = col_code;
+      el._material_options.blend_factor.value = blend;
+
+      if( el.object.visible && col_code === CONSTANTS.VOXEL_COLOR ){
+        // need to get current active datacube2
+        const inst = this.current_voxel_type();
+        if( inst ){
+          el._set_color_from_datacube2(inst, sigma);
+        } else {
+          el._material_options.which_map.value = CONSTANTS.DEFAULT_COLOR;
+        }
+      }
+    };
+
+
+    this.canvas.threebrain_instances.forEach( f );
+
+    this._update_canvas();
+    this.fire_change({ 'surface_color_type' : this._current_surface_ctype });
+
+  }
+
+  c_surface_color(){
+    const folder_name = CONSTANTS.FOLDERS[ 'surface-selector' ],
+          maps = {
+            'vertices' : CONSTANTS.VERTEX_COLOR,
+            'sync from voxels' : CONSTANTS.VOXEL_COLOR,
+            'sync from electrodes' : CONSTANTS.ELECTRODE_COLOR,
+            'none' : CONSTANTS.DEFAULT_COLOR
+          },
+          options = Object.keys( maps );
+    this._surface_ctype_map = maps;
+    let col = 'vertices';
+
+    this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
+      .onChange((v) => {
+        this.gui.hide_item(['Blend Factor', 'Sigma'], folder_name);
+        this.canvas.__hide_voxels = false;
+        this.set_surface_ctype( v );
+
+        if( this._current_surface_ctype !== "none" ){
+          this.gui.show_item(['Blend Factor'], folder_name);
+        }
+
+        if( this._current_surface_ctype === "sync from voxels" ){
+          this.gui.show_item(['Sigma'], folder_name);
+          this.canvas.__hide_voxels = true;
+        }
+        this._update_canvas();
+      });
+
+    const blend_factor = this.gui.add_item("Blend Factor", 0.4, { folder_name : folder_name })
+      .min( 0 ).max( 1 )
+      .onChange((v) => {
+        if( typeof(v) != "number" ){
+          v = 0.4;
+        } else if( v < 0 ){
+          v = 0;
+        } else if (v > 1){
+          v = 1;
+        }
+        this.set_surface_ctype( true, undefined, v );
+        this._update_canvas();
+      })
+
+    // ---------- for voxel-color ---------------
+
+    const map_delta = this.gui.add_item("Sigma", 3.0, { folder_name : folder_name })
+      .min( 0 ).max( 10 )
+      .onChange((v) => {
+        if( v !== undefined ){
+          if( v < 0 ){ v = 0; }
+          this.set_surface_ctype( true, v );
+          this._update_canvas();
+        }
+      });
+
+
+
+    this.gui.hide_item(['Sigma'], folder_name);
+  }
+
   // 13. electrode visibility, highlight, groups
   set_electrodes_visibility( v ){
     if( !this._controller_electrodes ){
@@ -832,6 +991,15 @@ class THREEBRAIN_PRESETS{
     const _ani_name_onchange = (v) => {
       // Generate animations
       this.canvas.generate_animation_clips( v, true, (cmap) => {
+
+        // update time_range
+        if( this.canvas.__min_t === undefined ) {
+          this.canvas.update_time_range();
+        }
+        this._ani_time.min( this.canvas.__min_t ).max( this.canvas.__max_t );
+        this.animation_time[0] = this.canvas.__min_t;
+        this.animation_time[1] = this.canvas.__max_t;
+
         if( !cmap ){
           legend_visible.setValue(false);
           if( v === '[None]' ){
@@ -842,11 +1010,6 @@ class THREEBRAIN_PRESETS{
             });
           }
         }else{
-          this._ani_time.min( cmap.time_range[0] ).max( cmap.time_range[1] );
-          // min = cmap.time_range[0];
-          // max = cmap.time_range[1];
-          this.animation_time[0] = cmap.time_range[0];
-          this.animation_time[1] = cmap.time_range[1];
           this.set_animation_time( this.animation_time[0] );
           legend_visible.setValue(true);
 
@@ -1132,52 +1295,153 @@ class THREEBRAIN_PRESETS{
       });
   }
 
+  update_voxel_type(){
+    let c, v, flag;
 
-  c_atlas(){
+    if( this._ctl_voxel_type_options ){
+      c = this.gui.get_controller("Voxel Type");
+      if( !c.isfake ){
+
+        let atlases = this.canvas.get_atlas_types();
+        atlases.push("none");
+        if( this._ctl_voxel_type_options.length !== atlases.length ){
+          flag = true;
+        } else {
+          flag = false;
+          this._ctl_voxel_type_options.forEach((v, ii) => {
+            if( atlases[ii] !== v ){
+              flag = true;
+            }
+          })
+        }
+        if( flag ){
+          flag = this.gui.alter_item("Voxel Type", atlases, () => {
+            this._ctl_voxel_type_options = atlases;
+          })
+        }
+      }
+    }
+  }
+
+  current_voxel_type(){
+    const atlas_type = this.canvas.state_data.get("atlas_type") || "none",
+          sub = this.canvas.state_data.get("target_subject") || "none",
+          inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+    if( inst && inst.isDataCube2 ){
+      return( inst );
+    }
+    return;
+  }
+
+  c_voxel(){
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
-          _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none',  //_s
-          _c = ['none', 'aparc_aseg', 'aseg', 'aparc_a2009s_aseg', 'aparc_DKTatlas_aseg'];
-
-    const atlas_type = this.gui.add_item('Atlas Type', _atype, {args : _c, folder_name : folder_name })
-      .onChange((v) => {
+          lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
+          lut_map = lut.map,
+          lut_alpha = lut.mapAlpha,
+          lut_type = lut.mapDataType;
+          // _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none';  //_s
+    this._ctl_voxel_type_options = ['none'];
+    this._ctl_voxel_type_callback = (v) => {
+      if( v ){
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
         this.fire_change({ 'atlas_type' : v });
-      });
-    this.fire_change({ 'atlas_type' : _atype, 'atlas_enabled' : false});
-    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Atlas Type', folder_name);
+      }
+    }
 
+    this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
+      .onChange( this._ctl_voxel_type_callback );
 
-    const atlas_alpha = this.gui.add_item('Atlas Transparency', 1.0, { folder_name : folder_name })
-      .min(0).max(1).step(0.1)
-      .onChange((v) => {
-        let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const mesh = this.canvas.atlases.get(sub)[`Atlas - ${atlas_type} (${sub})`];
-        mesh.material.uniforms.alpha.value = v;
-        this._update_canvas();
-        this.fire_change({ 'atlas_alpha' : v });
-      });
+    this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
 
+    // register key callbacks
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
-        let current_idx = (_c.indexOf( atlas_type.getValue() ) + 1) % _c.length;
+        // have to update dynamically because it could change
+        const ctl = this.gui.get_controller("Voxel Type");
+        const _c = this._ctl_voxel_type_options;
+        let current_idx = (_c.indexOf( ctl.getValue() ) + 1) % _c.length;
         if( current_idx >= 0 ){
-          atlas_type.setValue( _c[ current_idx ] );
+          ctl.setValue( _c[ current_idx ] );
         }
       }
     }, 'gui_atlas_type');
 
-    let max_colorID = this.canvas.global_data('__global_data__FreeSurferColorLUTMaxColorID');
+    // If color map supports alpha, add override option
+    const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
+      .min(0).max(1).step(0.01)
+      .onChange((v) => {
+        const inst = this.current_voxel_type(),
+              opa = v < 0.001 ? -1 : v;
+        // mesh.material.uniforms.alpha.value = opa;
+        if( inst && inst.isDataCube2 ){
+          inst.object.material.uniforms.alpha.value = opa;
+          if( opa < 0 ){
+            inst._set_palette();
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+          }
+        }
+        this._update_canvas();
+        this.fire_change({ 'atlas_alpha' : opa });
+      });
+
+    // this.gui.hide_item("Voxel Opacity")
 
     //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
-    const atlas_thred_text = this.gui.add_item('Atlas Label', "0", { folder_name : folder_name })
+    if( lut_type === "continuous" ){
+
+      const cmap_array = Object.values(lut_map);
+      const voxel_value_range = to_array( lut.mapValueRange );
+      const voxel_minmax = (l, u) => {
+        const inst = this.current_voxel_type();
+        if( inst && inst.isDataCube2 ){
+
+          // might be large?
+          new Promise( () => {
+
+            let tmp;
+            const candidates = cmap_array.filter((e) => {
+              tmp = parseFloat(e.Label);
+              if(isNaN(tmp)){ return(false); }
+              if( tmp >= l && tmp <= u ){ return(true); }
+              return(false);
+            }).map( (e) => {
+              return(e.ColorID);
+            });
+
+            inst._set_palette( candidates );
+
+            inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this._update_canvas();
+          });
+
+        }
+      }
+      if(cmap_array.length > 0){
+        let vmin = voxel_value_range[0],
+            vmax = voxel_value_range[1];
+        this.gui.add_item('Voxel Min', vmin, { folder_name : folder_name })
+          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
+          .onChange((v) => {
+            vmin = v;
+            voxel_minmax(vmin, vmax);
+          });
+
+        this.gui.add_item('Voxel Max', vmax, { folder_name : folder_name })
+          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
+          .onChange((v) => {
+            vmax = v;
+            voxel_minmax(vmin, vmax);
+          });
+      }
+
+    } else {
+      const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
       .onChange((v) => {
 
-        let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.current_voxel_type();
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -1186,65 +1450,18 @@ class THREEBRAIN_PRESETS{
             const candidates = v.split(",")
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});
-
-            // check if 0 is in candidates, if so, show all
-            if(candidates.length === 0 || candidates.includes(0)){
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                if(inst._map_data[idx] == 0){
-                  inst._map_color[idx * 4 + 3] = 0;
-                } else {
-                  inst._map_color[idx * 4 + 3] = 1;
-                }
-              }
-            } else {
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                if(candidates.indexOf( inst._map_data[idx] ) != -1){
-                  inst._map_color[idx * 4 + 3] = 1;
-                } else {
-                  inst._map_color[idx * 4 + 3] = 0;
-                }
-              }
-            }
-
+            inst._set_palette( candidates );
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
-          })
+          });
 
         }
 
 
       });
-
-    /*
-    const atlas_thred = this.gui.add_item('Atlas Label', 0, { folder_name : folder_name })
-      .min(0).max(max_colorID).step(1)
-      .onChange((v) => {
-
-        let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
-        if( inst && inst.isDataCube2 ){
-
-          // might be large?
-          new Promise( () => {
-            for( let idx = 0; idx < inst._map_data.length; idx++ ){
-              if(v == 0 || inst._map_data[idx] == v){
-                inst._map_color[idx * 4 + 3] = 1;
-              } else {
-                inst._map_color[idx * 4 + 3] = 0;
-              }
-            }
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
-            this._update_canvas();
-          })
-
-        }
-
-
-      });
-      */
-
+    }
   }
+
 
   // -------------------------- New version --------------------------
 
@@ -1753,7 +1970,8 @@ class THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Atlas Type", "Atlas Label", "Atlas Transparency"
+      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
+      'Surface Color', 'Blend Factor', 'Sigma'
     ];
     const args_dict = to_dict( args );
 
@@ -1817,6 +2035,7 @@ class THREEBRAIN_CONTROL{
     const re = {};
     re.onChange = (callback) => {};
     re.setValue = (v) => {};
+    re.isfake = true;
 
     return( re );
   }
@@ -1863,6 +2082,31 @@ class THREEBRAIN_CONTROL{
     }
 
     return(_c);
+  }
+
+  alter_item(name, options, onSucceed = null, folder_name = 'Default'){
+    let c = this.get_controller(name, folder_name);
+    if( c.getValue && c.options ){
+      console.debug("Altering controller: " + name);
+      // will unlink listeners
+      const v = c.getValue(),
+            o = to_array( options ),
+            callback = c.__onChange;
+      if( !o.includes(v) && o.length > 0 ){
+        v = o[0];
+      }
+      c.options( options );
+
+      c = this.get_controller(name, folder_name);
+      c.__onChange = undefined;
+      c.setValue( v );
+      c.__onChange = callback;
+      if( typeof(onSucceed) === 'function' ){
+        onSucceed();
+      }
+      return( true );
+    }
+    return( false );
   }
 
   add_tooltip( tooltip, name, folder ){

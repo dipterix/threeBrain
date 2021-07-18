@@ -178,7 +178,7 @@ import_fs_T1 <- function(subject_name, fs_path, folder = 'mri', cache_dir = 'RAV
   group_volume$subject_code <- subject_name
 
   volume <- brain_t1$get_data()
-  volume <- reorient_volume( volume, Norig )
+  volume <- reorient_volume( volume, Torig )
 
   # Create a datacube geom to force cache
   DataCubeGeom$new(

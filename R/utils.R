@@ -163,6 +163,11 @@ to_json <- function(x, dataframe = 'rows', matrix = 'rowmajor', null = 'null', n
   s
 }
 
+to_json2 <- function(...){
+  toJSON <- asNamespace('htmlwidgets')$toJSON
+  toJSON(...)
+}
+
 from_json <- function(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVector,
                       simplifyMatrix = simplifyVector, flatten = FALSE, ..., from_file = NULL){
   if(length(from_file) == 1){
@@ -718,5 +723,100 @@ load_first_file <- function(files, fun, ..., if_not_found = NULL){
   f <- files[fe][[1]]
 
   fun(f, ...)
+
+}
+
+rand_string <- function(length = 50){
+  paste(sample(c(letters, LETTERS, 0:9), length, replace = TRUE), collapse = '')
+}
+
+R_user_dir <- function (package, which = c("data", "config", "cache")) {
+  stopifnot(is.character(package), length(package) == 1L)
+  which <- match.arg(which)
+  home <- normalizePath("~")
+  path <- switch(
+    which, data = {
+      p <- Sys.getenv("R_USER_DATA_DIR")
+      if (!nzchar(p)) {
+        p <- Sys.getenv("XDG_DATA_HOME")
+        if( !nzchar(p) ){
+          if( .Platform$OS.type == "windows" ){
+            p <- file.path(Sys.getenv("APPDATA"), "R", "data")
+          } else if (Sys.info()["sysname"] == "Darwin") {
+            p <- file.path(home, "Library", "Application Support", "org.R-project.R")
+          } else {
+            p <- file.path(home, ".local", "share" )
+          }
+        }
+      }
+      p
+  }, config = {
+    p <- Sys.getenv("R_USER_CONFIG_DIR")
+    if (!nzchar(p)) {
+      p <- Sys.getenv("R_USER_CONFIG_DIR")
+      if (!nzchar(p)) {
+        p <- Sys.getenv("XDG_CONFIG_HOME")
+        if (!nzchar(p)) {
+          if( .Platform$OS.type == "windows" ){
+            p <- file.path(Sys.getenv("APPDATA"), "R", "config")
+          } else if (Sys.info()["sysname"] == "Darwin") {
+            p <- file.path(home, "Library", "Preferences", "org.R-project.R")
+          } else {
+            p <- file.path(home, ".config")
+          }
+        }
+      }
+    }
+    p
+  }, cache = {
+    p <- Sys.getenv("R_USER_CACHE_DIR")
+    if (!nzchar(p)) {
+      p <- Sys.getenv("XDG_CACHE_HOME")
+      if (!nzchar(p)) {
+        if( .Platform$OS.type == "windows" ){
+          p <- file.path(Sys.getenv("LOCALAPPDATA"), "R", "cache")
+        } else if (Sys.info()["sysname"] == "Darwin") {
+          p <- file.path(home, "Library", "Caches", "org.R-project.R")
+        } else {
+          p <- file.path(home, ".cache")
+        }
+      }
+    }
+    p
+  })
+  file.path(path, "R", package)
+}
+
+#' @title Default Directory to Store Template Brain
+#' @return A directory path where template brain is stored at; see also
+#' \code{\link{download_N27}}
+#' @details When \code{threeBrain.template_dir} is not set or invalid, the
+#' function checks 'RAVE' (R Analysis and Visualization for 'iEEG',
+#' \url{https://openwetware.org/wiki/RAVE}) folder at home directory. If
+#' this folder is missing, then returns results from
+#' \code{R_user_dir('threeBrain', 'data')}. To override the default behavior,
+#' use \code{options(threeBrain.template_dir=...)}.
+#' @examples
+#'
+#' default_template_directory()
+#'
+#' @export
+default_template_directory <- function(){
+
+  re <- unname(getOption('threeBrain.template_dir', NULL), force = TRUE)
+  if(length(re) != 1 || !isTRUE(dir.exists(re))){
+    # If rave data dir exists, use rave directory
+    if(dir.exists('~/rave_data/others/three_brain')){
+      re <- '~/rave_data/others/three_brain'
+    } else {
+      re <- R_user_dir('threeBrain', 'data')
+      re <- file.path(re, 'templates')
+      if(!dir.exists(re)){
+        dir_create(re)
+      }
+    }
+  }
+
+  normalizePath(re, mustWork = FALSE)
 
 }

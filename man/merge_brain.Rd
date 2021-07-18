@@ -9,8 +9,7 @@ merge_brain(
   .list = NULL,
   template_surface_types = NULL,
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
-  template_dir = unname(getOption("threeBrain.template_dir",
-    "~/rave_data/others/three_brain"))
+  template_dir = default_template_directory()
 )
 }
 \arguments{

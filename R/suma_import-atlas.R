@@ -32,7 +32,7 @@ import_suma.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype
   group_volume$subject_code <- subject_name
 
   volume <- dat$get_data()
-  volume <- reorient_volume( volume, Norig )
+  volume <- reorient_volume( volume, Torig )
 
   # Create a datacube geom to force cache
   unlink(target)

@@ -39,10 +39,10 @@ However, it's always recommended to pass a group to the free mesh.
 }
 \examples{
 \dontrun{
-# Make sure you have N27 brain downloaded to ~/rave_data/others/threeBrain/N27
+# Make sure you have N27 brain downloaded to `default_template_directory()`
 # threeBrain::download_N27()
 
-n27_dir = '~/rave_data/others/three_brain/N27/'
+n27_dir = file.path(default_template_directory(), "N27")
 surf_type = 'pial'
 
 # Locate mesh files

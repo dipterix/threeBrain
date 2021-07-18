@@ -1,4 +1,5 @@
 
+
 #' @title Create Multi-subject Template
 #' @author Zhengjia Wang
 #' @param ...,.list \code{Brain2} objects
@@ -10,7 +11,7 @@ merge_brain <- function(
   ..., .list = NULL,
   template_surface_types = NULL,
   template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
-  template_dir = unname(getOption('threeBrain.template_dir', '~/rave_data/others/three_brain'))
+  template_dir = default_template_directory()
 ){
   MultiBrain2$new( ... , .list = .list, template_subject = template_subject,
                    template_dir = template_dir, template_surface_types = template_surface_types)
@@ -19,7 +20,7 @@ merge_brain <- function(
 
 MultiBrain2 <- R6::R6Class(
   classname = 'multi-rave-brain',
-  portable = TRUE,
+  portable = FALSE,
   cloneable = FALSE,
   public = list(
 
@@ -32,7 +33,7 @@ MultiBrain2 <- R6::R6Class(
       ..., .list = NULL,
       template_surface_types = NULL,
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
-      template_dir = unname(getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')),
+      template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)) ){
 
 
@@ -59,7 +60,7 @@ MultiBrain2 <- R6::R6Class(
     alter_template = function(
       surface_types = NULL,
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
-      template_dir = unname(getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')),
+      template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE))
     ){
       # test
@@ -132,8 +133,10 @@ MultiBrain2 <- R6::R6Class(
       names(geoms) <- NULL
 
       global_data <- self$global_data
-      control_presets <- unique(c('subject2', 'surface_type2', 'hemisphere_material',
-                                 'map_template', 'electrodes', 'atlas', control_presets, 'animation', 'display_highlights' ))
+      control_presets <- unique(c(
+        'subject2', 'surface_type2', 'hemisphere_material', 'surface_color',
+        'map_template', 'electrodes', 'voxel', control_presets, 'animation',
+        'display_highlights' ))
 
       threejs_brain(
         .list = geoms, controllers = controllers, value_alias = value_alias,

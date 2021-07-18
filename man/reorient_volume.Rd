@@ -4,12 +4,12 @@
 \alias{reorient_volume}
 \title{Function to reshape data to `RAS` order}
 \usage{
-reorient_volume(volume, Norig)
+reorient_volume(volume, Torig)
 }
 \arguments{
 \item{volume, }{3-mode tensor (voxels), usually from `mgz`, `nii`, or `BRIK` files}
 
-\item{Norig}{a \code{4x4} transform matrix mapping volume (`CRS`) to `RAS`}
+\item{Torig}{a \code{4x4} transform matrix mapping volume (`CRS`) to `RAS`}
 }
 \value{
 Reshaped tensor with dimensions corresponding to `R`, `A`, and `S`

@@ -1,4 +1,6 @@
 #' @importFrom grDevices palette
+#' @importFrom grDevices col2rgb
+#' @importFrom grDevices rgb
 #' @importFrom graphics plot
 #' @importFrom R6 is.R6
 #' @importFrom R6 R6Class
@@ -10,6 +12,7 @@
 #' @importFrom htmltools htmlDependency
 #' @importFrom shiny getDefaultReactiveDomain
 #' @importFrom utils write.csv
+#' @importFrom utils read.table
 #' @importFrom utils zip
 #' @importFrom utils compareVersion
 #' @importFrom utils download.file
@@ -88,7 +91,7 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
 
     cat2('Wrapping up installation...', level = 'INFO')
 
-    template_dir <- getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
+    template_dir <- default_template_directory()
     import_from_freesurfer(fs_path = file.path(template_dir, 'N27'), subject_name = 'N27')
 
 

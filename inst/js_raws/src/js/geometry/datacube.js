@@ -27,7 +27,7 @@ class DataCube extends AbstractThreeBrainObject {
     let mesh, group_name;
 
     let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-        line_geometry = new THREE.Geometry();
+        line_geometry = new THREE.BufferGeometry();
     line_material.depthTest = false;
 
 
@@ -129,16 +129,19 @@ class DataCube extends AbstractThreeBrainObject {
   	// generate diagonal line
   	const _mhw = Math.max( ...cube_half_size );
 
-  	line_geometry.vertices.push(
+    const line_vert = [];
+  	line_vert.push(
     	new THREE.Vector3( -_mhw, -_mhw, 0 ),
     	new THREE.Vector3( _mhw, _mhw, 0 )
     );
+    line_geometry.setFromPoints( line_vert );
+
     let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
         line_mesh_xy = new THREE.Line( line_geometry, line_material ),
         line_mesh_yz = new THREE.Line( line_geometry, line_material );
-    line_mesh_xz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-    line_mesh_xy.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
-    line_mesh_yz.renderOrder = CONSTANTS.MAX_RENDER_ORDER - 1;
+    line_mesh_xz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    line_mesh_xy.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    line_mesh_yz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
     line_mesh_xz.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
     line_mesh_xz.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
     line_mesh_xy.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
@@ -218,9 +221,9 @@ class DataCube extends AbstractThreeBrainObject {
     this._canvas.mesh.set( '_sagittal_' + this.name, this._mesh_yz );
 
     if( this.clickable ){
-      this._canvas.clickable.set( '_coronal_' + this.name, this._mesh_xz );
-      this._canvas.clickable.set( '_axial_' + this.name, this._mesh_xy );
-      this._canvas.clickable.set( '_sagittal_' + this.name, this._mesh_yz );
+      this._canvas.add_clickable( '_coronal_' + this.name, this._mesh_xz );
+      this._canvas.add_clickable( '_axial_' + this.name, this._mesh_xy );
+      this._canvas.add_clickable( '_sagittal_' + this.name, this._mesh_yz );
     }
 
     // data cube must have groups

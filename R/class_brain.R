@@ -4,7 +4,7 @@
 
 Brain2 <- R6::R6Class(
   classname = 'rave-brain',
-  portable = TRUE,
+  portable = FALSE,
   cloneable = TRUE,
   private = list(
     .subject_code = ''
@@ -274,7 +274,7 @@ Brain2 <- R6::R6Class(
       }
 
       if(tempenv$has_change && length(save_to) == 1 && is.character(save_to)){
-        threeBrain:::safe_write_csv(rows, save_to)
+        safe_write_csv(rows, save_to)
 
         self$electrodes$set_electrodes(save_to)
         return(invisible(rows))
@@ -402,8 +402,9 @@ Brain2 <- R6::R6Class(
 
 
       control_presets <- unique(
-        c( 'subject2', 'surface_type2', 'hemisphere_material',
-           'map_template', 'electrodes', 'atlas', control_presets, 'animation', 'display_highlights')
+        c( 'subject2', 'surface_type2', 'hemisphere_material', 'surface_color',
+           'map_template', 'electrodes', 'voxel', control_presets, 'animation',
+           'display_highlights')
       )
 
       if( !length(self$volumes) ){

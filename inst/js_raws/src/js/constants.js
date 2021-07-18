@@ -31,7 +31,7 @@ CONSTANTS.LAYER_SYS_AXIAL_10 = 10;                 // System reserved, axial cam
 CONSTANTS.LAYER_SYS_SAGITTAL_11 = 11;              // System reserved, sagittal camera only
 CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 = 13;      // System reserved, all side cameras visible
 CONSTANTS.LAYER_SYS_RAYCASTER_14 = 14;               // System reserved, raycaster use
-
+CONSTANTS.LAYER_INVISIBLE_31 = 31;                   // invisible layer, but keep rendered
 /* ------------------------------------ Global constants ------------------------------------
 */
 
@@ -100,7 +100,7 @@ CONSTANTS.REGEXP_SURFACE_GROUP    = /^Surface - (.+) \((.+)\)$/;  // Surface - p
 CONSTANTS.REGEXP_VOLUME_GROUP     = /^Volume - (.+) \((.+)\)$/;   // Volume - brain.finalsurfs (YAB)
 CONSTANTS.REGEXP_ELECTRODE_GROUP  = /^Electrodes \((.+)\)$/;                  // Electrodes (YAB)
 CONSTANTS.REGEXP_SURFACE          = /^([\w ]+) (Left|right) Hemisphere - (.+) \((.+)\)$/;   // Standard 141 Left Hemisphere - pial (YAB)
-CONSTANTS.REGEXP_ATLAS_GROUP      = /^Atlas - (.+) \\((.*)\\)$/;  // Atlas - aparc_aseg (YAB)
+CONSTANTS.REGEXP_ATLAS            = /^Atlas - ([^\(\)]+)\s\(/;  // Atlas - aparc_aseg (YAB)
 CONSTANTS.REGEXP_VOLUME           = /^(.+) \((.+)\)$/;                   // brain.finalsurfs (YAB)
 CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - pSYLV12
 
@@ -108,6 +108,11 @@ CONSTANTS.REGEXP_ELECTRODE        = /^(.+), ([0-9]+) - (.*)$/;     // YAB, 1 - p
 CONSTANTS.COLOR_MAIN_LIGHT = 0xefefef;                  // Color for main camera casting towards objects
 CONSTANTS.COLOR_AMBIENT_LIGHT = 0x808080;               // Color for ambient light that lights up all cameras
 
+// freemesh
+CONSTANTS.DEFAULT_COLOR = 0;
+CONSTANTS.VERTEX_COLOR = 1;
+CONSTANTS.VOXEL_COLOR = 2;
+CONSTANTS.ELECTRODE_COLOR = 3;
 
 // dat.GUI folders
 CONSTANTS.FOLDERS = {
@@ -141,7 +146,14 @@ CONSTANTS.THRESHOLD_OPERATORS = [
   'v not in [T1,T2]'
 ];
 
-
+/**
+ * .renderOrder : Number
+This value allows the default rendering order of scene graph objects to be overridden although opaque and transparent objects remain sorted independently. When this property is set for an instance of Group, all descendants objects will be sorted and rendered together. Sorting is from lowest to highest renderOrder. Default value is 0.
+ */
+CONSTANTS.RENDER_ORDER = {
+  'DataCube2' : -1,
+  'DataCube'  : CONSTANTS.MAX_RENDER_ORDER - 1
+}
 
 
 export { CONSTANTS };

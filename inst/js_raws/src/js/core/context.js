@@ -1,4 +1,6 @@
 import jsPDF from 'jspdf';
+// var jsPDF = require('jspdf');
+window.jsPDF = jsPDF;
 
 class PDFContext {
   constructor( base_canvas ){
@@ -18,18 +20,16 @@ class PDFContext {
     this.font_style = 'Courier';
   }
 
+  /**
+   * parameter type is ignored as only limited fonts are supported
+   */
   set_font( size, type, bold = false ){
     // TODO: check font
     // this.font_type = type || this.font_type;
     this.context.setFontSize( size );
-    this.context.setFont( this.font_type );
-    if( bold ){
-      this.context.setFontStyle( "bold" );
-    } else {
-      this.context.setFontStyle( "normal" );
-    }
-    this.context.setFont( this.font_type );
-
+    // this.context.setFont( this.font_type );
+    const font_weight = bold ? "bold" : "normal";
+    this.context.setFont("courier", font_weight)
   }
 
   set_font_color( color ){

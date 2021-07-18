@@ -12,8 +12,8 @@ FreeGeom <- R6::R6Class(
 
     type = 'free',
 
-    # not yet implemented
     value = NULL,
+    time_stamp = NULL,
 
     clickable = FALSE,
 
@@ -21,8 +21,14 @@ FreeGeom <- R6::R6Class(
     hemisphere = NULL,
     surface_type = NULL,
 
-    set_value = function(value = NULL, time_stamp = 0, name = 'Value',
-                         target = '.geometry.attributes.color.array', ...){
+    set_value = function(value, colormap, time_stamp = 0, key = colormap$get_key(value)){
+      self$value <- as.integer(key)
+      self$time_stamp <- time_stamp
+    },
+
+    set_value2 = function(value = NULL, time_stamp = 0, name = 'Value',
+                         target = '.geometry.attributes.color.array',
+                         temporary = FALSE, ...){
       stopifnot2(name != '[None]', msg = 'name cannot be "[None]", it\'s reserved')
 
       # Check length
@@ -38,8 +44,13 @@ FreeGeom <- R6::R6Class(
                         target = '.geometry.attributes.color.array', ...)
 
 
-      if(length(self$cache_file)){
+      if(length(self$cache_file) && !temporary ){
         cf <- stringr::str_replace(self$cache_file, '\\.json$', paste0('__', name, '.json'))
+      } else {
+        cf <- tempfile(fileext = '.json')
+        if(file.exists(cf)){
+          cf <- tempfile(fileext = '.json')
+        }
       }
 
       dname <- sprintf('free_vertex_colors_%s_%s', name, self$name)

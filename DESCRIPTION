@@ -1,9 +1,9 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 0.1.9
+Version: 0.2.0
 Authors@R: c(
-    person("Zhengjia", "Wang", email = "zhengjia.wang@rice.edu", role = c("aut", "cre", "cph")),
+    person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "jmagnotti@bcm.edu", role = c("aut")),
     person("Brian", "Metzger", email = "Brian.Metzger@bcm.edu", role = c("aut")),
     person("Elizabeth", "Nesbitt", email = "Elizabeth.Nesbitt@bcm.edu", role = c("res")),
@@ -26,7 +26,6 @@ Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain.
     electrodes from multiple subjects to one template 141 brain.
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.1.1
 Roxygen: list(r6 = FALSE)
 Language: en-US

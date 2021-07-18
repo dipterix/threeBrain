@@ -25,7 +25,7 @@ NULL
 download_template_subject <- function(
   subject_code = 'N27',
   url = 'https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip',
-  template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')
+  template_dir = default_template_directory()
 ){
   dir_create(template_dir)
   dir <- normalizePath(template_dir)
@@ -87,7 +87,7 @@ download_N27 <- function(make_default = FALSE, ...){
 #' @param view whether to view the subject
 #' @export
 set_default_template <- function(subject_code, view = TRUE,
-                                 template_dir = getOption('threeBrain.template_dir', '~/rave_data/others/three_brain')){
+                                 template_dir = default_template_directory()){
   dir <- normalizePath(template_dir, mustWork = TRUE)
   sub_dir <- file.path(dir, subject_code)
   pass_check <- check_freesurfer_path(sub_dir, autoinstall_template = FALSE)
@@ -121,7 +121,7 @@ set_default_template <- function(subject_code, view = TRUE,
 threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never'), async = TRUE){
   upgrade <- match.arg(upgrade)
 
-  template_dir <- getOption('threeBrain.template_dir', normalizePath('~/rave_data/others/three_brain'))
+  template_dir <- default_template_directory()
   n27 <- file.path(template_dir, 'N27')
 
   has_n27 <- tryCatch({
