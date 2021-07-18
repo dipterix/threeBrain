@@ -150,7 +150,6 @@ class FreeMesh extends AbstractThreeBrainObject {
       1 / m._cube_dim[1],
       1 / m._cube_dim[2]
     )
-    this._material_options.shift.value.copy( this._mesh.parent.position );
     this._volume_texture.needsUpdate = true;
     this._material_options.which_map.value = CONSTANTS.VOXEL_COLOR;
     this._material_options.sampler_bias.value = bias;
@@ -174,6 +173,72 @@ class FreeMesh extends AbstractThreeBrainObject {
     }
   }
 
+  _link_electrodes(){
+
+    if( !Array.isArray( this._linked_electrodes ) ){
+      this._linked_electrodes = [];
+      this._canvas.electrodes.forEach((v) => {
+        for( let k in v ){
+          this._linked_electrodes.push( v[ k ] );
+        }
+      });
+
+      // this._linked_electrodes to shaders
+      const elec_size = this._linked_electrodes.length;
+      if( elec_size == 0 ){ return; }
+      const elec_locs = new Uint8Array( elec_size * 3 );
+      const locs_texture = new THREE.DataTexture( elec_locs, elec_size, 1 );
+
+      locs_texture.minFilter = THREE.NearestFilter;
+      locs_texture.magFilter = THREE.NearestFilter;
+      locs_texture.format = THREE.RGBFormat;
+      locs_texture.type = THREE.UnsignedByteType;
+      locs_texture.unpackAlignment = 1;
+      locs_texture.needsUpdate = true;
+      this._material_options.elec_locs.value = locs_texture;
+
+      const elec_cols = new Uint8Array( elec_size * 3 );
+      const cols_texture = new THREE.DataTexture( elec_cols, elec_size, 1 );
+
+      cols_texture.minFilter = THREE.NearestFilter;
+      cols_texture.magFilter = THREE.NearestFilter;
+      cols_texture.format = THREE.RGBFormat;
+      cols_texture.type = THREE.UnsignedByteType;
+      cols_texture.unpackAlignment = 1;
+      cols_texture.needsUpdate = true;
+      this._material_options.elec_cols.value = cols_texture;
+
+      this._material_options.elec_size.value = elec_size;
+      this._material_options.elec_active_size.value = elec_size;
+    }
+
+    const e_size = this._linked_electrodes.length;
+    if( !e_size ){ return; }
+
+    const e_locs = this._material_options.elec_locs.value.image.data;
+    const e_cols = this._material_options.elec_cols.value.image.data;
+
+    const p = new THREE.Vector3();
+    let ii = 0;
+    this._linked_electrodes.forEach((el) => {
+      if( el.visible && el.material.isMeshBasicMaterial ){
+        el.getWorldPosition( p );
+        p.addScalar( 128 );
+        e_locs[ ii * 3 ] = Math.round( p.x );
+        e_locs[ ii * 3 + 1 ] = Math.round( p.y );
+        e_locs[ ii * 3 + 2 ] = Math.round( p.z );
+        e_cols[ ii * 3 ] = Math.floor( el.material.color.r * 255 );
+        e_cols[ ii * 3 + 1 ] = Math.floor( el.material.color.g * 255 );
+        e_cols[ ii * 3 + 2 ] = Math.floor( el.material.color.b * 255 );
+        ii++;
+      }
+    });
+    this._material_options.elec_locs.value.needsUpdate = true;
+    this._material_options.elec_cols.value.needsUpdate = true;
+    this._material_options.elec_active_size.value = ii;
+
+  }
+
   finish_init(){
 
     super.finish_init();
@@ -182,8 +247,20 @@ class FreeMesh extends AbstractThreeBrainObject {
     // instead of using surface name, use
     this.register_object( ['surfaces'] );
 
+    this._material_options.shift.value.copy( this._mesh.parent.position );
+
     this._set_primary_color(this._vertex_cname, true);
     this._set_track( 0 );
+
+
+    /*this._canvas.bind( this.name + "_link_electrodes", "canvas_finish_init", () => {
+      let nm, el;
+      this._canvas.electrodes.forEach((v) => {
+        for(nm in v){
+          el = v[ nm ];
+        }
+      });
+    }, this._canvas.el );*/
 
 
     this.__initialized = true;
@@ -201,22 +278,26 @@ class FreeMesh extends AbstractThreeBrainObject {
     // check material
     this._check_material( false );
 
+    if( !this.object.visible ) { return; }
+
     // get current frame
-    if( this._material_options.which_map.value === CONSTANTS.VERTEX_COLOR &&
-        this.time_stamp.length > 0){
-      let skip_frame = 0;
+    if( this._material_options.which_map.value === CONSTANTS.VERTEX_COLOR){
+      if( this.time_stamp.length ){
+        let skip_frame = 0;
 
-      this.time_stamp.forEach((v, ii) => {
-        if( v <= results.current_time ){
-          skip_frame = ii - 1;
+        this.time_stamp.forEach((v, ii) => {
+          if( v <= results.current_time ){
+            skip_frame = ii - 1;
+          }
+        });
+        if( skip_frame < 0 ){ skip_frame = 0; }
+
+        if( this.__skip_frame !== skip_frame){
+          this._set_track( skip_frame );
         }
-      });
-      if( skip_frame < 0 ){ skip_frame = 0; }
-
-      if( this.__skip_frame !== skip_frame){
-        this._set_track( skip_frame );
       }
-
+    } else if( this._material_options.which_map.value === CONSTANTS.ELECTRODE_COLOR){
+      this._link_electrodes()
     }
   }
 
@@ -281,7 +362,11 @@ class FreeMesh extends AbstractThreeBrainObject {
       },
       'shift' : { value : new THREE.Vector3() },
       'sampler_bias' : { value : 3.0 },
-      'sampler_step' : { value : 1.5 }
+      'sampler_step' : { value : 1.5 },
+      'elec_cols' : { value : null },
+      'elec_locs' : { value : null },
+      'elec_size' : { value : 0 },
+      'elec_active_size' : { value : 0 }
     };
 
     this._materials = {

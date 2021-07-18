@@ -691,6 +691,11 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  finish_init(){
+    // finalizing initialization of each geom
+    this.dispatch_event( "canvas_finish_init" );
+  }
+
   dispatch_event( type, data ){
     let event = new CustomEvent(type, {
       container_id: this.container_id,
@@ -2674,7 +2679,7 @@ class THREEBRAIN_CANVAS {
       this.volumes.set( subject_code, {} );
       this.ct_scan.set( subject_code, {} );
       this.surfaces.set(subject_code, {} );
-      this.atlases.set(subject_code, {} );
+      this.atlases.set( subject_code, {} );
     }
 
 

@@ -348,6 +348,8 @@ class BrainCanvas{
       }
     });
 
+    this.canvas.finish_init();
+
     let display_controllers = this.control_display;
 
     this._register_gui_control();

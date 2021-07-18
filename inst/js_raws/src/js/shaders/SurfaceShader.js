@@ -8,13 +8,17 @@ const compile_free_material = ( material, options, target_renderer ) => {
 
   material.onBeforeCompile = ( shader , renderer ) => {
 
-
     shader.uniforms.which_map = options.which_map;
     shader.uniforms.volume_map = options.volume_map;
     shader.uniforms.scale_inv = options.scale_inv;
     shader.uniforms.shift = options.shift;
     shader.uniforms.sampler_bias = options.sampler_bias;
     shader.uniforms.sampler_step = options.sampler_step;
+
+    shader.uniforms.elec_cols = options.elec_cols;
+    shader.uniforms.elec_locs = options.elec_locs;
+    shader.uniforms.elec_size = options.elec_size;
+    shader.uniforms.elec_active_size = options.elec_active_size;
 
     material.userData.shader = shader;
 
@@ -26,9 +30,14 @@ const compile_free_material = ( material, options, target_renderer ) => {
     material.userData.compiled = true;
 
     shader.vertexShader = `
+precision mediump sampler2D;
 precision mediump sampler3D;
 uniform int which_map;
+uniform float elec_size;
+uniform float elec_active_size;
 uniform sampler3D volume_map;
+uniform sampler2D elec_cols;
+uniform sampler2D elec_locs;
 uniform vec3 scale_inv;
 uniform vec3 shift;
 uniform float sampler_bias;
@@ -36,6 +45,7 @@ uniform float sampler_step;
 
 attribute vec3 track_color;
 vec3 zeros = vec3( 0.0 );
+
 vec4 sample1(vec3 p) {
   vec4 re = vec4( 0.0, 0.0, 0.0, 0.0 );
   vec3 threshold = vec3( 0.007843137, 0.007843137, 0.007843137 );
@@ -73,11 +83,39 @@ vec4 sample1(vec3 p) {
   }
   return( re );
 }
+
+
+vec3 sample2( vec3 p ) {
+  // p = (position + shift) * scale_inv
+  vec3 eloc;
+  vec3 ecol;
+  vec2 p2 = vec2( 0.0, 0.5 );
+  vec3 re = vec3( 0.0 );
+  float count = 0.0;
+  float len = 0.0;
+  float start = 0.5 / elec_size;
+  float end = elec_active_size / elec_size;
+  float step = 1.0 / elec_size;
+
+  for( p2.x = start; p2.x < end; p2.x += step ){
+    ecol = texture( elec_cols, p2 ).rgb;
+    eloc = texture( elec_locs, p2 ).rgb;
+    len = length( ( eloc * 255.0 - 128.0 ) - p );
+    if( len < 3.0 ){
+      len = 3.0;
+    }
+    re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
+    count += 1.0;
+  }
+  return (re / elec_active_size);
+}
     ` + shader.vertexShader;
 
     shader.vertexShader = shader.vertexShader.replace(
       "#include <fog_vertex>",
       `#include <fog_vertex>
+
+vec4 data_color0 = vec4( 0.0 );
 
 if( which_map == 1 ){
     // is track_color is missing, or all zeros, it's invalid
@@ -86,14 +124,22 @@ if( which_map == 1 ){
     }
 } else if( which_map == 2 ){
   vec3 data_position = (position + shift) * scale_inv + 0.5;
-  vec4 data_color0 = sample1( data_position - scale_inv * vec3(0.5,-0.5,0.5) );
+  data_color0 = sample1(
+    data_position -
+    scale_inv * vec3(0.5,-0.5,0.5)
+  );
+
 #if defined( USE_COLOR_ALPHA )
 	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, 0.4 );
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
 	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, 0.4 );
 #endif
-}
-      `.split("\n").map((e) => {
+} else if( which_map == 3 ){
+  if( elec_active_size > 0.0 ){
+    data_color0.rgb = sample2( position + shift );
+    vColor.rgb = mix( vColor.rgb, data_color0.rgb, 0.9 );
+  }
+}     `.split("\n").map((e) => {
           return(
             e.replaceAll(/\/\/.*/g, "")
           );

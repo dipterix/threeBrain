@@ -52551,7 +52551,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__[/* AbstractThreeB
     const canvas = this._canvas,
           mesh = this._mesh;
 
-    // 0. check if global position is 0,0,0
+    // 0. check if raw position is 0,0,0
     const const_pos = mesh.userData.construct_params.position;
     if( is_electrode(mesh) && const_pos[0] === 0 && const_pos[1] === 0 && const_pos[2] === 0 ){
       mesh.visible = false;
@@ -52845,222 +52845,6 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__[/* AbstractThreeB
 function gen_sphere(g, canvas){
   return( new Sphere(g, canvas) );
 }
-
-
-/*
-
-function gen_sphere(g, canvas){
-  const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
-      values = g.keyframes,
-      n_keyframes = to_array( g.keyframes ).length;
-  let material_basic = new THREE.MeshBasicMaterial({ 'transparent' : false }),
-      material_lambert = new THREE.MeshLambertMaterial({ 'transparent' : false }),
-      material;
-  gb.name = 'geom_sphere_' + g.name;
-
-  // Make material based on value
-  if( n_keyframes > 0 ){
-    // Use the first value
-    material = material_basic;
-  }else{
-    material = material_lambert;
-  }
-
-  const mesh = new THREE.Mesh(gb, material);
-  mesh.name = 'mesh_sphere_' + g.name;
-
-  let linked = false;
-  if(g.use_link){
-    // This is a linkedSphereGeom which should be attached to a surface mesh
-    let vertex_ind = Math.floor(g.vertex_number - 1),
-        target_name = g.linked_geom,
-        target_mesh = canvas.mesh.get( target_name );
-
-    if(target_mesh && target_mesh.isMesh){
-      let target_pos = target_mesh.geometry.attributes.position.array;
-      mesh.position.set(target_pos[vertex_ind * 3], target_pos[vertex_ind * 3+1], target_pos[vertex_ind * 3+2]);
-      linked = true;
-    }
-  }
-
-  if(!linked){
-    mesh.position.fromArray(g.position);
-  }
-
-  if( n_keyframes > 0 ){
-    mesh.userData.ani_exists = true;
-  }
-  mesh.userData.ani_active = false;
-  mesh.userData.ani_params = {...values};
-  mesh.userData.ani_name = 'default';
-  mesh.userData.ani_all_names = Object.keys( mesh.userData.ani_params );
-
-  mesh.userData.add_track_data = ( track_name, data_type, value, time_stamp = 0 ) => {
-    let first_value = value, track_value = value;
-    if(Array.isArray(time_stamp)){
-      if(!Array.isArray(value) || time_stamp.length !== value.length ){
-        return;
-      }
-      first_value = value[0];
-    }else if(Array.isArray(value)){
-      first_value = value[0];
-      track_value = first_value;
-    }
-    if( !data_type ){
-      data_type = (typeof first_value === 'number')? 'continuous' : 'discrete';
-    }
-    mesh.userData.ani_exists = true;
-    mesh.userData.ani_params[track_name] = {
-      "name"      : track_name,
-      "time"      : time_stamp,
-      "value"     : value,
-      "data_type" : data_type,
-      "target"    : ".material.color",
-      "cached"    : false
-    };
-
-    if( !Array.isArray( mesh.userData.ani_all_names ) ){
-      mesh.userData.ani_all_names = [];
-    }
-    if(!mesh.userData.ani_all_names.includes( track_name )){
-      mesh.userData.ani_all_names.push( track_name );
-    }
-
-
-  };
-
-  mesh.userData.get_track_data = ( track_name, reset_material ) => {
-    let re;
-
-    if( mesh.userData.ani_exists ){
-      if( track_name === undefined ){ track_name = mesh.userData.ani_name; }
-      re = mesh.userData.ani_params[ track_name ];
-    }
-
-    if( reset_material ){
-      if( re && re.value !== null ){
-        mesh.material = material_basic;
-        mesh.userData.ani_active = true;
-      }else{
-        mesh.material = material_lambert;
-        mesh.userData.ani_active = false;
-      }
-    }
-
-    return( re );
-  };
-
-
-  mesh.userData.display_info = {};
-  // Add pre-render function to change some attributes
-  mesh.userData.pre_render = ( results ) => {
-
-    // 1. whether passed threshold
-    let threshold_test = true;
-    let current_value;
-    const track_name = canvas.state_data.get('threshold_variable');
-
-    if( get_or_default(canvas.state_data, 'threshold_active', false) ){
-      // need to check the threshold
-      threshold_test = false;
-
-      const track = mesh.userData.get_track_data(track_name, false);
-
-      if(track){
-
-        // obtain current threshold value
-        if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
-          // need to get the value at current time
-          const ani_params = canvas.animation_controls.get_params();
-
-          for(let idx in track.time){
-            if(track.time[idx] >= ani_params.time){
-              current_value = track.value[ idx ];
-              break;
-            }
-          }
-
-        }else{
-          if(Array.isArray(track.value)){
-            current_value = track.value[0];
-          }else{
-            current_value = track.value;
-          }
-        }
-
-        // get threshold criteria
-        if(current_value !== undefined){
-          const ranges = to_array(canvas.state_data.get('threshold_values'));
-          if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
-            // contunuous
-            threshold_test = false;
-            ranges.forEach((r) => {
-              if(Array.isArray(r) && r.length === 2){
-                if(!threshold_test && r[1] >= current_value && r[0] <= current_value){
-                  threshold_test = true;
-                }
-              }
-            });
-          }else{
-            // discrete
-            threshold_test = ranges.includes( current_value );
-          }
-        }
-      }
-
-    }
-
-    // 2. check if active
-    let active_test = threshold_test & mesh.userData.ani_active;
-
-    // 3. change material
-    if( active_test && mesh.material.isMeshLambertMaterial ){
-      mesh.material = material_basic;
-    }else if( !active_test && mesh.material.isMeshBasicMaterial ){
-      mesh.material = material_lambert;
-    }
-
-    // 4. set visibility
-    const vis = get_or_default(canvas.state_data, 'electrode_visibility', 'all visible');
-
-    switch (vis) {
-      case 'all visible':
-        mesh.visible = true;
-        break;
-      case 'hidden':
-        mesh.visible = false;
-        break;
-      case 'hide inactives':
-        // The electrode has no value, hide
-        if( active_test ){
-          mesh.visible = true;
-        }else{
-          mesh.visible = false;
-        }
-        break;
-    }
-    // 5. check if mixer exists, update
-    if( mesh.userData.ani_mixer ){
-      mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
-    }
-
-    // 6. if the object is chosen, display information
-    if( mesh === canvas.object_chosen ){
-      mesh.userData.display_info.threshold_name = track_name;
-      mesh.userData.display_info.threshold_value = current_value;
-      mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
-    }
-
-
-  };
-
-  mesh.userData.dispose = () => {
-    mesh.material.dispose();
-    mesh.geometry.dispose();
-  };
-  return(mesh);
-}
-*/
 
 function add_electrode (canvas, number, name, position, surface_type = 'NA',
                         custom_info = '', is_surface_electrode = false,
@@ -63445,13 +63229,17 @@ const compile_free_material = ( material, options, target_renderer ) => {
 
   material.onBeforeCompile = ( shader , renderer ) => {
 
-
     shader.uniforms.which_map = options.which_map;
     shader.uniforms.volume_map = options.volume_map;
     shader.uniforms.scale_inv = options.scale_inv;
     shader.uniforms.shift = options.shift;
     shader.uniforms.sampler_bias = options.sampler_bias;
     shader.uniforms.sampler_step = options.sampler_step;
+
+    shader.uniforms.elec_cols = options.elec_cols;
+    shader.uniforms.elec_locs = options.elec_locs;
+    shader.uniforms.elec_size = options.elec_size;
+    shader.uniforms.elec_active_size = options.elec_active_size;
 
     material.userData.shader = shader;
 
@@ -63463,9 +63251,14 @@ const compile_free_material = ( material, options, target_renderer ) => {
     material.userData.compiled = true;
 
     shader.vertexShader = `
+precision mediump sampler2D;
 precision mediump sampler3D;
 uniform int which_map;
+uniform float elec_size;
+uniform float elec_active_size;
 uniform sampler3D volume_map;
+uniform sampler2D elec_cols;
+uniform sampler2D elec_locs;
 uniform vec3 scale_inv;
 uniform vec3 shift;
 uniform float sampler_bias;
@@ -63473,6 +63266,7 @@ uniform float sampler_step;
 
 attribute vec3 track_color;
 vec3 zeros = vec3( 0.0 );
+
 vec4 sample1(vec3 p) {
   vec4 re = vec4( 0.0, 0.0, 0.0, 0.0 );
   vec3 threshold = vec3( 0.007843137, 0.007843137, 0.007843137 );
@@ -63510,11 +63304,39 @@ vec4 sample1(vec3 p) {
   }
   return( re );
 }
+
+
+vec3 sample2( vec3 p ) {
+  // p = (position + shift) * scale_inv
+  vec3 eloc;
+  vec3 ecol;
+  vec2 p2 = vec2( 0.0, 0.5 );
+  vec3 re = vec3( 0.0 );
+  float count = 0.0;
+  float len = 0.0;
+  float start = 0.5 / elec_size;
+  float end = elec_active_size / elec_size;
+  float step = 1.0 / elec_size;
+
+  for( p2.x = start; p2.x < end; p2.x += step ){
+    ecol = texture( elec_cols, p2 ).rgb;
+    eloc = texture( elec_locs, p2 ).rgb;
+    len = length( ( eloc * 255.0 - 128.0 ) - p );
+    if( len < 3.0 ){
+      len = 3.0;
+    }
+    re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
+    count += 1.0;
+  }
+  return (re / elec_active_size);
+}
     ` + shader.vertexShader;
 
     shader.vertexShader = shader.vertexShader.replace(
       "#include <fog_vertex>",
       `#include <fog_vertex>
+
+vec4 data_color0 = vec4( 0.0 );
 
 if( which_map == 1 ){
     // is track_color is missing, or all zeros, it's invalid
@@ -63523,14 +63345,22 @@ if( which_map == 1 ){
     }
 } else if( which_map == 2 ){
   vec3 data_position = (position + shift) * scale_inv + 0.5;
-  vec4 data_color0 = sample1( data_position - scale_inv * vec3(0.5,-0.5,0.5) );
+  data_color0 = sample1(
+    data_position -
+    scale_inv * vec3(0.5,-0.5,0.5)
+  );
+
 #if defined( USE_COLOR_ALPHA )
 	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, 0.4 );
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
 	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, 0.4 );
 #endif
-}
-      `.split("\n").map((e) => {
+} else if( which_map == 3 ){
+  if( elec_active_size > 0.0 ){
+    data_color0.rgb = sample2( position + shift );
+    vColor.rgb = mix( vColor.rgb, data_color0.rgb, 0.9 );
+  }
+}     `.split("\n").map((e) => {
           return(
             e.replaceAll(/\/\/.*/g, "")
           );
@@ -63698,7 +63528,6 @@ class free_FreeMesh extends geometry_abstract["a" /* AbstractThreeBrainObject */
       1 / m._cube_dim[1],
       1 / m._cube_dim[2]
     )
-    this._material_options.shift.value.copy( this._mesh.parent.position );
     this._volume_texture.needsUpdate = true;
     this._material_options.which_map.value = constants["a" /* CONSTANTS */].VOXEL_COLOR;
     this._material_options.sampler_bias.value = bias;
@@ -63722,6 +63551,72 @@ class free_FreeMesh extends geometry_abstract["a" /* AbstractThreeBrainObject */
     }
   }
 
+  _link_electrodes(){
+
+    if( !Array.isArray( this._linked_electrodes ) ){
+      this._linked_electrodes = [];
+      this._canvas.electrodes.forEach((v) => {
+        for( let k in v ){
+          this._linked_electrodes.push( v[ k ] );
+        }
+      });
+
+      // this._linked_electrodes to shaders
+      const elec_size = this._linked_electrodes.length;
+      if( elec_size == 0 ){ return; }
+      const elec_locs = new Uint8Array( elec_size * 3 );
+      const locs_texture = new threeplugins["a" /* THREE */].DataTexture( elec_locs, elec_size, 1 );
+
+      locs_texture.minFilter = threeplugins["a" /* THREE */].NearestFilter;
+      locs_texture.magFilter = threeplugins["a" /* THREE */].NearestFilter;
+      locs_texture.format = threeplugins["a" /* THREE */].RGBFormat;
+      locs_texture.type = threeplugins["a" /* THREE */].UnsignedByteType;
+      locs_texture.unpackAlignment = 1;
+      locs_texture.needsUpdate = true;
+      this._material_options.elec_locs.value = locs_texture;
+
+      const elec_cols = new Uint8Array( elec_size * 3 );
+      const cols_texture = new threeplugins["a" /* THREE */].DataTexture( elec_cols, elec_size, 1 );
+
+      cols_texture.minFilter = threeplugins["a" /* THREE */].NearestFilter;
+      cols_texture.magFilter = threeplugins["a" /* THREE */].NearestFilter;
+      cols_texture.format = threeplugins["a" /* THREE */].RGBFormat;
+      cols_texture.type = threeplugins["a" /* THREE */].UnsignedByteType;
+      cols_texture.unpackAlignment = 1;
+      cols_texture.needsUpdate = true;
+      this._material_options.elec_cols.value = cols_texture;
+
+      this._material_options.elec_size.value = elec_size;
+      this._material_options.elec_active_size.value = elec_size;
+    }
+
+    const e_size = this._linked_electrodes.length;
+    if( !e_size ){ return; }
+
+    const e_locs = this._material_options.elec_locs.value.image.data;
+    const e_cols = this._material_options.elec_cols.value.image.data;
+
+    const p = new threeplugins["a" /* THREE */].Vector3();
+    let ii = 0;
+    this._linked_electrodes.forEach((el) => {
+      if( el.visible && el.material.isMeshBasicMaterial ){
+        el.getWorldPosition( p );
+        p.addScalar( 128 );
+        e_locs[ ii * 3 ] = Math.round( p.x );
+        e_locs[ ii * 3 + 1 ] = Math.round( p.y );
+        e_locs[ ii * 3 + 2 ] = Math.round( p.z );
+        e_cols[ ii * 3 ] = Math.floor( el.material.color.r * 255 );
+        e_cols[ ii * 3 + 1 ] = Math.floor( el.material.color.g * 255 );
+        e_cols[ ii * 3 + 2 ] = Math.floor( el.material.color.b * 255 );
+        ii++;
+      }
+    });
+    this._material_options.elec_locs.value.needsUpdate = true;
+    this._material_options.elec_cols.value.needsUpdate = true;
+    this._material_options.elec_active_size.value = ii;
+
+  }
+
   finish_init(){
 
     super.finish_init();
@@ -63730,8 +63625,20 @@ class free_FreeMesh extends geometry_abstract["a" /* AbstractThreeBrainObject */
     // instead of using surface name, use
     this.register_object( ['surfaces'] );
 
+    this._material_options.shift.value.copy( this._mesh.parent.position );
+
     this._set_primary_color(this._vertex_cname, true);
     this._set_track( 0 );
+
+
+    /*this._canvas.bind( this.name + "_link_electrodes", "canvas_finish_init", () => {
+      let nm, el;
+      this._canvas.electrodes.forEach((v) => {
+        for(nm in v){
+          el = v[ nm ];
+        }
+      });
+    }, this._canvas.el );*/
 
 
     this.__initialized = true;
@@ -63749,22 +63656,26 @@ class free_FreeMesh extends geometry_abstract["a" /* AbstractThreeBrainObject */
     // check material
     this._check_material( false );
 
+    if( !this.object.visible ) { return; }
+
     // get current frame
-    if( this._material_options.which_map.value === constants["a" /* CONSTANTS */].VERTEX_COLOR &&
-        this.time_stamp.length > 0){
-      let skip_frame = 0;
+    if( this._material_options.which_map.value === constants["a" /* CONSTANTS */].VERTEX_COLOR){
+      if( this.time_stamp.length ){
+        let skip_frame = 0;
 
-      this.time_stamp.forEach((v, ii) => {
-        if( v <= results.current_time ){
-          skip_frame = ii - 1;
+        this.time_stamp.forEach((v, ii) => {
+          if( v <= results.current_time ){
+            skip_frame = ii - 1;
+          }
+        });
+        if( skip_frame < 0 ){ skip_frame = 0; }
+
+        if( this.__skip_frame !== skip_frame){
+          this._set_track( skip_frame );
         }
-      });
-      if( skip_frame < 0 ){ skip_frame = 0; }
-
-      if( this.__skip_frame !== skip_frame){
-        this._set_track( skip_frame );
       }
-
+    } else if( this._material_options.which_map.value === constants["a" /* CONSTANTS */].ELECTRODE_COLOR){
+      this._link_electrodes()
     }
   }
 
@@ -63829,7 +63740,11 @@ class free_FreeMesh extends geometry_abstract["a" /* AbstractThreeBrainObject */
       },
       'shift' : { value : new threeplugins["a" /* THREE */].Vector3() },
       'sampler_bias' : { value : 3.0 },
-      'sampler_step' : { value : 1.5 }
+      'sampler_step' : { value : 1.5 },
+      'elec_cols' : { value : null },
+      'elec_locs' : { value : null },
+      'elec_size' : { value : 0 },
+      'elec_active_size' : { value : 0 }
     };
 
     this._materials = {
@@ -64694,6 +64609,11 @@ class threejs_scene_THREEBRAIN_CANVAS {
     this.json_loader = new threeplugins["a" /* THREE */].FileLoader( this.loader_manager );
     this.font_loader = new threeplugins["a" /* THREE */].FontLoader( this.loader_manager );
 
+  }
+
+  finish_init(){
+    // finalizing initialization of each geom
+    this.dispatch_event( "canvas_finish_init" );
   }
 
   dispatch_event( type, data ){
@@ -66679,7 +66599,7 @@ class threejs_scene_THREEBRAIN_CANVAS {
       this.volumes.set( subject_code, {} );
       this.ct_scan.set( subject_code, {} );
       this.surfaces.set(subject_code, {} );
-      this.atlases.set(subject_code, {} );
+      this.atlases.set( subject_code, {} );
     }
 
 
@@ -68242,6 +68162,8 @@ class BrainCanvas{
         }
       }
     });
+
+    this.canvas.finish_init();
 
     let display_controllers = this.control_display;
 

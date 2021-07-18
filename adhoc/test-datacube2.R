@@ -4,9 +4,9 @@ file.copy('inst/palettes/datacube2/', to = '/Users/dipterix/Library/R/arm64/4.1/
 yab <- rave::rave_brain2('demo/YAB',surfaces = 'smoothwm')
 yab$set_electrode_values(data.frame(
   Subject = 'YAB',
-  Electrode = 14,
-  Color = -1:1,
-  Time = c(0.5,3,4)
+  Electrode = c(rep(14, 3), rep(15,1)),
+  Color = c(-1:1, 1),
+  Time = c(0.5,3,4, 0)
 ))
 yab <- threeBrain::merge_brain(yab)
 
@@ -20,16 +20,16 @@ for(ii in 1:20){
 yab$template_object$surfaces$pial$left_hemisphere$set_value(key = as.vector(col), time_stamp = seq(0, 5, length.out = 20))
 yab$template_object$surfaces$pial$left_hemisphere$time_stamp
 
-library(shiny)
-
-ui <- shiny::basicPage(
-  threejsBrainOutput('out', height = '100vh'),
-  actionButton("btn", "refresh")
-)
-
-server <- function(input, output, session) {
-  output$out <- renderBrain({
-    input$btn
+# library(shiny)
+#
+# ui <- shiny::basicPage(
+#   threejsBrainOutput('out', height = '100vh'),
+#   actionButton("btn", "refresh")
+# )
+#
+# server <- function(input, output, session) {
+#   output$out <- renderBrain({
+#     input$btn
     yab$plot(
       # voxel_colormap = "inst/palettes/datacube2/ContinuousSample.json",
       debug = TRUE, controllers = list(
@@ -44,18 +44,23 @@ server <- function(input, output, session) {
       window.m=canvas.threebrain_instances.get("Atlas - aparc_aseg (N27)");
       window.m1=canvas.threebrain_instances.get("Standard 141 Left Hemisphere - pial (N27)");
       window.m2=canvas.threebrain_instances.get("Standard 141 Right Hemisphere - pial (N27)");
+
+      //window.m1=canvas.threebrain_instances.get("FreeSurfer Left Hemisphere - pial (N27)");
+      //window.m2=canvas.threebrain_instances.get("FreeSurfer Right Hemisphere - pial (N27)");
+
+
       // m1._set_color_from_datacube2(m, 3);
       m2._set_color_from_datacube2(m, 3);
-      m1.object.material.userData.shader.uniforms.which_map.value=1;
+      m1.object.material.userData.shader.uniforms.which_map.value=3;
       //m1.object.geometry.attributes.track_color.needsUpdate=true;
       //m1.object.material.needsUpdate=true;
       //this.gui.get_controller("Screenshot").domElement.click();
       )'
 
     )
-  })
-}
+#   })
+# }
 
-shinyApp(ui, server, options = list(launch.browser = TRUE))
+# shinyApp(ui, server, options = list(launch.browser = TRUE))
 # threeBrain::save_brain(wg, '~/Desktop/3dtest', as_zip = TRUE)
 # yab$plot(debug = TRUE, voxel_palette = "inst/palettes/datacube2/ContinuousSample.json")
