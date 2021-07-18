@@ -26,7 +26,6 @@ Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain.
     electrodes from multiple subjects to one template 141 brain.
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.1.1
 Roxygen: list(r6 = FALSE)
 Language: en-US
