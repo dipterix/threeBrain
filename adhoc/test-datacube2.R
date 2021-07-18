@@ -1,5 +1,5 @@
-file.copy('inst/htmlwidgets/lib/dipterixThreeBrain-1.0.1/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/htmlwidgets/lib/', overwrite = TRUE, recursive = TRUE)
-file.copy('inst/palettes/datacube2/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/palettes/', overwrite = TRUE, recursive = TRUE)
+# file.copy('inst/htmlwidgets/lib/dipterixThreeBrain-1.0.1/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/htmlwidgets/lib/', overwrite = TRUE, recursive = TRUE)
+# file.copy('inst/palettes/datacube2/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/palettes/', overwrite = TRUE, recursive = TRUE)
 
 yab <- rave::rave_brain2('demo/YAB',surfaces = 'smoothwm')
 yab$set_electrode_values(data.frame(
