@@ -133,8 +133,10 @@ MultiBrain2 <- R6::R6Class(
       names(geoms) <- NULL
 
       global_data <- self$global_data
-      control_presets <- unique(c('subject2', 'surface_type2', 'hemisphere_material',
-                                 'map_template', 'electrodes', 'voxel', control_presets, 'animation', 'display_highlights' ))
+      control_presets <- unique(c(
+        'subject2', 'surface_type2', 'hemisphere_material', 'surface_color',
+        'map_template', 'electrodes', 'voxel', control_presets, 'animation',
+        'display_highlights' ))
 
       threejs_brain(
         .list = geoms, controllers = controllers, value_alias = value_alias,

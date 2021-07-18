@@ -402,8 +402,9 @@ Brain2 <- R6::R6Class(
 
 
       control_presets <- unique(
-        c( 'subject2', 'surface_type2', 'hemisphere_material',
-           'map_template', 'electrodes', 'voxel', control_presets, 'animation', 'display_highlights')
+        c( 'subject2', 'surface_type2', 'hemisphere_material', 'surface_color',
+           'map_template', 'electrodes', 'voxel', control_presets, 'animation',
+           'display_highlights')
       )
 
       if( !length(self$volumes) ){

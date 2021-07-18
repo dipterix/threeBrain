@@ -19,6 +19,7 @@ const compile_free_material = ( material, options, target_renderer ) => {
     shader.uniforms.elec_locs = options.elec_locs;
     shader.uniforms.elec_size = options.elec_size;
     shader.uniforms.elec_active_size = options.elec_active_size;
+    shader.uniforms.blend_factor = options.blend_factor;
 
     material.userData.shader = shader;
 
@@ -42,6 +43,7 @@ uniform vec3 scale_inv;
 uniform vec3 shift;
 uniform float sampler_bias;
 uniform float sampler_step;
+uniform float blend_factor;
 
 attribute vec3 track_color;
 vec3 zeros = vec3( 0.0 );
@@ -98,16 +100,18 @@ vec3 sample2( vec3 p ) {
   float step = 1.0 / elec_size;
 
   for( p2.x = start; p2.x < end; p2.x += step ){
-    ecol = texture( elec_cols, p2 ).rgb;
     eloc = texture( elec_locs, p2 ).rgb;
-    len = length( ( eloc * 255.0 - 128.0 ) - p );
-    if( len < 3.0 ){
-      len = 3.0;
+    len = max( length( ( eloc * 255.0 - 128.0 ) - p ) , 3.0 );
+    if( len < 10.0 ){
+      ecol = texture( elec_cols, p2 ).rgb;
+      re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
+      count += 1.0;
     }
-    re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
-    count += 1.0;
   }
-  return (re / elec_active_size);
+  if( count == 0.0 ){
+    return ( vec3( 1.0 ) );
+  }
+  return (re / count);
 }
     ` + shader.vertexShader;
 
@@ -120,7 +124,7 @@ vec4 data_color0 = vec4( 0.0 );
 if( which_map == 1 ){
     // is track_color is missing, or all zeros, it's invalid
     if( track_color.rgb != zeros ){
-      vColor.rgb = mix( vColor.rgb, track_color, 0.4 );
+      vColor.rgb = mix( vColor.rgb, track_color, blend_factor );
     }
 } else if( which_map == 2 ){
   vec3 data_position = (position + shift) * scale_inv + 0.5;
@@ -130,14 +134,14 @@ if( which_map == 1 ){
   );
 
 #if defined( USE_COLOR_ALPHA )
-	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, 0.4 );
+	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, blend_factor );
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
-	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, 0.4 );
+	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
 #endif
 } else if( which_map == 3 ){
   if( elec_active_size > 0.0 ){
     data_color0.rgb = sample2( position + shift );
-    vColor.rgb = mix( vColor.rgb, data_color0.rgb, 0.9 );
+    vColor.rgb = mix( vColor.rgb, data_color0.rgb, blend_factor );
   }
 }     `.split("\n").map((e) => {
           return(

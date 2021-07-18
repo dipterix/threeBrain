@@ -366,7 +366,8 @@ class FreeMesh extends AbstractThreeBrainObject {
       'elec_cols' : { value : null },
       'elec_locs' : { value : null },
       'elec_size' : { value : 0 },
-      'elec_active_size' : { value : 0 }
+      'elec_active_size' : { value : 0 },
+      'blend_factor' : { value : 0.4 }
     };
 
     this._materials = {

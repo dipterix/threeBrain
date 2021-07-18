@@ -58922,34 +58922,8 @@ class data_controls_THREEBRAIN_PRESETS{
 
   // update gui controllers
   update_self(){
-    // check if subject has changed? state.get('target_subject')
-    let c, v, flag;
-
-    if( this._ctl_voxel_type_options ){
-      c = this.gui.get_controller("Voxel Type");
-      if( !c.isfake ){
-
-        let atlases = this.canvas.get_atlas_types();
-        atlases.unshift("none");
-        if( this._ctl_voxel_type_options.length !== atlases.length ){
-          flag = true;
-        } else {
-          flag = false;
-          this._ctl_voxel_type_options.forEach((v, ii) => {
-            if( atlases[ii] !== v ){
-              flag = true;
-            }
-          })
-        }
-        if( flag ){
-          flag = this.gui.alter_item("Voxel Type", atlases, () => {
-            this._ctl_voxel_type_options = atlases;
-          })
-        }
-      }
-
-    }
-
+    this.update_voxel_type();
+    this.set_surface_ctype( true );
 
     if( typeof(this._calculate_intersection_coord) === 'function' ){
       this._calculate_intersection_coord();
@@ -59554,6 +59528,123 @@ class data_controls_THREEBRAIN_PRESETS{
     }, 'gui_right_cycle');
   }
 
+  get_surface_ctype(){
+    const _c = this.gui.get_controller( 'Surface Color' );
+    if( _c.isfake ){ return( "none" ); }
+    return( _c.getValue() );
+  }
+  set_surface_ctype( t, sigma, blend ){
+
+    if( !this._surface_ctype_map ){ return; }
+
+    if (t === undefined){ return; }
+    let ctype = t;
+    if( t === true ){
+      // refresh
+      ctype = this._current_surface_ctype;
+    }
+    if( !ctype ){ ctype = "vertices"; }
+    this._current_surface_ctype = ctype;
+
+    let _c;
+    if( sigma === undefined ){
+      _c = this.gui.get_controller( 'Sigma' );
+      if( _c.isfake ){ sigma = 3.0; } else { sigma = _c.getValue(); }
+    }
+    if( blend === undefined ){
+      _c = this.gui.get_controller( 'Blend Factor' );
+      if( _c.isfake ){ blend = 0.4; } else { blend = _c.getValue(); }
+    }
+
+    let col_code = this._surface_ctype_map[ ctype ];
+    if( col_code === undefined ){
+      col_code = constants["a" /* CONSTANTS */].VERTEX_COLOR;
+      this._current_surface_ctype = "vertices";
+    }
+    let f = (el) => {
+      if( !(el.isFreeMesh && el._material_options) ){ return; }
+      el._material_options.which_map.value = col_code;
+      el._material_options.blend_factor.value = blend;
+
+      if( el.object.visible && col_code === constants["a" /* CONSTANTS */].VOXEL_COLOR ){
+        // need to get current active datacube2
+        const inst = this.current_voxel_type();
+        if( inst ){
+          el._set_color_from_datacube2(inst, sigma);
+        } else {
+          el._material_options.which_map.value = constants["a" /* CONSTANTS */].DEFAULT_COLOR;
+        }
+      }
+    };
+
+
+    this.canvas.threebrain_instances.forEach( f );
+
+    this._update_canvas();
+    this.fire_change({ 'surface_color_type' : this._current_surface_ctype });
+
+  }
+
+  c_surface_color(){
+    const folder_name = constants["a" /* CONSTANTS */].FOLDERS[ 'surface-selector' ],
+          maps = {
+            'vertices' : constants["a" /* CONSTANTS */].VERTEX_COLOR,
+            'sync from voxels' : constants["a" /* CONSTANTS */].VOXEL_COLOR,
+            'sync from electrodes' : constants["a" /* CONSTANTS */].ELECTRODE_COLOR,
+            'none' : constants["a" /* CONSTANTS */].DEFAULT_COLOR
+          },
+          options = Object.keys( maps );
+    this._surface_ctype_map = maps;
+    let col = 'vertices';
+
+    this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
+      .onChange((v) => {
+        this.gui.hide_item(['Blend Factor', 'Sigma'], folder_name);
+        this.canvas.__hide_voxels = false;
+        this.set_surface_ctype( v );
+
+        if( this._current_surface_ctype !== "none" ){
+          this.gui.show_item(['Blend Factor'], folder_name);
+        }
+
+        if( this._current_surface_ctype === "sync from voxels" ){
+          this.gui.show_item(['Sigma'], folder_name);
+          this.canvas.__hide_voxels = true;
+        }
+        this._update_canvas();
+      });
+
+    const blend_factor = this.gui.add_item("Blend Factor", 0.4, { folder_name : folder_name })
+      .min( 0 ).max( 1 )
+      .onChange((v) => {
+        if( typeof(v) != "number" ){
+          v = 0.4;
+        } else if( v < 0 ){
+          v = 0;
+        } else if (v > 1){
+          v = 1;
+        }
+        this.set_surface_ctype( true, undefined, v );
+        this._update_canvas();
+      })
+
+    // ---------- for voxel-color ---------------
+
+    const map_delta = this.gui.add_item("Sigma", 3.0, { folder_name : folder_name })
+      .min( 0 ).max( 10 )
+      .onChange((v) => {
+        if( v !== undefined ){
+          if( v < 0 ){ v = 0; }
+          this.set_surface_ctype( true, v );
+          this._update_canvas();
+        }
+      });
+
+
+
+    this.gui.hide_item(['Sigma'], folder_name);
+  }
+
   // 13. electrode visibility, highlight, groups
   set_electrodes_visibility( v ){
     if( !this._controller_electrodes ){
@@ -60079,6 +60170,43 @@ class data_controls_THREEBRAIN_PRESETS{
       });
   }
 
+  update_voxel_type(){
+    let c, v, flag;
+
+    if( this._ctl_voxel_type_options ){
+      c = this.gui.get_controller("Voxel Type");
+      if( !c.isfake ){
+
+        let atlases = this.canvas.get_atlas_types();
+        atlases.push("none");
+        if( this._ctl_voxel_type_options.length !== atlases.length ){
+          flag = true;
+        } else {
+          flag = false;
+          this._ctl_voxel_type_options.forEach((v, ii) => {
+            if( atlases[ii] !== v ){
+              flag = true;
+            }
+          })
+        }
+        if( flag ){
+          flag = this.gui.alter_item("Voxel Type", atlases, () => {
+            this._ctl_voxel_type_options = atlases;
+          })
+        }
+      }
+    }
+  }
+
+  current_voxel_type(){
+    const atlas_type = this.canvas.state_data.get("atlas_type") || "none",
+          sub = this.canvas.state_data.get("target_subject") || "none",
+          inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+    if( inst && inst.isDataCube2 ){
+      return( inst );
+    }
+    return;
+  }
 
   c_voxel(){
     const folder_name = constants["a" /* CONSTANTS */].FOLDERS['atlas'] || 'Volume Settings',
@@ -60120,10 +60248,7 @@ class data_controls_THREEBRAIN_PRESETS{
     const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
       .min(0).max(1).step(0.01)
       .onChange((v) => {
-        let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject"),
-              // mesh = this.canvas.atlases.get(sub)[`${atlas_type} (${sub})`],
-              inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+        const inst = this.current_voxel_type(),
               opa = v < 0.001 ? -1 : v;
         // mesh.material.uniforms.alpha.value = opa;
         if( inst && inst.isDataCube2 ){
@@ -60145,9 +60270,7 @@ class data_controls_THREEBRAIN_PRESETS{
       const cmap_array = Object.values(lut_map);
       const voxel_value_range = Object(utils["g" /* to_array */])( lut.mapValueRange );
       const voxel_minmax = (l, u) => {
-        let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.current_voxel_type();
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -60193,9 +60316,7 @@ class data_controls_THREEBRAIN_PRESETS{
       const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
       .onChange((v) => {
 
-        let atlas_type = this.canvas.state_data.get("atlas_type");
-        const sub = this.canvas.state_data.get("target_subject");
-        const inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
+        const inst = this.current_voxel_type();
         if( inst && inst.isDataCube2 ){
 
           // might be large?
@@ -60204,28 +60325,7 @@ class data_controls_THREEBRAIN_PRESETS{
             const candidates = v.split(",")
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});
-
             inst._set_palette( candidates );
-            /*
-            // check if 0 is in candidates, if so, show all
-            if(candidates.length === 0 || candidates.includes(0)){
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                if(inst._map_data[idx] == 0){
-                  inst._map_color[idx * 4 + 3] = 0;
-                } else {
-                  inst._map_color[idx * 4 + 3] = 1;
-                }
-              }
-            } else {
-              for( let idx = 0; idx < inst._map_data.length; idx++ ){
-                if(candidates.indexOf( inst._map_data[idx] ) != -1){
-                  inst._map_color[idx * 4 + 3] = 1;
-                } else {
-                  inst._map_color[idx * 4 + 3] = 0;
-                }
-              }
-            }*/
-
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this._update_canvas();
           });
@@ -60861,7 +60961,7 @@ class data_controls_THREEBRAIN_CONTROL{
   alter_item(name, options, onSucceed = null, folder_name = 'Default'){
     let c = this.get_controller(name, folder_name);
     if( c.getValue && c.options ){
-      console.log("Altering " + name);
+      console.debug("Altering controller: " + name);
       // will unlink listeners
       const v = c.getValue(),
             o = Object(utils["g" /* to_array */])( options ),
@@ -62602,6 +62702,7 @@ class datacube2_DataCube2 extends geometry_abstract["a" /* AbstractThreeBrainObj
 
     this.type = 'DataCube2';
     this.isDataCube2 = true;
+    this._hide_flag = false;
 
     let mesh;
 
@@ -62802,6 +62903,11 @@ class datacube2_DataCube2 extends geometry_abstract["a" /* AbstractThreeBrainObj
 
   pre_render( results ){
     this._mesh.material.uniforms.cameraPos.value.copy( this._canvas.main_camera.position );
+
+    // if surface is using it
+    if( this._canvas.__hide_voxels ){
+      this.object.visible = false;
+    }
   }
 
   finish_init(){
@@ -63240,6 +63346,7 @@ const compile_free_material = ( material, options, target_renderer ) => {
     shader.uniforms.elec_locs = options.elec_locs;
     shader.uniforms.elec_size = options.elec_size;
     shader.uniforms.elec_active_size = options.elec_active_size;
+    shader.uniforms.blend_factor = options.blend_factor;
 
     material.userData.shader = shader;
 
@@ -63263,6 +63370,7 @@ uniform vec3 scale_inv;
 uniform vec3 shift;
 uniform float sampler_bias;
 uniform float sampler_step;
+uniform float blend_factor;
 
 attribute vec3 track_color;
 vec3 zeros = vec3( 0.0 );
@@ -63319,16 +63427,18 @@ vec3 sample2( vec3 p ) {
   float step = 1.0 / elec_size;
 
   for( p2.x = start; p2.x < end; p2.x += step ){
-    ecol = texture( elec_cols, p2 ).rgb;
     eloc = texture( elec_locs, p2 ).rgb;
-    len = length( ( eloc * 255.0 - 128.0 ) - p );
-    if( len < 3.0 ){
-      len = 3.0;
+    len = max( length( ( eloc * 255.0 - 128.0 ) - p ) , 3.0 );
+    if( len < 10.0 ){
+      ecol = texture( elec_cols, p2 ).rgb;
+      re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
+      count += 1.0;
     }
-    re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
-    count += 1.0;
   }
-  return (re / elec_active_size);
+  if( count == 0.0 ){
+    return ( vec3( 1.0 ) );
+  }
+  return (re / count);
 }
     ` + shader.vertexShader;
 
@@ -63341,7 +63451,7 @@ vec4 data_color0 = vec4( 0.0 );
 if( which_map == 1 ){
     // is track_color is missing, or all zeros, it's invalid
     if( track_color.rgb != zeros ){
-      vColor.rgb = mix( vColor.rgb, track_color, 0.4 );
+      vColor.rgb = mix( vColor.rgb, track_color, blend_factor );
     }
 } else if( which_map == 2 ){
   vec3 data_position = (position + shift) * scale_inv + 0.5;
@@ -63351,14 +63461,14 @@ if( which_map == 1 ){
   );
 
 #if defined( USE_COLOR_ALPHA )
-	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, 0.4 );
+	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, blend_factor );
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
-	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, 0.4 );
+	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
 #endif
 } else if( which_map == 3 ){
   if( elec_active_size > 0.0 ){
     data_color0.rgb = sample2( position + shift );
-    vColor.rgb = mix( vColor.rgb, data_color0.rgb, 0.9 );
+    vColor.rgb = mix( vColor.rgb, data_color0.rgb, blend_factor );
   }
 }     `.split("\n").map((e) => {
           return(
@@ -63744,7 +63854,8 @@ class free_FreeMesh extends geometry_abstract["a" /* AbstractThreeBrainObject */
       'elec_cols' : { value : null },
       'elec_locs' : { value : null },
       'elec_size' : { value : 0 },
-      'elec_active_size' : { value : 0 }
+      'elec_active_size' : { value : 0 },
+      'blend_factor' : { value : 0.4 }
     };
 
     this._materials = {

@@ -172,6 +172,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 
     this.type = 'DataCube2';
     this.isDataCube2 = true;
+    this._hide_flag = false;
 
     let mesh;
 
@@ -372,6 +373,11 @@ class DataCube2 extends AbstractThreeBrainObject {
 
   pre_render( results ){
     this._mesh.material.uniforms.cameraPos.value.copy( this._canvas.main_camera.position );
+
+    // if surface is using it
+    if( this._canvas.__hide_voxels ){
+      this.object.visible = false;
+    }
   }
 
   finish_init(){
