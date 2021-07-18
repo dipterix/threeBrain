@@ -93,7 +93,7 @@ add_voxel_cube <- function(brain, name, cube){
     position = c(0,0,0), value = cube)
   geom$subject_code <- subject
 
-  obj <- threeBrain:::BrainAtlas$new(
+  obj <- BrainAtlas$new(
     subject_code = subject, atlas_type = name,
     atlas = geom, position = c(0, 0, 0 ))
 

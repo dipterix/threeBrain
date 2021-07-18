@@ -20,7 +20,7 @@ merge_brain <- function(
 
 MultiBrain2 <- R6::R6Class(
   classname = 'multi-rave-brain',
-  portable = TRUE,
+  portable = FALSE,
   cloneable = FALSE,
   public = list(
 

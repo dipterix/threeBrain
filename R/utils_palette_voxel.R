@@ -1,28 +1,26 @@
 
 #' @name voxel_colormap
-#' @title Creates color maps for volume data (\code{\link{DataCubeGeom2}})
-#' @param key non-negative integer vector corresponding to voxel values;
+#' @title Color maps for volume or surface data
+#' @param gtype geometry type, choices are \code{"surface"}, \code{"volume"}
+#' @param dtype data type, \code{"continuous"} or \code{"discrete"}
+#' @param key non-negative integer vector corresponding to color values;
 #' its length must exceed 1; see 'Details'
 #' @param color characters, corresponding to color strings for each key
-#' @param label name for each key, discrete palettes only
-#' @param value actual value for each key, continuous palettes only
+#' @param value actual value for each key
 #' @param alpha whether to respect transparency
-#' @param x voxel color map object to be saved
+#' @param cmap color map object
 #' @param con a file path to write results to or to read from. The
 #' file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.
 #' @param ... used by continuous color maps, passed to
-#' \code{\link[grDevices]{colorRampPalette}}. Ignored by others
+#' \code{\link[grDevices]{colorRampPalette}}
 #'
 #' @details
-#' Internal 'JavaScript' shader implementation uses integer \code{key} to
-#' connect data and color palettes. The keys must be non-negative. These keys
-#' should coincide with data values used by \code{\link{DataCubeGeom2}}.
-#' Each key stands for a value or label indicated by \code{value} or
-#' \code{label}.
+#' Internal 'JavaScript' shader implementation uses integer color \code{key}s to
+#' connect color palettes and corresponding values. The keys must be
+#' non-negative.
 #'
-#' Zero key is a special color key. If a \code{\link{DataCubeGeom2}} voxel
-#' value is 0, then this voxel will be hidden. This is hard-coded into
-#' material shader.
+#' Zero key is a special color key reserved by system. Please avoid using it
+#' for valid values.
 #'
 #' @return A list of color map information
 #'
@@ -32,15 +30,31 @@
 #' # The color range is -10 to 10
 #' # The colors are 'blue','white','red' for these keys
 #'
-#' pal <- create_voxel_colormap_continuous(
+#' pal <- create_colormap(
+#'   gtype = "volume", dtype = "continuous",
 #'   key = c(1,2,3), value = c(-10,0,10),
 #'   color = c('blue','white','red'))
 #'
 #' print( pal )
 #'
+#' # ---------------- Get colormap key from a value ------------
+#'
+#' # returns key index starting from
+#' pal$get_key( -10 )
+#'
+#' # nearest value
+#' pal$get_key( 2 )
+#'
+#' # set threshold, key is now 0 (no color)
+#' pal$get_key( 2, max_delta = 1 )
+#'
+#'
+#' # ---------------- Save and load ----------------
 #' f <- tempfile( fileext = '.json' )
-#' save_voxel_colormap( pal, f )
+#' save_colormap( pal, f )
 #' cat(readLines(f), sep = '\n')
+#'
+#' load_colormap(f)
 #'
 NULL
 
@@ -56,9 +70,10 @@ register_get_key <- function(re){
 
       k <- sapply(value, function(v){
         if(is.na(v)){ return(0) }
-        ii <- which.min(abs(map[, 2] - v))
-        if(abs(map[ii, 2]) > max_delta) { return(0) }
-        map[ii, 1]
+        diff <- abs(map[2, ] - v)
+        ii <- which.min(diff)
+        if(diff[[ii]] > max_delta) { return(0) }
+        map[1, ii]
       })
       as.integer(k)
     }

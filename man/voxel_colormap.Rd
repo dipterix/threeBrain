@@ -6,7 +6,7 @@
 \alias{save_colormap}
 \alias{freeserfer_colormap}
 \alias{load_colormap}
-\title{Creates color maps for volume data (\code{\link{DataCubeGeom2}})}
+\title{Color maps for volume or surface data}
 \usage{
 create_colormap(
   gtype = c("surface", "volume"),
@@ -26,12 +26,16 @@ freeserfer_colormap(con)
 load_colormap(con)
 }
 \arguments{
-\item{key}{non-negative integer vector corresponding to voxel values;
+\item{gtype}{geometry type, choices are \code{"surface"}, \code{"volume"}}
+
+\item{dtype}{data type, \code{"continuous"} or \code{"discrete"}}
+
+\item{key}{non-negative integer vector corresponding to color values;
 its length must exceed 1; see 'Details'}
 
 \item{color}{characters, corresponding to color strings for each key}
 
-\item{value}{actual value for each key, continuous palettes only}
+\item{value}{actual value for each key}
 
 \item{alpha}{whether to respect transparency}
 
@@ -39,28 +43,23 @@ its length must exceed 1; see 'Details'}
 file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.}
 
 \item{...}{used by continuous color maps, passed to
-\code{\link[grDevices]{colorRampPalette}}. Ignored by others}
+\code{\link[grDevices]{colorRampPalette}}}
 
-\item{label}{name for each key, discrete palettes only}
-
-\item{x}{voxel color map object to be saved}
+\item{cmap}{color map object}
 }
 \value{
 A list of color map information
 }
 \description{
-Creates color maps for volume data (\code{\link{DataCubeGeom2}})
+Color maps for volume or surface data
 }
 \details{
-Internal 'JavaScript' shader implementation uses integer \code{key} to
-connect data and color palettes. The keys must be non-negative. These keys
-should coincide with data values used by \code{\link{DataCubeGeom2}}.
-Each key stands for a value or label indicated by \code{value} or
-\code{label}.
+Internal 'JavaScript' shader implementation uses integer color \code{key}s to
+connect color palettes and corresponding values. The keys must be
+non-negative.
 
-Zero key is a special color key. If a \code{\link{DataCubeGeom2}} voxel
-value is 0, then this voxel will be hidden. This is hard-coded into
-material shader.
+Zero key is a special color key reserved by system. Please avoid using it
+for valid values.
 }
 \examples{
 
@@ -68,14 +67,30 @@ material shader.
 # The color range is -10 to 10
 # The colors are 'blue','white','red' for these keys
 
-pal <- create_voxel_colormap_continuous(
+pal <- create_colormap(
+  gtype = "volume", dtype = "continuous",
   key = c(1,2,3), value = c(-10,0,10),
   color = c('blue','white','red'))
 
 print( pal )
 
+# ---------------- Get colormap key from a value ------------
+
+# returns key index starting from
+pal$get_key( -10 )
+
+# nearest value
+pal$get_key( 2 )
+
+# set threshold, key is now 0 (no color)
+pal$get_key( 2, max_delta = 1 )
+
+
+# ---------------- Save and load ----------------
 f <- tempfile( fileext = '.json' )
-save_voxel_colormap( pal, f )
+save_colormap( pal, f )
 cat(readLines(f), sep = '\n')
+
+load_colormap(f)
 
 }
