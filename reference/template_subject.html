@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
@@ -123,7 +123,7 @@
     <pre class="usage"><span class='fu'>download_template_subject</span><span class='op'>(</span>
   subject_code <span class='op'>=</span> <span class='st'>"N27"</span>,
   url <span class='op'>=</span> <span class='st'>"https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip"</span>,
-  template_dir <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span><span class='op'>(</span><span class='st'>"threeBrain.template_dir"</span>, <span class='st'>"~/rave_data/others/three_brain"</span><span class='op'>)</span>
+  template_dir <span class='op'>=</span> <span class='fu'><a href='default_template_directory.html'>default_template_directory</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span>
 
 <span class='fu'>download_N27</span><span class='op'>(</span>make_default <span class='op'>=</span> <span class='cn'>FALSE</span>, <span class='va'>...</span><span class='op'>)</span>
@@ -131,7 +131,7 @@
 <span class='fu'>set_default_template</span><span class='op'>(</span>
   <span class='va'>subject_code</span>,
   view <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  template_dir <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/options.html'>getOption</a></span><span class='op'>(</span><span class='st'>"threeBrain.template_dir"</span>, <span class='st'>"~/rave_data/others/three_brain"</span><span class='op'>)</span>
+  template_dir <span class='op'>=</span> <span class='fu'><a href='default_template_directory.html'>default_template_directory</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span>
 
 <span class='fu'>threebrain_finalize_installation</span><span class='op'>(</span>
