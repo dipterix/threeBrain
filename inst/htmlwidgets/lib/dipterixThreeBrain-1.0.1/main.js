@@ -60845,7 +60845,8 @@ class data_controls_THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max'
+      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
+      'Surface Color', 'Blend Factor', 'Sigma'
     ];
     const args_dict = Object(utils["h" /* to_dict */])( args );
 
@@ -68371,15 +68372,21 @@ class BrainCanvas{
     // run customized js code
     if( this.settings.custom_javascript &&
         this.settings.custom_javascript !== ''){
-      let s = `
-      window.canvas = this.canvas;
-      ` + this.settings.custom_javascript;
-      console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
-      try {
-        eval( s );
-      } catch (e) {
-        console.warn(e);
+
+      if( this.canvas.DEBUG ){
+        console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
       }
+
+      const _f = (groups, geoms, settings, scene, canvas, gui, presets) => {
+        try {
+          eval( this.settings.custom_javascript );
+        } catch (e) {
+          console.warn(e);
+        }
+      };
+
+      _f( this.groups, this.geoms, this.settings, this.scene,
+          this.canvas, this.gui, this.presets );
 
     }
   }

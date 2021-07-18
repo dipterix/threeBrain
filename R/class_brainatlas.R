@@ -76,6 +76,62 @@ BrainAtlas <- R6::R6Class(
   )
 )
 
+#' @name voxel_cube
+#' @title Generate volume data from 'MNI' coordinates
+#' @param mni_ras 'MNI' 'RAS' coordinates, should be a \code{n}-by-3 matrix
+#' @param keys integer color-keys generated from a color map with length of \code{n}; alternatively, you could specify \code{value} and \code{colormap} to generate keys automatically
+#' @param value data values (length \code{n}); used if \code{keys} is missing
+#' @param colormap a color map generated from \code{create_colormap}; see \code{\link{voxel_colormap}} for details
+#' @param dimension volume dimension; default is a \code{256 x 256 x 256} array cube; must be integers and have length of 3
+#' @param brain a 'threeBrain' brain object generated from \code{\link{freesurfer_brain2}} or \code{\link{merge_brain}}. If you have \code{'rave'} package installed, the brain can be generated from \code{rave::rave_brain2}
+#' @param name the name of voxel cube, only letters, digits and \code{'_'} are allowed; other characters will be replaced by \code{'_'}
+#' @param cube a 3-mode array; see the following example
+#'
+#' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
+#' \code{add_voxel_cube} returns the \code{brain} object
+#'
+#' @examples
+#'
+#' # requires N27 brain to be installed
+#' # use `download_N27()` to download template Collins brain
+#'
+#'
+#' # sample MNI coords
+#' tbl <- read.csv(system.file(
+#'   'sample_data/example_cube.csv', package = 'threeBrain'
+#' ))
+#' head(tbl)
+#'
+#' # load colormap
+#' cmap <- load_colormap(system.file(
+#'   'palettes/datacube2/Mixed.json', package = 'threeBrain'
+#' ))
+#'
+#' x <- create_voxel_cube(
+#'   mni_ras = tbl[, c('x', 'y', 'z')],
+#'   keys = tbl$key,
+#'   dimension = c(128, 128, 128)
+#' )
+#'
+#'
+#' n27_path <- file.path(default_template_directory(), "N27")
+#' if( dir.exists(n27_path) ) {
+#'   brain <- merge_brain()
+#'
+#'   # or add_voxel_cube(brain, 'example', x$cube)
+#'   x$add_to_brain(brain, 'example')
+#'
+#'   brain$plot(controllers = list(
+#'     "Voxel Type" = 'example',
+#'     'Right Opacity' = 0.3,
+#'     'Left Opacity' = 0.3,
+#'     'Background Color' = '#000000'
+#'   ), voxel_colormap = cmap)
+#' }
+#'
+NULL
+
+#' @rdname voxel_cube
 #' @export
 add_voxel_cube <- function(brain, name, cube){
   re <- brain
@@ -101,6 +157,7 @@ add_voxel_cube <- function(brain, name, cube){
   invisible(re)
 }
 
+#' @rdname voxel_cube
 #' @export
 create_voxel_cube <- function(mni_ras, value, colormap,
                        keys = colormap$get_key(value),

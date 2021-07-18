@@ -1970,7 +1970,8 @@ class THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max'
+      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
+      'Surface Color', 'Blend Factor', 'Sigma'
     ];
     const args_dict = to_dict( args );
 

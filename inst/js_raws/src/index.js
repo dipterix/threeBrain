@@ -445,15 +445,21 @@ class BrainCanvas{
     // run customized js code
     if( this.settings.custom_javascript &&
         this.settings.custom_javascript !== ''){
-      let s = `
-      window.canvas = this.canvas;
-      ` + this.settings.custom_javascript;
-      console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
-      try {
-        eval( s );
-      } catch (e) {
-        console.warn(e);
+
+      if( this.canvas.DEBUG ){
+        console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
       }
+
+      const _f = (groups, geoms, settings, scene, canvas, gui, presets) => {
+        try {
+          eval( this.settings.custom_javascript );
+        } catch (e) {
+          console.warn(e);
+        }
+      };
+
+      _f( this.groups, this.geoms, this.settings, this.scene,
+          this.canvas, this.gui, this.presets );
 
     }
   }
