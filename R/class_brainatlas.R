@@ -171,14 +171,14 @@ create_voxel_cube <- function(mni_ras, value, colormap,
   mni_ras <- mni_ras + 128
 
   cube <- array(0L, dimension)
-  ratio = dimension / c(256, 256, 256)
+  ratio <- dimension / c(256, 256, 256)
   for(i in seq_len(nrow(mni_ras))){
     tmp <- round((mni_ras[i,]) * ratio)
     if(cube[tmp[1], tmp[2], tmp[3]] == 0){
       cube[tmp[1], tmp[2], tmp[3]] <- keys[[i]]
     }
   }
-  add_to_brain = function(brain, name){
+  add_to_brain <- function(brain, name){
     add_voxel_cube(brain, name, cube)
   }
 
