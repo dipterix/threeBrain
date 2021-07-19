@@ -117,212 +117,161 @@
 
 <table>
 <colgroup>
-<col width="3%">
-<col width="11%">
-<col width="13%">
-<col width="62%">
-<col width="10%">
+<col width="14%">
+<col width="60%">
+<col width="24%">
 </colgroup>
 <thead><tr class="header">
-<th align="left">No.</th>
-<th align="left">Target</th>
-<th align="left">Key</th>
-<th align="left">Details</th>
-<th align="left">Note</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+<th align="left">Internal Flag</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">1</td>
-<td align="left">Camera</td>
-<td align="left"><code>z</code></td>
-<td align="left">Zoom out</td>
-<td align="left"></td>
+<td align="left">“KeyZ”</td>
+<td align="left">
+<code>z/⇧Z</code> - zoom out/in</td>
+<td align="left">KEY_ZOOM</td>
 </tr>
 <tr class="even">
-<td align="left">2</td>
-<td align="left">Camera</td>
+<td align="left">“BracketLeft”</td>
 <td align="left">
-<code>Shift</code> + <code>z</code>
-</td>
-<td align="left">Zoom in</td>
-<td align="left"></td>
+<code><a href="https://rdrr.io/r/base/Extract.html">[</a></code> - cycle through left hemisphere material</td>
+<td align="left">KEY_CYCLE_LEFT</td>
 </tr>
 <tr class="odd">
-<td align="left">3</td>
-<td align="left">Animation</td>
-<td align="left"><code>s</code></td>
-<td align="left">Play/pause animation</td>
-<td align="left"></td>
+<td align="left">“BracketRight”</td>
+<td align="left">
+<code>]</code> - cycle through right hemisphere material</td>
+<td align="left">KEY_CYCLE_RIGHT</td>
 </tr>
 <tr class="even">
-<td align="left">4</td>
-<td align="left">Surface</td>
-<td align="left"><code><a href="https://rdrr.io/r/base/Extract.html">[</a></code></td>
-<td align="left">Cycle through [Mesh]/[Wireframe]/[Hidden], (Left hemisphere)</td>
-<td align="left"></td>
+<td align="left">“KeyK”</td>
+<td align="left">
+<code>k</code> - cycling surface color type</td>
+<td align="left">KEY_CYCLE_SURFACE_COLOR</td>
 </tr>
 <tr class="odd">
-<td align="left">5</td>
-<td align="left">Surface</td>
-<td align="left"><code>]</code></td>
-<td align="left">Cycle through [Mesh]/[Wireframe]/[Hidden], (Right hemisphere)</td>
-<td align="left"></td>
+<td align="left">“Period”</td>
+<td align="left">
+<code>.</code> - choosing next electrodes</td>
+<td align="left">KEY_CYCLE_ELECTRODES_NEXT</td>
 </tr>
 <tr class="even">
-<td align="left">6</td>
-<td align="left">Surface</td>
+<td align="left">“Comma”</td>
 <td align="left">
-<code>Shift</code> + <code><a href="https://rdrr.io/r/base/Extract.html">[</a></code>
-</td>
-<td align="left">Left hemisphere transparency</td>
-<td align="left"></td>
+<code>,</code> - choosing previous electrodes</td>
+<td align="left">KEY_CYCLE_ELECTRODES_PREV</td>
 </tr>
 <tr class="odd">
-<td align="left">7</td>
-<td align="left">Surface</td>
+<td align="left">“KeyV”</td>
 <td align="left">
-<code>Shift</code> + <code>]</code>
-</td>
-<td align="left">Right hemisphere transparency</td>
-<td align="left"></td>
+<code>v</code> - toggle electrode visibility</td>
+<td align="left">KEY_CYCLE_ELEC_VISIBILITY</td>
 </tr>
 <tr class="even">
-<td align="left">8</td>
-<td align="left">Surface</td>
-<td align="left"><code>p</code></td>
-<td align="left">Cycle through different surface types</td>
-<td align="left"></td>
+<td align="left">“KeyP”</td>
+<td align="left">
+<code>p</code> - cycle through surfaces types</td>
+<td align="left">KEY_CYCLE_SURFACE</td>
 </tr>
 <tr class="odd">
-<td align="left">9</td>
-<td align="left">Electrodes</td>
-<td align="left"><code>v</code></td>
-<td align="left">Cycle through electrode visibility</td>
-<td align="left"></td>
+<td align="left">“KeyM”</td>
+<td align="left">
+<code>⇧M</code> - change surface material types (lighting model)</td>
+<td align="left">KEY_CYCLE_MATERIAL</td>
 </tr>
 <tr class="even">
-<td align="left">10</td>
-<td align="left">3 Plane</td>
+<td align="left">“KeyL”</td>
 <td align="left">
-<code>Shift</code> + <code>A</code>
-</td>
-<td align="left">Show/hide Axial plane in main view</td>
-<td align="left"></td>
+<code>l</code> - cycle through voxel data such as atlases</td>
+<td align="left">KEY_CYCLE_ATLAS</td>
 </tr>
 <tr class="odd">
-<td align="left">11</td>
-<td align="left">3 Plane</td>
+<td align="left">“KeyC”</td>
 <td align="left">
-<code>Shift</code> + <code>S</code>
-</td>
-<td align="left">Show/hide Sagittal plane in main view</td>
-<td align="left"></td>
+<code>⇧C</code> - toggle coronal plane in main scene</td>
+<td align="left">KEY_OVERLAY_CORONAL</td>
 </tr>
 <tr class="even">
-<td align="left">12</td>
-<td align="left">3 Plane</td>
+<td align="left">“KeyA”</td>
 <td align="left">
-<code>Shift</code> + <code>C</code>
-</td>
-<td align="left">Show/hide Coronal plane in main view</td>
-<td align="left"></td>
+<code>⇧A</code> - toggle axial plane in main scene</td>
+<td align="left">KEY_OVERLAY_AXIAL</td>
 </tr>
 <tr class="odd">
-<td align="left">13</td>
-<td align="left">Electrodes</td>
-<td align="left"><code>,</code></td>
-<td align="left">Previous electrode</td>
-<td align="left"></td>
+<td align="left">“KeyS”</td>
+<td align="left">
+<code>⇧S</code> - toggle sagittal plane in main scene</td>
+<td align="left">KEY_OVERLAY_SAGITTAL</td>
 </tr>
 <tr class="even">
-<td align="left">14</td>
-<td align="left">Electrodes</td>
-<td align="left"><code>.</code></td>
-<td align="left">Next electrode</td>
-<td align="left"></td>
+<td align="left">“KeyE”</td>
+<td align="left">
+<code>q/⇧Q</code> - move coronal forward/backward</td>
+<td align="left">KEY_MOVE_CORONAL</td>
 </tr>
 <tr class="odd">
-<td align="left">15</td>
-<td align="left">3 Plane</td>
+<td align="left">“KeyQ”</td>
 <td align="left">
-<code>Alt</code> (Option <code>⌥</code>) + Mouse Scroll</td>
-<td align="left">Change volume slice number (mouse must be on 3 planes)</td>
-<td align="left"></td>
+<code>w/⇧W</code> - move axial forward/backward</td>
+<td align="left">KEY_MOVE_AXIAL</td>
 </tr>
 <tr class="even">
-<td align="left">16</td>
-<td align="left">Electrodes</td>
-<td align="left">Right Click on Electrodes</td>
-<td align="left">Align Axial, Sagittal, Coronal planes to selected electrode</td>
-<td align="left"></td>
+<td align="left">“KeyW”</td>
+<td align="left">
+<code>e/⇧E</code> - move sagittal forward/backward</td>
+<td align="left">KEY_MOVE_SAGITTAL</td>
 </tr>
 <tr class="odd">
-<td align="left">17</td>
-<td align="left">Camera</td>
+<td align="left">“KeyC”</td>
 <td align="left">
-<code>Ctrl</code> (<code>⌃</code>) + Mouse Drag</td>
-<td align="left">Move camera [Left &lt;-&gt; Right]</td>
-<td align="left"></td>
+<code>c</code> - cycle through animation clips or values</td>
+<td align="left">KEY_CYCLE_ANIMATION</td>
 </tr>
 <tr class="even">
-<td align="left">18</td>
-<td align="left">Camera</td>
+<td align="left">“KeyS”</td>
 <td align="left">
-<code>Shift</code> + Mouse Drag</td>
-<td align="left">Move camera [Up &lt;-&gt; Down]</td>
-<td align="left"></td>
+<code>s</code> - play/pause timer</td>
+<td align="left">KEY_TOGGLE_ANIMATION</td>
 </tr>
 <tr class="odd">
-<td align="left">19</td>
-<td align="left">Camera</td>
+<td align="left">“Backquote”</td>
 <td align="left">
-<code>Alt</code> (Option <code>⌥</code>) + Mouse Drag</td>
-<td align="left">Move camera [Clockwise &lt;-&gt; Counter-Clockwise]</td>
-<td align="left"></td>
+<code>`</code> - cycle through electrodes (localization, experimental)</td>
+<td align="left">KEY_CYCLE_ELEC_EDITOR</td>
 </tr>
 <tr class="even">
-<td align="left">20</td>
-<td align="left">Electrodes</td>
-<td align="left"><code>c</code></td>
-<td align="left">Cycle through electrode value types</td>
-<td align="left"></td>
+<td align="left">“Digit4”</td>
+<td align="left">
+<code>4</code> - toggle electrode type (surface ot iEEG, experimental)</td>
+<td align="left">KEY_CYCLE_SURFTYPE_EDITOR</td>
 </tr>
 <tr class="odd">
-<td align="left">21</td>
-<td align="left">Electrodes</td>
-<td align="left"><code>1</code></td>
-<td align="left">New electrode</td>
-<td align="left">(Experimental)</td>
+<td align="left">“Digit1”</td>
+<td align="left">
+<code>1</code> - new electrode (experimental)</td>
+<td align="left">KEY_NEW_ELECTRODE_EDITOR</td>
 </tr>
 <tr class="even">
-<td align="left">22</td>
-<td align="left">Electrodes</td>
-<td align="left"><code>4</code></td>
-<td align="left">Toggle electrode type (surface/depth)</td>
-<td align="left">(Experimental)</td>
+<td align="left">“Digit2”</td>
+<td align="left">
+<code>2</code> - quick edit label (experimental)</td>
+<td align="left">KEY_LABEL_FOCUS_EDITOR</td>
 </tr>
 <tr class="odd">
-<td align="left">23</td>
-<td align="left">Electrodes</td>
-<td align="left"><code>`</code></td>
-<td align="left">Edit next electrode</td>
-<td align="left">(Experimental)</td>
-</tr>
-<tr class="even">
-<td align="left">24</td>
-<td align="left">Electrodes</td>
+<td align="left">“KeyR”</td>
 <td align="left">
-<code>Shift</code> + <code>`</code>
-</td>
-<td align="left">Edit previous electrode</td>
-<td align="left">(Experimental)</td>
+<code>r</code> - remove editor key (experimental)</td>
+<td align="left">KEY_CYCLE_REMOVE_EDITOR</td>
 </tr>
 </tbody>
 </table>
 <ul>
+<li>The shortcut keys are only active when the mouse is on the main canvas (not controling GUI nor the side panel)</li>
+<li>Hold <code>Ctrl</code>, <code>Shift</code>, or <code>Alt</code> and drag the brain if you want to fix the rotation axis</li>
 <li>If you are using <em>MacOSX</em>, <code>Alt</code> key is equivalent to <code>Option [⌥]</code>, and <code>Ctrl</code> is equivalent to <code>Control [^]</code>
 </li>
-<li>Shortcuts 21-24 are available only in electrode editing mode (designed for electrode localization)</li>
 </ul>
 </div>
 
