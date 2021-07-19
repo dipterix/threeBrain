@@ -750,6 +750,7 @@ class THREEBRAIN_PRESETS{
         }
       }
     }, 'gui_surf_color_type');
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR, 'Surface Color', folder_name);
 
     const blend_factor = this.gui.add_item("Blend Factor", 0.4, { folder_name : folder_name })
       .min( 0 ).max( 1 )
