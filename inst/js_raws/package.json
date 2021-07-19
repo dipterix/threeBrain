@@ -3,23 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "ajv": "^6.12.3",
     "downloadjs": "^1.4.7",
-    "json-2-csv": "^3.7.6",
+    "json-2-csv": "^3.14.1",
     "jspdf": "^2.3.1"
   },
   "devDependencies": {
-    "npm-run-all": "^4.1.5",
-    "serve": "^11.3.2",
     "terser-webpack-plugin": "^3.0.8",
     "uglify-js": "^3.13.10",
     "webpack": "^5.45.1",
-    "webpack-cli": "^3.3.12"
+    "webpack-cli": "^4.7.2"
   },
   "scripts": {
-    "build": "npx webpack",
-    "start": "serve dist",
-    "dev": "npm-run-all --parallel start build"
+    "build": "bash build.sh"
   },
   "main": "index.js",
   "keywords": [

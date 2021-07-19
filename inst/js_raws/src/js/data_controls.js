@@ -739,6 +739,18 @@ class THREEBRAIN_PRESETS{
         this._update_canvas();
       });
 
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE_COLOR, (evt) => {
+      if( has_meta_keys( evt.event, false, false, false ) ){
+        // options
+        const _c = this.gui.get_controller( "Surface Color" );
+
+        let current_idx = (options.indexOf( _c.getValue() ) + 1) % options.length;
+        if( current_idx >= 0 ){
+          _c.setValue( options[ current_idx ] );
+        }
+      }
+    }, 'gui_surf_color_type');
+
     const blend_factor = this.gui.add_item("Blend Factor", 0.4, { folder_name : folder_name })
       .min( 0 ).max( 1 )
       .onChange((v) => {

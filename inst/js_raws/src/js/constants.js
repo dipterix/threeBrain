@@ -51,6 +51,7 @@ CONSTANTS.VEC_ANAT_I = new THREE.Vector3( 0, 0, -1 );
 CONSTANTS.KEY_ZOOM                    = 'KeyZ';         // z for zoom out and Z for zoom in
 CONSTANTS.KEY_CYCLE_LEFT              = 'BracketLeft';  // [ for cycle through left hemisphere material
 CONSTANTS.KEY_CYCLE_RIGHT             = 'BracketRight'; // ] for cycle through right hemisphere material
+CONSTANTS.KEY_CYCLE_SURFACE_COLOR     = 'KeyK';         // "k" for cycling surface color type
 CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = 'Period';       // "." for choosing next electrodes
 CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = 'Comma';        // "," for choosing previous electrodes
 CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = 'KeyV';         // 'v' for cycling through visible, hide inactive, hidden
