@@ -1,32 +1,32 @@
 # 3D Brain Viewer Shortcuts
 
+|Name           |Description                                                     |Internal Flag             |
+|:--------------|:---------------------------------------------------------------|:-------------------------|
+|"KeyZ"         |`z/⇧Z` - zoom out/in                                            |KEY_ZOOM                  |
+|"BracketLeft"  |`[` - cycle through left hemisphere material                    |KEY_CYCLE_LEFT            |
+|"BracketRight" |`]` - cycle through right hemisphere material                   |KEY_CYCLE_RIGHT           |
+|"KeyK"         |`k` - cycling surface color type                                |KEY_CYCLE_SURFACE_COLOR   |
+|"Period"       |`.` - choosing next electrodes                                  |KEY_CYCLE_ELECTRODES_NEXT |
+|"Comma"        |`,` - choosing previous electrodes                              |KEY_CYCLE_ELECTRODES_PREV |
+|"KeyV"         |`v` - toggle electrode visibility                               |KEY_CYCLE_ELEC_VISIBILITY |
+|"KeyP"         |`p` - cycle through surfaces types                              |KEY_CYCLE_SURFACE         |
+|"KeyM"         |`⇧M` - change surface material types (lighting model)           |KEY_CYCLE_MATERIAL        |
+|"KeyL"         |`l` - cycle through voxel data such as atlases                  |KEY_CYCLE_ATLAS           |
+|"KeyC"         |`⇧C` - toggle coronal plane in main scene                       |KEY_OVERLAY_CORONAL       |
+|"KeyA"         |`⇧A` - toggle axial plane in main scene                         |KEY_OVERLAY_AXIAL         |
+|"KeyS"         |`⇧S` - toggle sagittal plane in main scene                      |KEY_OVERLAY_SAGITTAL      |
+|"KeyE"         |`q/⇧Q` - move coronal forward/backward                          |KEY_MOVE_CORONAL          |
+|"KeyQ"         |`w/⇧W` - move axial forward/backward                            |KEY_MOVE_AXIAL            |
+|"KeyW"         |`e/⇧E` - move sagittal forward/backward                         |KEY_MOVE_SAGITTAL         |
+|"KeyC"         |`c` - cycle through animation clips or values                   |KEY_CYCLE_ANIMATION       |
+|"KeyS"         |`s` - play/pause timer                                          |KEY_TOGGLE_ANIMATION      |
+|"Backquote"    |`` ` `` - cycle through electrodes (localization, experimental) |KEY_CYCLE_ELEC_EDITOR     |
+|"Digit4"       |`4` - toggle electrode type (surface ot iEEG, experimental)     |KEY_CYCLE_SURFTYPE_EDITOR |
+|"Digit1"       |`1` - new electrode (experimental)                              |KEY_NEW_ELECTRODE_EDITOR  |
+|"Digit2"       |`2` - quick edit label (experimental)                           |KEY_LABEL_FOCUS_EDITOR    |
+|"KeyR"         |`r` - remove editor key (experimental)                          |KEY_CYCLE_REMOVE_EDITOR   |
 
-|No.|Target     |Key          |Details                                                       |Note      |
-|:--|:----------|:------------|:-------------------------------------------------------------|:---------|
-|1  |Camera     |`z`          |Zoom out                                                      |          |
-|2  |Camera     |`Shift` + `z`|Zoom in                                                       |          |
-|3  |Animation  |`s`          |Play/pause animation                                          |          |
-|4  |Surface    |`[`          |Cycle through [Mesh]/[Wireframe]/[Hidden], (Left hemisphere)  |          |
-|5  |Surface    |`]`          |Cycle through [Mesh]/[Wireframe]/[Hidden], (Right hemisphere) |          |
-|6  |Surface    |`Shift` + `[`|Left hemisphere transparency                                  |          |
-|7  |Surface    |`Shift` + `]`|Right hemisphere transparency                                 |          |
-|8  |Surface    |`p`          |Cycle through different surface types                         |          |
-|9  |Electrodes |`v`          |Cycle through electrode visibility                            |          |
-|10 |3 Plane    |`Shift` + `A`|Show/hide Axial plane in main view                            |          |
-|11 |3 Plane    |`Shift` + `S`|Show/hide Sagittal plane in main view                         |          |
-|12 |3 Plane    |`Shift` + `C`|Show/hide Coronal plane in main view                          |          |
-|13 |Electrodes |`,`          |Previous electrode                                            |          |
-|14 |Electrodes |`.`          |Next electrode                                                |          |
-|15 |3 Plane    |`Alt` (Option `⌥`) + Mouse Scroll |Change volume slice number (mouse must be on 3 planes)|          |
-|16 |Electrodes |Right Click on Electrodes|Align Axial, Sagittal, Coronal planes to selected electrode| |
-|17 |Camera     |`Ctrl` (`⌃`) + Mouse Drag|Move camera [Left <-> Right]                      |          |
-|18 |Camera     |`Shift` + Mouse Drag|Move camera [Up <-> Down]                              |          |
-|19 |Camera     |`Alt` (Option `⌥`) + Mouse Drag|Move camera [Clockwise <-> Counter-Clockwise]|         |
-|20 |Electrodes |`c`          |Cycle through electrode value types                           |          |
-|21 |Electrodes |`1`          |New electrode                                            |(Experimental) |
-|22 |Electrodes |`4`          |Toggle electrode type (surface/depth)                    |(Experimental) |
-|23 |Electrodes |`` ` ``      |Edit next electrode                                      |(Experimental) |
-|24 |Electrodes |`Shift` + `` ` ``|Edit previous electrode                              |(Experimental) |
-
+* The shortcut keys are only active when the mouse is on the main canvas (not controling GUI nor the side panel)
+* Hold `Ctrl`, `Shift`, or `Alt` and drag the brain if you want to fix the rotation axis
 * If you are using *MacOSX*, `Alt` key is equivalent to `Option [⌥]`, and `Ctrl` is equivalent to `Control [^]`
-* Shortcuts 21-24 are available only in electrode editing mode (designed for electrode localization)
+
