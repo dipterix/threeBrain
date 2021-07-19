@@ -725,6 +725,7 @@ class THREEBRAIN_PRESETS{
     this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
       .onChange((v) => {
         this.gui.hide_item(['Blend Factor', 'Sigma'], folder_name);
+        const last_ctype = this._current_surface_ctype;
         this.canvas.__hide_voxels = false;
         this.set_surface_ctype( v );
 
@@ -734,6 +735,9 @@ class THREEBRAIN_PRESETS{
 
         if( this._current_surface_ctype === "sync from voxels" ){
           this.gui.show_item(['Sigma'], folder_name);
+          this.canvas.__hide_voxels = true;
+        } else if( last_ctype === "sync from voxels" ){
+          // leaving, have to set voxels to none
           this.canvas.__hide_voxels = true;
         }
         this._update_canvas();
@@ -1356,6 +1360,9 @@ class THREEBRAIN_PRESETS{
     this._ctl_voxel_type_options = ['none'];
     this._ctl_voxel_type_callback = (v) => {
       if( v ){
+        if( this._current_surface_ctype !== "sync from voxels" ){
+          this.canvas.__hide_voxels = false;
+        }
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });

@@ -1,6 +1,6 @@
 const webpack = require("webpack");
 const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
+const minimizer = require('terser-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -12,15 +12,8 @@ module.exports = {
   },
   optimization: {
     minimize: true,
-    minimizer: [
-      new TerserPlugin({
-        terserOptions: {
-          format: {
-            comments: false,
-          },
-        },
-        extractComments: false,
-      }),
-    ],
-  },
+    minimizer: [new minimizer({
+      include: /\.min\.js$/
+    })]
+  }
 };
