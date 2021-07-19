@@ -110,7 +110,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     const _transform = (v, b = 10 / scale) => {
       // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
       let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
-      return( s );
+      return( s / 255 );
     };
 
     color_data.value.forEach((v, ii) => {
@@ -387,7 +387,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this.__nvertices = vertices.length;
     const vertex_positions = new Float32Array( this.__nvertices * 3 ),
           face_orders = new Uint32Array( faces.length * 3 ),
-          vertex_color = new Uint8Array( this.__nvertices * 3 ).fill(255);
+          vertex_color = new Float32Array( this.__nvertices * 3 ).fill(1);
 
     this._vertex_color = vertex_color;
 
