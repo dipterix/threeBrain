@@ -1,5 +1,5 @@
-# file.copy('inst/htmlwidgets/lib/dipterixThreeBrain-1.0.1/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/htmlwidgets/lib/', overwrite = TRUE, recursive = TRUE)
-# file.copy('inst/palettes/datacube2/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/palettes/', overwrite = TRUE, recursive = TRUE)
+file.copy('inst/htmlwidgets/lib/dipterixThreeBrain-1.0.1/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/htmlwidgets/lib/', overwrite = TRUE, recursive = TRUE)
+file.copy('inst/palettes/datacube2/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/palettes/', overwrite = TRUE, recursive = TRUE)
 
 yab <- rave::rave_brain2('demo/YAB',surfaces = 'smoothwm')
 yab$set_electrode_values(data.frame(
@@ -17,8 +17,8 @@ for(ii in 1:20){
   col[(skip + 1):198812,ii] <- tmp[1:(198812-skip)]
 }
 
-yab$template_object$surfaces$pial$left_hemisphere$set_value(key = as.vector(col), time_stamp = seq(0, 5, length.out = 20))
-yab$template_object$surfaces$pial$left_hemisphere$time_stamp
+# yab$template_object$surfaces$pial$left_hemisphere$set_value(key = as.vector(col), time_stamp = seq(0, 5, length.out = 20))
+# yab$template_object$surfaces$pial$left_hemisphere$time_stamp
 
 # library(shiny)
 #
@@ -50,8 +50,8 @@ yab$template_object$surfaces$pial$left_hemisphere$time_stamp
 
 
       // m1._set_color_from_datacube2(m, 3);
-      m2._set_color_from_datacube2(m, 3);
-      m1.object.material.userData.shader.uniforms.which_map.value=3;
+      //m2._set_color_from_datacube2(m, 3);
+      //m1.object.material.userData.shader.uniforms.which_map.value=3;
       //m1.object.geometry.attributes.track_color.needsUpdate=true;
       //m1.object.material.needsUpdate=true;
       //this.gui.get_controller("Screenshot").domElement.click();

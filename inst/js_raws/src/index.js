@@ -11,10 +11,21 @@ import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
 import { THREEBRAIN_STORAGE } from './js/threebrain_cache.js';
 import { CONSTANTS } from './js/constants.js';
 // import { invertColor, padZero, to_array } from './js/utils.js';
-import { padZero, to_array } from './js/utils.js';
+import { padZero, to_array, get_element_size, get_or_default } from './js/utils.js';
 // import { D3Canvas } from './js/Math/sparkles.js';
 // import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
 // import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
+import { json2csv } from 'json-2-csv';
+
+const utils_toolbox = {
+  'padZero' : padZero,
+  'to_array' : to_array,
+  'get_element_size' : get_element_size,
+  'get_or_default' : get_or_default,
+  'json2csv' : json2csv,
+  'download' : download,
+  'CONSTANTS' : CONSTANTS
+}
 
 class BrainCanvas{
   constructor(el, width, height, shiny_mode = false, viewer_mode = false,
@@ -450,7 +461,9 @@ class BrainCanvas{
         console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
       }
 
-      const _f = (groups, geoms, settings, scene, canvas, gui, presets) => {
+      const _f = (groups, geoms, settings, scene,
+        canvas, gui, presets, shiny, tools
+      ) => {
         try {
           eval( this.settings.custom_javascript );
         } catch (e) {
@@ -459,7 +472,7 @@ class BrainCanvas{
       };
 
       _f( this.groups, this.geoms, this.settings, this.scene,
-          this.canvas, this.gui, this.presets );
+          this.canvas, this.gui, this.presets, this.shiny, utils_toolbox );
 
     }
   }

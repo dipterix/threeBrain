@@ -83,10 +83,6 @@ class THREEBRAIN_CANVAS {
       this.use_cache = true;
       this.cache = cache;
     }
-    if( this.use_cache ){
-      this.cache.set_item( "debug.CONSTANTS", CONSTANTS );
-      this.cache.set_item( "debug.json2csv", json2csv );
-    }
 
     // DOM container information
     this.el = el;
