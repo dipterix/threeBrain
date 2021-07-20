@@ -124,7 +124,15 @@ HTMLWidgets.widget({
       const modal = document.createElement("div");
       modal.classList.add("threejs-brain-modal");
 
+      // check webgl2 availability
       modal.innerText = "Click me to load 3D viewer.";
+      if ( window._WEBGL ){
+        try {
+          if(!window._WEBGL.isWebGL2Available()){
+            modal.innerHTML = "It seems your browser does not support WebGL2. <br />Please use Chrome for full support. <br /><br /> Click me to load 3D viewer anyway.";
+          }
+        } catch (e) {}
+      }
 
       el.appendChild( modal );
       el.onclick = (evt) => {

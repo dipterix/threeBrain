@@ -1461,12 +1461,13 @@ class THREEBRAIN_PRESETS{
       const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
       .onChange((v) => {
 
+        if(typeof(v) !== "string"){ return; }
+
         const inst = this.current_voxel_type();
         if( inst && inst.isDataCube2 ){
 
           // might be large?
           new Promise( () => {
-
             const candidates = v.split(",")
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});

@@ -480,6 +480,7 @@ class BrainCanvas{
 
 window.BrainCanvas = BrainCanvas;
 window.THREE = THREE;
+window._WEBGL = WEBGL;
 window.download = download;
 window.THREEBRAIN_STORAGE = THREEBRAIN_STORAGE;
 export { BrainCanvas };

@@ -56045,12 +56045,13 @@ class THREEBRAIN_PRESETS{
       const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
       .onChange((v) => {
 
+        if(typeof(v) !== "string"){ return; }
+
         const inst = this.current_voxel_type();
         if( inst && inst.isDataCube2 ){
 
           // might be large?
           new Promise( () => {
-
             const candidates = v.split(",")
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});
@@ -69389,6 +69390,7 @@ class BrainCanvas{
 
 window.BrainCanvas = BrainCanvas;
 window.THREE = _js_threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE */ .J;
+window._WEBGL = _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__/* .WEBGL */ .$;
 window.download = _js_download_js__WEBPACK_IMPORTED_MODULE_8__/* .download */ .L;
 window.THREEBRAIN_STORAGE = _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_9__/* .THREEBRAIN_STORAGE */ .E;
 
