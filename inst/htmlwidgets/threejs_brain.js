@@ -20,7 +20,7 @@ HTMLWidgets.widget({
     const elid = el.getAttribute('id'),
           cache_id = '__THREE_CANVAS_' + elid,
           status = {
-            initalized : !HTMLWidgets.shinyMode
+            initalized : false
           };
 
     // Add class to el to make it display: flex
