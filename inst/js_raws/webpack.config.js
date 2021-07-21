@@ -8,7 +8,8 @@ module.exports = {
   devtool: "source-map",
   output: {
     path: path.resolve(__dirname, '../htmlwidgets/lib/dipterixThreeBrain-1.0.1'),
-    filename: "main.js"
+    filename: "main.js",
+    publicPath: "/"
   },
   optimization: {
     minimize: true,
