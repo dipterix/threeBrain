@@ -1,7 +1,6 @@
 AFNI
 AbstractGeom
 BRIK
-Beauchamp's
 CMD
 CRS
 DICOM
@@ -16,6 +15,7 @@ JF
 JS
 JSON
 MNI
+NeuroImage
 Nifti
 POSTFIX
 RAS
@@ -32,6 +32,8 @@ autorecon
 commissure
 csv
 datapath
+doi
+eCoG
 expr
 fs
 gifti
@@ -39,7 +41,6 @@ gii
 gz
 gzip
 iEEG
-js
 json
 lh
 localStorage
@@ -47,6 +48,7 @@ lr
 mgh
 mgz
 mri
+neuroimage
 nibabel
 nii
 npx

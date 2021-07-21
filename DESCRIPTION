@@ -10,20 +10,20 @@ Authors@R: c(
     person("Meng", "Li", email = "meng@rice.edu", role = c("ths")),
     person("Michael", "Beauchamp", email = "michael.beauchamp@bcm.edu", role = c("aut", "dtc"))
     )
-Description: In neuroscience, 'AFNI/SUMA' is a great tool to visualize 3D brain. 
-    However, it takes efforts to interact and share the viewer to others. In 
-    addition, 'AFNI/SUMA' doesn't support Windows platform. In the 'EEG/iEEG' 
-    field, it's hard to have multiple cortical electrodes mapped to a template 
-    brain for group analysis. Therefore this package is written aimed at 
-    providing a fast, stable, interactive and easy to share tool based on 'Three.js', 
-    a 'WebGL' engine to render 3D objects in the web browser such that we can 
-    display brain surfaces on webpage interactively. This package translates R 
-    objects to JavaScript objects via 'JSON' format, and provides 'R-Shiny' interface
-    to manipulate geometries interactively. The visualizations can also serve as 
-    standalone widgets that can be easily shared across different platforms. 
-    Along with 'rave', another package developed by Beauchamp's lab at Baylor 
-    College Medicine, this package provides solutions to easily map surface 
-    electrodes from multiple subjects to one template 141 brain.
+Description: A fast, interactive cross-platform, and easy to share 
+    'WebGL'-based 3D brain viewer that visualizes 'FreeSurfer' and/or
+    'AFNI/SUMA' surfaces. The viewer widget can be either standalone or 
+    embedded into 'R-shiny' applications. The standalone version only require
+    a web browser with 'WebGL2' support (for example, 'Chrome'). It can be
+    inserted into any websites; see <https://dipterix.org/project/threebrain/>).
+    as an example. The 'R-shiny' support allows the 3D viewer to be dynamically 
+    generated from reactive user inputs. This feature has been fully adopted by
+    'RAVE' <http://openwetware.org/wiki/RAVE>, an interactive toolbox to 
+    analyze 'iEEG/eCoG' data. Documentation about 'threeBrain' is provided
+    by <https://dipterix.github.io/threeBrain> and several vignettes included 
+    in this package. To cite the package, please check our 'NeuroImage' paper 
+    by Magnotti, Wang, and Beauchamp (2020, <doi:10.1016/j.neuroimage.2020.117341>),
+    or see 'citation("threeBrain")' for details.
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.1.1
