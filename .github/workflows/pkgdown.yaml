@@ -42,8 +42,8 @@ jobs:
         run: R CMD INSTALL .
 
       - name: Create N27 viewer
-      run: |
-          options('timeout' = 6000)
+        run: |
+          options("timeout" = 6000)
           utils::download.file('https://github.com/dipterix/threeBrain/releases/download/0.1.9.9000/lib.zip', destfile = file.path(tempdir(check = TRUE), 'lib.zip'))
           utils::unzip(file.path(tempdir(check = TRUE), 'lib.zip'))
           s <- readLines('README.md')
