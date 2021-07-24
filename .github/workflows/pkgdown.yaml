@@ -41,6 +41,17 @@ jobs:
       - name: Install package
         run: R CMD INSTALL .
 
+      - name: Create N27 viewer
+      run: |
+          options('timeout' = 6000)
+          utils::download.file('https://github.com/dipterix/threeBrain/releases/download/0.1.9.9000/lib.zip', destfile = file.path(tempdir(check = TRUE), 'lib.zip'))
+          utils::unzip(file.path(tempdir(check = TRUE), 'lib.zip'))
+          s <- readLines('README.md')
+          s[startsWith(s, "<!-- demo static: start")] <- "<!-- demo static: start"
+          s[startsWith(s, "<!-- demo dynamic: start")] <- "<!-- demo dynamic: start -->"
+          writeLines(s, "README.md")
+        shell: Rscript {0}
+
       - name: Deploy package
         run: |
           git config --local user.email "actions@github.com"
