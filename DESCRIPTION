@@ -29,7 +29,7 @@ Encoding: UTF-8
 RoxygenNote: 7.1.1
 Roxygen: list(r6 = FALSE)
 Language: en-US
-URL: https://dipterix.github.io/threeBrain/
+URL: https://dipterix.github.io/threeBrain/ https://github.com/dipterix/threeBrain
 BugReports: https://github.com/dipterix/threeBrain/issues
 Imports:
     grDevices,
