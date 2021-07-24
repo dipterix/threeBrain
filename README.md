@@ -15,12 +15,12 @@
 <div style = 'text-align:center; font-size: 20px'><a href="https://dipterix.github.io/project/threebrain/" target="_blank">A live demo is live NOW! (Recommended: view it with Chrome)</a></div>
 <!-- demo static: end -->
 
-<!-- demo dynamic: start 
-<script src="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/htmlwidgets-1.5.3/htmlwidgets.js"></script>
-<link href="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/threejs-0.101.1/css/dat.gui.css" rel="stylesheet" />
-<link href="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/dipterixThreeBrain-1.0.1/dipterix.css" rel="stylesheet" />
-<script src="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/dipterixThreeBrain-1.0.1/main.js"></script>
-<script src="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/threejs_brain-binding-0.2.0/threejs_brain.js"></script>
+<!-- demo dynamic: start -->
+<script src="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/htmlwidgets-1.5.3/htmlwidgets.js" type="application/javascript" ></script>
+<link href="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/threejs-0.101.1/css/dat.gui.css" rel="stylesheet" type="text/css" />
+<link href="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/dipterixThreeBrain-1.0.1/dipterix.css" rel="stylesheet" type="text/css" />
+<script src="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/dipterixThreeBrain-1.0.1/main.js" type="application/javascript" ></script>
+<script src="https://raw.githubusercontent.com/dipterix/dipterix.github.io/master/static/lib/threejs_brain-binding-0.2.0/threejs_brain.js" type="application/javascript" ></script>
 <body>
 <div id="htmlwidget_container">
   <div id="htmlwidget-10b2167231e00d19a0eb" style="width:100%;height:80vh;" class="threejs_brain html-widget"></div>
