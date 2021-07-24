@@ -19,6 +19,9 @@ const compile_free_material = ( material, options, target_renderer ) => {
     shader.uniforms.elec_locs = options.elec_locs;
     shader.uniforms.elec_size = options.elec_size;
     shader.uniforms.elec_active_size = options.elec_active_size;
+    shader.uniforms.elec_radius = options.elec_radius;
+    shader.uniforms.elec_decay = options.elec_decay;
+
     shader.uniforms.blend_factor = options.blend_factor;
 
     material.userData.shader = shader;
@@ -44,6 +47,8 @@ uniform vec3 shift;
 uniform float sampler_bias;
 uniform float sampler_step;
 uniform float blend_factor;
+uniform float elec_radius;
+uniform float elec_decay;
 
 attribute vec3 track_color;
 vec3 zeros = vec3( 0.0 );
@@ -102,9 +107,9 @@ vec3 sample2( vec3 p ) {
   for( p2.x = start; p2.x < end; p2.x += step ){
     eloc = texture( elec_locs, p2 ).rgb;
     len = max( length( ( eloc * 255.0 - 128.0 ) - p ) , 3.0 );
-    if( len < 10.0 ){
+    if( len < elec_radius ){
       ecol = texture( elec_cols, p2 ).rgb;
-      re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
+      re += 1.0 + ( ecol - 1.0 ) * exp( - len * elec_decay / elec_radius );
       count += 1.0;
     }
   }

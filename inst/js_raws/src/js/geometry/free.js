@@ -221,7 +221,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     const p = new THREE.Vector3();
     let ii = 0;
     this._linked_electrodes.forEach((el) => {
-      if( el.visible && el.material.isMeshBasicMaterial ){
+      if( el.material.isMeshBasicMaterial ){
         el.getWorldPosition( p );
         p.addScalar( 128 );
         e_locs[ ii * 3 ] = Math.round( p.x );
@@ -352,22 +352,24 @@ class FreeMesh extends AbstractThreeBrainObject {
 
 
     this._material_options = {
-      'which_map' : { value : CONSTANTS.DEFAULT_COLOR },
-      'volume_map' : { value : this._volume_texture },
-      'scale_inv' : {
+      'which_map'         : { value : CONSTANTS.DEFAULT_COLOR },
+      'volume_map'        : { value : this._volume_texture },
+      'scale_inv'         : {
         value : new THREE.Vector3(
           1 / this._volume_margin_size, 1 / this._volume_margin_size,
           1 / this._volume_margin_size
         )
       },
-      'shift' : { value : new THREE.Vector3() },
-      'sampler_bias' : { value : 3.0 },
-      'sampler_step' : { value : 1.5 },
-      'elec_cols' : { value : null },
-      'elec_locs' : { value : null },
-      'elec_size' : { value : 0 },
-      'elec_active_size' : { value : 0 },
-      'blend_factor' : { value : 0.4 }
+      'shift'             : { value : new THREE.Vector3() },
+      'sampler_bias'      : { value : 3.0 },
+      'sampler_step'      : { value : 1.5 },
+      'elec_cols'         : { value : null },
+      'elec_locs'         : { value : null },
+      'elec_size'         : { value : 0 },
+      'elec_active_size'  : { value : 0 },
+      'elec_radius'       : { value: 10.0 },
+      'elec_decay'        : { value : 0.15 },
+      'blend_factor'      : { value : 0.4 }
     };
 
     this._materials = {

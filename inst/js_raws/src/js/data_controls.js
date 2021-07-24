@@ -658,12 +658,16 @@ class THREEBRAIN_PRESETS{
     if( _c.isfake ){ return( "none" ); }
     return( _c.getValue() );
   }
-  set_surface_ctype( t, sigma, blend ){
+  set_surface_ctype( t, params = {} ){
 
     if( !this._surface_ctype_map ){ return; }
-
     if (t === undefined){ return; }
-    let ctype = t;
+    let ctype = t,
+        sigma = params.sigma,
+        blend = params.blend,
+        decay = params.decay,
+        radius = params.radius;
+
     if( t === true ){
       // refresh
       ctype = this._current_surface_ctype;
@@ -680,6 +684,14 @@ class THREEBRAIN_PRESETS{
       _c = this.gui.get_controller( 'Blend Factor' );
       if( _c.isfake ){ blend = 0.4; } else { blend = _c.getValue(); }
     }
+    if( decay === undefined ){
+      _c = this.gui.get_controller( 'Decay' );
+      if( _c.isfake ){ decay = 0.15; } else { decay = _c.getValue(); }
+    }
+    if( radius === undefined ){
+      _c = this.gui.get_controller( 'Range Limit' );
+      if( _c.isfake ){ radius = 10.0; } else { radius = _c.getValue(); }
+    }
 
     let col_code = this._surface_ctype_map[ ctype ];
     if( col_code === undefined ){
@@ -690,6 +702,8 @@ class THREEBRAIN_PRESETS{
       if( !(el.isFreeMesh && el._material_options) ){ return; }
       el._material_options.which_map.value = col_code;
       el._material_options.blend_factor.value = blend;
+      el._material_options.elec_decay.value = decay;
+      el._material_options.elec_radius.value = radius;
 
       if( el.object.visible && col_code === CONSTANTS.VOXEL_COLOR ){
         // need to get current active datacube2
@@ -724,7 +738,7 @@ class THREEBRAIN_PRESETS{
 
     this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
       .onChange((v) => {
-        this.gui.hide_item(['Blend Factor', 'Sigma'], folder_name);
+        this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         const last_ctype = this._current_surface_ctype;
         this.canvas.__hide_voxels = false;
         this.set_surface_ctype( v );
@@ -736,9 +750,14 @@ class THREEBRAIN_PRESETS{
         if( this._current_surface_ctype === "sync from voxels" ){
           this.gui.show_item(['Sigma'], folder_name);
           this.canvas.__hide_voxels = true;
-        } else if( last_ctype === "sync from voxels" ){
-          // leaving, have to set voxels to none
-          this.canvas.__hide_voxels = true;
+        } else {
+          if( last_ctype === "sync from voxels" ) {
+            // leaving, have to set voxels to none
+            this.canvas.__hide_voxels = true;
+          }
+          if( this._current_surface_ctype === "sync from electrodes" ){
+            this.gui.show_item(['Decay', 'Range Limit'], folder_name);
+          }
         }
         this._update_canvas();
       });
@@ -756,7 +775,8 @@ class THREEBRAIN_PRESETS{
     }, 'gui_surf_color_type');
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR, 'Surface Color', folder_name);
 
-    const blend_factor = this.gui.add_item("Blend Factor", 0.4, { folder_name : folder_name })
+    const blend_factor = this.gui.add_item(
+      "Blend Factor", 0.4, { folder_name : folder_name })
       .min( 0 ).max( 1 )
       .onChange((v) => {
         if( typeof(v) != "number" ){
@@ -766,7 +786,7 @@ class THREEBRAIN_PRESETS{
         } else if (v > 1){
           v = 1;
         }
-        this.set_surface_ctype( true, undefined, v );
+        this.set_surface_ctype( true, { 'blend' : v } );
         this._update_canvas();
       })
 
@@ -777,14 +797,37 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 0 ){ v = 0; }
-          this.set_surface_ctype( true, v );
+          this.set_surface_ctype( true, { 'sigma' : v } );
           this._update_canvas();
         }
       });
 
+    // ---------- for electrode maps ------------
+    this.gui.add_item("Decay", 0.15, { folder_name : folder_name })
+      .min( 0.05 ).max( 1 ).step( 0.05 )
+      .onChange((v) => {
+        if( v !== undefined ){
+          if( v < 0.05 ){ v = 0.05; }
+          this.set_surface_ctype( true, { 'decay' : v } );
+          this._update_canvas();
+        }
+      });
+
+    this.gui.add_item("Range Limit", 10.0, { folder_name : folder_name })
+      .min( 1.0 ).max( 30.0 ).step( 1.0 )
+      .onChange((v) => {
+        if( v !== undefined ){
+          if( v < 1.0 ){ v = 1.0; }
+          this.set_surface_ctype( true, { 'radius' : v } );
+          this._update_canvas();
+        }
+      });
+
+    // 'elec_decay'        : { value : 2.0 },
+    // 'blend_factor'      : { value : 0.4 }
 
 
-    this.gui.hide_item(['Sigma'], folder_name);
+    this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
   }
 
   // 13. electrode visibility, highlight, groups
@@ -1992,7 +2035,7 @@ class THREEBRAIN_CONTROL{
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
-      'Surface Color', 'Blend Factor', 'Sigma'
+      'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit'
     ];
     const args_dict = to_dict( args );
 

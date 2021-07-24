@@ -55242,12 +55242,16 @@ class THREEBRAIN_PRESETS{
     if( _c.isfake ){ return( "none" ); }
     return( _c.getValue() );
   }
-  set_surface_ctype( t, sigma, blend ){
+  set_surface_ctype( t, params = {} ){
 
     if( !this._surface_ctype_map ){ return; }
-
     if (t === undefined){ return; }
-    let ctype = t;
+    let ctype = t,
+        sigma = params.sigma,
+        blend = params.blend,
+        decay = params.decay,
+        radius = params.radius;
+
     if( t === true ){
       // refresh
       ctype = this._current_surface_ctype;
@@ -55264,6 +55268,14 @@ class THREEBRAIN_PRESETS{
       _c = this.gui.get_controller( 'Blend Factor' );
       if( _c.isfake ){ blend = 0.4; } else { blend = _c.getValue(); }
     }
+    if( decay === undefined ){
+      _c = this.gui.get_controller( 'Decay' );
+      if( _c.isfake ){ decay = 0.15; } else { decay = _c.getValue(); }
+    }
+    if( radius === undefined ){
+      _c = this.gui.get_controller( 'Range Limit' );
+      if( _c.isfake ){ radius = 10.0; } else { radius = _c.getValue(); }
+    }
 
     let col_code = this._surface_ctype_map[ ctype ];
     if( col_code === undefined ){
@@ -55274,6 +55286,8 @@ class THREEBRAIN_PRESETS{
       if( !(el.isFreeMesh && el._material_options) ){ return; }
       el._material_options.which_map.value = col_code;
       el._material_options.blend_factor.value = blend;
+      el._material_options.elec_decay.value = decay;
+      el._material_options.elec_radius.value = radius;
 
       if( el.object.visible && col_code === constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR ){
         // need to get current active datacube2
@@ -55308,7 +55322,7 @@ class THREEBRAIN_PRESETS{
 
     this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
       .onChange((v) => {
-        this.gui.hide_item(['Blend Factor', 'Sigma'], folder_name);
+        this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         const last_ctype = this._current_surface_ctype;
         this.canvas.__hide_voxels = false;
         this.set_surface_ctype( v );
@@ -55320,9 +55334,14 @@ class THREEBRAIN_PRESETS{
         if( this._current_surface_ctype === "sync from voxels" ){
           this.gui.show_item(['Sigma'], folder_name);
           this.canvas.__hide_voxels = true;
-        } else if( last_ctype === "sync from voxels" ){
-          // leaving, have to set voxels to none
-          this.canvas.__hide_voxels = true;
+        } else {
+          if( last_ctype === "sync from voxels" ) {
+            // leaving, have to set voxels to none
+            this.canvas.__hide_voxels = true;
+          }
+          if( this._current_surface_ctype === "sync from electrodes" ){
+            this.gui.show_item(['Decay', 'Range Limit'], folder_name);
+          }
         }
         this._update_canvas();
       });
@@ -55340,7 +55359,8 @@ class THREEBRAIN_PRESETS{
     }, 'gui_surf_color_type');
     this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR */.t.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR, 'Surface Color', folder_name);
 
-    const blend_factor = this.gui.add_item("Blend Factor", 0.4, { folder_name : folder_name })
+    const blend_factor = this.gui.add_item(
+      "Blend Factor", 0.4, { folder_name : folder_name })
       .min( 0 ).max( 1 )
       .onChange((v) => {
         if( typeof(v) != "number" ){
@@ -55350,7 +55370,7 @@ class THREEBRAIN_PRESETS{
         } else if (v > 1){
           v = 1;
         }
-        this.set_surface_ctype( true, undefined, v );
+        this.set_surface_ctype( true, { 'blend' : v } );
         this._update_canvas();
       })
 
@@ -55361,14 +55381,37 @@ class THREEBRAIN_PRESETS{
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 0 ){ v = 0; }
-          this.set_surface_ctype( true, v );
+          this.set_surface_ctype( true, { 'sigma' : v } );
           this._update_canvas();
         }
       });
 
+    // ---------- for electrode maps ------------
+    this.gui.add_item("Decay", 0.15, { folder_name : folder_name })
+      .min( 0.05 ).max( 1 ).step( 0.05 )
+      .onChange((v) => {
+        if( v !== undefined ){
+          if( v < 0.05 ){ v = 0.05; }
+          this.set_surface_ctype( true, { 'decay' : v } );
+          this._update_canvas();
+        }
+      });
+
+    this.gui.add_item("Range Limit", 10.0, { folder_name : folder_name })
+      .min( 1.0 ).max( 30.0 ).step( 1.0 )
+      .onChange((v) => {
+        if( v !== undefined ){
+          if( v < 1.0 ){ v = 1.0; }
+          this.set_surface_ctype( true, { 'radius' : v } );
+          this._update_canvas();
+        }
+      });
+
+    // 'elec_decay'        : { value : 2.0 },
+    // 'blend_factor'      : { value : 0.4 }
 
 
-    this.gui.hide_item(['Sigma'], folder_name);
+    this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
   }
 
   // 13. electrode visibility, highlight, groups
@@ -56576,7 +56619,7 @@ class THREEBRAIN_CONTROL{
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
-      'Surface Color', 'Blend Factor', 'Sigma'
+      'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit'
     ];
     const args_dict = (0,utils/* to_dict */.nr)( args );
 
@@ -62159,6 +62202,9 @@ const compile_free_material = ( material, options, target_renderer ) => {
     shader.uniforms.elec_locs = options.elec_locs;
     shader.uniforms.elec_size = options.elec_size;
     shader.uniforms.elec_active_size = options.elec_active_size;
+    shader.uniforms.elec_radius = options.elec_radius;
+    shader.uniforms.elec_decay = options.elec_decay;
+
     shader.uniforms.blend_factor = options.blend_factor;
 
     material.userData.shader = shader;
@@ -62184,6 +62230,8 @@ uniform vec3 shift;
 uniform float sampler_bias;
 uniform float sampler_step;
 uniform float blend_factor;
+uniform float elec_radius;
+uniform float elec_decay;
 
 attribute vec3 track_color;
 vec3 zeros = vec3( 0.0 );
@@ -62242,9 +62290,9 @@ vec3 sample2( vec3 p ) {
   for( p2.x = start; p2.x < end; p2.x += step ){
     eloc = texture( elec_locs, p2 ).rgb;
     len = max( length( ( eloc * 255.0 - 128.0 ) - p ) , 3.0 );
-    if( len < 10.0 ){
+    if( len < elec_radius ){
       ecol = texture( elec_cols, p2 ).rgb;
-      re += 1.0 + ( ecol - 1.0 ) / ( len * len / 9.0 );
+      re += 1.0 + ( ecol - 1.0 ) * exp( - len * elec_decay / elec_radius );
       count += 1.0;
     }
   }
@@ -62522,7 +62570,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     const p = new threeplugins/* THREE.Vector3 */.J.Vector3();
     let ii = 0;
     this._linked_electrodes.forEach((el) => {
-      if( el.visible && el.material.isMeshBasicMaterial ){
+      if( el.material.isMeshBasicMaterial ){
         el.getWorldPosition( p );
         p.addScalar( 128 );
         e_locs[ ii * 3 ] = Math.round( p.x );
@@ -62653,22 +62701,24 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
 
     this._material_options = {
-      'which_map' : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
-      'volume_map' : { value : this._volume_texture },
-      'scale_inv' : {
+      'which_map'         : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
+      'volume_map'        : { value : this._volume_texture },
+      'scale_inv'         : {
         value : new threeplugins/* THREE.Vector3 */.J.Vector3(
           1 / this._volume_margin_size, 1 / this._volume_margin_size,
           1 / this._volume_margin_size
         )
       },
-      'shift' : { value : new threeplugins/* THREE.Vector3 */.J.Vector3() },
-      'sampler_bias' : { value : 3.0 },
-      'sampler_step' : { value : 1.5 },
-      'elec_cols' : { value : null },
-      'elec_locs' : { value : null },
-      'elec_size' : { value : 0 },
-      'elec_active_size' : { value : 0 },
-      'blend_factor' : { value : 0.4 }
+      'shift'             : { value : new threeplugins/* THREE.Vector3 */.J.Vector3() },
+      'sampler_bias'      : { value : 3.0 },
+      'sampler_step'      : { value : 1.5 },
+      'elec_cols'         : { value : null },
+      'elec_locs'         : { value : null },
+      'elec_size'         : { value : 0 },
+      'elec_active_size'  : { value : 0 },
+      'elec_radius'       : { value: 10.0 },
+      'elec_decay'        : { value : 0.15 },
+      'blend_factor'      : { value : 0.4 }
     };
 
     this._materials = {
