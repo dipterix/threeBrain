@@ -64015,8 +64015,17 @@ class THREEBRAIN_CANVAS {
   get_mouse(){
     if(this.mouse_event !== undefined && !this.mouse_event.dispose){
       let event = this.mouse_event.event;
-      this.mouse_pointer.x = ( event.offsetX / this.main_canvas.clientWidth ) * 2 - 1;
-      this.mouse_pointer.y = - ( event.offsetY / this.main_canvas.clientHeight ) * 2 + 1;
+
+      if( !event.offsetX && !event.offsetY ){
+        // Firefox, where offsetX,Y are always 0
+        const rect = this.domElement.getBoundingClientRect();
+        this.mouse_pointer.x = 2 * (event.clientX - rect.x) / rect.width - 1;
+        // three.js origin is from bottom-left while html origin is top-left
+        this.mouse_pointer.y = 2 * (rect.y - event.clientY) / rect.height + 1;
+      } else {
+        this.mouse_pointer.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
+        this.mouse_pointer.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
+      }
     }
   }
 
@@ -64058,61 +64067,6 @@ class THREEBRAIN_CANVAS {
       this.mouse_raycaster.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
       items = this.mouse_raycaster.intersectObjects( (0,utils/* to_array */.AA)( request_type ), true );
     }
-
-    /*
-
-    if(clickable_only === true){
-      let raycaster = this.mouse_raycaster;
-      // items = raycaster.intersectOctreeObjects( octreeObjects );
-      items = raycaster.intersectObjects( to_array( this.clickable ) );
-    }else{
-
-
-      if(this.DEBUG){
-        console.debug('Searching for all intersections - Partial searching');
-      }
-
-      // We need to filter out meshes
-      // 1. invisible
-      // 2. layers > 20
-      // 3. not intersect with ray on the boxes
-
-      // First step, intersect with boxes
-      let target_object,
-          test_layer = new THREE.Layers(),
-          p1 = new THREE.Vector3(),
-          p2 = new THREE.Vector3();
-
-      test_layer.mask = 16383;
-
-      this.mesh.forEach( (m, mesh_name) => {
-        if(m.isMesh && m.visible && m.layers.test(test_layer)){
-          let geom = m.geometry;
-
-          if(!geom.boundingBox){
-            geom.computeBoundingBox();
-          }
-
-          let box_item = this.mouse_raycaster.ray.intersectBox(geom.boundingBox, p2);
-          if(box_item !== null){
-            if(target_object === undefined || (p1.distanceTo( this.main_camera.position ) > p2.distanceTo( this.main_camera.position ) )){
-              target_object = m;
-              p1.set( p2.x, p2.y, p2.z );
-            }
-          }
-        }
-      });
-
-      console.log(target_object.name);
-
-      if(target_object !== undefined){
-        console.log(target_object.name);
-        items = this.mouse_raycaster.intersectObject( target_object, false );
-      }
-
-
-    }
-    */
 
     if(this.DEBUG){
       this._items = items;
@@ -64173,7 +64127,9 @@ class THREEBRAIN_CANVAS {
         continue;
       }
       request = callback[0]( this.mouse_event );
+
       if( request && request.pass ){
+
         // raycast object
         // check which object(s) to raycast on
         request_type = request.type || 'clickable';

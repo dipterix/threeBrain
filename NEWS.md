@@ -15,6 +15,7 @@ threeBrain 0.2.0
 * Bumped `threejs` version to `v131dev`
 * Fixed surface transparency losing fragments issue
 * Added loaders to shiny applications to avoid performance issues on old computers
+* Fixed electrodes not selected on mouse click-down (on `Firefox`)
 
 threeBrain 0.1.9
 =======
