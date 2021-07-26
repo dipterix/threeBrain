@@ -66,16 +66,12 @@
 #'
 #' # 1. dynamically serialize
 #' mesh = geom_freemesh('lh', vertex = vertex, face = face, layer = 1)
-#' pryr::object_size(mesh) # ~10 MB
-#' threejs_brain(mesh) # ~3 seconds to serialize
 #'
 #' # 2. cache
 #' # Create group, all geometries in this group are relatively positioned
 #' tmp_file = tempfile()
 #' mesh = geom_freemesh('Left Hemisphere cached', vertex = vertex,
 #'                      face = face, cache_file = tmp_file)
-#' pryr::object_size(mesh) # ~0.5 MB
-#' threejs_brain(mesh) # serialize at once, load in browser
 #'
 #' }
 #' @export

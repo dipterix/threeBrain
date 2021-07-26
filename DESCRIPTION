@@ -47,5 +47,4 @@ Imports:
     oro.nifti (>= 0.9.1)
 Suggests: 
     knitr,
-    rmarkdown,
-    pryr,
+    rmarkdown
