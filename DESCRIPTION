@@ -18,9 +18,9 @@ Description: A fast, interactive cross-platform, and easy to share
     inserted into any websites; see <https://dipterix.org/project/threebrain/>).
     as an example. The 'R-shiny' support allows the 3D viewer to be dynamically 
     generated from reactive user inputs. This feature has been fully adopted by
-    'RAVE' <http://openwetware.org/wiki/RAVE>, an interactive toolbox to 
+    'RAVE' <https://openwetware.org/wiki/RAVE>, an interactive toolbox to 
     analyze 'iEEG/eCoG' data. Documentation about 'threeBrain' is provided
-    by <https://dipterix.github.io/threeBrain> and several vignettes included 
+    by <https://dipterix.org/threeBrain/> and several vignettes included 
     in this package. To cite the package, please check our 'NeuroImage' paper 
     by Magnotti, Wang, and Beauchamp (2020, <doi:10.1016/j.neuroimage.2020.117341>),
     or see 'citation("threeBrain")' for details.
@@ -29,7 +29,7 @@ Encoding: UTF-8
 RoxygenNote: 7.1.1
 Roxygen: list(r6 = FALSE)
 Language: en-US
-URL: https://dipterix.github.io/threeBrain/ https://github.com/dipterix/threeBrain
+URL: https://dipterix.org/threeBrain/ https://github.com/dipterix/threeBrain
 BugReports: https://github.com/dipterix/threeBrain/issues
 Imports:
     grDevices,
