@@ -20,9 +20,9 @@
     inserted into any websites; see &lt;https://dipterix.org/project/threebrain/&gt;).
     as an example. The R-shiny support allows the 3D viewer to be dynamically 
     generated from reactive user inputs. This feature has been fully adopted by
-    RAVE &lt;http://openwetware.org/wiki/RAVE&gt;, an interactive toolbox to 
+    RAVE &lt;https://openwetware.org/wiki/RAVE&gt;, an interactive toolbox to 
     analyze iEEG/eCoG data. Documentation about threeBrain is provided
-    by &lt;https://dipterix.github.io/threeBrain&gt; and several vignettes included 
+    by &lt;https://dipterix.org/threeBrain/&gt; and several vignettes included 
     in this package. To cite the package, please check our NeuroImage paper 
     by Magnotti, Wang, and Beauchamp (2020, &lt;doi:10.1016/j.neuroimage.2020.117341&gt;),
     or see citation("threeBrain") for details.'>
@@ -146,7 +146,7 @@
 <a href="#b-basic-brain-viewer" class="anchor"></a>B. Basic Brain Viewer</h2>
 <p>Once finishing setting up of <code>threeBrain</code>, there will be a template subject <code>N27</code> (Collin’s 27) created locally. The location is platform-related. You can find it by running the following command:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.github.io/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
 
 <span class="fu"><a href="reference/default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; [1] "/Users/dipterix/Library/Application Support/</span>
@@ -157,7 +157,7 @@
 <li>Import subject</li>
 </ol>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.github.io/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
 
 <span class="va">n27_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="fu"><a href="reference/default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span>
 
@@ -209,7 +209,7 @@
 <a href="#e-merge-subjects-and-template-mapping" class="anchor"></a>E. Merge Subjects and Template mapping</h2>
 <p>If you have your own subjects with <code>FreeSurfer</code> output, for example, I have two subjects <code>YAB</code> and <code>YCQ</code>. To merge these two subjects and show them on <code>N27</code> template,</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.github.io/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
 
 <span class="co"># yab = ... (see section B for import a single subject)</span>
 <span class="co"># ycq = ...</span>
