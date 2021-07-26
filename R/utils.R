@@ -22,8 +22,25 @@ stopifnot2 <- function(..., msg = 'Condition not satisfied'){
 }
 
 
-data_uri <- function(file, ...){
-  base64enc::dataURI(file = file, ...)
+# data_uri <- function(file, ...){
+#   base64enc::dataURI(file = file, ...)
+# }
+
+htmlDependency <- function (
+  name, version, src, meta = NULL, script = NULL, stylesheet = NULL,
+  head = NULL, attachment = NULL, package = NULL, all_files = TRUE) {
+
+  version <- as.character(version)
+  srcNames <- names(src)
+  if (is.null(srcNames)){ srcNames <- rep.int("", length(src)) }
+  srcNames[!nzchar(srcNames)] <- "file"
+  names(src) <- srcNames
+  src <- as.list(src)
+  structure(class = "html_dependency", list(
+    name = name, version = as.character(version),
+    src = src, meta = meta, script = script, stylesheet = stylesheet,
+    head = head, attachment = attachment, package = package,
+    all_files = all_files))
 }
 
 
@@ -40,6 +57,7 @@ cat2 <- function(
     'DEFAULT' = '#000000'
   )
 ){
+  level <- toupper(level)
   if(!level %in% names(pal)){
     level <- 'DEFAULT'
   }
@@ -49,18 +67,29 @@ cat2 <- function(
   }
 
   # check if interactive
-  if(base::interactive()){
-    # use colored console
-    col <- crayon::make_style(.col)
+  if(dipsaus::rs_avail() && !nzchar(file)){
     if(print_level){
       base::cat('[', level, ']: ', sep = '')
     }
 
-    base::cat(col(..., sep = sep), end = end, file = file, fill = fill, labels = labels, append = append)
+    # level to color prefix
+    prefix <- list(
+      "DEBUG" = "\033[38;5;246m",
+      'INFO' = '\033[38;5;35m',
+      'WARNING' = '\033[38;5;215m',
+      'ERROR' = '\033[38;5;203m',
+      'FATAL' = '\033[38;5;95m',
+      'DEFAULT' = '\033[38;5;232m'
+    )[[level]]
+    if(is.null(prefix)){
+      prefix <- '\033[38;5;232m'
+    }
+    s <- paste(..., sep = sep)
+    base::cat(prefix, s, "\033[39m", end, file = file, fill = fill, labels = labels, append = append, sep = '')
 
   }else{
     # Just use cat
-    base::cat(...)
+    base::cat(..., end, file = file, fill = fill, labels = labels, append = append)
   }
 
   if(level == 'FATAL'){

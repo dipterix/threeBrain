@@ -1281,6 +1281,7 @@ class THREEBRAIN_CANVAS {
         continue;
       }
       request = callback[0]( this.mouse_event );
+      // console.log(request)
       if( request && request.pass ){
         // raycast object
         // check which object(s) to raycast on

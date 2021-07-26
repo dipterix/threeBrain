@@ -8,6 +8,7 @@ threeBrain 0.2.0
 * Added color-map generator for surface and volume data
 * Added method to generate data cube (volume) from `MNI305` coordinates
 * Optimized loading procedure
+* Removed `crayon`, `base64enc`, `htmltools` from dependence
 
 ### Improvements
 

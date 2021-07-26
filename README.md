@@ -35,7 +35,7 @@
 
 #### System Requirement
 
-* **Web Browsers**: the viewer uses `WegGL2` to render in browsers. Please check [this list](https://caniuse.com/?search=webgl2) to see compatible browsers. As of 2020, **Chrome** and **Firefox** have full supports.
+* **Web Browsers**: the viewer uses `WegGL2` to render in browsers. Please check [this list](https://caniuse.com/webgl2) to see compatible browsers. As of 2020, **Chrome**, **Firefox**, and **Edge** (not IE) have full supports.
   - For **Safari** users, please enable this feature by going to `Safari` > `Preferences`, click `Advanced`, then select `Show Develop menu in menu bar`; then click `Develop` in the menu bar, go to `Experimental Features` > `WebGL 2.0`. This only needs to be done once. 
 
 ## A. Installation

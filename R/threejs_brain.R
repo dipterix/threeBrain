@@ -282,7 +282,7 @@ threejs_brain <- function(
   # TODO: Need to think on how to resolve conflicts.
   widget_id <- stringr::str_replace_all(widget_id, '[^a-zA-Z0-9]', '_')
 
-  dependencies <- htmltools::htmlDependency(
+  dependencies <- htmlDependency(
     name = widget_id,
     version = '0',
     src = tmp_dir,
@@ -478,15 +478,37 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
 
 }
 
+grey_col <- function(...){
+  if( dipsaus::rs_avail() ){
+    cat("\033[38;5;246m", paste(..., sep = " ", collapse = "\n"),
+        "\033[39m", sep = "")
+  } else {
+    cat(..., sep = " ")
+  }
+}
+
+green_col <- function(...){
+  if( dipsaus::rs_avail() ){
+    cat("\033[38;5;35m", paste(..., sep = " ", collapse = "\n"),
+        "\033[39m", sep = "")
+  } else {
+    cat(..., sep = " ")
+  }
+}
+
+red_col <- function(...){
+  if( dipsaus::rs_avail() ){
+    cat("\033[38;5;215m", paste(..., sep = " ", collapse = "\n"),
+        "\033[39m", sep = "")
+  } else {
+    cat(..., sep = " ")
+  }
+}
 
 #' @export
 print.threeBrain_saved <- function(x, ...){
 
   index <- x$index
-
-  grey_col <- crayon::make_style('grey60')
-  green_col <- crayon::make_style('#1d9f34')
-  red_col <- crayon::make_style('#ec942c')
 
   if(!file.exists(index)){
     warning('Cannot find index file at: ', index)

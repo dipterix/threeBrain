@@ -9,7 +9,6 @@
 #' @importFrom htmlwidgets shinyWidgetOutput
 #' @importFrom htmlwidgets shinyRenderWidget
 #' @importFrom htmlwidgets saveWidget
-#' @importFrom htmltools htmlDependency
 #' @importFrom shiny getDefaultReactiveDomain
 #' @importFrom utils write.csv
 #' @importFrom utils read.table
