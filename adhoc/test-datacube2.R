@@ -1,7 +1,7 @@
 file.copy('inst/htmlwidgets/lib/dipterixThreeBrain-1.0.1/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/htmlwidgets/lib/', overwrite = TRUE, recursive = TRUE)
 file.copy('inst/palettes/datacube2/', to = '/Users/dipterix/Library/R/arm64/4.1/library/threeBrain/palettes/', overwrite = TRUE, recursive = TRUE)
 
-yab <- rave::rave_brain2('demo/YAB',surfaces = 'smoothwm')
+yab <- rave::rave_brain2('demo/YAB')
 yab$set_electrode_values(data.frame(
   Subject = 'YAB',
   Electrode = c(rep(14, 3), rep(15,1)),
@@ -33,9 +33,9 @@ for(ii in 1:20){
     yab$plot(
       # voxel_colormap = "inst/palettes/datacube2/ContinuousSample.json",
       debug = TRUE, controllers = list(
-        # 'Left Hemisphere' = 'hidden',
-        # 'Right Hemisphere' = 'hidden',
-        # 'Voxel Type' = 'aparc_aseg',
+        'Left Hemisphere' = 'hidden',
+        'Right Hemisphere' = 'hidden',
+        'Voxel Type' = 'aparc_aseg',
         # 'Voxel Opacity' = 0.76,
         # 'Voxel Label' = '1026, 1002, 1023, 1010, 2026, 2002, 2023, 2010,1012, 1014, 1027, 1032, 2012, 2014, 2027, 2032,18, 54,1035, 2035',
         'Show Panels' = FALSE
@@ -45,8 +45,16 @@ for(ii in 1:20){
       window.m1=canvas.threebrain_instances.get("Standard 141 Left Hemisphere - pial (N27)");
       window.m2=canvas.threebrain_instances.get("Standard 141 Right Hemisphere - pial (N27)");
 
+      window.origin = canvas.mouse_raycaster.ray.origin;
+      window.direction = canvas.mouse_raycaster.ray.direction;
+      window.margin_voxels = new THREE.Vector3().fromArray(m._cube_dim);
+      window.margin_lengths = margin_voxels;
+      window.map_array = m._color_texture.image.data;
+      window.delta = 2;
+
       //window.m1=canvas.threebrain_instances.get("FreeSurfer Left Hemisphere - pial (N27)");
       //window.m2=canvas.threebrain_instances.get("FreeSurfer Right Hemisphere - pial (N27)");
+      presets.c_localization();
 
 
       // m1._set_color_from_datacube2(m, 3);

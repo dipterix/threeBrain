@@ -135,6 +135,9 @@ class THREEBRAIN_CANVAS {
     this._mouse_click_callbacks = {};
     this._keyboard_callbacks = {};
 
+    // update functions
+    this._custom_updates = new Map();
+
     /* A render flag that tells renderers whether the canvas needs update.
           Case -1, -2, ... ( < 0 ) : stop rendering
           Case 0: render once
@@ -1151,11 +1154,15 @@ class THREEBRAIN_CANVAS {
     }
   }
 
+  set_raycaster(){
+    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+  }
+
   _fast_raycast( request_type ){
 
     let items;
 
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+    this.set_raycaster();
 
     this.mouse_raycaster.layers.disableAll();
 
@@ -1612,6 +1619,20 @@ class THREEBRAIN_CANVAS {
       if(this.DEBUG){
         console.error(e);
       }
+    }
+
+    if( this._custom_updates.size ){
+      this._custom_updates.forEach((f) => {
+        try {
+          if( typeof(f) === "function" ){
+            f();
+          }
+        } catch (e) {
+          if(this.DEBUG){
+            console.error(e);
+          }
+        }
+      });
     }
 
   }
@@ -2493,6 +2514,9 @@ class THREEBRAIN_CANVAS {
     this._disposed = true;
     this.clock.stop();
 
+    // update functions
+    this._custom_updates.clear();
+
     // Remove custom listeners
     this.dispose_eventlisters();
 
@@ -2615,20 +2639,21 @@ class THREEBRAIN_CANVAS {
       console.debug('Generating geometry '+g.type);
     }
     let gen_f = GEOMETRY_FACTORY[g.type],
-        inst = gen_f(g, this),
-        layers = to_array(g.layer);
+        inst = gen_f(g, this);
 
-    if(typeof(inst) !== 'object' || inst === null){
-      return(null);
-    }
-
-    if( !inst.object ){
-      return(null);
+    if( !inst || typeof(inst) !== 'object' || !inst.object ){
+      return;
     }
 
     // make sure subject array exists
-    const subject_code = inst.subject_code;
+    this.init_subject( inst.subject_code );
 
+
+    inst.finish_init();
+  }
+
+  init_subject( subject_code ){
+    if( !subject_code ){ return; }
     if( ! this.subject_codes.includes( subject_code ) ){
       this.subject_codes.push( subject_code );
       this.electrodes.set( subject_code, {});
@@ -2637,9 +2662,6 @@ class THREEBRAIN_CANVAS {
       this.surfaces.set(subject_code, {} );
       this.atlases.set( subject_code, {} );
     }
-
-
-    inst.finish_init();
   }
 
   add_clickable( name, obj ){
@@ -3141,6 +3163,7 @@ class THREEBRAIN_CANVAS {
     return( to_array( re ) );
   }
 
+  // not used
   get_volume_types(){
     const re = {};
 

@@ -817,6 +817,8 @@ R_user_dir <- function (package, which = c("data", "config", "cache")) {
 }
 
 #' @title Default Directory to Store Template Brain
+#' @param check logical, check if the folder is missing, is so,
+#' create one. This option ensures the folder is always created.
 #' @return A directory path where template brain is stored at; see also
 #' \code{\link{download_N27}}
 #' @details When \code{threeBrain.template_dir} is not set or invalid, the
@@ -830,7 +832,7 @@ R_user_dir <- function (package, which = c("data", "config", "cache")) {
 #' default_template_directory()
 #'
 #' @export
-default_template_directory <- function(){
+default_template_directory <- function(check = FALSE){
 
   re <- unname(getOption('threeBrain.template_dir', NULL), force = TRUE)
   if(length(re) != 1 || !isTRUE(dir.exists(re))){
@@ -840,7 +842,7 @@ default_template_directory <- function(){
     } else {
       re <- R_user_dir('threeBrain', 'data')
       re <- file.path(re, 'templates')
-      if(!dir.exists(re)){
+      if(check && !dir.exists(re)){
         dir_create(re)
       }
     }

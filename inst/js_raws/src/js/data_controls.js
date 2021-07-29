@@ -1,6 +1,6 @@
 import { THREE } from './threeplugins.js';
 import * as dat from './libs/dat.gui.module.js';
-import { add_electrode, is_electrode } from './geometry/sphere.js';
+import { add_electrode2, add_electrode, is_electrode } from './geometry/sphere.js';
 import { invertColor, to_array, get_or_default, to_dict } from './utils.js';
 import { CONSTANTS } from './constants.js';
 import { CCanvasRecorder } from './capture/CCanvasRecorder.js';
@@ -102,6 +102,7 @@ class THREEBRAIN_PRESETS{
   // 14. electrode mapping
   // 15. animation, play/pause, speed, clips...
   // 16. Highlight selected electrodes and info
+  // 17. Voxel color type
 
   // 1. Background colors
   c_background(){
@@ -1355,6 +1356,7 @@ class THREEBRAIN_PRESETS{
       });
   }
 
+  // 17. Voxel color type
   update_voxel_type(){
     let c, v, flag;
 
@@ -1529,7 +1531,142 @@ class THREEBRAIN_PRESETS{
 
   // -------------------------- New version --------------------------
 
+  c_localization(){
+    const folder_name = CONSTANTS.FOLDERS['localization'] || 'Electrode Localization';
+    const edit_mode = this.gui.add_item( 'Edit Mode', "disabled", {
+      folder_name: folder_name,
+      args: ['disabled', 'CT/volume', 'MRI slice']
+    });
+    const elect_loc = this.gui.add_item( 'Pointer Position', "", {
+      folder_name: folder_name
+    });
 
+    const electrodes = [];
+
+    const pos = [0,0,0];
+
+    const electrode_from_ct = () => {
+      const inst = this.current_voxel_type();
+      if( !inst ){ return; }
+      this.canvas.set_raycaster();
+      const res = THREE.raycast_volume(
+        this.canvas.mouse_raycaster.ray.origin,
+        this.canvas.mouse_raycaster.ray.direction,
+        new THREE.Vector3().fromArray( inst._cube_dim ),
+        new THREE.Vector3().set(
+          inst._margin_length.xLength,
+          inst._margin_length.yLength,
+          inst._margin_length.zLength,
+        ),
+        inst._color_texture.image.data,
+        2
+      );
+      pos[0] = res[3];
+      pos[1] = res[4];
+      pos[2] = res[5];
+
+      return ( pos );
+    };
+    const electrode_from_slice = ( scode ) => {
+      if( !this.canvas._has_datacube_registered ){ return; }
+      const l = canvas.volumes.get(scode);
+      const k = Object.keys(l);
+      if( !k.length ) { return; }
+      const planes = l[k[0]];
+      if(!Array.isArray(planes) || planes.length != 3){ return; }
+
+      this.canvas.set_raycaster();
+      this.canvas.mouse_raycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+
+      const items = this.canvas.mouse_raycaster.intersectObjects( planes );
+
+      if( !items.length ){ return; }
+
+      const p = items[0].point;
+      pos[0] = p.x;
+      pos[1] = p.y;
+      pos[2] = p.z;
+      return( pos );
+    };
+    const electrode_pos = () => {
+      const mode = edit_mode.getValue();
+      const scode = this.canvas.state_data.get("target_subject");
+      if( !mode || !scode || scode === "" ){ return; }
+      switch(mode){
+        case "CT/volume":
+          return( electrode_from_ct() );
+          break;
+        case "MRI slice":
+          return( electrode_from_slice( scode ) );
+          break;
+        default:
+          return;
+      }
+    };
+
+    // add canvas update
+    this.canvas._custom_updates.set("localization_update", () => {
+      const electrode_position = electrode_pos();
+      if( !Array.isArray(electrode_position) || electrode_position.length != 3 ){
+        elect_loc.setValue("");
+      } else {
+        elect_loc.setValue(
+          electrode_position.map((e) => {
+            return(e.toFixed(2))
+          }).join(", ")
+        );
+      }
+
+    });
+
+    // bind dblclick
+    this.canvas.bind( 'localization_dblclick', 'dblclick',
+      (event) => {
+        const scode = this.canvas.state_data.get("target_subject");
+        const electrode_position = electrode_pos();
+
+        if( !Array.isArray(electrode_position) || electrode_position.length != 3 ){ return; }
+        const num = electrodes.length + 1,
+              group_name = `group_Electrodes (${scode})`;
+
+        const el = add_electrode2(
+          {
+            "name": `${scode}, ${num} - NEW_ELECTRODE`,
+            "type": "sphere",
+            "time_stamp": [],
+            "position": electrode_position,
+            "value": null,
+            "clickable": true,
+            "layer": 0,
+            "group":{
+              "group_name": group_name,
+              "group_layer": 0,
+              "group_position":[0,0,0]
+            },
+            "use_cache":false,
+            "custom_info": "",
+            "subject_code": scode,
+            "radius": 1.5,
+            "width_segments": 10,
+            "height_segments": 6,
+            "is_electrode":true,
+            "is_surface_electrode": false,
+            "use_template":false,
+            "surface_type": 'pial',
+            "hemisphere": null,
+            "vertex_number": -1,
+            "sub_cortical": true,
+            "search_geoms": null
+          },
+          this.canvas
+        );
+        electrodes.push( el );
+
+      }, this.canvas.main_canvas, false );
+
+    // open folder
+    this.gui.open_folder( folder_name );
+  }
 
 
   c_electrode_localization(folder_name = 'Electrode Localization (Beta)'){

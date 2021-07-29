@@ -188,7 +188,7 @@ class DataCube2 extends AbstractThreeBrainObject {
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
           max_colID = lut.mapMaxColorID;
-
+    this._margin_length = volume;
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders

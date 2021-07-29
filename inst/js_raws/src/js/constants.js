@@ -135,7 +135,8 @@ CONSTANTS.FOLDERS = {
   'electrode-style'       : 'Electrodes',
   'electrode-mapping'     : 'Electrodes',
   'animation'             : 'Data Visualization',
-  'highlight-selection'   : 'Data Visualization'
+  'highlight-selection'   : 'Data Visualization',
+  'localization'          : 'Electrode Localization'
 };
 
 CONSTANTS.THRESHOLD_OPERATORS = [

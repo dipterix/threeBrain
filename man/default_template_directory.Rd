@@ -4,7 +4,11 @@
 \alias{default_template_directory}
 \title{Default Directory to Store Template Brain}
 \usage{
-default_template_directory()
+default_template_directory(check = FALSE)
+}
+\arguments{
+\item{check}{logical, check if the folder is missing, is so,
+create one. This option ensures the folder is always created.}
 }
 \value{
 A directory path where template brain is stored at; see also

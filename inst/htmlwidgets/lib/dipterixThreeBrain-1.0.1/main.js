@@ -51735,7 +51735,7 @@ const WEBGL = {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "t": () => (/* binding */ CONSTANTS)
 /* harmony export */ });
-/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(178);
+/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3508);
 
 // Defined all the constants
 
@@ -51873,7 +51873,8 @@ CONSTANTS.FOLDERS = {
   'electrode-style'       : 'Electrodes',
   'electrode-mapping'     : 'Electrodes',
   'animation'             : 'Data Visualization',
-  'highlight-selection'   : 'Data Visualization'
+  'highlight-selection'   : 'Data Visualization',
+  'localization'          : 'Electrode Localization'
 };
 
 CONSTANTS.THRESHOLD_OPERATORS = [
@@ -51912,8 +51913,8 @@ __webpack_require__.d(__webpack_exports__, {
   "B": () => (/* binding */ THREEBRAIN_PRESETS)
 });
 
-// EXTERNAL MODULE: ./src/js/threeplugins.js + 5 modules
-var threeplugins = __webpack_require__(178);
+// EXTERNAL MODULE: ./src/js/threeplugins.js + 6 modules
+var threeplugins = __webpack_require__(3508);
 ;// CONCATENATED MODULE: ./src/js/libs/dat.gui.module.js
 /**
  * dat-gui JavaScript Controller Library
@@ -54686,6 +54687,7 @@ class THREEBRAIN_PRESETS{
   // 14. electrode mapping
   // 15. animation, play/pause, speed, clips...
   // 16. Highlight selected electrodes and info
+  // 17. Voxel color type
 
   // 1. Background colors
   c_background(){
@@ -55939,6 +55941,7 @@ class THREEBRAIN_PRESETS{
       });
   }
 
+  // 17. Voxel color type
   update_voxel_type(){
     let c, v, flag;
 
@@ -56113,7 +56116,142 @@ class THREEBRAIN_PRESETS{
 
   // -------------------------- New version --------------------------
 
+  c_localization(){
+    const folder_name = constants/* CONSTANTS.FOLDERS.localization */.t.FOLDERS.localization || 'Electrode Localization';
+    const edit_mode = this.gui.add_item( 'Edit Mode', "disabled", {
+      folder_name: folder_name,
+      args: ['disabled', 'CT/volume', 'MRI slice']
+    });
+    const elect_loc = this.gui.add_item( 'Pointer Position', "", {
+      folder_name: folder_name
+    });
 
+    const electrodes = [];
+
+    const pos = [0,0,0];
+
+    const electrode_from_ct = () => {
+      const inst = this.current_voxel_type();
+      if( !inst ){ return; }
+      this.canvas.set_raycaster();
+      const res = threeplugins/* THREE.raycast_volume */.J.raycast_volume(
+        this.canvas.mouse_raycaster.ray.origin,
+        this.canvas.mouse_raycaster.ray.direction,
+        new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray( inst._cube_dim ),
+        new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+          inst._margin_length.xLength,
+          inst._margin_length.yLength,
+          inst._margin_length.zLength,
+        ),
+        inst._color_texture.image.data,
+        2
+      );
+      pos[0] = res[3];
+      pos[1] = res[4];
+      pos[2] = res[5];
+
+      return ( pos );
+    };
+    const electrode_from_slice = ( scode ) => {
+      if( !this.canvas._has_datacube_registered ){ return; }
+      const l = canvas.volumes.get(scode);
+      const k = Object.keys(l);
+      if( !k.length ) { return; }
+      const planes = l[k[0]];
+      if(!Array.isArray(planes) || planes.length != 3){ return; }
+
+      this.canvas.set_raycaster();
+      this.canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+
+      const items = this.canvas.mouse_raycaster.intersectObjects( planes );
+
+      if( !items.length ){ return; }
+
+      const p = items[0].point;
+      pos[0] = p.x;
+      pos[1] = p.y;
+      pos[2] = p.z;
+      return( pos );
+    };
+    const electrode_pos = () => {
+      const mode = edit_mode.getValue();
+      const scode = this.canvas.state_data.get("target_subject");
+      if( !mode || !scode || scode === "" ){ return; }
+      switch(mode){
+        case "CT/volume":
+          return( electrode_from_ct() );
+          break;
+        case "MRI slice":
+          return( electrode_from_slice( scode ) );
+          break;
+        default:
+          return;
+      }
+    };
+
+    // add canvas update
+    this.canvas._custom_updates.set("localization_update", () => {
+      const electrode_position = electrode_pos();
+      if( !Array.isArray(electrode_position) || electrode_position.length != 3 ){
+        elect_loc.setValue("");
+      } else {
+        elect_loc.setValue(
+          electrode_position.map((e) => {
+            return(e.toFixed(2))
+          }).join(", ")
+        );
+      }
+
+    });
+
+    // bind dblclick
+    this.canvas.bind( 'localization_dblclick', 'dblclick',
+      (event) => {
+        const scode = this.canvas.state_data.get("target_subject");
+        const electrode_position = electrode_pos();
+
+        if( !Array.isArray(electrode_position) || electrode_position.length != 3 ){ return; }
+        const num = electrodes.length + 1,
+              group_name = `group_Electrodes (${scode})`;
+
+        const el = (0,sphere/* add_electrode2 */.l)(
+          {
+            "name": `${scode}, ${num} - NEW_ELECTRODE`,
+            "type": "sphere",
+            "time_stamp": [],
+            "position": electrode_position,
+            "value": null,
+            "clickable": true,
+            "layer": 0,
+            "group":{
+              "group_name": group_name,
+              "group_layer": 0,
+              "group_position":[0,0,0]
+            },
+            "use_cache":false,
+            "custom_info": "",
+            "subject_code": scode,
+            "radius": 1.5,
+            "width_segments": 10,
+            "height_segments": 6,
+            "is_electrode":true,
+            "is_surface_electrode": false,
+            "use_template":false,
+            "surface_type": 'pial',
+            "hemisphere": null,
+            "vertex_number": -1,
+            "sub_cortical": true,
+            "search_geoms": null
+          },
+          this.canvas
+        );
+        electrodes.push( el );
+
+      }, this.canvas.main_canvas, false );
+
+    // open folder
+    this.gui.open_folder( folder_name );
+  }
 
 
   c_electrode_localization(folder_name = 'Electrode Localization (Beta)'){
@@ -57068,10 +57206,11 @@ class AbstractThreeBrainObject {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Lk": () => (/* binding */ gen_sphere),
 /* harmony export */   "C6": () => (/* binding */ add_electrode),
-/* harmony export */   "OK": () => (/* binding */ is_electrode)
+/* harmony export */   "OK": () => (/* binding */ is_electrode),
+/* harmony export */   "l": () => (/* binding */ add_electrode2)
 /* harmony export */ });
 /* harmony import */ var _abstract_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(470);
-/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(178);
+/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3508);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(3658);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(975);
 
@@ -57593,6 +57732,38 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
   return( _el );
 }
 
+
+function add_electrode2 (g, canvas){
+  const subject_code = g.subject_code;
+
+  if( !subject_code ){
+    throw Error("No subject code in `add_electrode2`");
+  }
+
+  if( g.group && g.group.group_name ){
+    const group_name = g.group.group_name;
+
+    if( !canvas.group.has(group_name) ){
+      canvas.add_group( {
+        name : group_name, layer : 0, position : [0,0,0],
+        disable_trans_mat: true, group_data: null,
+        parent_group: null, subject_code: subject_code,
+        trans_mat: null
+      });
+    }
+  }
+  const el = gen_sphere(g, canvas);
+
+  if( !el || typeof(el) !== 'object' || !el.object ){
+    return;
+  }
+
+  // make sure subject array exists
+  canvas.init_subject( subject_code );
+  el.finish_init();
+  return( el );
+}
+
 function is_electrode(e) {
   if(e && e.isMesh && e.userData.construct_params && e.userData.construct_params.is_electrode){
     return(true);
@@ -57614,7 +57785,7 @@ function is_electrode(e) {
 /* harmony export */   "P": () => (/* binding */ THREE_BRAIN_SHINY)
 /* harmony export */ });
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3658);
-/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(178);
+/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3508);
 /* harmony import */ var _geometry_sphere_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(960);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(975);
 /* JS to shiny callbacks
@@ -60824,8 +60995,8 @@ Stats.Panel = function ( name, fg, bg ) {
 
 
 
-// EXTERNAL MODULE: ./src/js/threeplugins.js + 5 modules
-var threeplugins = __webpack_require__(178);
+// EXTERNAL MODULE: ./src/js/threeplugins.js + 6 modules
+var threeplugins = __webpack_require__(3508);
 // EXTERNAL MODULE: ./src/js/threebrain_cache.js
 var threebrain_cache = __webpack_require__(5664);
 ;// CONCATENATED MODULE: ./src/js/libs/draggable.js
@@ -61575,7 +61746,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
           max_colID = lut.mapMaxColorID;
-
+    this._margin_length = volume;
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
@@ -63027,6 +63198,9 @@ class THREEBRAIN_CANVAS {
     this._mouse_click_callbacks = {};
     this._keyboard_callbacks = {};
 
+    // update functions
+    this._custom_updates = new Map();
+
     /* A render flag that tells renderers whether the canvas needs update.
           Case -1, -2, ... ( < 0 ) : stop rendering
           Case 0: render once
@@ -64043,11 +64217,15 @@ class THREEBRAIN_CANVAS {
     }
   }
 
+  set_raycaster(){
+    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+  }
+
   _fast_raycast( request_type ){
 
     let items;
 
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+    this.set_raycaster();
 
     this.mouse_raycaster.layers.disableAll();
 
@@ -64504,6 +64682,20 @@ class THREEBRAIN_CANVAS {
       if(this.DEBUG){
         console.error(e);
       }
+    }
+
+    if( this._custom_updates.size ){
+      this._custom_updates.forEach((f) => {
+        try {
+          if( typeof(f) === "function" ){
+            f();
+          }
+        } catch (e) {
+          if(this.DEBUG){
+            console.error(e);
+          }
+        }
+      });
     }
 
   }
@@ -65385,6 +65577,9 @@ class THREEBRAIN_CANVAS {
     this._disposed = true;
     this.clock.stop();
 
+    // update functions
+    this._custom_updates.clear();
+
     // Remove custom listeners
     this.dispose_eventlisters();
 
@@ -65507,20 +65702,21 @@ class THREEBRAIN_CANVAS {
       console.debug('Generating geometry '+g.type);
     }
     let gen_f = GEOMETRY_FACTORY[g.type],
-        inst = gen_f(g, this),
-        layers = (0,utils/* to_array */.AA)(g.layer);
+        inst = gen_f(g, this);
 
-    if(typeof(inst) !== 'object' || inst === null){
-      return(null);
-    }
-
-    if( !inst.object ){
-      return(null);
+    if( !inst || typeof(inst) !== 'object' || !inst.object ){
+      return;
     }
 
     // make sure subject array exists
-    const subject_code = inst.subject_code;
+    this.init_subject( inst.subject_code );
 
+
+    inst.finish_init();
+  }
+
+  init_subject( subject_code ){
+    if( !subject_code ){ return; }
     if( ! this.subject_codes.includes( subject_code ) ){
       this.subject_codes.push( subject_code );
       this.electrodes.set( subject_code, {});
@@ -65529,9 +65725,6 @@ class THREEBRAIN_CANVAS {
       this.surfaces.set(subject_code, {} );
       this.atlases.set( subject_code, {} );
     }
-
-
-    inst.finish_init();
   }
 
   add_clickable( name, obj ){
@@ -66033,6 +66226,7 @@ class THREEBRAIN_CANVAS {
     return( (0,utils/* to_array */.AA)( re ) );
   }
 
+  // not used
   get_volume_types(){
     const re = {};
 
@@ -66651,7 +66845,7 @@ mapped = false,
 
 /***/ }),
 
-/***/ 178:
+/***/ 3508:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -68313,6 +68507,121 @@ function add_text_sprite(THREE){
 
 
 
+;// CONCATENATED MODULE: ./src/js/Math/raycast_volume.js
+
+const register_raycast_volume = (THREE) => {
+
+  const orig = new THREE.Vector3().copy(origin);
+  const projection = new THREE.Matrix3();
+  const p = new THREE.Vector3();
+  const p1 = new THREE.Vector3();
+  const f = new THREE.Vector3();
+
+  /*window.orig = orig;
+  window.projection = projection;
+  window.p = p;
+  window.p1 = p1;
+  window.f = f;*/
+
+  THREE.raycast_volume = (
+    origin, direction, margin_voxels, margin_lengths,
+    map_array, delta = 2 ) => {
+    // canvas.mouse_raycaster.ray.origin
+    // canvas.mouse_raycaster.ray.direction
+
+    orig.x = origin.x + ( margin_lengths.x - 1 ) / 2;
+    orig.y = origin.y + ( margin_lengths.y - 1 ) / 2;
+    orig.z = origin.z + ( margin_lengths.z - 1 ) / 2;
+    f.x = margin_lengths.x / margin_voxels.x;
+    f.y = margin_lengths.y / margin_voxels.y;
+    f.z = margin_lengths.z / margin_voxels.z;
+    projection.set(
+      1-direction.x * direction.x,
+      -direction.x * direction.y,
+      -direction.x * direction.z,
+
+       -direction.y * direction.x,
+       1-direction.y * direction.y,
+       -direction.y * direction.z,
+
+       -direction.z * direction.x,
+       -direction.z * direction.y,
+       1-direction.z * direction.z
+    );
+    const a13 = projection.elements[2],
+          a23 = projection.elements[5],
+          a33 = projection.elements[8];
+    let i, j, k1, k2, tmp, k, dist = Infinity;
+    const mx = margin_voxels.x,
+          my = margin_voxels.y,
+          mz = margin_voxels.z;
+
+
+    const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
+
+    for( let i = 0; i < margin_voxels.x; i++ ){
+      for( let j = 0; j < margin_voxels.y; j++ ){
+        p.set( i * f.x - orig.x, j * f.y - orig.y , 0 );
+        p1.copy( p );
+        p.applyMatrix3( projection );
+        p.set(
+          p.x*p.x + p.y*p.y + p.z*p.z - delta,
+          p.x*a13 + p.y*a23 + p.z*a33,
+          a13*a13 + a23*a23 + a33*a33
+        );
+        p1.z = -p.y / p.z;
+        tmp = p1.applyMatrix3( projection ).length();
+        // check if it's truly close
+        if( tmp < delta ){
+
+          tmp = Math.sqrt( p.y * p.y - p.x * p.z ) / p.z;
+
+          if( !isNaN(tmp) ){
+
+            k1 = Math.ceil(((-p.y / p.z - tmp) + orig.z) / f.z);
+            k2 = Math.floor(((-p.y / p.z + tmp) + orig.z) / f.z);
+
+            if( k1 < 0 ){ k1 = 0; }
+            if( k2 >= mz ){ k2 = mz - 1 ; }
+
+            for( k = k1; k <= k2; k++ ){
+              tmp = map_array[(
+                i + j * mx + k * mx * my
+              ) * 4 + 3 ];
+              if( tmp > 0 ){
+                p.set(
+                  i * f.x - orig.x,
+                  j * f.y - orig.y,
+                  k * f.z - orig.z
+                );
+                tmp = p.dot( direction );
+                if( tmp < dist ){
+                  res[0] = i;
+                  res[1] = j;
+                  res[2] = k;
+                  res[3] = i * f.x - ( margin_lengths.x - 1 ) / 2;
+                  res[4] = j * f.y - ( margin_lengths.y - 1 ) / 2;
+                  res[5] = k * f.z - ( margin_lengths.z - 1 ) / 2;
+                  res[6] = tmp;
+                  dist = tmp;
+                }
+              }
+            }
+          }
+        }
+
+      }
+    }
+
+    return( res );
+  };
+
+  return( THREE );
+};
+
+
+
+
 ;// CONCATENATED MODULE: ./src/js/threeplugins.js
 
 /*
@@ -68327,6 +68636,7 @@ function add_text_sprite(THREE){
 
 
 
+
 let THREE = register_lut( three_module );
 
 THREE = register_orthographic_controls( THREE );
@@ -68334,6 +68644,7 @@ THREE = register_orthographic_controls( THREE );
 THREE = register_volumeShader1( THREE );
 THREE = register_volume2DShader1( THREE );
 THREE = add_text_sprite( THREE );
+THREE = register_raycast_volume( THREE );
 
 
 
@@ -68890,7 +69201,7 @@ var __webpack_exports__ = {};
 /* unused harmony export BrainCanvas */
 /* harmony import */ var _js_download_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(3121);
 /* harmony import */ var _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5278);
-/* harmony import */ var _js_threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(178);
+/* harmony import */ var _js_threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3508);
 /* harmony import */ var _js_data_controls_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(1658);
 /* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8173);
 /* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(1619);
