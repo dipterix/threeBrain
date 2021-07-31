@@ -388,7 +388,31 @@ class Sphere extends AbstractThreeBrainObject {
 
 
 function gen_sphere(g, canvas){
-  return( new Sphere(g, canvas) );
+  const subject_code = g.subject_code;
+
+  if( subject_code ){
+    // make sure subject group exists
+    if( g.group && g.group.group_name ){
+      const group_name = g.group.group_name;
+
+      if( !canvas.group.has(group_name) ){
+        canvas.add_group( {
+          name : group_name, layer : 0, position : [0,0,0],
+          disable_trans_mat: true, group_data: null,
+          parent_group: null, subject_code: subject_code,
+          trans_mat: null
+        });
+      }
+    }
+  }
+
+  const el = new Sphere(g, canvas);
+
+  if( subject_code ){
+    // make sure subject array exists
+    canvas.init_subject( subject_code );
+  }
+  return( el );
 }
 
 function add_electrode (canvas, number, name, position, surface_type = 'NA',

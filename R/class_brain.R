@@ -462,7 +462,7 @@ Brain2 <- R6::R6Class(
       names(self$atlases)
     },
     global_data = function(){
-      structure(list(list(
+      re <- structure(list(list(
         Norig = self$Norig,
         Torig = self$Torig,
         xfm = self$xfm,
@@ -471,6 +471,8 @@ Brain2 <- R6::R6Class(
         atlas_types = self$atlas_types,
         volume_types = self$volume_types
       )), names = self$subject_code)
+      re$.subject_codes <- self$subject_code
+      re
     }
   )
 )

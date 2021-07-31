@@ -213,6 +213,7 @@ MultiBrain2 <- R6::R6Class(
       re[[ self$template_subject ]] <- self$template_object$global_data[[ self$template_subject ]]
       re$.multiple_subjects <- TRUE
       re$.template_subjects <- self$template_subject
+      re$.subject_codes <- self$subject_codes
       re
     }
   )

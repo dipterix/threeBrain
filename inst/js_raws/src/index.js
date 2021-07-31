@@ -453,6 +453,10 @@ class BrainCanvas{
         console.warn(e);
       }
     }
+
+    // canvas is ready. set flag
+    this.canvas.ready = true;
+
     // run customized js code
     if( this.settings.custom_javascript &&
         this.settings.custom_javascript !== ''){

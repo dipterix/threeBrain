@@ -131,10 +131,39 @@ function get_or_default(map, key, _default = undefined){
   }
 }
 
+function vec3_to_string(v, ifInvalid = ""){
+  if( !v ){ return( ifInvalid ); }
+  if( Array.isArray(v) ){
+    return(`${v[0].toFixed(2)}, ${v[1].toFixed(2)}, ${v[2].toFixed(2)}`)
+  }
+  if( v.isVector3 ){
+    return(`${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)}`)
+  }
+  return( ifInvalid );
+}
 
 
+function throttle_promise(){
+  let blocked = false;
 
-// Credit David Walsh (https://davidwalsh.name/javascript-debounce-function)
+  const new_promise = (f) => {
+    if( blocked ){ return; }
+    blocked = true;
+    const p = new Promise((resolve, reject) => {
+      try {
+        f(resolve, reject);
+      } catch (e) {}
+      blocked = false;
+    });
+    return( p );
+  };
+
+  return( new_promise );
+
+}
+
+
+// Credit: David Walsh (https://davidwalsh.name/javascript-debounce-function)
 
 // Returns a function, that, as long as it continues to be invoked, will not
 // be triggered. The function will be called after it stops being called for
@@ -243,7 +272,8 @@ const float_to_int32 = ( function () {
 
 
 export { invertColor, padZero, to_dict, to_array,
-  get_element_size, get_or_default, debounce, min2, sub2, float_to_int32 };
+  get_element_size, get_or_default, debounce, min2,
+  sub2, float_to_int32, vec3_to_string, throttle_promise };
 
 
 

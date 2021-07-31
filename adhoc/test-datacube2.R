@@ -8,7 +8,7 @@ yab$set_electrode_values(data.frame(
   Color = c(-1:1, 1),
   Time = c(0.5,3,4, 0)
 ))
-yab <- threeBrain::merge_brain(yab)
+# yab <- threeBrain::merge_brain(yab)
 
 col <- matrix(NA, 198812, 20)
 tmp <- rep(1:255,each = ceiling(198812/255))
@@ -39,7 +39,7 @@ for(ii in 1:20){
         # 'Voxel Opacity' = 0.76,
         # 'Voxel Label' = '1026, 1002, 1023, 1010, 2026, 2002, 2023, 2010,1012, 1014, 1027, 1032, 2012, 2014, 2027, 2032,18, 54,1035, 2035',
         'Show Panels' = FALSE
-      ),
+      ), control_presets = 'localization',
       custom_javascript = r'(
       window.m=canvas.threebrain_instances.get("Atlas - aparc_aseg (N27)");
       window.m1=canvas.threebrain_instances.get("Standard 141 Left Hemisphere - pial (N27)");
@@ -54,7 +54,6 @@ for(ii in 1:20){
 
       //window.m1=canvas.threebrain_instances.get("FreeSurfer Left Hemisphere - pial (N27)");
       //window.m2=canvas.threebrain_instances.get("FreeSurfer Right Hemisphere - pial (N27)");
-      presets.c_localization();
 
 
       // m1._set_color_from_datacube2(m, 3);

@@ -87,6 +87,7 @@ class THREEBRAIN_CANVAS {
     // DOM container information
     this.el = el;
     this.container_id = this.el.getAttribute( 'data-target' );
+    this.ready = false;
 
     // Is system supporting WebGL2? some customized shaders might need this feature
     // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
@@ -137,6 +138,7 @@ class THREEBRAIN_CANVAS {
 
     // update functions
     this._custom_updates = new Map();
+    this._update_countdown = 5;
 
     /* A render flag that tells renderers whether the canvas needs update.
           Case -1, -2, ... ( < 0 ) : stop rendering
@@ -1621,18 +1623,24 @@ class THREEBRAIN_CANVAS {
       }
     }
 
-    if( this._custom_updates.size ){
-      this._custom_updates.forEach((f) => {
-        try {
-          if( typeof(f) === "function" ){
-            f();
+    // Run less frequently
+    if( this.ready && this._custom_updates.size ){
+      if( this._update_countdown > 0 ){
+        this._update_countdown--;
+      } else {
+        this._update_countdown = 5;
+        this._custom_updates.forEach((f) => {
+          try {
+            if( typeof(f) === "function" ){
+              f();
+            }
+          } catch (e) {
+            if(this.DEBUG){
+              console.error(e);
+            }
           }
-        } catch (e) {
-          if(this.DEBUG){
-            console.error(e);
-          }
-        }
-      });
+        });
+      }
     }
 
   }
@@ -2512,6 +2520,7 @@ class THREEBRAIN_CANVAS {
   dispose(){
     // Remove all objects, listeners, and dispose all
     this._disposed = true;
+    this.ready = false;
     this.clock.stop();
 
     // update functions
@@ -2650,6 +2659,7 @@ class THREEBRAIN_CANVAS {
 
 
     inst.finish_init();
+    return( inst );
   }
 
   init_subject( subject_code ){
@@ -2924,6 +2934,46 @@ class THREEBRAIN_CANVAS {
       for( let _n in g.group_data ){
         this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
       }
+
+      // check if ".subject_codes" is in the name
+      const subject_codes = to_array( this.shared_data.get(".subject_codes") );
+      if( subject_codes.length > 0 ){
+
+        // generate transform matrices
+        subject_codes.forEach((scode) => {
+
+          let subject_data = this.shared_data.get(scode);
+          if( !subject_data ){
+            subject_data = {};
+            this.shared_data.set(scode, subject_data);
+          }
+
+          const Norig = THREE.as_Matrix4( subject_data.Norig );
+          const Torig = THREE.as_Matrix4( subject_data.Torig );
+          const xfm = THREE.as_Matrix4( subject_data.xfm );
+          const tkrRAS_MNI305 = THREE.as_Matrix4( subject_data.vox2vox_MNI305 );
+          const MNI305_tkrRAS = new THREE.Matrix4()
+            .copy(tkrRAS_MNI305).invert();
+          const tkrRAS_Scanner = new THREE.Matrix4()
+            .copy(Norig)
+            .multiply(
+              new THREE.Matrix4()
+                .copy(Torig)
+                .invert()
+            );
+          subject_data.matrices = {
+            Norig : Norig,
+            Torig : Torig,
+            xfm : xfm,
+            tkrRAS_MNI305 : tkrRAS_MNI305,
+            MNI305_tkrRAS : MNI305_tkrRAS,
+            tkrRAS_Scanner: tkrRAS_Scanner
+          };
+
+        });
+
+      }
+
     }
 
     const check = function(){
@@ -3245,21 +3295,17 @@ class THREEBRAIN_CANVAS {
     let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
     let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
-    let v2v_orig = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
-    // let v2v_orig = this.shared_data.get( target_subject ).vox2vox_MNI305;
+
+    // TODO: add checks
+    const subject_data  = this.shared_data.get( target_subject );
+
+    // tkRAS should be tkrRAS, TODO: fix this typo
+    const tkRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
+    const MNI305_tkRAS = subject_data.matrices.MNI305_tkrRAS;
+
     let anterior_commissure = state.get('anterior_commissure') || new THREE.Vector3();
     anterior_commissure.set(0,0,0);
-
-    let tkRAS_MNI305 = state.get('tkRAS_MNI305') || new THREE.Matrix4();
-    tkRAS_MNI305.set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-    if(Array.isArray(v2v_orig) && v2v_orig.length == 4 && v2v_orig[3].length == 4 ){
-      tkRAS_MNI305.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
-        v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
-        v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
-        v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-      const MNI305_tkRAS = new THREE.Matrix4().copy( tkRAS_MNI305 ).invert();
-      anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
-    }
+    anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
 
     this.switch_volume( target_subject, volume_type );
     this.switch_ct( target_subject, ct_type, ct_threshold );
@@ -3450,9 +3496,9 @@ mapped = false,
 
 
     const pos_targ = new THREE.Vector3(),
-          pos_orig = new THREE.Vector3(),
-          mat1 = new THREE.Matrix4(),
-          mat2 = new THREE.Matrix4();
+          pos_orig = new THREE.Vector3();
+          // mat1 = new THREE.Matrix4(),
+          // mat2 = new THREE.Matrix4();
 
     this.electrodes.forEach( (els, origin_subject) => {
       for( let el_name in els ){
@@ -3477,16 +3523,10 @@ mapped = false,
           ) {
             el.userData.MNI305_position.fromArray( mni305 );
           } else {
-            let v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
-            if( v2v_orig ){
-              mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
-                                    v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
-                                    v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
-                                    v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-              pos_targ.fromArray( origin_position ).applyMatrix4(mat1);
-              el.userData.MNI305_position.fromArray( pos_targ.toArray() );
-            }
-
+            const subject_data  = this.shared_data.get( origin_subject );
+            const tkrRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
+            pos_targ.fromArray( origin_position ).applyMatrix4( tkrRAS_MNI305 );
+            el.userData.MNI305_position.copy( pos_targ );
           }
         }
 
@@ -3500,48 +3540,24 @@ mapped = false,
         // always do MNI305 mapping first as calibration
         if( !hide_electrode && volume === 'mni305' ){
           // apply MNI 305 transformation
-          // let v2v_orig = get_or_default( this.shared_data, origin_subject, {} ).vox2vox_MNI305;
-          const v2v_targ = get_or_default( this.shared_data, target_subject, {} ).vox2vox_MNI305;
+          const subject_data2  = this.shared_data.get( target_subject );
+          const MNI305_tkrRAS = subject_data2.matrices.MNI305_tkrRAS;
 
-          if( v2v_targ ){
-            mat2.set( v2v_targ[0][0], v2v_targ[0][1], v2v_targ[0][2], v2v_targ[0][3],
-                      v2v_targ[1][0], v2v_targ[1][1], v2v_targ[1][2], v2v_targ[1][3],
-                      v2v_targ[2][0], v2v_targ[2][1], v2v_targ[2][2], v2v_targ[2][3],
-                      v2v_targ[3][0], v2v_targ[3][1], v2v_targ[3][2], v2v_targ[3][3] );
+          if( mni305_points.x !== 0 || mni305_points.y !== 0 || mni305_points.z !== 0 ){
+            pos_targ.set( mni305_points.x, mni305_points.y, mni305_points.z ).applyMatrix4(MNI305_tkrRAS);
+            mapped = true;
+          }
 
-            // mat2.getInverse( mat2 );
-            mat2.invert();
-
-            if( mni305_points.x !== 0 || mni305_points.y !== 0 || mni305_points.z !== 0 ){
-              pos_targ.set( mni305_points.x, mni305_points.y, mni305_points.z ).applyMatrix4(mat2);
-              mapped = true;
-            }
-            /*
-            if( !mapped && v2v_orig ){
-              mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
-                        v2v_orig[1][0], v2v_orig[1][1], v2v_orig[1][2], v2v_orig[1][3],
-                        v2v_orig[2][0], v2v_orig[2][1], v2v_orig[2][2], v2v_orig[2][3],
-                        v2v_orig[3][0], v2v_orig[3][1], v2v_orig[3][2], v2v_orig[3][3] );
-
-              // target position = inv(mat2) * mat1 * origin_position
-              // mat2.multiplyMatrices( mat2, mat1 );
-              pos_targ.fromArray( origin_position ).applyMatrix4(mat1);
-
-              pos_targ.applyMatrix4( mat2 );
-              mapped = true;
-            }*/
-
-            if( mapped ){
-              el.position.copy( pos_targ );
-              el.userData._template_mni305 = pos_targ.clone();
-              el.userData._template_mapped = true;
-              el.userData._template_space = 'mni305';
-              el.userData._template_shift = 0;
-              el.userData._template_surface = g.surface_type;
-              el.userData._template_hemisphere = g.hemisphere;
-            }else{
-              el.userData._template_mni305 = undefined;
-            }
+          if( mapped ){
+            el.position.copy( pos_targ );
+            el.userData._template_mni305 = pos_targ.clone();
+            el.userData._template_mapped = true;
+            el.userData._template_space = 'mni305';
+            el.userData._template_shift = 0;
+            el.userData._template_surface = g.surface_type;
+            el.userData._template_hemisphere = g.hemisphere;
+          }else{
+            el.userData._template_mni305 = undefined;
           }
 
         }
@@ -3600,33 +3616,23 @@ mapped = false,
   // export electrodes
   electrodes_info(){
 
-    const res = {};
+    const res = [];
 
-    // Electrode Coord_x Coord_y Coord_z Label MNI305_x MNI305_y MNI305_z
-    // SurfaceElectrode SurfaceType Radius VertexNumber
     this.electrodes.forEach( ( collection , subject_code ) => {
       const _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
             // _regexp = CONSTANTS.REGEXP_ELECTRODE,
-            _v2v = get_or_default( this.shared_data, subject_code, {} ).vox2vox_MNI305,
-            re = [],
-            mat = new THREE.Matrix4(),
+            subject_data  = this.shared_data.get( subject_code ),
+            tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
+            xfm = subject_data.matrices.xfm,
             pos = new THREE.Vector3();
       let row = {};
       let parsed, e, g;
-
-      if( _v2v ){
-        mat.set( _v2v[0][0], _v2v[0][1], _v2v[0][2], _v2v[0][3],
-                 _v2v[1][0], _v2v[1][1], _v2v[1][2], _v2v[1][3],
-                 _v2v[2][0], _v2v[2][1], _v2v[2][2], _v2v[2][3],
-                 _v2v[3][0], _v2v[3][1], _v2v[3][2], _v2v[3][3] );
-
-      }
 
       for( let k in collection ){
         parsed = _regexp.exec( k );
         // just incase
         if( parsed && parsed.length === 3 ){
-          row = {};
+          row = { Subject : subject_code };
           e = collection[ k ];
           g = e.userData.construct_params;
           pos.fromArray( g.position );
@@ -3638,8 +3644,14 @@ mapped = false,
           row.Coord_z = pos.z;
           row.Label = parsed[2];
 
+          //  T1_x y z
+          pos.applyMatrix4( tkrRAS_Scanner );
+          row.T1_x = pos.x;
+          row.T1_y = pos.y;
+          row.T1_z = pos.z;
+
           //  MNI305_x MNI305_y MNI305_z
-          pos.applyMatrix4( mat );
+          pos.applyMatrix4( xfm );
           row.MNI305_x = pos.x;
           row.MNI305_y = pos.y;
           row.MNI305_z = pos.z;
@@ -3654,37 +3666,11 @@ mapped = false,
           // CustomizedInformation
           row.Notes = g.custom_info || '';
 
+          res.push( row );
         }
-        re[ row.Electrode - 1 ] = row;
-      }
-      row = {};
-      // re set row to default
-      row.Coord_x = 0;
-      row.Coord_y = 0;
-      row.Coord_z = 0;
-      row.Label = 'NA';
 
-      //  MNI305_x MNI305_y MNI305_z
-      row.MNI305_x = 0;
-      row.MNI305_y = 0;
-      row.MNI305_z = 0;
-
-      // SurfaceElectrode SurfaceType Radius VertexNumber
-      row.SurfaceElectrode = 'TRUE';
-      row.SurfaceType = 'NA';
-      row.Radius = 1;
-      row.VertexNumber = -1;
-      row.Hemisphere = 'NA';
-      row.Notes = '';
-      for( let ii = 0; ii < re.length; ii++ ){
-        if( re[ ii ] === undefined ){
-          // missing one electrode, fill that in
-          row.Electrode = ii + 1;
-          re[ ii ] = {...row};
-        }
       }
 
-      res[ subject_code ] = re;
     });
 
     return( res );
@@ -3693,40 +3679,22 @@ mapped = false,
   download_electrodes( format = 'json' ){
     const res = this.electrodes_info();
 
-
-    // convert to csv
-    for( let subcode in res ){
-      let electrode_data = res[ subcode ];
-
-      if( subcode === '__localization__' ){
-        const template_sub = this.state_data.get('target_subject');
-        electrode_data = electrode_data.map((e) => {
-
-          return({
-            Electrode : e.Electrode,
-            TemplateCoord_x : e.Coord_x,
-            TemplateCoord_y : e.Coord_y,
-            TemplateCoord_z : e.Coord_z,
-            Label : e.Notes,
-            TemplateSubject : template_sub
-          });
-
-        });
-
-      }
-
-      if( electrode_data.length > 0 ){
-        if( format === 'json' ){
-          download( JSON.stringify(electrode_data) , subcode + '_electrodes.json', 'application/json');
-        }else if( format === 'csv' ){
-          json2csv(electrode_data, (err, csv) => {
-            download( csv , subcode + '_electrodes.csv', 'plan/csv');
-          });
-        }
-
-      }
+    if( res.length == 0 ){
+      alert("No electrode found!");
+      return;
     }
 
+    if( format === 'json' ){
+      download(
+        JSON.stringify(res) ,
+        'electrodes.json',
+        'application/json'
+      );
+    }else if( format === 'csv' ){
+      json2csv(res, (err, csv) => {
+        download( csv , 'electrodes.csv', 'plan/csv');
+      });
+    }
 
   }
 
