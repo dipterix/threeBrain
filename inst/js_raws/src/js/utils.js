@@ -270,10 +270,19 @@ const float_to_int32 = ( function () {
 } )();
 
 
+function has_meta_keys( event, shift = true, ctrl = true, alt = true){
+  let v1 = 0 + event.shiftKey + event.ctrlKey * 2 + event.altKey * 4,
+      v2 = 0 + shift + ctrl * 2 + alt * 4;
+  if( v1 === v2 ){
+    return(true);
+  }
+  return( false );
+}
 
 export { invertColor, padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
-  sub2, float_to_int32, vec3_to_string, throttle_promise };
+  sub2, float_to_int32, vec3_to_string, throttle_promise,
+  has_meta_keys };
 
 
 

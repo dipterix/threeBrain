@@ -8,7 +8,7 @@ yab$set_electrode_values(data.frame(
   Color = c(-1:1, 1),
   Time = c(0.5,3,4, 0)
 ))
-# yab <- threeBrain::merge_brain(yab)
+yab <- threeBrain::merge_brain(yab)
 
 col <- matrix(NA, 198812, 20)
 tmp <- rep(1:255,each = ceiling(198812/255))

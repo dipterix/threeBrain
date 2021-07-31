@@ -5,7 +5,8 @@
 import { download } from './js/download.js';
 import { WEBGL } from './js/WebGL.js';
 import { THREE } from './js/threeplugins.js';
-import { THREEBRAIN_PRESETS, THREEBRAIN_CONTROL } from './js/data_controls.js';
+import { THREEBRAIN_CONTROL } from './js/core/gui_wrapper.js';
+import { THREEBRAIN_PRESETS } from './js/core/data_controls.js';
 import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
 import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
 import { THREEBRAIN_STORAGE } from './js/threebrain_cache.js';
