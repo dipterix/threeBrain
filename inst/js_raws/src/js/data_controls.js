@@ -1540,6 +1540,21 @@ class THREEBRAIN_PRESETS{
     const tkr_loc = this.gui.add_item( ' - tkrRAS', "", {
       folder_name: folder_name
     });
+
+    // snap to surface
+    const surf_types = this.canvas.get_surface_types(),
+          surf_options = ["no"];
+    surf_types.forEach((v) => {
+      surf_options.push(`lh.${v}`);
+      surf_options.push(`rh.${v}`);
+    });
+    const snap_surf = this.gui.add_item( 'Snap to Surface', "no", {
+      folder_name: folder_name,
+      args : surf_options
+    });
+
+    // group name
+
     // Calculate MNI and T1
     const mni_loc = this.gui.add_item( ' - MNI305', "", {
       folder_name: folder_name
@@ -1547,6 +1562,8 @@ class THREEBRAIN_PRESETS{
     const t1_loc = this.gui.add_item( ' - T1 RAS', "", {
       folder_name: folder_name
     });
+
+    // Download as CSV
     this.gui.add_item( 'Download as csv', () => {
       this.canvas.download_electrodes("csv");
     }, {
@@ -1582,7 +1599,7 @@ class THREEBRAIN_PRESETS{
     };
     const electrode_from_slice = ( scode ) => {
       if( !this.canvas._has_datacube_registered ){ return; }
-      const l = canvas.volumes.get(scode);
+      const l = this.canvas.volumes.get(scode);
       const k = Object.keys(l);
       if( !k.length ) { return; }
       const planes = l[k[0]];
