@@ -54087,8 +54087,11 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         const scode = this.canvas.state_data.get("target_subject");
         const electrode_position = electrode_pos();
 
-        if( !electrode_position ||
-            !electrode_position.isVector3 ){ return; }
+        if(
+          !electrode_position ||
+          !electrode_position.isVector3 ||
+          isNaN( electrode_position.x )
+        ){ return; }
         const num = electrodes.length + 1,
               group_name = `group_Electrodes (${scode})`;
         const el = add_electrode(scode, num, electrode_position, this.canvas);
@@ -56845,7 +56848,8 @@ class THREEBRAIN_CONTROL{
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
-      'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit'
+      'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',
+      'Edit Mode'
     ];
     const args_dict = (0,utils/* to_dict */.nr)( args );
 

@@ -68,7 +68,8 @@ class THREEBRAIN_CONTROL{
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
-      'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit'
+      'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',
+      'Edit Mode'
     ];
     const args_dict = to_dict( args );
 

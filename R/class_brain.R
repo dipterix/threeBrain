@@ -370,6 +370,54 @@ Brain2 <- R6::R6Class(
       return(invisible(self))
     },
 
+    localize = function(
+      coregistered_ct,
+      col = c("white", "green", "yellow", "red"),
+      controllers = list(),
+      control_presets = NULL,
+      voxel_colormap = NULL,
+      ...
+    ){
+      control_presets <- c('localization', control_presets)
+
+      if(!missing( coregistered_ct )){
+        ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )
+        cube <- reorient_volume( ct$get_data(), self$Torig )
+        add_voxel_cube(self, "CT", cube)
+
+        key = seq(0, max(cube))
+        cmap <- create_colormap(
+          gtype = 'volume', dtype = 'continuous',
+          key = key, value = key,
+          color = col
+        )
+        controllers[["Left Opacity"]] <- 0.4
+        controllers[["Right Opacity"]] <- 0.4
+        controllers[["Voxel Type"]] <- "CT"
+        controllers[["Voxel Min"]] <- 3000
+        controllers[["Edit Mode"]] <- "CT/volume"
+        self$plot(
+          control_presets = control_presets,
+          voxel_colormap = cmap,
+          controllers = controllers,
+          ...
+        )
+      } else {
+        # No CT scan, use 3 planes to localize
+        controllers[["Edit Mode"]] <- "MRI slice"
+        controllers[["Overlay Coronal"]] <- TRUE
+        controllers[["Overlay Axial"]] <- TRUE
+        controllers[["Overlay Sagittal"]] <- TRUE
+        controllers[["Left Opacity"]] <- 0.1
+        controllers[["Right Opacity"]] <- 0.1
+        self$plot(
+          control_presets = control_presets,
+          controllers = controllers,
+          ...
+        )
+      }
+    },
+
     plot = function( # Elements
       volumes = TRUE, surfaces = TRUE, atlases = TRUE, start_zoom = 1, cex = 1,
       background = '#FFFFFF',

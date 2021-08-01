@@ -358,8 +358,11 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         const scode = this.canvas.state_data.get("target_subject");
         const electrode_position = electrode_pos();
 
-        if( !electrode_position ||
-            !electrode_position.isVector3 ){ return; }
+        if(
+          !electrode_position ||
+          !electrode_position.isVector3 ||
+          isNaN( electrode_position.x )
+        ){ return; }
         const num = electrodes.length + 1,
               group_name = `group_Electrodes (${scode})`;
         const el = add_electrode(scode, num, electrode_position, this.canvas);
