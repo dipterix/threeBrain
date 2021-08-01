@@ -51,6 +51,7 @@ for(ii in 1:20){
       window.margin_lengths = margin_voxels;
       window.map_array = m._color_texture.image.data;
       window.delta = 2;
+      gui.get_controller("Edit Mode").setValue("CT/volume")
 
       //window.m1=canvas.threebrain_instances.get("FreeSurfer Left Hemisphere - pial (N27)");
       //window.m2=canvas.threebrain_instances.get("FreeSurfer Right Hemisphere - pial (N27)");

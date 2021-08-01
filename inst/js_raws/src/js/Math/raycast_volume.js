@@ -1,5 +1,6 @@
+import { THREE } from '../threeplugins.js';
 
-const register_raycast_volume = (THREE) => {
+function raycast_volume_geneator(){
 
   const orig = new THREE.Vector3().copy(origin);
   const projection = new THREE.Matrix3();
@@ -13,7 +14,7 @@ const register_raycast_volume = (THREE) => {
   window.p1 = p1;
   window.f = f;*/
 
-  THREE.raycast_volume = (
+  const raycast_volume = (
     origin, direction, margin_voxels, margin_lengths,
     map_array, delta = 2 ) => {
     // canvas.mouse_raycaster.ray.origin
@@ -106,8 +107,8 @@ const register_raycast_volume = (THREE) => {
     return( res );
   };
 
-  return( THREE );
+  return( raycast_volume );
 };
 
-export { register_raycast_volume };
+export { raycast_volume_geneator };
 

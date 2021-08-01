@@ -463,7 +463,7 @@ class BrainCanvas{
         this.settings.custom_javascript !== ''){
 
       if( this.canvas.DEBUG ){
-        console.log("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
+        console.debug("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
       }
 
       const _f = (groups, geoms, settings, scene,
