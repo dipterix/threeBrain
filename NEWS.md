@@ -1,3 +1,12 @@
+threeBrain 0.2.1
+=======
+
+## Changes
+
+* Finally, electrode localization is added!
+* Added `TextTexture` in the internal code to display text `Sprite` easily
+* Can download electrodes as `csv`
+
 threeBrain 0.2.0
 =======
 
