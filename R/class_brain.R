@@ -372,7 +372,7 @@ Brain2 <- R6::R6Class(
 
     localize = function(
       coregistered_ct,
-      col = c("white", "green", "yellow", "red"),
+      col = c("white", "green", 'darkgreen'),
       controllers = list(),
       control_presets = NULL,
       voxel_colormap = NULL,
