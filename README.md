@@ -29,9 +29,16 @@
 <script type="application/htmlwidget-sizing" data-for="htmlwidget-10b2167231e00d19a0eb">{"viewer":{"width":"100%","height":"100vh","padding":"0px","fill":true},"browser":{"width":"100%","height":"80vh","padding":"0px","fill":false}}</script>
 <!-- demo dynamic: end -->
 
-* Click [here](https://dipterix.github.io/threeBrain/news/index.html) for the news
-* For function usage, check [Reference page](https://dipterix.github.io/threeBrain/reference/index.html)
-* Check [keyboard shortcuts](https://dipterix.github.io/threeBrain/shortcuts.html) here
+**Key Features**:
+
+* Uses modern browsers, easy to **embed** and **share**
+* Displays MRI, surfaces, and electrodes in the same canvas
+* **Maps multiple subjects** on template brains using `AFNI/SUMA` (standard 141) or `MNI-305` locations
+* **Electrode localization** in 3 approaches
+* Volume rendering and surface/electrode **animation**
+* Integration with interactive `R-shiny` framework
+
+[News](https://dipterix.github.io/threeBrain/news/index.html) | [reference page](https://dipterix.github.io/threeBrain/reference/index.html) | [keyboard shortcuts](https://dipterix.github.io/threeBrain/shortcuts.html)
 
 #### System Requirement
 
@@ -145,6 +152,71 @@ plot( template_n27 )
 ```
 The viewer will be in `N27` template, and electrodes of these two subjects can be mapped via `MNI305` (for surface and stereo EEG) or `std.141` (for surface-only).
 
+
+## F. Electrode Localization
+
+(Do NOT use this feature for clinical purposes!)
+
+As of version `0.2.1`, `threeBrain` supports electrode localization. You can:
+
+* Use template brain to generate electrode table, when you don't have subject-level MRI
+* Use subject MRI to generate when CT scans are unavailable
+* Use CT co-registered to MRI
+
+#### Use template brain to generate electrode table
+
+Create a blank template and localize:
+
+```r
+library(threeBrain)
+template <- merge_brain()
+template$localize()
+```
+
+#### Use subject MRI to generate when CT scans are unavailable
+
+If you have MRI but don't have CT scans, it is possible to use MRI slices. Make sure to change `fs_subject_folder` accordingly:
+
+```r
+x <- freesurfer_brain2( 
+  fs_subject_folder = file.path(default_template_directory(), "N27"),
+  subject_name = 'N27', surface_types = 'pial')
+  
+x$localize()
+```
+
+#### Use CT co-registered to MRI
+
+If you have CT images, please co-register with MRI first. This requires `dcm2nii` ([link](https://www.nitrc.org/plugins/mwiki/index.php/dcm2nii:MainPage)) or `dcm2niix` ([link](https://github.com/rordenlab/dcm2niix)), and `FLIRT` package ([link](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT/StepByStep)).
+
+
+**Step 1**: Merge all `DICOM` images to `Nifti` format:
+
+Open your terminal, change directories to where `CT` images are, and run
+
+```
+dcm2niix [folder with DICOM images]
+```
+
+Do the same to `T1` MR images too.
+
+**Step 2**: Copy the two `.nii` files generated in the previous step to a same folder, rename them to be `ct.nii` and `t1.nii`
+
+```
+flirt -in ct.nii -ref t1.nii -out ct_in_t1.nii -omat ct2t1.mat -interp trilinear -cost mutualinfo -dof 6 -searchcost mutualinfo -searchrx -180 180 -searchry -180 180 -searchrz -180 180 
+```
+
+There will be a `ct_in_t1.nii` file generated. 
+
+**Step 3**: Localize
+
+Open `RStudio`, type and change the file path to `ct_in_t1.nii` just created
+
+```
+# Import 3D brain
+# x <- freesurfer_brain2( ... ) 
+x$localize( "[path to ct_in_t1.nii]" )
+```
 
 ## Citation
 
