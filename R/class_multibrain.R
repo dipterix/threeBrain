@@ -99,6 +99,52 @@ MultiBrain2 <- R6::R6Class(
       lapply(c(self$template_object, self$objects), fun, ...)
     },
 
+    localize = function(
+      coregistered_ct,
+      col = c("white", "green", 'darkgreen'),
+      controllers = list(),
+      control_presets = NULL,
+      voxel_colormap = NULL,
+      ...
+    ){
+      control_presets <- c('localization', control_presets)
+      controllers[["Edit Mode"]] <- "CT/volume"
+
+      if(!missing( coregistered_ct )){
+        ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )
+        cube <- reorient_volume( ct$get_data(), self$Torig )
+        add_voxel_cube(self, "CT", cube)
+
+        key = seq(0, max(cube))
+        cmap <- create_colormap(
+          gtype = 'volume', dtype = 'continuous',
+          key = key, value = key,
+          color = col
+        )
+        controllers[["Voxel Type"]] <- "CT"
+        controllers[["Voxel Min"]] <- 3000
+        controllers[["Left Opacity"]] <- 0.4
+        controllers[["Right Opacity"]] <- 0.4
+
+        self$plot(
+          control_presets = control_presets,
+          voxel_colormap = cmap,
+          controllers = controllers,
+          ...
+        )
+      } else {
+        # No CT scan, use aparc+aseg
+        controllers[["Voxel Type"]] <- "aparc_aseg"
+        controllers[["Left Hemisphere"]] <- "hidden"
+        controllers[["Right Hemisphere"]] <- "hidden"
+        self$plot(
+          control_presets = control_presets,
+          controllers = controllers,
+          ...
+        )
+      }
+    },
+
     plot = function(
       additional_subjects = NULL, volumes = TRUE, surfaces = TRUE, atlases = 'aparc+aseg',
       palettes = NULL, val_ranges = NULL, value_alias = NULL,
