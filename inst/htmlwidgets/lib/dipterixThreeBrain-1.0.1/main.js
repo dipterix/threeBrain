@@ -53773,6 +53773,14 @@ class TextTexture extends threeplugins/* THREE.Texture */.J.Texture {
 
 function add_electrode(scode, num, pos, canvas){
   const group_name = `group_Electrodes (${scode})`;
+
+  let ac_pos = canvas.state_data.get("anterior_commissure");
+  if( ac_pos && ac_pos.isVector3 ){
+    ac_pos = ac_pos.x;
+  } else {
+    ac_pos = 0;
+  }
+
   const el = canvas.add_object({
     "name": `${scode}, ${num} - NEW_ELECTRODE`,
     "type": "sphere",
@@ -53796,7 +53804,7 @@ function add_electrode(scode, num, pos, canvas){
     "is_surface_electrode": false,
     "use_template":false,
     "surface_type": 'pial',
-    "hemisphere": null,
+    "hemisphere": pos.x > ac_pos ? "right" : "left",
     "vertex_number": -1,
     "sub_cortical": true,
     "search_geoms": null
@@ -67030,6 +67038,11 @@ mapped = false,
           row = { Subject : subject_code };
           e = collection[ k ];
           g = e.userData.construct_params;
+
+          if( e.userData.instance._enabled === false ){
+            continue;
+          }
+
           pos.fromArray( g.position );
 
           // Electrode Coord_x Coord_y Coord_z Label Hemisphere

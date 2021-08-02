@@ -3635,6 +3635,11 @@ mapped = false,
           row = { Subject : subject_code };
           e = collection[ k ];
           g = e.userData.construct_params;
+
+          if( e.userData.instance._enabled === false ){
+            continue;
+          }
+
           pos.fromArray( g.position );
 
           // Electrode Coord_x Coord_y Coord_z Label Hemisphere
