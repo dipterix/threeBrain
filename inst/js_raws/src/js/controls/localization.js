@@ -184,7 +184,6 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
 
   return( re );
 }
-window.electrode_line_from_ct = electrode_line_from_ct;
 
 function electrode_line_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
@@ -217,7 +216,6 @@ function electrode_line_from_slice( canvas, electrodes, size ){
 
   return( re );
 }
-window.electrode_line_from_slice = electrode_line_from_slice;
 
 function register_controls_localization( THREEBRAIN_PRESETS ){
 
@@ -226,7 +224,6 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
     const electrodes = [];
     let refine_electrode;
-    window.electrodes = electrodes;
 
     const edit_mode = this.gui.add_item( 'Edit Mode', "disabled", {
       folder_name: folder_name,
@@ -344,6 +341,18 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         }
 
         if( res.length ){
+          const last_elec = electrodes[electrodes.length - 1];
+          let last_pos = new THREE.Vector3().fromArray(
+            last_elec._params.position
+          );
+          res.push(last_pos);
+          last_pos = res.shift();
+          // last_elec._params is identical to last_elec.object.userData.construct_params
+          last_elec._params.position[ 0 ] = last_pos.x;
+          last_elec._params.position[ 1 ] = last_pos.y;
+          last_elec._params.position[ 2 ] = last_pos.z;
+          last_elec.object.position.copy( last_pos );
+
           res.forEach((pos) => {
             const el = add_electrode(
               scode, electrodes.length + 1, pos, this.canvas
@@ -480,7 +489,6 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       return( pos_alt );
     };
 
-    window.electrode_pos = electrode_pos;
     // add canvas update
     this.canvas._custom_updates.set("localization_update", () => {
       const electrode_position = electrode_pos();
