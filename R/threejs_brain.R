@@ -183,6 +183,22 @@ threejs_brain <- function(
     is_cached = TRUE,
     cache_if_not_exists = FALSE
   )
+
+  fs_colormap <- system.file(
+    'palettes', 'FSColorLUT.json', package = 'threeBrain')
+  global_container$group$set_group_data(
+    name = '__global_data__.FSColorLUT',
+    value = list(
+      'path' = normalizePath(fs_colormap, mustWork = TRUE),
+      'absolute_path' = normalizePath(fs_colormap, mustWork = TRUE),
+      'file_name' = filename(fs_colormap),
+      'is_new_cache' = FALSE,
+      'is_cache' = TRUE
+    ),
+    is_cached = TRUE,
+    cache_if_not_exists = FALSE
+  )
+
   # global_container$group$set_group_data(
   #   name = '__global_data__FreeSurferColorLUT',
   #   value = list(

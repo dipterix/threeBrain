@@ -53774,21 +53774,113 @@ class TextTexture extends threeplugins/* THREE.Texture */.J.Texture {
 
 }
 
+function atlas_label(pos_array, canvas){
+  const sub = canvas.state_data.get("target_subject") || "none",
+        inst = canvas.threebrain_instances.get(`Atlas - aparc_aseg (${sub})`);
+  if( !inst ){ return("Unknown"); }
+
+  const margin_voxels = new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray( inst._cube_dim );
+  const margin_lengths = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+    inst._margin_length.xLength,
+    inst._margin_length.yLength,
+    inst._margin_length.zLength
+  );
+  const f = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+    margin_lengths.x / margin_voxels.x,
+    margin_lengths.y / margin_voxels.y,
+    margin_lengths.z / margin_voxels.z
+  );
+  const mx = margin_voxels.x,
+        my = margin_voxels.y,
+        mz = margin_voxels.z;
+  const ct_data = inst._cube_values;
+
+  const delta = 4;
+  const position = pos_array;
+
+  let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x;
+  let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y;
+  let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z;
+
+  i = Math.round( i );
+  j = Math.round( j );
+  k = Math.round( k );
+
+  if( i < 0 ){ i = 0; }
+  if( i >= mx ){ i = mx - 1; }
+  if( j < 0 ){ k = 0; }
+  if( j >= my ){ j = my - 1; }
+  if( k < 0 ){ k = 0; }
+  if( k >= mz ){ k = mz - 1; }
+
+  let tmp, count = {};
+
+  tmp = ct_data[ i + j * mx + k * mx * my ];
+
+  if( tmp == 0 ){
+    for(let i0 = Math.max(0, i - delta); i0 < Math.min(i + delta, mx); i0++ ) {
+      for(let j0 = Math.max(0, j - delta); j0 < Math.min(j + delta, my); j0++ ) {
+        for(let k0 = Math.max(0, k - delta); k0 < Math.min(k + delta, mz); k0++ ) {
+          tmp = ct_data[ i0 + j0 * mx + k0 * mx * my ];
+          if( tmp > 0 ){
+            count[ tmp ] = ( count[ tmp ] || 0 ) + 1;
+          }
+        }
+      }
+    }
+
+    const keys = Object.keys(count);
+    if( keys.length > 0 ){
+      tmp = keys.reduce((a, b) => count[a] > count[b] ? a : b);
+      tmp = parseInt( tmp );
+    }
+  }
+
+  // find label
+  if( tmp == 0 ){
+    return([ "Unknown", 0 ]);
+  }
+  const fslut = canvas.global_data("__global_data__.FSColorLUT");
+  try {
+    const lbl = fslut.map[ tmp ].Label;
+    if( lbl ){
+      return([ lbl, tmp ]);
+    } else {
+      return([ "Unknown", 0 ]);
+    }
+  } catch (e) {
+    return([ "Unknown", 0 ]);
+  }
+
+}
+window.atlas_label = atlas_label;
+
 function add_electrode(scode, num, pos, canvas){
   const group_name = `group_Electrodes (${scode})`;
 
-  let ac_pos = canvas.state_data.get("anterior_commissure");
-  if( ac_pos && ac_pos.isVector3 ){
-    ac_pos = ac_pos.x;
+  const pos_array = pos.toArray();
+  const fs_label = atlas_label(pos_array, canvas)[0];
+  const regex = /(l|r)h\-/g;
+  const m = regex.exec(fs_label);
+
+  let hemisphere;
+  if( m && m.length >= 2 ){
+    hemisphere = m[1] == "r" ? "right" : "left";
   } else {
-    ac_pos = 0;
+    let ac_pos = canvas.state_data.get("anterior_commissure");
+    if( ac_pos && ac_pos.isVector3 ){
+      ac_pos = ac_pos.x;
+    } else {
+      ac_pos = 0;
+    }
+    hemisphere = pos.x > ac_pos ? "right" : "left";
   }
 
   const el = canvas.add_object({
     "name": `${scode}, ${num} - NEW_ELECTRODE`,
     "type": "sphere",
     "time_stamp": [],
-    "position": pos.toArray(),
+    "position": pos_array,
     "value": null,
     "clickable": true,
     "layer": 0,
@@ -53807,12 +53899,15 @@ function add_electrode(scode, num, pos, canvas){
     "is_surface_electrode": false,
     "use_template":false,
     "surface_type": 'pial',
-    "hemisphere": pos.x > ac_pos ? "right" : "left",
+    "hemisphere": hemisphere,
     "vertex_number": -1,
     "sub_cortical": true,
     "search_geoms": null
   });
   el._enabled = true;
+  el._fs_label = () => {
+    return( atlas_label(el._params.position, canvas) );
+  };
   el.object.material.color.set( COL_ENABLED );
 
   const map = new TextTexture( `${num}` );
@@ -67040,7 +67135,8 @@ mapped = false,
             xfm = subject_data.matrices.xfm,
             pos = new threeplugins/* THREE.Vector3 */.J.Vector3();
       let row = {};
-      let parsed, e, g;
+      let parsed, e, g, inst, fs_label;
+      const label_list = {};
 
       for( let k in collection ){
         parsed = _regexp.exec( k );
@@ -67050,18 +67146,32 @@ mapped = false,
           e = collection[ k ];
           g = e.userData.construct_params;
 
-          if( e.userData.instance._enabled === false ){
+          inst = e.userData.instance;
+
+          if( inst._enabled === false ){
             continue;
+          }
+          if( typeof( inst._fs_label ) === "function" ){
+            fs_label = inst._fs_label();
+          } else {
+            fs_label = [ "Unknown", 0 ];
           }
 
           pos.fromArray( g.position );
 
           // Electrode Coord_x Coord_y Coord_z Label Hemisphere
-          row.Electrode = parseInt( parsed[1] );
+          row.Electrode = "";
           row.Coord_x = pos.x;
           row.Coord_y = pos.y;
           row.Coord_z = pos.z;
-          row.Label = parsed[2];
+          row.Label = parsed[2] || "NoLabel";
+          if( row.Label && row.Label !== "" ){
+            label_list[[row.Label]] = (label_list[[row.Label]] || 0) + 1;
+            row.Label = `${row.Label}${label_list[[row.Label]]}`;
+          }
+          row.LocalizationOrder = parseInt( parsed[1] );
+          row.FSIndex = fs_label[1];
+          row.FSLabel = fs_label[0];
 
           //  T1_x y z
           pos.applyMatrix4( tkrRAS_Scanner );
