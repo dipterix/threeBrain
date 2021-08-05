@@ -63,9 +63,9 @@ function atlas_label(pos_array, canvas){
   const delta = 4;
   const position = pos_array;
 
-  let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x;
-  let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y;
-  let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z;
+  let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x + 0.5;
+  let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y + 0.5;
+  let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z - 0.5;
 
   i = Math.round( i );
   j = Math.round( j );
@@ -538,7 +538,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         new_ijk[1] /= total_v;
         new_ijk[2] /= total_v;
 
-        const x = (new_ijk[0] + 0.5) * f.x - ( margin_lengths.x - 1 ) / 2,
+        const x = (new_ijk[0] - 0.5) * f.x - ( margin_lengths.x - 1 ) / 2,
               y = (new_ijk[1] - 0.5) * f.y - ( margin_lengths.y - 1 ) / 2,
               z = (new_ijk[2] + 0.5) * f.z - ( margin_lengths.z - 1 ) / 2;
 

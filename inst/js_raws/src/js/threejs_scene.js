@@ -1,4 +1,4 @@
-import { to_array, get_element_size, get_or_default } from './utils.js';
+import { to_array, get_element_size, get_or_default, has_meta_keys, vec3_to_string, write_clipboard } from './utils.js';
 import { CanvasContext2D, PDFContext } from './core/context.js';
 import { Stats } from './libs/stats.min.js';
 import { THREE } from './threeplugins.js';
@@ -1046,24 +1046,35 @@ class THREEBRAIN_CANVAS {
       }
     }, 'electrode_cycling_prev');
 
+    this.add_keyboard_callabck( CONSTANTS.KEY_CLIP_INFO_FOCUSED, (evt) => {
+      if( has_meta_keys( evt.event, false, true, false ) ){
 
-    if( this.DEBUG ){
-      this.add_mouse_callback(
-        (evt) => {
-          return({
-            pass  : evt.action !== 'mousemove',
-            type  : 'clickable'
-          });
-        },
-        (res, evt) => {
-          console.log( evt );
-          console.debug( `${res.items.length} items found by raycaster.` );
-        },
-        'debug'
-      );
+        const m = this.object_chosen || this._last_object_chosen;
+        // check if this is electrode
+        if( is_electrode(m) ){
+          // get electrode information
+          const g = m.userData.construct_params,
+                subject_code = g.subject_code,
+                subject_data = this.shared_data.get( subject_code ),
+                tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
+                xfm = subject_data.matrices.xfm,
+                pos = new THREE.Vector3();
 
-    }
+          pos.fromArray( g.position );
+          let s = `${g.name}\n` + `tkrRAS: ${vec3_to_string(g.position)}\n`;
 
+          //  T1_x y z
+          pos.applyMatrix4( tkrRAS_Scanner );
+          s = s + `T1 RAS: ${vec3_to_string(pos)}\n`;
+
+          //  MNI305_x MNI305_y MNI305_z
+          pos.applyMatrix4( xfm );
+          s = s + `MNI305: ${vec3_to_string(pos)}\n`;
+
+          write_clipboard(s);
+        }
+      }
+    }, 'copy_electrode_info');
 
   }
 

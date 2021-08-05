@@ -1,3 +1,5 @@
+import ClipboardJS from 'clipboard';
+// import download from 'downloadjs';
 
 const invertColor = function(hex) {
     if (hex.indexOf('#') === 0) {
@@ -131,13 +133,13 @@ function get_or_default(map, key, _default = undefined){
   }
 }
 
-function vec3_to_string(v, ifInvalid = ""){
+function vec3_to_string(v, ifInvalid = "", precision = 2){
   if( !v ){ return( ifInvalid ); }
   if( Array.isArray(v) ){
-    return(`${v[0].toFixed(2)}, ${v[1].toFixed(2)}, ${v[2].toFixed(2)}`)
+    return(`${v[0].toFixed(precision)}, ${v[1].toFixed(precision)}, ${v[2].toFixed(precision)}`)
   }
   if( v.isVector3 ){
-    return(`${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)}`)
+    return(`${v.x.toFixed(precision)}, ${v.y.toFixed(precision)}, ${v.z.toFixed(precision)}`)
   }
   return( ifInvalid );
 }
@@ -271,7 +273,7 @@ const float_to_int32 = ( function () {
 
 
 function has_meta_keys( event, shift = true, ctrl = true, alt = true){
-  let v1 = 0 + event.shiftKey + event.ctrlKey * 2 + event.altKey * 4,
+  let v1 = 0 + event.shiftKey + (event.ctrlKey || event.metaKey) * 2 + event.altKey * 4,
       v2 = 0 + shift + ctrl * 2 + alt * 4;
   if( v1 === v2 ){
     return(true);
@@ -279,10 +281,36 @@ function has_meta_keys( event, shift = true, ctrl = true, alt = true){
   return( false );
 }
 
+function write_clipboard_maker(){
+  let btn, msg;
+
+  return((s) => {
+
+    if( btn === undefined ){
+      btn = document.createElement("button");
+      new ClipboardJS(btn, {
+        text : (trigger) => {
+          const s = msg;
+          msg = undefined;
+          return(s);
+        }
+      });
+    }
+
+
+    if( s && s !== ""){
+      msg = s;
+      btn.click();
+    }
+  });
+
+}
+const write_clipboard = write_clipboard_maker();
+
 export { invertColor, padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
   sub2, float_to_int32, vec3_to_string, throttle_promise,
-  has_meta_keys };
+  has_meta_keys, write_clipboard };
 
 
 

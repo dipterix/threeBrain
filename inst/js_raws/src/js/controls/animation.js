@@ -363,6 +363,12 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
         if( current_idx >= 0 ){
           ani_name.setValue( names[ current_idx ] );
         }
+      } else if ( has_meta_keys( evt.event, true, false, false ) ){
+        let current_idx = names.indexOf( ani_name.getValue() ) - 1;
+        if( current_idx < 0 ){ current_idx += names.length; }
+        if( current_idx >= 0 ){
+          ani_name.setValue( names[ current_idx ] );
+        }
       }
     }, 'gui_cycle_animation');
 
