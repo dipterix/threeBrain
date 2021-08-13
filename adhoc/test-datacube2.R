@@ -47,7 +47,7 @@ for(ii in 1:20){
           time_start: 1,
           duration: 4,
           name: "Color",
-          url: "https://www.w3schools.com/html/mov_bbb.mp4"
+          url: "https://www.dropbox.com/s/opsgvzothqxvsj0/mov_bbb.mp4?raw=1"
         }
       })
       canvas.switch_media("Color");

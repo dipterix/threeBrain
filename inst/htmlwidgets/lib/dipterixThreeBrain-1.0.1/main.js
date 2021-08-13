@@ -64583,6 +64583,11 @@ class THREEBRAIN_CANVAS {
     this.el = el;
     this.container_id = this.el.getAttribute( 'data-target' );
     this.ready = false;
+    this._time_info = {
+      selected_object : {
+        position: new threeplugins/* THREE.Vector3 */.J.Vector3()
+      }
+    };
 
     // Is system supporting WebGL2? some customized shaders might need this feature
     // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
@@ -65089,7 +65094,7 @@ class THREEBRAIN_CANVAS {
     this.video_canvas.setAttribute( "autoplay", "false" );
     this.video_canvas.muted = true;
 
-    this.video_canvas.innerHTML = `<source src="" type="video/mp4">`
+    // this.video_canvas.innerHTML = `<source src="" type="video/mp4">`
     this.video_canvas.height = Math.min( height / 4, 250 );
     this.video_canvas._enabled = false;
     this.video_canvas._time_start = Infinity;
@@ -66227,12 +66232,10 @@ class THREEBRAIN_CANVAS {
   render( results ){
 
     if( !results ){
-      results = {
-        current_time        : 0,
-        current_time_delta  : 0,
-        elapsed_time : // this.clock.getElapsedTime()
-          (this.clock.oldTime - this.clock.startTime) / 1000
-      };
+      results = this._time_info;
+      results.current_time = 0;
+      results.current_time_delta = 0;
+      results.elapsed_time = (this.clock.oldTime - this.clock.startTime) / 1000;
     }
 
     // double-buffer to make sure depth renderings
@@ -66312,70 +66315,66 @@ class THREEBRAIN_CANVAS {
   inc_time(){
     // this.animation_controls = {};
     // this.clock = new THREE.Clock();
-    let clock_time_delta = this.clock.getDelta(),
-        results = {
-          current_time_delta  : 0,
-          last_time : 0,
-          current_time : 0,
-          speed : 1,
-          elapsed_time : //this.clock.getElapsedTime()
-            (this.clock.oldTime - this.clock.startTime) / 1000
-        };
 
-    // const time_range_min = get_or_default( this.state_data, 'time_range_min', 0 );
-    const time_range_min = this.__min_t;
-    results.time_range_min = time_range_min;
+    const clock_time_delta = this.clock.getDelta();
+    const results = this._time_info;
+    const sel_obj = results.selected_object;
+    results.current_time_delta = 0;
+    results.last_time = 0;
+    results.current_time = 0;
+    results.speed = 1;
+    results.elapsed_time = (this.clock.oldTime - this.clock.startTime) / 1000;
+
+    results.time_range_min = this.__min_t;
 
     // show mesh value info
     if(this.object_chosen !== undefined &&
         this.object_chosen.userData ){
 
-        results.selected_object = {
-          name            : this.object_chosen.userData.construct_params.name,
-          position        : this.object_chosen.getWorldPosition( new threeplugins/* THREE.Vector3 */.J.Vector3() ),
-          custom_info     : this.object_chosen.userData.construct_params.custom_info,
-          is_electrode    : this.object_chosen.userData.construct_params.is_electrode || false,
-          MNI305_position : this.object_chosen.userData.MNI305_position,
-          template_mapping : {
-            mapped        : this.object_chosen.userData._template_mapped || false,
-            shift         : this.object_chosen.userData._template_shift || 0,
-            space         : this.object_chosen.userData._template_space || 'original',
-            surface       : this.object_chosen.userData._template_surface || 'NA',
-            hemisphere    : this.object_chosen.userData._template_hemisphere || 'NA',
-            mni305        : this.object_chosen.userData._template_mni305
-          }
-        };
+        results.has_object = true;
 
-      }
+        sel_obj.name = this.object_chosen.userData.construct_params.name;
+        this.object_chosen.getWorldPosition( sel_obj.position );
+        sel_obj.custom_info = this.object_chosen.userData.construct_params.custom_info;
+        sel_obj.is_electrode = this.object_chosen.userData.construct_params.is_electrode || false;
+        sel_obj.MNI305_position = this.object_chosen.userData.MNI305_position;
+
+        if( !sel_obj.template_mapping ){
+          sel_obj.template_mapping = {};
+        }
+        sel_obj.template_mapping.mapped = this.object_chosen.userData._template_mapped || false;
+        sel_obj.template_mapping.shift = this.object_chosen.userData._template_shift || 0;
+        sel_obj.template_mapping.space = this.object_chosen.userData._template_space || 'original';
+        sel_obj.template_mapping.surface = this.object_chosen.userData._template_surface || 'NA';
+        sel_obj.template_mapping.hemisphere = this.object_chosen.userData._template_hemisphere || 'NA';
+        sel_obj.template_mapping.mni305 = this.object_chosen.userData._template_mni305;
+
+      } else {
+      results.has_object = false;
+    }
 
 
     if( typeof( this.animation_controls.get_params ) === 'function' ){
 
       // animation is enabled
 
-      let params = this.animation_controls.get_params(),
-          is_playing = params.play,
-          last_time = params.time,
-          speed = params.speed,
-          time_start = params.min,
-          time_end = params.max;
+      const params = this.animation_controls.get_params();
 
       // next_time =
       //  1. if not is_playing, last_time
       //  2. if is_playing, last_time + time_delta * speed
-      let current_time = is_playing ? (last_time + clock_time_delta * speed) : last_time;
-      results.current_time = current_time;
-      results.speed = speed;
-      results.is_playing = is_playing;
-      results.last_time = last_time;
+      results.current_time = params.play ? (params.time + clock_time_delta * params.speed) : params.time;
+      results.speed = params.speed;
+      results.is_playing = params.play;
+      results.last_time = params.time;
 
-      if( current_time > time_end ){
-        current_time = time_start;
-        results.last_time = time_start;
+      if( results.current_time > params.max ){
+        results.current_time = params.min;
+        results.last_time = params.min;
       }
 
       // Change animation
-      results.current_time_delta = current_time - time_range_min;
+      results.current_time_delta = results.current_time - results.time_range_min;
       /*
       this.animation_mixers.forEach( (mixer) => {
         mixer.update( current_time - time_range_min - mixer.time );
@@ -66383,15 +66382,15 @@ class THREEBRAIN_CANVAS {
       */
 
       // set timer
-      if( is_playing ){
-        this.animation_controls.set_time( current_time );
+      if( params.play ){
+        this.animation_controls.set_time( results.current_time );
       }
 
 
     }
 
     // show mesh value info
-    if( results.selected_object && this.object_chosen.userData.ani_exists ){
+    if( results.has_object && this.object_chosen.userData.ani_exists ){
 
       const track_type = this.state_data.get("color_map");
 
@@ -66755,7 +66754,7 @@ class THREEBRAIN_CANVAS {
                       x = 10, y = 10, w = 100, h = 100,
                       context_wrapper = undefined, force_left = false ){
     // Add selected object information, or if not showing is set
-    if( !results.selected_object || this.state_data.get( 'info_text_disabled') ){
+    if( !results.has_object || this.state_data.get( 'info_text_disabled') ){
       // no object selected, discard
       return( null );
     }
