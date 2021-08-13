@@ -41,28 +41,17 @@ for(ii in 1:20){
         'Show Panels' = FALSE
       ), control_presets = 'localization',
       custom_javascript = r'(
-      window.m=canvas.threebrain_instances.get("Atlas - aparc_aseg (N27)");
-      window.m1=canvas.threebrain_instances.get("Standard 141 Left Hemisphere - pial (N27)");
-      window.m2=canvas.threebrain_instances.get("Standard 141 Right Hemisphere - pial (N27)");
+      canvas.shared_data.set(".media_content", {
+        Color: {
+          asp_ratio: 16/9,
+          time_start: 1,
+          duration: 4,
+          name: "Color",
+          url: "https://www.w3schools.com/html/mov_bbb.mp4"
+        }
+      })
+      canvas.switch_media("Color");
 
-      window.origin = canvas.mouse_raycaster.ray.origin;
-      window.direction = canvas.mouse_raycaster.ray.direction;
-      window.margin_voxels = new THREE.Vector3().fromArray(m._cube_dim);
-      window.margin_lengths = margin_voxels;
-      window.map_array = m._color_texture.image.data;
-      window.delta = 2;
-      gui.get_controller("Edit Mode").setValue("CT/volume")
-
-      //window.m1=canvas.threebrain_instances.get("FreeSurfer Left Hemisphere - pial (N27)");
-      //window.m2=canvas.threebrain_instances.get("FreeSurfer Right Hemisphere - pial (N27)");
-
-
-      // m1._set_color_from_datacube2(m, 3);
-      //m2._set_color_from_datacube2(m, 3);
-      //m1.object.material.userData.shader.uniforms.which_map.value=3;
-      //m1.object.geometry.attributes.track_color.needsUpdate=true;
-      //m1.object.material.needsUpdate=true;
-      //this.gui.get_controller("Screenshot").domElement.click();
       )'
 
     )
@@ -72,3 +61,25 @@ for(ii in 1:20){
 # shinyApp(ui, server, options = list(launch.browser = TRUE))
 # threeBrain::save_brain(wg, '~/Desktop/3dtest', as_zip = TRUE)
 # yab$plot(debug = TRUE, voxel_palette = "inst/palettes/datacube2/ContinuousSample.json")
+    # window.m=canvas.threebrain_instances.get("Atlas - aparc_aseg (N27)");
+    # window.m1=canvas.threebrain_instances.get("Standard 141 Left Hemisphere - pial (N27)");
+    # window.m2=canvas.threebrain_instances.get("Standard 141 Right Hemisphere - pial (N27)");
+    #
+    # window.origin = canvas.mouse_raycaster.ray.origin;
+    # window.direction = canvas.mouse_raycaster.ray.direction;
+    # window.margin_voxels = new THREE.Vector3().fromArray(m._cube_dim);
+    # window.margin_lengths = margin_voxels;
+    # window.map_array = m._color_texture.image.data;
+    # window.delta = 2;
+    # gui.get_controller("Edit Mode").setValue("CT/volume")
+    #
+    # //window.m1=canvas.threebrain_instances.get("FreeSurfer Left Hemisphere - pial (N27)");
+    # //window.m2=canvas.threebrain_instances.get("FreeSurfer Right Hemisphere - pial (N27)");
+    #
+    #
+    # // m1._set_color_from_datacube2(m, 3);
+    # //m2._set_color_from_datacube2(m, 3);
+    # //m1.object.material.userData.shader.uniforms.which_map.value=3;
+    # //m1.object.geometry.attributes.track_color.needsUpdate=true;
+    # //m1.object.material.needsUpdate=true;
+    # //this.gui.get_controller("Screenshot").domElement.click();

@@ -65,7 +65,7 @@ class THREEBRAIN_CONTROL{
       "Dist. Threshold", "Surface Type", "Surface Material", "Left Hemisphere", "Right Hemisphere",
       "Left Opacity", "Right Opacity",
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
-      "Display Range", "Threshold Data", "Threshold Range", "Threshold Method",
+      "Display Range", "Threshold Data", "Threshold Range", "Threshold Method", "Video Mode",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
       'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',

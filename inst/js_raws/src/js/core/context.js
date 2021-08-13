@@ -164,6 +164,11 @@ class CanvasContext2D {
     }
   }
 
+  draw_video( domElement, x, y, w, h ){
+    if( domElement.currentTime === 0 || domElement.ended ){ return; }
+    this.context.drawImage(domElement, x, y, w, h);
+  }
+
 }
 
 export { CanvasContext2D, PDFContext };

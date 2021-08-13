@@ -1,4 +1,4 @@
-import { to_array, get_element_size, get_or_default, has_meta_keys, vec3_to_string, write_clipboard } from './utils.js';
+import { to_array, get_element_size, get_or_default, has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4 } from './utils.js';
 import { CanvasContext2D, PDFContext } from './core/context.js';
 import { Stats } from './libs/stats.min.js';
 import { THREE } from './threeplugins.js';
@@ -588,6 +588,18 @@ class THREEBRAIN_CANVAS {
 
 
     });
+
+    // Add video
+    this.video_canvas = document.createElement('video');
+    this.video_canvas.setAttribute( "autoplay", "false" );
+    this.video_canvas.muted = true;
+
+    this.video_canvas.innerHTML = `<source src="" type="video/mp4">`
+    this.video_canvas.height = Math.min( height / 4, 250 );
+    this.video_canvas._enabled = false;
+    this.video_canvas._time_start = Infinity;
+    this.video_canvas._duration = 0;
+    this.video_canvas._mode = "hidden";
 
 
     // Add main canvas to wrapper element
@@ -1494,6 +1506,8 @@ class THREEBRAIN_CANVAS {
       this.domElement.style.height = main_height + 'px';
     }
 
+    this.video_canvas.height = Math.min( main_height / 4, 250 );
+
     this.controls.handleResize();
 
     this.start_animation(0);
@@ -1806,6 +1820,9 @@ class THREEBRAIN_CANVAS {
     let clock_time_delta = this.clock.getDelta(),
         results = {
           current_time_delta  : 0,
+          last_time : 0,
+          current_time : 0,
+          speed : 1,
           elapsed_time : //this.clock.getElapsedTime()
             (this.clock.oldTime - this.clock.startTime) / 1000
         };
@@ -1853,9 +1870,13 @@ class THREEBRAIN_CANVAS {
       //  2. if is_playing, last_time + time_delta * speed
       let current_time = is_playing ? (last_time + clock_time_delta * speed) : last_time;
       results.current_time = current_time;
+      results.speed = speed;
+      results.is_playing = is_playing;
+      results.last_time = last_time;
 
       if( current_time > time_end ){
         current_time = time_start;
+        results.last_time = time_start;
       }
 
       // Change animation
@@ -2369,6 +2390,83 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  switch_media( name ){
+    this.video_canvas._playing = false;
+    this.video_canvas.pause();
+    this.video_canvas.currentTime = 0;
+    this.video_canvas._enabled = false;
+
+    const media_content = this.shared_data.get(".media_content");
+    if( !media_content ){ return; }
+    const content = media_content[ name ];
+    if( !content ){ return; }
+    // name (animation name), durtion, time_start, asp_ratio, url
+    // set this.video_canvas;
+    const video_height = this.video_canvas.height;
+    this.video_canvas.src = content.url;
+    this.video_canvas._time_start = content.time_start;
+    this.video_canvas._asp_ratio = content.asp_ratio || (16/9);
+    this.video_canvas._duration = content.duration || Infinity;
+    this.video_canvas._name = content.name;
+    this.video_canvas._enabled = true;
+
+  }
+
+  start_video( speed, video_time ){
+    if( speed < 0.1 ){
+      this.pause_video( video_time );
+      return;
+    }
+    if( this.video_canvas.playbackRate !== speed ){
+      this.video_canvas.playbackRate = speed;
+    }
+
+    if( !this.video_canvas._playing ) {
+      this.video_canvas._playing = true;
+      this.video_canvas.play(() => {
+        this.video_canvas.currentTime = video_time.toFixed(2);
+      });
+    }
+  }
+
+  pause_video( video_time ){
+    if( this.video_canvas._playing || !this.video_canvas.paused ){
+      this.video_canvas._playing = false;
+      this.video_canvas.pause();
+    }
+    if ( video_time !== undefined ){
+      const delta = Math.abs(this.video_canvas.currentTime - video_time);
+      if( delta > 0.05 ){
+        this.video_canvas.currentTime = video_time.toFixed(2);
+      }
+      // this.video_canvas.currentTime = video_time.toFixed(2);
+    }
+  }
+
+  _draw_video( results, w, h ){
+    if( !this.video_canvas._enabled || this.video_canvas._mode === 'hidden' ){ return; }
+    // set video time
+    const video_time = results.last_time - this.video_canvas._time_start;
+
+    if(
+      this.video_canvas.ended || video_time <= 0 ||
+      video_time > Math.min( this.video_canvas._duration, this.video_canvas.duration )
+    ){
+      this.pause_video( 0 );
+      return;
+    }
+
+    if( this.render_flag >= 2 ){
+      this.start_video( results.speed || 1, video_time );
+    } else {
+      // static, set timer
+      this.pause_video( video_time );
+    }
+
+    const video_height = this.video_canvas.height,
+          video_width = video_height * this.video_canvas._asp_ratio;
+    this.domContextWrapper.draw_video( this.video_canvas, 0, h - video_height, video_width, video_height);
+  }
 
   // Do not call this function directly after the initial call
   // use "this.start_animation(0);" to render once
@@ -2388,14 +2486,15 @@ class THREEBRAIN_CANVAS {
 
     this.update();
 
+    const results = this.inc_time();
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
     if(this.render_flag >= 0){
 
       if(this.has_stats){
         this.stats.update();
       }
-
-  		const results = this.inc_time();
-
 
   		this.render( results );
 
@@ -2424,12 +2523,9 @@ class THREEBRAIN_CANVAS {
   		this.mapToCanvas();
 
 
-
   		// Add additional information
       const _pixelRatio = this.pixel_ratio[0];
       const _fontType = 'Courier New, monospace';
-      const _width = this.domElement.width;
-      const _height = this.domElement.height;
 
       this.domContext.fillStyle = this.foreground_color;
 
@@ -2445,18 +2541,18 @@ class THREEBRAIN_CANVAS {
       // Draw focused target information on the top right corner
       this._draw_focused_info( results, 0, 0, _width, _height );
 
+    }
 
-  		// check if capturer is working
-      if( this.capturer_recording && this.capturer ){
-        // Not really used but just keep it in case for future capturer
-        this.capturer.add();
-      }
+    this._draw_video( results, _width, _height );
+
+    // check if capturer is working
+    if( this.render_flag >= 0 && this.capturer_recording && this.capturer ){
+      this.capturer.add();
     }
 
     if(this.render_flag === 0){
       this.render_flag = -1;
     }
-
 
 
 	}
@@ -2959,10 +3055,10 @@ class THREEBRAIN_CANVAS {
             this.shared_data.set(scode, subject_data);
           }
 
-          const Norig = THREE.as_Matrix4( subject_data.Norig );
-          const Torig = THREE.as_Matrix4( subject_data.Torig );
-          const xfm = THREE.as_Matrix4( subject_data.xfm );
-          const tkrRAS_MNI305 = THREE.as_Matrix4( subject_data.vox2vox_MNI305 );
+          const Norig = as_Matrix4( subject_data.Norig );
+          const Torig = as_Matrix4( subject_data.Torig );
+          const xfm = as_Matrix4( subject_data.xfm );
+          const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
           const MNI305_tkrRAS = new THREE.Matrix4()
             .copy(tkrRAS_MNI305).invert();
           const tkrRAS_Scanner = new THREE.Matrix4()
@@ -3095,6 +3191,8 @@ class THREEBRAIN_CANVAS {
     }else{
       this.shared_data.set('animation_name', animation_name);
     }
+
+    this.switch_media( animation_name );
 
     // TODO: make sure cmap exists or use default lut
     const cmap = this.switch_colormap( animation_name );

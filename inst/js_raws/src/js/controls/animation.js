@@ -119,6 +119,9 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
         this.animation_time[0] = this.canvas.__min_t;
         this.animation_time[1] = this.canvas.__max_t;
 
+        // update video playback speed
+        const play_speed = this._ani_speed.getValue() || 1;
+
         if( !cmap ){
           legend_visible.setValue(false);
           if( v === '[None]' ){
@@ -335,6 +338,7 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
           if(typeof this.__current_time !== 'number' ||
              Math.abs(this.__current_time - v) >= 0.001){
             this.__current_time = v;
+            this._ani_status.setValue(false);
           }
           this._update_canvas();
         });
@@ -372,6 +376,20 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
       }
     }, 'gui_cycle_animation');
 
+    this.gui.add_item('Video Mode', "hidden", {
+      folder_name: folder_name, args : ["hidden", "muted", "normal"]
+    }).onChange((v) => {
+      if( v === undefined || v === "hidden" ){
+        this.canvas.video_canvas._mode = "hidden"
+      } else {
+        this.canvas.video_canvas._mode = v;
+        if( v === "muted" ){
+          this.canvas.video_canvas.muted = true;
+        } else {
+          this.canvas.video_canvas.muted = false;
+        }
+      }
+    });
 
     let render_legend = this.settings.show_legend;
     const legend_visible = this.gui.add_item('Show Legend', true, {folder_name: folder_name })

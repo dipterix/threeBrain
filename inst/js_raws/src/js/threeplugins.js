@@ -21,24 +21,5 @@ THREE = register_volume2DShader1( THREE );
 THREE = add_text_sprite( THREE );
 THREE = regisater_convexhull( THREE );
 
-THREE.as_Matrix4 = (m) => {
-  const re = new THREE.Matrix4();
-  if(!Array.isArray(m)){ return(re); }
-
-  if( m.length <= 4 ){
-    try {
-      const m1 = m[3] || [0,0,0,1];
-      re.set(...m[0],...m[1],...m[2], ...m1);
-    } catch (e) {}
-    return( re );
-  }
-  // else m length is either 12 or 16
-  if( m.length == 12 ) {
-    re.set(...m, 0,0,0,1);
-  } if (m.length == 16) {
-    re.set(...m);
-  }
-  return( re );
-};
 
 export { THREE };

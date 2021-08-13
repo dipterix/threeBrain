@@ -1,4 +1,5 @@
 import ClipboardJS from 'clipboard';
+import * as THREE from '../build/three.module.js';
 // import download from 'downloadjs';
 
 const invertColor = function(hex) {
@@ -307,10 +308,31 @@ function write_clipboard_maker(){
 }
 const write_clipboard = write_clipboard_maker();
 
+
+function as_Matrix4(m) {
+  const re = new THREE.Matrix4();
+  if(!Array.isArray(m)){ return(re); }
+
+  if( m.length <= 4 ){
+    try {
+      const m1 = m[3] || [0,0,0,1];
+      re.set(...m[0],...m[1],...m[2], ...m1);
+    } catch (e) {}
+    return( re );
+  }
+  // else m length is either 12 or 16
+  if( m.length == 12 ) {
+    re.set(...m, 0,0,0,1);
+  } if (m.length == 16) {
+    re.set(...m);
+  }
+  return( re );
+}
+
 export { invertColor, padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
   sub2, float_to_int32, vec3_to_string, throttle_promise,
-  has_meta_keys, write_clipboard };
+  has_meta_keys, write_clipboard, as_Matrix4 };
 
 
 
