@@ -13,6 +13,8 @@ class PDFContext {
     this.canvas.width = this.width;
     this.canvas.height = this.height;
     this._domContext = this.canvas.getContext('2d');
+    this._video_canvas = document.createElement('canvas');
+    this._video_context = this._video_canvas.getContext('2d');
 
     this.background_color = '#ffffff'; // white background
     this.foreground_color = '#000000';
@@ -53,6 +55,16 @@ class PDFContext {
     this._domContext.fillRect(0, 0, w, h);
     this._domContext.drawImage( el, 0, 0, w, h);
     this.context.addImage( this.canvas, 'PNG', x, y, w, h );
+  }
+
+  draw_video( el, x, y, w, h ){
+    if( el.currentTime === 0 || el.ended ){ return; }
+
+    this._video_canvas.width = w;
+    this._video_canvas.height = h;
+    this._video_context.drawImage( el, 0, 0, w, h );
+
+    this.context.addImage( this._video_canvas, 'PNG', x, y, w, h );
   }
 
   fill_gradient(  grd, x, y, w, h ){
@@ -164,9 +176,9 @@ class CanvasContext2D {
     }
   }
 
-  draw_video( domElement, x, y, w, h ){
-    if( domElement.currentTime === 0 || domElement.ended ){ return; }
-    this.context.drawImage(domElement, x, y, w, h);
+  draw_video( el, x, y, w, h ){
+    if( el.currentTime === 0 || el.ended ){ return; }
+    this.context.drawImage( el, x, y, w, h );
   }
 
 }

@@ -389,6 +389,7 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
           this.canvas.video_canvas.muted = false;
         }
       }
+      this._update_canvas();
     });
 
     let render_legend = this.settings.show_legend;

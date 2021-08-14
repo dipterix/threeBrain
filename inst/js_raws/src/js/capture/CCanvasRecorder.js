@@ -11,7 +11,7 @@ class CCanvasRecorder extends CCFrameEncoder{
   constructor( settings ){
     super( settings );
   	this.extension = '.webm';
-  	this.mimeType = 'video/webm;codecs=vp8,opus';
+  	this.mimeType = 'video/webm;codecs=h264,vp9,opus';
   	this.baseFilename = this.filename;
     this.framerate = settings.framerate;
   	this.chunks = [];
@@ -22,12 +22,16 @@ class CCanvasRecorder extends CCFrameEncoder{
     this.stream = this.canvas.captureStream( this.framerate );
 
     // create a recorder fed with our canvas' stream
-    this.recorder = new MediaRecorder(this.stream, {mimeType : 'video/webm;codecs=vp8,opus'});
+    this.recorder = new MediaRecorder(this.stream, {
+      audioBitsPerSecond: 128000,
+      videoBitsPerSecond: 2500000,
+      mimeType : this.mimeType
+    });
 
     // save the chunks
-    this.recorder.ondataavailable = (e) => {
+    this.recorder.addEventListener('dataavailable', (e) => {
       this.chunks.push(e.data);
-    };
+    });
 
     // On stop, save data
     this.recorder.onstop = (e) => {
@@ -35,18 +39,21 @@ class CCanvasRecorder extends CCFrameEncoder{
         console.log('Start to download...');
         download( blob, this.filename + this.extension );
       });
-      this.chunks.length = 0;
     };
   }
 
   stop(){
     if(this.recorder && this.recorder.state === 'recording'){
+      this.recorder.requestData();
       this.recorder.stop();
     }
   }
 
   start(){
-    this.dispose();
+    if(this.recorder && this.recorder.state === 'recording'){
+      this.recorder.pause()
+    }
+    this.chunks.length = 0;
     this.recorder.start();
   }
 
@@ -58,12 +65,14 @@ class CCanvasRecorder extends CCFrameEncoder{
     if( this.chunks.length > 0 ){
       let result = new Blob(this.chunks);
       callback( result );
+      this.chunks.length = 0;
     }
 
   }
 
   dispose() {
     if(this.recorder){
+      this.recorder.onstop = undefined;
       this.stop();
     }
     this.chunks.length = 0;

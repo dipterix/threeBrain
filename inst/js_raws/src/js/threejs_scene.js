@@ -1,5 +1,5 @@
 import { to_array, get_element_size, get_or_default, has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4 } from './utils.js';
-import { CanvasContext2D, PDFContext } from './core/context.js';
+import { CanvasContext2D } from './core/context.js';
 import { Stats } from './libs/stats.min.js';
 import { THREE } from './threeplugins.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
@@ -597,10 +597,11 @@ class THREEBRAIN_CANVAS {
     // Add video
     this.video_canvas = document.createElement('video');
     this.video_canvas.setAttribute( "autoplay", "false" );
+    // this.video_canvas.setAttribute( "crossorigin", "use-credentials" );
     this.video_canvas.muted = true;
 
     // this.video_canvas.innerHTML = `<source src="" type="video/mp4">`
-    this.video_canvas.height = Math.min( height / 4, 250 );
+    this.video_canvas.height = height / 4;
     this.video_canvas._enabled = false;
     this.video_canvas._time_start = Infinity;
     this.video_canvas._duration = 0;
@@ -1511,7 +1512,7 @@ class THREEBRAIN_CANVAS {
       this.domElement.style.height = main_height + 'px';
     }
 
-    this.video_canvas.height = Math.min( main_height / 4, 250 );
+    this.video_canvas.height = main_height / 4;
 
     this.controls.handleResize();
 
@@ -1675,30 +1676,6 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  mapToPDF(){
-    const results = this.inc_time();
-    const _width = this.domElement.width,
-          _height = this.domElement.height;
-    const pdf_wrapper = new PDFContext( this.domElement );
-
-    pdf_wrapper.set_font_color( this.foreground_color );
-
-    // Clear the whole canvas
-    // copy the main_renderer context
-    pdf_wrapper.background_color = this.background_color;
-    pdf_wrapper.draw_image( this.main_renderer.domElement, 0, 0, _width, _height );
-
-    // Draw timestamp on the bottom right corner
-    this._draw_ani( results, 0, 0, _width, _height, pdf_wrapper );
-
-    // Draw focused target information on the top right corner
-    this._draw_focused_info( results, 0, 0, _width, _height, pdf_wrapper, true );
-
-    // Draw legend on the right side
-    this._draw_legend( results, 0, 0, _width, _height, pdf_wrapper );
-
-    return( pdf_wrapper.context );
-  }
 
   mapToCanvas(){
     const _width = this.domElement.width,
@@ -2442,7 +2419,7 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _draw_video( results, w, h ){
+  _draw_video( results, w, h, context_wrapper ){
     if( !this.video_canvas._enabled || this.video_canvas._mode === 'hidden' ){ return; }
     // set video time
     const video_time = results.last_time - this.video_canvas._time_start;
@@ -2464,7 +2441,10 @@ class THREEBRAIN_CANVAS {
 
     const video_height = this.video_canvas.height,
           video_width = video_height * this.video_canvas._asp_ratio;
-    this.domContextWrapper.draw_video( this.video_canvas, 0, h - video_height, video_width, video_height);
+    if( !context_wrapper ){
+      context_wrapper = this.domContextWrapper;
+    }
+    context_wrapper.draw_video( this.video_canvas, 0, h - video_height, video_width, video_height);
   }
 
   // Do not call this function directly after the initial call
@@ -2540,14 +2520,13 @@ class THREEBRAIN_CANVAS {
       // Draw focused target information on the top right corner
       this._draw_focused_info( results, 0, 0, _width, _height );
 
+      // check if capturer is working
+      if( this.capturer_recording && this.capturer ){
+        this.capturer.add();
+      }
     }
 
     this._draw_video( results, _width, _height );
-
-    // check if capturer is working
-    if( this.render_flag >= 0 && this.capturer_recording && this.capturer ){
-      this.capturer.add();
-    }
 
     if(this.render_flag === 0){
       this.render_flag = -1;

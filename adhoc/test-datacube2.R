@@ -32,7 +32,7 @@ for(ii in 1:20){
 #     input$btn
     yab$plot(
       # voxel_colormap = "inst/palettes/datacube2/ContinuousSample.json",
-      debug = TRUE, controllers = list(
+      debug = F, controllers = list(
         'Left Hemisphere' = 'hidden',
         'Right Hemisphere' = 'hidden',
         'Voxel Type' = 'aparc_aseg',
@@ -41,6 +41,7 @@ for(ii in 1:20){
         'Show Panels' = FALSE
       ), control_presets = 'localization',
       custom_javascript = r'(
+      // canvas.video_canvas.crossOrigin="use-credentials"
       canvas.shared_data.set(".media_content", {
         Color: {
           asp_ratio: 16/9,
