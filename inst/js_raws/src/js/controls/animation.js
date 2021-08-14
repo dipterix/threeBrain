@@ -376,7 +376,9 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
       }
     }, 'gui_cycle_animation');
 
-    this.gui.add_item('Video Mode', "hidden", {
+    this.canvas.video_canvas._mode = "muted";
+    this.canvas.video_canvas.muted = true;
+    this.gui.add_item('Video Mode', "muted", {
       folder_name: folder_name, args : ["hidden", "muted", "normal"]
     }).onChange((v) => {
       if( v === undefined || v === "hidden" ){

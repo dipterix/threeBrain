@@ -38,9 +38,10 @@ wg <- yab$plot(
         Color =
           video_content(
             path = "https://www.dropbox.com/s/opsgvzothqxvsj0/mov_bbb.mp4?raw=1",
-            duration = 11, time_start = 0, asp_ratio = 16 / 9, local = TRUE
+            duration = 11, time_start = 0, asp_ratio = 16 / 9, local = FALSE
           )
       ),
+      show_modal=T,
 
       controllers = list(
         'Left Hemisphere' = 'hidden',

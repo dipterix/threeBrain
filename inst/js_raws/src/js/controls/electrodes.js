@@ -119,7 +119,7 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
       // Do mapping by default
       do_mapping.setValue( true );
       // and open gui
-      this.gui.open_folder( folder_name );
+      // this.gui.open_folder( folder_name );
     }
 
   };

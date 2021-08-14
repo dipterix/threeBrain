@@ -23,7 +23,7 @@ class THREEBRAIN_CONTROL{
     this.DEBUG = DEBUG;
 
     this.add_folder('Default');
-    this.open_folder('Default');
+    // this.open_folder('Default');
   }
 
 
