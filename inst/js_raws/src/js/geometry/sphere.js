@@ -85,6 +85,9 @@ class Sphere extends AbstractThreeBrainObject {
   }
 
   dispose(){
+    try {
+      this._mesh.removeFromParent();
+    } catch (e) {}
     this._mesh.material.dispose();
     this._mesh.geometry.dispose();
   }

@@ -520,7 +520,7 @@ class D3Renderers {
       }
     }
 
-    window.dd=dat
+    // window.dd=dat
 
 
     _trace.select('img').attr('src', inner_canvas.toDataURL());

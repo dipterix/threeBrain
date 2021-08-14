@@ -118,7 +118,7 @@ function atlas_label(pos_array, canvas){
   }
 
 }
-window.atlas_label = atlas_label;
+// window.atlas_label = atlas_label;
 
 function add_electrode(scode, num, pos, canvas){
   const group_name = `group_Electrodes (${scode})`;
@@ -184,6 +184,14 @@ function add_electrode(scode, num, pos, canvas){
   const sprite = new THREE.Sprite( material );
   sprite.scale.set(2,2,2);
   el.object.add( sprite );
+
+  el.object.userData.dispose = () => {
+    sprite.removeFromParent();
+    sprite.material.map.dispose();
+    sprite.geometry.dispose();
+    sprite.material.dispose();
+    el.dispose();
+  };
 
   return( el );
 }
@@ -436,17 +444,11 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         }
 
         if( res.length ){
-          const last_elec = electrodes[electrodes.length - 1];
-          let last_pos = new THREE.Vector3().fromArray(
+          const last_elec = electrodes.pop();
+          res.push(new THREE.Vector3().fromArray(
             last_elec._params.position
-          );
-          res.push(last_pos);
-          last_pos = res.shift();
-          // last_elec._params is identical to last_elec.object.userData.construct_params
-          last_elec._params.position[ 0 ] = last_pos.x;
-          last_elec._params.position[ 1 ] = last_pos.y;
-          last_elec._params.position[ 2 ] = last_pos.z;
-          last_elec.object.position.copy( last_pos );
+          ));
+          last_elec.object.userData.dispose();
 
           res.forEach((pos) => {
             const el = add_electrode(

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 // var jsPDF = require('jspdf');
-window.jsPDF = jsPDF;
+// window.jsPDF = jsPDF;
 
 class PDFContext {
   constructor( base_canvas ){
