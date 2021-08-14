@@ -11,6 +11,7 @@ jobs:
     runs-on: macOS-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      _THREEBRAIN_VIGNETTES_EVAL_: TRUE
     steps:
       - uses: actions/checkout@v2
 
@@ -47,6 +48,7 @@ jobs:
           s[startsWith(s, "<!-- demo static: start")] <- "<!-- demo static: start"
           s[startsWith(s, "<!-- demo dynamic: start")] <- "<!-- demo dynamic: start -->"
           writeLines(s, "README.md")
+          threeBrain::download_N27()
         shell: Rscript {0}
 
       - name: Deploy package

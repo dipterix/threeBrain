@@ -59,9 +59,9 @@ if(do_eval){
   # if(!dir.exists(subject_path)){
   #   threeBrain::download_N27()
   # }
+  brain <- freesurfer_brain2(subject_path, subject_code)
+  print(brain)
 }
-brain <- freesurfer_brain2(subject_path, subject_code)
-print(brain)
 ```
 
 ## Visualization
