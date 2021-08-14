@@ -1,0 +1,85 @@
+---
+title: "Getting Started"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE, message=FALSE, results='hide'}
+do_eval <- isTRUE(
+    Sys.getenv("_THREEBRAIN_VIGNETTES_EVAL_") == "TRUE"
+  )
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = do_eval
+)
+library(threeBrain)
+```
+
+`threeBrain` is an R package that renders `FreeSurfer` or `AFNI/SUMA` files in the modern web browsers. The goal is to provide 3D viewers that are **powerful**, **interactive**, **easy-to-share**.
+
+## Directory Setup
+
+The basic setup of a typical subject folder should look like this:
+
+```
+Project Directory
+  └─Subject code 
+    ├─mri   - Atlas, T1 and/or CT image files (*.mgz, transforms, ...)
+    ├─surf  - FreeSurfer surface files (pial, sulc, ...)
+    ├─SUMA  - (Optional) SUMA standard 141 surfaces (std.141.*)
+    └─...   - Other files
+```
+
+If you are using `FreeSurfer` to generate MRI reconstruction, then you are all set! For `AFNI/SUMA` users, please place your `SUMA` folder under subject folder.
+
+If you don't have any `FreeSurfer` folders, you can download a sample archive from [here](https://github.com/dipterix/threeBrain-sample/releases), choose `N27.zip` or `N27-complete.zip`, and extract to your download directory. Once extracted, you will have a `N27` subject folder in the `~/Downloads/` directory. The directory tree looks exactly the same as described above.
+
+In the following context, I will use `~/Downloads/N27` as an example
+
+## Generate Viewer Object
+
+```{r setup}
+library(threeBrain)
+subject_code <- "N27"
+subject_path <- "~/Downloads/N27"
+brain <- freesurfer_brain2(subject_path, subject_code)
+print(brain)
+```
+
+```{r setup2, eval=TRUE, echo=FALSE, results='hide', message=FALSE}
+if(do_eval){
+  library(threeBrain)
+  subject_code <- "N27"
+  subject_path <- file.path(
+    threeBrain::default_template_directory(), "N27")
+  # if(!dir.exists(subject_path)){
+  #   threeBrain::download_N27()
+  # }
+}
+brain <- freesurfer_brain2(subject_path, subject_code)
+print(brain)
+```
+
+## Visualization
+
+Visualizing the viewer is simply just one line.
+
+```{r}
+plot(brain)
+```
+
+
+
+
+
+
+
+
+
+
+
+
