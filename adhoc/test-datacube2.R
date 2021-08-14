@@ -30,9 +30,19 @@ for(ii in 1:20){
 # server <- function(input, output, session) {
 #   output$out <- renderBrain({
 #     input$btn
-    yab$plot(
+wg <- yab$plot(
       # voxel_colormap = "inst/palettes/datacube2/ContinuousSample.json",
-      debug = F, controllers = list(
+      debug = T,
+
+      videos = list(
+        Color =
+          video_content(
+            path = "https://www.dropbox.com/s/opsgvzothqxvsj0/mov_bbb.mp4?raw=1",
+            duration = 11, time_start = 0, asp_ratio = 16 / 9, local = TRUE
+          )
+      ),
+
+      controllers = list(
         'Left Hemisphere' = 'hidden',
         'Right Hemisphere' = 'hidden',
         'Voxel Type' = 'aparc_aseg',
@@ -42,7 +52,7 @@ for(ii in 1:20){
       ), control_presets = 'localization',
       custom_javascript = r'(
       // canvas.video_canvas.crossOrigin="use-credentials"
-      canvas.shared_data.set(".media_content", {
+      /*canvas.shared_data.set(".media_content", {
         Color: {
           asp_ratio: 16/9,
           time_start: 1,
@@ -51,11 +61,13 @@ for(ii in 1:20){
           url: "https://www.dropbox.com/s/opsgvzothqxvsj0/mov_bbb.mp4?raw=1"
         }
       })
-      canvas.switch_media("Color");
+      canvas.switch_media("Color");*/
 
       )'
 
     )
+
+wg
 #   })
 # }
 

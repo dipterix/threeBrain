@@ -2410,8 +2410,9 @@ class THREEBRAIN_CANVAS {
       this.video_canvas._playing = false;
       this.video_canvas.pause();
     }
+
     if ( video_time !== undefined ){
-      const delta = Math.abs(this.video_canvas.currentTime - video_time);
+      const delta = Math.abs(parseFloat(this.video_canvas.currentTime) - video_time);
       if( delta > 0.05 ){
         this.video_canvas.currentTime = video_time.toFixed(2);
       }
@@ -2441,10 +2442,19 @@ class THREEBRAIN_CANVAS {
 
     const video_height = this.video_canvas.height,
           video_width = video_height * this.video_canvas._asp_ratio;
-    if( !context_wrapper ){
-      context_wrapper = this.domContextWrapper;
+    if( context_wrapper ){
+      context_wrapper.draw_video(
+        this.video_canvas, 0, h - video_height,
+        video_width, video_height
+      );
+    } else {
+      this.domContextWrapper.draw_video(
+        this.video_canvas, 0, h - video_height,
+        video_width, video_height
+      );
     }
-    context_wrapper.draw_video( this.video_canvas, 0, h - video_height, video_width, video_height);
+
+
   }
 
   // Do not call this function directly after the initial call
@@ -3057,6 +3067,20 @@ class THREEBRAIN_CANVAS {
 
         });
 
+      }
+
+      const media_content = this.shared_data.get(".media_content");
+      if( media_content ){
+        for(let video_name in media_content){
+          const content = media_content[video_name];
+          if( !content.is_url ){
+            content.url = cache_folder + g.cache_name + '/' + content.url;
+            content.is_url = true;
+            window.fetch(content.url).then(r => r.blob()).then(blob => {
+              content.url = URL.createObjectURL(blob);
+            });
+          }
+        }
       }
 
     }

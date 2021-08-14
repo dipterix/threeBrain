@@ -34,6 +34,7 @@ threejs_brain(
     package = "threeBrain"),
   voxel_colormap = system.file("palettes", "datacube2", "FreeSurferColorLUT.json",
     package = "threeBrain"),
+  videos = list(),
   widget_id = "threebrain_data",
   tmp_dirname = NULL,
   debug = FALSE,

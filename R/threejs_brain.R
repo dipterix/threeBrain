@@ -98,6 +98,8 @@ threejs_brain <- function(
   voxel_colormap = system.file(
     'palettes', 'datacube2', 'FreeSurferColorLUT.json', package = 'threeBrain'),
 
+  videos = list(),
+
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
   debug = FALSE, token = NULL, controllers = list(),
@@ -199,18 +201,28 @@ threejs_brain <- function(
     cache_if_not_exists = FALSE
   )
 
-  # global_container$group$set_group_data(
-  #   name = '__global_data__FreeSurferColorLUT',
-  #   value = list(
-  #     'path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
-  #     'absolute_path' = system.file('FreeSurferColorLUT.json', package = 'threeBrain'),
-  #     'file_name' = 'FreeSurferColorLUT.json',
-  #     'is_new_cache' = FALSE,
-  #     'is_cache' = TRUE
-  #   ),
-  #   is_cached = TRUE,
-  #   cache_if_not_exists = FALSE
-  # )
+  # Video contents
+  if( length(videos) ){
+    nms <- names(videos)
+    sel <- !nms %in% ""
+    if(length(nms) && any(sel)){
+      videos <- videos[sel]
+      nms <- nms[sel]
+      videos <- lapply(nms, function(nm){
+        x <- videos[[nm]]
+        x$name <- stringr::str_replace_all(nm, "[^a-zA-Z0-9-_]", "_")
+        x
+      })
+      names(videos) <- sapply(videos, "[[", 'name')
+      global_container$group$set_group_data(
+        name = '__global_data__.media_content',
+        value = videos,
+        is_cached = FALSE,
+        cache_if_not_exists = FALSE
+      )
+    }
+
+  }
 
 
   # Create element list
@@ -290,6 +302,17 @@ threejs_brain <- function(
       for(f in g$cached_items){
         re <- g$group_data[[f]]
         file.copy(re$absolute_path, to = file.path(tmp_dir, g$cache_name(), re$file_name))
+      }
+    }
+  })
+  lapply(videos, function(x){
+    if(!x$is_url){
+      target <- file.path(
+        tmp_dir, global_container$group$cache_name(), filename(x$path)
+      )
+      file.copy(x$path, target, overwrite = TRUE)
+      if( x$temp ){
+        unlink(x$path)
       }
     }
   })

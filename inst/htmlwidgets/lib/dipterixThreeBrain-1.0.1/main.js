@@ -55151,7 +55151,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 ;// CONCATENATED MODULE: ./src/js/core/context.js
 
 // var jsPDF = require('jspdf');
-window.jsPDF = jspdf_es_min;
+// window.jsPDF = jsPDF;
 
 class PDFContext {
   constructor( base_canvas ){
@@ -57345,7 +57345,7 @@ function atlas_label(pos_array, canvas){
   }
 
 }
-window.atlas_label = atlas_label;
+// window.atlas_label = atlas_label;
 
 function add_electrode(scode, num, pos, canvas){
   const group_name = `group_Electrodes (${scode})`;
@@ -57411,6 +57411,14 @@ function add_electrode(scode, num, pos, canvas){
   const sprite = new threeplugins/* THREE.Sprite */.J.Sprite( material );
   sprite.scale.set(2,2,2);
   el.object.add( sprite );
+
+  el.object.userData.dispose = () => {
+    sprite.removeFromParent();
+    sprite.material.map.dispose();
+    sprite.geometry.dispose();
+    sprite.material.dispose();
+    el.dispose();
+  };
 
   return( el );
 }
@@ -57663,17 +57671,11 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         }
 
         if( res.length ){
-          const last_elec = electrodes[electrodes.length - 1];
-          let last_pos = new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray(
+          const last_elec = electrodes.pop();
+          res.push(new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray(
             last_elec._params.position
-          );
-          res.push(last_pos);
-          last_pos = res.shift();
-          // last_elec._params is identical to last_elec.object.userData.construct_params
-          last_elec._params.position[ 0 ] = last_pos.x;
-          last_elec._params.position[ 1 ] = last_pos.y;
-          last_elec._params.position[ 2 ] = last_pos.z;
-          last_elec.object.position.copy( last_pos );
+          ));
+          last_elec.object.userData.dispose();
 
           res.forEach((pos) => {
             const el = add_electrode(
@@ -61214,6 +61216,9 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
   }
 
   dispose(){
+    try {
+      this._mesh.removeFromParent();
+    } catch (e) {}
     this._mesh.material.dispose();
     this._mesh.geometry.dispose();
   }
@@ -66970,8 +66975,9 @@ class THREEBRAIN_CANVAS {
       this.video_canvas._playing = false;
       this.video_canvas.pause();
     }
+
     if ( video_time !== undefined ){
-      const delta = Math.abs(this.video_canvas.currentTime - video_time);
+      const delta = Math.abs(parseFloat(this.video_canvas.currentTime) - video_time);
       if( delta > 0.05 ){
         this.video_canvas.currentTime = video_time.toFixed(2);
       }
@@ -67001,10 +67007,19 @@ class THREEBRAIN_CANVAS {
 
     const video_height = this.video_canvas.height,
           video_width = video_height * this.video_canvas._asp_ratio;
-    if( !context_wrapper ){
-      context_wrapper = this.domContextWrapper;
+    if( context_wrapper ){
+      context_wrapper.draw_video(
+        this.video_canvas, 0, h - video_height,
+        video_width, video_height
+      );
+    } else {
+      this.domContextWrapper.draw_video(
+        this.video_canvas, 0, h - video_height,
+        video_width, video_height
+      );
     }
-    context_wrapper.draw_video( this.video_canvas, 0, h - video_height, video_width, video_height);
+
+
   }
 
   // Do not call this function directly after the initial call
@@ -67617,6 +67632,20 @@ class THREEBRAIN_CANVAS {
 
         });
 
+      }
+
+      const media_content = this.shared_data.get(".media_content");
+      if( media_content ){
+        for(let video_name in media_content){
+          const content = media_content[video_name];
+          if( !content.is_url ){
+            content.url = cache_folder + g.cache_name + '/' + content.url;
+            content.is_url = true;
+            window.fetch(content.url).then(r => r.blob()).then(blob => {
+              content.url = URL.createObjectURL(blob);
+            });
+          }
+        }
       }
 
     }
