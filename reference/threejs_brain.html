@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.1.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.2</span>
       </span>
     </div>
 
@@ -95,7 +95,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/A-getting-started.html">Getting Started</a>
+      <a href="../articles/A-getting-started.html">1 - Getting Started</a>
+    </li>
+    <li>
+      <a href="../articles/B-electrode-localization.html">2 - Electrode Localization</a>
+    </li>
+    <li>
+      <a href="../articles/C-data-visualization.html">3 - Data Visualization (Electrodes)</a>
     </li>
   </ul>
 </li>
@@ -361,134 +367,7 @@ only use it when you have multiple widgets in one website</p></td>
   <span class='op'>)</span>
 
 <span class='op'>}</span>
-</div><div class='output co'>#&gt; [Importing N27 (first time will take seconds)]: initializing... 
-#&gt; [Importing N27 (first time will take seconds)]: Transform Matrix (1 out of 26) 
-#&gt; [Importing N27 (first time will take seconds)]: MRI-T1 (2 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_t1.json 
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer pial (3 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_fs_lh_pial.json 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_fs_rh_pial.json 
-#&gt; [Importing N27 (first time will take seconds)]: SUMA pial (4 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_std_141_lh_pial.json 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_std_141_rh_pial.json 
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer white (5 out of 26) 
-#&gt;   * surf/lh.white (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.white (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: SUMA white (6 out of 26) 
-#&gt;   * surf/lh.white (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.white (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer smoothwm (7 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_fs_lh_smoothwm.json 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_fs_rh_smoothwm.json 
-#&gt; [Importing N27 (first time will take seconds)]: SUMA smoothwm (8 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_std_141_lh_smoothwm.json 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_std_141_rh_smoothwm.json 
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer pial-outer-smoothed (9 out of 26) 
-#&gt;   * surf/lh.pial-outer-smoothed (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.pial-outer-smoothed (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: SUMA pial-outer-smoothed (10 out of 26) 
-#&gt;   * surf/lh.pial-outer-smoothed (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.pial-outer-smoothed (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer inflated (11 out of 26) 
-#&gt;   * surf/lh.inflated (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.inflated (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: SUMA inflated (12 out of 26) 
-#&gt;   * surf/lh.inflated (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.inflated (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer sphere (13 out of 26) 
-#&gt;   * surf/lh.sphere (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.sphere (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: SUMA sphere (14 out of 26) 
-#&gt;   * surf/lh.sphere (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.sphere (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer curv (15 out of 26) 
-#&gt;   * surf/lh.curv (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.curv (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: SUMA curv (16 out of 26) 
-#&gt;   * surf/lh.curv (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt;   * surf/rh.curv (as well as its asc/gii versions) is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer sulc (17 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_fs_lh_sulc.json 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_fs_rh_sulc.json 
-#&gt; [Importing N27 (first time will take seconds)]: SUMA sulc (18 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_std_141_lh_sulc.json 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_std_141_rh_sulc.json 
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer aparc+aseg (19 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_aparc_aseg.json 
-#&gt; [Importing N27 (first time will take seconds)]: SUMA aparc+aseg - skipped (20 out of 26) 
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer aparc.a2009s+aseg (21 out of 26) 
-#&gt;   * mri/aparc.a2009s+aseg.mgz is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: SUMA aparc.a2009s+aseg (22 out of 26) 
-#&gt;   * SUMA/aparc.a2009s+aseg.nii is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer aparc.DKTatlas+aseg (23 out of 26) 
-#&gt;   * mri/aparc.DKTatlas+aseg.mgz is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: SUMA aparc.DKTatlas+aseg (24 out of 26) 
-#&gt;   * SUMA/aparc.DKTatlas+aseg.nii is missing
-#&gt;  
-#&gt; [Importing N27 (first time will take seconds)]: FreeSurfer aseg (25 out of 26) 
-#&gt; Creating cache data to - /Users/runner/Library/Application Support/org.R-project.R/R/threeBrain/templates/N27/RAVE/N27_aseg.json 
-#&gt; [Importing N27 (first time will take seconds)]: SUMA aseg - skipped (26 out of 26) 
-#&gt; Subject - N27 
-#&gt; Transforms:
-#&gt; 
-#&gt; - FreeSurfer TalXFM [from scanner to MNI305]:
-#&gt;        [,1]    [,2]    [,3]    [,4]
-#&gt; [1,] 0.9692 -0.0029 -0.0134 -0.1638
-#&gt; [2,] 0.0062  0.9685  0.0492 -2.0717
-#&gt; [3,] 0.0145  0.0276  0.9541  0.1361
-#&gt; [4,] 0.0000  0.0000  0.0000  1.0000
-#&gt; 
-#&gt; - Torig [Voxel CRS to FreeSurfer origin, vox2ras-tkr]
-#&gt;      [,1] [,2] [,3] [,4]
-#&gt; [1,]   -1    0    0  128
-#&gt; [2,]    0    0    1 -128
-#&gt; [3,]    0   -1    0  128
-#&gt; [4,]    0    0    0    1
-#&gt; 
-#&gt; - Norig [Voxel CRS to Scanner center, vox2ras]
-#&gt;      [,1] [,2] [,3]   [,4]
-#&gt; [1,]   -1    0    0  128.5
-#&gt; [2,]    0    0    1 -145.5
-#&gt; [3,]    0   -1    0  146.5
-#&gt; [4,]    0    0    0    1.0
-#&gt; 
-#&gt; - Scanner center relative to FreeSurfer origin
-#&gt; [1]  -0.5  17.5 -18.5
-#&gt; 
-#&gt; - FreeSurfer RAS to MNI305, vox2vox-MNI305
-#&gt;        [,1]    [,2]    [,3]      [,4]
-#&gt; [1,] 0.9692 -0.0029 -0.0134   0.12365
-#&gt; [2,] 0.0062  0.9685  0.0492 -18.10715
-#&gt; [3,] 0.0145  0.0276  0.9541  17.31120
-#&gt; [4,] 0.0000  0.0000  0.0000   1.00000
-#&gt; Surface information (total count 2)
-#&gt;   pial [ std.141 ]  
-#&gt;   smoothwm [ std.141 ]  
-#&gt; Volume information (total count 1)
-#&gt;   T1  </div><div class='input'>
+
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
