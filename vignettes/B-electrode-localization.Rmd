@@ -1,10 +1,10 @@
 ---
-title: "2 - Electrode Localization"
+title: "Electrode Localization"
 output: 
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{2 - Electrode Localization}
+  %\VignetteIndexEntry{Electrode Localization}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

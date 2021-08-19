@@ -1,10 +1,10 @@
 ---
-title: "3 - Data Visualization (Electrodes)"
+title: "Data Visualization (Electrodes)"
 output: 
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{3 - Data Visualization (Electrodes)}
+  %\VignetteIndexEntry{Data Visualization (Electrodes)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -31,7 +31,7 @@ brain <- freesurfer_brain2(subject_path, subject_code)
 
 To add electrodes to the brain object, you need a electrode table with least 5 columns: `Subject`, `Coord_x`, `Coord_y`, `Coord_z`, `Label`. The column names are case-sensitive.
 
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-09.png" width="100%"/>
+![Electrode table - example](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-09.png){width=80%}
 
 
 If you have performed electrode localization (see the previous article) and exported the electrode table, the exported table can be used here once `Electrode` is filled out.
@@ -44,9 +44,9 @@ brain$set_electrodes(electrode_table)
 brain$plot()
 ```
 
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-10.png" width="100%"/>
+![Click on one of the electrodes, the information (label, 'MNI' coordinates) will be displayed at top.](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-10.png){width=100%}
 
-Click on one of the electrodes, the information (label, 'MNI' coordinates) will be displayed at top.
+
 
 ## Add Electrode Values
 
@@ -91,9 +91,12 @@ brain$set_electrode_values(value_table)
 brain$plot()
 ```
 
-Open `Data Visualization` panel, change `Display Data` and enjoy!
+Open `Data Visualization` panel, change `Display Data` or use keyboard shortcut `d` (make sure the mouse is hovering on the brain) to switch to desired variables.
 
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-11.png" width="100%"/>
+![Electrode data visualization. For continuous data, the value range is automatically detected using the maximum absolute values. The color palette goes from blue to white to red with linear transition. For discrete data, the color palette uses R's default palette.](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-11.png){width=100%}
+
+The `sine_wave` is time series. You can see the animation by toggling `Play/Pause` option in the `Data Visualization` panel.
+
 
 ### Change Color Palette
 
@@ -112,11 +115,16 @@ brain$plot(
 )
 ```
 
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png" width="100%"/>
+![Adjusted p-value palette: the value range is from 0 to 1; the color transition is non-linear, with $p<0.05$ rendered as deep red, and large p-values rendered as light reds](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png){width=50%}
 
+## Map Electrode Values to the Surface
 
+`threeBrain` provides value mapping that allows electrode values to be displayed on the surfaces. To enable this feature,
+open `Surface Settings` panel, and click on `Surface Color`, switch to `sync from electrodes`, or simply use keyboard shortcut `k` (make sure the mouse is hovering over the brain) to change.
 
+You can also hide the electrodes by switching the electrode `Visibility` to `hidden` in the `Electrodes` panel to only show the mapped results.
 
+![Electrode values (p-value) mapped on to the pial surface. Left: electrodes arer visible; Right: electrodes are hidden.](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png){width=80%}
 
 
 
