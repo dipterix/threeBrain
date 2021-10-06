@@ -222,6 +222,30 @@ class THREE_BRAIN_SHINY {
     this.canvas.start_animation( 0 );
   }
 
+  handle_set_localization_electrode( args ){
+    this.presets.localization_set_electrode(
+      args.which, args.params, args.update_shiny
+    );
+  }
+
+  handle_clear_localization(update_shiny = true) {
+    this.presets.localization_clear(update_shiny);
+  }
+
+  handle_add_localization_electrode( args ){
+    const el = this.presets.localization_add_electrode(
+       args.Coord_x, args.Coord_y, args.Coord_z,
+       args.mode || "CT/volume", false
+    );
+    window.eeee = el;
+    if( el ){
+      const locorder = el._localization_params.localizationOrder;
+      this.presets.localization_set_electrode(
+        locorder, args, args.update_shiny
+      );
+    }
+  }
+
   handle_controllers( args ){
     for(let k in args){
       this.gui

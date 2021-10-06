@@ -39,10 +39,24 @@ class TextTexture extends THREE.Texture {
 
 }
 
+function atlas_label_from_index(index, canvas){
+  const fslut = canvas.global_data("__global_data__.FSColorLUT");
+  try {
+    const lbl = fslut.map[ index ].Label;
+    if( lbl ){
+      return([lbl, index]);
+    } else {
+      return(["Unknown", index]);
+    }
+  } catch (e) {
+    return(["Unknown", index]);
+  }
+}
+
 function atlas_label(pos_array, canvas){
   const sub = canvas.state_data.get("target_subject") || "none",
         inst = canvas.threebrain_instances.get(`Atlas - aparc_aseg (${sub})`);
-  if( !inst ){ return("Unknown"); }
+  if( !inst ){ return( [ "Unknown", 0 ] ); }
 
   const margin_voxels = new THREE.Vector3().fromArray( inst._cube_dim );
   const margin_lengths = new THREE.Vector3().set(
@@ -170,9 +184,15 @@ function add_electrode(scode, num, pos, canvas){
     "search_geoms": null
   });
   el._enabled = true;
-  el._fs_label = () => {
-    return( atlas_label(el._params.position, canvas) );
+  el._fs_label = ( index ) => {
+    if( index !== undefined ){
+      return( atlas_label_from_index(index, canvas) );
+    } else {
+      return( atlas_label(el._params.position, canvas) );
+    }
   };
+  el._localization_params = {};
+  el._localization_params.localizationOrder = num;
   el.object.material.color.set( COL_ENABLED );
 
   const map = new TextTexture( `${num}` );
@@ -322,10 +342,113 @@ function electrode_line_from_slice( canvas, electrodes, size ){
 
 function register_controls_localization( THREEBRAIN_PRESETS ){
 
+  THREEBRAIN_PRESETS.prototype.localization_clear = function(update_shiny = true){
+    const electrodes = this.__localize_electrode_list;
+    const scode = this.canvas.state_data.get("target_subject");
+    const collection = this.canvas.electrodes.get(scode) || {};
+    electrodes.forEach((el) => {
+      try {
+        delete collection[ el.name ];
+      } catch (e) {}
+      el.object.userData.dispose();
+    });
+    this.__localize_electrode_list.length = 0;
+    this.canvas.switch_subject();
+
+    if(update_shiny && this.shiny){
+      this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+    }
+  };
+
+  THREEBRAIN_PRESETS.prototype.localization_add_electrode = function(
+    x, y, z, mode, update_shiny = true
+  ){
+    const electrodes = this.__localize_electrode_list;
+    const scode = this.canvas.state_data.get("target_subject");
+    let edit_mode = mode;
+    if(!edit_mode){
+      const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
+    }
+    if(edit_mode === "disabled" ||
+       edit_mode === "refine"){ return; }
+
+    const el = add_electrode(
+      scode, electrodes.length + 1,
+      new THREE.Vector3().set(x, y, z), this.canvas
+    );
+    el._mode = edit_mode;
+    electrodes.push( el );
+    this.canvas.switch_subject();
+
+    if(update_shiny && this.shiny){
+      this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+    }
+
+    return( el );
+  };
+
+  THREEBRAIN_PRESETS.prototype.localization_set_electrode = function(
+    which, params, update_shiny = true
+  ){
+    const electrodes = this.__localize_electrode_list;
+    const scode = this.canvas.state_data.get("target_subject");
+
+    const _regexp = new RegExp(`^${scode}, ([0-9]+) \\- (.*)$`);
+
+    electrodes.forEach((inst) => {
+      const loc_params = inst._localization_params;
+      const localization_order = loc_params.localizationOrder;
+      if(localization_order == which){
+        const g = inst.object.userData.construct_params;
+        if(!inst._localization_params){
+          inst._localization_params = {};
+        }
+        for( let k in params ){
+          switch (k) {
+            case 'Electrode':
+            case 'FSIndex':
+            case 'Label':
+              loc_params[k] = params[k];
+              break;
+            case 'SurfaceElectrode':
+              if( params[k] === "TRUE" || params[k] == true ){
+                g.is_surface_electrode = true;
+              } else {
+                g.is_surface_electrode = false;
+              }
+              break;
+            case 'SurfaceType':
+              g.surface_type = params[k];
+              break;
+            case 'Radius':
+              g.radius = params[k];
+              break;
+            case 'VertexNumber':
+              g.vertex_number = params[k];
+              break;
+            case 'Hemisphere':
+              g.hemisphere = params[k];
+              break;
+            case 'Notes':
+              g.custom_info = params[k];
+              break;
+            default:
+              // skip
+          }
+        }
+      }
+
+    });
+    this.canvas.switch_subject();
+
+    if(update_shiny && this.shiny){
+      this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+    }
+  };
 
   THREEBRAIN_PRESETS.prototype.c_localization = function(){
 
-    const electrodes = [];
+    const electrodes = this.__localize_electrode_list;
     let refine_electrode;
 
     const edit_mode = this.gui.add_item( 'Edit Mode', "disabled", {
@@ -381,6 +504,11 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
           refine_electrode = null;
         }
 
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        }
+
+
         this._update_canvas();
       }
     },  { folder_name: folder_name });
@@ -390,12 +518,22 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
           refine_electrode.isThreeBrainObject &&
           is_electrode( refine_electrode.object ) ){
         adjust_local( [ refine_electrode ] );
+
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        }
+
         this._update_canvas();
       }
     },  { folder_name: folder_name });
 
     this.gui.add_item( 'Auto-Adjust All', () => {
       adjust_local( electrodes );
+
+      if(this.shiny){
+        this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+      }
+
       this._update_canvas();
     },  { folder_name: folder_name });
 
@@ -459,6 +597,10 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
           });
 
           this.canvas.switch_subject();
+        }
+
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
         }
 
       },
@@ -666,6 +808,10 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
           }
         }
 
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        }
+
 
       }, this.canvas.main_canvas, false );
 
@@ -682,6 +828,9 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         // L
         refine_electrode.object.position[nm] -= step;
         refine_electrode.object.userData.construct_params.position[idx] -= step;
+      }
+      if(this.shiny){
+        this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
       }
       this._update_canvas();
     }

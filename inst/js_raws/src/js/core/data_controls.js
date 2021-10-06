@@ -59,6 +59,8 @@ class THREEBRAIN_PRESETS{
 
     this.cache = {};
 
+    this.__localize_electrode_list = [];
+
     this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
       (evt) => {
         this.update_self();

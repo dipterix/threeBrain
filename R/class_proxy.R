@@ -114,6 +114,28 @@ ViewerProxy <- R6::R6Class(
       private$set_value('font_magnification', cex)
     },
 
+    set_localization_electrode = function(which, params, update_shiny = TRUE){
+      which <- as.integer(which)
+      private$set_value('set_localization_electrode', list(
+        which = which,
+        params = as.list(params),
+        update_shiny = isTRUE(update_shiny)
+      ))
+    },
+
+    add_localization_electrode = function(params, update_shiny = TRUE){
+      params <- as.list(params)
+      if(length(c(params$Coord_x,params$Coord_y,params$Coord_z)) != 3){
+        stop("`add_localization_electrode` must contains valid `Coord_x, Coord_y, Coord_z` (tkrRAS)")
+      }
+      params$update_shiny <- isTRUE(update_shiny)
+      private$set_value('add_localization_electrode', params)
+    },
+
+    clear_localization = function(update_shiny = TRUE){
+      private$set_value( "clear_localization", isTRUE(update_shiny) )
+    },
+
     set_values = function( name, target_object, data_type,
                            value, palette = rainbow(64), symmetric = FALSE,
                            time = ifelse(length(value)==1, 0, stop('time must match length with value')),
@@ -220,6 +242,19 @@ ViewerProxy <- R6::R6Class(
       re <- c(sagittal_depth, coronal_depth, axial_depth)
       names(re) <- c('R', 'A', 'S')
       re
+    },
+
+    localization_table = function(){
+      private$ensure_session()
+      tbl <- private$get_value('localization_table', NULL)
+      if(!is.null(tbl)){
+        tbl <- tryCatch({
+          jsonlite::fromJSON(tbl, simplifyDataFrame = TRUE)
+        }, error = function(e){
+          NULL
+        })
+      }
+      tbl
     },
 
     mouse_event_double_click = function(){
