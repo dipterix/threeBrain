@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.2.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3</span>
       </span>
     </div>
 
@@ -263,7 +263,7 @@
 <div id="change-color-palette" class="section level3">
 <h3 class="hasAnchor">
 <a href="#change-color-palette" class="anchor"></a>Change Color Palette</h3>
-<p>In the example above, the p-value legend shows the range is from <code>-0.5</code> to <code>0.5</code>. This is because <code>threeBrain</code> viewer’s default palette is symmetric around zero, and the range is decided by the maximum absolute number. However, the actual p-value should range from <code>0</code> to <code>1</code>, and we might be particularly interested in <span class="math inline">\(p\leq 0.05\)</span>. This means both the color palette and value range need to be corrected.</p>
+<p>In the example above, the p-value legend shows the range is from <code>-0.5</code> to <code>0.5</code>. This is because <code>threeBrain</code> viewer’s default palette is symmetric around zero, and the range is decided by the maximum absolute number. However, the actual p-value should range from <code>0</code> to <code>1</code>, and we might be particularly interested in <code>$p \leq 0.05$</code>. This means both the color palette and value range need to be corrected.</p>
 <p>In the following code, <code>value_ranges</code> is a named list of such value ranges. <code>"p_value"=c(0,1)</code> suggests that the <code>p_value</code> variable should range from 0 to 1. All other variables adopt the default ranges. <code>palettes</code> is a named list of color palettes. In this specific case, variable <code>pal</code> is a vector of 64 colors. <code>colorRampPalette</code> is a base-R function to interpolate colors. Please use <code><a href="https://rdrr.io/r/grDevices/colorRamp.html">help("colorRampPalette")</a></code> to see the documentation.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pal</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
@@ -285,7 +285,7 @@
 <p><code>threeBrain</code> provides value mapping that allows electrode values to be displayed on the surfaces. To enable this feature, open <code>Surface Settings</code> panel, and click on <code>Surface Color</code>, switch to <code>sync from electrodes</code>, or simply use keyboard shortcut <code>k</code> (make sure the mouse is hovering over the brain) to change.</p>
 <p>You can also hide the electrodes by switching the electrode <code>Visibility</code> to <code>hidden</code> in the <code>Electrodes</code> panel to only show the mapped results.</p>
 <div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png" style="width:80.0%" alt=""><p class="caption">Electrode values (p-value) mapped on to the pial surface. Left: electrodes arer visible; Right: electrodes are hidden.</p>
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png" style="width:80.0%" alt=""><p class="caption">Electrode values (p-value) mapped on to the pial surface. Left: electrodes are visible; Right: electrodes are hidden.</p>
 </div>
 </div>
   </div>

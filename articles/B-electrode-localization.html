@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.2.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.3</span>
       </span>
     </div>
 
@@ -129,7 +129,9 @@
 <p>Next, type in and change the file path to <code>ct_in_t1.nii</code> just created</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ct_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="st">"mri/ct_in_t1.nii"</span><span class="op">)</span>
-<span class="va">brain</span><span class="op">$</span><span class="fu">localize</span><span class="op">(</span><span class="va">ct_path</span><span class="op">)</span></code></pre></div>
+<span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="../reference/localization_module.html">localization_module</a></span><span class="op">(</span>subject_code <span class="op">=</span> <span class="va">subject_code</span>,
+                                fs_path <span class="op">=</span> <span class="va">subject_path</span>,
+                                ct_path <span class="op">=</span> <span class="va">ct_path</span><span class="op">)</span></code></pre></div>
 <p>You will see the threshold CT displayed along with the pial surfaces.</p>
 <p><img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-03.png" width="100%"></p>
 <p>Make sure <code>Edit Mode</code> (in the <code>Electrode Localization</code> panel) is <code>CT/Volume</code>. Now move your mouse cursor to the green electrodes, the localization control panel will display the <code>tkrRAS</code> (<code>FreeSurfer</code> coordinate), <code>T1</code> (native RAS coordinate), and <code>MNI305</code> (‘MNI’ template coordinate). <strong>Double-click</strong> on the green areas, and a new electrode will be created.</p>
