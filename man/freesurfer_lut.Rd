@@ -17,8 +17,9 @@ Query the 'FreeSurfer' labels
 The 'FreeSurfer' atlases use
 \url{https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT}
 look-up table to query indexes. The 'threeBrain' electrode localization
-also uses this table to export electrode 'FSLabel'. If volume type is
-set to \code{'aparc_aseg'}, then please also use this table to filter.
+also uses this table to export the \code{'FSLabel'} from electrode. If
+volume type is set to \code{'aparc_aseg'}, then please also use this
+table to filter.
 }
 \examples{
 

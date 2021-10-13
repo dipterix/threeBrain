@@ -100,7 +100,7 @@ The `sine_wave` is time series. You can see the animation by toggling `Play/Paus
 
 ### Change Color Palette
 
-In the example above, the p-value legend shows the range is from `-0.5` to `0.5`. This is because `threeBrain` viewer's default palette is symmetric around zero, and the range is decided by the maximum absolute number. However, the actual p-value should range from `0` to `1`, and we might be particularly interested in $p\leq 0.05$. This means both the color palette and value range need to be corrected. 
+In the example above, the p-value legend shows the range is from `-0.5` to `0.5`. This is because `threeBrain` viewer's default palette is symmetric around zero, and the range is decided by the maximum absolute number. However, the actual p-value should range from `0` to `1`, and we might be particularly interested in `$p \leq 0.05$`. This means both the color palette and value range need to be corrected. 
 
 In the following code, `value_ranges` is a named list of such value ranges. `"p_value"=c(0,1)` suggests that the `p_value` variable should range from 0 to 1. All other variables adopt the default ranges. `palettes` is a named list of color palettes. In this specific case, variable `pal` is a vector of 64 colors. `colorRampPalette` is a base-R function to interpolate colors. Please use `help("colorRampPalette")` to see the documentation.
 
@@ -124,7 +124,7 @@ open `Surface Settings` panel, and click on `Surface Color`, switch to `sync fro
 
 You can also hide the electrodes by switching the electrode `Visibility` to `hidden` in the `Electrodes` panel to only show the mapped results.
 
-![Electrode values (p-value) mapped on to the pial surface. Left: electrodes arer visible; Right: electrodes are hidden.](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png){width=80%}
+![Electrode values (p-value) mapped on to the pial surface. Left: electrodes are visible; Right: electrodes are hidden.](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png){width=80%}
 
 
 

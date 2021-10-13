@@ -66,7 +66,9 @@ Next, type in and change the file path to `ct_in_t1.nii` just created
 
 ```{r}
 ct_path <- file.path(subject_path, "mri/ct_in_t1.nii")
-brain$localize(ct_path)
+threeBrain::localization_module(subject_code = subject_code,
+                                fs_path = subject_path,
+                                ct_path = ct_path)
 ```
 
 You will see the threshold CT displayed along with the pial surfaces.

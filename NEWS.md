@@ -1,3 +1,14 @@
+threeBrain 0.2.3
+=======
+
+## Changes
+
+* Electrode localization now has a `shiny` application
+
+### Improvements
+
+* Added 3 vignettes
+
 threeBrain 0.2.2
 =======
 

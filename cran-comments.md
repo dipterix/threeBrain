@@ -1,26 +1,19 @@
 # Update logs (for R-cran only)
 
-## 2021-08-02
-**Version 0.2.1 (current)**
+## 2021-10-13
+**Version 0.2.3 (current)**
 
 Self check: 0 errors | 0 warnings | 1 notes
-Days since last update: 6
-
-
-This update added several key features, and fixed a violation mentioned by 
-Prof. Ripley:
 
 ```
-These leave behind empty directories in ~/.local/share/R, which does not
-comply with the CRAN policy's
-
-"the contents are actively managed (including removing outdated material)"
+checking installed package size ... NOTE
+  installed size is  5.4Mb
 ```
 
-`~/.local/share/R/threeBrain` will not be generated automatically during the 
-installation and check process. Users now have to manually call `download_n27` 
-function to create and add additional data to the directory.
+## 2021-08-02
+**Version 0.2.2 (passed)**
 
+Skipped a version
 
 ## 2021-07-18
 **Version 0.2.0 (passed)**
