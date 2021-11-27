@@ -297,7 +297,7 @@ class FreeMesh extends AbstractThreeBrainObject {
         }
       }
     } else if( this._material_options.which_map.value === CONSTANTS.ELECTRODE_COLOR){
-      this._link_electrodes()
+      this._link_electrodes();
     }
   }
 

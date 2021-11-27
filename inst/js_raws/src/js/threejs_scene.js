@@ -2964,7 +2964,7 @@ class THREEBRAIN_CANVAS {
       gp.userData.inv_trans_mat = inverse_trans;
 
       if(!g.disable_trans_mat){
-        gp.applyMatrix(trans);
+        gp.applyMatrix4(trans);
       }
     }
 

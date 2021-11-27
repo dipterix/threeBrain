@@ -54,7 +54,7 @@ FreeGeom <- R6::R6Class(
       }
 
       dname <- sprintf('free_vertex_colors_%s_%s', name, self$name)
-      kf$use_cache(path = cf, name = dname)
+      kf$use_cache(path = cf, name = dname, auto_unbox = TRUE)
 
       re <- list(
         path = cf,

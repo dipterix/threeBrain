@@ -313,6 +313,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
+      uniforms.screenPos.value.set( 0.0, 0.0, 1.0 );
 
       this._bounding_min = bounding_min;
       this._bounding_max = bounding_max;
@@ -372,7 +373,15 @@ class DataCube2 extends AbstractThreeBrainObject {
   get_track_data( track_name, reset_material ){}
 
   pre_render( results ){
-    this._mesh.material.uniforms.cameraPos.value.copy( this._canvas.main_camera.position );
+    const orig = this._canvas.origin;
+    if( typeof( orig.setFromMatrixPosition ) === "function" ){
+      orig
+        .getWorldPosition(
+          this._mesh.material.uniforms.screenPos
+        )
+        .applyMatrix4(this._canvas.main_camera.matrixWorldInverse)
+        .applyMatrix4(this._canvas.main_camera.projectionMatrix);
+    }
 
     // if surface is using it
     if( this._canvas.__hide_voxels ){

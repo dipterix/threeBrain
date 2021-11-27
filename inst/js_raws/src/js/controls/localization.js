@@ -2,14 +2,12 @@ import { THREE } from '../threeplugins.js';
 import { vec3_to_string, has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 import { is_electrode } from '../geometry/sphere.js';
-import { raycast_volume_geneator } from '../Math/raycast_volume.js';
+import { intersect_volume, electrode_from_ct } from '../Math/raycast_volume.js';
 import * as download from 'downloadjs';
 
 // Electrode localization
 const pos = new THREE.Vector3();
 const folder_name = CONSTANTS.FOLDERS['localization'] || 'Electrode Localization';
-
-const raycast_volume = raycast_volume_geneator();
 
 const COL_SELECTED = 0xff0000,
       COL_ENABLED = 0xfa9349,
@@ -134,7 +132,7 @@ function atlas_label(pos_array, canvas){
 }
 // window.atlas_label = atlas_label;
 
-function add_electrode(scode, num, pos, canvas){
+function add_electrode(scode, num, pos, canvas, size = 1){
   const group_name = `group_Electrodes (${scode})`;
 
   const pos_array = pos.toArray();
@@ -171,7 +169,7 @@ function add_electrode(scode, num, pos, canvas){
     "use_cache":false,
     "custom_info": "",
     "subject_code": scode,
-    "radius": 1.5,
+    "radius": 1,
     "width_segments": 10,
     "height_segments": 6,
     "is_electrode":true,
@@ -202,7 +200,7 @@ function add_electrode(scode, num, pos, canvas){
     depthWrite : false
   } );
   const sprite = new THREE.Sprite( material );
-  sprite.scale.set(2,2,2);
+  sprite.scale.set(1, 1, 1);
   el.object.add( sprite );
 
   el.object.userData.dispose = () => {
@@ -213,31 +211,11 @@ function add_electrode(scode, num, pos, canvas){
     el.dispose();
   };
 
+  el.object.scale.set( size, size, size );
+
   return( el );
 }
 
-function electrode_from_ct( inst, canvas ){
-  // const inst = this.current_voxel_type();
-  if( !inst ){ return; }
-  canvas.set_raycaster();
-  const res = raycast_volume(
-    canvas.mouse_raycaster.ray.origin,
-    canvas.mouse_raycaster.ray.direction,
-    new THREE.Vector3().fromArray( inst._cube_dim ),
-    new THREE.Vector3().set(
-      inst._margin_length.xLength,
-      inst._margin_length.yLength,
-      inst._margin_length.zLength,
-    ),
-    inst._color_texture.image.data,
-    2
-  );
-  pos.x = res[3];
-  pos.y = res[4];
-  pos.z = res[5];
-
-  return ( pos );
-}
 
 function electrode_from_slice( scode, canvas ){
   if( !canvas._has_datacube_registered ){ return; }
@@ -263,12 +241,14 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
+  /*
   const margin_nvoxels = new THREE.Vector3().fromArray( inst._cube_dim );
   const margin_lengths = new THREE.Vector3().set(
     inst._margin_length.xLength,
     inst._margin_length.yLength,
     inst._margin_length.zLength
   );
+  */
   const src = canvas.main_camera.position;
   const dst = new THREE.Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
@@ -281,7 +261,6 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   const est = new THREE.Vector3();
 
   const dir = new THREE.Vector3();
-  let res;
   const re = [];
   for( let ii = 1; ii < n; ii++ ){
 
@@ -289,7 +268,15 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
     est.copy( dst ).add( tmp );
     dir.copy( est ).sub( src ).normalize();
 
-    for( let delta = 2; delta < 100; delta += 2 ){
+    // adjust
+
+    for( let delta = 0.5; delta < 100; delta += 0.5 ){
+      const res = intersect_volume(src, dir, inst, canvas, delta, false);
+      if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
+        re.push( res.clone() );
+        break;
+      }
+      /*
       res = raycast_volume(
         src, dir, margin_nvoxels, margin_lengths,
         inst._color_texture.image.data,
@@ -302,10 +289,14 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
           break;
         }
       }
+      */
     }
   }
 
-  return( re );
+  return({
+    positions : re,
+    direction : step
+  });
 }
 
 function electrode_line_from_slice( canvas, electrodes, size ){
@@ -337,7 +328,10 @@ function electrode_line_from_slice( canvas, electrodes, size ){
     re.push( new THREE.Vector3().copy(est) );
   }
 
-  return( re );
+  return({
+    positions : re,
+    direction : step
+  });
 }
 
 function register_controls_localization( THREEBRAIN_PRESETS ){
@@ -369,12 +363,14 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     if(!edit_mode){
       const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
     }
+    let electrode_size = this.gui.get_controller('Electrode Size (L)', folder_name).getValue() || 1.5;
     if(edit_mode === "disabled" ||
        edit_mode === "refine"){ return; }
 
     const el = add_electrode(
       scode, electrodes.length + 1,
-      new THREE.Vector3().set(x, y, z), this.canvas
+      new THREE.Vector3().set(x, y, z),
+      this.canvas, electrode_size
     );
     el._mode = edit_mode;
     electrodes.push( el );
@@ -448,6 +444,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
   THREEBRAIN_PRESETS.prototype.c_localization = function(){
 
+    // threebrain_instances, not Object3D
     const electrodes = this.__localize_electrode_list;
     let refine_electrode;
 
@@ -488,6 +485,18 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       this._update_canvas();
 
     });
+
+    const elec_size = this.gui.add_item( 'Electrode Size (L)', 1.5, { folder_name: folder_name })
+      .min(0.5).max(2).step(0.1)
+      .onChange((v) => {
+
+        electrodes.forEach((e) => {
+          e.object.scale.set( v, v, v );
+        });
+
+        this._update_canvas();
+
+      });
 
     // remove electrode
     this.gui.add_item( 'Enable/Disable Electrode', () => {
@@ -580,19 +589,26 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         } else {
           res = electrode_line_from_slice( this.canvas, electrodes, v + 2 );
         }
+        // return({
+        //   positions : re,
+        //   direction : step
+        // });
 
-        if( res.length ){
+        if( res.positions.length ){
           const last_elec = electrodes.pop();
-          res.push(new THREE.Vector3().fromArray(
+          res.direction.normalize();
+          res.positions.push(new THREE.Vector3().fromArray(
             last_elec._params.position
           ));
           last_elec.object.userData.dispose();
 
-          res.forEach((pos) => {
+          res.positions.forEach((pos) => {
             const el = add_electrode(
-              scode, electrodes.length + 1, pos, this.canvas
+              scode, electrodes.length + 1, pos,
+              this.canvas, elec_size.getValue()
             );
             el._mode = mode;
+            el.__interpolate_direction = res.direction.clone();
             electrodes.push( el );
           });
 
@@ -624,7 +640,10 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       const els = el_list.filter((el) => { return( el && el._mode === "CT/volume" ); });
       if( !els.length ){ return; }
       const inst = this.current_voxel_type();
-      if( !inst ){ return; }
+      if( !inst || !inst.isDataCube2 ){ return; }
+
+      const matrix_ = inst.object.parent.matrixWorld.clone(),
+            matrix_inv = matrix_.clone().invert();
 
       const margin_voxels = new THREE.Vector3().fromArray( inst._cube_dim );
       const margin_lengths = new THREE.Vector3().set(
@@ -643,12 +662,28 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       const ct_data = inst._cube_values;
 
       const delta = 4;
+      const pos = new THREE.Vector3(),
+            pos0 = new THREE.Vector3();
+            // pos1 = new THREE.Vector3();
+
       els.forEach((el) => {
         const position = el.object.userData.construct_params.position;
+        pos0.fromArray( position );
+        pos.fromArray( position ).applyMatrix4( matrix_inv );
+
+        /*
+        (i+0.5) * f.x - l_x / 2,
+        (j+0.5) * f.y - l_y / 2,
+        (k+0.5) * f.z - l_z / 2
+        *?
 
         let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x;
         let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y;
         let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z;
+        */
+        let i = ( pos.x + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
+        let j = ( pos.y + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
+        let k = ( pos.z + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
 
         i = Math.round( i );
         j = Math.round( j );
@@ -682,15 +717,34 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         new_ijk[1] /= total_v;
         new_ijk[2] /= total_v;
 
-        const x = (new_ijk[0] - 0.5) * f.x - ( margin_lengths.x - 1 ) / 2,
-              y = (new_ijk[1] - 0.5) * f.y - ( margin_lengths.y - 1 ) / 2,
-              z = (new_ijk[2] + 0.5) * f.z - ( margin_lengths.z - 1 ) / 2;
 
-        el.object.userData.construct_params.position[0] = x;
-        el.object.userData.construct_params.position[1] = y;
-        el.object.userData.construct_params.position[2] = z;
+        /*
+        let i = ( pos.x + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
+        let j = ( pos.y + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
+        let k = ( pos.z + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
+        */
+        pos.x = (new_ijk[0] + 0.5) * f.x - ( margin_lengths.x ) / 2;
+        pos.y = (new_ijk[1] + 0.5) * f.y - ( margin_lengths.y ) / 2;
+        pos.z = (new_ijk[2] + 0.5) * f.z - ( margin_lengths.z ) / 2;
 
-        el.object.position.set( x, y, z );
+        // reverse back
+        pos.applyMatrix4( matrix_ );
+
+        if( el.__interpolate_direction && el.__interpolate_direction.isVector3 ){
+          // already normalized
+          const interp_dir = el.__interpolate_direction.clone();
+
+          // reduce moving along interpolate_direction
+          pos.copy( pos ).sub( pos0 );
+          const inner_prod = pos.dot( interp_dir );
+          pos.sub( interp_dir.multiplyScalar( inner_prod * 0.9 ) ).add( pos0 );
+        }
+
+        position[0] = pos.x;
+        position[1] = pos.y;
+        position[2] = pos.z;
+
+        el.object.position.copy( pos );
 
       });
 
@@ -782,7 +836,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
           const num = electrodes.length + 1,
               group_name = `group_Electrodes (${scode})`;
-          const el = add_electrode(scode, num, electrode_position, this.canvas);
+          const el = add_electrode(scode, num, electrode_position, this.canvas, elec_size.getValue());
           el._mode = mode;
           electrodes.push( el );
           this.canvas.switch_subject();

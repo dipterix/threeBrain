@@ -55,11 +55,11 @@ KeyFrame <- R6::R6Class(
       )
     },
 
-    use_cache = function(path, name){
+    use_cache = function(path, name, ...){
       if(self$cached){ return() }
       self$cached <- TRUE
 
-      json_cache(path = path, data = structure(list(self$to_list()), names = name))
+      json_cache(path = path, data = structure(list(self$to_list()), names = name), ...)
       if(self$is_continuous){
         private$.values <- range(private$.values)
       }else{

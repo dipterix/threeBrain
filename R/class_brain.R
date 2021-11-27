@@ -400,8 +400,8 @@ Brain2 <- R6::R6Class(
           control_presets = control_presets,
           voxel_colormap = cmap,
           controllers = controllers,
-          ...,
-          custom_javascript = "canvas.controls.noPan=true;"
+          # custom_javascript = "canvas.controls.noPan=true;",
+          ...
         )
       } else {
         # No CT scan, use 3 planes to localize
@@ -414,8 +414,8 @@ Brain2 <- R6::R6Class(
         self$plot(
           control_presets = control_presets,
           controllers = controllers,
-          ...,
-          custom_javascript = "canvas.controls.noPan=true;"
+          # custom_javascript = "canvas.controls.noPan=true;",
+          ...
         )
       }
     },

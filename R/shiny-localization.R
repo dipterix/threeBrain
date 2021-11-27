@@ -100,7 +100,7 @@ localization_module <- function(
             controllers = controllers,
             side_display = side_display,
             ...,
-            custom_javascript = "canvas.controls.noPan=true;",
+            # custom_javascript = "canvas.controls.noPan=true;",
             show_modal = FALSE
           )
         }

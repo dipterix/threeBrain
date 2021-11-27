@@ -14,20 +14,22 @@ const register_volumeShader1 = function(THREE){
       cmap: { value: null },
       nmap: { value: null },
       mask: { value: null },
-      cameraPos: { value: new THREE.Vector3() },
       alpha : { value: -1.0 },
       steps: { value: 300 },
       scale_inv: { value: new THREE.Vector3() },
+      screenPos: { value: new THREE.Vector3() },
       bounding: { value : 0.5 }
     },
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
 in vec3 position;
-// uniform mat4 modelMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-uniform vec3 cameraPos;
+uniform vec3 cameraPosition;
 uniform vec3 scale_inv;
+uniform vec3 screenPos;
 
 out mat4 pmv;
 out vec3 vOrigin;
@@ -36,8 +38,9 @@ void main() {
   pmv = projectionMatrix * modelViewMatrix;
 
   // For perspective camera, vorigin is camera
-  // 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
-  // 'vDirection = position / scale - vOrigin;',
+  // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
+  // vOrigin = - vorig.xyz * scale_inv;
+  // vDirection = position * scale_inv - vOrigin;
 
   // Orthopgraphic camera, camera position in theory is at infinite
   // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
@@ -45,11 +48,17 @@ void main() {
   // obtains Orthopgraphic direction, which can be directly used as ray direction
 
   // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-  vDirection = inverse( pmv )[3].xyz * scale_inv;
+  // vDirection = inverse( pmv )[3].xyz * scale_inv;
+  vec4 vdir = inverse( pmv ) * vec4( screenPos.x / screenPos.z, screenPos.y / screenPos.z, 1.0, 1.0 );
+  vDirection = vdir.xyz * scale_inv  / vdir.w;
 
   // Previous test code, seems to be poor because camera position is not well-calculated?
   // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-  vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  vOrigin = (position) * scale_inv - vDirection;
+
+  // sample need to shift by 0.5 voxel
+  // gl_Position = pmv * vec4( position + 0.5, 1.0 );
   gl_Position = pmv * vec4( position, 1.0 );
 }`),
     fragmentShader: remove_comments(`#version 300 es

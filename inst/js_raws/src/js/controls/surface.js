@@ -11,7 +11,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     const _c = this.gui.get_controller( 'Surface Color' );
     if( _c.isfake ){ return( "none" ); }
     return( _c.getValue() );
-  }
+  };
   THREEBRAIN_PRESETS.prototype.set_surface_ctype = function(
     t, params = {}
   ){
@@ -78,7 +78,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     this._update_canvas();
     this.fire_change({ 'surface_color_type' : this._current_surface_ctype });
 
-  }
+  };
 
   THREEBRAIN_PRESETS.prototype.c_surface_type2 = function(){
 

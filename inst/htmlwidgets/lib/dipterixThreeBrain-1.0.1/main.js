@@ -56038,7 +56038,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     const _c = this.gui.get_controller( 'Surface Color' );
     if( _c.isfake ){ return( "none" ); }
     return( _c.getValue() );
-  }
+  };
   THREEBRAIN_PRESETS.prototype.set_surface_ctype = function(
     t, params = {}
   ){
@@ -56105,7 +56105,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     this._update_canvas();
     this.fire_change({ 'surface_color_type' : this._current_surface_ctype });
 
-  }
+  };
 
   THREEBRAIN_PRESETS.prototype.c_surface_type2 = function(){
 
@@ -57118,6 +57118,9 @@ function raycast_volume_geneator(){
   const p = new threeplugins/* THREE.Vector3 */.J.Vector3();
   const p1 = new threeplugins/* THREE.Vector3 */.J.Vector3();
   const f = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const dest = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  let l_x, l_y, l_z, i, j, k, tmp, k1, k2, l_res;
+  const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
 
   /*window.orig = orig;
   window.projection = projection;
@@ -57127,16 +57130,24 @@ function raycast_volume_geneator(){
 
   const raycast_volume = (
     origin, direction, margin_voxels, margin_lengths,
-    map_array, delta = 2 ) => {
+    map_array, delta = 0.5, snap_raycaster = true ) => {
     // canvas.mouse_raycaster.ray.origin
     // canvas.mouse_raycaster.ray.direction
 
-    orig.x = origin.x + ( margin_lengths.x - 1 ) / 2;
-    orig.y = origin.y + ( margin_lengths.y - 1 ) / 2;
-    orig.z = origin.z + ( margin_lengths.z - 1 ) / 2;
+    l_x = margin_lengths.x;
+    l_y = margin_lengths.y;
+    l_z = margin_lengths.z;
+
+    direction.normalize();
+
     f.x = margin_lengths.x / margin_voxels.x;
     f.y = margin_lengths.y / margin_voxels.y;
     f.z = margin_lengths.z / margin_voxels.z;
+
+    // vOrigin = (position - vec3(0.5, 0.5, 0.5)) * scale_inv - vDirection;
+    orig.x = origin.x + l_x / 2;
+    orig.y = origin.y + l_y / 2;
+    orig.z = origin.z + l_z / 2;
     projection.set(
       1-direction.x * direction.x,
       -direction.x * direction.y,
@@ -57159,11 +57170,13 @@ function raycast_volume_geneator(){
           mz = margin_voxels.z;
 
 
-    const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
+    for(i = 0; i < 7; i++){
+      res[i] = NaN;
+    }
 
-    for( let i = 0; i < margin_voxels.x; i++ ){
-      for( let j = 0; j < margin_voxels.y; j++ ){
-        p.set( i * f.x - orig.x, j * f.y - orig.y , 0 );
+    for( i = 0; i < margin_voxels.x; i++ ){
+      for( j = 0; j < margin_voxels.y; j++ ){
+        p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0 );
         p1.copy( p );
         p.applyMatrix3( projection );
         p.set(
@@ -57192,18 +57205,31 @@ function raycast_volume_geneator(){
               ) * 4 + 3 ];
               if( tmp > 0 ){
                 p.set(
-                  i * f.x - orig.x,
-                  j * f.y - orig.y,
-                  k * f.z - orig.z
+                  (i+0.5) * f.x - orig.x,
+                  (j+0.5) * f.y - orig.y,
+                  (k+0.5) * f.z - orig.z
                 );
                 tmp = p.dot( direction );
                 if( tmp < dist ){
                   res[0] = i;
                   res[1] = j;
                   res[2] = k;
-                  res[3] = i * f.x - ( margin_lengths.x - 1 ) / 2;
-                  res[4] = j * f.y - ( margin_lengths.y - 1 ) / 2;
-                  res[5] = k * f.z - ( margin_lengths.z - 1 ) / 2;
+
+                  // voxel coordinate
+                  dest.set(
+                    (i+0.5) * f.x - l_x / 2,
+                    (j+0.5) * f.y - l_y / 2,
+                    (k+0.5) * f.z - l_z / 2
+                  );
+
+                  if( snap_raycaster ){
+                    l_res = dest.sub( origin ).dot( direction );
+                    dest.copy( direction ).multiplyScalar( l_res ).add( origin );
+                  }
+
+                  res[3] = dest.x;
+                  res[4] = dest.y;
+                  res[5] = dest.z;
                   res[6] = tmp;
                   dist = tmp;
                 }
@@ -57219,6 +57245,81 @@ function raycast_volume_geneator(){
   };
 
   return( raycast_volume );
+};
+
+const raycast_volume = raycast_volume_geneator();
+
+function electrode_from_ct_generator(){
+
+  const cube_dim = new threeplugins/* THREE.Vector3 */.J.Vector3(),
+        cube_size = new threeplugins/* THREE.Vector3 */.J.Vector3(),
+        origin = new threeplugins/* THREE.Vector3 */.J.Vector3(),
+        direction = new threeplugins/* THREE.Vector3 */.J.Vector3(),
+        pos = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const matrix_ = new threeplugins/* THREE.Matrix4 */.J.Matrix4(),
+        matrix_inv = new threeplugins/* THREE.Matrix4 */.J.Matrix4(),
+        matrix_rot = new threeplugins/* THREE.Matrix3 */.J.Matrix3();
+
+  const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
+    if( !inst || !inst.isDataCube2 ){ return; }
+
+    matrix_.copy(inst.object.parent.matrixWorld);
+    matrix_inv.copy(matrix_).invert();
+    origin.copy(src).applyMatrix4(matrix_inv);
+
+    // direction no need to shift
+    matrix_rot.setFromMatrix4(matrix_inv)
+    direction.copy(dir).applyMatrix3(matrix_rot);
+
+    if(!canvas.__localization_helper){
+      canvas.__localization_helper = new threeplugins/* THREE.ArrowHelper */.J.ArrowHelper(new threeplugins/* THREE.Vector3 */.J.Vector3( 0, 0, 1 ), new threeplugins/* THREE.Vector3 */.J.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 );
+      canvas.scene.add( canvas.__localization_helper );
+    }
+    canvas.__localization_helper.position.copy(origin);
+    canvas.__localization_helper.setDirection(dir);
+
+    cube_dim.fromArray( inst._cube_dim );
+    cube_size.set(
+      inst._margin_length.xLength,
+      inst._margin_length.yLength,
+      inst._margin_length.zLength,
+    );
+
+    const res = raycast_volume(
+      origin, direction, cube_dim, cube_size,
+      inst._color_texture.image.data,
+      delta, snap_raycaster
+    );
+    pos.x = res[3];
+    pos.y = res[4];
+    pos.z = res[5];
+
+    pos.applyMatrix4( matrix_ );
+
+    return ( pos );
+  }
+
+  return( intersect_volume );
+
+}
+
+
+const intersect_volume = electrode_from_ct_generator();
+
+
+const electrode_from_ct = ( inst, canvas ) => {
+  // const inst = this.current_voxel_type();
+  if( !inst || !inst.isDataCube2 ){ return; }
+  canvas.set_raycaster();
+
+
+  return (
+    intersect_volume(
+      canvas.mouse_raycaster.ray.origin,
+      canvas.mouse_raycaster.ray.direction,
+      inst, canvas
+    )
+  );
 };
 
 
@@ -57237,8 +57338,6 @@ var downloadjs_download = __webpack_require__(3729);
 // Electrode localization
 const pos = new threeplugins/* THREE.Vector3 */.J.Vector3();
 const folder_name = constants/* CONSTANTS.FOLDERS.localization */.t.FOLDERS.localization || 'Electrode Localization';
-
-const raycast_volume = raycast_volume_geneator();
 
 const COL_SELECTED = 0xff0000,
       COL_ENABLED = 0xfa9349,
@@ -57363,7 +57462,7 @@ function atlas_label(pos_array, canvas){
 }
 // window.atlas_label = atlas_label;
 
-function add_electrode(scode, num, pos, canvas){
+function add_electrode(scode, num, pos, canvas, size = 1){
   const group_name = `group_Electrodes (${scode})`;
 
   const pos_array = pos.toArray();
@@ -57400,7 +57499,7 @@ function add_electrode(scode, num, pos, canvas){
     "use_cache":false,
     "custom_info": "",
     "subject_code": scode,
-    "radius": 1.5,
+    "radius": 1,
     "width_segments": 10,
     "height_segments": 6,
     "is_electrode":true,
@@ -57431,7 +57530,7 @@ function add_electrode(scode, num, pos, canvas){
     depthWrite : false
   } );
   const sprite = new threeplugins/* THREE.Sprite */.J.Sprite( material );
-  sprite.scale.set(2,2,2);
+  sprite.scale.set(1, 1, 1);
   el.object.add( sprite );
 
   el.object.userData.dispose = () => {
@@ -57442,31 +57541,11 @@ function add_electrode(scode, num, pos, canvas){
     el.dispose();
   };
 
+  el.object.scale.set( size, size, size );
+
   return( el );
 }
 
-function electrode_from_ct( inst, canvas ){
-  // const inst = this.current_voxel_type();
-  if( !inst ){ return; }
-  canvas.set_raycaster();
-  const res = raycast_volume(
-    canvas.mouse_raycaster.ray.origin,
-    canvas.mouse_raycaster.ray.direction,
-    new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray( inst._cube_dim ),
-    new threeplugins/* THREE.Vector3 */.J.Vector3().set(
-      inst._margin_length.xLength,
-      inst._margin_length.yLength,
-      inst._margin_length.zLength,
-    ),
-    inst._color_texture.image.data,
-    2
-  );
-  pos.x = res[3];
-  pos.y = res[4];
-  pos.z = res[5];
-
-  return ( pos );
-}
 
 function electrode_from_slice( scode, canvas ){
   if( !canvas._has_datacube_registered ){ return; }
@@ -57492,12 +57571,14 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
-  const margin_nvoxels = new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray( inst._cube_dim );
-  const margin_lengths = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+  /*
+  const margin_nvoxels = new THREE.Vector3().fromArray( inst._cube_dim );
+  const margin_lengths = new THREE.Vector3().set(
     inst._margin_length.xLength,
     inst._margin_length.yLength,
     inst._margin_length.zLength
   );
+  */
   const src = canvas.main_camera.position;
   const dst = new threeplugins/* THREE.Vector3 */.J.Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
@@ -57510,7 +57591,6 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   const est = new threeplugins/* THREE.Vector3 */.J.Vector3();
 
   const dir = new threeplugins/* THREE.Vector3 */.J.Vector3();
-  let res;
   const re = [];
   for( let ii = 1; ii < n; ii++ ){
 
@@ -57518,23 +57598,35 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
     est.copy( dst ).add( tmp );
     dir.copy( est ).sub( src ).normalize();
 
-    for( let delta = 2; delta < 100; delta += 2 ){
+    // adjust
+
+    for( let delta = 0.5; delta < 100; delta += 0.5 ){
+      const res = intersect_volume(src, dir, inst, canvas, delta, false);
+      if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
+        re.push( res.clone() );
+        break;
+      }
+      /*
       res = raycast_volume(
         src, dir, margin_nvoxels, margin_lengths,
         inst._color_texture.image.data,
         delta
       );
       if( res && res.length >= 6 && !isNaN( res[3] )){
-        let est1 = new threeplugins/* THREE.Vector3 */.J.Vector3( res[3], res[4], res[5] );
+        let est1 = new THREE.Vector3( res[3], res[4], res[5] );
         if( est1.distanceTo(est) < 10 + delta / 10 ){
           re.push(est1);
           break;
         }
       }
+      */
     }
   }
 
-  return( re );
+  return({
+    positions : re,
+    direction : step
+  });
 }
 
 function electrode_line_from_slice( canvas, electrodes, size ){
@@ -57566,7 +57658,10 @@ function electrode_line_from_slice( canvas, electrodes, size ){
     re.push( new threeplugins/* THREE.Vector3 */.J.Vector3().copy(est) );
   }
 
-  return( re );
+  return({
+    positions : re,
+    direction : step
+  });
 }
 
 function register_controls_localization( THREEBRAIN_PRESETS ){
@@ -57598,12 +57693,14 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     if(!edit_mode){
       const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
     }
+    let electrode_size = this.gui.get_controller('Electrode Size (L)', folder_name).getValue() || 1.5;
     if(edit_mode === "disabled" ||
        edit_mode === "refine"){ return; }
 
     const el = add_electrode(
       scode, electrodes.length + 1,
-      new threeplugins/* THREE.Vector3 */.J.Vector3().set(x, y, z), this.canvas
+      new threeplugins/* THREE.Vector3 */.J.Vector3().set(x, y, z),
+      this.canvas, electrode_size
     );
     el._mode = edit_mode;
     electrodes.push( el );
@@ -57677,6 +57774,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
   THREEBRAIN_PRESETS.prototype.c_localization = function(){
 
+    // threebrain_instances, not Object3D
     const electrodes = this.__localize_electrode_list;
     let refine_electrode;
 
@@ -57717,6 +57815,18 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       this._update_canvas();
 
     });
+
+    const elec_size = this.gui.add_item( 'Electrode Size (L)', 1.5, { folder_name: folder_name })
+      .min(0.5).max(2).step(0.1)
+      .onChange((v) => {
+
+        electrodes.forEach((e) => {
+          e.object.scale.set( v, v, v );
+        });
+
+        this._update_canvas();
+
+      });
 
     // remove electrode
     this.gui.add_item( 'Enable/Disable Electrode', () => {
@@ -57809,19 +57919,26 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         } else {
           res = electrode_line_from_slice( this.canvas, electrodes, v + 2 );
         }
+        // return({
+        //   positions : re,
+        //   direction : step
+        // });
 
-        if( res.length ){
+        if( res.positions.length ){
           const last_elec = electrodes.pop();
-          res.push(new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray(
+          res.direction.normalize();
+          res.positions.push(new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray(
             last_elec._params.position
           ));
           last_elec.object.userData.dispose();
 
-          res.forEach((pos) => {
+          res.positions.forEach((pos) => {
             const el = add_electrode(
-              scode, electrodes.length + 1, pos, this.canvas
+              scode, electrodes.length + 1, pos,
+              this.canvas, elec_size.getValue()
             );
             el._mode = mode;
+            el.__interpolate_direction = res.direction.clone();
             electrodes.push( el );
           });
 
@@ -57853,7 +57970,10 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       const els = el_list.filter((el) => { return( el && el._mode === "CT/volume" ); });
       if( !els.length ){ return; }
       const inst = this.current_voxel_type();
-      if( !inst ){ return; }
+      if( !inst || !inst.isDataCube2 ){ return; }
+
+      const matrix_ = inst.object.parent.matrixWorld.clone(),
+            matrix_inv = matrix_.clone().invert();
 
       const margin_voxels = new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray( inst._cube_dim );
       const margin_lengths = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
@@ -57872,12 +57992,28 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       const ct_data = inst._cube_values;
 
       const delta = 4;
+      const pos = new threeplugins/* THREE.Vector3 */.J.Vector3(),
+            pos0 = new threeplugins/* THREE.Vector3 */.J.Vector3();
+            // pos1 = new THREE.Vector3();
+
       els.forEach((el) => {
         const position = el.object.userData.construct_params.position;
+        pos0.fromArray( position );
+        pos.fromArray( position ).applyMatrix4( matrix_inv );
+
+        /*
+        (i+0.5) * f.x - l_x / 2,
+        (j+0.5) * f.y - l_y / 2,
+        (k+0.5) * f.z - l_z / 2
+        *?
 
         let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x;
         let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y;
         let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z;
+        */
+        let i = ( pos.x + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
+        let j = ( pos.y + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
+        let k = ( pos.z + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
 
         i = Math.round( i );
         j = Math.round( j );
@@ -57911,15 +58047,34 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         new_ijk[1] /= total_v;
         new_ijk[2] /= total_v;
 
-        const x = (new_ijk[0] - 0.5) * f.x - ( margin_lengths.x - 1 ) / 2,
-              y = (new_ijk[1] - 0.5) * f.y - ( margin_lengths.y - 1 ) / 2,
-              z = (new_ijk[2] + 0.5) * f.z - ( margin_lengths.z - 1 ) / 2;
 
-        el.object.userData.construct_params.position[0] = x;
-        el.object.userData.construct_params.position[1] = y;
-        el.object.userData.construct_params.position[2] = z;
+        /*
+        let i = ( pos.x + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
+        let j = ( pos.y + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
+        let k = ( pos.z + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
+        */
+        pos.x = (new_ijk[0] + 0.5) * f.x - ( margin_lengths.x ) / 2;
+        pos.y = (new_ijk[1] + 0.5) * f.y - ( margin_lengths.y ) / 2;
+        pos.z = (new_ijk[2] + 0.5) * f.z - ( margin_lengths.z ) / 2;
 
-        el.object.position.set( x, y, z );
+        // reverse back
+        pos.applyMatrix4( matrix_ );
+
+        if( el.__interpolate_direction && el.__interpolate_direction.isVector3 ){
+          // already normalized
+          const interp_dir = el.__interpolate_direction.clone();
+
+          // reduce moving along interpolate_direction
+          pos.copy( pos ).sub( pos0 );
+          const inner_prod = pos.dot( interp_dir );
+          pos.sub( interp_dir.multiplyScalar( inner_prod * 0.9 ) ).add( pos0 );
+        }
+
+        position[0] = pos.x;
+        position[1] = pos.y;
+        position[2] = pos.z;
+
+        el.object.position.copy( pos );
 
       });
 
@@ -58011,7 +58166,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
           const num = electrodes.length + 1,
               group_name = `group_Electrodes (${scode})`;
-          const el = add_electrode(scode, num, electrode_position, this.canvas);
+          const el = add_electrode(scode, num, electrode_position, this.canvas, elec_size.getValue());
           el._mode = mode;
           electrodes.push( el );
           this.canvas.switch_subject();
@@ -63550,6 +63705,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
+      uniforms.screenPos.value.set( 0.0, 0.0, 1.0 );
 
       this._bounding_min = bounding_min;
       this._bounding_max = bounding_max;
@@ -63609,7 +63765,15 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
   get_track_data( track_name, reset_material ){}
 
   pre_render( results ){
-    this._mesh.material.uniforms.cameraPos.value.copy( this._canvas.main_camera.position );
+    const orig = this._canvas.origin;
+    if( typeof( orig.setFromMatrixPosition ) === "function" ){
+      orig
+        .getWorldPosition(
+          this._mesh.material.uniforms.screenPos
+        )
+        .applyMatrix4(this._canvas.main_camera.matrixWorldInverse)
+        .applyMatrix4(this._canvas.main_camera.projectionMatrix);
+    }
 
     // if surface is using it
     if( this._canvas.__hide_voxels ){
@@ -64496,7 +64660,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
         }
       }
     } else if( this._material_options.which_map.value === constants/* CONSTANTS.ELECTRODE_COLOR */.t.ELECTRODE_COLOR){
-      this._link_electrodes()
+      this._link_electrodes();
     }
   }
 
@@ -67706,7 +67870,7 @@ class THREEBRAIN_CANVAS {
       gp.userData.inv_trans_mat = inverse_trans;
 
       if(!g.disable_trans_mat){
-        gp.applyMatrix(trans);
+        gp.applyMatrix4(trans);
       }
     }
 
@@ -69878,20 +70042,22 @@ const register_volumeShader1 = function(THREE){
       cmap: { value: null },
       nmap: { value: null },
       mask: { value: null },
-      cameraPos: { value: new THREE.Vector3() },
       alpha : { value: -1.0 },
       steps: { value: 300 },
       scale_inv: { value: new THREE.Vector3() },
+      screenPos: { value: new THREE.Vector3() },
       bounding: { value : 0.5 }
     },
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
 in vec3 position;
-// uniform mat4 modelMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-uniform vec3 cameraPos;
+uniform vec3 cameraPosition;
 uniform vec3 scale_inv;
+uniform vec3 screenPos;
 
 out mat4 pmv;
 out vec3 vOrigin;
@@ -69900,8 +70066,9 @@ void main() {
   pmv = projectionMatrix * modelViewMatrix;
 
   // For perspective camera, vorigin is camera
-  // 'vOrigin = vec3( inverse( modelMatrix ) * vec4( cameraPos, 1.0 ) ).xyz / scale;',
-  // 'vDirection = position / scale - vOrigin;',
+  // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
+  // vOrigin = - vorig.xyz * scale_inv;
+  // vDirection = position * scale_inv - vOrigin;
 
   // Orthopgraphic camera, camera position in theory is at infinite
   // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
@@ -69909,11 +70076,17 @@ void main() {
   // obtains Orthopgraphic direction, which can be directly used as ray direction
 
   // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-  vDirection = inverse( pmv )[3].xyz * scale_inv;
+  // vDirection = inverse( pmv )[3].xyz * scale_inv;
+  vec4 vdir = inverse( pmv ) * vec4( screenPos.x / screenPos.z, screenPos.y / screenPos.z, 1.0, 1.0 );
+  vDirection = vdir.xyz * scale_inv  / vdir.w;
 
   // Previous test code, seems to be poor because camera position is not well-calculated?
   // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-  vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  vOrigin = (position) * scale_inv - vDirection;
+
+  // sample need to shift by 0.5 voxel
+  // gl_Position = pmv * vec4( position + 0.5, 1.0 );
   gl_Position = pmv * vec4( position, 1.0 );
 }`),
     fragmentShader: remove_comments(`#version 300 es
