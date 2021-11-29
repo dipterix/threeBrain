@@ -211,54 +211,60 @@ non-negative.</p>
 for valid values.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'>
-<span class='co'># Creates a symmetric continuous colormap with 3 keys</span>
-<span class='co'># The color range is -10 to 10</span>
-<span class='co'># The colors are 'blue','white','red' for these keys</span>
-
-<span class='va'>pal</span> <span class='op'>&lt;-</span> <span class='fu'>create_colormap</span><span class='op'>(</span>
-  gtype <span class='op'>=</span> <span class='st'>"volume"</span>, dtype <span class='op'>=</span> <span class='st'>"continuous"</span>,
-  key <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>2</span>,<span class='fl'>3</span><span class='op'>)</span>, value <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>10</span>,<span class='fl'>0</span>,<span class='fl'>10</span><span class='op'>)</span>,
-  color <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'blue'</span>,<span class='st'>'white'</span>,<span class='st'>'red'</span><span class='op'>)</span><span class='op'>)</span>
-
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span> <span class='va'>pal</span> <span class='op'>)</span>
-</div><div class='output co'>#&gt; &lt;threeBrain Colormap&gt;
-#&gt;   Version: 1.0
-#&gt;   Geometry Type: volume
-#&gt;   Data Type: continuous
-#&gt;   Transparent: FALSE
-#&gt;   # of keys: 3
-#&gt;   Min key: 1
-#&gt;   Max key: 3
-#&gt;   Value Range: -10 ~ 10</div><div class='input'>
-<span class='co'># ---------------- Get colormap key from a value ------------</span>
-
-<span class='co'># returns key index starting from</span>
-<span class='va'>pal</span><span class='op'>$</span><span class='fu'>get_key</span><span class='op'>(</span> <span class='op'>-</span><span class='fl'>10</span> <span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 1</div><div class='input'>
-<span class='co'># nearest value</span>
-<span class='va'>pal</span><span class='op'>$</span><span class='fu'>get_key</span><span class='op'>(</span> <span class='fl'>2</span> <span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 2</div><div class='input'>
-<span class='co'># set threshold, key is now 0 (no color)</span>
-<span class='va'>pal</span><span class='op'>$</span><span class='fu'>get_key</span><span class='op'>(</span> <span class='fl'>2</span>, max_delta <span class='op'>=</span> <span class='fl'>1</span> <span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 0</div><div class='input'>
-
-<span class='co'># ---------------- Save and load ----------------</span>
-<span class='va'>f</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span><span class='op'>(</span> fileext <span class='op'>=</span> <span class='st'>'.json'</span> <span class='op'>)</span>
-<span class='fu'>save_colormap</span><span class='op'>(</span> <span class='va'>pal</span>, <span class='va'>f</span> <span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span><span class='op'>(</span><span class='va'>f</span><span class='op'>)</span>, sep <span class='op'>=</span> <span class='st'>'\n'</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; {"__global_data__.VolumeColorLUT":{"map":{"1":{"ColorID":1,"Label":-10,"R":0,"G":0,"B":255},"2":{"ColorID":2,"Label":0,"R":255,"G":255,"B":255},"3":{"ColorID":3,"Label":10,"R":255,"G":0,"B":0}},"mapAlpha":false,"mapMinColorID":1,"mapMaxColorID":3,"mapValueRange":[-10,10],"mapDataType":"continuous","mapGeomType":"volume","mapVersion":1}}</div><div class='input'>
-<span class='fu'>load_colormap</span><span class='op'>(</span><span class='va'>f</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; &lt;threeBrain Colormap&gt;
-#&gt;   Version: 1.0
-#&gt;   Geometry Type: volume
-#&gt;   Data Type: continuous
-#&gt;   Transparent: FALSE
-#&gt;   # of keys: 3
-#&gt;   Min key: 1
-#&gt;   Max key: 3
-#&gt;   Value Range: -10 ~ 10</div><div class='input'>
-</div></pre>
+    <pre class="examples"><span class='r-in'></span>
+<span class='r-in'><span class='co'># Creates a symmetric continuous colormap with 3 keys</span></span>
+<span class='r-in'><span class='co'># The color range is -10 to 10</span></span>
+<span class='r-in'><span class='co'># The colors are 'blue','white','red' for these keys</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>pal</span> <span class='op'>&lt;-</span> <span class='fu'>create_colormap</span><span class='op'>(</span></span>
+<span class='r-in'>  gtype <span class='op'>=</span> <span class='st'>"volume"</span>, dtype <span class='op'>=</span> <span class='st'>"continuous"</span>,</span>
+<span class='r-in'>  key <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>,<span class='fl'>2</span>,<span class='fl'>3</span><span class='op'>)</span>, value <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>10</span>,<span class='fl'>0</span>,<span class='fl'>10</span><span class='op'>)</span>,</span>
+<span class='r-in'>  color <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'blue'</span>,<span class='st'>'white'</span>,<span class='st'>'red'</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span> <span class='va'>pal</span> <span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> &lt;threeBrain Colormap&gt;</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Version: 1.0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Geometry Type: volume</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Data Type: continuous</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Transparent: FALSE</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   # of keys: 3</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Min key: 1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Max key: 3</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Value Range: -10 ~ 10</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># ---------------- Get colormap key from a value ------------</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># returns key index starting from</span></span>
+<span class='r-in'><span class='va'>pal</span><span class='op'>$</span><span class='fu'>get_key</span><span class='op'>(</span> <span class='op'>-</span><span class='fl'>10</span> <span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 1</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># nearest value</span></span>
+<span class='r-in'><span class='va'>pal</span><span class='op'>$</span><span class='fu'>get_key</span><span class='op'>(</span> <span class='fl'>2</span> <span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 2</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># set threshold, key is now 0 (no color)</span></span>
+<span class='r-in'><span class='va'>pal</span><span class='op'>$</span><span class='fu'>get_key</span><span class='op'>(</span> <span class='fl'>2</span>, max_delta <span class='op'>=</span> <span class='fl'>1</span> <span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 0</span>
+<span class='r-in'></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># ---------------- Save and load ----------------</span></span>
+<span class='r-in'><span class='va'>f</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempfile</a></span><span class='op'>(</span> fileext <span class='op'>=</span> <span class='st'>'.json'</span> <span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>save_colormap</span><span class='op'>(</span> <span class='va'>pal</span>, <span class='va'>f</span> <span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/cat.html'>cat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/readLines.html'>readLines</a></span><span class='op'>(</span><span class='va'>f</span><span class='op'>)</span>, sep <span class='op'>=</span> <span class='st'>'\n'</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> {"__global_data__.VolumeColorLUT":{"map":{"1":{"ColorID":1,"Label":-10,"R":0,"G":0,"B":255},"2":{"ColorID":2,"Label":0,"R":255,"G":255,"B":255},"3":{"ColorID":3,"Label":10,"R":255,"G":0,"B":0}},"mapAlpha":false,"mapMinColorID":1,"mapMaxColorID":3,"mapValueRange":[-10,10],"mapDataType":"continuous","mapGeomType":"volume","mapVersion":1}}</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'>load_colormap</span><span class='op'>(</span><span class='va'>f</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> &lt;threeBrain Colormap&gt;</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Version: 1.0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Geometry Type: volume</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Data Type: continuous</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Transparent: FALSE</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   # of keys: 3</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Min key: 1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Max key: 3</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   Value Range: -10 ~ 10</span>
+<span class='r-in'></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
