@@ -86,6 +86,8 @@ BrainAtlas <- R6::R6Class(
 #' @param brain a 'threeBrain' brain object generated from \code{\link{freesurfer_brain2}} or \code{\link{merge_brain}}. If you have \code{'rave'} package installed, the brain can be generated from \code{rave::rave_brain2}
 #' @param name the name of voxel cube, only letters, digits and \code{'_'} are allowed; other characters will be replaced by \code{'_'}
 #' @param cube a 3-mode array; see the following example
+#' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size
+#' @param matrix_world the transform matrix of the volume
 #'
 #' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
 #' \code{add_voxel_cube} returns the \code{brain} object

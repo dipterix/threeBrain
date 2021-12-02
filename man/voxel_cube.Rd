@@ -23,6 +23,10 @@ create_voxel_cube(
 
 \item{cube}{a 3-mode array; see the following example}
 
+\item{size}{the actual size of the volume, usually dot multiplication of the dimension and voxel size}
+
+\item{matrix_world}{the transform matrix of the volume}
+
 \item{mni_ras}{'MNI' 'RAS' coordinates, should be a \code{n}-by-3 matrix}
 
 \item{value}{data values (length \code{n}); used if \code{keys} is missing}
