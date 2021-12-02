@@ -155,7 +155,7 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
   get_shape <- function(){
     oro.nifti::dim_(nii)[2:4]
   }
-  get_size = function(){
+  get_size <- function(){
     dm <- oro.nifti::dim_(nii)[2:4]
     vox_size <- oro.nifti::voxdim(nii)
     dm * vox_size
@@ -174,7 +174,7 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
   }
   get_voxel_size <- function(){ oro.nifti::voxdim(nii) }
 
-  get_boundary = function(){
+  get_boundary <- function(){
     qform <- oro.nifti::qform(nii)
     ct_crs_orig <- -abs(qform[1:3, 4])
     dm <- oro.nifti::dim_(nii)[2:4]

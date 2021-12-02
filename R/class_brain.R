@@ -391,6 +391,7 @@ Brain2 <- R6::R6Class(
         ct_shift <- ct$get_center_matrix()
         ct_qform <- ct$get_qform()
         matrix_world <- brain$Torig %*% solve(brain$Norig) %*% ct_qform %*% ct_shift
+        # matrix_world <- NULL
         add_voxel_cube(self, "CT", ct$get_data(), size = ct$get_size(),
                        matrix_world = matrix_world)
 

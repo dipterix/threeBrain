@@ -87,6 +87,7 @@ localization_module <- function(
         ct_shift <- ct$get_center_matrix()
         ct_qform <- ct$get_qform()
         matrix_world <- brain$Torig %*% solve(brain$Norig) %*% ct_qform %*% ct_shift
+        # matrix_world <- NULL
         add_voxel_cube(brain, "CT", ct$get_data(), size = ct$get_size(),
                        matrix_world = matrix_world)
         key <- seq(0, max(ct$get_range()))

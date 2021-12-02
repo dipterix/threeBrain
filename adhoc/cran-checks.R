@@ -1,6 +1,6 @@
 spelling::spell_check_package()
 ac = goodpractice::all_checks()
-goodpractice::gp(checks = ac[-c(1:2)])
+goodpractice::gp(checks = ac[-c(1:2,13)])
 tools::dependsOnPkgs(pkgs = 'threeBrain')
 utils::globalVariables(package = 'threeBrain')
 spelling::spell_check_package()

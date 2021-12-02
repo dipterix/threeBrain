@@ -1,3 +1,22 @@
+threeBrain 0.2.4
+=======
+
+This version mainly works on the electrode localization
+
+## Changes
+
+* Allows electrodes to be reset
+* Displays electrode labels along with the electrodes
+* Allows resizing electrode size on the fly
+* Allows resizing the electrode labels
+* Localization module has been integrated into `RAVE`
+
+### Improvements
+
+* Improved localization precision
+* Auto-adjusting electrodes now respects the topology
+* Electrodes in the localization mode now have `LocElectrode` class
+
 threeBrain 0.2.3
 =======
 

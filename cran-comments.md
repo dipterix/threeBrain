@@ -1,14 +1,17 @@
 # Update logs (for R-cran only)
 
-## 2021-10-13
-**Version 0.2.3 (current)**
+## 2021-12-02
+**Version 0.2.4 (current)**
 
 Self check: 0 errors | 0 warnings | 1 notes
 
 ```
 checking installed package size ... NOTE
-  installed size is  5.4Mb
+  installed size is  5.3Mb
 ```
+
+## 2021-10-13
+**Version 0.2.3 (passed)**
 
 ## 2021-08-02
 **Version 0.2.2 (passed)**
