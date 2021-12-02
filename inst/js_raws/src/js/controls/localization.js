@@ -149,7 +149,7 @@ class LocElectrode {
       this.Hemisphere = pos.x > ac_pos ? "right" : "left";
     }
 
-    this.Label = "N/A" + this.localization_order;
+    this.Label = "NoLabel" + this.localization_order;
     this.Electrode = "";
     this.FSIndex = undefined;
     this._orig_name = `${this.subject_code}, ${this.localization_order} - ${this.Label}`;
@@ -278,7 +278,6 @@ class LocElectrode {
           g.surface_type = params[k];
           break;
         case 'Radius':
-          console.log(params);
           g.radius = parseFloat(params[k]);
           this.update_scale();
           break;
@@ -327,6 +326,7 @@ class LocElectrode {
     this.instance._params.position[0] = this.initial_position[0];
     this.instance._params.position[1] = this.initial_position[1];
     this.instance._params.position[2] = this.initial_position[2];
+    this.update_line();
   }
 
   update_line() {

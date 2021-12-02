@@ -256,7 +256,6 @@ localization_module <- function(
           columns = c(1, 3:5, 9, 10:15))),
         selection = "single",
         rownames = TRUE,
-        caption = "Please add the electrode/channel number before saving to RAVE",
         filter = "none",
         options = list(
           dom = 'rtip',

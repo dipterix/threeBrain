@@ -147,19 +147,19 @@ function add_text_sprite(THREE){
       {
     	  switch ( this._align ) {
     	    case 'left':
-    	      this.object.center.x = 0.3 / this.text.length;
+    	      this.object.center.x = 0.5 / this.text.length;
     	      break;
     	    case 'center':
     	      this.object.center.x = 0.5;
     	      break;
     	    case 'right':
-    	      this.object.center.x = 1.0 - 0.3 / this.text.length;
+    	      this.object.center.x = 1.0 - 0.5 / this.text.length;
     	      break;
     	    case 'smart':
     	      // find the first '-'
     	      const dash = this.text.indexOf("-");
     	      if( dash >= 0 ){
-    	        this.object.center.x = dash * 0.3 / this.text.length;
+    	        this.object.center.x = dash * 0.5 / this.text.length;
     	      } else {
     	        this.object.center.x = 0.5;
     	      }
