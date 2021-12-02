@@ -141,30 +141,65 @@ read_gii2 <- function(path){
 }
 
 
-read_nii2 <- function(path, head_only = FALSE ){
+read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
+                      reorient = FALSE, rescale_data = FALSE, ...)
+{
   path <- normalizePath(path, mustWork = FALSE)
 
-  nibabel <- load_nibabel()
-  if( !is.null(nibabel) ){
-    tmp <- nibabel$load( path )
+  nii <- oro.nifti::readNIfTI(path, verbose = reorient, reorient = reorient,
+                              read_data = !head_only, rescale_data = rescale_data, ...)
 
-    re <- list(
-      header = tmp$header,
-      get_shape = tmp$get_shape,
-      get_data = tmp$get_data
+  get_range <- function(){
+    c(nii@cal_min, nii@cal_max)
+  }
+  get_shape <- function(){
+    oro.nifti::dim_(nii)[2:4]
+  }
+  get_size = function(){
+    dm <- oro.nifti::dim_(nii)[2:4]
+    vox_size <- oro.nifti::voxdim(nii)
+    dm * vox_size
+  }
+  get_center_matrix <- function(){
+    sz <- get_size() / 2
+    matrix(c(
+      1,0,0,0,
+      0,1,0,0,
+      0,0,1,0,
+      sz, 1
+    ), nrow = 4, byrow = FALSE)
+  }
+  get_qform <- function(){
+    return(oro.nifti::qform(nii))
+  }
+  get_voxel_size <- function(){ oro.nifti::voxdim(nii) }
+
+  get_boundary = function(){
+    qform <- oro.nifti::qform(nii)
+    ct_crs_orig <- -abs(qform[1:3, 4])
+    dm <- oro.nifti::dim_(nii)[2:4]
+    vox_size <- oro.nifti::voxdim(nii)
+    re <- cbind(
+      ct_crs_orig,
+      (dm - 1) * vox_size + ct_crs_orig
     )
-
-  }else{
-    nii <- oro.nifti::readNIfTI(path, verbose = FALSE, reorient = FALSE, read_data = !head_only)
-
-    re <- list(
-      header = nii,
-      get_shape = function(){ as.list(dim(nii@.Data)) },
-      get_data = function(){ nii@.Data }
-    )
+    colnames(re) <- c("lower", "upper")
+    re
   }
 
-  return(re)
+  list(
+    header = nii,
+    get_range = get_range,
+    get_shape = get_shape,
+    get_data = function(){ nii@.Data },
+    # Torig
+    get_qform = get_qform,
+    get_center_matrix = get_center_matrix,
+    get_voxel_size = get_voxel_size,
+    get_size = get_size,
+    get_boundary = get_boundary
+  )
+
 }
 
 

@@ -157,21 +157,22 @@ function electrode_from_ct_generator(){
     origin.copy(src).applyMatrix4(matrix_inv);
 
     // direction no need to shift
-    matrix_rot.setFromMatrix4(matrix_inv)
+    matrix_rot.setFromMatrix4(matrix_inv);
     direction.copy(dir).applyMatrix3(matrix_rot);
 
-    if(!canvas.__localization_helper){
+    /*if(!canvas.__localization_helper){
       canvas.__localization_helper = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 );
       canvas.scene.add( canvas.__localization_helper );
     }
     canvas.__localization_helper.position.copy(origin);
     canvas.__localization_helper.setDirection(dir);
+    */
 
     cube_dim.fromArray( inst._cube_dim );
     cube_size.set(
       inst._margin_length.xLength,
       inst._margin_length.yLength,
-      inst._margin_length.zLength,
+      inst._margin_length.zLength
     );
 
     const res = raycast_volume(

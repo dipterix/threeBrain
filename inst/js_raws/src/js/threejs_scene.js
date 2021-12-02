@@ -3749,13 +3749,13 @@ mapped = false,
           g = e.userData.construct_params;
 
           inst = e.userData.instance;
-          const loc_params = inst._localization_params || {};
+          const loc_inst = e.userData.localization_instance || {};
 
           if( inst._enabled === false ){
             continue;
           }
-          if( typeof( inst._fs_label ) === "function" ){
-            fs_label = inst._fs_label( loc_params.FSIndex );
+          if( typeof( loc_inst.get_fs_label ) === "function" ){
+            fs_label = loc_inst.get_fs_label();
           } else {
             fs_label = [ "Unknown", 0 ];
           }
@@ -3763,12 +3763,12 @@ mapped = false,
           pos.fromArray( g.position );
 
           // Electrode Coord_x Coord_y Coord_z Label Hemisphere
-          row.Electrode = loc_params.Electrode || "";
+          row.Electrode = loc_inst.Electrode || "";
           row.Coord_x = pos.x;
           row.Coord_y = pos.y;
           row.Coord_z = pos.z;
-          if( loc_params.Label ){
-            row.Label = loc_params.Label;
+          if( loc_inst.Label ){
+            row.Label = loc_inst.Label;
           } else {
             row.Label = parsed[2] || "NoLabel";
             if( row.Label && row.Label !== "" ){
@@ -3776,7 +3776,7 @@ mapped = false,
               row.Label = `${row.Label}${label_list[[row.Label]]}`;
             }
           }
-          row.LocalizationOrder = loc_params.localizationOrder || parseInt( parsed[1] );
+          row.LocalizationOrder = loc_inst.localization_order || parseInt( parsed[1] );
           row.FSIndex = fs_label[1];
           row.FSLabel = fs_label[0];
 

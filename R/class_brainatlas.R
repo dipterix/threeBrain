@@ -133,7 +133,12 @@ NULL
 
 #' @rdname voxel_cube
 #' @export
-add_voxel_cube <- function(brain, name, cube){
+add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256), matrix_world = NULL){
+  stopifnot2(length(size) == 3 && all(size > 0), msg = "add_voxel_cube: `size` must be length of 3 and all positive")
+  stopifnot2(is.null(matrix_world) || (
+    length(matrix_world) == 16 && is.matrix(matrix_world) && nrow(matrix_world) == 4
+  ), msg = "add_voxel_cube: `matrix_world` must be either NULL or a 4x4 matrix")
+
   re <- brain
   if("multi-rave-brain" %in% class(brain)){
     brain <- brain$template_object
@@ -143,9 +148,14 @@ add_voxel_cube <- function(brain, name, cube){
   group <- GeomGroup$new(name = nm)
   group$subject_code <- subject
 
+  if(length(matrix_world) == 16){
+    group$trans_mat <- matrix_world
+  }
+
+
   geom <- DataCubeGeom2$new(
     name = nm, dim = dim(cube),
-    half_size = c(128,128,128), group = group,
+    half_size = size / 2, group = group,
     position = c(0,0,0), value = cube)
   geom$subject_code <- subject
 

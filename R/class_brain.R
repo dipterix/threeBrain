@@ -382,10 +382,18 @@ Brain2 <- R6::R6Class(
 
       if(!missing( coregistered_ct )){
         ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )
-        cube <- reorient_volume( ct$get_data(), self$Torig )
-        add_voxel_cube(self, "CT", cube)
+        # cube <- reorient_volume( ct$get_data(), self$Torig )
 
-        key <- seq(0, max(cube))
+        # TODO: FIXME
+
+        # add_voxel_cube(self, "CT", cube)
+        ct_shift <- ct$get_center_matrix()
+        ct_qform <- ct$get_qform()
+        matrix_world <- brain$Torig %*% solve(brain$Norig) %*% ct_qform %*% ct_shift
+        add_voxel_cube(self, "CT", ct$get_data(), size = ct$get_size(),
+                       matrix_world = matrix_world)
+
+        key <- seq(0, max(ct$get_range()))
         cmap <- create_colormap(
           gtype = 'volume', dtype = 'continuous',
           key = key, value = key,
@@ -400,7 +408,7 @@ Brain2 <- R6::R6Class(
           control_presets = control_presets,
           voxel_colormap = cmap,
           controllers = controllers,
-          # custom_javascript = "canvas.controls.noPan=true;",
+          custom_javascript = "canvas.controls.noPan=true;",
           ...
         )
       } else {
@@ -414,7 +422,7 @@ Brain2 <- R6::R6Class(
         self$plot(
           control_presets = control_presets,
           controllers = controllers,
-          # custom_javascript = "canvas.controls.noPan=true;",
+          custom_javascript = "canvas.controls.noPan=true;",
           ...
         )
       }

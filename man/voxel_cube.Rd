@@ -6,7 +6,7 @@
 \alias{create_voxel_cube}
 \title{Generate volume data from 'MNI' coordinates}
 \usage{
-add_voxel_cube(brain, name, cube)
+add_voxel_cube(brain, name, cube, size = c(256, 256, 256), matrix_world = NULL)
 
 create_voxel_cube(
   mni_ras,

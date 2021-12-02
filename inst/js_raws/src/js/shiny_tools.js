@@ -237,9 +237,8 @@ class THREE_BRAIN_SHINY {
        args.Coord_x, args.Coord_y, args.Coord_z,
        args.mode || "CT/volume", false
     );
-    window.eeee = el;
     if( el ){
-      const locorder = el._localization_params.localizationOrder;
+      const locorder = el.localization_order;
       this.presets.localization_set_electrode(
         locorder, args, args.update_shiny
       );
