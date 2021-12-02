@@ -710,7 +710,7 @@ class THREEBRAIN_CANVAS {
     this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
 
     this.json_loader = new THREE.FileLoader( this.loader_manager );
-    this.font_loader = new THREE.FontLoader( this.loader_manager );
+    // this.font_loader = new THREE.FontLoader( this.loader_manager );
 
   }
 

@@ -187,7 +187,7 @@ function electrode_from_ct_generator(){
     pos.applyMatrix4( matrix_ );
 
     return ( pos );
-  }
+  };
 
   return( intersect_volume );
 

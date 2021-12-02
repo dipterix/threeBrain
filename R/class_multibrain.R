@@ -109,6 +109,7 @@ MultiBrain2 <- R6::R6Class(
     ){
       control_presets <- c('localization', control_presets)
       controllers[["Edit Mode"]] <- "CT/volume"
+      controllers[["Highlight Box"]] <- FALSE
 
       if(!missing( coregistered_ct )){
         ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )

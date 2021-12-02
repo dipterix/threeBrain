@@ -5,6 +5,7 @@ import { is_electrode } from '../geometry/sphere.js';
 import { intersect_volume, electrode_from_ct } from '../Math/raycast_volume.js';
 import * as download from 'downloadjs';
 
+
 // Electrode localization
 const pos = new THREE.Vector3();
 const folder_name = CONSTANTS.FOLDERS['localization'] || 'Electrode Localization';
@@ -129,7 +130,7 @@ class LocElectrode {
       this.initial_position[0],
       this.initial_position[1],
       this.initial_position[2]
-    ]
+    ];
 
     // get fs Label
     this.fs_label = atlas_label(init_pos_clone, canvas)[0];
@@ -148,7 +149,7 @@ class LocElectrode {
       this.Hemisphere = pos.x > ac_pos ? "right" : "left";
     }
 
-    this.Label = "N/A " + this.localization_order;
+    this.Label = "N/A" + this.localization_order;
     this.Electrode = "";
     this.FSIndex = undefined;
     this._orig_name = `${this.subject_code}, ${this.localization_order} - ${this.Label}`;
@@ -277,6 +278,7 @@ class LocElectrode {
           g.surface_type = params[k];
           break;
         case 'Radius':
+          console.log(params);
           g.radius = parseFloat(params[k]);
           this.update_scale();
           break;
@@ -318,6 +320,13 @@ class LocElectrode {
         this.object.material.color.set( COL_DISABLED );
       }
     }
+  }
+
+  reset_position() {
+    this.object.position.fromArray( this.initial_position );
+    this.instance._params.position[0] = this.initial_position[0];
+    this.instance._params.position[1] = this.initial_position[1];
+    this.instance._params.position[2] = this.initial_position[2];
   }
 
   update_line() {
@@ -680,14 +689,14 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       }
       this.gui.hide_item([
         ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-        'Interpolate from Recently Added',
+        'Interpolate from Recently Added', 'Reset Highlighted',
         'Auto-Adjust Highlighted', 'Auto-Adjust All'
       ], folder_name);
       if( v === 'disabled' ){ return; }
       if( v === 'refine' ) {
         this.gui.show_item([
           ' - tkrRAS', ' - MNI305', ' - T1 RAS',
-          'Auto-Adjust Highlighted', 'Auto-Adjust All'
+          'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
         ], folder_name);
       } else {
         this.gui.show_item([
@@ -747,7 +756,21 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     this.gui.add_item( 'Auto-Adjust Highlighted', () => {
       if( refine_electrode &&
           refine_electrode.isLocElectrode ){
-        refine_electrode.adjust()
+        refine_electrode.adjust();
+
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        }
+
+        this._update_canvas();
+      }
+    },  { folder_name: folder_name });
+
+    this.gui.add_item( 'Reset Highlighted', () => {
+      if( refine_electrode &&
+          refine_electrode.isLocElectrode ){
+
+        refine_electrode.reset_position();
 
         if(this.shiny){
           this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
@@ -1004,7 +1027,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     this.gui.hide_item([
       ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
       'Interpolate from Recently Added',
-      'Auto-Adjust Highlighted', 'Auto-Adjust All'
+      'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
     ], folder_name);
   };
 

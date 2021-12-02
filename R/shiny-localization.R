@@ -100,6 +100,7 @@ localization_module <- function(
         controllers[["Voxel Type"]] <- "CT"
         controllers[["Voxel Min"]] <- 3000
         controllers[["Edit Mode"]] <- "CT/volume"
+        controllers[["Highlight Box"]] <- FALSE
         function(){
           brain$plot(
             control_presets = control_presets,
@@ -223,10 +224,10 @@ localization_module <- function(
 
       # assign('edit', edit, envir = globalenv())
 
-      mode <- sapply(nms, function(nm){ storage.mode(tbl[[nm]]) })
+      mode <- sapply(nms, function(nm){ mode(tbl[[nm]]) })
       params <- structure(lapply(seq_along(nms), function(ii){
         re <- edit$value[edit$col == ii]
-        storage.mode(re) <- mode[[ii]]
+        mode(re) <- mode[[ii]]
         re
       }), names = nms)
 
