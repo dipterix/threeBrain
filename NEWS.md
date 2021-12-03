@@ -1,7 +1,7 @@
 threeBrain 0.2.4
 =======
 
-This version mainly works on the electrode localization
+This version mainly works on the electrode localization. Most changes occur in the `JavaScript` engine. 
 
 ## Changes
 
@@ -10,12 +10,14 @@ This version mainly works on the electrode localization
 * Allows resizing electrode size on the fly
 * Allows resizing the electrode labels
 * Localization module has been integrated into `RAVE`
+* Added line mesh to mark the distance of the electrode deviating from its original position. The line color changes with the distance value.
 
 ### Improvements
 
 * Improved localization precision
 * Auto-adjusting electrodes now respects the topology
 * Electrodes in the localization mode now have `LocElectrode` class
+* Volume rendering and ray-casters now respects the transform matrices
 
 threeBrain 0.2.3
 =======
