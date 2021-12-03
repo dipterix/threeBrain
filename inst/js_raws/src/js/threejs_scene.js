@@ -3754,6 +3754,11 @@ mapped = false,
           if( inst._enabled === false ){
             continue;
           }
+          if( typeof( loc_inst.enabled ) === "function" ){
+            if(!loc_inst.enabled()){
+              continue;
+            }
+          }
           if( typeof( loc_inst.get_fs_label ) === "function" ){
             fs_label = loc_inst.get_fs_label();
           } else {
