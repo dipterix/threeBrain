@@ -4,6 +4,9 @@ import { CONSTANTS } from '../constants.js';
 import { is_electrode } from '../geometry/sphere.js';
 import { intersect_volume, electrode_from_ct } from '../Math/raycast_volume.js';
 import * as download from 'downloadjs';
+import { LineSegments2 } from '../jsm/lines/LineSegments2.js';
+import { LineMaterial } from '../jsm/lines/LineMaterial.js';
+import { LineSegmentsGeometry } from '../jsm/lines/LineSegmentsGeometry.js';
 
 
 // Electrode localization
@@ -114,7 +117,7 @@ const pal = [0x1874CD, 0x1F75C6, 0x2677BF, 0x2E78B9, 0x357AB2, 0x3C7BAC, 0x447DA
 
 class LocElectrode {
   constructor(subject_code, localization_order, initial_position, canvas,
-              electrode_scale = 1, text_scale = 1.5) {
+              electrode_scale = 1, text_scale = 1.0) {
     this.isLocElectrode = true;
     // temp vector 3
     this.__vec3 = new THREE.Vector3().set( 0, 0, 0 );
@@ -209,28 +212,41 @@ class LocElectrode {
     };
     this.object.userData.localization_instance = this;
     // this.object.scale.set( this._scale, this._scale, this._scale );
-    this.update_scale();
+
 
     // Add line to indicate shift
-    const line_geometry = new THREE.BufferGeometry().setFromPoints( [
-      this.__vec3, this.__vec3
+    const line_geometry = new LineSegmentsGeometry();
+    line_geometry.setPositions( [
+      0,0,0,
+      0,0,0
     ] );
-    const line_material = new THREE.LineBasicMaterial( {
+    const line_material = new LineMaterial( {
       color: 0x0000ff,
-      linewidth: 5,
-      depthTest: false
+      // depthTest: false,
+      linewidth: 3,
+      side: THREE.DoubleSide
     } );
-    const line = new THREE.Line( line_geometry, line_material );
+    const line = new LineSegments2( line_geometry, line_material );
     this._line = line;
+    line.computeLineDistances();
+    line.scale.set( 1/this._scale , 1/this._scale , 1/this._scale );
+    line_material.resolution.set(
+      this._canvas.client_width || window.innerWidth,
+      this._canvas.client_height || window.innerHeight
+    );
     this.object.add( line );
 
+
+
+
+    this.update_scale();
     this._enabled = true;
   }
 
   dispose() {
     this.object.userData.dispose();
     try {
-      const collection = this.canvas.electrodes.get(this.subject_code);
+      const collection = this._canvas.electrodes.get(this.subject_code);
       if( collection.hasOwnProperty(this._orig_name) ){
         delete collection[ this._orig_name ];
       }
@@ -307,6 +323,7 @@ class LocElectrode {
     const v = this._scale * this.instance._params.radius;
     this.object.scale.set( v, v, v );
     this._map.update_scale( this._text_scale / v );
+    this._line.scale.set( 1 / v, 1 / v, 1 / v );
   }
 
   update_color( color ){
@@ -333,10 +350,25 @@ class LocElectrode {
     const positions = this._line.geometry.attributes.position;
     const dst = this.__vec3.fromArray( this.initial_position ).sub( this.object.position );
 
+    //__canvas.object_chosen.position.set(0,0,0)
+    const inst_start = this._line.geometry.attributes.instanceStart.data.array,
+          inst_end   = this._line.geometry.attributes.instanceEnd.data.array;
+
+    inst_start[3] = dst.x;
+    inst_start[4] = dst.y;
+    inst_start[5] = dst.z;
+    inst_end[3] = dst.x;
+    inst_end[4] = dst.y;
+    inst_end[5] = dst.z;
+    this._line.geometry.attributes.instanceStart.needsUpdate = true;
+    this._line.geometry.attributes.instanceEnd.needsUpdate = true;
+
+    /*
     positions.array[0] = dst.x;
     positions.array[1] = dst.y;
     positions.array[2] = dst.z;
     positions.needsUpdate = true;
+    */
 
     // update length
     let shift_idx = Math.floor(dst.length() * 10);
@@ -344,6 +376,7 @@ class LocElectrode {
       shift_idx = 63;
     }
     this._line.material.color.set( pal[shift_idx] );
+    this.update_scale();
   }
 
   enabled() {
@@ -629,8 +662,8 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     if(!edit_mode){
       const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
     }
-    let electrode_size = this.gui.get_controller('Electrode Scale', folder_name).getValue() || 1.5;
-    let text_size = this.gui.get_controller('Text Scale', folder_name).getValue() || 1.5;
+    let electrode_size = this.gui.get_controller('Electrode Scale', folder_name).getValue() || 1.0;
+    let text_size = this.gui.get_controller('Text Scale', folder_name).getValue() || 1.0;
     if(edit_mode === "disabled" ||
        edit_mode === "refine"){ return; }
 
@@ -709,7 +742,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
     });
 
-    const elec_size = this.gui.add_item( 'Electrode Scale', 1.5, { folder_name: folder_name })
+    const elec_size = this.gui.add_item( 'Electrode Scale', 1.0, { folder_name: folder_name })
       .min(0.5).max(2).step(0.1)
       .onChange((v) => {
 
@@ -721,7 +754,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
       });
 
-    const elec_text_size = this.gui.add_item( 'Text Scale', 1.5, { folder_name: folder_name })
+    const elec_text_size = this.gui.add_item( 'Text Scale', 1.0, { folder_name: folder_name })
       .min(1).max(3).step(0.1)
       .onChange((v) => {
 
@@ -1005,6 +1038,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         refine_electrode.object.position[nm] -= step;
         refine_electrode.object.userData.construct_params.position[idx] -= step;
       }
+      refine_electrode.update_line();
       if(this.shiny){
         this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
       }
