@@ -1,13 +1,13 @@
-import { THREE } from '../threeplugins.js';
+import { Vector3, Matrix4, Matrix3, ArrowHelper } from '../../build/three.module.js';
 
 function raycast_volume_geneator(){
 
-  const orig = new THREE.Vector3().copy(origin);
-  const projection = new THREE.Matrix3();
-  const p = new THREE.Vector3();
-  const p1 = new THREE.Vector3();
-  const f = new THREE.Vector3();
-  const dest = new THREE.Vector3();
+  const orig = new Vector3().copy(origin);
+  const projection = new Matrix3();
+  const p = new Vector3();
+  const p1 = new Vector3();
+  const f = new Vector3();
+  const dest = new Vector3();
   let l_x, l_y, l_z, i, j, k, tmp, k1, k2, l_res;
   const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
 
@@ -140,14 +140,14 @@ const raycast_volume = raycast_volume_geneator();
 
 function electrode_from_ct_generator(){
 
-  const cube_dim = new THREE.Vector3(),
-        cube_size = new THREE.Vector3(),
-        origin = new THREE.Vector3(),
-        direction = new THREE.Vector3(),
-        pos = new THREE.Vector3();
-  const matrix_ = new THREE.Matrix4(),
-        matrix_inv = new THREE.Matrix4(),
-        matrix_rot = new THREE.Matrix3();
+  const cube_dim = new Vector3(),
+        cube_size = new Vector3(),
+        origin = new Vector3(),
+        direction = new Vector3(),
+        pos = new Vector3();
+  const matrix_ = new Matrix4(),
+        matrix_inv = new Matrix4(),
+        matrix_rot = new Matrix3();
 
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
@@ -161,7 +161,7 @@ function electrode_from_ct_generator(){
     direction.copy(dir).applyMatrix3(matrix_rot);
 
     /*if(!canvas.__localization_helper){
-      canvas.__localization_helper = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 );
+      canvas.__localization_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 );
       canvas.scene.add( canvas.__localization_helper );
     }
     canvas.__localization_helper.position.copy(origin);

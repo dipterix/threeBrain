@@ -1,4 +1,4 @@
-import { THREE } from './threeplugins.js';
+import { Vector3 } from '../build/three.module.js';
 // Defined all the constants
 
 const CONSTANTS = {};
@@ -37,14 +37,14 @@ CONSTANTS.LAYER_INVISIBLE_31 = 31;                   // invisible layer, but kee
 
 // reorder render depth to force renders to render objects with maximum render order first
 CONSTANTS.MAX_RENDER_ORDER = 9999999;
-CONSTANTS.VEC_ORIGIN = new THREE.Vector3( 0, 0, 0 );
+CONSTANTS.VEC_ORIGIN = new Vector3( 0, 0, 0 );
 // Anatomcal axis RAS is the normal XYZ, LAI is the other direction
-CONSTANTS.VEC_ANAT_R = new THREE.Vector3( 1, 0, 0 );
-CONSTANTS.VEC_ANAT_A = new THREE.Vector3( 0, 1, 0 );
-CONSTANTS.VEC_ANAT_S = new THREE.Vector3( 0, 0, 1 );
-CONSTANTS.VEC_ANAT_L = new THREE.Vector3( -1, 0, 0 );
-CONSTANTS.VEC_ANAT_P = new THREE.Vector3( 0, -1, 0 );
-CONSTANTS.VEC_ANAT_I = new THREE.Vector3( 0, 0, -1 );
+CONSTANTS.VEC_ANAT_R = new Vector3( 1, 0, 0 );
+CONSTANTS.VEC_ANAT_A = new Vector3( 0, 1, 0 );
+CONSTANTS.VEC_ANAT_S = new Vector3( 0, 0, 1 );
+CONSTANTS.VEC_ANAT_L = new Vector3( -1, 0, 0 );
+CONSTANTS.VEC_ANAT_P = new Vector3( 0, -1, 0 );
+CONSTANTS.VEC_ANAT_I = new Vector3( 0, 0, -1 );
 
 // You can only change which key is pressed. However, you cannot change shift & ctrl or alt
 // To do that you must go into the code

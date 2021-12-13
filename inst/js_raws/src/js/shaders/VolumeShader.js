@@ -1,3 +1,4 @@
+import { Vector3 } from '../../build/three.module.js';
 
 const remove_comments = (s) => {
   return(s.split("\n").map((e) => {
@@ -5,19 +6,17 @@ const remove_comments = (s) => {
         e.replaceAll(/\/\/.*/g, "")
       );
     }).join("\n"));
-}
+};
 
-const register_volumeShader1 = function(THREE){
-
-  THREE.VolumeRenderShader1 = {
+const VolumeRenderShader1 = {
     uniforms: {
       cmap: { value: null },
       nmap: { value: null },
       mask: { value: null },
       alpha : { value: -1.0 },
       steps: { value: 300 },
-      scale_inv: { value: new THREE.Vector3() },
-      screenPos: { value: new THREE.Vector3() },
+      scale_inv: { value: new Vector3() },
+      screenPos: { value: new Vector3() },
       bounding: { value : 0.5 }
     },
     vertexShader: remove_comments(`#version 300 es
@@ -169,9 +168,5 @@ void main(){
   // calculate alpha at depth
 }`)};
 
-  return(THREE);
 
-};
-
-
-export { register_volumeShader1 };
+export { VolumeRenderShader1 };

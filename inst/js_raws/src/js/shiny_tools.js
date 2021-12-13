@@ -4,7 +4,7 @@ This file defines shiny callback functions (js to shiny)
 */
 
 import { debounce, to_array, get_or_default } from './utils.js';
-import { THREE } from './threeplugins.js';
+import { Math, Vector3, Color } from '../build/three.module.js';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
 import { CONSTANTS } from './constants.js';
 
@@ -44,7 +44,7 @@ class THREE_BRAIN_SHINY {
     this.shiny_mode = shiny_mode;
     this.shinyId = outputId + '__shiny';
     this.canvas = canvas;
-    this.uuid = THREE.Math.generateUUID();
+    this.uuid = Math.generateUUID();
 
     this.stack = [];
 
@@ -74,7 +74,7 @@ class THREE_BRAIN_SHINY {
 
     // 2. click callback
     // finalize registering
-    const pos = new THREE.Vector3();
+    const pos = new Vector3();
     this.canvas.add_mouse_callback(
       (evt) => {
         return({
@@ -447,7 +447,7 @@ class THREE_BRAIN_SHINY {
             this.clear_electrode_group( '__localization__' );
           }
           const _es = to_array( data.data );
-          const _col = new THREE.Color();
+          const _col = new Color();
           _es.forEach((d) => {
             _col.setStyle( d.color || '#FF0000' );
             this.loc_add_electrode( d.electrode, d.label, d.position,

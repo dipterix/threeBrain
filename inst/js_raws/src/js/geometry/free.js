@@ -1,14 +1,17 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { THREE } from '../threeplugins.js';
+import { DoubleSide, VertexColors, BufferAttribute, DataTexture, NearestFilter,
+         LinearFilter, RGBFormat, RGBAFormat, UnsignedByteType, Vector3,
+         MeshPhongMaterial, MeshLambertMaterial, BufferGeometry, Mesh,
+         DataTexture3D } from '../../build/three.module.js';
 import { CONSTANTS } from '../constants.js';
 import { to_array, min2, sub2 } from '../utils.js';
 import { compile_free_material } from '../shaders/SurfaceShader.js';
 
 const MATERIAL_PARAMS = {
   'transparent' : true,
-  'side': THREE.DoubleSide,
+  'side': DoubleSide,
   'wireframeLinewidth' : 0.1,
-  'vertexColors' : THREE.VertexColors
+  'vertexColors' : VertexColors
 };
 
 // freemesh
@@ -23,7 +26,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     if( !this._track_color ){
       const track_color = new Uint8Array( this.__nvertices * 3 ).fill(255);
       this._track_color = track_color;
-      this._geometry.setAttribute( 'track_color', new THREE.BufferAttribute( track_color, 3, true ) );
+      this._geometry.setAttribute( 'track_color', new BufferAttribute( track_color, 3, true ) );
     }
   }
 
@@ -164,7 +167,7 @@ class FreeMesh extends AbstractThreeBrainObject {
 
       this._material_type = material_type;
       this._mesh.material = _m;
-      this._mesh.material.vertexColors = THREE.VertexColors;
+      this._mesh.material.vertexColors = VertexColors;
       this._mesh.material.opacity = _o;
       this._mesh.material.needsUpdate = true;
       if( update_canvas ){
@@ -187,23 +190,23 @@ class FreeMesh extends AbstractThreeBrainObject {
       const elec_size = this._linked_electrodes.length;
       if( elec_size == 0 ){ return; }
       const elec_locs = new Uint8Array( elec_size * 3 );
-      const locs_texture = new THREE.DataTexture( elec_locs, elec_size, 1 );
+      const locs_texture = new DataTexture( elec_locs, elec_size, 1 );
 
-      locs_texture.minFilter = THREE.NearestFilter;
-      locs_texture.magFilter = THREE.NearestFilter;
-      locs_texture.format = THREE.RGBFormat;
-      locs_texture.type = THREE.UnsignedByteType;
+      locs_texture.minFilter = NearestFilter;
+      locs_texture.magFilter = NearestFilter;
+      locs_texture.format = RGBFormat;
+      locs_texture.type = UnsignedByteType;
       locs_texture.unpackAlignment = 1;
       locs_texture.needsUpdate = true;
       this._material_options.elec_locs.value = locs_texture;
 
       const elec_cols = new Uint8Array( elec_size * 3 );
-      const cols_texture = new THREE.DataTexture( elec_cols, elec_size, 1 );
+      const cols_texture = new DataTexture( elec_cols, elec_size, 1 );
 
-      cols_texture.minFilter = THREE.NearestFilter;
-      cols_texture.magFilter = THREE.NearestFilter;
-      cols_texture.format = THREE.RGBFormat;
-      cols_texture.type = THREE.UnsignedByteType;
+      cols_texture.minFilter = NearestFilter;
+      cols_texture.magFilter = NearestFilter;
+      cols_texture.format = RGBFormat;
+      cols_texture.type = UnsignedByteType;
       cols_texture.unpackAlignment = 1;
       cols_texture.needsUpdate = true;
       this._material_options.elec_cols.value = cols_texture;
@@ -218,7 +221,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     const e_locs = this._material_options.elec_locs.value.image.data;
     const e_cols = this._material_options.elec_cols.value.image.data;
 
-    const p = new THREE.Vector3();
+    const p = new Vector3();
     let ii = 0;
     this._linked_electrodes.forEach((el) => {
       if( el.material.isMeshBasicMaterial ){
@@ -341,13 +344,13 @@ class FreeMesh extends AbstractThreeBrainObject {
     this._volume_margin_size = 128;
     this._volume_array = new Uint8Array( 32 );
     // fake texture, will update later
-    this._volume_texture = new THREE.DataTexture3D(
+    this._volume_texture = new DataTexture3D(
       this._volume_array, 2, 2, 2
     );
-    this._volume_texture.minFilter = THREE.NearestFilter;
-    this._volume_texture.magFilter = THREE.LinearFilter;
-    this._volume_texture.format = THREE.RGBAFormat;
-    this._volume_texture.type = THREE.UnsignedByteType;
+    this._volume_texture.minFilter = NearestFilter;
+    this._volume_texture.magFilter = LinearFilter;
+    this._volume_texture.format = RGBAFormat;
+    this._volume_texture.type = UnsignedByteType;
     this._volume_texture.unpackAlignment = 1;
 
 
@@ -355,12 +358,12 @@ class FreeMesh extends AbstractThreeBrainObject {
       'which_map'         : { value : CONSTANTS.DEFAULT_COLOR },
       'volume_map'        : { value : this._volume_texture },
       'scale_inv'         : {
-        value : new THREE.Vector3(
+        value : new Vector3(
           1 / this._volume_margin_size, 1 / this._volume_margin_size,
           1 / this._volume_margin_size
         )
       },
-      'shift'             : { value : new THREE.Vector3() },
+      'shift'             : { value : new Vector3() },
       'sampler_bias'      : { value : 3.0 },
       'sampler_step'      : { value : 1.5 },
       'elec_cols'         : { value : null },
@@ -374,16 +377,16 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     this._materials = {
       'MeshPhongMaterial' : compile_free_material(
-        new THREE.MeshPhongMaterial( MATERIAL_PARAMS),
+        new MeshPhongMaterial( MATERIAL_PARAMS),
         this._material_options, this._canvas.main_renderer
       ),
       'MeshLambertMaterial': compile_free_material(
-        new THREE.MeshLambertMaterial( MATERIAL_PARAMS ),
+        new MeshLambertMaterial( MATERIAL_PARAMS ),
         this._material_options, this._canvas.main_renderer
       )
     };
 
-    this._geometry = new THREE.BufferGeometry();
+    this._geometry = new BufferGeometry();
 
     // construct geometry
     this.__nvertices = vertices.length;
@@ -404,13 +407,13 @@ class FreeMesh extends AbstractThreeBrainObject {
       face_orders[ ii * 3 + 2 ] = v[2];
     });
 
-    this._geometry.setIndex( new THREE.BufferAttribute(face_orders, 1) );
-    this._geometry.setAttribute( 'position', new THREE.BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'color', new THREE.BufferAttribute( vertex_color, 3, true ) );
+    this._geometry.setIndex( new BufferAttribute(face_orders, 1) );
+    this._geometry.setAttribute( 'position', new BufferAttribute(vertex_positions, 3) );
+    this._geometry.setAttribute( 'color', new BufferAttribute( vertex_color, 3, true ) );
 
 
-    // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
-    // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+    // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );
+    // gb.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
 
     this._geometry.computeVertexNormals();
     this._geometry.computeBoundingBox();
@@ -420,7 +423,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this._geometry.name = 'geom_free_' + g.name;
 
     this._material_type = g.material_type || 'MeshPhongMaterial';
-    this._mesh = new THREE.Mesh(this._geometry, this._materials[this._material_type]);
+    this._mesh = new Mesh(this._geometry, this._materials[this._material_type]);
     this._mesh.name = 'mesh_free_' + g.name;
 
     this._mesh.position.fromArray(g.position);

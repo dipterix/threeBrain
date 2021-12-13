@@ -4,7 +4,7 @@
  */
 import { download } from './js/download.js';
 import { WEBGL } from './js/WebGL.js';
-import { THREE } from './js/threeplugins.js';
+import * as THREE from './build/three.module.js';
 import { THREEBRAIN_CONTROL } from './js/core/gui_wrapper.js';
 import { THREEBRAIN_PRESETS } from './js/core/data_controls.js';
 import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
@@ -17,6 +17,12 @@ import { padZero, to_array, get_element_size, get_or_default } from './js/utils.
 // import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
 // import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 import { json2csv } from 'json-2-csv';
+import { Lut, ColorMapKeywords } from './js/jsm/math/Lut2.js';
+
+window.THREEBRAIN = {
+  Lut : Lut,
+  ColorMapKeywords : ColorMapKeywords
+};
 
 const utils_toolbox = {
   'padZero' : padZero,

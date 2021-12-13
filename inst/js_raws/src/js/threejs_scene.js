@@ -1,7 +1,16 @@
+import {
+  Vector2, Vector3, Color, Scene, Object3D, Matrix3, Matrix4,
+  OrthographicCamera, PerspectiveCamera, WebGLRenderer,
+  DirectionalLight, AmbientLight,
+  Raycaster, ArrowHelper, BoxHelper,
+  LoadingManager, FileLoader, FontLoader,
+  AnimationClip, AnimationMixer, Clock,
+  BoxBufferGeometry, Mesh, MeshBasicMaterial
+} from '../build/three.module.js';
 import { to_array, get_element_size, get_or_default, has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4 } from './utils.js';
+import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
 import { CanvasContext2D } from './core/context.js';
 import { Stats } from './libs/stats.min.js';
-import { THREE } from './threeplugins.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
 import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
@@ -13,6 +22,7 @@ import { gen_datacube2 } from './geometry/datacube2.js';
 import { gen_tube } from './geometry/tube.js';
 import { gen_free } from './geometry/free.js';
 import { Compass } from './geometry/compass.js';
+import { Lut, addToColorMapKeywords } from './jsm/math/Lut2.js';
 import { json2csv } from 'json-2-csv';
 import download from 'downloadjs';
 
@@ -90,7 +100,7 @@ class THREEBRAIN_CANVAS {
     this.ready = false;
     this._time_info = {
       selected_object : {
-        position: new THREE.Vector3()
+        position: new Vector3()
       }
     };
 
@@ -168,7 +178,7 @@ class THREEBRAIN_CANVAS {
     this.animation_clips = new Map();
     this.color_maps = new Map();
     // Important, this keeps animation clock aligned with real-time PC clock.
-    this.clock = new THREE.Clock();
+    this.clock = new Clock();
 
     // Set pixel ratio, separate settings for main and side renderers
     this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
@@ -184,8 +194,8 @@ class THREEBRAIN_CANVAS {
 
     // General scene.
     // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another to set render order
-    this.scene = new THREE.Scene();
-    this.origin = new THREE.Object3D();
+    this.scene = new Scene();
+    this.origin = new Object3D();
     this.origin.position.copy( CONSTANTS.VEC_ORIGIN );
     this.scene.add( this.origin );
 
@@ -201,8 +211,8 @@ class THREEBRAIN_CANVAS {
           center/lookat: origin (0,0,0)
           up: 0,1,0 ( heads up )
     */
-    this.main_camera = new THREE.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
-    // this.main_camera = new THREE.PerspectiveCamera( 20, width / height, 0.1, 10000 );
+    this.main_camera = new OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
+    // this.main_camera = new PerspectiveCamera( 20, width / height, 0.1, 10000 );
 
 		this.main_camera.position.x = 500;
 		this.main_camera.userData.pos = [500,0,0];
@@ -217,7 +227,7 @@ class THREEBRAIN_CANVAS {
 
 		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
 		// Maybe we should get rid of directional light as it will cause reflactions?
-    const main_light = new THREE.DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
+    const main_light = new DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
     main_light.position.copy( CONSTANTS.VEC_ANAT_I );
     main_light.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
     main_light.name = 'main light - directional';
@@ -227,7 +237,7 @@ class THREEBRAIN_CANVAS {
     this.add_to_scene( this.main_camera, true );
 
     // Add ambient light to make scene soft
-    const ambient_light = new THREE.AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT, 1.0 );
+    const ambient_light = new AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT, 1.0 );
     ambient_light.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
     ambient_light.name = 'main light - ambient';
     this.add_to_scene( ambient_light, true ); // soft white light
@@ -238,11 +248,11 @@ class THREEBRAIN_CANVAS {
       // We need to use webgl2 for VolumeRenderShader1 to work
       let main_canvas_el = document.createElement('canvas'),
           main_context = main_canvas_el.getContext( 'webgl2' );
-    	this.main_renderer = new THREE.WebGLRenderer({
+    	this.main_renderer = new WebGLRenderer({
     	  antialias: false, alpha: true, canvas: main_canvas_el, context: main_context
     	});
     }else{
-    	this.main_renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+    	this.main_renderer = new WebGLRenderer({ antialias: false, alpha: true });
     }
   	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
@@ -256,13 +266,13 @@ class THREEBRAIN_CANVAS {
       // We need to use webgl2 for VolumeRenderShader1 to work
       let side_canvas_el = document.createElement('canvas'),
           side_context = side_canvas_el.getContext( 'webgl2' );
-    	this.side_renderer = new THREE.WebGLRenderer({
+    	this.side_renderer = new WebGLRenderer({
     	  antialias: false, alpha: true,
     	  canvas: side_canvas_el, context: side_context,
     	  depths: false
     	});
     }else{
-    	this.side_renderer = new THREE.WebGLRenderer( { antialias: false, alpha: true } );
+    	this.side_renderer = new WebGLRenderer( { antialias: false, alpha: true } );
     }
 
   	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
@@ -404,9 +414,9 @@ class THREEBRAIN_CANVAS {
 
 
 			// Add cameras
-			const camera = new THREE.OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
+			const camera = new OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
 			// Side light is needed so that side views are visible.
-			const side_light = new THREE.DirectionalLight( 0xefefef, 0.5 );
+			const side_light = new DirectionalLight( 0xefefef, 0.5 );
 
 			if( idx === 0 ){
 			  // coronal (FB)
@@ -431,7 +441,7 @@ class THREEBRAIN_CANVAS {
 			  side_light.layers.set( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
 			}
 
-			camera.lookAt( new THREE.Vector3(0,0,0) );
+			camera.lookAt( new Vector3(0,0,0) );
 			camera.aspect = 1;
 			camera.updateProjectionMatrix();
 			[1, 4, 5, 6, 7, 13].forEach((ly) => {
@@ -499,7 +509,7 @@ class THREEBRAIN_CANVAS {
             // this._axial_depth = -_y;
           }
           // Also set main_camera
-          const _d = new THREE.Vector3(
+          const _d = new Vector3(
             // this._sagittal_depth || 0,
             this.state_data.get( 'sagittal_depth' ),
 
@@ -514,7 +524,7 @@ class THREEBRAIN_CANVAS {
           }
 
           if( e.shiftKey ){
-            const heads_up = new THREE.Vector3(0, 0, 1);
+            const heads_up = new Vector3(0, 0, 1);
             // calculate camera up
             let _cp = this.main_camera.position.clone().cross( heads_up ).cross( _d ).normalize();
             if( _cp.length() < 0.5 ){
@@ -620,7 +630,7 @@ class THREEBRAIN_CANVAS {
     // Controls
     // First, it should be a OrthographicTrackballControls to ignore distance information
     // Second, it need main canvas, hence main canvas Must be added to dom element
-    this.controls = new THREE.OrthographicTrackballControls( this.main_camera, this.main_canvas );
+    this.controls = new OrthographicTrackballControls( this.main_camera, this.main_canvas );
   	this.controls.zoomSpeed = 0.02;
   	// You cannot use pan in perspective camera. So if you are using PerspectiveCamera, this needs to be true
   	this.controls.noPan = false;
@@ -655,12 +665,12 @@ class THREEBRAIN_CANVAS {
 
 
     // Mouse helpers
-    const mouse_pointer = new THREE.Vector2(),
-        mouse_raycaster = new THREE.Raycaster(),
-        mouse_helper = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-        mouse_helper_root = new THREE.Mesh(
-          new THREE.BoxBufferGeometry( 4,4,4 ),
-          new THREE.MeshBasicMaterial({ color : 0xff0000 })
+    const mouse_pointer = new Vector2(),
+        mouse_raycaster = new Raycaster(),
+        mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
+        mouse_helper_root = new Mesh(
+          new BoxBufferGeometry( 4,4,4 ),
+          new MeshBasicMaterial({ color : 0xff0000 })
         );
 
     // root is a green cube that's only visible in side cameras
@@ -680,10 +690,10 @@ class THREEBRAIN_CANVAS {
 
     this.add_to_scene(mouse_helper, true);
 
-    this.focus_box = new THREE.BoxHelper();
+    this.focus_box = new BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
-    this.bounding_box = new THREE.BoxHelper();
+    this.bounding_box = new BoxHelper();
     this.bounding_box.material.color.setRGB( 0, 0, 1 );
     this.bounding_box.userData.added = false;
     this.bounding_box.layers.set( CONSTANTS.LAYER_INVISIBLE_31 )
@@ -693,7 +703,7 @@ class THREEBRAIN_CANVAS {
 
 		// File loader
     this.loader_triggered = false;
-    this.loader_manager = new THREE.LoadingManager();
+    this.loader_manager = new LoadingManager();
     this.loader_manager.onStart = () => {
       this.loader_triggered = true;
       console.debug( 'Loading start!');
@@ -709,8 +719,8 @@ class THREEBRAIN_CANVAS {
     };
     this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
 
-    this.json_loader = new THREE.FileLoader( this.loader_manager );
-    // this.font_loader = new THREE.FontLoader( this.loader_manager );
+    this.json_loader = new FileLoader( this.loader_manager );
+    // this.font_loader = new FontLoader( this.loader_manager );
 
   }
 
@@ -777,7 +787,7 @@ class THREEBRAIN_CANVAS {
 
   get_main_camera_params(){
     return({
-      'target' : this.main_camera.localToWorld(new THREE.Vector3(
+      'target' : this.main_camera.localToWorld(new Vector3(
         -this.main_camera.userData.pos[0],
         -this.main_camera.userData.pos[1],
         -this.main_camera.userData.pos[2]
@@ -790,15 +800,15 @@ class THREEBRAIN_CANVAS {
   draw_axis( x , y , z ){
     if( !this._coordinates ){
       this._coordinates = {};
-      const origin = new THREE.Vector3( 0, 0, 0 );
+      const origin = new Vector3( 0, 0, 0 );
       // x
-      this._coordinates.x = new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ),
+      this._coordinates.x = new ArrowHelper( new Vector3( 1, 0, 0 ),
               origin, x === 0 ? 1: x, 0xff0000 );
 
-      this._coordinates.y = new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ),
+      this._coordinates.y = new ArrowHelper( new Vector3( 0, 1, 0 ),
               origin, y === 0 ? 1: y, 0x00ff00 );
 
-      this._coordinates.z = new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ),
+      this._coordinates.z = new ArrowHelper( new Vector3( 0, 0, 1 ),
               origin, z === 0 ? 1: z, 0x0000ff );
       this._coordinates.x.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
       this._coordinates.y.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
@@ -969,7 +979,7 @@ class THREEBRAIN_CANVAS {
           direction.transformDirection( target_object.matrixWorld );
           let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
           if(back){
-            direction.applyMatrix3(new THREE.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
+            direction.applyMatrix3(new Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
           }
 
           this.mouse_helper.position.fromArray( to_array(from) );
@@ -1076,7 +1086,7 @@ class THREEBRAIN_CANVAS {
                 subject_data = this.shared_data.get( subject_code ),
                 tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
                 xfm = subject_data.matrices.xfm,
-                pos = new THREE.Vector3();
+                pos = new Vector3();
 
           pos.fromArray( g.position );
           let s = `${g.name}\n` + `tkrRAS: ${vec3_to_string(g.position)}\n`;
@@ -1312,21 +1322,23 @@ class THREEBRAIN_CANVAS {
 
     const color_name = name + '--'  + this.container_id;
 
-    // Step 1: register to THREE.ColorMapKeywords
-    if(THREE.ColorMapKeywords[color_name] === undefined){
-      THREE.ColorMapKeywords[color_name] = [];
-    }else{
-      THREE.ColorMapKeywords[color_name].length = 0;
-    }
+    // Step 1: register to ColorMapKeywords
+    const cmap_keys = [];
 
     // n_color is number of colors in Lut, not the true levels of colors
     const n_color = Math.max( 2 , to_array( color_keys ).length );
 
     // Step 2:
     for( let ii=0; ii < n_color; ii++ ){
-      THREE.ColorMapKeywords[color_name].push([ ii / (n_color-1) , color_vals[ii] ]);
+      cmap_keys.push([ ii / (n_color-1) , color_vals[ii] ]);
     }
-    const lut = new THREE.Lut( color_name , n_color );
+
+    addToColorMapKeywords(
+      color_name,
+      cmap_keys
+    );
+
+    const lut = new Lut( color_name , n_color );
 
     // min and max cannot be the same, otherwise colors will not be rendered
     if( value_type === 'continuous' ){
@@ -1796,7 +1808,7 @@ class THREEBRAIN_CANVAS {
 
   inc_time(){
     // this.animation_controls = {};
-    // this.clock = new THREE.Clock();
+    // this.clock = new Clock();
 
     const clock_time_delta = this.clock.getDelta();
     const results = this._time_info;
@@ -2949,16 +2961,16 @@ class THREEBRAIN_CANVAS {
 
   // Add geom groups
   add_group(g, cache_folder = 'threebrain_data', onProgress = null){
-    var gp = new THREE.Object3D();
+    var gp = new Object3D();
 
     gp.name = 'group_' + g.name;
     to_array(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
     gp.position.fromArray( g.position );
 
     if(g.trans_mat !== null){
-      let trans = new THREE.Matrix4();
+      let trans = new Matrix4();
       trans.set(...g.trans_mat);
-      let inverse_trans = new THREE.Matrix4().copy( trans ).invert();
+      let inverse_trans = new Matrix4().copy( trans ).invert();
 
       gp.userData.trans_mat = trans;
       gp.userData.inv_trans_mat = inverse_trans;
@@ -3047,12 +3059,12 @@ class THREEBRAIN_CANVAS {
           const Torig = as_Matrix4( subject_data.Torig );
           const xfm = as_Matrix4( subject_data.xfm );
           const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
-          const MNI305_tkrRAS = new THREE.Matrix4()
+          const MNI305_tkrRAS = new Matrix4()
             .copy(tkrRAS_MNI305).invert();
-          const tkrRAS_Scanner = new THREE.Matrix4()
+          const tkrRAS_Scanner = new Matrix4()
             .copy(Norig)
             .multiply(
-              new THREE.Matrix4()
+              new Matrix4()
                 .copy(Torig)
                 .invert()
             );
@@ -3210,13 +3222,13 @@ class THREEBRAIN_CANVAS {
        * Steps to make an animation
        *
        * 1. get keyframes, here is "ColorKeyframeTrack"
-       *        new THREE.ColorKeyframeTrack( '.material.color', time_key, color_value, THREE.InterpolateDiscrete )
+       *        new ColorKeyframeTrack( '.material.color', time_key, color_value, InterpolateDiscrete )
        *    keyframe doesn't specify which object, it also can only change one attribute
        * 2. generate clip via "AnimationClip"
-       *        new THREE.AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
+       *        new AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
        *    animation clip combines multiple keyframe, still, doesn't specify which object
        * 3. mixer via "AnimationMixer"
-       *        new THREE.AnimationMixer( m );
+       *        new AnimationMixer( m );
        *    A mixer specifies an object
        * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
        *    action.play() will play the animation clips
@@ -3257,7 +3269,7 @@ class THREEBRAIN_CANVAS {
       let clip = this.animation_clips.get( clip_name ), new_clip = false;
 
       if( !clip ){
-        clip = new THREE.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
+        clip = new AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
         this.animation_clips.set( clip_name, clip );
         new_clip = true;
       }else{
@@ -3271,7 +3283,7 @@ class THREEBRAIN_CANVAS {
       if( m.userData.ani_mixer ){
         m.userData.ani_mixer.stopAllAction();
       }
-      m.userData.ani_mixer = new THREE.AnimationMixer( m );
+      m.userData.ani_mixer = new AnimationMixer( m );
       m.userData.ani_mixer.stopAllAction();
 
       // Step 4: combine mixer with clip
@@ -3414,7 +3426,7 @@ class THREEBRAIN_CANVAS {
     const tkRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
     const MNI305_tkRAS = subject_data.matrices.MNI305_tkrRAS;
 
-    let anterior_commissure = state.get('anterior_commissure') || new THREE.Vector3();
+    let anterior_commissure = state.get('anterior_commissure') || new Vector3();
     anterior_commissure.set(0,0,0);
     anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
 
@@ -3465,7 +3477,7 @@ class THREEBRAIN_CANVAS {
 
   calculate_mni305(vec, nan_if_trans_not_found = true){
     if( !vec.isVector3 ){
-      throw('vec must be a THREE.Vector3 instance');
+      throw('vec must be a Vector3 instance');
     }
 
     const tkRAS_MNI305 = this.state_data.get('tkRAS_MNI305');
@@ -3587,10 +3599,10 @@ class THREEBRAIN_CANVAS {
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
     /* DEBUG code
     target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
-    pos_targ = new THREE.Vector3(),
-          pos_orig = new THREE.Vector3(),
-          mat1 = new THREE.Matrix4(),
-          mat2 = new THREE.Matrix4();
+    pos_targ = new Vector3(),
+          pos_orig = new Vector3(),
+          mat1 = new Matrix4(),
+          mat2 = new Matrix4();
     el = canvas.electrodes.get(origin_subject)["YAB, 29 - aTMP6"];
     g = el.userData.construct_params,
               is_surf = g.is_surface_electrode,
@@ -3606,10 +3618,10 @@ mapped = false,
     */
 
 
-    const pos_targ = new THREE.Vector3(),
-          pos_orig = new THREE.Vector3();
-          // mat1 = new THREE.Matrix4(),
-          // mat2 = new THREE.Matrix4();
+    const pos_targ = new Vector3(),
+          pos_orig = new Vector3();
+          // mat1 = new Matrix4(),
+          // mat2 = new Matrix4();
 
     this.electrodes.forEach( (els, origin_subject) => {
       for( let el_name in els ){
@@ -3627,7 +3639,7 @@ mapped = false,
 
         // Calculate MNI 305 coordinate in template space
         if( el.userData.MNI305_position === undefined ){
-          el.userData.MNI305_position = new THREE.Vector3().set(0, 0, 0);
+          el.userData.MNI305_position = new Vector3().set(0, 0, 0);
           if(
             Array.isArray( mni305 ) && mni305.length === 3 &&
             !( mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0 )
@@ -3735,7 +3747,7 @@ mapped = false,
             subject_data  = this.shared_data.get( subject_code ),
             tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
             xfm = subject_data.matrices.xfm,
-            pos = new THREE.Vector3();
+            pos = new Vector3();
       let row = {};
       let parsed, e, g, inst, fs_label;
       const label_list = {};
@@ -3851,8 +3863,8 @@ mapped = false,
     const _x = get_or_default( this.state_data, 'sagittal_posx', 0);
     const _y = get_or_default( this.state_data, 'coronal_posy', 0);
     const _z = get_or_default( this.state_data, 'axial_posz', 0);
-    const plane_pos = new THREE.Vector3().set( _x, _y, _z );
-    const diff = new THREE.Vector3();
+    const plane_pos = new Vector3().set( _x, _y, _z );
+    const diff = new Vector3();
 
     this.electrodes.forEach((li, subcode) => {
 
@@ -3887,5 +3899,6 @@ mapped = false,
 
 export { THREEBRAIN_CANVAS };
 // window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;
+
 
 

@@ -52690,7 +52690,7 @@ const WEBGL = {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "t": () => (/* binding */ CONSTANTS)
 /* harmony export */ });
-/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1829);
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7000);
 
 // Defined all the constants
 
@@ -52730,14 +52730,14 @@ CONSTANTS.LAYER_INVISIBLE_31 = 31;                   // invisible layer, but kee
 
 // reorder render depth to force renders to render objects with maximum render order first
 CONSTANTS.MAX_RENDER_ORDER = 9999999;
-CONSTANTS.VEC_ORIGIN = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__/* .THREE.Vector3 */ .J.Vector3( 0, 0, 0 );
+CONSTANTS.VEC_ORIGIN = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 0 );
 // Anatomcal axis RAS is the normal XYZ, LAI is the other direction
-CONSTANTS.VEC_ANAT_R = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__/* .THREE.Vector3 */ .J.Vector3( 1, 0, 0 );
-CONSTANTS.VEC_ANAT_A = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__/* .THREE.Vector3 */ .J.Vector3( 0, 1, 0 );
-CONSTANTS.VEC_ANAT_S = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__/* .THREE.Vector3 */ .J.Vector3( 0, 0, 1 );
-CONSTANTS.VEC_ANAT_L = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__/* .THREE.Vector3 */ .J.Vector3( -1, 0, 0 );
-CONSTANTS.VEC_ANAT_P = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__/* .THREE.Vector3 */ .J.Vector3( 0, -1, 0 );
-CONSTANTS.VEC_ANAT_I = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_0__/* .THREE.Vector3 */ .J.Vector3( 0, 0, -1 );
+CONSTANTS.VEC_ANAT_R = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 1, 0, 0 );
+CONSTANTS.VEC_ANAT_A = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 );
+CONSTANTS.VEC_ANAT_S = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 1 );
+CONSTANTS.VEC_ANAT_L = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( -1, 0, 0 );
+CONSTANTS.VEC_ANAT_P = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, -1, 0 );
+CONSTANTS.VEC_ANAT_I = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, -1 );
 
 // You can only change which key is pressed. However, you cannot change shift & ctrl or alt
 // To do that you must go into the code
@@ -57106,19 +57106,19 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
 
 
 
-// EXTERNAL MODULE: ./src/js/threeplugins.js + 6 modules
-var threeplugins = __webpack_require__(1829);
+// EXTERNAL MODULE: ./src/build/three.module.js
+var three_module = __webpack_require__(7000);
 ;// CONCATENATED MODULE: ./src/js/Math/raycast_volume.js
 
 
 function raycast_volume_geneator(){
 
-  const orig = new threeplugins/* THREE.Vector3 */.J.Vector3().copy(origin);
-  const projection = new threeplugins/* THREE.Matrix3 */.J.Matrix3();
-  const p = new threeplugins/* THREE.Vector3 */.J.Vector3();
-  const p1 = new threeplugins/* THREE.Vector3 */.J.Vector3();
-  const f = new threeplugins/* THREE.Vector3 */.J.Vector3();
-  const dest = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const orig = new three_module.Vector3().copy(origin);
+  const projection = new three_module.Matrix3();
+  const p = new three_module.Vector3();
+  const p1 = new three_module.Vector3();
+  const f = new three_module.Vector3();
+  const dest = new three_module.Vector3();
   let l_x, l_y, l_z, i, j, k, tmp, k1, k2, l_res;
   const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
 
@@ -57251,14 +57251,14 @@ const raycast_volume = raycast_volume_geneator();
 
 function electrode_from_ct_generator(){
 
-  const cube_dim = new threeplugins/* THREE.Vector3 */.J.Vector3(),
-        cube_size = new threeplugins/* THREE.Vector3 */.J.Vector3(),
-        origin = new threeplugins/* THREE.Vector3 */.J.Vector3(),
-        direction = new threeplugins/* THREE.Vector3 */.J.Vector3(),
-        pos = new threeplugins/* THREE.Vector3 */.J.Vector3();
-  const matrix_ = new threeplugins/* THREE.Matrix4 */.J.Matrix4(),
-        matrix_inv = new threeplugins/* THREE.Matrix4 */.J.Matrix4(),
-        matrix_rot = new threeplugins/* THREE.Matrix3 */.J.Matrix3();
+  const cube_dim = new three_module.Vector3(),
+        cube_size = new three_module.Vector3(),
+        origin = new three_module.Vector3(),
+        direction = new three_module.Vector3(),
+        pos = new three_module.Vector3();
+  const matrix_ = new three_module.Matrix4(),
+        matrix_inv = new three_module.Matrix4(),
+        matrix_rot = new three_module.Matrix3();
 
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
@@ -57272,7 +57272,7 @@ function electrode_from_ct_generator(){
     direction.copy(dir).applyMatrix3(matrix_rot);
 
     /*if(!canvas.__localization_helper){
-      canvas.__localization_helper = new THREE.ArrowHelper(new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 );
+      canvas.__localization_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 );
       canvas.scene.add( canvas.__localization_helper );
     }
     canvas.__localization_helper.position.copy(origin);
@@ -57328,8 +57328,6 @@ const electrode_from_ct = ( inst, canvas ) => {
 
 // EXTERNAL MODULE: ./node_modules/downloadjs/download.js
 var downloadjs_download = __webpack_require__(3729);
-// EXTERNAL MODULE: ./src/build/three.module.js
-var three_module = __webpack_require__(7000);
 ;// CONCATENATED MODULE: ./src/js/jsm/lines/LineSegmentsGeometry.js
 
 
@@ -58552,6 +58550,8 @@ LineSegments2.prototype.isLineSegments2 = true;
 
 
 
+// EXTERNAL MODULE: ./src/js/ext/text_sprite.js
+var text_sprite = __webpack_require__(1086);
 ;// CONCATENATED MODULE: ./src/js/controls/localization.js
 
 
@@ -58564,8 +58564,9 @@ LineSegments2.prototype.isLineSegments2 = true;
 
 
 
+
 // Electrode localization
-const pos = new threeplugins/* THREE.Vector3 */.J.Vector3();
+const pos = new three_module.Vector3();
 const folder_name = constants/* CONSTANTS.FOLDERS.localization */.t.FOLDERS.localization || 'Electrode Localization';
 
 const COL_SELECTED = 0xff0000,
@@ -58591,13 +58592,13 @@ function atlas_label(pos_array, canvas){
         inst = canvas.threebrain_instances.get(`Atlas - aparc_aseg (${sub})`);
   if( !inst ){ return( [ "Unknown", 0 ] ); }
 
-  const margin_voxels = new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray( inst._cube_dim );
-  const margin_lengths = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+  const margin_voxels = new three_module.Vector3().fromArray( inst._cube_dim );
+  const margin_lengths = new three_module.Vector3().set(
     inst._margin_length.xLength,
     inst._margin_length.yLength,
     inst._margin_length.zLength
   );
-  const f = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+  const f = new three_module.Vector3().set(
     margin_lengths.x / margin_voxels.x,
     margin_lengths.y / margin_voxels.y,
     margin_lengths.z / margin_voxels.z
@@ -58675,7 +58676,7 @@ class LocElectrode {
               electrode_scale = 1, text_scale = 1.0) {
     this.isLocElectrode = true;
     // temp vector 3
-    this.__vec3 = new threeplugins/* THREE.Vector3 */.J.Vector3().set( 0, 0, 0 );
+    this.__vec3 = new three_module.Vector3().set( 0, 0, 0 );
     this.subject_code = subject_code;
     this.localization_order = localization_order;
     this._canvas = canvas;
@@ -58748,13 +58749,13 @@ class LocElectrode {
     this.object = inst.object;
     this.object.material.color.set( COL_ENABLED );
 
-    const map = new threeplugins/* THREE.TextTexture */.J.TextTexture( `${localization_order}` );
-    const material = new threeplugins/* THREE.SpriteMaterial */.J.SpriteMaterial( {
+    const map = new text_sprite/* TextTexture */.OD( `${localization_order}` );
+    const material = new three_module.SpriteMaterial( {
       map: map,
       depthTest : false,
       depthWrite : false
     } );
-    const sprite = new threeplugins/* THREE.Sprite2 */.J.Sprite2( material );
+    const sprite = new text_sprite/* Sprite2 */.oj( material );
     this.object.add( sprite );
     this._map = map;
 
@@ -58779,7 +58780,7 @@ class LocElectrode {
       color: 0x0000ff,
       // depthTest: false,
       linewidth: 3,
-      side: threeplugins/* THREE.DoubleSide */.J.DoubleSide
+      side: three_module.DoubleSide
     } );
     const line = new LineSegments2( line_geometry, line_material );
     this._line = line;
@@ -58968,13 +58969,13 @@ class LocElectrode {
     const matrix_ = inst.object.parent.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
-    const margin_voxels = new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray( inst._cube_dim );
-    const margin_lengths = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+    const margin_voxels = new three_module.Vector3().fromArray( inst._cube_dim );
+    const margin_lengths = new three_module.Vector3().set(
       inst._margin_length.xLength,
       inst._margin_length.yLength,
       inst._margin_length.zLength
     );
-    const f = new threeplugins/* THREE.Vector3 */.J.Vector3().set(
+    const f = new three_module.Vector3().set(
       margin_lengths.x / margin_voxels.x,
       margin_lengths.y / margin_voxels.y,
       margin_lengths.z / margin_voxels.z
@@ -58985,9 +58986,9 @@ class LocElectrode {
     const ct_data = inst._cube_values;
 
     const delta = 4;
-    const pos = new threeplugins/* THREE.Vector3 */.J.Vector3(),
-          pos0 = new threeplugins/* THREE.Vector3 */.J.Vector3();
-          // pos1 = new THREE.Vector3();
+    const pos = new three_module.Vector3(),
+          pos0 = new three_module.Vector3();
+          // pos1 = new Vector3();
 
     // get position
     const position = this.instance._params.position;
@@ -59098,26 +59099,18 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
-  /*
-  const margin_nvoxels = new THREE.Vector3().fromArray( inst._cube_dim );
-  const margin_lengths = new THREE.Vector3().set(
-    inst._margin_length.xLength,
-    inst._margin_length.yLength,
-    inst._margin_length.zLength
-  );
-  */
   const src = canvas.main_camera.position;
-  const dst = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const dst = new three_module.Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
-  const step = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const step = new three_module.Vector3();
   electrodes[electrodes.length - 1].object.getWorldPosition( step );
   step.sub( dst ).multiplyScalar( 1 / n );
-  const tmp = new threeplugins/* THREE.Vector3 */.J.Vector3();
-  const est = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const tmp = new three_module.Vector3();
+  const est = new three_module.Vector3();
 
-  const dir = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const dir = new three_module.Vector3();
   const re = [];
   for( let ii = 1; ii < n; ii++ ){
 
@@ -59140,7 +59133,7 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
         delta
       );
       if( res && res.length >= 6 && !isNaN( res[3] )){
-        let est1 = new THREE.Vector3( res[3], res[4], res[5] );
+        let est1 = new Vector3( res[3], res[4], res[5] );
         if( est1.distanceTo(est) < 10 + delta / 10 ){
           re.push(est1);
           break;
@@ -59161,18 +59154,18 @@ function electrode_line_from_slice( canvas, electrodes, size ){
   if( size <= 2 ){ return; }
 
   const src = canvas.main_camera.position;
-  const dst = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const dst = new three_module.Vector3();
 
   canvas.set_raycaster();
   canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
-  const step = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const step = new three_module.Vector3();
   electrodes[electrodes.length - 1].object.getWorldPosition( step );
   step.sub( dst ).multiplyScalar( 1 / n );
-  const tmp = new threeplugins/* THREE.Vector3 */.J.Vector3();
-  const est = new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const tmp = new three_module.Vector3();
+  const est = new three_module.Vector3();
 
   let res;
   const re = [];
@@ -59182,7 +59175,7 @@ function electrode_line_from_slice( canvas, electrodes, size ){
     tmp.copy( step ).multiplyScalar( ii );
     est.copy( dst ).add( tmp );
 
-    re.push( new threeplugins/* THREE.Vector3 */.J.Vector3().copy(est) );
+    re.push( new three_module.Vector3().copy(est) );
   }
 
   return({
@@ -59431,7 +59424,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         if( res.positions.length ){
           const last_elec = electrodes.pop();
           res.direction.normalize();
-          res.positions.push(new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray(
+          res.positions.push(new three_module.Vector3().fromArray(
             last_elec.instance._params.position
           ));
           last_elec.dispose();
@@ -62665,6 +62658,207 @@ function download(data, strFileName, strMimeType) {
 
 /***/ }),
 
+/***/ 1086:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "VW": () => (/* binding */ TextSprite),
+/* harmony export */   "oj": () => (/* binding */ Sprite2),
+/* harmony export */   "OD": () => (/* binding */ TextTexture)
+/* harmony export */ });
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7000);
+
+
+
+class TextSprite extends _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Sprite {
+  constructor(text = '', textHeight = 10, color = 'rgba(255, 255, 255, 1)', font_face = 'Arial') {
+    super(new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.SpriteMaterial({ map: new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Texture(), transparent:true, opacity: 0.5 }));
+    this._text = text;
+    this._textHeight = textHeight;
+    this._color = color;
+
+    this._fontFace = font_face;
+    this._fontSize = 90; // defines text resolution
+    this._fontWeight = 'normal';
+
+    this._canvas = document.createElement('canvas');
+    this._texture = this.material.map;
+    this._texture.minFilter = _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.LinearFilter;
+
+    this._genCanvas();
+  }
+
+  get text() { return this._text; }
+  set text(text) { this._text = text; this._genCanvas(); }
+  get textHeight() { return this._textHeight; }
+  set textHeight(textHeight) { this._textHeight = textHeight; this._genCanvas(); }
+  get color() { return this._color; }
+  set color(color) { this._color = color; this._genCanvas(); }
+  get fontFace() { return this._fontFace; }
+  set fontFace(fontFace) { this._fontFace = fontFace; this._genCanvas(); }
+  get fontSize() { return this._fontSize; }
+  set fontSize(fontSize) { this._fontSize = fontSize; this._genCanvas(); }
+  get fontWeight() { return this._fontWeight; }
+  set fontWeight(fontWeight) { this._fontWeight = fontWeight; this._genCanvas(); }
+
+
+  _genCanvas() {
+    const canvas = this._canvas;
+    const ctx = canvas.getContext('2d');
+
+    const font = `${this.fontWeight} ${this.fontSize}px ${this.fontFace}`;
+
+    ctx.font = font;
+    const textWidth = ctx.measureText(this.text).width;
+    canvas.width = textWidth;
+    canvas.height = this.fontSize;
+
+    ctx.font = font;
+    ctx.fillStyle = this.color;
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(this.text, 0, canvas.height);
+
+    // Inject canvas into sprite
+    this._texture.image = canvas;
+    this._texture.needsUpdate = true;
+
+    this.scale.set(this.textHeight * canvas.width / canvas.height, this.textHeight);
+  }
+
+  clone() {
+    return new this.constructor(this.text, this.textHeight, this.color, this._fontFace).copy(this);
+  }
+
+  copy(source) {
+    _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Sprite.prototype.copy.call(this, source);
+
+    this.color = source.color;
+    this.fontFace = source.fontFace;
+    this.fontSize = source.fontSize;
+    this.fontWeight = source.fontWeight;
+
+    return this;
+  }
+
+}
+
+class Sprite2 extends _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Sprite {
+  constructor( material ) {
+    super( material );
+
+    if( material.map.isTextTexture ){
+      material.map.object = this;
+      // re-draw texture
+      material.map.draw_text( material.map.text );
+    }
+
+  }
+}
+
+class TextTexture extends _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Texture {
+
+  constructor( text, mapping, wrapS, wrapT, magFilter, minFilter, format,
+    type, anisotropy, font = "Courier", size = 32
+  ) {
+
+    const canvas = document.createElement("canvas");
+    super( canvas, mapping, wrapS, wrapT, magFilter, minFilter, format, type, anisotropy );
+
+    // this._text = text || " ";
+    this._size = Math.ceil( size );
+    this._canvas = canvas;
+    // this._canvas.height = this._size;
+    // this._canvas.width = Math.ceil( this._text.length * this._size * 0.6 );
+    this._context = this._canvas.getContext("2d");
+    // this._context.font = `${this._size}px ${font}`;
+    // this._context.fillText( this._text, 0, this._size * 26 / 32);
+    this._font = font;
+		// this.needsUpdate = true;
+		this.isTextTexture = true;
+		this.object = null;
+
+		this.draw_text( text );
+
+	}
+
+	update_scale( v ) {
+	  if( this.object && typeof this.object === "object" &&
+        this.object.isSprite === true )
+    {
+      if( v ){
+        this.object.scale.z = v;
+      }
+      const base_scale = this.object.scale.z;
+      this.object.scale.x = this._text.length * 0.6 * this.object.scale.z;
+      this.object.scale.y = 1 * this.object.scale.z;
+    }
+	}
+
+  // align (0: center, 1: left, 2: right, 3: based on "-" or center)
+	draw_text( text, more_args = {} ){
+
+    this.text = text || "";
+
+    // color = "#000000", shadow_color = "#FFFFF", shadow_blur = 4
+    this._align = more_args.align || "smart";
+    this._color = more_args.color || this._color || "#000000";
+    this._shadow_color = more_args.shadow_color || this._shadow_color || "#FFFFFF";
+    this._shadow_blur = more_args.shadow_blur ||
+                              typeof this._shadow_blur === "undefined" ? 4 : this._shadow_blur;
+
+    if( this.object && typeof this.object === "object" &&
+        this.object.isSprite === true )
+    {
+  	  switch ( this._align ) {
+  	    case 'left':
+  	      this.object.center.x = 0.5 / this.text.length;
+  	      break;
+  	    case 'center':
+  	      this.object.center.x = 0.5;
+  	      break;
+  	    case 'right':
+  	      this.object.center.x = 1.0 - 0.5 / this.text.length;
+  	      break;
+  	    case 'smart':
+  	      // find the first '-'
+  	      const dash = this.text.indexOf("-");
+  	      if( dash >= 0 ){
+  	        this.object.center.x = dash * 0.5 / this.text.length;
+  	      } else {
+  	        this.object.center.x = 0.5;
+  	      }
+  	      break;
+  	    default:
+  	      // do nothing
+  	  }
+    }
+	  this._text = this.text;
+
+    this._canvas.width = Math.ceil( this._text.length * this._size * 0.6 );
+    this._canvas.height = this._size;
+    this._context.clearRect( 0 , 0 , this._canvas.width , this._canvas.height );
+    this._context.font = `${this._size}px ${this._font}`;
+    this._context.fillStyle = this._color;
+    this._context.shadowBlur = this._shadow_blur || 0;
+    this._context.shadowColor = this._shadow_color;
+    this._context.fillText(this._text, 0, this._size * 26 / 32);
+    this.needsUpdate = true;
+
+    this.update_scale();
+
+	}
+
+}
+
+
+
+
+
+
+
+/***/ }),
+
 /***/ 470:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -62815,7 +63009,7 @@ class AbstractThreeBrainObject {
 /* harmony export */ });
 /* unused harmony export add_electrode2 */
 /* harmony import */ var _abstract_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(470);
-/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1829);
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7000);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(3658);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(975);
 
@@ -62833,11 +63027,11 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
     this.isSphere = true;
 
     this._materials = {
-      'MeshBasicMaterial' : new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.MeshBasicMaterial */ .J.MeshBasicMaterial( MATERIAL_PARAMS ),
-      'MeshLambertMaterial': new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.MeshLambertMaterial */ .J.MeshLambertMaterial( MATERIAL_PARAMS )
+      'MeshBasicMaterial' : new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.MeshBasicMaterial( MATERIAL_PARAMS ),
+      'MeshLambertMaterial': new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.MeshLambertMaterial( MATERIAL_PARAMS )
     };
 
-    const gb = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.SphereBufferGeometry */ .J.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+    const gb = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
           values = g.keyframes,
           n_keyframes = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .to_array */ .AA)( g.keyframes ).length;
     this._geometry = gb;
@@ -62852,7 +63046,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
       this._material_type = 'MeshLambertMaterial';
     }
 
-    const mesh = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Mesh */ .J.Mesh(gb, this._materials[ this._material_type ]);
+    const mesh = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Mesh(gb, this._materials[ this._material_type ]);
     mesh.name = 'mesh_sphere_' + g.name;
 
     // FIXME: need to use class instead of canvas.mesh
@@ -63169,7 +63363,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
           const mesh_center = search_group.getWorldPosition( gp_position );
           if( lh_vertices && rh_vertices ){
             // calculate
-            let _tmp = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Vector3 */ .J.Vector3(),
+            let _tmp = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
                 node_idx = -1,
                 min_dist = Infinity,
                 side = '',
@@ -63278,8 +63472,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
     const scode = canvas.state_data.get("target_subject");
     const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
 
-    const gp_position = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Vector3 */ .J.Vector3(),
-          _mpos = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Vector3 */ .J.Vector3();
+    const gp_position = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
+          _mpos = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3();
     _mpos.fromArray( position );
 
     // Search 141 nodes
@@ -63298,7 +63492,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       const mesh_center = search_group.getWorldPosition( gp_position );
       if( lh_vertices && rh_vertices ){
         // calculate
-        let _tmp = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Vector3 */ .J.Vector3(),
+        let _tmp = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3(),
             node_idx = -1,
             min_dist = Infinity,
             side = '',
@@ -63335,8 +63529,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       }
     }
     // calculate MNI305 coordinate
-    const mat1 = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Matrix4 */ .J.Matrix4(),
-          pos_targ = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Vector3 */ .J.Vector3();
+    const mat1 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Matrix4(),
+          pos_targ = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3();
     const v2v_orig = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .get_or_default */ .jM)( canvas.shared_data, scode, {} ).vox2vox_MNI305;
 
     if( v2v_orig ){
@@ -63409,6 +63603,230 @@ function is_electrode(e) {
 
 /***/ }),
 
+/***/ 5858:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AV": () => (/* binding */ Lut),
+/* harmony export */   "cZ": () => (/* binding */ ColorMapKeywords),
+/* harmony export */   "ki": () => (/* binding */ addToColorMapKeywords)
+/* harmony export */ });
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7000);
+
+
+class Lut {
+
+ 	constructor( colormap, count = 32 ) {
+
+		this.lut = [];
+		this.map = [];
+		this.n = 0;
+		this.minV = 0;
+		this.maxV = 1;
+
+		this.setColorMap( colormap, count );
+
+	}
+
+	set( value ) {
+
+		if ( value.isLut === true ) {
+
+			this.copy( value );
+
+		}
+
+		return this;
+
+	}
+
+	setMin( min ) {
+
+		this.minV = min;
+
+		return this;
+
+	}
+
+	setMax( max ) {
+
+		this.maxV = max;
+
+		return this;
+
+	}
+
+	setColorMap( colormap, count = 32 ) {
+
+		this.map = ColorMapKeywords[ colormap ] || ColorMapKeywords.rainbow;
+		this.n = count;
+
+		const step = 1.0 / this.n;
+
+		this.lut.length = 0;
+
+		for ( let i = 0; i <= 1; i += step ) {
+
+			for ( let j = 0; j < this.map.length - 1; j ++ ) {
+
+				if ( i >= this.map[ j ][ 0 ] && i < this.map[ j + 1 ][ 0 ] ) {
+
+					const min = this.map[ j ][ 0 ];
+					const max = this.map[ j + 1 ][ 0 ];
+
+					const minColor = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j ][ 1 ] );
+					const maxColor = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j + 1 ][ 1 ] );
+
+					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+
+					this.lut.push( color );
+
+				}
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+	copy( lut ) {
+
+		this.lut = lut.lut;
+		this.map = lut.map;
+		this.n = lut.n;
+		this.minV = lut.minV;
+		this.maxV = lut.maxV;
+
+		return this;
+
+	}
+
+	getColor( alpha ) {
+
+		if ( alpha <= this.minV ) {
+
+			alpha = this.minV;
+
+		} else if ( alpha >= this.maxV ) {
+
+			alpha = this.maxV;
+
+		}
+
+		alpha = ( alpha - this.minV ) / ( this.maxV - this.minV );
+
+		let colorPosition = Math.round( alpha * this.n );
+		colorPosition == this.n ? colorPosition -= 1 : colorPosition;
+
+		return this.lut[ colorPosition ];
+
+	}
+
+	addColorMap( name, arrayOfColors ) {
+
+		ColorMapKeywords[ name ] = arrayOfColors;
+
+		return this;
+
+	}
+
+	createCanvas() {
+
+		const canvas = document.createElement( 'canvas' );
+		canvas.width = 1;
+		canvas.height = this.n;
+
+		this.updateCanvas( canvas );
+
+		return canvas;
+
+	}
+
+	updateCanvas( canvas ) {
+
+		const ctx = canvas.getContext( '2d', { alpha: false } );
+
+		const imageData = ctx.getImageData( 0, 0, 1, this.n );
+
+		const data = imageData.data;
+
+		let k = 0;
+
+		const step = 1.0 / this.n;
+
+		for ( let i = 1; i >= 0; i -= step ) {
+
+			for ( let j = this.map.length - 1; j >= 0; j -- ) {
+
+				if ( i < this.map[ j ][ 0 ] && i >= this.map[ j - 1 ][ 0 ] ) {
+
+					const min = this.map[ j - 1 ][ 0 ];
+					const max = this.map[ j ][ 0 ];
+
+					const minColor = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j - 1 ][ 1 ] );
+					const maxColor = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j ][ 1 ] );
+
+					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+
+					data[ k * 4 ] = Math.round( color.r * 255 );
+					data[ k * 4 + 1 ] = Math.round( color.g * 255 );
+					data[ k * 4 + 2 ] = Math.round( color.b * 255 );
+					data[ k * 4 + 3 ] = 255;
+
+					k += 1;
+
+				}
+
+			}
+
+		}
+
+		ctx.putImageData( imageData, 0, 0 );
+
+		return canvas;
+
+	}
+
+}
+
+Lut.prototype.isLut = true;
+
+const ColorMapKeywords = {
+
+	'rainbow': [[ 0.0, 0x0000FF ], [ 0.2, 0x00FFFF ], [ 0.5, 0x00FF00 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFF0000 ]],
+	'cooltowarm': [[ 0.0, 0x3C4EC2 ], [ 0.2, 0x9BBCFF ], [ 0.5, 0xDCDCDC ], [ 0.8, 0xF6A385 ], [ 1.0, 0xB40426 ]],
+	'blackbody': [[ 0.0, 0x000000 ], [ 0.2, 0x780000 ], [ 0.5, 0xE63200 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFFFFFF ]],
+	'grayscale': [[ 0.0, 0x000000 ], [ 0.2, 0x404040 ], [ 0.5, 0x7F7F80 ], [ 0.8, 0xBFBFBF ], [ 1.0, 0xFFFFFF ]]
+
+};
+
+function addToColorMapKeywords( color_name, cmap_keys ) {
+  if(ColorMapKeywords[color_name] === undefined){
+    ColorMapKeywords[color_name] = [];
+  }else{
+    ColorMapKeywords[color_name].length = 0;
+  }
+  const arr = ColorMapKeywords[color_name];
+  if(Array.isArray(cmap_keys)){
+    cmap_keys.forEach((el) => {
+      const e = el;
+      if( typeof e[1] === 'string' ){
+        e[1] = e[1].replace("0x", "#");
+      }
+      arr.push( e );
+    });
+  }
+}
+
+
+
+
+
+/***/ }),
+
 /***/ 8173:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -63417,7 +63835,7 @@ function is_electrode(e) {
 /* harmony export */   "P": () => (/* binding */ THREE_BRAIN_SHINY)
 /* harmony export */ });
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3658);
-/* harmony import */ var _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1829);
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7000);
 /* harmony import */ var _geometry_sphere_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(960);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(975);
 /* JS to shiny callbacks
@@ -63466,7 +63884,7 @@ class THREE_BRAIN_SHINY {
     this.shiny_mode = shiny_mode;
     this.shinyId = outputId + '__shiny';
     this.canvas = canvas;
-    this.uuid = _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Math.generateUUID */ .J.Math.generateUUID();
+    this.uuid = _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Math.generateUUID();
 
     this.stack = [];
 
@@ -63496,7 +63914,7 @@ class THREE_BRAIN_SHINY {
 
     // 2. click callback
     // finalize registering
-    const pos = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Vector3 */ .J.Vector3();
+    const pos = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3();
     this.canvas.add_mouse_callback(
       (evt) => {
         return({
@@ -63869,7 +64287,7 @@ class THREE_BRAIN_SHINY {
             this.clear_electrode_group( '__localization__' );
           }
           const _es = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( data.data );
-          const _col = new _threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE.Color */ .J.Color();
+          const _col = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Color();
           _es.forEach((d) => {
             _col.setStyle( d.color || '#FF0000' );
             this.loc_add_electrode( d.electrode, d.label, d.position,
@@ -64021,7 +64439,7 @@ class THREEBRAIN_STORAGE {
 
 /***/ }),
 
-/***/ 5043:
+/***/ 2631:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -64031,8 +64449,695 @@ __webpack_require__.d(__webpack_exports__, {
   "S": () => (/* binding */ THREEBRAIN_CANVAS)
 });
 
+// EXTERNAL MODULE: ./src/build/three.module.js
+var three_module = __webpack_require__(7000);
 // EXTERNAL MODULE: ./src/js/utils.js
 var utils = __webpack_require__(3658);
+;// CONCATENATED MODULE: ./src/js/core/OrthographicTrackballControls.js
+
+
+const OrthographicTrackballControls = function ( object, domElement ) {
+
+	var _this = this;
+	var STATE = { NONE: - 1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
+
+	this.object = object;
+	this.domElement = ( domElement !== undefined ) ? domElement : document;
+
+	// API
+
+	this.enabled = true;
+
+	this.screen = { left: 0, top: 0, width: 0, height: 0 };
+
+	this.radius = 0;
+
+	this.rotateSpeed = 1.0;
+	this.zoomSpeed = 1.2;
+
+	this.noRotate = false;
+	this.noZoom = false;
+	this.noPan = false;
+	this.noRoll = false;
+
+	this.staticMoving = false;
+	this.dynamicDampingFactor = 0.2;
+
+	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
+
+	// internals
+
+	this.target = new three_module.Vector3();
+
+	var EPS = 0.000001;
+
+	var _changed = true;
+
+	var _state = STATE.NONE,
+		_prevState = STATE.NONE,
+
+		_eye = new three_module.Vector3(),
+
+		_rotateStart = new three_module.Vector3(),
+		_rotateEnd = new three_module.Vector3(),
+
+		_zoomStart = new three_module.Vector2(),
+		_zoomEnd = new three_module.Vector2(),
+
+		_touchZoomDistanceStart = 0,
+		_touchZoomDistanceEnd = 0,
+
+		_panStart = new three_module.Vector2(),
+		_panEnd = new three_module.Vector2();
+
+	// for reset
+
+	this.target0 = this.target.clone();
+	this.position0 = this.object.position.clone();
+	this.up0 = this.object.up.clone();
+
+	this.left0 = this.object.left;
+	this.right0 = this.object.right;
+	this.top0 = this.object.top;
+	this.bottom0 = this.object.bottom;
+
+	// events
+
+	var changeEvent = { type: 'change' };
+	var startEvent = { type: 'start' };
+	var endEvent = { type: 'end' };
+
+
+	// methods
+
+	this.handleResize = function () {
+
+		if ( this.domElement === document ) {
+
+			this.screen.left = 0;
+			this.screen.top = 0;
+			this.screen.width = window.innerWidth;
+			this.screen.height = window.innerHeight;
+
+		} else {
+
+			var box = this.domElement.getBoundingClientRect();
+			// adjustments come from similar code in the jquery offset() function
+			var d = this.domElement.ownerDocument.documentElement;
+			this.screen.left = box.left + window.pageXOffset - d.clientLeft;
+			this.screen.top = box.top + window.pageYOffset - d.clientTop;
+			this.screen.width = box.width;
+			this.screen.height = box.height;
+
+		}
+
+		this.radius = 0.5 * Math.min( this.screen.width, this.screen.height );
+
+		this.left0 = this.object.left;
+		this.right0 = this.object.right;
+		this.top0 = this.object.top;
+		this.bottom0 = this.object.bottom;
+
+	};
+
+	var getMouseOnScreen = ( function () {
+
+		var vector = new three_module.Vector2();
+
+		return function getMouseOnScreen( pageX, pageY ) {
+
+			vector.set(
+				( pageX - _this.screen.left ) / _this.screen.width,
+				( pageY - _this.screen.top ) / _this.screen.height
+			);
+
+			return vector;
+
+		};
+
+	}() );
+
+	var getMouseProjectionOnBall = ( function () {
+
+		var vector = new three_module.Vector3();
+		var objectUp = new three_module.Vector3();
+		var mouseOnBall = new three_module.Vector3();
+
+		return function getMouseProjectionOnBall( pageX, pageY, fix_axis = 0 ) {
+
+			mouseOnBall.set(
+				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / _this.radius,
+				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / _this.radius,
+				0.0
+			);
+
+			var length = mouseOnBall.length();
+
+			if( fix_axis === 1 ){
+			  // Fix x
+			  mouseOnBall.x = 0;
+			  length = Math.abs( mouseOnBall.y );
+			}else if ( fix_axis === 2 ){
+			  mouseOnBall.y = 0;
+			  length = Math.abs( mouseOnBall.x );
+			}else if ( fix_axis === 3 ){
+			  mouseOnBall.normalize();
+			  length = 1;
+			}
+
+
+
+			if ( _this.noRoll ) {
+				if ( length < Math.SQRT1_2 ) {
+					mouseOnBall.z = Math.sqrt( 1.0 - length * length );
+				} else {
+					mouseOnBall.z = 0.5 / length;
+				}
+			} else if ( length > 1.0 ) {
+				mouseOnBall.normalize();
+			} else {
+				mouseOnBall.z = Math.sqrt( 1.0 - length * length );
+			}
+
+			_eye.copy( _this.object.position ).sub( _this.target );
+
+			vector.copy( _this.object.up ).setLength( mouseOnBall.y );
+			vector.add( objectUp.copy( _this.object.up ).cross( _eye ).setLength( mouseOnBall.x ) );
+			vector.add( _eye.setLength( mouseOnBall.z ) );
+
+			return vector;
+
+		};
+
+	}() );
+
+	this.rotateCamera = ( function () {
+
+		var axis = new three_module.Vector3(),
+			quaternion = new three_module.Quaternion(),
+			running = false;
+
+
+		return function rotateCamera() {
+
+			var angle = Math.acos( _rotateStart.dot( _rotateEnd ) / _rotateStart.length() / _rotateEnd.length() );
+
+			if ( angle ) {
+			  // start event
+			  running = true;
+			  _this.dispatchEvent( startEvent );
+
+				axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
+
+				angle *= _this.rotateSpeed;
+
+				quaternion.setFromAxisAngle( axis, - angle );
+
+				_eye.applyQuaternion( quaternion );
+
+				_this.object.up.applyQuaternion( quaternion );
+
+				_rotateEnd.applyQuaternion( quaternion );
+
+				if ( _this.staticMoving ) {
+
+					_rotateStart.copy( _rotateEnd );
+
+				} else {
+
+					quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
+					_rotateStart.applyQuaternion( quaternion );
+
+				}
+
+				_changed = true;
+
+			}else if (running){
+			  running = false;
+			  _this.dispatchEvent( endEvent );
+			}
+
+		};
+
+	}() );
+
+	this.zoomCamera = (function(){
+	  var running = false;
+
+	  return function zoomCamera(){
+	    if ( _state === STATE.TOUCH_ZOOM_PAN ) {
+
+  			var factor = _touchZoomDistanceEnd / _touchZoomDistanceStart;
+  			_touchZoomDistanceStart = _touchZoomDistanceEnd;
+
+        if( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ){
+
+          // start event
+  			  running = true;
+  			  _this.dispatchEvent( startEvent );
+
+
+          _this.object.zoom *= factor;
+          _changed = true;
+        }else if(running){
+  			  // stop event
+  			  running = false;
+  			  _this.dispatchEvent( endEvent );
+  			}
+
+  		} else {
+
+  			var factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
+
+  			if ( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ) {
+
+  			  // start event
+  			  running = true;
+  			  _this.dispatchEvent( startEvent );
+
+  				_this.object.zoom /= factor;
+
+  				if ( _this.staticMoving ) {
+
+  					_zoomStart.copy( _zoomEnd );
+
+  				} else {
+
+  					_zoomStart.y += ( _zoomEnd.y - _zoomStart.y ) * this.dynamicDampingFactor;
+
+  				}
+
+  				_changed = true;
+
+  			}else if(running){
+  			  // stop event
+  			  running = false;
+  			  _this.dispatchEvent( endEvent );
+  			}
+
+  		}
+	  };
+	}() );
+
+	this.panCamera = ( function () {
+
+		var mouseChange = new three_module.Vector2(),
+			objectUp = new three_module.Vector3(),
+			pan = new three_module.Vector3(),
+			running = false;
+
+		return function panCamera() {
+
+			mouseChange.copy( _panEnd ).sub( _panStart );
+
+			if ( mouseChange.lengthSq() > 0.00001 ) {
+			  // start event
+			  running = true;
+			  _this.dispatchEvent( startEvent );
+
+				// Scale movement to keep clicked/dragged position under cursor
+				var scale_x = ( _this.object.right - _this.object.left ) / _this.object.zoom;
+				var scale_y = ( _this.object.top - _this.object.bottom ) / _this.object.zoom;
+				mouseChange.x *= scale_x;
+				mouseChange.y *= scale_y;
+
+				pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
+				pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
+
+				/*_this.object.position.add( pan );
+				_this.target.add( pan );*/
+
+				_this.object.right = _this.object.right - mouseChange.x / 2;
+				_this.object.left = _this.object.left - mouseChange.x / 2;
+				_this.object.top = _this.object.top + mouseChange.y / 2;
+				_this.object.bottom = _this.object.bottom + mouseChange.y / 2;
+
+				_this.left0 = _this.object.left;
+    		_this.right0 = _this.object.right;
+    		_this.top0 = _this.object.top;
+    		_this.bottom0 = _this.object.bottom;
+
+				if ( _this.staticMoving ) {
+
+					_panStart.copy( _panEnd );
+
+				} else {
+
+					_panStart.add( mouseChange.subVectors( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
+
+				}
+
+
+				_changed = true;
+
+			}else if (running){
+  		  running = false;
+  		  _this.dispatchEvent( endEvent );
+			}
+
+		};
+
+	}() );
+
+	this.update = function () {
+
+		_eye.subVectors( _this.object.position, _this.target );
+
+		if ( ! _this.noRotate ) {
+
+			_this.rotateCamera();
+
+		}
+
+		if ( ! _this.noZoom ) {
+
+			_this.zoomCamera();
+
+			if ( _changed ) {
+
+				_this.object.updateProjectionMatrix();
+
+			}
+
+		}
+
+		if ( ! _this.noPan ) {
+
+			_this.panCamera();
+
+			if ( _changed ) {
+
+				_this.object.updateProjectionMatrix();
+
+			}
+
+		}
+
+		_this.object.position.addVectors( _this.target, _eye );
+
+		_this.object.lookAt( _this.target );
+
+		if ( _changed ) {
+
+			_this.dispatchEvent( changeEvent );
+
+			_changed = false;
+
+		}
+
+	};
+
+	this.reset = function () {
+
+		_state = STATE.NONE;
+		_prevState = STATE.NONE;
+
+		_this.target.copy( _this.target0 );
+		_this.object.position.copy( _this.position0 );
+		_this.object.up.copy( _this.up0 );
+
+		_eye.subVectors( _this.object.position, _this.target );
+
+		_this.object.left = _this.left0;
+		_this.object.right = _this.right0;
+		_this.object.top = _this.top0;
+		_this.object.bottom = _this.bottom0;
+
+		_this.object.lookAt( _this.target );
+
+		_this.dispatchEvent( changeEvent );
+
+		_changed = false;
+
+	};
+
+	// listeners
+
+	function keydown( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		window.removeEventListener( 'keydown', keydown );
+
+		_prevState = _state;
+
+		if ( _state !== STATE.NONE ) {
+
+			return;
+
+		} else if ( event.keyCode === _this.keys[ STATE.ROTATE ] && ! _this.noRotate ) {
+
+			_state = STATE.ROTATE;
+
+		} else if ( event.keyCode === _this.keys[ STATE.ZOOM ] && ! _this.noZoom ) {
+
+			_state = STATE.ZOOM;
+
+		} else if ( event.keyCode === _this.keys[ STATE.PAN ] && ! _this.noPan ) {
+
+			_state = STATE.PAN;
+
+		}
+
+	}
+
+	function keyup( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		_state = _prevState;
+
+		window.addEventListener( 'keydown', keydown, false );
+
+	}
+
+	function mousedown( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		if ( _state === STATE.NONE ) {
+
+			_state = event.button;
+
+		}
+
+		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
+
+		  // fix axis? altKey -> 3, ctrl -> 2, shift -> 1
+
+			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
+			_rotateEnd.copy( _rotateStart );
+
+		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
+
+			_zoomStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
+			_zoomEnd.copy( _zoomStart );
+
+		} else if ( _state === STATE.PAN && ! _this.noPan ) {
+
+			_panStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
+			_panEnd.copy( _panStart );
+
+		}
+
+		document.addEventListener( 'mousemove', mousemove, false );
+		document.addEventListener( 'mouseup', mouseup, false );
+
+		_this.dispatchEvent( startEvent );
+
+	}
+
+	function mousemove( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
+
+			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
+
+		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
+
+			_zoomEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
+
+		} else if ( _state === STATE.PAN && ! _this.noPan ) {
+
+			_panEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
+
+		}
+
+	}
+
+	function mouseup( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		_state = STATE.NONE;
+
+		document.removeEventListener( 'mousemove', mousemove );
+		document.removeEventListener( 'mouseup', mouseup );
+		_this.dispatchEvent( endEvent );
+
+	}
+
+	function mousewheel( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		_zoomStart.y += event.deltaY * 0.01;
+		_this.dispatchEvent( startEvent );
+		_this.dispatchEvent( endEvent );
+
+	}
+
+	function touchstart( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		switch ( event.touches.length ) {
+
+			case 1:
+				_state = STATE.TOUCH_ROTATE;
+				_rotateStart.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				_rotateEnd.copy( _rotateStart );
+				break;
+
+			case 2:
+				_state = STATE.TOUCH_ZOOM_PAN;
+				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+				_touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
+
+				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				_panStart.copy( getMouseOnScreen( x, y ) );
+				_panEnd.copy( _panStart );
+				break;
+
+			default:
+				_state = STATE.NONE;
+
+		}
+		_this.dispatchEvent( startEvent );
+
+	}
+
+	function touchmove( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		switch ( event.touches.length ) {
+
+			case 1:
+				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				break;
+
+			case 2:
+				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+				_touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
+
+				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				_panEnd.copy( getMouseOnScreen( x, y ) );
+				break;
+
+			default:
+				_state = STATE.NONE;
+
+		}
+
+	}
+
+	function touchend( event ) {
+
+		if ( _this.enabled === false ) return;
+
+		switch ( event.touches.length ) {
+
+			case 1:
+				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				_rotateStart.copy( _rotateEnd );
+				break;
+
+			case 2:
+				_touchZoomDistanceStart = _touchZoomDistanceEnd = 0;
+
+				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				_panEnd.copy( getMouseOnScreen( x, y ) );
+				_panStart.copy( _panEnd );
+				break;
+
+		}
+
+		_state = STATE.NONE;
+		_this.dispatchEvent( endEvent );
+
+	}
+
+	function contextmenu( event ) {
+
+		event.preventDefault();
+
+	}
+
+	this.dispose = function () {
+
+		this.domElement.removeEventListener( 'contextmenu', contextmenu, false );
+		this.domElement.removeEventListener( 'mousedown', mousedown, false );
+		this.domElement.removeEventListener( 'wheel', mousewheel, false );
+
+		this.domElement.removeEventListener( 'touchstart', touchstart, false );
+		this.domElement.removeEventListener( 'touchend', touchend, false );
+		this.domElement.removeEventListener( 'touchmove', touchmove, false );
+
+		document.removeEventListener( 'mousemove', mousemove, false );
+		document.removeEventListener( 'mouseup', mouseup, false );
+
+		window.removeEventListener( 'keydown', keydown, false );
+		window.removeEventListener( 'keyup', keyup, false );
+
+	};
+
+	this.domElement.addEventListener( 'contextmenu', contextmenu, false );
+	this.domElement.addEventListener( 'mousedown', mousedown, false );
+	this.domElement.addEventListener( 'wheel', mousewheel, false );
+
+	this.domElement.addEventListener( 'touchstart', touchstart, false );
+	this.domElement.addEventListener( 'touchend', touchend, false );
+	this.domElement.addEventListener( 'touchmove', touchmove, false );
+
+	window.addEventListener( 'keydown', keydown, false );
+	window.addEventListener( 'keyup', keyup, false );
+
+	this.handleResize();
+
+	// force an update at start
+	this.update();
+
+};
+
+OrthographicTrackballControls.prototype = Object.create( three_module.EventDispatcher.prototype );
+OrthographicTrackballControls.prototype.constructor = OrthographicTrackballControls;
+
+
+
+
 // EXTERNAL MODULE: ./src/js/core/context.js + 2 modules
 var context = __webpack_require__(6326);
 ;// CONCATENATED MODULE: ./src/js/libs/stats.min.js
@@ -64209,8 +65314,6 @@ Stats.Panel = function ( name, fg, bg ) {
 
 
 
-// EXTERNAL MODULE: ./src/js/threeplugins.js + 6 modules
-var threeplugins = __webpack_require__(1829);
 // EXTERNAL MODULE: ./src/js/threebrain_cache.js
 var threebrain_cache = __webpack_require__(5664);
 ;// CONCATENATED MODULE: ./src/js/libs/draggable.js
@@ -64487,9 +65590,9 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 
       });
     }
-    const keyframe = new threeplugins/* THREE.ColorKeyframeTrack */.J.ColorKeyframeTrack(
+    const keyframe = new three_module.ColorKeyframeTrack(
       track_data.target || '.material.color',
-      time_stamp, colors, threeplugins/* THREE.InterpolateDiscrete */.J.InterpolateDiscrete
+      time_stamp, colors, three_module.InterpolateDiscrete
     );
 
     return(keyframe);
@@ -64501,7 +65604,168 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 var sphere = __webpack_require__(960);
 // EXTERNAL MODULE: ./src/js/geometry/abstract.js
 var geometry_abstract = __webpack_require__(470);
+;// CONCATENATED MODULE: ./src/js/shaders/Volume2DShader.js
+
+
+const Volume2dArrayShader_xy = {
+  uniforms: {
+    diffuse: { value: null },
+		depth: { value: 0 },
+		size: { value: new three_module.Vector3( 256, 256, 256 ) },
+		threshold: { value : 0.0 },
+		renderDepth: { value : 1.0 }
+	},
+	vertexShader: [
+    // '#version 300 es',
+    'uniform vec3 size;',
+    'out vec2 vUv;',
+    'void main() {',
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+    // Convert position.xy to 1.0-0.0
+    'vUv.xy = position.xy / size.xy + 0.5;',
+    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+    '}'
+	].join( '\n' ),
+  fragmentShader: [
+    // '#version 300 es',
+
+    'precision highp float;',
+    'precision highp int;',
+    'precision highp sampler2DArray;',
+
+    'uniform sampler2DArray diffuse;',
+    'in vec2 vUv;',
+    'uniform int depth;',
+    'uniform float threshold;',
+    'uniform float renderDepth;',
+    // 'out vec4 out_FragColor;',
+
+    'void main() {',
+
+    'vec4 color = texture( diffuse, vec3( vUv, depth ) );',
+
+    'float is_opaque = float( color.r > threshold );',
+
+    // calculating z-depth, if transparent, make depth 1 (far)
+    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
+    // lighten a bit
+    'gl_FragColor = vec4( color.rrr, is_opaque );',
+
+    '}'
+  ].join( '\n' )
+};
+
+
+
+
+const Volume2dArrayShader_xz = {
+  uniforms: {
+    diffuse: { value: null },
+		depth: { value: 0 },
+		size: { value: new three_module.Vector3( 256, 256, 256 ) },
+		threshold: { value : 0.0 },
+		renderDepth: { value : 1.0 }
+	},
+	vertexShader: [
+    // '#version 300 es',
+    'uniform vec3 size;',
+    'out vec2 vUv;',
+    'void main() {',
+
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+    // Convert position.xz to 1.0-0.0
+    'vUv.xy = position.xy / size.xz + 0.5;',
+    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+    '}'
+	].join( '\n' ),
+  fragmentShader: [
+    // '#version 300 es',
+
+    'precision highp float;',
+    'precision highp int;',
+    'precision highp sampler2DArray;',
+
+    'uniform sampler2DArray diffuse;',
+    'uniform vec3 size;',
+    'in vec2 vUv;',
+    'uniform float depth;',
+    'uniform float threshold;',
+    'uniform float renderDepth;',
+    // 'out vec4 out_FragColor;',
+
+    'void main() {',
+
+    'vec4 color = texture( diffuse, vec3( vUv.x, depth / size.y, floor( vUv.y * size.z ) ) );',
+
+    'float is_opaque = float( color.r > threshold );',
+
+    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
+    // lighten a bit
+    'gl_FragColor = vec4( color.rrr, is_opaque );',
+
+    '}'
+  ].join( '\n' )
+};
+
+const Volume2dArrayShader_yz = {
+  uniforms: {
+    diffuse: { value: null },
+		depth: { value: 0 },
+		size: { value: new three_module.Vector3( 256, 256, 256 ) },
+		threshold: { value : 0.0 },
+		renderDepth: { value : 1.0 }
+	},
+	vertexShader: [
+    // '#version 300 es',
+    'uniform vec3 size;',
+    'out vec2 vUv;',
+    'void main() {',
+
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+    // Convert position.xz to 1.0-0.0
+    'vUv.xy = position.xy / size.yz + 0.5;',
+    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+    '}'
+	].join( '\n' ),
+  fragmentShader: [
+    // '#version 300 es',
+
+    'precision highp float;',
+    'precision highp int;',
+    'precision highp sampler2DArray;',
+
+    'uniform sampler2DArray diffuse;',
+    'uniform vec3 size;',
+    'in vec2 vUv;',
+    'uniform float depth;',
+    'uniform float threshold;',
+    'uniform float renderDepth;',
+    // 'out vec4 out_FragColor;',
+
+    'void main() {',
+
+    'vec4 color = texture( diffuse, vec3( depth / size.x, vUv.x, floor( vUv.y * size.z ) ) );',
+
+    'float is_opaque = float( color.r > threshold );',
+
+    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
+    // lighten a bit
+    'gl_FragColor = vec4( color.rrr, is_opaque );',
+
+    '}'
+  ].join( '\n' )
+};
+
+
+
 ;// CONCATENATED MODULE: ./src/js/geometry/datacube.js
+
 
 
 
@@ -64530,8 +65794,8 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     let mesh, group_name;
 
-    let line_material = new threeplugins/* THREE.LineBasicMaterial */.J.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-        line_geometry = new threeplugins/* THREE.BufferGeometry */.J.BufferGeometry();
+    let line_material = new three_module.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
+        line_geometry = new three_module.BufferGeometry();
     line_material.depthTest = false;
 
 
@@ -64547,56 +65811,56 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
           };
 
     // Generate texture
-    let texture = new threeplugins/* THREE.DataTexture2DArray */.J.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-    texture.format = threeplugins/* THREE.RedFormat */.J.RedFormat;
-  	texture.type = threeplugins/* THREE.UnsignedByteType */.J.UnsignedByteType;
+    let texture = new three_module.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
+    texture.format = three_module.RedFormat;
+  	texture.type = three_module.UnsignedByteType;
   	texture.needsUpdate = true;
   	this._texture = texture;
 
 
     // Shader - XY plane
-  	const shader_xy = threeplugins/* THREE.Volume2dArrayShader_xy */.J.Volume2dArrayShader_xy;
-  	let material_xy = new threeplugins/* THREE.ShaderMaterial */.J.ShaderMaterial({
+  	const shader_xy = Volume2dArrayShader_xy;
+  	let material_xy = new three_module.ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-    		size: { value: new threeplugins/* THREE.Vector3 */.J.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
+    		size: { value: new three_module.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_xy.vertexShader,
   		fragmentShader: shader_xy.fragmentShader,
-  		side: threeplugins/* THREE.DoubleSide */.J.DoubleSide,
+  		side: three_module.DoubleSide,
   		transparent: true
   	});
-  	let geometry_xy = new threeplugins/* THREE.PlaneBufferGeometry */.J.PlaneBufferGeometry( volume.xLength, volume.yLength );
+  	let geometry_xy = new three_module.PlaneBufferGeometry( volume.xLength, volume.yLength );
 
 
-  	let mesh_xy = new threeplugins/* THREE.Mesh */.J.Mesh( geometry_xy, material_xy );
-  	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
+  	let mesh_xy = new three_module.Mesh( geometry_xy, material_xy );
+  	// let mesh_xy2 = new Mesh( geometry_xy, material_xy );
   	mesh_xy.renderOrder = -1;
   	mesh_xy.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
   	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
 
 
   	// Shader - XZ plane
-  	const shader_xz = threeplugins/* THREE.Volume2dArrayShader_xz */.J.Volume2dArrayShader_xz;
-  	let material_xz = new threeplugins/* THREE.ShaderMaterial */.J.ShaderMaterial({
+  	const shader_xz = Volume2dArrayShader_xz;
+  	let material_xz = new three_module.ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-    		size: { value: new threeplugins/* THREE.Vector3 */.J.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
+    		size: { value: new three_module.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_xz.vertexShader,
   		fragmentShader: shader_xz.fragmentShader,
-  		side: threeplugins/* THREE.DoubleSide */.J.DoubleSide,
+  		side: three_module.DoubleSide,
   		transparent: true
   	});
-  	let geometry_xz = new threeplugins/* THREE.PlaneBufferGeometry */.J.PlaneBufferGeometry( volume.xLength, volume.zLength );
+  	let geometry_xz = new three_module.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-  	let mesh_xz = new threeplugins/* THREE.Mesh */.J.Mesh( geometry_xz, material_xz );
+  	let mesh_xz = new three_module.Mesh( geometry_xz, material_xz );
   	mesh_xz.rotateX( Math.PI / 2 );
   	mesh_xz.renderOrder = -1;
   	mesh_xz.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
@@ -64604,23 +65868,23 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
 
   	// Shader - YZ plane
-  	const shader_yz = threeplugins/* THREE.Volume2dArrayShader_yz */.J.Volume2dArrayShader_yz;
-  	let material_yz = new threeplugins/* THREE.ShaderMaterial */.J.ShaderMaterial({
+  	const shader_yz = Volume2dArrayShader_yz;
+  	let material_yz = new three_module.ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-    		size: { value: new threeplugins/* THREE.Vector3 */.J.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
+    		size: { value: new three_module.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_yz.vertexShader,
   		fragmentShader: shader_yz.fragmentShader,
-  		side: threeplugins/* THREE.DoubleSide */.J.DoubleSide,
+  		side: three_module.DoubleSide,
   		transparent: true
   	});
-  	let geometry_yz = new threeplugins/* THREE.PlaneBufferGeometry */.J.PlaneBufferGeometry( volume.xLength, volume.zLength );
+  	let geometry_yz = new three_module.PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-  	let mesh_yz = new threeplugins/* THREE.Mesh */.J.Mesh( geometry_yz, material_yz );
+  	let mesh_yz = new three_module.Mesh( geometry_yz, material_yz );
   	mesh_yz.rotateY( Math.PI / 2);
   	mesh_yz.rotateZ( Math.PI / 2); // Back side
   	mesh_yz.renderOrder = -1;
@@ -64635,14 +65899,14 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     const line_vert = [];
   	line_vert.push(
-    	new threeplugins/* THREE.Vector3 */.J.Vector3( -_mhw, -_mhw, 0 ),
-    	new threeplugins/* THREE.Vector3 */.J.Vector3( _mhw, _mhw, 0 )
+    	new three_module.Vector3( -_mhw, -_mhw, 0 ),
+    	new three_module.Vector3( _mhw, _mhw, 0 )
     );
     line_geometry.setFromPoints( line_vert );
 
-    let line_mesh_xz = new threeplugins/* THREE.Line */.J.Line( line_geometry, line_material ),
-        line_mesh_xy = new threeplugins/* THREE.Line */.J.Line( line_geometry, line_material ),
-        line_mesh_yz = new threeplugins/* THREE.Line */.J.Line( line_geometry, line_material );
+    let line_mesh_xz = new three_module.Line( line_geometry, line_material ),
+        line_mesh_xy = new three_module.Line( line_geometry, line_material ),
+        line_mesh_yz = new three_module.Line( line_geometry, line_material );
     line_mesh_xz.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
     line_mesh_xy.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
     line_mesh_yz.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
@@ -64769,7 +66033,182 @@ function gen_datacube(g, canvas){
 
 
 
+;// CONCATENATED MODULE: ./src/js/shaders/VolumeShader.js
+
+
+const remove_comments = (s) => {
+  return(s.split("\n").map((e) => {
+      return(
+        e.replaceAll(/\/\/.*/g, "")
+      );
+    }).join("\n"));
+};
+
+const VolumeRenderShader1 = {
+    uniforms: {
+      cmap: { value: null },
+      nmap: { value: null },
+      mask: { value: null },
+      alpha : { value: -1.0 },
+      steps: { value: 300 },
+      scale_inv: { value: new three_module.Vector3() },
+      screenPos: { value: new three_module.Vector3() },
+      bounding: { value : 0.5 }
+    },
+    vertexShader: remove_comments(`#version 300 es
+precision highp float;
+in vec3 position;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec3 cameraPosition;
+uniform vec3 scale_inv;
+uniform vec3 screenPos;
+
+out mat4 pmv;
+out vec3 vOrigin;
+out vec3 vDirection;
+void main() {
+  pmv = projectionMatrix * modelViewMatrix;
+
+  // For perspective camera, vorigin is camera
+  // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
+  // vOrigin = - vorig.xyz * scale_inv;
+  // vDirection = position * scale_inv - vOrigin;
+
+  // Orthopgraphic camera, camera position in theory is at infinite
+  // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
+  // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
+  // obtains Orthopgraphic direction, which can be directly used as ray direction
+
+  // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
+  // vDirection = inverse( pmv )[3].xyz * scale_inv;
+  vec4 vdir = inverse( pmv ) * vec4( screenPos.x / screenPos.z, screenPos.y / screenPos.z, 1.0, 1.0 );
+  vDirection = vdir.xyz * scale_inv  / vdir.w;
+
+  // Previous test code, seems to be poor because camera position is not well-calculated?
+  // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
+  // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  vOrigin = (position) * scale_inv - vDirection;
+
+  // sample need to shift by 0.5 voxel
+  // gl_Position = pmv * vec4( position + 0.5, 1.0 );
+  gl_Position = pmv * vec4( position, 1.0 );
+}`),
+    fragmentShader: remove_comments(`#version 300 es
+precision highp float;
+precision mediump sampler3D;
+in vec3 vOrigin;
+in vec3 vDirection;
+in mat4 pmv;
+out vec4 color;
+uniform sampler3D cmap;
+uniform sampler3D nmap;
+uniform float alpha;
+uniform float steps;
+uniform vec3 scale_inv;
+uniform float bounding;
+vec4 fcolor;
+vec2 hitBox( vec3 orig, vec3 dir ) {
+  vec3 box_min = vec3( - bounding );
+  vec3 box_max = vec3( bounding );
+  vec3 inv_dir = 1.0 / dir;
+  vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
+  vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
+  vec3 tmin = min( tmin_tmp, tmax_tmp );
+  vec3 tmax = max( tmin_tmp, tmax_tmp );
+  float t0 = max( tmin.x, max( tmin.y, tmin.z ) );
+  float t1 = min( tmax.x, min( tmax.y, tmax.z ) );
+  return vec2( t0, t1 );
+}
+float getDepth( vec3 p ){
+  vec4 frag2 = pmv * vec4( p, scale_inv );
+  return (frag2.z / frag2.w / 2.0 + 0.5);
+}
+vec4 sample2( vec3 p ) {
+  return texture( cmap, p + 0.5 );
+}
+vec3 getNormal( vec3 p ) {
+  vec3 re = vec3( texture( nmap, p + 0.5 ).rgb *  255.0 - 127.0 );
+  return normalize( re );
+}
+
+void main(){
+  vec3 rayDir = normalize( vDirection );
+  vec2 bounds = hitBox( vOrigin, rayDir );
+  if ( bounds.x > bounds.y ) discard;
+  bounds.x = max( bounds.x, 0.0 );
+  // 0-255 need to be 0.5-255.5
+  vec3 p = vOrigin + bounds.x * rayDir;
+  vec3 inc = 1.0 / abs( rayDir );
+  float delta = min( inc.x, min( inc.y, inc.z ) );
+  delta /= steps;
+
+  int nn = 0;
+  int valid_voxel = 0;
+  float mix_factor = 1.0;
+  vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
+  vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
+
+  for ( float t = bounds.x; t < bounds.y; t += delta ) {
+    fcolor = sample2( p );
+
+    // Hit voxel
+    if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
+
+      if( alpha >= 0.0 ){
+        fcolor.a = alpha;
+      }
+
+
+      if( fcolor.rgb != last_color.rgb ){
+        // We are right on the surface
+
+        last_color = fcolor;
+
+        // reflect light
+        fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
+
+        if( nn == 0 ){
+          gl_FragDepth = getDepth( p );
+          color = fcolor;
+          color.a = max( color.a, 0.2 );
+        } else {
+          // blend
+          color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
+          color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
+          // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
+        }
+
+        nn++;
+
+      }
+
+      valid_voxel = 1;
+
+      if( nn >= 10 || color.a > 0.95 ){
+        break;
+      }
+
+    } else if ( valid_voxel > 0 ) {
+
+      // Leaving the structure reset states
+      last_color.rgb = zero_rgb;
+      valid_voxel = 0;
+    }
+    p += rayDir * delta;
+  }
+  if ( nn == 0 || color.a == 0.0 ) discard;
+
+  // calculate alpha at depth
+}`)};
+
+
+
+
 ;// CONCATENATED MODULE: ./src/js/geometry/datacube2.js
+
 
 
 
@@ -64782,7 +66221,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
   _compute_normals() {
 
     let i = 0, ii = 0, jj,
-        nml = new threeplugins/* THREE.Vector3 */.J.Vector3(), u = new threeplugins/* THREE.Vector3 */.J.Vector3(),
+        nml = new three_module.Vector3(), u = new three_module.Vector3(),
         tmp, x, y, z, a, b, c;
     const zdim = this._cube_dim[0],
           ydim = this._cube_dim[1],
@@ -64922,7 +66361,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
           ),
           0.5
         );
-        this.object.material.uniformsNeedUpdate = true
+        this.object.material.uniformsNeedUpdate = true;
       }
 
       if( this._color_texture ){
@@ -65031,13 +66470,13 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._compute_normals();
 
       // 3D texture
-      /*let data_texture = new THREE.DataTexture3D(
+      /*let data_texture = new DataTexture3D(
         this._map_data, cube_dim[0], cube_dim[1], cube_dim[2]
       );
-      data_texture.minFilter = THREE.NearestFilter;
-      data_texture.magFilter = THREE.NearestFilter;
-      data_texture.format = THREE.RedFormat;
-      data_texture.type = THREE.FloatType;
+      data_texture.minFilter = NearestFilter;
+      data_texture.magFilter = NearestFilter;
+      data_texture.format = RedFormat;
+      data_texture.type = FloatType;
       data_texture.unpackAlignment = 1;
       data_texture.needsUpdate = true;
       this._data_texture = data_texture;
@@ -65045,40 +66484,40 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
 
       // Color texture - used to render colors
-      let color_texture = new threeplugins/* THREE.DataTexture3D */.J.DataTexture3D(
+      let color_texture = new three_module.DataTexture3D(
         color, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
-      color_texture.minFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-      color_texture.magFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-      color_texture.format = threeplugins/* THREE.RGBAFormat */.J.RGBAFormat;
-      color_texture.type = threeplugins/* THREE.UnsignedByteType */.J.UnsignedByteType;
+      color_texture.minFilter = three_module.NearestFilter;
+      color_texture.magFilter = three_module.NearestFilter;
+      color_texture.format = three_module.RGBAFormat;
+      color_texture.type = three_module.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
       this._color_texture = color_texture;
       this._color_texture.needsUpdate = true;
 
       // normals
-      let normals_texture = new threeplugins/* THREE.DataTexture3D */.J.DataTexture3D(
+      let normals_texture = new three_module.DataTexture3D(
         normals, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
       // magFilter must be nearest
       // minFilter can be locally smoothed
-      normals_texture.minFilter = threeplugins/* THREE.LinearFilter */.J.LinearFilter;
-      normals_texture.magFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-      normals_texture.format = threeplugins/* THREE.RGBFormat */.J.RGBFormat;
-      normals_texture.type = threeplugins/* THREE.UnsignedByteType */.J.UnsignedByteType;
+      normals_texture.minFilter = three_module.LinearFilter;
+      normals_texture.magFilter = three_module.NearestFilter;
+      normals_texture.format = three_module.RGBFormat;
+      normals_texture.type = three_module.UnsignedByteType;
       normals_texture.unpackAlignment = 1;
 
       this._normals_texture = normals_texture;
       this._normals_texture.needsUpdate = true;
 
       // Material
-      const shader = threeplugins/* THREE.VolumeRenderShader1 */.J.VolumeRenderShader1;
+      const shader = VolumeRenderShader1;
 
 
-      let uniforms = threeplugins/* THREE.UniformsUtils.clone */.J.UniformsUtils.clone( shader.uniforms );
+      let uniforms = three_module.UniformsUtils.clone( shader.uniforms );
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
       uniforms.nmap.value = normals_texture;
@@ -65097,25 +66536,25 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       bounding = Math.min(bounding, 0.5);
       uniforms.bounding.value = bounding;
 
-      let material = new threeplugins/* THREE.RawShaderMaterial */.J.RawShaderMaterial( {
+      let material = new three_module.RawShaderMaterial( {
         uniforms: uniforms,
         vertexShader: shader.vertexShader,
         fragmentShader: shader.fragmentShader,
-        side: threeplugins/* THREE.BackSide */.J.BackSide, // The volume shader uses the backface as its "reference point"
+        side: three_module.BackSide, // The volume shader uses the backface as its "reference point"
         transparent : true
       } );
 
-      let geometry = new threeplugins/* THREE.SphereBufferGeometry */.J.SphereBufferGeometry(
-        new threeplugins/* THREE.Vector3 */.J.Vector3().fromArray(cube_half_size).length(), 29, 14
+      let geometry = new three_module.SphereBufferGeometry(
+        new three_module.Vector3().fromArray(cube_half_size).length(), 29, 14
       );
 
-      // let geometry = new THREE.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
+      // let geometry = new BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
 
-      mesh = new threeplugins/* THREE.Mesh */.J.Mesh( geometry, material );
+      mesh = new three_module.Mesh( geometry, material );
       mesh.name = 'mesh_datacube_' + g.name;
 
       mesh.position.fromArray( g.position );
@@ -65188,8 +66627,6 @@ function gen_datacube2(g, canvas){
 
 
 
-// EXTERNAL MODULE: ./src/build/three.module.js
-var three_module = __webpack_require__(7000);
 ;// CONCATENATED MODULE: ./src/js/ext/geometries/TubeBufferGeometry2.js
 
 
@@ -65427,16 +66864,16 @@ class TubeBufferGeometry2 extends three_module.BufferGeometry {
 
 // construct curve
 function CustomLine( targets ) {
-	threeplugins/* THREE.Curve.call */.J.Curve.call( this );
+	three_module.Curve.call( this );
 	this.targets = targets;
 	this._cached = targets.map((v) => {
-	  return(new threeplugins/* THREE.Vector3 */.J.Vector3());
+	  return(new three_module.Vector3());
 	});
 }
-CustomLine.prototype = Object.create( threeplugins/* THREE.Curve.prototype */.J.Curve.prototype );
+CustomLine.prototype = Object.create( three_module.Curve.prototype );
 CustomLine.prototype.constructor = CustomLine;
 CustomLine.prototype.getPoint = function ( t, optionalTarget ) {
-  const tp = optionalTarget || new threeplugins/* THREE.Vector3 */.J.Vector3();
+  const tp = optionalTarget || new three_module.Vector3();
 	tp.x = this.targets[0].x * (1.0 - t) + this.targets[1].x * t;
   tp.y = this.targets[0].y * (1.0 - t) + this.targets[1].y * t;
   tp.z = this.targets[0].z * (1.0 - t) + this.targets[1].z * t;
@@ -65504,9 +66941,9 @@ class TubeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this._geometry = new TubeBufferGeometry2( this._curve, this.tubularSegments,
                                               this.radius, this.radialSegments, this.is_closed );
 
-    this._material = new threeplugins/* THREE.MeshLambertMaterial */.J.MeshLambertMaterial();
+    this._material = new three_module.MeshLambertMaterial();
 
-    this.object = new threeplugins/* THREE.Mesh */.J.Mesh( this._geometry, this._material );
+    this.object = new three_module.Mesh( this._geometry, this._material );
     this._mesh = this.object;
 
 
@@ -65749,9 +67186,9 @@ if( which_map == 1 ){
 
 const MATERIAL_PARAMS = {
   'transparent' : true,
-  'side': threeplugins/* THREE.DoubleSide */.J.DoubleSide,
+  'side': three_module.DoubleSide,
   'wireframeLinewidth' : 0.1,
-  'vertexColors' : threeplugins/* THREE.VertexColors */.J.VertexColors
+  'vertexColors' : three_module.VertexColors
 };
 
 // freemesh
@@ -65766,7 +67203,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     if( !this._track_color ){
       const track_color = new Uint8Array( this.__nvertices * 3 ).fill(255);
       this._track_color = track_color;
-      this._geometry.setAttribute( 'track_color', new threeplugins/* THREE.BufferAttribute */.J.BufferAttribute( track_color, 3, true ) );
+      this._geometry.setAttribute( 'track_color', new three_module.BufferAttribute( track_color, 3, true ) );
     }
   }
 
@@ -65907,7 +67344,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
       this._material_type = material_type;
       this._mesh.material = _m;
-      this._mesh.material.vertexColors = threeplugins/* THREE.VertexColors */.J.VertexColors;
+      this._mesh.material.vertexColors = three_module.VertexColors;
       this._mesh.material.opacity = _o;
       this._mesh.material.needsUpdate = true;
       if( update_canvas ){
@@ -65930,23 +67367,23 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       const elec_size = this._linked_electrodes.length;
       if( elec_size == 0 ){ return; }
       const elec_locs = new Uint8Array( elec_size * 3 );
-      const locs_texture = new threeplugins/* THREE.DataTexture */.J.DataTexture( elec_locs, elec_size, 1 );
+      const locs_texture = new three_module.DataTexture( elec_locs, elec_size, 1 );
 
-      locs_texture.minFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-      locs_texture.magFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-      locs_texture.format = threeplugins/* THREE.RGBFormat */.J.RGBFormat;
-      locs_texture.type = threeplugins/* THREE.UnsignedByteType */.J.UnsignedByteType;
+      locs_texture.minFilter = three_module.NearestFilter;
+      locs_texture.magFilter = three_module.NearestFilter;
+      locs_texture.format = three_module.RGBFormat;
+      locs_texture.type = three_module.UnsignedByteType;
       locs_texture.unpackAlignment = 1;
       locs_texture.needsUpdate = true;
       this._material_options.elec_locs.value = locs_texture;
 
       const elec_cols = new Uint8Array( elec_size * 3 );
-      const cols_texture = new threeplugins/* THREE.DataTexture */.J.DataTexture( elec_cols, elec_size, 1 );
+      const cols_texture = new three_module.DataTexture( elec_cols, elec_size, 1 );
 
-      cols_texture.minFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-      cols_texture.magFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-      cols_texture.format = threeplugins/* THREE.RGBFormat */.J.RGBFormat;
-      cols_texture.type = threeplugins/* THREE.UnsignedByteType */.J.UnsignedByteType;
+      cols_texture.minFilter = three_module.NearestFilter;
+      cols_texture.magFilter = three_module.NearestFilter;
+      cols_texture.format = three_module.RGBFormat;
+      cols_texture.type = three_module.UnsignedByteType;
       cols_texture.unpackAlignment = 1;
       cols_texture.needsUpdate = true;
       this._material_options.elec_cols.value = cols_texture;
@@ -65961,7 +67398,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     const e_locs = this._material_options.elec_locs.value.image.data;
     const e_cols = this._material_options.elec_cols.value.image.data;
 
-    const p = new threeplugins/* THREE.Vector3 */.J.Vector3();
+    const p = new three_module.Vector3();
     let ii = 0;
     this._linked_electrodes.forEach((el) => {
       if( el.material.isMeshBasicMaterial ){
@@ -66084,13 +67521,13 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this._volume_margin_size = 128;
     this._volume_array = new Uint8Array( 32 );
     // fake texture, will update later
-    this._volume_texture = new threeplugins/* THREE.DataTexture3D */.J.DataTexture3D(
+    this._volume_texture = new three_module.DataTexture3D(
       this._volume_array, 2, 2, 2
     );
-    this._volume_texture.minFilter = threeplugins/* THREE.NearestFilter */.J.NearestFilter;
-    this._volume_texture.magFilter = threeplugins/* THREE.LinearFilter */.J.LinearFilter;
-    this._volume_texture.format = threeplugins/* THREE.RGBAFormat */.J.RGBAFormat;
-    this._volume_texture.type = threeplugins/* THREE.UnsignedByteType */.J.UnsignedByteType;
+    this._volume_texture.minFilter = three_module.NearestFilter;
+    this._volume_texture.magFilter = three_module.LinearFilter;
+    this._volume_texture.format = three_module.RGBAFormat;
+    this._volume_texture.type = three_module.UnsignedByteType;
     this._volume_texture.unpackAlignment = 1;
 
 
@@ -66098,12 +67535,12 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       'which_map'         : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
       'volume_map'        : { value : this._volume_texture },
       'scale_inv'         : {
-        value : new threeplugins/* THREE.Vector3 */.J.Vector3(
+        value : new three_module.Vector3(
           1 / this._volume_margin_size, 1 / this._volume_margin_size,
           1 / this._volume_margin_size
         )
       },
-      'shift'             : { value : new threeplugins/* THREE.Vector3 */.J.Vector3() },
+      'shift'             : { value : new three_module.Vector3() },
       'sampler_bias'      : { value : 3.0 },
       'sampler_step'      : { value : 1.5 },
       'elec_cols'         : { value : null },
@@ -66117,16 +67554,16 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     this._materials = {
       'MeshPhongMaterial' : compile_free_material(
-        new threeplugins/* THREE.MeshPhongMaterial */.J.MeshPhongMaterial( MATERIAL_PARAMS),
+        new three_module.MeshPhongMaterial( MATERIAL_PARAMS),
         this._material_options, this._canvas.main_renderer
       ),
       'MeshLambertMaterial': compile_free_material(
-        new threeplugins/* THREE.MeshLambertMaterial */.J.MeshLambertMaterial( MATERIAL_PARAMS ),
+        new three_module.MeshLambertMaterial( MATERIAL_PARAMS ),
         this._material_options, this._canvas.main_renderer
       )
     };
 
-    this._geometry = new threeplugins/* THREE.BufferGeometry */.J.BufferGeometry();
+    this._geometry = new three_module.BufferGeometry();
 
     // construct geometry
     this.__nvertices = vertices.length;
@@ -66147,13 +67584,13 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       face_orders[ ii * 3 + 2 ] = v[2];
     });
 
-    this._geometry.setIndex( new threeplugins/* THREE.BufferAttribute */.J.BufferAttribute(face_orders, 1) );
-    this._geometry.setAttribute( 'position', new threeplugins/* THREE.BufferAttribute */.J.BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'color', new threeplugins/* THREE.BufferAttribute */.J.BufferAttribute( vertex_color, 3, true ) );
+    this._geometry.setIndex( new three_module.BufferAttribute(face_orders, 1) );
+    this._geometry.setAttribute( 'position', new three_module.BufferAttribute(vertex_positions, 3) );
+    this._geometry.setAttribute( 'color', new three_module.BufferAttribute( vertex_color, 3, true ) );
 
 
-    // gb.setAttribute( 'color', new THREE.Float32BufferAttribute( vertex_colors, 3 ) );
-    // gb.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+    // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );
+    // gb.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
 
     this._geometry.computeVertexNormals();
     this._geometry.computeBoundingBox();
@@ -66163,7 +67600,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this._geometry.name = 'geom_free_' + g.name;
 
     this._material_type = g.material_type || 'MeshPhongMaterial';
-    this._mesh = new threeplugins/* THREE.Mesh */.J.Mesh(this._geometry, this._materials[this._material_type]);
+    this._mesh = new three_module.Mesh(this._geometry, this._materials[this._material_type]);
     this._mesh.name = 'mesh_free_' + g.name;
 
     this._mesh.position.fromArray(g.position);
@@ -66215,8 +67652,11 @@ function gen_free(g, canvas){
 
 
 
+// EXTERNAL MODULE: ./src/js/ext/text_sprite.js
+var text_sprite = __webpack_require__(1086);
 ;// CONCATENATED MODULE: ./src/js/geometry/compass.js
 /* mesh objects that always stays at the corner of canvas */
+
 
 
 
@@ -66228,14 +67668,14 @@ class Compass {
     this._control = control;
     this._text = text;
 
-    this.container = new threeplugins/* THREE.Group */.J.Group();
+    this.container = new three_module.Group();
 
     for( let ii in text ){
-      let geom = new threeplugins/* THREE.CylinderGeometry */.J.CylinderGeometry( 0.5, 0.5, 3, 8 );
+      let geom = new three_module.CylinderGeometry( 0.5, 0.5, 3, 8 );
       let _c = [0,0,0];
       _c[ ii ] = 1;
-      let color = new threeplugins/* THREE.Color */.J.Color().fromArray( _c );
-      let line = new threeplugins/* THREE.Mesh */.J.Mesh( geom, new threeplugins/* THREE.MeshBasicMaterial */.J.MeshBasicMaterial({ color: color, side: threeplugins/* THREE.DoubleSide */.J.DoubleSide }) );
+      let color = new three_module.Color().fromArray( _c );
+      let line = new three_module.Mesh( geom, new three_module.MeshBasicMaterial({ color: color, side: three_module.DoubleSide }) );
       line.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
 
       let _tmp = ['rotateZ', null, 'rotateX'][ii];
@@ -66246,7 +67686,7 @@ class Compass {
       this.container.add( line );
 
       _c[ ii ] = 255;
-      let sprite = new threeplugins/* THREE.TextSprite */.J.TextSprite(text[ ii ], 3, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
+      let sprite = new text_sprite/* TextSprite */.VW(text[ ii ], 3, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
       _c[ ii ] = 5;
       sprite.position.fromArray( _c );
       sprite.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
@@ -66278,12 +67718,16 @@ class Compass {
 
 
 
+// EXTERNAL MODULE: ./src/js/jsm/math/Lut2.js
+var Lut2 = __webpack_require__(5858);
 // EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
 var converter = __webpack_require__(7542);
 // EXTERNAL MODULE: ./node_modules/downloadjs/download.js
 var download = __webpack_require__(3729);
 var download_default = /*#__PURE__*/__webpack_require__.n(download);
 ;// CONCATENATED MODULE: ./src/js/threejs_scene.js
+
+
 
 
 
@@ -66376,7 +67820,7 @@ class THREEBRAIN_CANVAS {
     this.ready = false;
     this._time_info = {
       selected_object : {
-        position: new threeplugins/* THREE.Vector3 */.J.Vector3()
+        position: new three_module.Vector3()
       }
     };
 
@@ -66454,7 +67898,7 @@ class THREEBRAIN_CANVAS {
     this.animation_clips = new Map();
     this.color_maps = new Map();
     // Important, this keeps animation clock aligned with real-time PC clock.
-    this.clock = new threeplugins/* THREE.Clock */.J.Clock();
+    this.clock = new three_module.Clock();
 
     // Set pixel ratio, separate settings for main and side renderers
     this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
@@ -66470,8 +67914,8 @@ class THREEBRAIN_CANVAS {
 
     // General scene.
     // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another to set render order
-    this.scene = new threeplugins/* THREE.Scene */.J.Scene();
-    this.origin = new threeplugins/* THREE.Object3D */.J.Object3D();
+    this.scene = new three_module.Scene();
+    this.origin = new three_module.Object3D();
     this.origin.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
     this.scene.add( this.origin );
 
@@ -66487,8 +67931,8 @@ class THREEBRAIN_CANVAS {
           center/lookat: origin (0,0,0)
           up: 0,1,0 ( heads up )
     */
-    this.main_camera = new threeplugins/* THREE.OrthographicCamera */.J.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
-    // this.main_camera = new THREE.PerspectiveCamera( 20, width / height, 0.1, 10000 );
+    this.main_camera = new three_module.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
+    // this.main_camera = new PerspectiveCamera( 20, width / height, 0.1, 10000 );
 
 		this.main_camera.position.x = 500;
 		this.main_camera.userData.pos = [500,0,0];
@@ -66503,7 +67947,7 @@ class THREEBRAIN_CANVAS {
 
 		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
 		// Maybe we should get rid of directional light as it will cause reflactions?
-    const main_light = new threeplugins/* THREE.DirectionalLight */.J.DirectionalLight( constants/* CONSTANTS.COLOR_MAIN_LIGHT */.t.COLOR_MAIN_LIGHT , 0.5 );
+    const main_light = new three_module.DirectionalLight( constants/* CONSTANTS.COLOR_MAIN_LIGHT */.t.COLOR_MAIN_LIGHT , 0.5 );
     main_light.position.copy( constants/* CONSTANTS.VEC_ANAT_I */.t.VEC_ANAT_I );
     main_light.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
     main_light.name = 'main light - directional';
@@ -66513,7 +67957,7 @@ class THREEBRAIN_CANVAS {
     this.add_to_scene( this.main_camera, true );
 
     // Add ambient light to make scene soft
-    const ambient_light = new threeplugins/* THREE.AmbientLight */.J.AmbientLight( constants/* CONSTANTS.COLOR_AMBIENT_LIGHT */.t.COLOR_AMBIENT_LIGHT, 1.0 );
+    const ambient_light = new three_module.AmbientLight( constants/* CONSTANTS.COLOR_AMBIENT_LIGHT */.t.COLOR_AMBIENT_LIGHT, 1.0 );
     ambient_light.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
     ambient_light.name = 'main light - ambient';
     this.add_to_scene( ambient_light, true ); // soft white light
@@ -66524,11 +67968,11 @@ class THREEBRAIN_CANVAS {
       // We need to use webgl2 for VolumeRenderShader1 to work
       let main_canvas_el = document.createElement('canvas'),
           main_context = main_canvas_el.getContext( 'webgl2' );
-    	this.main_renderer = new threeplugins/* THREE.WebGLRenderer */.J.WebGLRenderer({
+    	this.main_renderer = new three_module.WebGLRenderer({
     	  antialias: false, alpha: true, canvas: main_canvas_el, context: main_context
     	});
     }else{
-    	this.main_renderer = new threeplugins/* THREE.WebGLRenderer */.J.WebGLRenderer({ antialias: false, alpha: true });
+    	this.main_renderer = new three_module.WebGLRenderer({ antialias: false, alpha: true });
     }
   	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
   	this.main_renderer.setSize( width, height );
@@ -66542,13 +67986,13 @@ class THREEBRAIN_CANVAS {
       // We need to use webgl2 for VolumeRenderShader1 to work
       let side_canvas_el = document.createElement('canvas'),
           side_context = side_canvas_el.getContext( 'webgl2' );
-    	this.side_renderer = new threeplugins/* THREE.WebGLRenderer */.J.WebGLRenderer({
+    	this.side_renderer = new three_module.WebGLRenderer({
     	  antialias: false, alpha: true,
     	  canvas: side_canvas_el, context: side_context,
     	  depths: false
     	});
     }else{
-    	this.side_renderer = new threeplugins/* THREE.WebGLRenderer */.J.WebGLRenderer( { antialias: false, alpha: true } );
+    	this.side_renderer = new three_module.WebGLRenderer( { antialias: false, alpha: true } );
     }
 
   	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
@@ -66690,9 +68134,9 @@ class THREEBRAIN_CANVAS {
 
 
 			// Add cameras
-			const camera = new threeplugins/* THREE.OrthographicCamera */.J.OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
+			const camera = new three_module.OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
 			// Side light is needed so that side views are visible.
-			const side_light = new threeplugins/* THREE.DirectionalLight */.J.DirectionalLight( 0xefefef, 0.5 );
+			const side_light = new three_module.DirectionalLight( 0xefefef, 0.5 );
 
 			if( idx === 0 ){
 			  // coronal (FB)
@@ -66717,7 +68161,7 @@ class THREEBRAIN_CANVAS {
 			  side_light.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
 			}
 
-			camera.lookAt( new threeplugins/* THREE.Vector3 */.J.Vector3(0,0,0) );
+			camera.lookAt( new three_module.Vector3(0,0,0) );
 			camera.aspect = 1;
 			camera.updateProjectionMatrix();
 			[1, 4, 5, 6, 7, 13].forEach((ly) => {
@@ -66785,7 +68229,7 @@ class THREEBRAIN_CANVAS {
             // this._axial_depth = -_y;
           }
           // Also set main_camera
-          const _d = new threeplugins/* THREE.Vector3 */.J.Vector3(
+          const _d = new three_module.Vector3(
             // this._sagittal_depth || 0,
             this.state_data.get( 'sagittal_depth' ),
 
@@ -66800,7 +68244,7 @@ class THREEBRAIN_CANVAS {
           }
 
           if( e.shiftKey ){
-            const heads_up = new threeplugins/* THREE.Vector3 */.J.Vector3(0, 0, 1);
+            const heads_up = new three_module.Vector3(0, 0, 1);
             // calculate camera up
             let _cp = this.main_camera.position.clone().cross( heads_up ).cross( _d ).normalize();
             if( _cp.length() < 0.5 ){
@@ -66906,7 +68350,7 @@ class THREEBRAIN_CANVAS {
     // Controls
     // First, it should be a OrthographicTrackballControls to ignore distance information
     // Second, it need main canvas, hence main canvas Must be added to dom element
-    this.controls = new threeplugins/* THREE.OrthographicTrackballControls */.J.OrthographicTrackballControls( this.main_camera, this.main_canvas );
+    this.controls = new OrthographicTrackballControls( this.main_camera, this.main_canvas );
   	this.controls.zoomSpeed = 0.02;
   	// You cannot use pan in perspective camera. So if you are using PerspectiveCamera, this needs to be true
   	this.controls.noPan = false;
@@ -66941,12 +68385,12 @@ class THREEBRAIN_CANVAS {
 
 
     // Mouse helpers
-    const mouse_pointer = new threeplugins/* THREE.Vector2 */.J.Vector2(),
-        mouse_raycaster = new threeplugins/* THREE.Raycaster */.J.Raycaster(),
-        mouse_helper = new threeplugins/* THREE.ArrowHelper */.J.ArrowHelper(new threeplugins/* THREE.Vector3 */.J.Vector3( 0, 0, 1 ), new threeplugins/* THREE.Vector3 */.J.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-        mouse_helper_root = new threeplugins/* THREE.Mesh */.J.Mesh(
-          new threeplugins/* THREE.BoxBufferGeometry */.J.BoxBufferGeometry( 4,4,4 ),
-          new threeplugins/* THREE.MeshBasicMaterial */.J.MeshBasicMaterial({ color : 0xff0000 })
+    const mouse_pointer = new three_module.Vector2(),
+        mouse_raycaster = new three_module.Raycaster(),
+        mouse_helper = new three_module.ArrowHelper(new three_module.Vector3( 0, 0, 1 ), new three_module.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
+        mouse_helper_root = new three_module.Mesh(
+          new three_module.BoxBufferGeometry( 4,4,4 ),
+          new three_module.MeshBasicMaterial({ color : 0xff0000 })
         );
 
     // root is a green cube that's only visible in side cameras
@@ -66966,10 +68410,10 @@ class THREEBRAIN_CANVAS {
 
     this.add_to_scene(mouse_helper, true);
 
-    this.focus_box = new threeplugins/* THREE.BoxHelper */.J.BoxHelper();
+    this.focus_box = new three_module.BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
     this.focus_box.userData.added = false;
-    this.bounding_box = new threeplugins/* THREE.BoxHelper */.J.BoxHelper();
+    this.bounding_box = new three_module.BoxHelper();
     this.bounding_box.material.color.setRGB( 0, 0, 1 );
     this.bounding_box.userData.added = false;
     this.bounding_box.layers.set( constants/* CONSTANTS.LAYER_INVISIBLE_31 */.t.LAYER_INVISIBLE_31 )
@@ -66979,7 +68423,7 @@ class THREEBRAIN_CANVAS {
 
 		// File loader
     this.loader_triggered = false;
-    this.loader_manager = new threeplugins/* THREE.LoadingManager */.J.LoadingManager();
+    this.loader_manager = new three_module.LoadingManager();
     this.loader_manager.onStart = () => {
       this.loader_triggered = true;
       console.debug( 'Loading start!');
@@ -66995,8 +68439,8 @@ class THREEBRAIN_CANVAS {
     };
     this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
 
-    this.json_loader = new threeplugins/* THREE.FileLoader */.J.FileLoader( this.loader_manager );
-    // this.font_loader = new THREE.FontLoader( this.loader_manager );
+    this.json_loader = new three_module.FileLoader( this.loader_manager );
+    // this.font_loader = new FontLoader( this.loader_manager );
 
   }
 
@@ -67063,7 +68507,7 @@ class THREEBRAIN_CANVAS {
 
   get_main_camera_params(){
     return({
-      'target' : this.main_camera.localToWorld(new threeplugins/* THREE.Vector3 */.J.Vector3(
+      'target' : this.main_camera.localToWorld(new three_module.Vector3(
         -this.main_camera.userData.pos[0],
         -this.main_camera.userData.pos[1],
         -this.main_camera.userData.pos[2]
@@ -67076,15 +68520,15 @@ class THREEBRAIN_CANVAS {
   draw_axis( x , y , z ){
     if( !this._coordinates ){
       this._coordinates = {};
-      const origin = new threeplugins/* THREE.Vector3 */.J.Vector3( 0, 0, 0 );
+      const origin = new three_module.Vector3( 0, 0, 0 );
       // x
-      this._coordinates.x = new threeplugins/* THREE.ArrowHelper */.J.ArrowHelper( new threeplugins/* THREE.Vector3 */.J.Vector3( 1, 0, 0 ),
+      this._coordinates.x = new three_module.ArrowHelper( new three_module.Vector3( 1, 0, 0 ),
               origin, x === 0 ? 1: x, 0xff0000 );
 
-      this._coordinates.y = new threeplugins/* THREE.ArrowHelper */.J.ArrowHelper( new threeplugins/* THREE.Vector3 */.J.Vector3( 0, 1, 0 ),
+      this._coordinates.y = new three_module.ArrowHelper( new three_module.Vector3( 0, 1, 0 ),
               origin, y === 0 ? 1: y, 0x00ff00 );
 
-      this._coordinates.z = new threeplugins/* THREE.ArrowHelper */.J.ArrowHelper( new threeplugins/* THREE.Vector3 */.J.Vector3( 0, 0, 1 ),
+      this._coordinates.z = new three_module.ArrowHelper( new three_module.Vector3( 0, 0, 1 ),
               origin, z === 0 ? 1: z, 0x0000ff );
       this._coordinates.x.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
       this._coordinates.y.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
@@ -67255,7 +68699,7 @@ class THREEBRAIN_CANVAS {
           direction.transformDirection( target_object.matrixWorld );
           let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
           if(back){
-            direction.applyMatrix3(new threeplugins/* THREE.Matrix3 */.J.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
+            direction.applyMatrix3(new three_module.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
           }
 
           this.mouse_helper.position.fromArray( (0,utils/* to_array */.AA)(from) );
@@ -67362,7 +68806,7 @@ class THREEBRAIN_CANVAS {
                 subject_data = this.shared_data.get( subject_code ),
                 tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
                 xfm = subject_data.matrices.xfm,
-                pos = new threeplugins/* THREE.Vector3 */.J.Vector3();
+                pos = new three_module.Vector3();
 
           pos.fromArray( g.position );
           let s = `${g.name}\n` + `tkrRAS: ${(0,utils/* vec3_to_string */.Wk)(g.position)}\n`;
@@ -67598,21 +69042,23 @@ class THREEBRAIN_CANVAS {
 
     const color_name = name + '--'  + this.container_id;
 
-    // Step 1: register to THREE.ColorMapKeywords
-    if(threeplugins/* THREE.ColorMapKeywords */.J.ColorMapKeywords[color_name] === undefined){
-      threeplugins/* THREE.ColorMapKeywords */.J.ColorMapKeywords[color_name] = [];
-    }else{
-      threeplugins/* THREE.ColorMapKeywords */.J.ColorMapKeywords[color_name].length = 0;
-    }
+    // Step 1: register to ColorMapKeywords
+    const cmap_keys = [];
 
     // n_color is number of colors in Lut, not the true levels of colors
     const n_color = Math.max( 2 , (0,utils/* to_array */.AA)( color_keys ).length );
 
     // Step 2:
     for( let ii=0; ii < n_color; ii++ ){
-      threeplugins/* THREE.ColorMapKeywords */.J.ColorMapKeywords[color_name].push([ ii / (n_color-1) , color_vals[ii] ]);
+      cmap_keys.push([ ii / (n_color-1) , color_vals[ii] ]);
     }
-    const lut = new threeplugins/* THREE.Lut */.J.Lut( color_name , n_color );
+
+    (0,Lut2/* addToColorMapKeywords */.ki)(
+      color_name,
+      cmap_keys
+    );
+
+    const lut = new Lut2/* Lut */.AV( color_name , n_color );
 
     // min and max cannot be the same, otherwise colors will not be rendered
     if( value_type === 'continuous' ){
@@ -68082,7 +69528,7 @@ class THREEBRAIN_CANVAS {
 
   inc_time(){
     // this.animation_controls = {};
-    // this.clock = new THREE.Clock();
+    // this.clock = new Clock();
 
     const clock_time_delta = this.clock.getDelta();
     const results = this._time_info;
@@ -69235,16 +70681,16 @@ class THREEBRAIN_CANVAS {
 
   // Add geom groups
   add_group(g, cache_folder = 'threebrain_data', onProgress = null){
-    var gp = new threeplugins/* THREE.Object3D */.J.Object3D();
+    var gp = new three_module.Object3D();
 
     gp.name = 'group_' + g.name;
     (0,utils/* to_array */.AA)(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
     gp.position.fromArray( g.position );
 
     if(g.trans_mat !== null){
-      let trans = new threeplugins/* THREE.Matrix4 */.J.Matrix4();
+      let trans = new three_module.Matrix4();
       trans.set(...g.trans_mat);
-      let inverse_trans = new threeplugins/* THREE.Matrix4 */.J.Matrix4().copy( trans ).invert();
+      let inverse_trans = new three_module.Matrix4().copy( trans ).invert();
 
       gp.userData.trans_mat = trans;
       gp.userData.inv_trans_mat = inverse_trans;
@@ -69333,12 +70779,12 @@ class THREEBRAIN_CANVAS {
           const Torig = (0,utils/* as_Matrix4 */.xl)( subject_data.Torig );
           const xfm = (0,utils/* as_Matrix4 */.xl)( subject_data.xfm );
           const tkrRAS_MNI305 = (0,utils/* as_Matrix4 */.xl)( subject_data.vox2vox_MNI305 );
-          const MNI305_tkrRAS = new threeplugins/* THREE.Matrix4 */.J.Matrix4()
+          const MNI305_tkrRAS = new three_module.Matrix4()
             .copy(tkrRAS_MNI305).invert();
-          const tkrRAS_Scanner = new threeplugins/* THREE.Matrix4 */.J.Matrix4()
+          const tkrRAS_Scanner = new three_module.Matrix4()
             .copy(Norig)
             .multiply(
-              new threeplugins/* THREE.Matrix4 */.J.Matrix4()
+              new three_module.Matrix4()
                 .copy(Torig)
                 .invert()
             );
@@ -69496,13 +70942,13 @@ class THREEBRAIN_CANVAS {
        * Steps to make an animation
        *
        * 1. get keyframes, here is "ColorKeyframeTrack"
-       *        new THREE.ColorKeyframeTrack( '.material.color', time_key, color_value, THREE.InterpolateDiscrete )
+       *        new ColorKeyframeTrack( '.material.color', time_key, color_value, InterpolateDiscrete )
        *    keyframe doesn't specify which object, it also can only change one attribute
        * 2. generate clip via "AnimationClip"
-       *        new THREE.AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
+       *        new AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
        *    animation clip combines multiple keyframe, still, doesn't specify which object
        * 3. mixer via "AnimationMixer"
-       *        new THREE.AnimationMixer( m );
+       *        new AnimationMixer( m );
        *    A mixer specifies an object
        * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
        *    action.play() will play the animation clips
@@ -69543,7 +70989,7 @@ class THREEBRAIN_CANVAS {
       let clip = this.animation_clips.get( clip_name ), new_clip = false;
 
       if( !clip ){
-        clip = new threeplugins/* THREE.AnimationClip */.J.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
+        clip = new three_module.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
         this.animation_clips.set( clip_name, clip );
         new_clip = true;
       }else{
@@ -69557,7 +71003,7 @@ class THREEBRAIN_CANVAS {
       if( m.userData.ani_mixer ){
         m.userData.ani_mixer.stopAllAction();
       }
-      m.userData.ani_mixer = new threeplugins/* THREE.AnimationMixer */.J.AnimationMixer( m );
+      m.userData.ani_mixer = new three_module.AnimationMixer( m );
       m.userData.ani_mixer.stopAllAction();
 
       // Step 4: combine mixer with clip
@@ -69700,7 +71146,7 @@ class THREEBRAIN_CANVAS {
     const tkRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
     const MNI305_tkRAS = subject_data.matrices.MNI305_tkrRAS;
 
-    let anterior_commissure = state.get('anterior_commissure') || new threeplugins/* THREE.Vector3 */.J.Vector3();
+    let anterior_commissure = state.get('anterior_commissure') || new three_module.Vector3();
     anterior_commissure.set(0,0,0);
     anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
 
@@ -69751,7 +71197,7 @@ class THREEBRAIN_CANVAS {
 
   calculate_mni305(vec, nan_if_trans_not_found = true){
     if( !vec.isVector3 ){
-      throw('vec must be a THREE.Vector3 instance');
+      throw('vec must be a Vector3 instance');
     }
 
     const tkRAS_MNI305 = this.state_data.get('tkRAS_MNI305');
@@ -69873,10 +71319,10 @@ class THREEBRAIN_CANVAS {
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
     /* DEBUG code
     target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
-    pos_targ = new THREE.Vector3(),
-          pos_orig = new THREE.Vector3(),
-          mat1 = new THREE.Matrix4(),
-          mat2 = new THREE.Matrix4();
+    pos_targ = new Vector3(),
+          pos_orig = new Vector3(),
+          mat1 = new Matrix4(),
+          mat2 = new Matrix4();
     el = canvas.electrodes.get(origin_subject)["YAB, 29 - aTMP6"];
     g = el.userData.construct_params,
               is_surf = g.is_surface_electrode,
@@ -69892,10 +71338,10 @@ mapped = false,
     */
 
 
-    const pos_targ = new threeplugins/* THREE.Vector3 */.J.Vector3(),
-          pos_orig = new threeplugins/* THREE.Vector3 */.J.Vector3();
-          // mat1 = new THREE.Matrix4(),
-          // mat2 = new THREE.Matrix4();
+    const pos_targ = new three_module.Vector3(),
+          pos_orig = new three_module.Vector3();
+          // mat1 = new Matrix4(),
+          // mat2 = new Matrix4();
 
     this.electrodes.forEach( (els, origin_subject) => {
       for( let el_name in els ){
@@ -69913,7 +71359,7 @@ mapped = false,
 
         // Calculate MNI 305 coordinate in template space
         if( el.userData.MNI305_position === undefined ){
-          el.userData.MNI305_position = new threeplugins/* THREE.Vector3 */.J.Vector3().set(0, 0, 0);
+          el.userData.MNI305_position = new three_module.Vector3().set(0, 0, 0);
           if(
             Array.isArray( mni305 ) && mni305.length === 3 &&
             !( mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0 )
@@ -70021,7 +71467,7 @@ mapped = false,
             subject_data  = this.shared_data.get( subject_code ),
             tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
             xfm = subject_data.matrices.xfm,
-            pos = new threeplugins/* THREE.Vector3 */.J.Vector3();
+            pos = new three_module.Vector3();
       let row = {};
       let parsed, e, g, inst, fs_label;
       const label_list = {};
@@ -70137,8 +71583,8 @@ mapped = false,
     const _x = (0,utils/* get_or_default */.jM)( this.state_data, 'sagittal_posx', 0);
     const _y = (0,utils/* get_or_default */.jM)( this.state_data, 'coronal_posy', 0);
     const _z = (0,utils/* get_or_default */.jM)( this.state_data, 'axial_posz', 0);
-    const plane_pos = new threeplugins/* THREE.Vector3 */.J.Vector3().set( _x, _y, _z );
-    const diff = new threeplugins/* THREE.Vector3 */.J.Vector3();
+    const plane_pos = new three_module.Vector3().set( _x, _y, _z );
+    const diff = new three_module.Vector3();
 
     this.electrodes.forEach((li, subcode) => {
 
@@ -70173,3156 +71619,6 @@ mapped = false,
 
 
 // window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;
-
-
-
-
-/***/ }),
-
-/***/ 1829:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-
-// EXPORTS
-__webpack_require__.d(__webpack_exports__, {
-  "J": () => (/* binding */ THREE)
-});
-
-// EXTERNAL MODULE: ./src/build/three.module.js
-var three_module = __webpack_require__(7000);
-;// CONCATENATED MODULE: ./src/js/Math/Lut.js
-/**
- * @author daron1337 / http://daron1337.github.io/
- */
-
-const register_lut = function(THREE){
-
-  if(THREE === undefined){
-    console.error('THREE is not defined');
-  }
-
-  if(THREE.Lut){
-    return(THREE);
-  }
-
-  THREE.Lut = function ( colormap, numberofcolors ) {
-
-  	this.lut = [];
-  	this.map = THREE.ColorMapKeywords[ colormap ];
-  	this.n = numberofcolors;
-  	this.mapname = colormap;
-
-  	var step = 1.0 / this.n;
-
-  	for ( var i = 0; i <= 1; i += step ) {
-
-  		for ( var j = 0; j < this.map.length - 1; j ++ ) {
-
-  			if ( i >= this.map[ j ][ 0 ] && i < this.map[ j + 1 ][ 0 ] ) {
-
-  				var min = this.map[ j ][ 0 ];
-  				var max = this.map[ j + 1 ][ 0 ];
-
-  				var minColor = new THREE.Color( 0xffffff ).setHex( this.map[ j ][ 1 ] );
-  				var maxColor = new THREE.Color( 0xffffff ).setHex( this.map[ j + 1 ][ 1 ] );
-
-  				var color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
-
-  				this.lut.push( color );
-
-  			}
-
-  		}
-
-  	}
-
-  	return this.set( this );
-
-  };
-
-  THREE.Lut.prototype = {
-
-  	constructor: THREE.Lut,
-
-  	lut: [], map: [], mapname: 'rainbow', n: 256, minV: 0, maxV: 1, legend: null,
-
-  	set: function ( value ) {
-
-  		if ( value instanceof THREE.Lut ) {
-
-  			this.copy( value );
-
-  		}
-
-  		return this;
-
-  	},
-
-  	setMin: function ( min ) {
-
-  		this.minV = min;
-
-  		return this;
-
-  	},
-
-  	setMax: function ( max ) {
-
-  		this.maxV = max;
-
-  		return this;
-
-  	},
-
-  	changeNumberOfColors: function ( numberofcolors ) {
-
-  		this.n = numberofcolors;
-
-  		return new THREE.Lut( this.mapname, this.n );
-
-  	},
-
-  	changeColorMap: function ( colormap ) {
-
-  		this.mapname = colormap;
-
-  		return new THREE.Lut( this.mapname, this.n );
-
-  	},
-
-  	copy: function ( lut ) {
-
-  		this.lut = lut.lut;
-  		this.mapname = lut.mapname;
-  		this.map = lut.map;
-  		this.n = lut.n;
-  		this.minV = lut.minV;
-  		this.maxV = lut.maxV;
-
-  		return this;
-
-  	},
-
-  	getColor: function ( alpha ) {
-
-  		if ( alpha <= this.minV ) {
-
-  			alpha = this.minV;
-
-  		} else if ( alpha >= this.maxV ) {
-
-  			alpha = this.maxV;
-
-  		}
-
-  		alpha = ( alpha - this.minV ) / ( this.maxV - this.minV );
-
-  		var colorPosition = Math.round( alpha * this.n );
-  		colorPosition == this.n ? colorPosition -= 1 : colorPosition;
-
-  		return this.lut[ colorPosition ];
-
-  	},
-
-  	addColorMap: function ( colormapName, arrayOfColors ) {
-
-  		THREE.ColorMapKeywords[ colormapName ] = arrayOfColors;
-
-  	},
-
-  	setLegendOn: function ( parameters ) {
-
-  		if ( parameters === undefined ) {
-
-  			parameters = {};
-
-  		}
-
-  		this.legend = {};
-
-  		this.legend.layout = parameters.hasOwnProperty( 'layout' ) ? parameters[ 'layout' ] : 'vertical';
-
-  		this.legend.position = parameters.hasOwnProperty( 'position' ) ? parameters[ 'position' ] : { 'x': 4, 'y': 0, 'z': 0 };
-
-  		this.legend.dimensions = parameters.hasOwnProperty( 'dimensions' ) ? parameters[ 'dimensions' ] : { 'width': 0.5, 'height': 3 };
-
-  		this.legend.canvas = document.createElement( 'canvas' );
-
-  		this.legend.canvas.setAttribute( 'id', 'legend' );
-  		this.legend.canvas.setAttribute( 'hidden', true );
-
-  		document.body.appendChild( this.legend.canvas );
-
-  		this.legend.ctx = this.legend.canvas.getContext( '2d' );
-
-  		this.legend.canvas.setAttribute( 'width', 1 );
-  		this.legend.canvas.setAttribute( 'height', this.n );
-
-  		this.legend.texture = new THREE.Texture( this.legend.canvas );
-
-  		var imageData = this.legend.ctx.getImageData( 0, 0, 1, this.n );
-
-  		var data = imageData.data;
-
-  		this.map = THREE.ColorMapKeywords[ this.mapname ];
-
-  		var k = 0;
-
-  		var step = 1.0 / this.n;
-
-  		for ( var i = 1; i >= 0; i -= step ) {
-
-  			for ( var j = this.map.length - 1; j >= 0; j -- ) {
-
-  				if ( i < this.map[ j ][ 0 ] && i >= this.map[ j - 1 ][ 0 ] ) {
-
-  					var min = this.map[ j - 1 ][ 0 ];
-  					var max = this.map[ j ][ 0 ];
-
-  					var minColor = new THREE.Color( 0xffffff ).setHex( this.map[ j - 1 ][ 1 ] );
-  					var maxColor = new THREE.Color( 0xffffff ).setHex( this.map[ j ][ 1 ] );
-
-  					var color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
-
-  					data[ k * 4 ] = Math.round( color.r * 255 );
-  					data[ k * 4 + 1 ] = Math.round( color.g * 255 );
-  					data[ k * 4 + 2 ] = Math.round( color.b * 255 );
-  					data[ k * 4 + 3 ] = 255;
-
-  					k += 1;
-
-  				}
-
-  			}
-
-  		}
-
-  		this.legend.ctx.putImageData( imageData, 0, 0 );
-  		this.legend.texture.needsUpdate = true;
-
-  		this.legend.legendGeometry = new THREE.PlaneBufferGeometry( this.legend.dimensions.width, this.legend.dimensions.height );
-  		this.legend.legendMaterial = new THREE.MeshBasicMaterial( { map: this.legend.texture, side: THREE.DoubleSide } );
-
-  		this.legend.mesh = new THREE.Mesh( this.legend.legendGeometry, this.legend.legendMaterial );
-
-  		if ( this.legend.layout == 'horizontal' ) {
-
-  			this.legend.mesh.rotation.z = - 90 * ( Math.PI / 180 );
-
-  		}
-
-  		this.legend.mesh.position.copy( this.legend.position );
-
-  		return this.legend.mesh;
-
-  	},
-
-  	setLegendOff: function () {
-
-  		this.legend = null;
-
-  		return this.legend;
-
-  	},
-
-  	setLegendLayout: function ( layout ) {
-
-  		if ( ! this.legend ) {
-
-  			return false;
-
-  		}
-
-  		if ( this.legend.layout == layout ) {
-
-  			return false;
-
-  		}
-
-  		if ( layout != 'horizontal' && layout != 'vertical' ) {
-
-  			return false;
-
-  		}
-
-  		this.layout = layout;
-
-  		if ( layout == 'horizontal' ) {
-
-  			this.legend.mesh.rotation.z = 90 * ( Math.PI / 180 );
-
-  		}
-
-  		if ( layout == 'vertical' ) {
-
-  			this.legend.mesh.rotation.z = - 90 * ( Math.PI / 180 );
-
-  		}
-
-  		return this.legend.mesh;
-
-  	},
-
-  	setLegendPosition: function ( position ) {
-
-  		this.legend.position = new THREE.Vector3( position.x, position.y, position.z );
-
-  		return this.legend;
-
-  	},
-
-  	setLegendLabels: function ( parameters, callback ) {
-
-  		if ( ! this.legend ) {
-
-  			return false;
-
-  		}
-
-  		if ( typeof parameters === 'function' ) {
-
-  			callback = parameters;
-
-  		}
-
-  		if ( parameters === undefined ) {
-
-  			parameters = {};
-
-  		}
-
-  		this.legend.labels = {};
-
-  		this.legend.labels.fontsize = parameters.hasOwnProperty( 'fontsize' ) ? parameters[ 'fontsize' ] : 24;
-
-  		this.legend.labels.fontface = parameters.hasOwnProperty( 'fontface' ) ? parameters[ 'fontface' ] : 'Arial';
-
-  		this.legend.labels.title = parameters.hasOwnProperty( 'title' ) ? parameters[ 'title' ] : '';
-
-  		this.legend.labels.um = parameters.hasOwnProperty( 'um' ) ? ' [ ' + parameters[ 'um' ] + ' ]' : '';
-
-  		this.legend.labels.ticks = parameters.hasOwnProperty( 'ticks' ) ? parameters[ 'ticks' ] : 0;
-
-  		this.legend.labels.decimal = parameters.hasOwnProperty( 'decimal' ) ? parameters[ 'decimal' ] : 2;
-
-  		this.legend.labels.notation = parameters.hasOwnProperty( 'notation' ) ? parameters[ 'notation' ] : 'standard';
-
-  		var backgroundColor = { r: 255, g: 100, b: 100, a: 0.8 };
-  		var borderColor = { r: 255, g: 0, b: 0, a: 1.0 };
-  		var borderThickness = 4;
-
-  		var canvasTitle = document.createElement( 'canvas' );
-  		var contextTitle = canvasTitle.getContext( '2d' );
-
-  		contextTitle.font = 'Normal ' + this.legend.labels.fontsize * 1.2 + 'px ' + this.legend.labels.fontface;
-
-  		contextTitle.fillStyle = 'rgba(' + backgroundColor.r + ',' + backgroundColor.g + ',' + backgroundColor.b + ',' + backgroundColor.a + ')';
-
-  		contextTitle.strokeStyle = 'rgba(' + borderColor.r + ',' + borderColor.g + ',' + borderColor.b + ',' + borderColor.a + ')';
-
-  		contextTitle.lineWidth = borderThickness;
-
-  		contextTitle.fillStyle = 'rgba( 0, 0, 0, 1.0 )';
-
-  		contextTitle.fillText( this.legend.labels.title.toString() + this.legend.labels.um.toString(), borderThickness, this.legend.labels.fontsize + borderThickness );
-
-  		var txtTitle = new THREE.CanvasTexture( canvasTitle );
-  		txtTitle.minFilter = THREE.LinearFilter;
-
-  		var spriteMaterialTitle = new THREE.SpriteMaterial( { map: txtTitle } );
-
-  		var spriteTitle = new THREE.Sprite( spriteMaterialTitle );
-
-  		spriteTitle.scale.set( 2, 1, 1.0 );
-
-  		if ( this.legend.layout == 'vertical' ) {
-
-  			spriteTitle.position.set( this.legend.position.x + this.legend.dimensions.width, this.legend.position.y + ( this.legend.dimensions.height * 0.45 ), this.legend.position.z );
-
-  		}
-
-  		if ( this.legend.layout == 'horizontal' ) {
-
-  			spriteTitle.position.set( this.legend.position.x * 1.015, this.legend.position.y + ( this.legend.dimensions.height * 0.03 ), this.legend.position.z );
-
-  		}
-
-  		if ( this.legend.labels.ticks > 0 ) {
-
-  			var ticks = {};
-  			var lines = {};
-
-  			if ( this.legend.layout == 'vertical' ) {
-
-  				var topPositionY = this.legend.position.y + ( this.legend.dimensions.height * 0.36 );
-  				var bottomPositionY = this.legend.position.y - ( this.legend.dimensions.height * 0.61 );
-
-  			}
-
-  			if ( this.legend.layout == 'horizontal' ) {
-
-  				var topPositionX = this.legend.position.x + ( this.legend.dimensions.height * 0.75 );
-  				var bottomPositionX = this.legend.position.x - ( this.legend.dimensions.width * 1.2 );
-
-  			}
-
-  			for ( var i = 0; i < this.legend.labels.ticks; i ++ ) {
-
-  				var value = ( this.maxV - this.minV ) / ( this.legend.labels.ticks - 1 ) * i + this.minV;
-
-  				if ( callback ) {
-
-  					value = callback( value );
-
-  				} else {
-
-  					if ( this.legend.labels.notation == 'scientific' ) {
-
-  						value = value.toExponential( this.legend.labels.decimal );
-
-  					} else {
-
-  						value = value.toFixed( this.legend.labels.decimal );
-
-  					}
-
-  				}
-
-  				var canvasTick = document.createElement( 'canvas' );
-  				var contextTick = canvasTick.getContext( '2d' );
-
-  				contextTick.font = 'Normal ' + this.legend.labels.fontsize + 'px ' + this.legend.labels.fontface;
-
-  				contextTick.fillStyle = 'rgba(' + backgroundColor.r + ',' + backgroundColor.g + ',' + backgroundColor.b + ',' + backgroundColor.a + ')';
-
-  				contextTick.strokeStyle = 'rgba(' + borderColor.r + ',' + borderColor.g + ',' + borderColor.b + ',' + borderColor.a + ')';
-
-  				contextTick.lineWidth = borderThickness;
-
-  				contextTick.fillStyle = 'rgba( 0, 0, 0, 1.0 )';
-
-  				contextTick.fillText( value.toString(), borderThickness, this.legend.labels.fontsize + borderThickness );
-
-  				var txtTick = new THREE.CanvasTexture( canvasTick );
-  				txtTick.minFilter = THREE.LinearFilter;
-
-  				var spriteMaterialTick = new THREE.SpriteMaterial( { map: txtTick } );
-
-  				var spriteTick = new THREE.Sprite( spriteMaterialTick );
-
-  				spriteTick.scale.set( 2, 1, 1.0 );
-
-  				if ( this.legend.layout == 'vertical' ) {
-
-  					var position = bottomPositionY + ( topPositionY - bottomPositionY ) * ( ( value - this.minV ) / ( this.maxV - this.minV ) );
-
-  					spriteTick.position.set( this.legend.position.x + ( this.legend.dimensions.width * 2.7 ), position, this.legend.position.z );
-
-  				}
-
-  				if ( this.legend.layout == 'horizontal' ) {
-
-  					var position = bottomPositionX + ( topPositionX - bottomPositionX ) * ( ( value - this.minV ) / ( this.maxV - this.minV ) );
-
-  					if ( this.legend.labels.ticks > 5 ) {
-
-  						if ( i % 2 === 0 ) {
-
-  							var offset = 1.7;
-
-  						} else {
-
-  							var offset = 2.1;
-
-  						}
-
-  					} else {
-
-  						var offset = 1.7;
-
-  					}
-
-  					spriteTick.position.set( position, this.legend.position.y - this.legend.dimensions.width * offset, this.legend.position.z );
-
-  				}
-
-  				var material = new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 2 } );
-
-  				var points = [];
-
-
-  				if ( this.legend.layout == 'vertical' ) {
-
-  					var linePosition = ( this.legend.position.y - ( this.legend.dimensions.height * 0.5 ) + 0.01 ) + ( this.legend.dimensions.height ) * ( ( value - this.minV ) / ( this.maxV - this.minV ) * 0.99 );
-
-  					points.push( new THREE.Vector3( this.legend.position.x + this.legend.dimensions.width * 0.55, linePosition, this.legend.position.z ) );
-
-  					points.push( new THREE.Vector3( this.legend.position.x + this.legend.dimensions.width * 0.7, linePosition, this.legend.position.z ) );
-
-  				}
-
-  				if ( this.legend.layout == 'horizontal' ) {
-
-  					var linePosition = ( this.legend.position.x - ( this.legend.dimensions.height * 0.5 ) + 0.01 ) + ( this.legend.dimensions.height ) * ( ( value - this.minV ) / ( this.maxV - this.minV ) * 0.99 );
-
-  					points.push( new THREE.Vector3( linePosition, this.legend.position.y - this.legend.dimensions.width * 0.55, this.legend.position.z ) );
-
-  					points.push( new THREE.Vector3( linePosition, this.legend.position.y - this.legend.dimensions.width * 0.7, this.legend.position.z ) );
-
-  				}
-
-  				var geometry = new THREE.BufferGeometry().setFromPoints( points );
-
-  				var line = new THREE.Line( geometry, material );
-
-  				lines[ i ] = line;
-  				ticks[ i ] = spriteTick;
-
-  			}
-
-  		}
-
-  		return { 'title': spriteTitle, 'ticks': ticks, 'lines': lines };
-
-  	}
-
-  };
-
-
-  THREE.ColorMapKeywords = {
-
-  	"rainbow": [[ 0.0, '0x0000FF' ], [ 0.2, '0x00FFFF' ], [ 0.5, '0x00FF00' ], [ 0.8, '0xFFFF00' ], [ 1.0, '0xFF0000' ]],
-  	"cooltowarm": [[ 0.0, '0x3C4EC2' ], [ 0.2, '0x9BBCFF' ], [ 0.5, '0xDCDCDC' ], [ 0.8, '0xF6A385' ], [ 1.0, '0xB40426' ]],
-  	"blackbody": [[ 0.0, '0x000000' ], [ 0.2, '0x780000' ], [ 0.5, '0xE63200' ], [ 0.8, '0xFFFF00' ], [ 1.0, '0xFFFFFF' ]],
-  	"grayscale": [[ 0.0, '0x000000' ], [ 0.2, '0x404040' ], [ 0.5, '0x7F7F80' ], [ 0.8, '0xBFBFBF' ], [ 1.0, '0xFFFFFF' ]]
-
-  };
-
-  return(THREE);
-
-}
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/core/OrthographicTrackballControls.js
-/**
- * @author Eberhard Graether / http://egraether.com/
- * @author Mark Lundin 	/ http://mark-lundin.com
- * @author Patrick Fuller / http://patrick-fuller.com
- * @author Max Smolens / https://github.com/msmolens
- */
-
-const register_orthographic_controls = function(THREE){
-  if(THREE === undefined){
-    console.error('THREE is not defined');
-  }
-
-  if(THREE.OrthographicTrackballControls){
-    return(THREE);
-  }
-
-
-THREE.OrthographicTrackballControls = function ( object, domElement ) {
-
-	var _this = this;
-	var STATE = { NONE: - 1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
-
-	this.object = object;
-	this.domElement = ( domElement !== undefined ) ? domElement : document;
-
-	// API
-
-	this.enabled = true;
-
-	this.screen = { left: 0, top: 0, width: 0, height: 0 };
-
-	this.radius = 0;
-
-	this.rotateSpeed = 1.0;
-	this.zoomSpeed = 1.2;
-
-	this.noRotate = false;
-	this.noZoom = false;
-	this.noPan = false;
-	this.noRoll = false;
-
-	this.staticMoving = false;
-	this.dynamicDampingFactor = 0.2;
-
-	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
-
-	// internals
-
-	this.target = new THREE.Vector3();
-
-	var EPS = 0.000001;
-
-	var _changed = true;
-
-	var _state = STATE.NONE,
-		_prevState = STATE.NONE,
-
-		_eye = new THREE.Vector3(),
-
-		_rotateStart = new THREE.Vector3(),
-		_rotateEnd = new THREE.Vector3(),
-
-		_zoomStart = new THREE.Vector2(),
-		_zoomEnd = new THREE.Vector2(),
-
-		_touchZoomDistanceStart = 0,
-		_touchZoomDistanceEnd = 0,
-
-		_panStart = new THREE.Vector2(),
-		_panEnd = new THREE.Vector2();
-
-	// for reset
-
-	this.target0 = this.target.clone();
-	this.position0 = this.object.position.clone();
-	this.up0 = this.object.up.clone();
-
-	this.left0 = this.object.left;
-	this.right0 = this.object.right;
-	this.top0 = this.object.top;
-	this.bottom0 = this.object.bottom;
-
-	// events
-
-	var changeEvent = { type: 'change' };
-	var startEvent = { type: 'start' };
-	var endEvent = { type: 'end' };
-
-
-	// methods
-
-	this.handleResize = function () {
-
-		if ( this.domElement === document ) {
-
-			this.screen.left = 0;
-			this.screen.top = 0;
-			this.screen.width = window.innerWidth;
-			this.screen.height = window.innerHeight;
-
-		} else {
-
-			var box = this.domElement.getBoundingClientRect();
-			// adjustments come from similar code in the jquery offset() function
-			var d = this.domElement.ownerDocument.documentElement;
-			this.screen.left = box.left + window.pageXOffset - d.clientLeft;
-			this.screen.top = box.top + window.pageYOffset - d.clientTop;
-			this.screen.width = box.width;
-			this.screen.height = box.height;
-
-		}
-
-		this.radius = 0.5 * Math.min( this.screen.width, this.screen.height );
-
-		this.left0 = this.object.left;
-		this.right0 = this.object.right;
-		this.top0 = this.object.top;
-		this.bottom0 = this.object.bottom;
-
-	};
-
-	var getMouseOnScreen = ( function () {
-
-		var vector = new THREE.Vector2();
-
-		return function getMouseOnScreen( pageX, pageY ) {
-
-			vector.set(
-				( pageX - _this.screen.left ) / _this.screen.width,
-				( pageY - _this.screen.top ) / _this.screen.height
-			);
-
-			return vector;
-
-		};
-
-	}() );
-
-	var getMouseProjectionOnBall = ( function () {
-
-		var vector = new THREE.Vector3();
-		var objectUp = new THREE.Vector3();
-		var mouseOnBall = new THREE.Vector3();
-
-		return function getMouseProjectionOnBall( pageX, pageY, fix_axis = 0 ) {
-
-			mouseOnBall.set(
-				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / _this.radius,
-				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / _this.radius,
-				0.0
-			);
-
-			var length = mouseOnBall.length();
-
-			if( fix_axis === 1 ){
-			  // Fix x
-			  mouseOnBall.x = 0;
-			  length = Math.abs( mouseOnBall.y );
-			}else if ( fix_axis === 2 ){
-			  mouseOnBall.y = 0;
-			  length = Math.abs( mouseOnBall.x );
-			}else if ( fix_axis === 3 ){
-			  mouseOnBall.normalize();
-			  length = 1;
-			}
-
-
-
-			if ( _this.noRoll ) {
-				if ( length < Math.SQRT1_2 ) {
-					mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-				} else {
-					mouseOnBall.z = 0.5 / length;
-				}
-			} else if ( length > 1.0 ) {
-				mouseOnBall.normalize();
-			} else {
-				mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-			}
-
-			_eye.copy( _this.object.position ).sub( _this.target );
-
-			vector.copy( _this.object.up ).setLength( mouseOnBall.y );
-			vector.add( objectUp.copy( _this.object.up ).cross( _eye ).setLength( mouseOnBall.x ) );
-			vector.add( _eye.setLength( mouseOnBall.z ) );
-
-			return vector;
-
-		};
-
-	}() );
-
-	this.rotateCamera = ( function () {
-
-		var axis = new THREE.Vector3(),
-			quaternion = new THREE.Quaternion(),
-			running = false;
-
-
-		return function rotateCamera() {
-
-			var angle = Math.acos( _rotateStart.dot( _rotateEnd ) / _rotateStart.length() / _rotateEnd.length() );
-
-			if ( angle ) {
-			  // start event
-			  running = true;
-			  _this.dispatchEvent( startEvent );
-
-				axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
-
-				angle *= _this.rotateSpeed;
-
-				quaternion.setFromAxisAngle( axis, - angle );
-
-				_eye.applyQuaternion( quaternion );
-
-				_this.object.up.applyQuaternion( quaternion );
-
-				_rotateEnd.applyQuaternion( quaternion );
-
-				if ( _this.staticMoving ) {
-
-					_rotateStart.copy( _rotateEnd );
-
-				} else {
-
-					quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
-					_rotateStart.applyQuaternion( quaternion );
-
-				}
-
-				_changed = true;
-
-			}else if (running){
-			  running = false;
-			  _this.dispatchEvent( endEvent );
-			}
-
-		};
-
-	}() );
-
-	this.zoomCamera = (function(){
-	  var running = false;
-
-	  return function zoomCamera(){
-	    if ( _state === STATE.TOUCH_ZOOM_PAN ) {
-
-  			var factor = _touchZoomDistanceEnd / _touchZoomDistanceStart;
-  			_touchZoomDistanceStart = _touchZoomDistanceEnd;
-
-        if( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ){
-
-          // start event
-  			  running = true;
-  			  _this.dispatchEvent( startEvent );
-
-
-          _this.object.zoom *= factor;
-          _changed = true;
-        }else if(running){
-  			  // stop event
-  			  running = false;
-  			  _this.dispatchEvent( endEvent );
-  			}
-
-  		} else {
-
-  			var factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
-
-  			if ( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ) {
-
-  			  // start event
-  			  running = true;
-  			  _this.dispatchEvent( startEvent );
-
-  				_this.object.zoom /= factor;
-
-  				if ( _this.staticMoving ) {
-
-  					_zoomStart.copy( _zoomEnd );
-
-  				} else {
-
-  					_zoomStart.y += ( _zoomEnd.y - _zoomStart.y ) * this.dynamicDampingFactor;
-
-  				}
-
-  				_changed = true;
-
-  			}else if(running){
-  			  // stop event
-  			  running = false;
-  			  _this.dispatchEvent( endEvent );
-  			}
-
-  		}
-	  };
-	}() );
-
-	this.panCamera = ( function () {
-
-		var mouseChange = new THREE.Vector2(),
-			objectUp = new THREE.Vector3(),
-			pan = new THREE.Vector3(),
-			running = false;
-
-		return function panCamera() {
-
-			mouseChange.copy( _panEnd ).sub( _panStart );
-
-			if ( mouseChange.lengthSq() > 0.00001 ) {
-			  // start event
-			  running = true;
-			  _this.dispatchEvent( startEvent );
-
-				// Scale movement to keep clicked/dragged position under cursor
-				var scale_x = ( _this.object.right - _this.object.left ) / _this.object.zoom;
-				var scale_y = ( _this.object.top - _this.object.bottom ) / _this.object.zoom;
-				mouseChange.x *= scale_x;
-				mouseChange.y *= scale_y;
-
-				pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
-				pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
-
-				/*_this.object.position.add( pan );
-				_this.target.add( pan );*/
-
-				_this.object.right = _this.object.right - mouseChange.x / 2;
-				_this.object.left = _this.object.left - mouseChange.x / 2;
-				_this.object.top = _this.object.top + mouseChange.y / 2;
-				_this.object.bottom = _this.object.bottom + mouseChange.y / 2;
-
-				_this.left0 = _this.object.left;
-    		_this.right0 = _this.object.right;
-    		_this.top0 = _this.object.top;
-    		_this.bottom0 = _this.object.bottom;
-
-				if ( _this.staticMoving ) {
-
-					_panStart.copy( _panEnd );
-
-				} else {
-
-					_panStart.add( mouseChange.subVectors( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
-
-				}
-
-
-				_changed = true;
-
-			}else if (running){
-  		  running = false;
-  		  _this.dispatchEvent( endEvent );
-			}
-
-		};
-
-	}() );
-
-	this.update = function () {
-
-		_eye.subVectors( _this.object.position, _this.target );
-
-		if ( ! _this.noRotate ) {
-
-			_this.rotateCamera();
-
-		}
-
-		if ( ! _this.noZoom ) {
-
-			_this.zoomCamera();
-
-			if ( _changed ) {
-
-				_this.object.updateProjectionMatrix();
-
-			}
-
-		}
-
-		if ( ! _this.noPan ) {
-
-			_this.panCamera();
-
-			if ( _changed ) {
-
-				_this.object.updateProjectionMatrix();
-
-			}
-
-		}
-
-		_this.object.position.addVectors( _this.target, _eye );
-
-		_this.object.lookAt( _this.target );
-
-		if ( _changed ) {
-
-			_this.dispatchEvent( changeEvent );
-
-			_changed = false;
-
-		}
-
-	};
-
-	this.reset = function () {
-
-		_state = STATE.NONE;
-		_prevState = STATE.NONE;
-
-		_this.target.copy( _this.target0 );
-		_this.object.position.copy( _this.position0 );
-		_this.object.up.copy( _this.up0 );
-
-		_eye.subVectors( _this.object.position, _this.target );
-
-		_this.object.left = _this.left0;
-		_this.object.right = _this.right0;
-		_this.object.top = _this.top0;
-		_this.object.bottom = _this.bottom0;
-
-		_this.object.lookAt( _this.target );
-
-		_this.dispatchEvent( changeEvent );
-
-		_changed = false;
-
-	};
-
-	// listeners
-
-	function keydown( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		window.removeEventListener( 'keydown', keydown );
-
-		_prevState = _state;
-
-		if ( _state !== STATE.NONE ) {
-
-			return;
-
-		} else if ( event.keyCode === _this.keys[ STATE.ROTATE ] && ! _this.noRotate ) {
-
-			_state = STATE.ROTATE;
-
-		} else if ( event.keyCode === _this.keys[ STATE.ZOOM ] && ! _this.noZoom ) {
-
-			_state = STATE.ZOOM;
-
-		} else if ( event.keyCode === _this.keys[ STATE.PAN ] && ! _this.noPan ) {
-
-			_state = STATE.PAN;
-
-		}
-
-	}
-
-	function keyup( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		_state = _prevState;
-
-		window.addEventListener( 'keydown', keydown, false );
-
-	}
-
-	function mousedown( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		if ( _state === STATE.NONE ) {
-
-			_state = event.button;
-
-		}
-
-		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
-
-		  // fix axis? altKey -> 3, ctrl -> 2, shift -> 1
-
-			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
-			_rotateEnd.copy( _rotateStart );
-
-		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
-
-			_zoomStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-			_zoomEnd.copy( _zoomStart );
-
-		} else if ( _state === STATE.PAN && ! _this.noPan ) {
-
-			_panStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-			_panEnd.copy( _panStart );
-
-		}
-
-		document.addEventListener( 'mousemove', mousemove, false );
-		document.addEventListener( 'mouseup', mouseup, false );
-
-		_this.dispatchEvent( startEvent );
-
-	}
-
-	function mousemove( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
-
-			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
-
-		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
-
-			_zoomEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-
-		} else if ( _state === STATE.PAN && ! _this.noPan ) {
-
-			_panEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-
-		}
-
-	}
-
-	function mouseup( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		_state = STATE.NONE;
-
-		document.removeEventListener( 'mousemove', mousemove );
-		document.removeEventListener( 'mouseup', mouseup );
-		_this.dispatchEvent( endEvent );
-
-	}
-
-	function mousewheel( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		_zoomStart.y += event.deltaY * 0.01;
-		_this.dispatchEvent( startEvent );
-		_this.dispatchEvent( endEvent );
-
-	}
-
-	function touchstart( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		switch ( event.touches.length ) {
-
-			case 1:
-				_state = STATE.TOUCH_ROTATE;
-				_rotateStart.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				_rotateEnd.copy( _rotateStart );
-				break;
-
-			case 2:
-				_state = STATE.TOUCH_ZOOM_PAN;
-				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-				_touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
-
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				_panStart.copy( getMouseOnScreen( x, y ) );
-				_panEnd.copy( _panStart );
-				break;
-
-			default:
-				_state = STATE.NONE;
-
-		}
-		_this.dispatchEvent( startEvent );
-
-	}
-
-	function touchmove( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		switch ( event.touches.length ) {
-
-			case 1:
-				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				break;
-
-			case 2:
-				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-				_touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
-
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				_panEnd.copy( getMouseOnScreen( x, y ) );
-				break;
-
-			default:
-				_state = STATE.NONE;
-
-		}
-
-	}
-
-	function touchend( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		switch ( event.touches.length ) {
-
-			case 1:
-				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				_rotateStart.copy( _rotateEnd );
-				break;
-
-			case 2:
-				_touchZoomDistanceStart = _touchZoomDistanceEnd = 0;
-
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				_panEnd.copy( getMouseOnScreen( x, y ) );
-				_panStart.copy( _panEnd );
-				break;
-
-		}
-
-		_state = STATE.NONE;
-		_this.dispatchEvent( endEvent );
-
-	}
-
-	function contextmenu( event ) {
-
-		event.preventDefault();
-
-	}
-
-	this.dispose = function () {
-
-		this.domElement.removeEventListener( 'contextmenu', contextmenu, false );
-		this.domElement.removeEventListener( 'mousedown', mousedown, false );
-		this.domElement.removeEventListener( 'wheel', mousewheel, false );
-
-		this.domElement.removeEventListener( 'touchstart', touchstart, false );
-		this.domElement.removeEventListener( 'touchend', touchend, false );
-		this.domElement.removeEventListener( 'touchmove', touchmove, false );
-
-		document.removeEventListener( 'mousemove', mousemove, false );
-		document.removeEventListener( 'mouseup', mouseup, false );
-
-		window.removeEventListener( 'keydown', keydown, false );
-		window.removeEventListener( 'keyup', keyup, false );
-
-	};
-
-	this.domElement.addEventListener( 'contextmenu', contextmenu, false );
-	this.domElement.addEventListener( 'mousedown', mousedown, false );
-	this.domElement.addEventListener( 'wheel', mousewheel, false );
-
-	this.domElement.addEventListener( 'touchstart', touchstart, false );
-	this.domElement.addEventListener( 'touchend', touchend, false );
-	this.domElement.addEventListener( 'touchmove', touchmove, false );
-
-	window.addEventListener( 'keydown', keydown, false );
-	window.addEventListener( 'keyup', keyup, false );
-
-	this.handleResize();
-
-	// force an update at start
-	this.update();
-
-};
-
-THREE.OrthographicTrackballControls.prototype = Object.create( THREE.EventDispatcher.prototype );
-THREE.OrthographicTrackballControls.prototype.constructor = THREE.OrthographicTrackballControls;
-
-
-return( THREE );
-
-};
-
-
-
-;// CONCATENATED MODULE: ./src/js/shaders/VolumeShader.js
-
-const remove_comments = (s) => {
-  return(s.split("\n").map((e) => {
-      return(
-        e.replaceAll(/\/\/.*/g, "")
-      );
-    }).join("\n"));
-}
-
-const register_volumeShader1 = function(THREE){
-
-  THREE.VolumeRenderShader1 = {
-    uniforms: {
-      cmap: { value: null },
-      nmap: { value: null },
-      mask: { value: null },
-      alpha : { value: -1.0 },
-      steps: { value: 300 },
-      scale_inv: { value: new THREE.Vector3() },
-      screenPos: { value: new THREE.Vector3() },
-      bounding: { value : 0.5 }
-    },
-    vertexShader: remove_comments(`#version 300 es
-precision highp float;
-in vec3 position;
-uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform vec3 cameraPosition;
-uniform vec3 scale_inv;
-uniform vec3 screenPos;
-
-out mat4 pmv;
-out vec3 vOrigin;
-out vec3 vDirection;
-void main() {
-  pmv = projectionMatrix * modelViewMatrix;
-
-  // For perspective camera, vorigin is camera
-  // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
-  // vOrigin = - vorig.xyz * scale_inv;
-  // vDirection = position * scale_inv - vOrigin;
-
-  // Orthopgraphic camera, camera position in theory is at infinite
-  // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
-  // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
-  // obtains Orthopgraphic direction, which can be directly used as ray direction
-
-  // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-  // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( screenPos.x / screenPos.z, screenPos.y / screenPos.z, 1.0, 1.0 );
-  vDirection = vdir.xyz * scale_inv  / vdir.w;
-
-  // Previous test code, seems to be poor because camera position is not well-calculated?
-  // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-  // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
-  vOrigin = (position) * scale_inv - vDirection;
-
-  // sample need to shift by 0.5 voxel
-  // gl_Position = pmv * vec4( position + 0.5, 1.0 );
-  gl_Position = pmv * vec4( position, 1.0 );
-}`),
-    fragmentShader: remove_comments(`#version 300 es
-precision highp float;
-precision mediump sampler3D;
-in vec3 vOrigin;
-in vec3 vDirection;
-in mat4 pmv;
-out vec4 color;
-uniform sampler3D cmap;
-uniform sampler3D nmap;
-uniform float alpha;
-uniform float steps;
-uniform vec3 scale_inv;
-uniform float bounding;
-vec4 fcolor;
-vec2 hitBox( vec3 orig, vec3 dir ) {
-  vec3 box_min = vec3( - bounding );
-  vec3 box_max = vec3( bounding );
-  vec3 inv_dir = 1.0 / dir;
-  vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
-  vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
-  vec3 tmin = min( tmin_tmp, tmax_tmp );
-  vec3 tmax = max( tmin_tmp, tmax_tmp );
-  float t0 = max( tmin.x, max( tmin.y, tmin.z ) );
-  float t1 = min( tmax.x, min( tmax.y, tmax.z ) );
-  return vec2( t0, t1 );
-}
-float getDepth( vec3 p ){
-  vec4 frag2 = pmv * vec4( p, scale_inv );
-  return (frag2.z / frag2.w / 2.0 + 0.5);
-}
-vec4 sample2( vec3 p ) {
-  return texture( cmap, p + 0.5 );
-}
-vec3 getNormal( vec3 p ) {
-  vec3 re = vec3( texture( nmap, p + 0.5 ).rgb *  255.0 - 127.0 );
-  return normalize( re );
-}
-
-void main(){
-  vec3 rayDir = normalize( vDirection );
-  vec2 bounds = hitBox( vOrigin, rayDir );
-  if ( bounds.x > bounds.y ) discard;
-  bounds.x = max( bounds.x, 0.0 );
-  // 0-255 need to be 0.5-255.5
-  vec3 p = vOrigin + bounds.x * rayDir;
-  vec3 inc = 1.0 / abs( rayDir );
-  float delta = min( inc.x, min( inc.y, inc.z ) );
-  delta /= steps;
-
-  int nn = 0;
-  int valid_voxel = 0;
-  float mix_factor = 1.0;
-  vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
-  vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
-
-  for ( float t = bounds.x; t < bounds.y; t += delta ) {
-    fcolor = sample2( p );
-
-    // Hit voxel
-    if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
-
-      if( alpha >= 0.0 ){
-        fcolor.a = alpha;
-      }
-
-
-      if( fcolor.rgb != last_color.rgb ){
-        // We are right on the surface
-
-        last_color = fcolor;
-
-        // reflect light
-        fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
-
-        if( nn == 0 ){
-          gl_FragDepth = getDepth( p );
-          color = fcolor;
-          color.a = max( color.a, 0.2 );
-        } else {
-          // blend
-          color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
-          color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
-          // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
-        }
-
-        nn++;
-
-      }
-
-      valid_voxel = 1;
-
-      if( nn >= 10 || color.a > 0.95 ){
-        break;
-      }
-
-    } else if ( valid_voxel > 0 ) {
-
-      // Leaving the structure reset states
-      last_color.rgb = zero_rgb;
-      valid_voxel = 0;
-    }
-    p += rayDir * delta;
-  }
-  if ( nn == 0 || color.a == 0.0 ) discard;
-
-  // calculate alpha at depth
-}`)};
-
-  return(THREE);
-
-};
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/shaders/Volume2DShader.js
-/**
- * @author Almar Klein / http://almarklein.org
- *
- * Shaders to render 3D volumes using raycasting.
- * The applied techniques are based on similar implementations in the Visvis and Vispy projects.
- * This is not the only approach, therefore it's marked 1.
- */
-
-const register_volume2DShader1 = function(THREE){
-  THREE.Volume2dArrayShader_xy = {
-    uniforms: {
-      diffuse: { value: null },
-			depth: { value: 0 },
-			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: { value : 0.0 },
-			renderDepth: { value : 1.0 }
-		},
-		vertexShader: [
-      // '#version 300 es',
-      'uniform vec3 size;',
-      'out vec2 vUv;',
-      'void main() {',
-      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-      // Convert position.xy to 1.0-0.0
-      'vUv.xy = position.xy / size.xy + 0.5;',
-      // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
-      '}'
-		].join( '\n' ),
-    fragmentShader: [
-      // '#version 300 es',
-
-      'precision highp float;',
-      'precision highp int;',
-      'precision highp sampler2DArray;',
-
-      'uniform sampler2DArray diffuse;',
-      'in vec2 vUv;',
-      'uniform int depth;',
-      'uniform float threshold;',
-      'uniform float renderDepth;',
-      // 'out vec4 out_FragColor;',
-
-      'void main() {',
-
-      'vec4 color = texture( diffuse, vec3( vUv, depth ) );',
-
-      'float is_opaque = float( color.r > threshold );',
-
-      // calculating z-depth, if transparent, make depth 1 (far)
-      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
-
-      // lighten a bit
-      'gl_FragColor = vec4( color.rrr, is_opaque );',
-
-      '}'
-    ].join( '\n' )
-  };
-
-
-
-
-  THREE.Volume2dArrayShader_xz = {
-    uniforms: {
-      diffuse: { value: null },
-			depth: { value: 0 },
-			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: { value : 0.0 },
-			renderDepth: { value : 1.0 }
-		},
-		vertexShader: [
-      // '#version 300 es',
-      'uniform vec3 size;',
-      'out vec2 vUv;',
-      'void main() {',
-
-      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-      // Convert position.xz to 1.0-0.0
-      'vUv.xy = position.xy / size.xz + 0.5;',
-      // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
-      '}'
-		].join( '\n' ),
-    fragmentShader: [
-      // '#version 300 es',
-
-      'precision highp float;',
-      'precision highp int;',
-      'precision highp sampler2DArray;',
-
-      'uniform sampler2DArray diffuse;',
-      'uniform vec3 size;',
-      'in vec2 vUv;',
-      'uniform float depth;',
-      'uniform float threshold;',
-      'uniform float renderDepth;',
-      // 'out vec4 out_FragColor;',
-
-      'void main() {',
-
-      'vec4 color = texture( diffuse, vec3( vUv.x, depth / size.y, floor( vUv.y * size.z ) ) );',
-
-      'float is_opaque = float( color.r > threshold );',
-
-      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
-
-      // lighten a bit
-      'gl_FragColor = vec4( color.rrr, is_opaque );',
-
-      '}'
-    ].join( '\n' )
-  };
-
-  THREE.Volume2dArrayShader_yz = {
-    uniforms: {
-      diffuse: { value: null },
-			depth: { value: 0 },
-			size: { value: new THREE.Vector3( 256, 256, 256 ) },
-			threshold: { value : 0.0 },
-			renderDepth: { value : 1.0 }
-		},
-		vertexShader: [
-      // '#version 300 es',
-      'uniform vec3 size;',
-      'out vec2 vUv;',
-      'void main() {',
-
-      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-      // Convert position.xz to 1.0-0.0
-      'vUv.xy = position.xy / size.yz + 0.5;',
-      // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
-      '}'
-		].join( '\n' ),
-    fragmentShader: [
-      // '#version 300 es',
-
-      'precision highp float;',
-      'precision highp int;',
-      'precision highp sampler2DArray;',
-
-      'uniform sampler2DArray diffuse;',
-      'uniform vec3 size;',
-      'in vec2 vUv;',
-      'uniform float depth;',
-      'uniform float threshold;',
-      'uniform float renderDepth;',
-      // 'out vec4 out_FragColor;',
-
-      'void main() {',
-
-      'vec4 color = texture( diffuse, vec3( depth / size.x, vUv.x, floor( vUv.y * size.z ) ) );',
-
-      'float is_opaque = float( color.r > threshold );',
-
-      'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
-
-      // lighten a bit
-      'gl_FragColor = vec4( color.rrr, is_opaque );',
-
-      '}'
-    ].join( '\n' )
-  };
-
-  return(THREE);
-
-};
-
-
-
-;// CONCATENATED MODULE: ./src/js/ext/text_sprite.js
-/*
-* Sprite fonts, modified from
-* https://github.com/vasturiano/THREE-spritetext/blob/master/src/index.js
-* Thanks vasturiano for providing the source code
-*/
-
-function add_text_sprite(THREE){
-
-  class TextSprite extends THREE.Sprite {
-    constructor(text = '', textHeight = 10, color = 'rgba(255, 255, 255, 1)', font_face = 'Arial') {
-      super(new THREE.SpriteMaterial({ map: new THREE.Texture(), transparent:true, opacity: 0.5 }));
-      this._text = text;
-      this._textHeight = textHeight;
-      this._color = color;
-
-      this._fontFace = font_face;
-      this._fontSize = 90; // defines text resolution
-      this._fontWeight = 'normal';
-
-      this._canvas = document.createElement('canvas');
-      this._texture = this.material.map;
-      this._texture.minFilter = THREE.LinearFilter;
-
-      this._genCanvas();
-    }
-
-    get text() { return this._text; }
-    set text(text) { this._text = text; this._genCanvas(); }
-    get textHeight() { return this._textHeight; }
-    set textHeight(textHeight) { this._textHeight = textHeight; this._genCanvas(); }
-    get color() { return this._color; }
-    set color(color) { this._color = color; this._genCanvas(); }
-    get fontFace() { return this._fontFace; }
-    set fontFace(fontFace) { this._fontFace = fontFace; this._genCanvas(); }
-    get fontSize() { return this._fontSize; }
-    set fontSize(fontSize) { this._fontSize = fontSize; this._genCanvas(); }
-    get fontWeight() { return this._fontWeight; }
-    set fontWeight(fontWeight) { this._fontWeight = fontWeight; this._genCanvas(); }
-
-
-    _genCanvas() {
-      const canvas = this._canvas;
-      const ctx = canvas.getContext('2d');
-
-      const font = `${this.fontWeight} ${this.fontSize}px ${this.fontFace}`;
-
-      ctx.font = font;
-      const textWidth = ctx.measureText(this.text).width;
-      canvas.width = textWidth;
-      canvas.height = this.fontSize;
-
-      ctx.font = font;
-      ctx.fillStyle = this.color;
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(this.text, 0, canvas.height);
-
-      // Inject canvas into sprite
-      this._texture.image = canvas;
-      this._texture.needsUpdate = true;
-
-      this.scale.set(this.textHeight * canvas.width / canvas.height, this.textHeight);
-    }
-
-    clone() {
-      return new this.constructor(this.text, this.textHeight, this.color, this._fontFace).copy(this);
-    }
-
-    copy(source) {
-      THREE.Sprite.prototype.copy.call(this, source);
-
-      this.color = source.color;
-      this.fontFace = source.fontFace;
-      this.fontSize = source.fontSize;
-      this.fontWeight = source.fontWeight;
-
-      return this;
-    }
-
-  }
-
-  class Sprite2 extends THREE.Sprite {
-    constructor( material ) {
-      super( material );
-
-      if( material.map.isTextTexture ){
-        material.map.object = this;
-        // re-draw texture
-        material.map.draw_text( material.map.text );
-      }
-
-    }
-  }
-
-  class TextTexture extends THREE.Texture {
-
-    constructor( text, mapping, wrapS, wrapT, magFilter, minFilter, format,
-      type, anisotropy, font = "Courier", size = 32
-    ) {
-
-      const canvas = document.createElement("canvas");
-      super( canvas, mapping, wrapS, wrapT, magFilter, minFilter, format, type, anisotropy );
-
-      // this._text = text || " ";
-      this._size = Math.ceil( size );
-      this._canvas = canvas;
-      // this._canvas.height = this._size;
-      // this._canvas.width = Math.ceil( this._text.length * this._size * 0.6 );
-      this._context = this._canvas.getContext("2d");
-      // this._context.font = `${this._size}px ${font}`;
-      // this._context.fillText( this._text, 0, this._size * 26 / 32);
-      this._font = font;
-  		// this.needsUpdate = true;
-  		this.isTextTexture = true;
-  		this.object = null;
-
-  		this.draw_text( text );
-
-  	}
-
-  	update_scale( v ) {
-  	  if( this.object && typeof this.object === "object" &&
-          this.object.isSprite === true )
-      {
-        if( v ){
-          this.object.scale.z = v;
-        }
-        const base_scale = this.object.scale.z;
-        this.object.scale.x = this._text.length * 0.6 * this.object.scale.z;
-        this.object.scale.y = 1 * this.object.scale.z;
-      }
-  	}
-
-    // align (0: center, 1: left, 2: right, 3: based on "-" or center)
-  	draw_text( text, more_args = {} ){
-
-      this.text = text || "";
-
-      // color = "#000000", shadow_color = "#FFFFF", shadow_blur = 4
-      this._align = more_args.align || "smart";
-      this._color = more_args.color || this._color || "#000000";
-      this._shadow_color = more_args.shadow_color || this._shadow_color || "#FFFFFF";
-      this._shadow_blur = more_args.shadow_blur ||
-                                typeof this._shadow_blur === "undefined" ? 4 : this._shadow_blur;
-
-      if( this.object && typeof this.object === "object" &&
-          this.object.isSprite === true )
-      {
-    	  switch ( this._align ) {
-    	    case 'left':
-    	      this.object.center.x = 0.5 / this.text.length;
-    	      break;
-    	    case 'center':
-    	      this.object.center.x = 0.5;
-    	      break;
-    	    case 'right':
-    	      this.object.center.x = 1.0 - 0.5 / this.text.length;
-    	      break;
-    	    case 'smart':
-    	      // find the first '-'
-    	      const dash = this.text.indexOf("-");
-    	      if( dash >= 0 ){
-    	        this.object.center.x = dash * 0.5 / this.text.length;
-    	      } else {
-    	        this.object.center.x = 0.5;
-    	      }
-    	      break;
-    	    default:
-    	      // do nothing
-    	  }
-      }
-  	  this._text = this.text;
-
-      this._canvas.width = Math.ceil( this._text.length * this._size * 0.6 );
-      this._canvas.height = this._size;
-      this._context.clearRect( 0 , 0 , this._canvas.width , this._canvas.height );
-      this._context.font = `${this._size}px ${this._font}`;
-      this._context.fillStyle = this._color;
-      this._context.shadowBlur = this._shadow_blur || 0;
-      this._context.shadowColor = this._shadow_color;
-      this._context.fillText(this._text, 0, this._size * 26 / 32);
-      this.needsUpdate = true;
-
-      this.update_scale();
-
-  	}
-
-  }
-
-
-
-
-
-
-  THREE.TextSprite = TextSprite;
-  THREE.TextTexture = TextTexture;
-  THREE.Sprite2 = Sprite2;
-
-  return(THREE);
-
-}
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/ext/geometries/ConvexHull.js
-function regisater_convexhull(THREE) {
-  const Visible = 0;
-  const Deleted = 1;
-
-  const _v1 = new THREE.Vector3();
-  const _Line3 = new THREE.Line3();
-  const _Plane = new THREE.Plane();
-  const _closestPoint = new THREE.Vector3();
-  const _Triangle = new THREE.Triangle();
-
-  class ConvexHull {
-
-  	constructor() {
-
-  		this.tolerance = - 1;
-
-  		this.faces = []; // the generated faces of the convex hull
-  		this.newFaces = []; // this array holds the faces that are generated within a single iteration
-
-  		// the vertex lists work as follows:
-  		//
-  		// let 'a' and 'b' be 'Face' instances
-  		// let 'v' be points wrapped as instance of 'Vertex'
-  		//
-  		//     [v, v, ..., v, v, v, ...]
-  		//      ^             ^
-  		//      |             |
-  		//  a.outside     b.outside
-  		//
-  		this.assigned = new VertexList();
-  		this.unassigned = new VertexList();
-
-  		this.vertices = []; 	// vertices of the hull (internal representation of given geometry data)
-
-  	}
-
-  	setFromPoints( points ) {
-
-  		if ( Array.isArray( points ) !== true ) {
-
-  			console.error( 'THREE.ConvexHull: Points parameter is not an array.' );
-
-  		}
-
-  		if ( points.length < 4 ) {
-
-  			console.error( 'THREE.ConvexHull: The algorithm needs at least four points.' );
-
-  		}
-
-  		this.makeEmpty();
-
-  		for ( let i = 0, l = points.length; i < l; i ++ ) {
-
-  			this.vertices.push( new VertexNode( points[ i ] ) );
-
-  		}
-
-  		this.compute();
-
-  		return this;
-
-  	}
-
-  	setFromObject( object ) {
-
-  		const points = [];
-
-  		object.updateMatrixWorld( true );
-
-  		object.traverse( function ( node ) {
-
-  			const geometry = node.geometry;
-
-  			if ( geometry !== undefined ) {
-
-  				if ( geometry.isGeometry ) {
-
-  					console.error( 'THREE.ConvexHull no longer supports Geometry. Use THREE.BufferGeometry instead.' );
-  					return;
-
-  				} else if ( geometry.isBufferGeometry ) {
-
-  					const attribute = geometry.attributes.position;
-
-  					if ( attribute !== undefined ) {
-
-  						for ( let i = 0, l = attribute.count; i < l; i ++ ) {
-
-  							const point = new THREE.Vector3();
-
-  							point.fromBufferAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
-
-  							points.push( point );
-
-  						}
-
-  					}
-
-  				}
-
-  			}
-
-  		} );
-
-  		return this.setFromPoints( points );
-
-  	}
-
-  	containsPoint( point ) {
-
-  		const faces = this.faces;
-
-  		for ( let i = 0, l = faces.length; i < l; i ++ ) {
-
-  			const face = faces[ i ];
-
-  			// compute signed distance and check on what half space the point lies
-
-  			if ( face.distanceToPoint( point ) > this.tolerance ) return false;
-
-  		}
-
-  		return true;
-
-  	}
-
-  	intersectRay( ray, target ) {
-
-  		// based on "Fast Ray-Convex Polyhedron Intersection"  by Eric Haines, GRAPHICS GEMS II
-
-  		const faces = this.faces;
-
-  		let tNear = - Infinity;
-  		let tFar = Infinity;
-
-  		for ( let i = 0, l = faces.length; i < l; i ++ ) {
-
-  			const face = faces[ i ];
-
-  			// interpret faces as THREE.Planes for the further computation
-
-  			const vN = face.distanceToPoint( ray.origin );
-  			const vD = face.normal.dot( ray.direction );
-
-  			// if the origin is on the positive side of a THREE.Plane (so the THREE.Plane can "see" the origin) and
-  			// the ray is turned away or parallel to the THREE.Plane, there is no intersection
-
-  			if ( vN > 0 && vD >= 0 ) return null;
-
-  			// compute the distance from the ray’s origin to the intersection with the THREE.Plane
-
-  			const t = ( vD !== 0 ) ? ( - vN / vD ) : 0;
-
-  			// only proceed if the distance is positive. a negative distance means the intersection point
-  			// lies "behind" the origin
-
-  			if ( t <= 0 ) continue;
-
-  			// now categorized THREE.Plane as front-facing or back-facing
-
-  			if ( vD > 0 ) {
-
-  				//  THREE.Plane faces away from the ray, so this THREE.Plane is a back-face
-
-  				tFar = Math.min( t, tFar );
-
-  			} else {
-
-  				// front-face
-
-  				tNear = Math.max( t, tNear );
-
-  			}
-
-  			if ( tNear > tFar ) {
-
-  				// if tNear ever is greater than tFar, the ray must miss the convex hull
-
-  				return null;
-
-  			}
-
-  		}
-
-  		// evaluate intersection point
-
-  		// always try tNear first since its the closer intersection point
-
-  		if ( tNear !== - Infinity ) {
-
-  			ray.at( tNear, target );
-
-  		} else {
-
-  			ray.at( tFar, target );
-
-  		}
-
-  		return target;
-
-  	}
-
-  	intersectsRay( ray ) {
-
-  		return this.intersectRay( ray, _v1 ) !== null;
-
-  	}
-
-  	makeEmpty() {
-
-  		this.faces = [];
-  		this.vertices = [];
-
-  		return this;
-
-  	}
-
-  	// Adds a vertex to the 'assigned' list of vertices and assigns it to the given face
-
-  	addVertexToFace( vertex, face ) {
-
-  		vertex.face = face;
-
-  		if ( face.outside === null ) {
-
-  			this.assigned.append( vertex );
-
-  		} else {
-
-  			this.assigned.insertBefore( face.outside, vertex );
-
-  		}
-
-  		face.outside = vertex;
-
-  		return this;
-
-  	}
-
-  	// Removes a vertex from the 'assigned' list of vertices and from the given face
-
-  	removeVertexFromFace( vertex, face ) {
-
-  		if ( vertex === face.outside ) {
-
-  			// fix face.outside link
-
-  			if ( vertex.next !== null && vertex.next.face === face ) {
-
-  				// face has at least 2 outside vertices, move the 'outside' reference
-
-  				face.outside = vertex.next;
-
-  			} else {
-
-  				// vertex was the only outside vertex that face had
-
-  				face.outside = null;
-
-  			}
-
-  		}
-
-  		this.assigned.remove( vertex );
-
-  		return this;
-
-  	}
-
-  	// Removes all the visible vertices that a given face is able to see which are stored in the 'assigned' vertext list
-
-  	removeAllVerticesFromFace( face ) {
-
-  		if ( face.outside !== null ) {
-
-  			// reference to the first and last vertex of this face
-
-  			const start = face.outside;
-  			let end = face.outside;
-
-  			while ( end.next !== null && end.next.face === face ) {
-
-  				end = end.next;
-
-  			}
-
-  			this.assigned.removeSubList( start, end );
-
-  			// fix references
-
-  			start.prev = end.next = null;
-  			face.outside = null;
-
-  			return start;
-
-  		}
-
-  	}
-
-  	// Removes all the visible vertices that 'face' is able to see
-
-  	deleteFaceVertices( face, absorbingFace ) {
-
-  		const faceVertices = this.removeAllVerticesFromFace( face );
-
-  		if ( faceVertices !== undefined ) {
-
-  			if ( absorbingFace === undefined ) {
-
-  				// mark the vertices to be reassigned to some other face
-
-  				this.unassigned.appendChain( faceVertices );
-
-
-  			} else {
-
-  				// if there's an absorbing face try to assign as many vertices as possible to it
-
-  				let vertex = faceVertices;
-
-  				do {
-
-  					// we need to buffer the subsequent vertex at this point because the 'vertex.next' reference
-  					// will be changed by upcoming method calls
-
-  					const nextVertex = vertex.next;
-
-  					const distance = absorbingFace.distanceToPoint( vertex.point );
-
-  					// check if 'vertex' is able to see 'absorbingFace'
-
-  					if ( distance > this.tolerance ) {
-
-  						this.addVertexToFace( vertex, absorbingFace );
-
-  					} else {
-
-  						this.unassigned.append( vertex );
-
-  					}
-
-  					// now assign next vertex
-
-  					vertex = nextVertex;
-
-  				} while ( vertex !== null );
-
-  			}
-
-  		}
-
-  		return this;
-
-  	}
-
-  	// Reassigns as many vertices as possible from the unassigned list to the new faces
-
-  	resolveUnassignedPoints( newFaces ) {
-
-  		if ( this.unassigned.isEmpty() === false ) {
-
-  			let vertex = this.unassigned.first();
-
-  			do {
-
-  				// buffer 'next' reference, see .deleteFaceVertices()
-
-  				const nextVertex = vertex.next;
-
-  				let maxDistance = this.tolerance;
-
-  				let maxFace = null;
-
-  				for ( let i = 0; i < newFaces.length; i ++ ) {
-
-  					const face = newFaces[ i ];
-
-  					if ( face.mark === Visible ) {
-
-  						const distance = face.distanceToPoint( vertex.point );
-
-  						if ( distance > maxDistance ) {
-
-  							maxDistance = distance;
-  							maxFace = face;
-
-  						}
-
-  						if ( maxDistance > 1000 * this.tolerance ) break;
-
-  					}
-
-  				}
-
-  				// 'maxFace' can be null e.g. if there are identical vertices
-
-  				if ( maxFace !== null ) {
-
-  					this.addVertexToFace( vertex, maxFace );
-
-  				}
-
-  				vertex = nextVertex;
-
-  			} while ( vertex !== null );
-
-  		}
-
-  		return this;
-
-  	}
-
-  	// Computes the extremes of a simplex which will be the initial hull
-
-  	computeExtremes() {
-
-  		const min = new THREE.Vector3();
-  		const max = new THREE.Vector3();
-
-  		const minVertices = [];
-  		const maxVertices = [];
-
-  		// initially assume that the first vertex is the min/max
-
-  		for ( let i = 0; i < 3; i ++ ) {
-
-  			minVertices[ i ] = maxVertices[ i ] = this.vertices[ 0 ];
-
-  		}
-
-  		min.copy( this.vertices[ 0 ].point );
-  		max.copy( this.vertices[ 0 ].point );
-
-  		// compute the min/max vertex on all six directions
-
-  		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
-
-  			const vertex = this.vertices[ i ];
-  			const point = vertex.point;
-
-  			// update the min coordinates
-
-  			for ( let j = 0; j < 3; j ++ ) {
-
-  				if ( point.getComponent( j ) < min.getComponent( j ) ) {
-
-  					min.setComponent( j, point.getComponent( j ) );
-  					minVertices[ j ] = vertex;
-
-  				}
-
-  			}
-
-  			// update the max coordinates
-
-  			for ( let j = 0; j < 3; j ++ ) {
-
-  				if ( point.getComponent( j ) > max.getComponent( j ) ) {
-
-  					max.setComponent( j, point.getComponent( j ) );
-  					maxVertices[ j ] = vertex;
-
-  				}
-
-  			}
-
-  		}
-
-  		// use min/max vectors to compute an optimal epsilon
-
-  		this.tolerance = 3 * Number.EPSILON * (
-  			Math.max( Math.abs( min.x ), Math.abs( max.x ) ) +
-  			Math.max( Math.abs( min.y ), Math.abs( max.y ) ) +
-  			Math.max( Math.abs( min.z ), Math.abs( max.z ) )
-  		);
-
-  		return { min: minVertices, max: maxVertices };
-
-  	}
-
-  	// Computes the initial simplex assigning to its faces all the points
-  	// that are candidates to form part of the hull
-
-  	computeInitialHull() {
-
-  		const vertices = this.vertices;
-  		const extremes = this.computeExtremes();
-  		const min = extremes.min;
-  		const max = extremes.max;
-
-  		// 1. Find the two vertices 'v0' and 'v1' with the greatest 1d separation
-  		// (max.x - min.x)
-  		// (max.y - min.y)
-  		// (max.z - min.z)
-
-  		let maxDistance = 0;
-  		let index = 0;
-
-  		for ( let i = 0; i < 3; i ++ ) {
-
-  			const distance = max[ i ].point.getComponent( i ) - min[ i ].point.getComponent( i );
-
-  			if ( distance > maxDistance ) {
-
-  				maxDistance = distance;
-  				index = i;
-
-  			}
-
-  		}
-
-  		const v0 = min[ index ];
-  		const v1 = max[ index ];
-  		let v2;
-  		let v3;
-
-  		// 2. The next vertex 'v2' is the one farthest to the line formed by 'v0' and 'v1'
-
-  		maxDistance = 0;
-  		_Line3.set( v0.point, v1.point );
-
-  		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
-
-  			const vertex = vertices[ i ];
-
-  			if ( vertex !== v0 && vertex !== v1 ) {
-
-  				_Line3.closestPointToPoint( vertex.point, true, _closestPoint );
-
-  				const distance = _closestPoint.distanceToSquared( vertex.point );
-
-  				if ( distance > maxDistance ) {
-
-  					maxDistance = distance;
-  					v2 = vertex;
-
-  				}
-
-  			}
-
-  		}
-
-  		// 3. The next vertex 'v3' is the one farthest to the THREE.Plane 'v0', 'v1', 'v2'
-
-  		maxDistance = - 1;
-  		_Plane.setFromCoplanarPoints( v0.point, v1.point, v2.point );
-
-  		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
-
-  			const vertex = vertices[ i ];
-
-  			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 ) {
-
-  				const distance = Math.abs( _Plane.distanceToPoint( vertex.point ) );
-
-  				if ( distance > maxDistance ) {
-
-  					maxDistance = distance;
-  					v3 = vertex;
-
-  				}
-
-  			}
-
-  		}
-
-  		const faces = [];
-
-  		if ( _Plane.distanceToPoint( v3.point ) < 0 ) {
-
-  			// the face is not able to see the point so 'THREE.Plane.normal' is pointing outside the tetrahedron
-
-  			faces.push(
-  				Face.create( v0, v1, v2 ),
-  				Face.create( v3, v1, v0 ),
-  				Face.create( v3, v2, v1 ),
-  				Face.create( v3, v0, v2 )
-  			);
-
-  			// set the twin edge
-
-  			for ( let i = 0; i < 3; i ++ ) {
-
-  				const j = ( i + 1 ) % 3;
-
-  				// join face[ i ] i > 0, with the first face
-
-  				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( j ) );
-
-  				// join face[ i ] with face[ i + 1 ], 1 <= i <= 3
-
-  				faces[ i + 1 ].getEdge( 1 ).setTwin( faces[ j + 1 ].getEdge( 0 ) );
-
-  			}
-
-  		} else {
-
-  			// the face is able to see the point so 'THREE.Plane.normal' is pointing inside the tetrahedron
-
-  			faces.push(
-  				Face.create( v0, v2, v1 ),
-  				Face.create( v3, v0, v1 ),
-  				Face.create( v3, v1, v2 ),
-  				Face.create( v3, v2, v0 )
-  			);
-
-  			// set the twin edge
-
-  			for ( let i = 0; i < 3; i ++ ) {
-
-  				const j = ( i + 1 ) % 3;
-
-  				// join face[ i ] i > 0, with the first face
-
-  				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( ( 3 - i ) % 3 ) );
-
-  				// join face[ i ] with face[ i + 1 ]
-
-  				faces[ i + 1 ].getEdge( 0 ).setTwin( faces[ j + 1 ].getEdge( 1 ) );
-
-  			}
-
-  		}
-
-  		// the initial hull is the tetrahedron
-
-  		for ( let i = 0; i < 4; i ++ ) {
-
-  			this.faces.push( faces[ i ] );
-
-  		}
-
-  		// initial assignment of vertices to the faces of the tetrahedron
-
-  		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
-
-  			const vertex = vertices[ i ];
-
-  			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 && vertex !== v3 ) {
-
-  				maxDistance = this.tolerance;
-  				let maxFace = null;
-
-  				for ( let j = 0; j < 4; j ++ ) {
-
-  					const distance = this.faces[ j ].distanceToPoint( vertex.point );
-
-  					if ( distance > maxDistance ) {
-
-  						maxDistance = distance;
-  						maxFace = this.faces[ j ];
-
-  					}
-
-  				}
-
-  				if ( maxFace !== null ) {
-
-  					this.addVertexToFace( vertex, maxFace );
-
-  				}
-
-  			}
-
-  		}
-
-  		return this;
-
-  	}
-
-  	// Removes inactive faces
-
-  	reindexFaces() {
-
-  		const activeFaces = [];
-
-  		for ( let i = 0; i < this.faces.length; i ++ ) {
-
-  			const face = this.faces[ i ];
-
-  			if ( face.mark === Visible ) {
-
-  				activeFaces.push( face );
-
-  			}
-
-  		}
-
-  		this.faces = activeFaces;
-
-  		return this;
-
-  	}
-
-  	// Finds the next vertex to create faces with the current hull
-
-  	nextVertexToAdd() {
-
-  		// if the 'assigned' list of vertices is empty, no vertices are left. return with 'undefined'
-
-  		if ( this.assigned.isEmpty() === false ) {
-
-  			let eyeVertex, maxDistance = 0;
-
-  			// grap the first available face and start with the first visible vertex of that face
-
-  			const eyeFace = this.assigned.first().face;
-  			let vertex = eyeFace.outside;
-
-  			// now calculate the farthest vertex that face can see
-
-  			do {
-
-  				const distance = eyeFace.distanceToPoint( vertex.point );
-
-  				if ( distance > maxDistance ) {
-
-  					maxDistance = distance;
-  					eyeVertex = vertex;
-
-  				}
-
-  				vertex = vertex.next;
-
-  			} while ( vertex !== null && vertex.face === eyeFace );
-
-  			return eyeVertex;
-
-  		}
-
-  	}
-
-  	// Computes a chain of half edges in CCW order called the 'horizon'.
-  	// For an edge to be part of the horizon it must join a face that can see
-  	// 'eyePoint' and a face that cannot see 'eyePoint'.
-
-  	computeHorizon( eyePoint, crossEdge, face, horizon ) {
-
-  		// moves face's vertices to the 'unassigned' vertex list
-
-  		this.deleteFaceVertices( face );
-
-  		face.mark = Deleted;
-
-  		let edge;
-
-  		if ( crossEdge === null ) {
-
-  			edge = crossEdge = face.getEdge( 0 );
-
-  		} else {
-
-  			// start from the next edge since 'crossEdge' was already analyzed
-  			// (actually 'crossEdge.twin' was the edge who called this method recursively)
-
-  			edge = crossEdge.next;
-
-  		}
-
-  		do {
-
-  			const twinEdge = edge.twin;
-  			const oppositeFace = twinEdge.face;
-
-  			if ( oppositeFace.mark === Visible ) {
-
-  				if ( oppositeFace.distanceToPoint( eyePoint ) > this.tolerance ) {
-
-  					// the opposite face can see the vertex, so proceed with next edge
-
-  					this.computeHorizon( eyePoint, twinEdge, oppositeFace, horizon );
-
-  				} else {
-
-  					// the opposite face can't see the vertex, so this edge is part of the horizon
-
-  					horizon.push( edge );
-
-  				}
-
-  			}
-
-  			edge = edge.next;
-
-  		} while ( edge !== crossEdge );
-
-  		return this;
-
-  	}
-
-  	// Creates a face with the vertices 'eyeVertex.point', 'horizonEdge.tail' and 'horizonEdge.head' in CCW order
-
-  	addAdjoiningFace( eyeVertex, horizonEdge ) {
-
-  		// all the half edges are created in ccw order thus the face is always pointing outside the hull
-
-  		const face = Face.create( eyeVertex, horizonEdge.tail(), horizonEdge.head() );
-
-  		this.faces.push( face );
-
-  		// join face.getEdge( - 1 ) with the horizon's opposite edge face.getEdge( - 1 ) = face.getEdge( 2 )
-
-  		face.getEdge( - 1 ).setTwin( horizonEdge.twin );
-
-  		return face.getEdge( 0 ); // the half edge whose vertex is the eyeVertex
-
-
-  	}
-
-  	//  Adds 'horizon.length' faces to the hull, each face will be linked with the
-  	//  horizon opposite face and the face on the left/right
-
-  	addNewFaces( eyeVertex, horizon ) {
-
-  		this.newFaces = [];
-
-  		let firstSideEdge = null;
-  		let previousSideEdge = null;
-
-  		for ( let i = 0; i < horizon.length; i ++ ) {
-
-  			const horizonEdge = horizon[ i ];
-
-  			// returns the right side edge
-
-  			const sideEdge = this.addAdjoiningFace( eyeVertex, horizonEdge );
-
-  			if ( firstSideEdge === null ) {
-
-  				firstSideEdge = sideEdge;
-
-  			} else {
-
-  				// joins face.getEdge( 1 ) with previousFace.getEdge( 0 )
-
-  				sideEdge.next.setTwin( previousSideEdge );
-
-  			}
-
-  			this.newFaces.push( sideEdge.face );
-  			previousSideEdge = sideEdge;
-
-  		}
-
-  		// perform final join of new faces
-
-  		firstSideEdge.next.setTwin( previousSideEdge );
-
-  		return this;
-
-  	}
-
-  	// Adds a vertex to the hull
-
-  	addVertexToHull( eyeVertex ) {
-
-  		const horizon = [];
-
-  		this.unassigned.clear();
-
-  		// remove 'eyeVertex' from 'eyeVertex.face' so that it can't be added to the 'unassigned' vertex list
-
-  		this.removeVertexFromFace( eyeVertex, eyeVertex.face );
-
-  		this.computeHorizon( eyeVertex.point, null, eyeVertex.face, horizon );
-
-  		this.addNewFaces( eyeVertex, horizon );
-
-  		// reassign 'unassigned' vertices to the new faces
-
-  		this.resolveUnassignedPoints( this.newFaces );
-
-  		return	this;
-
-  	}
-
-  	cleanup() {
-
-  		this.assigned.clear();
-  		this.unassigned.clear();
-  		this.newFaces = [];
-
-  		return this;
-
-  	}
-
-  	compute() {
-
-  		let vertex;
-
-  		this.computeInitialHull();
-
-  		// add all available vertices gradually to the hull
-
-  		while ( ( vertex = this.nextVertexToAdd() ) !== undefined ) {
-
-  			this.addVertexToHull( vertex );
-
-  		}
-
-  		this.reindexFaces();
-
-  		this.cleanup();
-
-  		return this;
-
-  	}
-
-  }
-
-  //
-
-  class Face {
-
-  	constructor() {
-
-  		this.normal = new THREE.Vector3();
-  		this.midpoint = new THREE.Vector3();
-  		this.area = 0;
-
-  		this.constant = 0; // signed distance from face to the origin
-  		this.outside = null; // reference to a vertex in a vertex list this face can see
-  		this.mark = Visible;
-  		this.edge = null;
-
-  	}
-
-  	static create( a, b, c ) {
-
-  		const face = new Face();
-
-  		const e0 = new HalfEdge( a, face );
-  		const e1 = new HalfEdge( b, face );
-  		const e2 = new HalfEdge( c, face );
-
-  		// join edges
-
-  		e0.next = e2.prev = e1;
-  		e1.next = e0.prev = e2;
-  		e2.next = e1.prev = e0;
-
-  		// main half edge reference
-
-  		face.edge = e0;
-
-  		return face.compute();
-
-  	}
-
-  	getEdge( i ) {
-
-  		let edge = this.edge;
-
-  		while ( i > 0 ) {
-
-  			edge = edge.next;
-  			i --;
-
-  		}
-
-  		while ( i < 0 ) {
-
-  			edge = edge.prev;
-  			i ++;
-
-  		}
-
-  		return edge;
-
-  	}
-
-  	compute() {
-
-  		const a = this.edge.tail();
-  		const b = this.edge.head();
-  		const c = this.edge.next.head();
-
-  		_Triangle.set( a.point, b.point, c.point );
-
-  		_Triangle.getNormal( this.normal );
-  		_Triangle.getMidpoint( this.midpoint );
-  		this.area = _Triangle.getArea();
-
-  		this.constant = this.normal.dot( this.midpoint );
-
-  		return this;
-
-  	}
-
-  	distanceToPoint( point ) {
-
-  		return this.normal.dot( point ) - this.constant;
-
-  	}
-
-  }
-
-  // Entity for a Doubly-Connected Edge List (DCEL).
-
-  class HalfEdge {
-
-
-  	constructor( vertex, face ) {
-
-  		this.vertex = vertex;
-  		this.prev = null;
-  		this.next = null;
-  		this.twin = null;
-  		this.face = face;
-
-  	}
-
-  	head() {
-
-  		return this.vertex;
-
-  	}
-
-  	tail() {
-
-  		return this.prev ? this.prev.vertex : null;
-
-  	}
-
-  	length() {
-
-  		const head = this.head();
-  		const tail = this.tail();
-
-  		if ( tail !== null ) {
-
-  			return tail.point.distanceTo( head.point );
-
-  		}
-
-  		return - 1;
-
-  	}
-
-  	lengthSquared() {
-
-  		const head = this.head();
-  		const tail = this.tail();
-
-  		if ( tail !== null ) {
-
-  			return tail.point.distanceToSquared( head.point );
-
-  		}
-
-  		return - 1;
-
-  	}
-
-  	setTwin( edge ) {
-
-  		this.twin = edge;
-  		edge.twin = this;
-
-  		return this;
-
-  	}
-
-  }
-
-  // A vertex as a double linked list node.
-
-  class VertexNode {
-
-  	constructor( point ) {
-
-  		this.point = point;
-  		this.prev = null;
-  		this.next = null;
-  		this.face = null; // the face that is able to see this vertex
-
-  	}
-
-  }
-
-  // A double linked list that contains vertex nodes.
-
-  class VertexList {
-
-  	constructor() {
-
-  		this.head = null;
-  		this.tail = null;
-
-  	}
-
-  	first() {
-
-  		return this.head;
-
-  	}
-
-  	last() {
-
-  		return this.tail;
-
-  	}
-
-  	clear() {
-
-  		this.head = this.tail = null;
-
-  		return this;
-
-  	}
-
-  	// Inserts a vertex before the target vertex
-
-  	insertBefore( target, vertex ) {
-
-  		vertex.prev = target.prev;
-  		vertex.next = target;
-
-  		if ( vertex.prev === null ) {
-
-  			this.head = vertex;
-
-  		} else {
-
-  			vertex.prev.next = vertex;
-
-  		}
-
-  		target.prev = vertex;
-
-  		return this;
-
-  	}
-
-  	// Inserts a vertex after the target vertex
-
-  	insertAfter( target, vertex ) {
-
-  		vertex.prev = target;
-  		vertex.next = target.next;
-
-  		if ( vertex.next === null ) {
-
-  			this.tail = vertex;
-
-  		} else {
-
-  			vertex.next.prev = vertex;
-
-  		}
-
-  		target.next = vertex;
-
-  		return this;
-
-  	}
-
-  	// Appends a vertex to the end of the linked list
-
-  	append( vertex ) {
-
-  		if ( this.head === null ) {
-
-  			this.head = vertex;
-
-  		} else {
-
-  			this.tail.next = vertex;
-
-  		}
-
-  		vertex.prev = this.tail;
-  		vertex.next = null; // the tail has no subsequent vertex
-
-  		this.tail = vertex;
-
-  		return this;
-
-  	}
-
-  	// Appends a chain of vertices where 'vertex' is the head.
-
-  	appendChain( vertex ) {
-
-  		if ( this.head === null ) {
-
-  			this.head = vertex;
-
-  		} else {
-
-  			this.tail.next = vertex;
-
-  		}
-
-  		vertex.prev = this.tail;
-
-  		// ensure that the 'tail' reference points to the last vertex of the chain
-
-  		while ( vertex.next !== null ) {
-
-  			vertex = vertex.next;
-
-  		}
-
-  		this.tail = vertex;
-
-  		return this;
-
-  	}
-
-  	// Removes a vertex from the linked list
-
-  	remove( vertex ) {
-
-  		if ( vertex.prev === null ) {
-
-  			this.head = vertex.next;
-
-  		} else {
-
-  			vertex.prev.next = vertex.next;
-
-  		}
-
-  		if ( vertex.next === null ) {
-
-  			this.tail = vertex.prev;
-
-  		} else {
-
-  			vertex.next.prev = vertex.prev;
-
-  		}
-
-  		return this;
-
-  	}
-
-  	// Removes a list of vertices whose 'head' is 'a' and whose 'tail' is b
-
-  	removeSubList( a, b ) {
-
-  		if ( a.prev === null ) {
-
-  			this.head = b.next;
-
-  		} else {
-
-  			a.prev.next = b.next;
-
-  		}
-
-  		if ( b.next === null ) {
-
-  			this.tail = a.prev;
-
-  		} else {
-
-  			b.next.prev = a.prev;
-
-  		}
-
-  		return this;
-
-  	}
-
-  	isEmpty() {
-
-  		return this.head === null;
-
-  	}
-
-  }
-
-
-  class ConvexGeometry extends THREE.BufferGeometry {
-
-  	constructor( object ) {
-
-  		super();
-
-  		// buffers
-
-  		const vertices = [];
-  		const normals = [];
-
-  		const convexHull = new ConvexHull().setFromObject( object );
-
-  		// generate vertices and normals
-
-  		const faces = convexHull.faces;
-
-  		for ( let i = 0; i < faces.length; i ++ ) {
-
-  			const face = faces[ i ];
-  			let edge = face.edge;
-
-  			// we move along a doubly-connected edge list to access all face points (see HalfEdge docs)
-
-  			do {
-
-  				const point = edge.head().point;
-
-  				vertices.push( point.x, point.y, point.z );
-  				normals.push( face.normal.x, face.normal.y, face.normal.z );
-
-  				edge = edge.next;
-
-  			} while ( edge !== face.edge );
-
-  		}
-
-  		// build geometry
-
-  		this.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-  		this.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-
-  	}
-
-  }
-
-  THREE.ConvexHull = ConvexHull;
-  THREE.Face = Face;
-  THREE.HalfEdge = HalfEdge;
-  THREE.VertexNode = VertexNode;
-  THREE.VertexList = VertexList;
-  THREE.ConvexGeometry2 = ConvexGeometry;
-  return( THREE );
-}
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/threeplugins.js
-
-/*
-* This file adds plugins to THREE
-*/
-
-
-
-
-// import { register_octree } from './threeoctree.js';
-
-
-
-
-
-let THREE = register_lut( three_module );
-
-THREE = register_orthographic_controls( THREE );
-// THREE = register_octree( THREE );
-THREE = register_volumeShader1( THREE );
-THREE = register_volume2DShader1( THREE );
-THREE = add_text_sprite( THREE );
-THREE = regisater_convexhull( THREE );
 
 
 
@@ -73972,18 +72268,19 @@ var __webpack_exports__ = {};
 (() => {
 "use strict";
 /* unused harmony export BrainCanvas */
-/* harmony import */ var _js_download_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(3121);
+/* harmony import */ var _js_download_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(3121);
 /* harmony import */ var _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5278);
-/* harmony import */ var _js_threeplugins_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1829);
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7000);
 /* harmony import */ var _js_core_gui_wrapper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2814);
 /* harmony import */ var _js_core_data_controls_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6683);
 /* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(8173);
-/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5043);
-/* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(5664);
+/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(2631);
+/* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(5664);
 /* harmony import */ var _js_constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(975);
 /* harmony import */ var _js_utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(3658);
 /* harmony import */ var json_2_csv__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(7542);
 /* harmony import */ var json_2_csv__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(json_2_csv__WEBPACK_IMPORTED_MODULE_8__);
+/* harmony import */ var _js_jsm_math_Lut2_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(5858);
 /**
  * @Author: Zhengjia Wang
  * Adapter of model (threejs_scene) and viewer (htmlwidgets)
@@ -74004,13 +72301,19 @@ var __webpack_exports__ = {};
 // import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 
 
+
+window.THREEBRAIN = {
+  Lut : _js_jsm_math_Lut2_js__WEBPACK_IMPORTED_MODULE_9__/* .Lut */ .AV,
+  ColorMapKeywords : _js_jsm_math_Lut2_js__WEBPACK_IMPORTED_MODULE_9__/* .ColorMapKeywords */ .cZ
+};
+
 const utils_toolbox = {
   'padZero' : _js_utils_js__WEBPACK_IMPORTED_MODULE_7__/* .padZero */ .Bd,
   'to_array' : _js_utils_js__WEBPACK_IMPORTED_MODULE_7__/* .to_array */ .AA,
   'get_element_size' : _js_utils_js__WEBPACK_IMPORTED_MODULE_7__/* .get_element_size */ .nq,
   'get_or_default' : _js_utils_js__WEBPACK_IMPORTED_MODULE_7__/* .get_or_default */ .jM,
   'json2csv' : json_2_csv__WEBPACK_IMPORTED_MODULE_8__.json2csv,
-  'download' : _js_download_js__WEBPACK_IMPORTED_MODULE_9__/* .download */ .L,
+  'download' : _js_download_js__WEBPACK_IMPORTED_MODULE_10__/* .download */ .L,
   'CONSTANTS' : _js_constants_js__WEBPACK_IMPORTED_MODULE_6__/* .CONSTANTS */ .t
 }
 
@@ -74470,10 +72773,10 @@ class BrainCanvas{
 }
 
 window.BrainCanvas = BrainCanvas;
-window.THREE = _js_threeplugins_js__WEBPACK_IMPORTED_MODULE_1__/* .THREE */ .J;
+window.THREE = _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__;
 window._WEBGL = _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__/* .WEBGL */ .$;
-window.download = _js_download_js__WEBPACK_IMPORTED_MODULE_9__/* .download */ .L;
-window.THREEBRAIN_STORAGE = _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_10__/* .THREEBRAIN_STORAGE */ .E;
+window.download = _js_download_js__WEBPACK_IMPORTED_MODULE_10__/* .download */ .L;
+window.THREEBRAIN_STORAGE = _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__/* .THREEBRAIN_STORAGE */ .E;
 
 
 })();

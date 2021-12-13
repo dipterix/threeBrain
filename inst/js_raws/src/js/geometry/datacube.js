@@ -1,7 +1,11 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { THREE } from '../threeplugins.js';
 import { CONSTANTS } from '../constants.js';
 import { to_array, get_or_default } from '../utils.js';
+import { LineBasicMaterial, BufferGeometry, DataTexture2DArray, RedFormat,
+         UnsignedByteType, ShaderMaterial, Vector3, DoubleSide,
+         PlaneBufferGeometry, Mesh, Line } from '../../build/three.module.js';
+import { Volume2dArrayShader_xy, Volume2dArrayShader_xz,
+         Volume2dArrayShader_yz } from '../shaders/Volume2DShader.js';
 
 /* WebGL doesn't take transparency into consideration when calculating depth
 https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
@@ -26,8 +30,8 @@ class DataCube extends AbstractThreeBrainObject {
 
     let mesh, group_name;
 
-    let line_material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-        line_geometry = new THREE.BufferGeometry();
+    let line_material = new LineBasicMaterial({ color: 0x00ff00, transparent: true }),
+        line_geometry = new BufferGeometry();
     line_material.depthTest = false;
 
 
@@ -43,56 +47,56 @@ class DataCube extends AbstractThreeBrainObject {
           };
 
     // Generate texture
-    let texture = new THREE.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-    texture.format = THREE.RedFormat;
-  	texture.type = THREE.UnsignedByteType;
+    let texture = new DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
+    texture.format = RedFormat;
+  	texture.type = UnsignedByteType;
   	texture.needsUpdate = true;
   	this._texture = texture;
 
 
     // Shader - XY plane
-  	const shader_xy = THREE.Volume2dArrayShader_xy;
-  	let material_xy = new THREE.ShaderMaterial({
+  	const shader_xy = Volume2dArrayShader_xy;
+  	let material_xy = new ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-    		size: { value: new THREE.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
+    		size: { value: new Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_xy.vertexShader,
   		fragmentShader: shader_xy.fragmentShader,
-  		side: THREE.DoubleSide,
+  		side: DoubleSide,
   		transparent: true
   	});
-  	let geometry_xy = new THREE.PlaneBufferGeometry( volume.xLength, volume.yLength );
+  	let geometry_xy = new PlaneBufferGeometry( volume.xLength, volume.yLength );
 
 
-  	let mesh_xy = new THREE.Mesh( geometry_xy, material_xy );
-  	// let mesh_xy2 = new THREE.Mesh( geometry_xy, material_xy );
+  	let mesh_xy = new Mesh( geometry_xy, material_xy );
+  	// let mesh_xy2 = new Mesh( geometry_xy, material_xy );
   	mesh_xy.renderOrder = -1;
   	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
   	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
 
 
   	// Shader - XZ plane
-  	const shader_xz = THREE.Volume2dArrayShader_xz;
-  	let material_xz = new THREE.ShaderMaterial({
+  	const shader_xz = Volume2dArrayShader_xz;
+  	let material_xz = new ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-    		size: { value: new THREE.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
+    		size: { value: new Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_xz.vertexShader,
   		fragmentShader: shader_xz.fragmentShader,
-  		side: THREE.DoubleSide,
+  		side: DoubleSide,
   		transparent: true
   	});
-  	let geometry_xz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+  	let geometry_xz = new PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-  	let mesh_xz = new THREE.Mesh( geometry_xz, material_xz );
+  	let mesh_xz = new Mesh( geometry_xz, material_xz );
   	mesh_xz.rotateX( Math.PI / 2 );
   	mesh_xz.renderOrder = -1;
   	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
@@ -100,23 +104,23 @@ class DataCube extends AbstractThreeBrainObject {
 
 
   	// Shader - YZ plane
-  	const shader_yz = THREE.Volume2dArrayShader_yz;
-  	let material_yz = new THREE.ShaderMaterial({
+  	const shader_yz = Volume2dArrayShader_yz;
+  	let material_yz = new ShaderMaterial({
   	  uniforms : {
     		diffuse: { value: texture },
     		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-    		size: { value: new THREE.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
+    		size: { value: new Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
     		threshold: { value : 0.0 },
     		renderDepth: { value : 1.0 }
     	},
     	vertexShader: shader_yz.vertexShader,
   		fragmentShader: shader_yz.fragmentShader,
-  		side: THREE.DoubleSide,
+  		side: DoubleSide,
   		transparent: true
   	});
-  	let geometry_yz = new THREE.PlaneBufferGeometry( volume.xLength, volume.zLength );
+  	let geometry_yz = new PlaneBufferGeometry( volume.xLength, volume.zLength );
 
-  	let mesh_yz = new THREE.Mesh( geometry_yz, material_yz );
+  	let mesh_yz = new Mesh( geometry_yz, material_yz );
   	mesh_yz.rotateY( Math.PI / 2);
   	mesh_yz.rotateZ( Math.PI / 2); // Back side
   	mesh_yz.renderOrder = -1;
@@ -131,14 +135,14 @@ class DataCube extends AbstractThreeBrainObject {
 
     const line_vert = [];
   	line_vert.push(
-    	new THREE.Vector3( -_mhw, -_mhw, 0 ),
-    	new THREE.Vector3( _mhw, _mhw, 0 )
+    	new Vector3( -_mhw, -_mhw, 0 ),
+    	new Vector3( _mhw, _mhw, 0 )
     );
     line_geometry.setFromPoints( line_vert );
 
-    let line_mesh_xz = new THREE.Line( line_geometry, line_material ),
-        line_mesh_xy = new THREE.Line( line_geometry, line_material ),
-        line_mesh_yz = new THREE.Line( line_geometry, line_material );
+    let line_mesh_xz = new Line( line_geometry, line_material ),
+        line_mesh_xy = new Line( line_geometry, line_material ),
+        line_mesh_yz = new Line( line_geometry, line_material );
     line_mesh_xz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
     line_mesh_xy.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
     line_mesh_yz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;

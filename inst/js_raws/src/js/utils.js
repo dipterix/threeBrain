@@ -1,5 +1,5 @@
 import ClipboardJS from 'clipboard';
-import * as THREE from '../build/three.module.js';
+import { Matrix4 } from '../build/three.module.js';
 // import download from 'downloadjs';
 
 const invertColor = function(hex) {
@@ -310,7 +310,7 @@ const write_clipboard = write_clipboard_maker();
 
 
 function as_Matrix4(m) {
-  const re = new THREE.Matrix4();
+  const re = new Matrix4();
   if(!Array.isArray(m)){ return(re); }
 
   if( m.length <= 4 ){

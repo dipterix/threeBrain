@@ -1,5 +1,6 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { THREE } from '../threeplugins.js';
+import { MeshBasicMaterial, MeshLambertMaterial, SphereBufferGeometry,
+         Mesh, Vector3, Matrix4 } from '../../build/three.module.js';
 import { to_array, get_or_default } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 
@@ -13,11 +14,11 @@ class Sphere extends AbstractThreeBrainObject {
     this.isSphere = true;
 
     this._materials = {
-      'MeshBasicMaterial' : new THREE.MeshBasicMaterial( MATERIAL_PARAMS ),
-      'MeshLambertMaterial': new THREE.MeshLambertMaterial( MATERIAL_PARAMS )
+      'MeshBasicMaterial' : new MeshBasicMaterial( MATERIAL_PARAMS ),
+      'MeshLambertMaterial': new MeshLambertMaterial( MATERIAL_PARAMS )
     };
 
-    const gb = new THREE.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+    const gb = new SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
           values = g.keyframes,
           n_keyframes = to_array( g.keyframes ).length;
     this._geometry = gb;
@@ -32,7 +33,7 @@ class Sphere extends AbstractThreeBrainObject {
       this._material_type = 'MeshLambertMaterial';
     }
 
-    const mesh = new THREE.Mesh(gb, this._materials[ this._material_type ]);
+    const mesh = new Mesh(gb, this._materials[ this._material_type ]);
     mesh.name = 'mesh_sphere_' + g.name;
 
     // FIXME: need to use class instead of canvas.mesh
@@ -349,7 +350,7 @@ class Sphere extends AbstractThreeBrainObject {
           const mesh_center = search_group.getWorldPosition( gp_position );
           if( lh_vertices && rh_vertices ){
             // calculate
-            let _tmp = new THREE.Vector3(),
+            let _tmp = new Vector3(),
                 node_idx = -1,
                 min_dist = Infinity,
                 side = '',
@@ -458,8 +459,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
     const scode = canvas.state_data.get("target_subject");
     const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
 
-    const gp_position = new THREE.Vector3(),
-          _mpos = new THREE.Vector3();
+    const gp_position = new Vector3(),
+          _mpos = new Vector3();
     _mpos.fromArray( position );
 
     // Search 141 nodes
@@ -478,7 +479,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       const mesh_center = search_group.getWorldPosition( gp_position );
       if( lh_vertices && rh_vertices ){
         // calculate
-        let _tmp = new THREE.Vector3(),
+        let _tmp = new Vector3(),
             node_idx = -1,
             min_dist = Infinity,
             side = '',
@@ -515,8 +516,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       }
     }
     // calculate MNI305 coordinate
-    const mat1 = new THREE.Matrix4(),
-          pos_targ = new THREE.Vector3();
+    const mat1 = new Matrix4(),
+          pos_targ = new Vector3();
     const v2v_orig = get_or_default( canvas.shared_data, scode, {} ).vox2vox_MNI305;
 
     if( v2v_orig ){

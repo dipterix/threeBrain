@@ -1,7 +1,8 @@
 /* mesh objects that always stays at the corner of canvas */
 
-import { THREE } from '../threeplugins.js';
 import { CONSTANTS } from '../constants.js';
+import { Group, CylinderGeometry, Color, Mesh, MeshBasicMaterial, DoubleSide } from '../../build/three.module.js';
+import { TextSprite } from '../ext/text_sprite.js';
 
 
 class Compass {
@@ -10,14 +11,14 @@ class Compass {
     this._control = control;
     this._text = text;
 
-    this.container = new THREE.Group();
+    this.container = new Group();
 
     for( let ii in text ){
-      let geom = new THREE.CylinderGeometry( 0.5, 0.5, 3, 8 );
+      let geom = new CylinderGeometry( 0.5, 0.5, 3, 8 );
       let _c = [0,0,0];
       _c[ ii ] = 1;
-      let color = new THREE.Color().fromArray( _c );
-      let line = new THREE.Mesh( geom, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }) );
+      let color = new Color().fromArray( _c );
+      let line = new Mesh( geom, new MeshBasicMaterial({ color: color, side: DoubleSide }) );
       line.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
 
       let _tmp = ['rotateZ', null, 'rotateX'][ii];
@@ -28,7 +29,7 @@ class Compass {
       this.container.add( line );
 
       _c[ ii ] = 255;
-      let sprite = new THREE.TextSprite(text[ ii ], 3, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
+      let sprite = new TextSprite(text[ ii ], 3, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
       _c[ ii ] = 5;
       sprite.position.fromArray( _c );
       sprite.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );

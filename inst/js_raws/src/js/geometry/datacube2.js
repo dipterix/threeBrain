@@ -1,7 +1,11 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { THREE } from '../threeplugins.js';
+import { Vector3, DataTexture3D, NearestFilter, FloatType, RedFormat,
+         RGBAFormat, UnsignedByteType, LinearFilter, RGBFormat, UniformsUtils,
+         RawShaderMaterial, BackSide, SphereBufferGeometry, Mesh,
+         BoxBufferGeometry } from '../../build/three.module.js';
 import { CONSTANTS } from '../constants.js';
 import { get_or_default } from '../utils.js';
+import { VolumeRenderShader1 } from '../shaders/VolumeShader.js';
 
 
 class DataCube2 extends AbstractThreeBrainObject {
@@ -10,7 +14,7 @@ class DataCube2 extends AbstractThreeBrainObject {
   _compute_normals() {
 
     let i = 0, ii = 0, jj,
-        nml = new THREE.Vector3(), u = new THREE.Vector3(),
+        nml = new Vector3(), u = new Vector3(),
         tmp, x, y, z, a, b, c;
     const zdim = this._cube_dim[0],
           ydim = this._cube_dim[1],
@@ -150,7 +154,7 @@ class DataCube2 extends AbstractThreeBrainObject {
           ),
           0.5
         );
-        this.object.material.uniformsNeedUpdate = true
+        this.object.material.uniformsNeedUpdate = true;
       }
 
       if( this._color_texture ){
@@ -259,13 +263,13 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._compute_normals();
 
       // 3D texture
-      /*let data_texture = new THREE.DataTexture3D(
+      /*let data_texture = new DataTexture3D(
         this._map_data, cube_dim[0], cube_dim[1], cube_dim[2]
       );
-      data_texture.minFilter = THREE.NearestFilter;
-      data_texture.magFilter = THREE.NearestFilter;
-      data_texture.format = THREE.RedFormat;
-      data_texture.type = THREE.FloatType;
+      data_texture.minFilter = NearestFilter;
+      data_texture.magFilter = NearestFilter;
+      data_texture.format = RedFormat;
+      data_texture.type = FloatType;
       data_texture.unpackAlignment = 1;
       data_texture.needsUpdate = true;
       this._data_texture = data_texture;
@@ -273,40 +277,40 @@ class DataCube2 extends AbstractThreeBrainObject {
 
 
       // Color texture - used to render colors
-      let color_texture = new THREE.DataTexture3D(
+      let color_texture = new DataTexture3D(
         color, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
-      color_texture.minFilter = THREE.NearestFilter;
-      color_texture.magFilter = THREE.NearestFilter;
-      color_texture.format = THREE.RGBAFormat;
-      color_texture.type = THREE.UnsignedByteType;
+      color_texture.minFilter = NearestFilter;
+      color_texture.magFilter = NearestFilter;
+      color_texture.format = RGBAFormat;
+      color_texture.type = UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
       this._color_texture = color_texture;
       this._color_texture.needsUpdate = true;
 
       // normals
-      let normals_texture = new THREE.DataTexture3D(
+      let normals_texture = new DataTexture3D(
         normals, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
       // magFilter must be nearest
       // minFilter can be locally smoothed
-      normals_texture.minFilter = THREE.LinearFilter;
-      normals_texture.magFilter = THREE.NearestFilter;
-      normals_texture.format = THREE.RGBFormat;
-      normals_texture.type = THREE.UnsignedByteType;
+      normals_texture.minFilter = LinearFilter;
+      normals_texture.magFilter = NearestFilter;
+      normals_texture.format = RGBFormat;
+      normals_texture.type = UnsignedByteType;
       normals_texture.unpackAlignment = 1;
 
       this._normals_texture = normals_texture;
       this._normals_texture.needsUpdate = true;
 
       // Material
-      const shader = THREE.VolumeRenderShader1;
+      const shader = VolumeRenderShader1;
 
 
-      let uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+      let uniforms = UniformsUtils.clone( shader.uniforms );
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
       uniforms.nmap.value = normals_texture;
@@ -325,25 +329,25 @@ class DataCube2 extends AbstractThreeBrainObject {
       bounding = Math.min(bounding, 0.5);
       uniforms.bounding.value = bounding;
 
-      let material = new THREE.RawShaderMaterial( {
+      let material = new RawShaderMaterial( {
         uniforms: uniforms,
         vertexShader: shader.vertexShader,
         fragmentShader: shader.fragmentShader,
-        side: THREE.BackSide, // The volume shader uses the backface as its "reference point"
+        side: BackSide, // The volume shader uses the backface as its "reference point"
         transparent : true
       } );
 
-      let geometry = new THREE.SphereBufferGeometry(
-        new THREE.Vector3().fromArray(cube_half_size).length(), 29, 14
+      let geometry = new SphereBufferGeometry(
+        new Vector3().fromArray(cube_half_size).length(), 29, 14
       );
 
-      // let geometry = new THREE.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
+      // let geometry = new BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
 
-      mesh = new THREE.Mesh( geometry, material );
+      mesh = new Mesh( geometry, material );
       mesh.name = 'mesh_datacube_' + g.name;
 
       mesh.position.fromArray( g.position );

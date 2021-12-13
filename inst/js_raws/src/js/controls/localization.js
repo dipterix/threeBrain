@@ -1,4 +1,4 @@
-import { THREE } from '../threeplugins.js';
+import { Vector3, SpriteMaterial, DoubleSide } from '../../build/three.module.js';
 import { vec3_to_string, has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 import { is_electrode } from '../geometry/sphere.js';
@@ -7,10 +7,11 @@ import * as download from 'downloadjs';
 import { LineSegments2 } from '../jsm/lines/LineSegments2.js';
 import { LineMaterial } from '../jsm/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from '../jsm/lines/LineSegmentsGeometry.js';
+import { Sprite2, TextTexture } from '../ext/text_sprite.js';
 
 
 // Electrode localization
-const pos = new THREE.Vector3();
+const pos = new Vector3();
 const folder_name = CONSTANTS.FOLDERS['localization'] || 'Electrode Localization';
 
 const COL_SELECTED = 0xff0000,
@@ -36,13 +37,13 @@ function atlas_label(pos_array, canvas){
         inst = canvas.threebrain_instances.get(`Atlas - aparc_aseg (${sub})`);
   if( !inst ){ return( [ "Unknown", 0 ] ); }
 
-  const margin_voxels = new THREE.Vector3().fromArray( inst._cube_dim );
-  const margin_lengths = new THREE.Vector3().set(
+  const margin_voxels = new Vector3().fromArray( inst._cube_dim );
+  const margin_lengths = new Vector3().set(
     inst._margin_length.xLength,
     inst._margin_length.yLength,
     inst._margin_length.zLength
   );
-  const f = new THREE.Vector3().set(
+  const f = new Vector3().set(
     margin_lengths.x / margin_voxels.x,
     margin_lengths.y / margin_voxels.y,
     margin_lengths.z / margin_voxels.z
@@ -120,7 +121,7 @@ class LocElectrode {
               electrode_scale = 1, text_scale = 1.0) {
     this.isLocElectrode = true;
     // temp vector 3
-    this.__vec3 = new THREE.Vector3().set( 0, 0, 0 );
+    this.__vec3 = new Vector3().set( 0, 0, 0 );
     this.subject_code = subject_code;
     this.localization_order = localization_order;
     this._canvas = canvas;
@@ -193,13 +194,13 @@ class LocElectrode {
     this.object = inst.object;
     this.object.material.color.set( COL_ENABLED );
 
-    const map = new THREE.TextTexture( `${localization_order}` );
-    const material = new THREE.SpriteMaterial( {
+    const map = new TextTexture( `${localization_order}` );
+    const material = new SpriteMaterial( {
       map: map,
       depthTest : false,
       depthWrite : false
     } );
-    const sprite = new THREE.Sprite2( material );
+    const sprite = new Sprite2( material );
     this.object.add( sprite );
     this._map = map;
 
@@ -224,7 +225,7 @@ class LocElectrode {
       color: 0x0000ff,
       // depthTest: false,
       linewidth: 3,
-      side: THREE.DoubleSide
+      side: DoubleSide
     } );
     const line = new LineSegments2( line_geometry, line_material );
     this._line = line;
@@ -413,13 +414,13 @@ class LocElectrode {
     const matrix_ = inst.object.parent.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
-    const margin_voxels = new THREE.Vector3().fromArray( inst._cube_dim );
-    const margin_lengths = new THREE.Vector3().set(
+    const margin_voxels = new Vector3().fromArray( inst._cube_dim );
+    const margin_lengths = new Vector3().set(
       inst._margin_length.xLength,
       inst._margin_length.yLength,
       inst._margin_length.zLength
     );
-    const f = new THREE.Vector3().set(
+    const f = new Vector3().set(
       margin_lengths.x / margin_voxels.x,
       margin_lengths.y / margin_voxels.y,
       margin_lengths.z / margin_voxels.z
@@ -430,9 +431,9 @@ class LocElectrode {
     const ct_data = inst._cube_values;
 
     const delta = 4;
-    const pos = new THREE.Vector3(),
-          pos0 = new THREE.Vector3();
-          // pos1 = new THREE.Vector3();
+    const pos = new Vector3(),
+          pos0 = new Vector3();
+          // pos1 = new Vector3();
 
     // get position
     const position = this.instance._params.position;
@@ -543,26 +544,18 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
-  /*
-  const margin_nvoxels = new THREE.Vector3().fromArray( inst._cube_dim );
-  const margin_lengths = new THREE.Vector3().set(
-    inst._margin_length.xLength,
-    inst._margin_length.yLength,
-    inst._margin_length.zLength
-  );
-  */
   const src = canvas.main_camera.position;
-  const dst = new THREE.Vector3();
+  const dst = new Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
-  const step = new THREE.Vector3();
+  const step = new Vector3();
   electrodes[electrodes.length - 1].object.getWorldPosition( step );
   step.sub( dst ).multiplyScalar( 1 / n );
-  const tmp = new THREE.Vector3();
-  const est = new THREE.Vector3();
+  const tmp = new Vector3();
+  const est = new Vector3();
 
-  const dir = new THREE.Vector3();
+  const dir = new Vector3();
   const re = [];
   for( let ii = 1; ii < n; ii++ ){
 
@@ -585,7 +578,7 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
         delta
       );
       if( res && res.length >= 6 && !isNaN( res[3] )){
-        let est1 = new THREE.Vector3( res[3], res[4], res[5] );
+        let est1 = new Vector3( res[3], res[4], res[5] );
         if( est1.distanceTo(est) < 10 + delta / 10 ){
           re.push(est1);
           break;
@@ -606,18 +599,18 @@ function electrode_line_from_slice( canvas, electrodes, size ){
   if( size <= 2 ){ return; }
 
   const src = canvas.main_camera.position;
-  const dst = new THREE.Vector3();
+  const dst = new Vector3();
 
   canvas.set_raycaster();
   canvas.mouse_raycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
-  const step = new THREE.Vector3();
+  const step = new Vector3();
   electrodes[electrodes.length - 1].object.getWorldPosition( step );
   step.sub( dst ).multiplyScalar( 1 / n );
-  const tmp = new THREE.Vector3();
-  const est = new THREE.Vector3();
+  const tmp = new Vector3();
+  const est = new Vector3();
 
   let res;
   const re = [];
@@ -627,7 +620,7 @@ function electrode_line_from_slice( canvas, electrodes, size ){
     tmp.copy( step ).multiplyScalar( ii );
     est.copy( dst ).add( tmp );
 
-    re.push( new THREE.Vector3().copy(est) );
+    re.push( new Vector3().copy(est) );
   }
 
   return({
@@ -876,7 +869,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         if( res.positions.length ){
           const last_elec = electrodes.pop();
           res.direction.normalize();
-          res.positions.push(new THREE.Vector3().fromArray(
+          res.positions.push(new Vector3().fromArray(
             last_elec.instance._params.position
           ));
           last_elec.dispose();

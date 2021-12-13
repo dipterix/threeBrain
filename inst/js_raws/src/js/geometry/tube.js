@@ -1,20 +1,20 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { THREE } from '../threeplugins.js';
+import { Curve, Vector3, MeshLambertMaterial, Mesh } from '../../build/three.module.js';
 import { to_array, min2, sub2 } from '../utils.js';
 import { TubeBufferGeometry2 } from '../ext/geometries/TubeBufferGeometry2.js';
 
 // construct curve
 function CustomLine( targets ) {
-	THREE.Curve.call( this );
+	Curve.call( this );
 	this.targets = targets;
 	this._cached = targets.map((v) => {
-	  return(new THREE.Vector3());
+	  return(new Vector3());
 	});
 }
-CustomLine.prototype = Object.create( THREE.Curve.prototype );
+CustomLine.prototype = Object.create( Curve.prototype );
 CustomLine.prototype.constructor = CustomLine;
 CustomLine.prototype.getPoint = function ( t, optionalTarget ) {
-  const tp = optionalTarget || new THREE.Vector3();
+  const tp = optionalTarget || new Vector3();
 	tp.x = this.targets[0].x * (1.0 - t) + this.targets[1].x * t;
   tp.y = this.targets[0].y * (1.0 - t) + this.targets[1].y * t;
   tp.z = this.targets[0].z * (1.0 - t) + this.targets[1].z * t;
@@ -82,9 +82,9 @@ class TubeMesh extends AbstractThreeBrainObject {
     this._geometry = new TubeBufferGeometry2( this._curve, this.tubularSegments,
                                               this.radius, this.radialSegments, this.is_closed );
 
-    this._material = new THREE.MeshLambertMaterial();
+    this._material = new MeshLambertMaterial();
 
-    this.object = new THREE.Mesh( this._geometry, this._material );
+    this.object = new Mesh( this._geometry, this._material );
     this._mesh = this.object;
 
 

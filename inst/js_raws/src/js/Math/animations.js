@@ -1,4 +1,4 @@
-import { THREE } from '../threeplugins.js';
+import { ColorKeyframeTrack, InterpolateDiscrete } from '../../build/three.module.js';
 import { to_array } from '../utils.js';
 
 function generate_animation_default(m, track_data, cmap, animation_clips, mixer) {
@@ -34,9 +34,9 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 
       });
     }
-    const keyframe = new THREE.ColorKeyframeTrack(
+    const keyframe = new ColorKeyframeTrack(
       track_data.target || '.material.color',
-      time_stamp, colors, THREE.InterpolateDiscrete
+      time_stamp, colors, InterpolateDiscrete
     );
 
     return(keyframe);
