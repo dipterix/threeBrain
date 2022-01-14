@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.4.9001</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -70,7 +66,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/dipterix/threeBrain/">
+  <a href="https://github.com/dipterix/threeBrain/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -91,7 +87,7 @@
       <h1 data-toc-skip>Electrode Localization</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/dipterix/threeBrain/blob/master/vignettes/B-electrode-localization.Rmd"><code>vignettes/B-electrode-localization.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/dipterix/threeBrain/blob/HEAD/vignettes/B-electrode-localization.Rmd" class="external-link"><code>vignettes/B-electrode-localization.Rmd</code></a></small>
       <div class="hidden name"><code>B-electrode-localization.Rmd</code></div>
 
     </div>
@@ -101,16 +97,16 @@
 <p>In <code>iEEG/ECoG</code> study, it is very common to localize the electrodes using ‘CT’ scans. The CT images have different orientations to the MR images, hence co-registration is often needed. This package does not provide co-registration functions, as different labs might have different approaches. <code>threeBrain</code> only takes co-registered CT scans and visualize them directly. Therefore if you have already co-registered CT, skip the next part.</p>
 <p>The rest part of this article uses <code>N27</code> sample files mentioned by the previous vignette. If you are using this example, please execute the following R code to set up. Alternatively, you can substitute variables <code>subject_code</code> and <code>subject_path</code> accordingly.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span>
 <span class="va">subject_code</span> <span class="op">&lt;-</span> <span class="st">"N27"</span>
 <span class="va">subject_path</span> <span class="op">&lt;-</span> <span class="st">"~/Downloads/N27"</span>
 <span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="va">subject_code</span><span class="op">)</span></code></pre></div>
-<div id="ct-co-registration" class="section level2">
-<h2 class="hasAnchor">
-<a href="#ct-co-registration" class="anchor"></a>CT Co-registration</h2>
+<div class="section level2">
+<h2 id="ct-co-registration">CT Co-registration<a class="anchor" aria-label="anchor" href="#ct-co-registration"></a>
+</h2>
 <p><em>(skip if you have generated co-registered CT in ‘Nifti’ formats)</em></p>
 <p>This part provides one working method via <code>dcm2niix</code> and <code>FLIRT</code> packages. Again, other methods will work as long as they output CT aligned to MRI in ‘Nifti’ formats.</p>
-<p>To start, please download and install <code>dcm2niix</code> (<a href="https://github.com/rordenlab/dcm2niix">link</a>), <code>FLIRT</code> packages (<a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT/StepByStep">link</a>).</p>
+<p>To start, please download and install <code>dcm2niix</code> (<a href="https://github.com/rordenlab/dcm2niix" class="external-link">link</a>), <code>FLIRT</code> packages (<a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT/StepByStep" class="external-link">link</a>).</p>
 <p><strong>Step 1</strong>: Merge all <code>DICOM</code> images to <code>Nifti</code> format:</p>
 <p>Open your terminal (<code>bash</code> or <code>power shell</code>), change directories to where <code>CT</code> <code>DICOM</code> images are, and run</p>
 <pre><code>dcm2niix [folder with DICOM images]</code></pre>
@@ -119,16 +115,16 @@
 <pre><code>flirt -in ct.nii -ref t1.nii -out ct_in_t1.nii -omat ct2t1.mat -interp trilinear -cost mutualinfo -dof 6 -searchcost mutualinfo -searchrx -180 180 -searchry -180 180 -searchrz -180 180 </code></pre>
 <p>There will be a <code>ct_in_t1.nii</code> file generated.</p>
 </div>
-<div id="localize-with-ct" class="section level2">
-<h2 class="hasAnchor">
-<a href="#localize-with-ct" class="anchor"></a>Localize with CT</h2>
+<div class="section level2">
+<h2 id="localize-with-ct">Localize with CT<a class="anchor" aria-label="anchor" href="#localize-with-ct"></a>
+</h2>
 <p>Assuming you have generated co-registered CT scans in file <code>ct_in_t1.nii</code>, please copy it to the subject folder. The file should be located at</p>
 <ul>
 <li><code>mri/ct_in_t1.nii</code></li>
 </ul>
 <p>Next, type in and change the file path to <code>ct_in_t1.nii</code> just created</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ct_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="st">"mri/ct_in_t1.nii"</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">ct_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="st">"mri/ct_in_t1.nii"</span><span class="op">)</span>
 <span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="../reference/localization_module.html">localization_module</a></span><span class="op">(</span>subject_code <span class="op">=</span> <span class="va">subject_code</span>,
                                 fs_path <span class="op">=</span> <span class="va">subject_path</span>,
                                 ct_path <span class="op">=</span> <span class="va">ct_path</span><span class="op">)</span></code></pre></div>
@@ -140,9 +136,9 @@
 <p>If the threshold is too low, then other irrelevant structures will appear. If the threshold is too high, some electrodes might disappear.</p>
 <p>To adjust the CT threshold, open the <code>Volume Settings</code> from the control panel, slide <code>Voxel Min</code>.</p>
 </div>
-<div id="localize-with-mri-without-ct" class="section level2">
-<h2 class="hasAnchor">
-<a href="#localize-with-mri-without-ct" class="anchor"></a>Localize with MRI (without CT)</h2>
+<div class="section level2">
+<h2 id="localize-with-mri-without-ct">Localize with MRI (without CT)<a class="anchor" aria-label="anchor" href="#localize-with-mri-without-ct"></a>
+</h2>
 <p>When electrodes are too small, or the CT is unavailable, electrode localization can be done on the MR images. Localization via MRI can be done by the following steps:</p>
 <ol style="list-style-type: decimal">
 <li>switch <code>Edit Mode</code> (in the <code>Electrode Localization</code> panel) to <code>MRI slices</code>
@@ -153,17 +149,17 @@
 </ol>
 <p><img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-07.png" width="100%"></p>
 </div>
-<div id="automatically-interpolate-electrodes" class="section level2">
-<h2 class="hasAnchor">
-<a href="#automatically-interpolate-electrodes" class="anchor"></a>Automatically interpolate electrodes</h2>
+<div class="section level2">
+<h2 id="automatically-interpolate-electrodes">Automatically interpolate electrodes<a class="anchor" aria-label="anchor" href="#automatically-interpolate-electrodes"></a>
+</h2>
 <p>In most of the scenarios, electrodes form grids or strips, The <code>threeBrain</code> provides interpolation functions.</p>
 <p>For example, we want to localize the electrodes circled in orange color (top-left). You could of course mark them one by one. More efficiently, you can simply localize the electrodes at both ends, set the <code>Interpolate Size</code> to 6 (there are 6 more electrodes to be added), make sure there is no other objects blocking the sight, and hit the <code>Interpolate from Recently Added</code> button (circled in the figure). All other electrodes will be automatically generated.</p>
 <p><img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-05.png" width="100%"></p>
 <p>The newly added electrodes might be inaccurate. Don’t worry, you can adjust them later!</p>
 </div>
-<div id="refine-electrodes" class="section level2">
-<h2 class="hasAnchor">
-<a href="#refine-electrodes" class="anchor"></a>Refine electrodes</h2>
+<div class="section level2">
+<h2 id="refine-electrodes">Refine electrodes<a class="anchor" aria-label="anchor" href="#refine-electrodes"></a>
+</h2>
 <p>Once all the electrodes are marked, change <code>Edit Mode</code> to <code>refine</code>. In the refine mode, you can</p>
 <ul>
 <li>Enable/Disable electrodes
@@ -184,9 +180,9 @@
 <p>To manually adjust a electrode, <strong>double-click</strong> one electrode. The highlighted electrode will be colored in red. Then hover the mouse above the canvas, press and hold keyboard <code>1</code> or <code>shift+1</code> to move the electrode along <code>Right/Left</code> axis. Press and hold <code>2</code> or <code>shift+2</code> to move the electrode along <code>Anterior/Posterior</code> axis. Press and hold <code>3</code> or <code>shift+3</code> to move the electrode along <code>Superior/Inferior</code> axis.</p>
 <p><img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-08.png" width="100%"></p>
 </div>
-<div id="download-electrode-table" class="section level2">
-<h2 class="hasAnchor">
-<a href="#download-electrode-table" class="anchor"></a>Download Electrode Table</h2>
+<div class="section level2">
+<h2 id="download-electrode-table">Download Electrode Table<a class="anchor" aria-label="anchor" href="#download-electrode-table"></a>
+</h2>
 <p>Once Finished electrode localization, you can take screenshots by opening <code>Default</code> panel, and click on <code>Screenshot</code>.</p>
 <p>To download electrode table, click on <code>Download as csv</code> in the <code>Electrode Localization</code> panel. The electrode table should look as follows:</p>
 <p><img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-06.png" width="100%"></p>
@@ -205,11 +201,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
+  <p></p>
+<p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -217,6 +215,8 @@
 
   
 
+
+  
 
   </body>
 </html>

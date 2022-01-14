@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.4.9001</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -70,7 +66,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/dipterix/threeBrain/">
+  <a href="https://github.com/dipterix/threeBrain/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -91,7 +87,7 @@
       <h1 data-toc-skip>Data Visualization (Electrodes)</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/dipterix/threeBrain/blob/master/vignettes/C-data-visualization.Rmd"><code>vignettes/C-data-visualization.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/dipterix/threeBrain/blob/HEAD/vignettes/C-data-visualization.Rmd" class="external-link"><code>vignettes/C-data-visualization.Rmd</code></a></small>
       <div class="hidden name"><code>C-data-visualization.Rmd</code></div>
 
     </div>
@@ -100,19 +96,19 @@
     
 <p>This article uses <code>N27</code> sample files mentioned by the previous vignettes. If you are using this example, please execute the following R code to set up. Alternatively, you can substitute variables <code>subject_code</code> and <code>subject_path</code> accordingly.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span>
 <span class="va">subject_code</span> <span class="op">&lt;-</span> <span class="st">"N27"</span>
 <span class="va">subject_path</span> <span class="op">&lt;-</span> <span class="st">"~/Downloads/N27"</span>
 <span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="va">subject_code</span><span class="op">)</span></code></pre></div>
-<div id="add-electrodes" class="section level2">
-<h2 class="hasAnchor">
-<a href="#add-electrodes" class="anchor"></a>Add Electrodes</h2>
+<div class="section level2">
+<h2 id="add-electrodes">Add Electrodes<a class="anchor" aria-label="anchor" href="#add-electrodes"></a>
+</h2>
 <p>To add electrodes to the brain object, you need a electrode table with least 5 columns: <code>Subject</code>, <code>Coord_x</code>, <code>Coord_y</code>, <code>Coord_z</code>, <code>Label</code>. The column names are case-sensitive.</p>
 <div class="figure">
 <img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-09.png" style="width:80.0%" alt=""><p class="caption">Electrode table - example</p>
 </div>
 <p>If you have performed electrode localization (see the previous article) and exported the electrode table, the exported table can be used here once <code>Electrode</code> is filled out.</p>
-<p>For demonstration purposes, this <a href="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/vignettes/electrodes.csv">electrode table</a> will be used. Please download this file and place it at <code>~/Downloads/N27/electrodes.csv</code></p>
+<p>For demonstration purposes, this <a href="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/vignettes/electrodes.csv" class="external-link">electrode table</a> will be used. Please download this file and place it at <code>~/Downloads/N27/electrodes.csv</code></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">electrode_table</span> <span class="op">&lt;-</span> <span class="va">`~/Downloads/N27/electrodes.csv`</span>
 <span class="va">brain</span><span class="op">$</span><span class="fu">set_electrodes</span><span class="op">(</span><span class="va">electrode_table</span><span class="op">)</span>
@@ -121,9 +117,9 @@
 <img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-10.png" style="width:100.0%" alt=""><p class="caption">Click on one of the electrodes, the information (label, ‘MNI’ coordinates) will be displayed at top.</p>
 </div>
 </div>
-<div id="add-electrode-values" class="section level2">
-<h2 class="hasAnchor">
-<a href="#add-electrode-values" class="anchor"></a>Add Electrode Values</h2>
+<div class="section level2">
+<h2 id="add-electrode-values">Add Electrode Values<a class="anchor" aria-label="anchor" href="#add-electrode-values"></a>
+</h2>
 <p>In iEEG study, various of analyses can be performed on the electrodes. The analysis results are different, including</p>
 <ul>
 <li>functional data such as mean-response over time</li>
@@ -248,7 +244,7 @@
 <code>Time</code> (optional) numerical time in seconds</li>
 <li>Value columns (such as <code>sine_wave</code>, <code>p_value</code>, <code>z_score</code>, and <code>cluster</code>): values of the electrodes</li>
 </ul>
-<p>Download sample value table from <a href="https://github.com/dipterix/threeBrain-sample/blob/master/vignettes/values.csv">here</a> and save it to <code>~/Downloads/N27/values.csv</code></p>
+<p>Download sample value table from <a href="https://github.com/dipterix/threeBrain-sample/blob/master/vignettes/values.csv" class="external-link">here</a> and save it to <code>~/Downloads/N27/values.csv</code></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">electrode_table</span> <span class="op">&lt;-</span> <span class="va">`~/Downloads/N27/electrodes.csv`</span>
 <span class="va">value_table</span> <span class="op">&lt;-</span> <span class="va">`~/Downloads/N27/values.csv`</span>
@@ -260,28 +256,28 @@
 <img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-11.png" style="width:100.0%" alt=""><p class="caption">Electrode data visualization. For continuous data, the value range is automatically detected using the maximum absolute values. The color palette goes from blue to white to red with linear transition. For discrete data, the color palette uses R’s default palette.</p>
 </div>
 <p>The <code>sine_wave</code> is time series. You can see the animation by toggling <code>Play/Pause</code> option in the <code>Data Visualization</code> panel.</p>
-<div id="change-color-palette" class="section level3">
-<h3 class="hasAnchor">
-<a href="#change-color-palette" class="anchor"></a>Change Color Palette</h3>
+<div class="section level3">
+<h3 id="change-color-palette">Change Color Palette<a class="anchor" aria-label="anchor" href="#change-color-palette"></a>
+</h3>
 <p>In the example above, the p-value legend shows the range is from <code>-0.5</code> to <code>0.5</code>. This is because <code>threeBrain</code> viewer’s default palette is symmetric around zero, and the range is decided by the maximum absolute number. However, the actual p-value should range from <code>0</code> to <code>1</code>, and we might be particularly interested in <code>$p \leq 0.05$</code>. This means both the color palette and value range need to be corrected.</p>
-<p>In the following code, <code>value_ranges</code> is a named list of such value ranges. <code>"p_value"=c(0,1)</code> suggests that the <code>p_value</code> variable should range from 0 to 1. All other variables adopt the default ranges. <code>palettes</code> is a named list of color palettes. In this specific case, variable <code>pal</code> is a vector of 64 colors. <code>colorRampPalette</code> is a base-R function to interpolate colors. Please use <code><a href="https://rdrr.io/r/grDevices/colorRamp.html">help("colorRampPalette")</a></code> to see the documentation.</p>
+<p>In the following code, <code>value_ranges</code> is a named list of such value ranges. <code>"p_value"=c(0,1)</code> suggests that the <code>p_value</code> variable should range from 0 to 1. All other variables adopt the default ranges. <code>palettes</code> is a named list of color palettes. In this specific case, variable <code>pal</code> is a vector of 64 colors. <code>colorRampPalette</code> is a base-R function to interpolate colors. Please use <code><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">help("colorRampPalette")</a></code> to see the documentation.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">pal</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"#FFC6C6"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span>,
-  <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"#FFC6C6"</span>, <span class="st">"white"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">56</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">pal</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
+  <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"#FFC6C6"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span>,
+  <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#FFC6C6"</span>, <span class="st">"white"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">56</span><span class="op">)</span>
 <span class="op">)</span>
 <span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span>
-  value_ranges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span> <span class="st">"p_value"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">)</span>, 
-  palettes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span> <span class="st">"p_value"</span> <span class="op">=</span> <span class="va">pal</span> <span class="op">)</span>
+  value_ranges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="st">"p_value"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">)</span>, 
+  palettes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="st">"p_value"</span> <span class="op">=</span> <span class="va">pal</span> <span class="op">)</span>
 <span class="op">)</span></code></pre></div>
 <div class="figure">
 <img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png" style="width:50.0%" alt=""><p class="caption">Adjusted p-value palette: the value range is from 0 to 1; the color transition is non-linear, with <span class="math inline">\(p&lt;0.05\)</span> rendered as deep red, and large p-values rendered as light reds</p>
 </div>
 </div>
 </div>
-<div id="map-electrode-values-to-the-surface" class="section level2">
-<h2 class="hasAnchor">
-<a href="#map-electrode-values-to-the-surface" class="anchor"></a>Map Electrode Values to the Surface</h2>
+<div class="section level2">
+<h2 id="map-electrode-values-to-the-surface">Map Electrode Values to the Surface<a class="anchor" aria-label="anchor" href="#map-electrode-values-to-the-surface"></a>
+</h2>
 <p><code>threeBrain</code> provides value mapping that allows electrode values to be displayed on the surfaces. To enable this feature, open <code>Surface Settings</code> panel, and click on <code>Surface Color</code>, switch to <code>sync from electrodes</code>, or simply use keyboard shortcut <code>k</code> (make sure the mouse is hovering over the brain) to change.</p>
 <p>You can also hide the electrodes by switching the electrode <code>Visibility</code> to <code>hidden</code> in the <code>Electrodes</code> panel to only show the mapped results.</p>
 <div class="figure">
@@ -301,11 +297,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
+  <p></p>
+<p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -313,6 +311,8 @@
 
   
 
+
+  
 
   </body>
 </html>

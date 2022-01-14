@@ -1,9 +1,9 @@
 pandoc: 2.7.3
-pkgdown: 1.6.1
+pkgdown: 2.0.1
 pkgdown_sha: ~
 articles:
   A-getting-started: A-getting-started.html
   B-electrode-localization: B-electrode-localization.html
   C-data-visualization: C-data-visualization.html
-last_built: 2021-12-03T15:53Z
+last_built: 2022-01-14T00:14Z
 

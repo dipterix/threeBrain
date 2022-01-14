@@ -32,6 +32,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -44,18 +46,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.4.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.4.9001</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
@@ -83,7 +79,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/dipterix/threeBrain/">
+  <a href="https://github.com/dipterix/threeBrain/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -100,9 +96,9 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="threebrain---html-webgl-based-3d-viewer" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#threebrain---html-webgl-based-3d-viewer" class="anchor"></a><a href="https://dipterix.github.io/threeBrain/index.html">threeBrain - HTML, WebGL based 3D Viewer</a>
+<div class="section level1">
+<div class="page-header"><h1 id="threebrain---html-webgl-based-3d-viewer">
+<a href="https://dipterix.github.io/threeBrain/index.html" class="external-link">threeBrain - HTML, WebGL based 3D Viewer</a><a class="anchor" aria-label="anchor" href="#threebrain---html-webgl-based-3d-viewer"></a>
 </h1></div>
 <!-- badges: start -->
 
@@ -116,7 +112,8 @@
 <script src="https://dipterix.org/lib/htmlwidgets-1.5.3/htmlwidgets.js" type="application/javascript"></script><link href="https://dipterix.org/lib/threejs-0.101.1/css/dat.gui.css" rel="stylesheet" type="text/css">
 <link href="https://dipterix.org/lib/dipterixThreeBrain-1.0.1/dipterix.css" rel="stylesheet" type="text/css">
 <script src="https://dipterix.org/lib/dipterixThreeBrain-1.0.1/main.js" type="application/javascript"></script><script src="https://dipterix.org/lib/threejs_brain-binding-0.2.0/threejs_brain.js" type="application/javascript"></script><div id="htmlwidget_container">
-<div id="htmlwidget-10b2167231e00d19a0eb" style="width:100%;height:80vh;" class="threejs_brain html-widget">
+<div id="htmlwidget-10b2167231e00d19a0eb" class="threejs_brain html-widget" style="width:100%;height:80vh;">
+
 </div>
 </div>
 <script type="application/json" data-for="htmlwidget-10b2167231e00d19a0eb">{"x":{"data_filename":"config_dc13c2e1fa80edd292dea332a530d87e.json","settings":{"side_camera":true,"side_canvas_zoom":1,"side_canvas_width":250,"side_canvas_shift":[0,0],"color_maps":[],"default_colormap":null,"hide_controls":false,"control_center":[0,0,0],"camera_pos":[500,0,0],"font_magnification":1,"start_zoom":1,"show_legend":true,"render_timestamp":true,"control_presets":["subject2","surface_type2","hemisphere_material","surface_color","map_template","electrodes","voxel","animation","display_highlights"],"cache_folder":"https://dipterix.org/lib/threebrain_data-0/","lib_path":"https://dipterix.org/lib/","default_controllers":{"Overlay Coronal":true,"Overlay Axial":true,"Overlay Sagittal":true,"Axial (I - S)":-24,"Voxel Type":"aparc_aseg","Surface Color":"sync from voxels","Surface Type":"smoothwm","Blend Factor":1},"debug":true,"background":"#000000","token":null,"coords":null,"show_inactive_electrodes":true,"side_display":true,"control_display":false,"custom_javascript":null},"force_render":false},"evals":[],"jsHooks":[]}</script><script type="application/htmlwidget-sizing" data-for="htmlwidget-10b2167231e00d19a0eb">{"viewer":{"width":"100%","height":"100vh","padding":"0px","fill":true},"browser":{"width":"100%","height":"80vh","padding":"0px","fill":false}}</script><!-- demo dynamic: end --><p><strong>Key Features</strong>:</p>
@@ -132,78 +129,78 @@
 </li>
 <li>Integration with interactive <code>R-shiny</code> framework</li>
 </ul>
-<p><a href="https://dipterix.github.io/threeBrain/news/index.html">News</a> | <a href="https://dipterix.github.io/threeBrain/reference/index.html">reference page</a> | <a href="https://dipterix.github.io/threeBrain/shortcuts.html">keyboard shortcuts</a></p>
-<div id="system-requirement" class="section level4">
-<h4 class="hasAnchor">
-<a href="#system-requirement" class="anchor"></a>System Requirement</h4>
+<p><a href="https://dipterix.github.io/threeBrain/news/index.html" class="external-link">News</a> | <a href="https://dipterix.github.io/threeBrain/reference/index.html" class="external-link">reference page</a> | <a href="https://dipterix.github.io/threeBrain/shortcuts.html" class="external-link">keyboard shortcuts</a></p>
+<div class="section level4">
+<h4 id="system-requirement">System Requirement<a class="anchor" aria-label="anchor" href="#system-requirement"></a>
+</h4>
 <ul>
 <li>
-<strong>Web Browsers</strong>: the viewer uses <code>WegGL2</code> to render in browsers. Please check <a href="https://caniuse.com/webgl2">this list</a> to see compatible browsers. As of 2020, <strong>Chrome</strong>, <strong>Firefox</strong>, and <strong>Edge</strong> (not IE) have full supports.
+<strong>Web Browsers</strong>: the viewer uses <code>WegGL2</code> to render in browsers. Please check <a href="https://caniuse.com/webgl2" class="external-link">this list</a> to see compatible browsers. As of 2020, <strong>Chrome</strong>, <strong>Firefox</strong>, and <strong>Edge</strong> (not IE) have full supports.
 <ul>
 <li>For <strong>Safari</strong> users, please enable this feature by going to <code>Safari</code> &gt; <code>Preferences</code>, click <code>Advanced</code>, then select <code>Show Develop menu in menu bar</code>; then click <code>Develop</code> in the menu bar, go to <code>Experimental Features</code> &gt; <code>WebGL 2.0</code>. This only needs to be done once.</li>
 </ul>
 </li>
 </ul>
 </div>
-<div id="a-installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#a-installation" class="anchor"></a>A. Installation</h2>
-<ol>
+<div class="section level2">
+<h2 id="a-installation">A. Installation<a class="anchor" aria-label="anchor" href="#a-installation"></a>
+</h2>
+<ol style="list-style-type: decimal">
 <li>
-<a href="https://cran.r-project.org/"><code>R</code></a> and <a href="https://www.rstudio.com/products/rstudio/download/"><code>RStudio Desktop (Free Version)</code></a>
+<a href="https://cran.r-project.org/" class="external-link"><code>R</code></a> and <a href="https://www.rstudio.com/products/rstudio/download/" class="external-link"><code>RStudio Desktop (Free Version)</code></a>
 </li>
 <li>Open <code>RStudio</code>, enter from its console:</li>
 </ol>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"threeBrain"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"threeBrain"</span><span class="op">)</span></code></pre></div>
 <p>If you want to install <code>dev</code> version from <em>Github</em>, then use:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"dipterix/threeBrain"</span><span class="op">)</span></code></pre></div>
-<ol>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"dipterix/threeBrain"</span><span class="op">)</span></code></pre></div>
+<ol start="3" style="list-style-type: decimal">
 <li>(Optional) Setups: after installation, in <code>RStudio</code> console, type the following command</li>
 </ol>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="reference/brain_setup.html">brain_setup</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p>and follow the instructions.</p>
 </div>
-<div id="b-basic-brain-viewer" class="section level2">
-<h2 class="hasAnchor">
-<a href="#b-basic-brain-viewer" class="anchor"></a>B. Basic Brain Viewer</h2>
+<div class="section level2">
+<h2 id="b-basic-brain-viewer">B. Basic Brain Viewer<a class="anchor" aria-label="anchor" href="#b-basic-brain-viewer"></a>
+</h2>
 <p>Once finishing setting up of <code>threeBrain</code>, there will be a template subject <code>N27</code> (Collin’s 27) created locally. The location is platform-related. You can find it by running the following command:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span>
 
 <span class="fu"><a href="reference/default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; [1] "/Users/dipterix/Library/Application Support/</span>
 <span class="co">#&gt; org.R-project.R/R/threeBrain/templates"</span></code></pre></div>
 <p><strong>N27</strong> template folder resides inside of this directory.</p>
 <p>Let’s view this subject using the <code>freesurfer_brain2</code> function.</p>
-<ol>
+<ol style="list-style-type: decimal">
 <li>Import subject</li>
 </ol>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span>
 
-<span class="va">n27_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="fu"><a href="reference/default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span>
+<span class="va">n27_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="reference/default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span>
 
 <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span> fs_subject_folder <span class="op">=</span> <span class="va">n27_path</span>,
   subject_name <span class="op">=</span> <span class="st">'N27'</span>, surface_types <span class="op">=</span> <span class="st">'pial'</span><span class="op">)</span></code></pre></div>
-<ol>
+<ol start="2" style="list-style-type: decimal">
 <li>Visualize</li>
 </ol>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>       <span class="co"># alternatively, you can use `n27$plot()`</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>       <span class="co"># alternatively, you can use `n27$plot()`</span></code></pre></div>
 </div>
-<div id="c-subject-setup" class="section level2">
-<h2 class="hasAnchor">
-<a href="#c-subject-setup" class="anchor"></a>C. Subject Setup</h2>
-<p>The sample subject (<code>N27</code>) is a sample generated by <code>FreeSurfer</code> (<a href="https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall">download</a>). If you have any subjects processed by <code>FreeSurfer</code>, use function <code>freesurfer_brain2</code> to visualize.</p>
-<p>The <code>AFNI/SUMA</code> standard 141 brain is also supported. Please use terminal command <code>@SUMA_Make_Spec_FS -NIFTI -sid [subID]</code> to generate 141 brain. (Click <a href="https://openwetware.org/wiki/Beauchamp:BuffyElectrodeNotes#Converting_Files_between_iELVis_and_AFNI/SUMA">here</a> for some hints)</p>
+<div class="section level2">
+<h2 id="c-subject-setup">C. Subject Setup<a class="anchor" aria-label="anchor" href="#c-subject-setup"></a>
+</h2>
+<p>The sample subject (<code>N27</code>) is a sample generated by <code>FreeSurfer</code> (<a href="https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall" class="external-link">download</a>). If you have any subjects processed by <code>FreeSurfer</code>, use function <code>freesurfer_brain2</code> to visualize.</p>
+<p>The <code>AFNI/SUMA</code> standard 141 brain is also supported. Please use terminal command <code>@SUMA_Make_Spec_FS -NIFTI -sid [subID]</code> to generate 141 brain. (Click <a href="https://openwetware.org/wiki/Beauchamp:BuffyElectrodeNotes#Converting_Files_between_iELVis_and_AFNI/SUMA" class="external-link">here</a> for some hints)</p>
 </div>
-<div id="d-addrender-electrodes" class="section level2">
-<h2 class="hasAnchor">
-<a href="#d-addrender-electrodes" class="anchor"></a>D. Add/Render Electrodes</h2>
+<div class="section level2">
+<h2 id="d-addrender-electrodes">D. Add/Render Electrodes<a class="anchor" aria-label="anchor" href="#d-addrender-electrodes"></a>
+</h2>
 <p>If you have electrode file, you can import it before calling <code>plot</code> function. Please make sure it’s in <code>csv</code> format.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">x</span><span class="op">$</span><span class="fu">set_electrodes</span><span class="op">(</span>electrodes <span class="op">=</span> <span class="st">"[PATH to ELECTRODE FILE]"</span><span class="op">)</span></code></pre></div>
@@ -228,25 +225,25 @@
 |         4|     N27|    Demo|       0|D         |   44.79092|  ...|
 |         5|     N27|    Demo|       0|A         |   49.45370|  ...|
 |         ...</code></pre>
-<p><code>Project</code> and <code>Time</code> are optional. However, if you are also using <a href="https://github.com/beauchamplab/rave"><code>rave</code></a>, please make sure <code>Project</code> exists. If you want to show animation, <code>Time</code> is necessary and must be numeric. <code>ValueName?</code> can be any characters containing letters (<code>A-Z</code>, <code>a-z</code>), letters (<code>0-9</code>) and underscore (<code>_</code>).</p>
+<p><code>Project</code> and <code>Time</code> are optional. However, if you are also using <a href="https://github.com/beauchamplab/rave" class="external-link"><code>rave</code></a>, please make sure <code>Project</code> exists. If you want to show animation, <code>Time</code> is necessary and must be numeric. <code>ValueName?</code> can be any characters containing letters (<code>A-Z</code>, <code>a-z</code>), letters (<code>0-9</code>) and underscore (<code>_</code>).</p>
 </div>
-<div id="e-merge-subjects-and-template-mapping" class="section level2">
-<h2 class="hasAnchor">
-<a href="#e-merge-subjects-and-template-mapping" class="anchor"></a>E. Merge Subjects and Template mapping</h2>
+<div class="section level2">
+<h2 id="e-merge-subjects-and-template-mapping">E. Merge Subjects and Template mapping<a class="anchor" aria-label="anchor" href="#e-merge-subjects-and-template-mapping"></a>
+</h2>
 <p>If you have your own subjects with <code>FreeSurfer</code> output, for example, I have two subjects <code>YAB</code> and <code>YCQ</code>. To merge these two subjects and show them on <code>N27</code> template,</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span>
 
 <span class="co"># yab = ... (see section B for import a single subject)</span>
 <span class="co"># ycq = ...</span>
 <span class="va">template_n27</span> <span class="op">=</span> <span class="fu"><a href="reference/merge_brain.html">merge_brain</a></span><span class="op">(</span><span class="va">yab</span>, <span class="va">ycq</span>, template_subject <span class="op">=</span> <span class="st">'N27'</span><span class="op">)</span>
 
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span> <span class="va">template_n27</span> <span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span> <span class="va">template_n27</span> <span class="op">)</span></code></pre></div>
 <p>The viewer will be in <code>N27</code> template, and electrodes of these two subjects can be mapped via <code>MNI305</code> (for surface and stereo EEG) or <code>std.141</code> (for surface-only).</p>
 </div>
-<div id="f-electrode-localization" class="section level2">
-<h2 class="hasAnchor">
-<a href="#f-electrode-localization" class="anchor"></a>F. Electrode Localization</h2>
+<div class="section level2">
+<h2 id="f-electrode-localization">F. Electrode Localization<a class="anchor" aria-label="anchor" href="#f-electrode-localization"></a>
+</h2>
 <p>(Do NOT use this feature for clinical purposes!)</p>
 <p>As of version <code>0.2.1</code>, <code>threeBrain</code> supports electrode localization. You can:</p>
 <ul>
@@ -254,30 +251,30 @@
 <li>Use subject MRI to generate when CT scans are unavailable</li>
 <li>Use CT co-registered to MRI</li>
 </ul>
-<div id="use-template-brain-to-generate-electrode-table" class="section level4">
-<h4 class="hasAnchor">
-<a href="#use-template-brain-to-generate-electrode-table" class="anchor"></a>Use template brain to generate electrode table</h4>
+<div class="section level4">
+<h4 id="use-template-brain-to-generate-electrode-table">Use template brain to generate electrode table<a class="anchor" aria-label="anchor" href="#use-template-brain-to-generate-electrode-table"></a>
+</h4>
 <p>Create a blank template and localize:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span>
 <span class="va">template</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/merge_brain.html">merge_brain</a></span><span class="op">(</span><span class="op">)</span>
 <span class="va">template</span><span class="op">$</span><span class="fu">localize</span><span class="op">(</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="use-subject-mri-to-generate-when-ct-scans-are-unavailable" class="section level4">
-<h4 class="hasAnchor">
-<a href="#use-subject-mri-to-generate-when-ct-scans-are-unavailable" class="anchor"></a>Use subject MRI to generate when CT scans are unavailable</h4>
+<div class="section level4">
+<h4 id="use-subject-mri-to-generate-when-ct-scans-are-unavailable">Use subject MRI to generate when CT scans are unavailable<a class="anchor" aria-label="anchor" href="#use-subject-mri-to-generate-when-ct-scans-are-unavailable"></a>
+</h4>
 <p>If you have MRI but don’t have CT scans, it is possible to use MRI slices. Make sure to change <code>fs_subject_folder</code> accordingly:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span> 
-  fs_subject_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="fu"><a href="reference/default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span>,
+  fs_subject_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="reference/default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span>,
   subject_name <span class="op">=</span> <span class="st">'N27'</span>, surface_types <span class="op">=</span> <span class="st">'pial'</span><span class="op">)</span>
   
 <span class="va">x</span><span class="op">$</span><span class="fu">localize</span><span class="op">(</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="use-ct-co-registered-to-mri" class="section level4">
-<h4 class="hasAnchor">
-<a href="#use-ct-co-registered-to-mri" class="anchor"></a>Use CT co-registered to MRI</h4>
-<p>If you have CT images, please co-register with MRI first. This requires <code>dcm2nii</code> (<a href="https://www.nitrc.org/plugins/mwiki/index.php/dcm2nii:MainPage">link</a>) or <code>dcm2niix</code> (<a href="https://github.com/rordenlab/dcm2niix">link</a>), and <code>FLIRT</code> package (<a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT/StepByStep">link</a>).</p>
+<div class="section level4">
+<h4 id="use-ct-co-registered-to-mri">Use CT co-registered to MRI<a class="anchor" aria-label="anchor" href="#use-ct-co-registered-to-mri"></a>
+</h4>
+<p>If you have CT images, please co-register with MRI first. This requires <code>dcm2nii</code> (<a href="https://www.nitrc.org/plugins/mwiki/index.php/dcm2nii:MainPage" class="external-link">link</a>) or <code>dcm2niix</code> (<a href="https://github.com/rordenlab/dcm2niix" class="external-link">link</a>), and <code>FLIRT</code> package (<a href="https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT/StepByStep" class="external-link">link</a>).</p>
 <p><strong>Step 1</strong>: Merge all <code>DICOM</code> images to <code>Nifti</code> format:</p>
 <p>Open your terminal, change directories to where <code>CT</code> images are, and run</p>
 <pre><code>dcm2niix [folder with DICOM images]</code></pre>
@@ -287,14 +284,14 @@
 <p>There will be a <code>ct_in_t1.nii</code> file generated.</p>
 <p><strong>Step 3</strong>: Localize</p>
 <p>Open <code>RStudio</code>, type and change the file path to <code>ct_in_t1.nii</code> just created</p>
-<pre><code># Import 3D brain
-# x &lt;- freesurfer_brain2( ... ) 
-x$localize( "[path to ct_in_t1.nii]" )</code></pre>
+<pre><code><span class="co"># Import 3D brain</span>
+<span class="co"># x &lt;- freesurfer_brain2( ... ) </span>
+<span class="va">x</span><span class="op">$</span><span class="fu">localize</span><span class="op">(</span> <span class="st">"[path to ct_in_t1.nii]"</span> <span class="op">)</span></code></pre>
 </div>
 </div>
-<div id="citation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#citation" class="anchor"></a>Citation</h2>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
 <p>To cite threeBrain in publications use:</p>
 <blockquote>
 <p>Magnotti, J. F., Wang, Z., &amp; Beauchamp, M. S. (2020). RAVE: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data. <em>NeuroImage, 223</em>, 117341.</p>
@@ -315,60 +312,64 @@ x$localize( "[path to ct_in_t1.nii]" )</code></pre>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=threeBrain">https://​cloud.r-project.org/​package=threeBrain</a>
-</li>
-<li>Browse source code at <br><a href="https://github.com/dipterix/threeBrain/">https://​github.com/​dipterix/​threeBrain/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/dipterix/threeBrain/issues">https://​github.com/​dipterix/​threeBrain/​issues</a>
-</li>
+<li><a href="https://cloud.r-project.org/package=threeBrain" class="external-link">View on CRAN</a></li>
+<li><a href="https://github.com/dipterix/threeBrain/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/dipterix/threeBrain/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>
-<a href="https://www.r-project.org/Licenses/GPL-3">GPL-3</a> | file <a href="LICENSE-text.html">LICENSE</a>
+<a href="https://www.r-project.org/Licenses/GPL-3" class="external-link">GPL-3</a> | file <a href="LICENSE-text.html">LICENSE</a>
 </li>
 </ul>
 </div>
+
+
 <div class="citation">
-<h2>Citation</h2>
+<h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html">Citing threeBrain</a></li>
+<li><a href="authors.html#citation">Citing threeBrain</a></li>
 </ul>
 </div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Zhengjia Wang <br><small class="roles"> Author, maintainer, copyright holder </small>  </li>
 <li>John Magnotti <br><small class="roles"> Author </small>  </li>
 <li>Michael Beauchamp <br><small class="roles"> Author, data contributor </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://cran.r-project.org/package=threeBrain"><img src="https://www.r-pkg.org/badges/version/threeBrain" alt="CRAN_Status_Badge"></a></li>
-<li><a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GPL--3-blue.svg" alt="license"></a></li>
-<li><a href="https://github.com/dipterix/threeBrain/actions"><img src="https://github.com/dipterix/threeBrain/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://www.repostatus.org/#active"><img src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."></a></li>
-<li><a href="https://doi.org/10.1016/j.neuroimage.2020.117341"><img src="https://raw.githubusercontent.com/dipterix/threeBrain/master/inst/doi.svg" alt="DOI"></a></li>
+<li><a href="https://cran.r-project.org/package=threeBrain" class="external-link"><img src="https://www.r-pkg.org/badges/version/threeBrain" alt="CRAN_Status_Badge"></a></li>
+<li><a href="https://www.gnu.org/licenses/gpl-3.0.en.html" class="external-link"><img src="https://img.shields.io/badge/license-GPL--3-blue.svg" alt="license"></a></li>
+<li><a href="https://github.com/dipterix/threeBrain/actions" class="external-link"><img src="https://github.com/dipterix/threeBrain/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://www.repostatus.org/#active" class="external-link"><img src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."></a></li>
+<li><a href="https://doi.org/10.1016/j.neuroimage.2020.117341" class="external-link"><img src="https://raw.githubusercontent.com/dipterix/threeBrain/master/inst/doi.svg" alt="DOI"></a></li>
 </ul>
 </div>
-</div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
+  <p></p>
+<p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -376,6 +377,8 @@ x$localize( "[path to ct_in_t1.nii]" )</code></pre>
 
   
 
+
+  
 
   </body>
 </html>
