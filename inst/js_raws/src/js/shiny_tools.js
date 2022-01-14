@@ -38,12 +38,13 @@ function storageAvailable(type) {
  *
  */
 class THREE_BRAIN_SHINY {
-  constructor(outputId, canvas, shiny_mode = true) {
+  constructor(widget, shiny_mode = true) {
+    this.widget = widget;
 
-    this.outputId = outputId;
+    this.outputId = widget.element_id;
     this.shiny_mode = shiny_mode;
-    this.shinyId = outputId + '__shiny';
-    this.canvas = canvas;
+    this.shinyId = this.outputId + '__shiny';
+    this.canvas = this.widget.handler.canvas;
     this.uuid = Math.generateUUID();
 
     this.stack = [];
@@ -66,9 +67,9 @@ class THREE_BRAIN_SHINY {
     // 1. controls
     this.canvas.bind( 'camera_parameters', 'end', (evt) => {
       this.to_shiny2('main_camera', {
-        position  : canvas.main_camera.position,
-        zoom      : canvas.main_camera.zoom,
-        up        : canvas.main_camera.up
+        position  : this.canvas.main_camera.position,
+        zoom      : this.canvas.main_camera.zoom,
+        up        : this.canvas.main_camera.up
       });
     }, this.canvas.controls );
 

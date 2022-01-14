@@ -32,7 +32,7 @@ const utils_toolbox = {
   'json2csv' : json2csv,
   'download' : download,
   'CONSTANTS' : CONSTANTS
-}
+};
 
 class BrainCanvas{
   constructor(el, width, height, shiny_mode = false, viewer_mode = false,
@@ -95,7 +95,9 @@ class BrainCanvas{
     this.canvas = new THREEBRAIN_CANVAS(
       this.el, width, height, 250,
       this.shiny_mode, cache, this.DEBUG, this.has_webgl2);
-    this.shiny = new THREE_BRAIN_SHINY( this.outputId, this.canvas, this.shiny_mode );
+
+    // this.shiny = new THREE_BRAIN_SHINY( this.outputId, this.canvas, this.shiny_mode );
+
 
     // 4. Animation, but do not render;
     this.canvas.animate();
@@ -489,6 +491,165 @@ class BrainCanvas{
   }
 }
 
+class BrainWidgetWrapper {
+
+  constructor(el, cache = false){
+
+    this._container = undefined;
+    if( cache === true ){
+      this.cache = window.global_cache || new THREEBRAIN_STORAGE();
+    } else {
+      this.cache = cache;
+    }
+
+    this.element_id = el.getAttribute('id');
+    this.cache_id = '__THREE_CANVAS_' + this.element_id;
+    this.initialized = false;
+
+    // Add class to el to make it display: flex
+    this.el = el;
+    this.el.classList.add('threejs-brain-container');
+
+    this.handler = undefined;
+
+  }
+
+  initialize (width, height) {
+
+    if(this.cache){
+      this.handler = this.cache.get_item(this.cache_id, undefined);
+    }
+
+    if( this.handler ){
+      console.log('Found previous handler, re-use it.');
+
+      this._container = this.handler.el;
+
+      // remove inner html of el
+      this.el.onclick = undefined;
+      this.el.innerHTML = '';
+      this.el.classList.remove("threejs-brain-blank-container");
+
+      this.el.appendChild( this._container );
+      this.initalized = true;
+    } else {
+
+      this.initalized = false;
+      this._container = document.createElement('div');
+      this._container.classList.add( 'threejs-brain-canvas' );
+      this._container.setAttribute( 'data-target', this.element_id );
+
+      this.addModal();
+      this.el.onclick = () => {
+        const modal = this.el.getElementsByClassName("threejs-brain-modal");
+        if( modal.length ){
+          modal[0].innerText = "";
+          const loader = document.createElement("div");
+          loader.classList.add("threejs-brain-loader");
+          modal[0].appendChild( loader );
+          this.el.classList.remove("threejs-brain-blank-container");
+        }
+
+        this.el.onclick = undefined;
+        this.el.innerHTML = '';
+        this.el.classList.remove("threejs-brain-blank-container");
+        this.el.appendChild( this._container );
+
+        this.handler = new BrainCanvas(
+
+          // Element to store 3D viewer
+          this._container,
+
+          // dimension of the viewer
+          width, height,
+
+          // Different sizing policy, as well as callbacks
+          HTMLWidgets.shinyMode, HTMLWidgets.viewerMode,
+
+          // use cache? true, false, or the cache object
+          this.cache,
+
+          // DEBUG mode?
+          false
+        );
+        this.handler.shiny = new THREE_BRAIN_SHINY( this, HTMLWidgets.shinyMode );
+
+        if(this.cache){
+          this.cache.set_item(this.cache_id, this.handler);
+        }
+
+        this.initalized = true;
+        if( this.values !== undefined ){
+          this.render( this.values, true );
+        }
+      };
+
+    }
+
+  }
+
+  render(v, reset = false, callback = undefined) {
+    // read
+    const xobj = new XMLHttpRequest();
+    // path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
+    // lib/threebrain_data-0/config.json
+    let path = v.settings.cache_folder + v.data_filename;
+
+    console.debug( 'Reading configuration file from: ' + path );
+
+    xobj.overrideMimeType("application/json");
+
+    const cb_ = () => {
+      if(typeof (callback) === "function"){
+        callback();
+      }
+      const modal = this.el.getElementsByClassName("threejs-brain-modal");
+      if( modal.length ){
+        modal[0].classList.add("hidden");
+      }
+    };
+
+    xobj.onreadystatechange = () => {
+      if (xobj.readyState == 4 && xobj.status == "200") {
+        new Promise( () => {
+          let x = JSON.parse(xobj.responseText);
+          x.settings = v.settings;
+          this.handler.render_value( x, reset, cb_ );
+        });
+      }
+    };
+    xobj.open('GET', path, true);
+    xobj.send(null);
+  }
+
+  resize(width, height) {
+    if( this.handler ){
+      this.handler.resize_widget( width, height );
+    }
+  }
+
+  addModal(){
+    this.el.classList.add("threejs-brain-blank-container");
+    const modal = document.createElement("div");
+    modal.classList.add("threejs-brain-modal");
+    // check webgl2 availability
+    modal.innerText = "Click me to load 3D viewer.";
+    if ( window._WEBGL ){
+      try {
+        if(!window._WEBGL.isWebGL2Available()){
+          modal.innerHTML = "It seems your browser does not support WebGL2. <br />Please use Chrome for full support. <br /><br /> Click me to load 3D viewer anyway.";
+        }
+      } catch (e) {}
+    }
+
+    this.el.innerHTML = "";
+    this.el.appendChild( modal );
+  }
+
+}
+
+
+window.BrainWidgetWrapper = BrainWidgetWrapper;
 window.BrainCanvas = BrainCanvas;
 window.THREE = THREE;
 window._WEBGL = WEBGL;

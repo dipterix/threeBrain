@@ -402,8 +402,8 @@ class DataCube2 extends AbstractThreeBrainObject {
     // data cube 2 must have groups and group parent is scene
     let gp = this.get_group_object();
     // Move gp to global scene as its center is always 0,0,0
-    this._canvas.origin.remove( gp );
-    this._canvas.scene.add( gp );
+    // this._canvas.origin.remove( gp );
+    // this._canvas.scene.add( gp );
 
     this.register_object( ['atlases'] );
 

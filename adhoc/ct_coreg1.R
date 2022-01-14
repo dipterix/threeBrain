@@ -10,22 +10,33 @@ print(module$app)
 brain <- threeBrain::freesurfer_brain2(
   '~/Downloads/iELVis_Localization/YAS/', 'YAS'
 )
-ct <- threeBrain:::read_nii2("~/Downloads/iELVis_Localization/CT_highresRAI_res_al.nii")
+ct <- threeBrain:::read_nii2("~/Downloads/iELVis_Localization/CT_highresRAI_shft.nii")
 a <- ct$get_data()
 # a <- threeBrain:::reorient_volume(ct$get_data(), brain$Torig)
 key <- seq(0, max(a))
 cmap <- threeBrain::create_colormap(gtype = "volume", dtype = "continuous",
                                     key = key, value = key, color = c("white", 'green'))
 
-ct2t1 <- matrix(as.numeric(read.table('~/Downloads/iELVis_Localization/CT_highresRAI_res_shft_al_mat.aff12.1D')), ncol = 4, byrow = TRUE)
-ct2t1 <- rbind(ct2t1, c(0,0,0,1))
+t12ct <- matrix(as.numeric(read.table('~/Downloads/iELVis_Localization/CT_highresRAI_res_shft_al_mat.aff12.1D')), ncol = 4, byrow = TRUE)
+ct2t1 <- solve(rbind(t12ct, c(0,0,0,1)))
 
 ct_shift <- ct$get_center_matrix()
 ct_qform <- ct$get_qform()
 ct$get_voxel_size()
-matrix_world <- brain$Torig %*% solve(brain$Norig) %*% solve(ct2t1) %*% ct_qform %*% ct_shift
+matrix_world <- brain$Torig %*% solve(brain$Norig) %*% ct2t1 %*% ct_qform %*% ct_shift
 add_voxel_cube(brain, "CT", ct$get_data(), size = ct$get_size(),
                matrix_world = matrix_world)
+
+brain$plot(
+  control_presets = "localization",
+  voxel_colormap = cmap,
+  controllers = list(
+    "Background Color" = "#000000",
+    "Voxel Min" = 3000,
+    "Voxel Type" = "CT",
+    "Edit Mode" = "CT/volume"
+  ))
+
 
 # get trans_mat
 ct_vox2ras <- oro.nifti::qform(ct$header)

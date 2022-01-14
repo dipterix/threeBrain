@@ -1,81 +1,11 @@
-import {
-  Vector2, Vector3, Color, Scene, Object3D, Matrix3, Matrix4,
-  OrthographicCamera, PerspectiveCamera, WebGLRenderer,
-  DirectionalLight, AmbientLight,
-  Raycaster, ArrowHelper, BoxHelper,
-  LoadingManager, FileLoader, FontLoader,
-  AnimationClip, AnimationMixer, Clock,
-  BoxBufferGeometry, Mesh, MeshBasicMaterial
-} from '../build/three.module.js';
-import { to_array, get_element_size, get_or_default, has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4 } from './utils.js';
-import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
-import { CanvasContext2D } from './core/context.js';
-import { Stats } from './libs/stats.min.js';
-import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
-import { make_draggable } from './libs/draggable.js';
-import { make_resizable } from './libs/resizable.js';
-import { CONSTANTS } from './constants.js';
-import { generate_animation_default } from './Math/animations.js';
-import { gen_sphere, is_electrode } from './geometry/sphere.js';
-import { gen_datacube } from './geometry/datacube.js';
-import { gen_datacube2 } from './geometry/datacube2.js';
-import { gen_tube } from './geometry/tube.js';
-import { gen_free } from './geometry/free.js';
-import { Compass } from './geometry/compass.js';
-import { Lut, addToColorMapKeywords } from './jsm/math/Lut2.js';
-import { json2csv } from 'json-2-csv';
-import download from 'downloadjs';
 
-/* Geometry generator */
-const GEOMETRY_FACTORY = {
-  'sphere'    : gen_sphere,
-  'free'      : gen_free,
-  'datacube'  : gen_datacube,
-  'datacube2' : gen_datacube2,
-  'tube'     : gen_tube,
-  'blank'     : (g, canvas) => { return(null) }
-};
-
-window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
-/* ------------------------------------ Layer setups ------------------------------------
-  Defines for each camera which layers are visible.
-  Protocols are
-    Layers:
-      - 0, 2, 3: Especially reserved for main camera
-      - 1, Shared by all cameras
-      - 4, 5, 6: Reserved for side-cameras
-      - 7: reserved for all, system reserved
-      - 8: main camera only, system reserved
-      - 9 side-cameras 1 only, system reserved
-      - 10 side-cameras 2 only, system reserved
-      - 11 side-cameras 3 only, system reserved
-      - 12 side-cameras 4 only, system reserved
-      - 13 all side cameras, system reserved
-      - 14~31 invisible
-
-*/
-
-// A storage to cache large objects such as mesh data
-const cached_storage = new THREEBRAIN_STORAGE();
-
-// Make sure window.requestAnimationFrame exists
-// Override methods so that we have multiple support across platforms
-window.requestAnimationFrame =
-    window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.msRequestAnimationFrame ||
-    window.oRequestAnimationFrame ||
-    function (callback) {
-        setTimeout(function() { callback(Date.now()); },  1000/60);
-    };
-
-
-
-class THREEBRAIN_CANVAS {
+class ThreeBrainCanvas {
   constructor(
-    el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
+    el, width, height, side_width = 250, shiny_mode=false, cache = false,
+    DEBUG = false, has_webgl2 = true
   ) {
+
+    this.ready = false;
 
     if(DEBUG){
       console.debug('Debug Mode: ON.');
@@ -96,15 +26,8 @@ class THREEBRAIN_CANVAS {
     // DOM container information
     this.el = el;
     this.container_id = this.el.getAttribute( 'data-target' );
-    this.ready = false;
-    this._time_info = {
-      selected_object : {
-        position: new Vector3()
-      }
-    };
 
     // Is system supporting WebGL2? some customized shaders might need this feature
-    // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
     this.has_webgl2 = has_webgl2;
 
     // Side panel initial size in pt
@@ -302,307 +225,6 @@ class THREEBRAIN_CANVAS {
     this.has_side_cameras = false;
     this.side_canvas = {};
 
-    // Generate inner canvas DOM element
-    // coronal (FB), axial (IS), sagittal (LR)
-    // 3 planes are draggable, resizable with open-close toggles 250x250px initial
-
-    ['coronal', 'axial', 'sagittal'].forEach((nm, idx) => {
-
-      const div = document.createElement('div');
-      div.id = this.container_id + '__' + nm;
-      div.style.display = 'none';
-      div.className = 'THREEBRAIN-SIDE resizable';
-      div.style.zIndex = idx;
-      div.style.top = ( idx * this.side_width ) + 'px';
-
-      // Make header
-      const div_header = document.createElement('div');
-      div_header.innerText = nm.toUpperCase();
-      div_header.className = 'THREEBRAIN-SIDE-HEADER';
-      div_header.id = div.id + 'header';
-      div.appendChild( div_header );
-
-      // Add canvas
-      const cvs = document.createElement('canvas');
-      cvs.width = this.side_renderer._render_height * this.pixel_ratio[1];
-      cvs.height = this.side_renderer._render_height * this.pixel_ratio[1];
-      cvs.style.width = '100%';
-			cvs.style.height = '100%';
-			cvs.style.position = 'absolute';
-			div.appendChild( cvs );
-
-			// Add zoom tools
-			let zoom_level = 1;
-			const set_zoom_level = (level) => {
-			  if( level ){
-			    zoom_level = level;
-			  }else{
-			    level = zoom_level;
-			  }
-			  cvs.style.width = parseInt(level * 100) + '%';
-			  cvs.style.height = parseInt(level * 100) + '%';
-			  const cvs_size = get_element_size( cvs );
-			  const div_size = get_element_size( div );
-			  const depths = [
-          this.state_data.get( 'sagittal_depth' ),
-          this.state_data.get( 'coronal_depth' ),
-          this.state_data.get( 'axial_depth' )
-        ];
-			  //  this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
-
-			  let _left = 0,
-			      _top = 0;
-			  if( nm === 'coronal' ){
-			    _left = Math.max( Math.min( div_size[0] / 2 - (128 + depths[0]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
-			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[2]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
-			  }else if( nm === 'axial' ){
-			    _left = Math.max( Math.min( div_size[0] / 2 - (128 + depths[0]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
-			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[1]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
-			  }else if( nm === 'sagittal' ){
-			    _left = Math.max( Math.min( div_size[0] / 2 - (128 - depths[1]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
-			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[2]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
-			  }
-
-			  cvs.style.left = _left + 'px';
-			  cvs.style.top = _top + 'px';
-
-			};
-			const zoom_in = document.createElement('div');
-			zoom_in.className = 'zoom-tool';
-			zoom_in.style.top = '23px';
-			zoom_in.innerText = '+';
-			div.appendChild( zoom_in );
-
-			this.bind( `${nm}_zoomin_click`, 'click', (e) => {
-			  zoom_level = zoom_level * 1.2;
-			  zoom_level = zoom_level > 10 ? 10 : zoom_level;
-			  set_zoom_level();
-			}, zoom_in);
-
-			const zoom_out = document.createElement('div');
-			zoom_out.className = 'zoom-tool';
-			zoom_out.style.top = '50px';
-			zoom_out.innerText = '-';
-			div.appendChild( zoom_out );
-			this.bind( `${nm}_zoomout_click`, 'click', (e) => {
-			  zoom_level = zoom_level / 1.2;
-			  zoom_level = zoom_level < 1.1 ? 1 : zoom_level;
-			  set_zoom_level();
-			}, zoom_out);
-
-			const toggle_pan = document.createElement('div');
-			toggle_pan.className = 'zoom-tool';
-			toggle_pan.style.top = '77px';
-			toggle_pan.innerText = 'P';
-			div.appendChild( toggle_pan );
-			this.bind( `${nm}_toggle_pan_click`, 'click', (e) => {
-			  toggle_pan.classList.toggle('pan-active');
-			  toggle_pan_canvas( toggle_pan.classList.contains('pan-active') ? 'pan' : 'select' );
-			}, toggle_pan);
-
-			const zoom_reset = document.createElement('div');
-			zoom_reset.className = 'zoom-tool';
-			zoom_reset.style.top = '104px';
-			zoom_reset.innerText = '0';
-			div.appendChild( zoom_reset );
-			this.bind( `${nm}_zoom_reset_click`, 'click', (e) => {
-			  cvs.style.top = '0';
-        cvs.style.left = '0';
-			  set_zoom_level( 1 );
-			}, zoom_reset);
-
-
-			// Add cameras
-			const camera = new OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
-			// Side light is needed so that side views are visible.
-			const side_light = new DirectionalLight( 0xefefef, 0.5 );
-
-			if( idx === 0 ){
-			  // coronal (FB)
-			  camera.position.fromArray( [0, -500, 0] );
-			  camera.up.set( 0, 0, 1 );
-			  camera.layers.enable( CONSTANTS.LAYER_SYS_CORONAL_9 );
-			  side_light.position.fromArray([0, 1, 0]);
-			  side_light.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
-			}else if( idx === 1 ){
-			  // axial (IS)
-			  camera.position.fromArray( [0, 0, 500] );
-			  camera.up.set( 0, 1, 0 );
-			  camera.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
-			  side_light.position.fromArray([0, 0, -1]);
-			  side_light.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
-			}else{
-			  // sagittal (LR)
-			  camera.position.fromArray( [-500, 0, 0] );
-			  camera.up.set( 0, 0, 1 );
-			  camera.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-			  side_light.position.fromArray([1, 0, 0]);
-			  side_light.layers.set( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-			}
-
-			camera.lookAt( new Vector3(0,0,0) );
-			camera.aspect = 1;
-			camera.updateProjectionMatrix();
-			[1, 4, 5, 6, 7, 13].forEach((ly) => {
-        camera.layers.enable(ly);
-      });
-
-      // light is always following cameras
-      camera.add( side_light );
-      this.add_to_scene( camera, true );
-
-      // Add resizables
-      let tmp = [
-        document.createElement('div'),
-        document.createElement('div')
-      ];
-      tmp[0].className = 'resizers';
-      tmp[1].className = 'resizer bottom-right';
-      tmp[0].appendChild( tmp[1] );
-      div.appendChild( tmp[0] );
-      // Add div to wrapper
-      this.wrapper_canvas.appendChild( div );
-
-      // Make it draggable
-      const raise_top = (e, data) => {
-        if( this.has_side_cameras ){
-          // reset z-index
-          let z_ind = [
-            [parseInt(this.side_canvas.coronal.container.style.zIndex), 'coronal'],
-            [parseInt(this.side_canvas.axial.container.style.zIndex), 'axial'],
-            [parseInt(this.side_canvas.sagittal.container.style.zIndex), 'sagittal']
-          ];
-          z_ind.sort((v1,v2) => {return(v1[0] - v2[0])});
-          z_ind.forEach((v, ii) => {
-            this.side_canvas[ v[ 1 ] ].container.style.zIndex = ii;
-          });
-          this.side_canvas[ nm ].container.style.zIndex = 4;
-        }
-      };
-      make_draggable( div, div_header, undefined, raise_top);
-
-
-      const toggle_pan_canvas = make_draggable( cvs, undefined, div, (e, data) => {
-        raise_top(e, data);
-
-        if( data.state === 'select' || data.state === 'move' ){
-          const _size = get_element_size( cvs ),
-                _x = data.x / _size[0] * 256 - 128,
-                _y = data.y / _size[1] * 256 - 128;
-
-          console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
-          if( nm === 'coronal' ){
-            this.state_data.set( 'sagittal_depth', _x );
-            this.state_data.set( 'axial_depth', -_y );
-            // this._sagittal_depth = _x;
-            // this._axial_depth = -_y;
-          }else if( nm === 'axial' ){
-            this.state_data.set( 'sagittal_depth', _x );
-            this.state_data.set( 'coronal_depth', -_y );
-            // this._sagittal_depth = _x;
-            // this._coronal_depth = -_y;
-          }else if( nm === 'sagittal' ){
-            this.state_data.set( 'coronal_depth', -_x );
-            this.state_data.set( 'axial_depth', -_y );
-            // this._coronal_depth = -_x;
-            // this._axial_depth = -_y;
-          }
-          // Also set main_camera
-          const _d = new Vector3(
-            // this._sagittal_depth || 0,
-            this.state_data.get( 'sagittal_depth' ),
-
-            // this._coronal_depth || 0,
-            this.state_data.get( 'coronal_depth' ),
-
-            // this._axial_depth || 0
-            this.state_data.get( 'axial_depth' )
-          ).normalize().multiplyScalar(500);
-          if( _d.length() === 0 ){
-            _d.x = 500;
-          }
-
-          if( e.shiftKey ){
-            const heads_up = new Vector3(0, 0, 1);
-            // calculate camera up
-            let _cp = this.main_camera.position.clone().cross( heads_up ).cross( _d ).normalize();
-            if( _cp.length() < 0.5 ){
-              _cp.y = 1;
-            }
-
-            // Always try to heads up
-            if( _cp.dot( heads_up ) < 0 ){
-              _cp.multiplyScalar(-1);
-            }
-
-            this.main_camera.position.copy( _d );
-            this.main_camera.up.copy( _cp );
-          }
-
-          this.set_side_depth(
-            this.state_data.get( 'coronal_depth' ),
-            this.state_data.get( 'axial_depth' ),
-            this.state_data.get( 'sagittal_depth' )
-          );
-
-        }
-      } );
-      toggle_pan_canvas( 'select' );
-
-      // Make cvs scrollable, but change slices
-      this.bind( `${nm}_cvs_mousewheel`, 'mousewheel', (evt) => {
-        evt.preventDefault();
-        if( evt.altKey ){
-          if( evt.deltaY > 0 ){
-            this.state_data.set( nm + '_depth', 1 + this.state_data.get(nm + '_depth') );
-            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
-          }else if( evt.deltaY < 0 ){
-            this.state_data.set( nm + '_depth', -1 + this.state_data.get(nm + '_depth') );
-            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
-          }
-        }
-        // this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
-        this.set_side_depth(
-          this.state_data.get( 'coronal_depth' ),
-          this.state_data.get( 'axial_depth' ),
-          this.state_data.get( 'sagittal_depth' )
-        );
-      }, cvs);
-
-      // Make resizable, keep current width and height
-      make_resizable( div, true );
-
-      // add double click handler
-      const reset = ( _zoom_level ) => {
-        div.style.top = ( idx * this.side_width ) + 'px';
-        div.style.left = '0';
-        div.style.width = this.side_width + 'px';
-        div.style.height = this.side_width + 'px';
-        if( _zoom_level !== undefined ){
-          set_zoom_level( _zoom_level || 1 );
-        }
-
-      };
-      this.bind( `${nm}_div_header_dblclick`, 'dblclick', (evt) => {
-        reset();
-        // Resize side canvas
-        // this.handle_resize( undefined, undefined );
-      }, div_header);
-
-
-      this.side_canvas[ nm ] = {
-        'container' : div,
-        'canvas'    : cvs,
-        'context'   : cvs.getContext('2d'),
-        'camera'    : camera,
-        'reset'     : reset,
-        'get_zoom_level' : () => { return( zoom_level ) },
-        'set_zoom_level' : set_zoom_level
-      };
-
-
-    });
-
     // Add video
     this.video_canvas = document.createElement('video');
     this.video_canvas.setAttribute( "autoplay", "false" );
@@ -785,14 +407,20 @@ class THREEBRAIN_CANVAS {
   }
 
   get_main_camera_params(){
+    const pos = this.__tmp_main_camera_position || new Vector3();
+    if(!this.__tmp_main_camera_position){
+      this.__tmp_main_camera_position = pos;
+    }
+    pos.set(
+      -this.main_camera.userData.pos[0],
+      -this.main_camera.userData.pos[1],
+      -this.main_camera.userData.pos[2]
+    );
+
     return({
-      'target' : this.main_camera.localToWorld(new Vector3(
-        -this.main_camera.userData.pos[0],
-        -this.main_camera.userData.pos[1],
-        -this.main_camera.userData.pos[2]
-      )), //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
-      'up' : this.main_camera.up, // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
-      'position': this.main_camera.position //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
+      'target' : this.main_camera.localToWorld(pos),
+      'up' : this.main_camera.up,
+      'position': this.main_camera.position
     });
   }
 
@@ -1546,82 +1174,6 @@ class THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
-  reset_side_canvas( zoom_level, side_width, side_position ){
-    let _sw = side_width;
-    if( !_sw ){
-      _sw = this._side_width;
-    }
-    if( _sw * 3 > this.client_height ){
-      _sw = Math.floor( this.client_height / 3 );
-    }
-    this.side_width = _sw;
-    // Resize side canvas, make sure this.side_width is proper
-    this.side_canvas.coronal.reset( zoom_level );
-    this.side_canvas.axial.reset( zoom_level );
-    this.side_canvas.sagittal.reset( zoom_level );
-
-    side_position = to_array( side_position );
-    if( side_position.length == 2 ){
-      const el_pos = this.el.getBoundingClientRect();
-      side_position[0] = Math.max( side_position[0], -el_pos.x );
-      side_position[1] = Math.max( side_position[1], -el_pos.y );
-
-      this.side_canvas.coronal.container.style.top = side_position[1] + 'px';
-      this.side_canvas.axial.container.style.top = (side_position[1] + _sw) + 'px';
-      this.side_canvas.sagittal.container.style.top = (side_position[1] + _sw * 2) + 'px';
-
-      this.side_canvas.coronal.container.style.left = side_position[0] + 'px';
-      this.side_canvas.axial.container.style.left = side_position[0] + 'px';
-      this.side_canvas.sagittal.container.style.left = side_position[0] + 'px';
-    }
-
-    this.handle_resize( undefined, undefined );
-
-  }
-
-  reset_side_cameras( pos, scale = 300, distance = 500 ){
-
-    if( pos ){
-      this._side_canvas_position = pos;
-    }else{
-      pos = this._side_canvas_position || CONSTANTS.VEC_ORIGIN;
-    }
-
-    this.side_canvas.coronal.camera.position.x = pos.x;
-    this.side_canvas.coronal.camera.position.z = pos.z;
-    this.side_canvas.coronal.camera.position.y = -distance;
-    this.side_canvas.coronal.camera.lookAt( pos.x, pos.y, pos.z );
-
-    this.side_canvas.coronal.camera.top = scale / 2;
-    this.side_canvas.coronal.camera.bottom = -scale / 2;
-    this.side_canvas.coronal.camera.right = scale / 2;
-    this.side_canvas.coronal.camera.left = -scale / 2;
-
-    this.side_canvas.axial.camera.position.x = pos.x;
-    this.side_canvas.axial.camera.position.y = pos.y;
-    this.side_canvas.axial.camera.position.z = distance;
-    this.side_canvas.axial.camera.lookAt( pos.x, pos.y, pos.z );
-    this.side_canvas.axial.camera.top = scale / 2;
-    this.side_canvas.axial.camera.bottom = -scale / 2;
-    this.side_canvas.axial.camera.right = scale / 2;
-    this.side_canvas.axial.camera.left = -scale / 2;
-
-    this.side_canvas.sagittal.camera.position.y = pos.y;
-    this.side_canvas.sagittal.camera.position.z = pos.z;
-    this.side_canvas.sagittal.camera.position.x = -distance;
-    this.side_canvas.sagittal.camera.lookAt( pos.x, pos.y, pos.z );
-    this.side_canvas.sagittal.camera.top = scale / 2;
-    this.side_canvas.sagittal.camera.bottom = -scale / 2;
-    this.side_canvas.sagittal.camera.right = scale / 2;
-    this.side_canvas.sagittal.camera.left = -scale / 2;
-
-
-    this.side_canvas.coronal.camera.updateProjectionMatrix();
-    this.side_canvas.axial.camera.updateProjectionMatrix();
-    this.side_canvas.sagittal.camera.updateProjectionMatrix();
-
-    this.start_animation( 0 );
-  }
 
   reset_controls(){
 	  // reset will erase target, manually reset target
@@ -1687,7 +1239,6 @@ class THREEBRAIN_CANVAS {
 
   }
 
-
   mapToCanvas(){
     const _width = this.domElement.width,
           _height = this.domElement.height;
@@ -1698,27 +1249,6 @@ class THREEBRAIN_CANVAS {
 
     // copy the main_renderer context
     this.domContext.drawImage( this.main_renderer.domElement, 0, 0, _width, _height);
-
-    // side cameras
-    if( this.has_side_cameras ){
-      const _rh = this.side_renderer._render_height * this.pixel_ratio[1];
-
-      /* Use integer pixels here to avoid sub-pixel antialiasing problem */
-      this.side_canvas.coronal.context.fillStyle = this.background_color;
-      this.side_canvas.coronal.context.fillRect(0, 0, _rh, _rh);
-      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement, 0, 0, _rh, _rh, 0, 0, _rh, _rh);
-
-
-      this.side_canvas.axial.context.fillStyle = this.background_color;
-      this.side_canvas.axial.context.fillRect(0, 0, _rh, _rh);
-      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement, _rh, 0, _rh, _rh, 0, 0, _rh, _rh);
-
-
-      this.side_canvas.sagittal.context.fillStyle = this.background_color;
-      this.side_canvas.sagittal.context.fillRect(0, 0, _rh, _rh);
-      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement, _rh * 2, 0, _rh, _rh, 0, 0, _rh, _rh);
-    }
-
 
   }
 
@@ -1752,39 +1282,6 @@ class THREEBRAIN_CANVAS {
     });
 
     this.main_renderer.render( this.scene, this.main_camera );
-
-    if(this.has_side_cameras){
-
-      // Disable side plane
-      this.side_plane_sendback( true );
-
-      const _rh = this.side_renderer._render_height;
-      // Cut side views
-      // Threejs's origin is at bottom-left, but html is at topleft
-      // Need to adjust for each view
-      // coronal
-      this.side_renderer.setViewport( 0, 0, _rh, _rh );
-      this.side_renderer.setScissor( 0, 0, _rh, _rh );
-      this.side_renderer.setScissorTest( true );
-      this.side_renderer.clear();
-      this.side_renderer.render( this.scene, this.side_canvas.coronal.camera );
-
-      // axial
-      this.side_renderer.setViewport( _rh, 0, _rh, _rh );
-      this.side_renderer.setScissor( _rh, 0, _rh, _rh );
-      this.side_renderer.setScissorTest( true );
-      this.side_renderer.clear();
-      this.side_renderer.render( this.scene, this.side_canvas.axial.camera );
-
-      // sagittal
-      this.side_renderer.setViewport( _rh * 2, 0, _rh, _rh );
-      this.side_renderer.setScissor( _rh * 2, 0, _rh, _rh );
-      this.side_renderer.setScissorTest( true );
-      this.side_renderer.clear();
-      this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
-
-      this.side_plane_sendback( false );
-    }
 
   }
 
@@ -1954,24 +1451,6 @@ class THREEBRAIN_CANVAS {
       .forEach( (ss, ii) => {
         this.domContext.fillText( ss , x, y + this._lineHeight_title * (ii + 1) );
       });
-  }
-
-  _draw_ani_old( results, x = 10, y = 10, w = 100, h = 100  ){
-
-    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
-    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
-
-    // Add current time to bottom right corner
-    if( this.render_timestamp !== false && typeof(results.current_time) === 'number' ){
-      this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
-      this.domContext.fillText(
-
-        // Current clock time
-        `${results.current_time.toFixed(3)} s`,
-
-        // offset
-        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 1);
-    }
   }
 
   _draw_ani( results, x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
@@ -3893,11 +3372,4 @@ mapped = false,
 
   }
 }
-
-
-
-export { THREEBRAIN_CANVAS };
-// window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;
-
-
 
