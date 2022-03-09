@@ -9,5 +9,6 @@ inst/doc
 .dropbox
 .DS_Store
 vignettes/intro.html
-
 docs
+_rs_job.R
+ui.R

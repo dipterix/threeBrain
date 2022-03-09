@@ -31,3 +31,5 @@ inst/htmlwidgets/lib/webmwriter-0.2.0/
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^ui\.R$
+^_rs_job\.R$

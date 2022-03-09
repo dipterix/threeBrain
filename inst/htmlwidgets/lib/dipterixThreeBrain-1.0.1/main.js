@@ -56985,7 +56985,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
         });
         this.fire_change({ 'atlas_type' : v });
       }
-    }
+    };
 
     this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
       .onChange( this._ctl_voxel_type_callback );
@@ -67144,7 +67144,7 @@ vec4 data_color0 = vec4( 0.0 );
 if( which_map == 1 ){
     // is track_color is missing, or all zeros, it's invalid
     if( track_color.rgb != zeros ){
-      vColor.rgb = mix( vColor.rgb, track_color, blend_factor );
+      vColor.rgb = mix( vColor.rgb, track_color.rgb, blend_factor );
     }
 } else if( which_map == 2 ){
   vec3 data_position = (position + shift) * scale_inv + 0.5;
@@ -67154,7 +67154,13 @@ if( which_map == 1 ){
   );
 
 #if defined( USE_COLOR_ALPHA )
-	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, blend_factor );
+  if( data_color0.a == 0.0 ){
+    vColor.a = 0.0;
+  } else {
+    vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
+    vColor.a = 1.0;
+  }
+
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
 	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
 #endif
@@ -67170,11 +67176,29 @@ if( which_map == 1 ){
         }).join("\n")
     );
 
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <clipping_planes_fragment>",
+      `
+// Remove transparent fragments
+#if defined( USE_COLOR_ALPHA )
+  if( vColor.a == 0.0 ){
+    // gl_FragColor.a = 0.0;
+    // gl_FragColor.rgba = vec4(0.0);
+    discard;
+  }
+#endif
+#include <clipping_planes_fragment>
+      `.split("\n").map((e) => {
+          return(
+            e.replaceAll(/\/\/.*/g, "")
+          );
+        }).join("\n")
+    );
   };
 
 
   return( material );
-}
+};
 
 
 
@@ -67246,16 +67270,19 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
         tcol[ ii * 3 ] = 0;
         tcol[ ii * 3 + 1 ] = 0;
         tcol[ ii * 3 + 2 ] = 0;
+        // tcol[ ii * 4 + 3 ] = 0;
       } else {
         c = lut_map[ value[ jj ] ];
         if( c ){
           tcol[ ii * 3 ] = c.R;
           tcol[ ii * 3 + 1 ] = c.G;
           tcol[ ii * 3 + 2 ] = c.B;
+          // tcol[ ii * 4 + 3 ] = 255;
         } else {
           tcol[ ii * 3 ] = 0;
           tcol[ ii * 3 + 1 ] = 0;
           tcol[ ii * 3 + 2 ] = 0;
+          // tcol[ ii * 4 + 3 ] = 0;
         }
       }
     }
@@ -67298,9 +67325,10 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       if( ii >= nvertices ){ return; }
       // Make it lighter using sigmoid function
       let col = _transform(v);
-      this._vertex_color[ ii * 3 ] = col;
-      this._vertex_color[ ii * 3 + 1 ] = col;
-      this._vertex_color[ ii * 3 + 2 ] = col;
+      this._vertex_color[ ii * 4 ] = col;
+      this._vertex_color[ ii * 4 + 1 ] = col;
+      this._vertex_color[ ii * 4 + 2 ] = col;
+      this._vertex_color[ ii * 4 + 3 ] = 1;
     });
 
     if( update_color ){
@@ -67330,11 +67358,18 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       1 / m._cube_dim[0],
       1 / m._cube_dim[1],
       1 / m._cube_dim[2]
-    )
-    this._volume_texture.needsUpdate = true;
+    );
+
+    /**
+     * We want to enable USE_COLOR_ALPHA so that vColor is vec4,
+     * This requires vertexAlphas to be true
+     * https://github.com/mrdoob/three.js/blob/be137e6da5fd682555cdcf5c8002717e4528f879/src/renderers/WebGLRenderer.js#L1442
+    */
+    this._mesh.material.vertexColors = true;
     this._material_options.which_map.value = constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR;
     this._material_options.sampler_bias.value = bias;
     this._material_options.sampler_step.value = bias / 2;
+    this._volume_texture.needsUpdate = true;
 
   }
 
@@ -67570,7 +67605,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.__nvertices = vertices.length;
     const vertex_positions = new Float32Array( this.__nvertices * 3 ),
           face_orders = new Uint32Array( faces.length * 3 ),
-          vertex_color = new Float32Array( this.__nvertices * 3 ).fill(1);
+          vertex_color = new Float32Array( this.__nvertices * 4 ).fill(1);
 
     this._vertex_color = vertex_color;
 
@@ -67587,7 +67622,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     this._geometry.setIndex( new three_module.BufferAttribute(face_orders, 1) );
     this._geometry.setAttribute( 'position', new three_module.BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'color', new three_module.BufferAttribute( vertex_color, 3, true ) );
+    this._geometry.setAttribute( 'color', new three_module.BufferAttribute( vertex_color, 4, true ) );
 
 
     // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );

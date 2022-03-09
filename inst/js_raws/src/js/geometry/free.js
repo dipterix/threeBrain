@@ -68,16 +68,19 @@ class FreeMesh extends AbstractThreeBrainObject {
         tcol[ ii * 3 ] = 0;
         tcol[ ii * 3 + 1 ] = 0;
         tcol[ ii * 3 + 2 ] = 0;
+        // tcol[ ii * 4 + 3 ] = 0;
       } else {
         c = lut_map[ value[ jj ] ];
         if( c ){
           tcol[ ii * 3 ] = c.R;
           tcol[ ii * 3 + 1 ] = c.G;
           tcol[ ii * 3 + 2 ] = c.B;
+          // tcol[ ii * 4 + 3 ] = 255;
         } else {
           tcol[ ii * 3 ] = 0;
           tcol[ ii * 3 + 1 ] = 0;
           tcol[ ii * 3 + 2 ] = 0;
+          // tcol[ ii * 4 + 3 ] = 0;
         }
       }
     }
@@ -120,9 +123,10 @@ class FreeMesh extends AbstractThreeBrainObject {
       if( ii >= nvertices ){ return; }
       // Make it lighter using sigmoid function
       let col = _transform(v);
-      this._vertex_color[ ii * 3 ] = col;
-      this._vertex_color[ ii * 3 + 1 ] = col;
-      this._vertex_color[ ii * 3 + 2 ] = col;
+      this._vertex_color[ ii * 4 ] = col;
+      this._vertex_color[ ii * 4 + 1 ] = col;
+      this._vertex_color[ ii * 4 + 2 ] = col;
+      this._vertex_color[ ii * 4 + 3 ] = 1;
     });
 
     if( update_color ){
@@ -152,11 +156,18 @@ class FreeMesh extends AbstractThreeBrainObject {
       1 / m._cube_dim[0],
       1 / m._cube_dim[1],
       1 / m._cube_dim[2]
-    )
-    this._volume_texture.needsUpdate = true;
+    );
+
+    /**
+     * We want to enable USE_COLOR_ALPHA so that vColor is vec4,
+     * This requires vertexAlphas to be true
+     * https://github.com/mrdoob/three.js/blob/be137e6da5fd682555cdcf5c8002717e4528f879/src/renderers/WebGLRenderer.js#L1442
+    */
+    this._mesh.material.vertexColors = true;
     this._material_options.which_map.value = CONSTANTS.VOXEL_COLOR;
     this._material_options.sampler_bias.value = bias;
     this._material_options.sampler_step.value = bias / 2;
+    this._volume_texture.needsUpdate = true;
 
   }
 
@@ -392,7 +403,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this.__nvertices = vertices.length;
     const vertex_positions = new Float32Array( this.__nvertices * 3 ),
           face_orders = new Uint32Array( faces.length * 3 ),
-          vertex_color = new Float32Array( this.__nvertices * 3 ).fill(1);
+          vertex_color = new Float32Array( this.__nvertices * 4 ).fill(1);
 
     this._vertex_color = vertex_color;
 
@@ -409,7 +420,7 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     this._geometry.setIndex( new BufferAttribute(face_orders, 1) );
     this._geometry.setAttribute( 'position', new BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'color', new BufferAttribute( vertex_color, 3, true ) );
+    this._geometry.setAttribute( 'color', new BufferAttribute( vertex_color, 4, true ) );
 
 
     // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );

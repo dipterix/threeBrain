@@ -62,7 +62,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
         });
         this.fire_change({ 'atlas_type' : v });
       }
-    }
+    };
 
     this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
       .onChange( this._ctl_voxel_type_callback );

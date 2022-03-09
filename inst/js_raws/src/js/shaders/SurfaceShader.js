@@ -129,7 +129,7 @@ vec4 data_color0 = vec4( 0.0 );
 if( which_map == 1 ){
     // is track_color is missing, or all zeros, it's invalid
     if( track_color.rgb != zeros ){
-      vColor.rgb = mix( vColor.rgb, track_color, blend_factor );
+      vColor.rgb = mix( vColor.rgb, track_color.rgb, blend_factor );
     }
 } else if( which_map == 2 ){
   vec3 data_position = (position + shift) * scale_inv + 0.5;
@@ -139,7 +139,13 @@ if( which_map == 1 ){
   );
 
 #if defined( USE_COLOR_ALPHA )
-	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, blend_factor );
+  if( data_color0.a == 0.0 ){
+    vColor.a = 0.0;
+  } else {
+    vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
+    vColor.a = 1.0;
+  }
+
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
 	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
 #endif
@@ -155,10 +161,28 @@ if( which_map == 1 ){
         }).join("\n")
     );
 
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <clipping_planes_fragment>",
+      `
+// Remove transparent fragments
+#if defined( USE_COLOR_ALPHA )
+  if( vColor.a == 0.0 ){
+    // gl_FragColor.a = 0.0;
+    // gl_FragColor.rgba = vec4(0.0);
+    discard;
+  }
+#endif
+#include <clipping_planes_fragment>
+      `.split("\n").map((e) => {
+          return(
+            e.replaceAll(/\/\/.*/g, "")
+          );
+        }).join("\n")
+    );
   };
 
 
   return( material );
-}
+};
 
 export { compile_free_material };
