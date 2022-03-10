@@ -16,23 +16,44 @@ const VolumeRenderShader1 = {
       alpha : { value: -1.0 },
       steps: { value: 300 },
       scale_inv: { value: new Vector3() },
-      screenPos: { value: new Vector3() },
       bounding: { value : 0.5 }
     },
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
+precision mediump sampler3D;
 in vec3 position;
+uniform sampler3D cmap;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 cameraPosition;
 uniform vec3 scale_inv;
-uniform vec3 screenPos;
+uniform float steps;
+uniform float bounding;
 
 out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
+out vec4 vPosition;
+
+vec2 hitBox( vec3 orig, vec3 dir ) {
+  vec3 box_min = vec3( - bounding );
+  vec3 box_max = vec3( bounding );
+  vec3 inv_dir = 1.0 / dir;
+  vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
+  vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
+  vec3 tmin = min( tmin_tmp, tmax_tmp );
+  vec3 tmax = max( tmin_tmp, tmax_tmp );
+  float t0 = max( tmin.x, max( tmin.y, tmin.z ) );
+  float t1 = min( tmax.x, min( tmax.y, tmax.z ) );
+  return vec2( t0, t1 );
+}
+vec4 sample2( vec3 p ) {
+  return texture( cmap, p + 0.5 );
+}
+
+
 void main() {
   pmv = projectionMatrix * modelViewMatrix;
 
@@ -48,7 +69,7 @@ void main() {
 
   // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
   // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( screenPos.x / screenPos.z, screenPos.y / screenPos.z, 1.0, 1.0 );
+  vec4 vdir = inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 );
   vDirection = vdir.xyz * scale_inv  / vdir.w;
 
   // Previous test code, seems to be poor because camera position is not well-calculated?
@@ -58,13 +79,16 @@ void main() {
 
   // sample need to shift by 0.5 voxel
   // gl_Position = pmv * vec4( position + 0.5, 1.0 );
-  gl_Position = pmv * vec4( position, 1.0 );
+  vPosition = pmv * vec4( position, 1.0 );
+  gl_Position = vPosition;
+
 }`),
     fragmentShader: remove_comments(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vDirection;
+in vec4 vPosition;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
@@ -136,6 +160,7 @@ void main(){
 
         if( nn == 0 ){
           gl_FragDepth = getDepth( p );
+          // gl_FragDepth = (vPosition.z / vPosition.w / 2.0 + 0.5);
           color = fcolor;
           color.a = max( color.a, 0.2 );
         } else {

@@ -6,6 +6,7 @@ import { Vector3, DataTexture3D, NearestFilter, FloatType, RedFormat,
 import { CONSTANTS } from '../constants.js';
 import { get_or_default } from '../utils.js';
 import { VolumeRenderShader1 } from '../shaders/VolumeShader.js';
+import { ConvexGeometry } from '../jsm/geometries/ConvexGeometry.js';
 
 
 class DataCube2 extends AbstractThreeBrainObject {
@@ -201,6 +202,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       // const data = new Float32Array( this._voxel_length );
       const color = new Uint8Array( this._voxel_length * 4 );
       const normals = new Uint8Array( this._voxel_length * 3 );
+      const vertex_position = [];
 
       this._cube_values = cube_values;
       this._lut = lut;
@@ -249,6 +251,16 @@ class DataCube2 extends AbstractThreeBrainObject {
                   bounding_max = Math.max(x,y,z);
                 }
                 // this._map_data[ ii ] = i;
+
+                // calculate vertex positions
+                vertex_position.push(
+                  new THREE.Vector3().set(
+                    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
+                    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
+                    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
+                  )
+                );
+
               }
             }
             /**
@@ -317,7 +329,6 @@ class DataCube2 extends AbstractThreeBrainObject {
 
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
-      uniforms.screenPos.value.set( 0.0, 0.0, 1.0 );
 
       this._bounding_min = bounding_min;
       this._bounding_max = bounding_max;
@@ -337,12 +348,11 @@ class DataCube2 extends AbstractThreeBrainObject {
         transparent : true
       } );
 
-      let geometry = new SphereBufferGeometry(
-        new Vector3().fromArray(cube_half_size).length(), 29, 14
-      );
+      // let geometry = new SphereBufferGeometry(
+      //   new Vector3().fromArray(cube_half_size).length(), 29, 14
+      // );
 
-      // let geometry = new BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
-
+      const geometry = new ConvexGeometry( vertex_position );
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
@@ -377,15 +387,6 @@ class DataCube2 extends AbstractThreeBrainObject {
   get_track_data( track_name, reset_material ){}
 
   pre_render( results ){
-    const orig = this._canvas.origin;
-    if( typeof( orig.setFromMatrixPosition ) === "function" ){
-      orig
-        .getWorldPosition(
-          this._mesh.material.uniforms.screenPos
-        )
-        .applyMatrix4(this._canvas.main_camera.matrixWorldInverse)
-        .applyMatrix4(this._canvas.main_camera.projectionMatrix);
-    }
 
     // if surface is using it
     if( this._canvas.__hide_voxels ){
