@@ -1,5 +1,6 @@
 import { has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
+import { Vector3 } from '../../build/three.module.js';
 
 // 6. toggle side panel
 // 7. reset side panel position
@@ -55,7 +56,7 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
       const ints_z = this.canvas.state_data.get( 'axial_posz' ) || 0,
             ints_y = this.canvas.state_data.get( 'coronal_posy' ) || 0,
             ints_x = this.canvas.state_data.get( 'sagittal_posx' ) || 0;
-      const point = new THREE.Vector3().set(ints_x, ints_y, ints_z);
+      const point = new Vector3().set(ints_x, ints_y, ints_z);
       this.canvas.calculate_mni305( point );
       // set controller
       _controller_mni305.setValue(`${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)}`);

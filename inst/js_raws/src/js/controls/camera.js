@@ -1,5 +1,5 @@
 import { CONSTANTS } from '../constants.js';
-
+import { Vector3 } from '../../build/three.module.js';
 
 // 3. Reset Camera
 // 4. Camera Position
@@ -67,7 +67,7 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
      */
 
     if( this.canvas.__reset_flag ){
-      const inital_camera_pos = new THREE.Vector3().fromArray(
+      const inital_camera_pos = new Vector3().fromArray(
         this.settings.camera_pos
       );
       if (inital_camera_pos.length() > 0){

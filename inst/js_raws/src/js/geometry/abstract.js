@@ -1,5 +1,6 @@
 import { to_array, get_element_size, get_or_default } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
+import { Vector3 } from '../../build/three.module.js';
 
 class AbstractThreeBrainObject {
   constructor(g, canvas){
@@ -14,7 +15,7 @@ class AbstractThreeBrainObject {
     this.subject_code = g.subject_code || '';
     canvas.threebrain_instances.set( this.name, this );
     this.clickable = g.clickable === true;
-    this.world_position = new THREE.Vector3();
+    this.world_position = new Vector3();
   }
 
   set_layer( addition = [], object = null ){

@@ -254,7 +254,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 
                 // calculate vertex positions
                 vertex_position.push(
-                  new THREE.Vector3().set(
+                  new Vector3().set(
                     ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
                     ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
                     ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
