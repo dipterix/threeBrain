@@ -37,23 +37,7 @@ uniform vec3 ndc_center;
 out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
-out vec4 vPosition;
-
-vec2 hitBox( vec3 orig, vec3 dir ) {
-  vec3 box_min = vec3( - bounding );
-  vec3 box_max = vec3( bounding );
-  vec3 inv_dir = 1.0 / dir;
-  vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
-  vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
-  vec3 tmin = min( tmin_tmp, tmax_tmp );
-  vec3 tmax = max( tmin_tmp, tmax_tmp );
-  float t0 = max( tmin.x, max( tmin.y, tmin.z ) );
-  float t1 = min( tmax.x, min( tmax.y, tmax.z ) );
-  return vec2( t0, t1 );
-}
-vec4 sample2( vec3 p ) {
-  return texture( cmap, p + 0.5 );
-}
+out vec3 vSamplerBias;
 
 
 void main() {
@@ -73,6 +57,7 @@ void main() {
   // vDirection = inverse( pmv )[3].xyz * scale_inv;
   vec4 vdir = inverse( pmv ) * vec4( ndc_center, 1.0 );
   vDirection = vdir.xyz * scale_inv  / vdir.w;
+  vSamplerBias =  - vec3(0.5, -0.5, 0.5) * scale_inv + 0.5;
 
   // Previous test code, seems to be poor because camera position is not well-calculated?
   // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
@@ -81,8 +66,8 @@ void main() {
 
   // sample need to shift by 0.5 voxel
   // gl_Position = pmv * vec4( position + 0.5, 1.0 );
-  vPosition = pmv * vec4( position, 1.0 );
-  gl_Position = vPosition;
+
+  gl_Position = pmv * vec4( position, 1.0 );
 
 }`),
     fragmentShader: remove_comments(`#version 300 es
@@ -90,7 +75,7 @@ precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vDirection;
-in vec4 vPosition;
+in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
@@ -126,10 +111,10 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  return texture( cmap, p + 0.5 );
+  return texture( cmap, p + vSamplerBias );
 }
 vec3 getNormal( vec3 p ) {
-  vec3 re = vec3( texture( nmap, p + 0.5 ).rgb *  255.0 - 127.0 );
+  vec3 re = vec3( texture( nmap, p + vSamplerBias ).rgb *  255.0 - 127.0 );
   return normalize( re );
 }
 
@@ -171,7 +156,6 @@ void main(){
 
         if( nn == 0 ){
           gl_FragDepth = getDepth( p );
-          // gl_FragDepth = (vPosition.z / vPosition.w / 2.0 + 0.5);
           color = fcolor;
           color.a = max( color.a, 0.2 );
         } else {
