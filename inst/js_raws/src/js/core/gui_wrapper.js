@@ -190,6 +190,11 @@ class THREEBRAIN_CONTROL{
       const v = c.getValue(),
             o = to_array( options ),
             callback = c.__onChange;
+      let tooltip;
+      if( c.__li ){
+        tooltip = c.__li.getAttribute('viewer-tooltip');
+      }
+
       if( !o.includes(v) && o.length > 0 ){
         v = o[0];
       }
@@ -199,6 +204,11 @@ class THREEBRAIN_CONTROL{
       c.__onChange = undefined;
       c.setValue( v );
       c.__onChange = callback;
+
+      if( typeof tooltip === 'string' ){
+        c.__li.setAttribute('viewer-tooltip', tooltip);
+      }
+
       if( typeof(onSucceed) === 'function' ){
         onSucceed();
       }
