@@ -354,6 +354,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       // );
 
       const geometry = new ConvexGeometry( vertex_position );
+      geometry.computeFaceNormals();
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );

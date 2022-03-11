@@ -23,6 +23,7 @@ const VolumeRenderShader1 = {
 precision highp float;
 precision mediump sampler3D;
 in vec3 position;
+in vec3 normal;
 uniform sampler3D cmap;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -38,6 +39,7 @@ out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
 out vec3 vSamplerBias;
+out vec3 vNormal;
 
 
 void main() {
@@ -66,6 +68,7 @@ void main() {
   // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
   vOrigin = (position) * scale_inv - vDirection;
 
+  vNormal = normal;
 
 }`),
     fragmentShader: remove_comments(`#version 300 es
@@ -74,6 +77,7 @@ precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vDirection;
 in vec3 vSamplerBias;
+in vec3 vNormal;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
@@ -112,7 +116,7 @@ vec4 sample2( vec3 p ) {
   return texture( cmap, p + vSamplerBias );
 }
 vec3 getNormal( vec3 p ) {
-  vec3 re = vec3( texture( nmap, p + vSamplerBias ).rgb *  255.0 - 127.0 );
+  vec3 re = texture( nmap, p + vSamplerBias ).rgb  *  255.0 - 127.0 ;
   return normalize( re );
 }
 
@@ -149,8 +153,11 @@ void main(){
 
         last_color = fcolor;
 
-        // reflect light
-        fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
+        // fcolor.rgb *= sqrt(max( abs(dot(rayDir, getNormal( p ))) , abs(dot(rayDir, vNormal)) * 0.5 ));
+        fcolor.rgb *= pow(
+          max(abs(dot(rayDir, getNormal( p ))), 0.25),
+          0.45
+        );
 
         if( nn == 0 ){
           gl_FragDepth = getDepth( p );
