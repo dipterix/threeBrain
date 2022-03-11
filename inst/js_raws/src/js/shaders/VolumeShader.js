@@ -16,7 +16,8 @@ const VolumeRenderShader1 = {
       alpha : { value: -1.0 },
       steps: { value: 300 },
       scale_inv: { value: new Vector3() },
-      bounding: { value : 0.5 }
+      bounding: { value : 0.5 },
+      ndc_center: { value: new Vector3() },
     },
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
@@ -31,6 +32,7 @@ uniform vec3 cameraPosition;
 uniform vec3 scale_inv;
 uniform float steps;
 uniform float bounding;
+uniform vec3 ndc_center;
 
 out mat4 pmv;
 out vec3 vOrigin;
@@ -69,7 +71,7 @@ void main() {
 
   // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
   // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 );
+  vec4 vdir = inverse( pmv ) * vec4( ndc_center, 1.0 );
   vDirection = vdir.xyz * scale_inv  / vdir.w;
 
   // Previous test code, seems to be poor because camera position is not well-calculated?
@@ -112,7 +114,16 @@ vec2 hitBox( vec3 orig, vec3 dir ) {
 }
 float getDepth( vec3 p ){
   vec4 frag2 = pmv * vec4( p, scale_inv );
-  return (frag2.z / frag2.w / 2.0 + 0.5);
+
+  return(
+    (frag2.z / frag2.w * (gl_DepthRange.far - gl_DepthRange.near) +
+      gl_DepthRange.near + gl_DepthRange.far) * 0.5
+  );
+
+
+  // ndc.z = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) /
+  //      (gl_DepthRange.far - gl_DepthRange.near);
+  // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
   return texture( cmap, p + 0.5 );

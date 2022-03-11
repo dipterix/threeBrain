@@ -322,7 +322,8 @@ class DataCube2 extends AbstractThreeBrainObject {
       const shader = VolumeRenderShader1;
 
 
-      let uniforms = UniformsUtils.clone( shader.uniforms );
+      const uniforms = UniformsUtils.clone( shader.uniforms );
+      this._uniforms = uniforms;
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
       uniforms.nmap.value = normals_texture;
@@ -387,7 +388,12 @@ class DataCube2 extends AbstractThreeBrainObject {
   get_track_data( track_name, reset_material ){}
 
   pre_render( results ){
-
+    const camera = canvas.main_camera;
+    this._uniforms.ndc_center.value.set(
+      (camera.left + camera.right) / (camera.left - camera.right),
+      (camera.top + camera.bottom) / (camera.bottom - camera.top),
+      0
+    );
     // if surface is using it
     if( this._canvas.__hide_voxels ){
       this.object.visible = false;
