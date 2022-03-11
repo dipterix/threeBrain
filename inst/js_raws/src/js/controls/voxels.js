@@ -26,8 +26,9 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           })
         }
         if( flag ){
-          flag = this.gui.alter_item("Voxel Type", atlases, () => {
+          flag = this.gui.alter_item("Voxel Type", atlases, ( c ) => {
             this._ctl_voxel_type_options = atlases;
+            c.setValue( atlases[0] );
           })
         }
       }
@@ -54,9 +55,6 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
     this._ctl_voxel_type_options = ['none'];
     this._ctl_voxel_type_callback = (v) => {
       if( v ){
-        if( this._current_surface_ctype !== "sync from voxels" ){
-          this.canvas.__hide_voxels = false;
-        }
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
@@ -68,20 +66,38 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
       .onChange( this._ctl_voxel_type_callback );
 
     this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
-    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
+
+    // display type
+    this.gui.add_item('Voxel Display', 'hidden', {
+      args : ['hidden', 'normal'], folder_name : folder_name
+    }).onChange( (v) => {
+      this.canvas.atlases.forEach( (al, subject_code) => {
+        for( let atlas_name in al ){
+          const m = al[ atlas_name ];
+          if( m.isMesh && m.userData.instance.isThreeBrainObject ){
+            const inst = m.userData.instance;
+            if( inst.isDataCube2 ){
+              inst.set_display_mode( v );
+            }
+          }
+        }
+      });
+      this._update_canvas();
+    });
+    this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, 'Voxel Display', folder_name);
 
     // register key callbacks
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS, (evt) => {
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS_MODE, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
         // have to update dynamically because it could change
-        const ctl = this.gui.get_controller("Voxel Type");
-        const _c = this._ctl_voxel_type_options;
-        let current_idx = (_c.indexOf( ctl.getValue() ) + 1) % _c.length;
-        if( current_idx >= 0 ){
-          ctl.setValue( _c[ current_idx ] );
+        const ctl = this.gui.get_controller("Voxel Display");
+        if( ctl.getValue() === 'hidden' ) {
+          ctl.setValue( "normal" );
+        } else {
+          ctl.setValue( "hidden" );
         }
       }
-    }, 'gui_atlas_type');
+    }, 'gui_atlas_display_mode');
 
     // If color map supports alpha, add override option
     const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })

@@ -211,27 +211,30 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
 
     this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
       .onChange((v) => {
-        this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         const last_ctype = this._current_surface_ctype;
-        this.canvas.__hide_voxels = false;
         this.set_surface_ctype( v );
 
-        if( this._current_surface_ctype !== "none" ){
-          this.gui.show_item(['Blend Factor'], folder_name);
+        switch (this._current_surface_ctype) {
+          case "sync from voxels":
+            this.gui.show_item(['Sigma', 'Blend Factor'], folder_name);
+            this.gui.hide_item(['Decay', 'Range Limit'], folder_name);
+            break;
+
+          case "sync from electrodes":
+            this.gui.show_item(['Decay', 'Range Limit', 'Blend Factor'], folder_name);
+            this.gui.hide_item(['Sigma'], folder_name);
+            break;
+
+          case "vertices":
+            this.gui.show_item(['Blend Factor'], folder_name);
+            this.gui.hide_item(['Sigma', 'Decay', 'Range Limit'], folder_name);
+            break;
+
+          default:
+            // none
+            this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         }
 
-        if( this._current_surface_ctype === "sync from voxels" ){
-          this.gui.show_item(['Sigma'], folder_name);
-          this.canvas.__hide_voxels = true;
-        } else {
-          if( last_ctype === "sync from voxels" ) {
-            // leaving, have to set voxels to none
-            this.canvas.__hide_voxels = true;
-          }
-          if( this._current_surface_ctype === "sync from electrodes" ){
-            this.gui.show_item(['Decay', 'Range Limit'], folder_name);
-          }
-        }
         this._update_canvas();
       });
 

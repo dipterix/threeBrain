@@ -67,7 +67,7 @@ class THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method", "Video Mode",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
+      "Voxel Type", "Voxel Display", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
       'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',
       'Edit Mode'
     ];
@@ -210,7 +210,7 @@ class THREEBRAIN_CONTROL{
       }
 
       if( typeof(onSucceed) === 'function' ){
-        onSucceed();
+        onSucceed( c );
       }
       return( true );
     }

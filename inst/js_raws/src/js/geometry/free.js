@@ -290,6 +290,7 @@ class FreeMesh extends AbstractThreeBrainObject {
 
   pre_render( results ){
     // check material
+    super.pre_render( results );
     this._check_material( false );
 
     if( !this.object.visible ) { return; }

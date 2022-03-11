@@ -177,7 +177,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 
     this.type = 'DataCube2';
     this.isDataCube2 = true;
-    this._hide_flag = false;
+    this._display_mode = "hidden";
 
     let mesh;
 
@@ -354,7 +354,6 @@ class DataCube2 extends AbstractThreeBrainObject {
       // );
 
       const geometry = new ConvexGeometry( vertex_position );
-      geometry.computeFaceNormals();
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
@@ -388,20 +387,6 @@ class DataCube2 extends AbstractThreeBrainObject {
 
   get_track_data( track_name, reset_material ){}
 
-  pre_render( results ){
-    // const camera = canvas.main_camera;
-    // this._uniforms.ndc_center.value.set(
-    //   (camera.left + camera.right) / (camera.left - camera.right),
-    //   (camera.top + camera.bottom) / (camera.bottom - camera.top),
-    //   0
-    // );
-
-    // if surface is using it
-    if( this._canvas.__hide_voxels ){
-      this.object.visible = false;
-    }
-  }
-
   finish_init(){
     // this.object
 
@@ -417,6 +402,8 @@ class DataCube2 extends AbstractThreeBrainObject {
     this.register_object( ['atlases'] );
 
   }
+
+
 }
 
 

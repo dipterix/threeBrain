@@ -123,6 +123,7 @@ MultiBrain2 <- R6::R6Class(
           color = col
         )
         controllers[["Voxel Type"]] <- "CT"
+        controllers[["Voxel Display"]] <- "normal"
         controllers[["Voxel Min"]] <- 3000
         controllers[["Left Opacity"]] <- 0.4
         controllers[["Right Opacity"]] <- 0.4
@@ -136,6 +137,7 @@ MultiBrain2 <- R6::R6Class(
       } else {
         # No CT scan, use aparc+aseg
         controllers[["Voxel Type"]] <- "aparc_aseg"
+        controllers[["Voxel Display"]] <- "normal"
         controllers[["Left Hemisphere"]] <- "hidden"
         controllers[["Right Hemisphere"]] <- "hidden"
         self$plot(

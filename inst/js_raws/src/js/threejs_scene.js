@@ -7,7 +7,10 @@ import {
   AnimationClip, AnimationMixer, Clock,
   BoxBufferGeometry, Mesh, MeshBasicMaterial
 } from '../build/three.module.js';
-import { to_array, get_element_size, get_or_default, has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4 } from './utils.js';
+import { to_array, get_element_size, get_or_default,
+  has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4,
+  set_visibility, set_display_mode
+} from './utils.js';
 import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
 import { CanvasContext2D } from './core/context.js';
 import { Stats } from './libs/stats.min.js';
@@ -1156,7 +1159,8 @@ class THREEBRAIN_CANVAS {
     if( m.children.length > 0 ){
       m.children.forEach((_c) => {
         if( _c.isMesh && _c.userData.is_highlight_helper ){
-          _c.visible = !reset;
+          set_visibility( _c, !reset );
+          // _c.visible = !reset;
         }
       });
     }
@@ -3496,42 +3500,39 @@ class THREEBRAIN_CANVAS {
     this.surfaces.forEach( (sf, subject_code) => {
       for( let surface_name in sf ){
         const m = sf[ surface_name ];
-        m.visible = false;
+        // m.visible = false;
+        set_visibility( m, false );
         if( subject_code === target_subject ){
 
           if(
             surface_name === `Standard 141 Left Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Left Hemisphere - ${surface_type} (${target_subject})`
           ){
-            if( material_type[0] === 'hidden' ){
-              m.visible = false;
-            }else{
-              m.material.wireframe = ( material_type[0] === 'wireframe' );
-              m.visible = true;
-              m.material.opacity = opacity[0];
-              m.material.transparent = opacity[0] < 0.99;
-            }
+            set_display_mode( m, material_type[0] );
+            set_visibility( m, material_type[0] !== 'hidden' );
+            m.material.wireframe = ( material_type[0] === 'wireframe' );
+            m.material.opacity = opacity[0];
+            m.material.transparent = opacity[0] < 0.99;
           }else if(
             surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
           ){
-            if( material_type[1] === 'hidden' ){
-              m.visible = false;
-            }else{
-              m.material.wireframe = ( material_type[1] === 'wireframe' );
-              m.visible = true;
-              m.material.opacity = opacity[1];
-              m.material.transparent = opacity[1] < 0.99;
-            }
-
-            // Re-calculate controls center so that rotation center is the center of mesh bounding box
-            this.bounding_box.setFromObject( m.parent );
-            this.bounding_box.geometry.computeBoundingBox();
-            const _b = this.bounding_box.geometry.boundingBox;
-            this.controls.target.copy( _b.min.clone() ).add( _b.max ).multiplyScalar( 0.5 );
-            this.control_center = this.controls.target.toArray();
-            this.controls.update();
+            set_display_mode( m, material_type[1] );
+            set_visibility( m, material_type[1] !== 'hidden' );
+            m.material.wireframe = ( material_type[1] === 'wireframe' );
+            m.material.opacity = opacity[1];
+            m.material.transparent = opacity[1] < 0.99;
           }
+
+
+          // Re-calculate controls center so that rotation center is the center of mesh bounding box
+          this.bounding_box.setFromObject( m.parent );
+          this.bounding_box.geometry.computeBoundingBox();
+          const _b = this.bounding_box.geometry.boundingBox;
+          this.controls.target.copy( _b.min.clone() )
+            .add( _b.max ).multiplyScalar( 0.5 );
+          this.control_center = this.controls.target.toArray();
+          this.controls.update();
 
         }
       }
@@ -3545,10 +3546,12 @@ class THREEBRAIN_CANVAS {
       for( let volume_name in vol ){
         const m = vol[ volume_name ];
         if( subject_code === target_subject && volume_name === `${volume_type} (${subject_code})`){
-          m[0].parent.visible = true;
+          //m[0].parent.visible = true;
+          set_visibility( m[0].parent, true );
           this._register_datacube( m );
         }else{
-          m[0].parent.visible = false;
+          // m[0].parent.visible = false;
+          set_visibility( m[0].parent, false );
         }
       }
     });
@@ -3568,9 +3571,11 @@ class THREEBRAIN_CANVAS {
       for( let atlas_name in al ){
         const m = al[ atlas_name ];
         if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
-          m.visible = true;
+          // m.visible = true;
+          set_visibility( m, true );
         }else{
-          m.visible = false;
+          // m.visible = false;
+          set_visibility( m, false );
         }
       }
     });
@@ -3582,10 +3587,12 @@ class THREEBRAIN_CANVAS {
       for( let ct_name in vol ){
         const m = vol[ ct_name ];
         if( subject_code === target_subject && ct_name === `${ct_type} (${subject_code})`){
-          m.parent.visible = this._show_ct;
+          // m.parent.visible = this._show_ct;
+          set_visibility( m.parent, this._show_ct );
           m.material.uniforms.u_renderthreshold.value = ct_threshold;
         }else{
-          m.parent.visible = false;
+          // m.parent.visible = false;
+          set_visibility( m.parent, false );
         }
       }
     });
@@ -3725,7 +3732,8 @@ mapped = false,
           el.userData._template_hemisphere = g.hemisphere;
         }
         if( hide_electrode ){
-          el.visible = false;
+          // el.visible = false;
+          set_visibility( el, false );
         }
 
       }

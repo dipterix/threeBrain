@@ -1,6 +1,7 @@
 import { is_electrode } from '../geometry/sphere.js';
 import { to_array, has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
+import { set_visibility } from '../utils.js';
 
 // 13. electrode visibility, highlight, groups
 // 14. electrode mapping
@@ -45,17 +46,21 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
       switch (v) {
         case 'hidden':
           // el is invisible
-          el.visible = false;
+          // el.visible = false;
+          set_visibility( el, false );
           break;
         case 'hide inactives':
           if( el.material.isMeshLambertMaterial ){
-            el.visible = false;
+            // el.visible = false;
+            set_visibility( el, false );
           }else{
-            el.visible = true;
+            // el.visible = true;
+            set_visibility( el, true );
           }
           break;
         default:
-          el.visible = true;
+          // el.visible = true;
+          set_visibility( el, true );
       }
     };
 

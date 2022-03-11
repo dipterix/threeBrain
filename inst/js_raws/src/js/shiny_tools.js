@@ -3,7 +3,7 @@
 This file defines shiny callback functions (js to shiny)
 */
 
-import { debounce, to_array, get_or_default } from './utils.js';
+import { debounce, to_array, get_or_default, set_visibility } from './utils.js';
 import { Math, Vector3, Color } from '../build/three.module.js';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
 import { CONSTANTS } from './constants.js';
@@ -388,9 +388,11 @@ class THREE_BRAIN_SHINY {
 
     if( !valid ){
       // el.position.set(0,0,0);
-      el.visible = false;
+      // el.visible = false;
+      set_visibility( el, false );
     }else{
-      el.visible = true;
+      // el.visible = true;
+      set_visibility( el, true );
     }
     if( position ){
       position = to_array( position );

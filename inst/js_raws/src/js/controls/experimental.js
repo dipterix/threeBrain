@@ -1,4 +1,5 @@
 import { CONSTANTS } from '../constants.js';
+import { set_visibility } from '../utils.js';
 
 // Experimental (probably not gonna be used)
 
@@ -221,11 +222,13 @@ function register_controls_experimental( THREEBRAIN_PRESETS ){
               // Check lh and rh visibility
               const _lh = this.gui.get_controller('Left Hemisphere');
               if( !(_lh && _lh.getValue && _lh.getValue() === 'hidden') ){
-                surfs[ lh_name ].visible = true;
+                // surfs[ lh_name ].visible = true;
+                set_visibility( surfs[ lh_name ], true );
               }
               const _rh = this.gui.get_controller('Right Hemisphere');
               if( !(_rh && _rh.getValue && _rh.getValue() === 'hidden') ){
-                surfs[ rh_name ].visible = true;
+                // surfs[ rh_name ].visible = true;
+                set_visibility( surfs[ rh_name ], true );
               }
               meta = {
                 lh_name: lh_name,
@@ -257,8 +260,10 @@ function register_controls_experimental( THREEBRAIN_PRESETS ){
         if( res.meta && res.meta.current_subject ){
           let surfs = this.canvas.surfaces.get( res.meta.current_subject );
           if( res.meta.lh_name ){
-            surfs[ res.meta.lh_name ].visible = false;
-            surfs[ res.meta.rh_name ].visible = false;
+            // surfs[ res.meta.lh_name ].visible = false;
+            // surfs[ res.meta.rh_name ].visible = false;
+            set_visibility( surfs[ res.meta.lh_name ], false );
+            set_visibility( surfs[ res.meta.rh_name ], false );
           }
         }
         if( res.first_item ){

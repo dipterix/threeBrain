@@ -6,6 +6,8 @@ class AbstractThreeBrainObject {
   constructor(g, canvas){
     this._params = g;
     this._canvas = canvas;
+    this._display_mode = "normal";
+    this._visible = true;
     this.type = 'AbstractThreeBrainObject';
     this.isThreeBrainObject = true;
     this.name = g.name;
@@ -75,6 +77,14 @@ class AbstractThreeBrainObject {
 
   pre_render( results ){
     this.get_world_position( results );
+    if( this.object && this.object.isMesh ){
+      if( this._visible && this._display_mode !== "hidden" ) {
+        this.object.visible = true;
+      } else {
+        this.object.visible = false;
+      }
+    }
+
     this._last_rendered = results.elapsed_time;
   }
 
@@ -121,6 +131,18 @@ class AbstractThreeBrainObject {
       }
 
     }
+  }
+
+
+  set_display_mode( mode ){
+    // hidden will set visible to false
+    if( typeof mode === "string" ){
+      this._display_mode = mode;
+    }
+  }
+
+  set_visibility( visible ){
+    this._visible = visible;
   }
 }
 

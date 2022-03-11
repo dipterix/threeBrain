@@ -99,6 +99,7 @@ localization_module <- function(
         controllers[["Left Opacity"]] <- 0.4
         controllers[["Right Opacity"]] <- 0.4
         controllers[["Voxel Type"]] <- "CT"
+        controllers[["Voxel Display"]] <- "normal"
         controllers[["Voxel Min"]] <- 3000
         controllers[["Edit Mode"]] <- "CT/volume"
         controllers[["Highlight Box"]] <- FALSE

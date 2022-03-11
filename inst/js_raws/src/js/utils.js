@@ -145,6 +145,28 @@ function vec3_to_string(v, ifInvalid = "", precision = 2){
   return( ifInvalid );
 }
 
+function set_visibility( m, visible ) {
+  if( visible === undefined ){ return; }
+  if( m.isObject3D ){
+    if( m.userData.instance && m.userData.instance.isThreeBrainObject ) {
+      m.userData.instance.set_visibility( visible );
+    } else {
+      m.visible = visible;
+    }
+  }
+}
+
+function set_display_mode( m, mode ) {
+  if( typeof mode !== "string" ){ return; }
+  if( m.isObject3D ){
+    if( m.userData.instance && m.userData.instance.isThreeBrainObject ) {
+      m.userData.instance.set_display_mode( mode );
+      return;
+    }
+  }
+  set_visibility( m, mode !== "hidden" );
+}
+
 
 function throttle_promise(){
   let blocked = false;
@@ -332,7 +354,8 @@ function as_Matrix4(m) {
 export { invertColor, padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
   sub2, float_to_int32, vec3_to_string, throttle_promise,
-  has_meta_keys, write_clipboard, as_Matrix4 };
+  has_meta_keys, write_clipboard, as_Matrix4,
+  set_visibility, set_display_mode };
 
 
 

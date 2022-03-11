@@ -17,6 +17,7 @@ const VolumeRenderShader1 = {
       steps: { value: 300 },
       scale_inv: { value: new Vector3() },
       bounding: { value : 0.5 },
+      depthMix: { value: 1 },
       // ndc_center: { value: new Vector3() },
     },
     vertexShader: remove_comments(`#version 300 es
@@ -39,7 +40,6 @@ out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
 out vec3 vSamplerBias;
-out vec3 vNormal;
 
 
 void main() {
@@ -68,8 +68,6 @@ void main() {
   // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
   vOrigin = (position) * scale_inv - vDirection;
 
-  vNormal = normal;
-
 }`),
     fragmentShader: remove_comments(`#version 300 es
 precision highp float;
@@ -77,7 +75,6 @@ precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vDirection;
 in vec3 vSamplerBias;
-in vec3 vNormal;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
@@ -86,6 +83,7 @@ uniform float alpha;
 uniform float steps;
 uniform vec3 scale_inv;
 uniform float bounding;
+uniform float depthMix;
 vec4 fcolor;
 vec2 hitBox( vec3 orig, vec3 dir ) {
   vec3 box_min = vec3( - bounding );
@@ -153,14 +151,13 @@ void main(){
 
         last_color = fcolor;
 
-        // fcolor.rgb *= sqrt(max( abs(dot(rayDir, getNormal( p ))) , abs(dot(rayDir, vNormal)) * 0.5 ));
         fcolor.rgb *= pow(
           max(abs(dot(rayDir, getNormal( p ))), 0.25),
           0.45
         );
 
         if( nn == 0 ){
-          gl_FragDepth = getDepth( p );
+          gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
           color = fcolor;
           color.a = max( color.a, 0.2 );
         } else {

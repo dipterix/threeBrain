@@ -52750,7 +52750,7 @@ CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = "Comma";        // `,` - choosing previo
 CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = "KeyV";         // `v` - toggle electrode visibility
 CONSTANTS.KEY_CYCLE_SURFACE           = "KeyP";         // `p` - cycle through surfaces types
 CONSTANTS.KEY_CYCLE_MATERIAL          = "KeyM";         // `⇧M` - change surface material types (lighting model)
-CONSTANTS.KEY_CYCLE_ATLAS             = "KeyL";         // `l` - cycle through voxel data such as atlases
+CONSTANTS.KEY_CYCLE_ATLAS_MODE        = "KeyL";         // `l` - cycle through voxel display mode
 CONSTANTS.KEY_OVERLAY_CORONAL         = "KeyC";         // `⇧C` - toggle coronal plane in main scene
 CONSTANTS.KEY_OVERLAY_AXIAL           = "KeyA";         // `⇧A` - toggle axial plane in main scene
 CONSTANTS.KEY_OVERLAY_SAGITTAL        = "KeyS";         // `⇧S` - toggle sagittal plane in main scene
@@ -52792,7 +52792,7 @@ CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFTYPE_EDITOR   = "4";
 CONSTANTS.TOOLTIPS.KEY_NEW_ELECTRODE_EDITOR    = "1";
 CONSTANTS.TOOLTIPS.KEY_LABEL_FOCUS_EDITOR      = "2";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_REMOVE_EDITOR     = "r";
-CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS             = "l";
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE        = "l";
 CONSTANTS.TOOLTIPS.KEY_CLIP_INFO_FOCUSED       = "ctrl+c";
 CONSTANTS.TOOLTIPS.KEY_ADJUST_ELECTRODE_LOCATION_R = "1/⇧1";
 CONSTANTS.TOOLTIPS.KEY_ADJUST_ELECTRODE_LOCATION_A = "2/⇧2";
@@ -56243,25 +56243,29 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
       .onChange((v) => {
         this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         const last_ctype = this._current_surface_ctype;
-        this.canvas.__hide_voxels = false;
         this.set_surface_ctype( v );
 
-        if( this._current_surface_ctype !== "none" ){
-          this.gui.show_item(['Blend Factor'], folder_name);
+        switch (this._current_surface_ctype) {
+          case "sync from voxels":
+            this.gui.show_item(['Sigma', 'Blend Factor'], folder_name);
+            this.gui.hide_item(['Decay', 'Range Limit'], folder_name);
+            break;
+
+          case "sync from electrodes":
+            this.gui.show_item(['Decay', 'Range Limit', 'Blend Factor'], folder_name);
+            this.gui.hide_item(['Sigma'], folder_name);
+            break;
+
+          case "vertices":
+            this.gui.show_item(['Blend Factor'], folder_name);
+            this.gui.hide_item(['Sigma', 'Decay', 'Range Limit'], folder_name);
+            break;
+
+          default:
+            // none
+            this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         }
 
-        if( this._current_surface_ctype === "sync from voxels" ){
-          this.gui.show_item(['Sigma'], folder_name);
-          this.canvas.__hide_voxels = true;
-        } else {
-          if( last_ctype === "sync from voxels" ) {
-            // leaving, have to set voxels to none
-            this.canvas.__hide_voxels = true;
-          }
-          if( this._current_surface_ctype === "sync from electrodes" ){
-            this.gui.show_item(['Decay', 'Range Limit'], folder_name);
-          }
-        }
         this._update_canvas();
       });
 
@@ -56346,6 +56350,7 @@ var sphere = __webpack_require__(960);
 
 
 
+
 // 13. electrode visibility, highlight, groups
 // 14. electrode mapping
 // 16. Highlight selected electrodes and info
@@ -56389,17 +56394,21 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
       switch (v) {
         case 'hidden':
           // el is invisible
-          el.visible = false;
+          // el.visible = false;
+          (0,utils/* set_visibility */.K3)( el, false );
           break;
         case 'hide inactives':
           if( el.material.isMeshLambertMaterial ){
-            el.visible = false;
+            // el.visible = false;
+            (0,utils/* set_visibility */.K3)( el, false );
           }else{
-            el.visible = true;
+            // el.visible = true;
+            (0,utils/* set_visibility */.K3)( el, true );
           }
           break;
         default:
-          el.visible = true;
+          // el.visible = true;
+          (0,utils/* set_visibility */.K3)( el, true );
       }
     };
 
@@ -56493,6 +56502,7 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
 
 
 ;// CONCATENATED MODULE: ./src/js/controls/animation.js
+
 
 
 
@@ -56622,7 +56632,8 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
           if( v === '[None]' ){
             this.canvas.electrodes.forEach((_d) => {
               for( let _kk in _d ){
-                _d[ _kk ].visible = true;
+                // _d[ _kk ].visible = true;
+                (0,utils/* set_visibility */.K3)( _d[ _kk ], true );
               }
             });
           }
@@ -56952,8 +56963,9 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           })
         }
         if( flag ){
-          flag = this.gui.alter_item("Voxel Type", atlases, () => {
+          flag = this.gui.alter_item("Voxel Type", atlases, ( c ) => {
             this._ctl_voxel_type_options = atlases;
+            c.setValue( atlases[0] );
           })
         }
       }
@@ -56980,9 +56992,6 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
     this._ctl_voxel_type_options = ['none'];
     this._ctl_voxel_type_callback = (v) => {
       if( v ){
-        if( this._current_surface_ctype !== "sync from voxels" ){
-          this.canvas.__hide_voxels = false;
-        }
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
@@ -56994,20 +57003,38 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
       .onChange( this._ctl_voxel_type_callback );
 
     this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
-    this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS */.t.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
+
+    // display type
+    this.gui.add_item('Voxel Display', 'hidden', {
+      args : ['hidden', 'normal'], folder_name : folder_name
+    }).onChange( (v) => {
+      this.canvas.atlases.forEach( (al, subject_code) => {
+        for( let atlas_name in al ){
+          const m = al[ atlas_name ];
+          if( m.isMesh && m.userData.instance.isThreeBrainObject ){
+            const inst = m.userData.instance;
+            if( inst.isDataCube2 ){
+              inst.set_display_mode( v );
+            }
+          }
+        }
+      });
+      this._update_canvas();
+    });
+    this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE */.t.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, 'Voxel Display', folder_name);
 
     // register key callbacks
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ATLAS */.t.KEY_CYCLE_ATLAS, (evt) => {
+    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ATLAS_MODE */.t.KEY_CYCLE_ATLAS_MODE, (evt) => {
       if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
         // have to update dynamically because it could change
-        const ctl = this.gui.get_controller("Voxel Type");
-        const _c = this._ctl_voxel_type_options;
-        let current_idx = (_c.indexOf( ctl.getValue() ) + 1) % _c.length;
-        if( current_idx >= 0 ){
-          ctl.setValue( _c[ current_idx ] );
+        const ctl = this.gui.get_controller("Voxel Display");
+        if( ctl.getValue() === 'hidden' ) {
+          ctl.setValue( "normal" );
+        } else {
+          ctl.setValue( "hidden" );
         }
       }
-    }, 'gui_atlas_type');
+    }, 'gui_atlas_display_mode');
 
     // If color map supports alpha, add override option
     const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
@@ -62359,7 +62386,7 @@ class THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method", "Video Mode",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
+      "Voxel Type", "Voxel Display", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
       'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',
       'Edit Mode'
     ];
@@ -62502,7 +62529,7 @@ class THREEBRAIN_CONTROL{
       }
 
       if( typeof(onSucceed) === 'function' ){
-        onSucceed();
+        onSucceed( c );
       }
       return( true );
     }
@@ -62888,6 +62915,8 @@ class AbstractThreeBrainObject {
   constructor(g, canvas){
     this._params = g;
     this._canvas = canvas;
+    this._display_mode = "normal";
+    this._visible = true;
     this.type = 'AbstractThreeBrainObject';
     this.isThreeBrainObject = true;
     this.name = g.name;
@@ -62957,6 +62986,14 @@ class AbstractThreeBrainObject {
 
   pre_render( results ){
     this.get_world_position( results );
+    if( this.object && this.object.isMesh ){
+      if( this._visible && this._display_mode !== "hidden" ) {
+        this.object.visible = true;
+      } else {
+        this.object.visible = false;
+      }
+    }
+
     this._last_rendered = results.elapsed_time;
   }
 
@@ -63003,6 +63040,18 @@ class AbstractThreeBrainObject {
       }
 
     }
+  }
+
+
+  set_display_mode( mode ){
+    // hidden will set visible to false
+    if( typeof mode === "string" ){
+      this._display_mode = mode;
+    }
+  }
+
+  set_visibility( visible ){
+    this._visible = visible;
   }
 }
 
@@ -64241,9 +64290,11 @@ class THREE_BRAIN_SHINY {
 
     if( !valid ){
       // el.position.set(0,0,0);
-      el.visible = false;
+      // el.visible = false;
+      (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .set_visibility */ .K3)( el, false );
     }else{
-      el.visible = true;
+      // el.visible = true;
+      (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .set_visibility */ .K3)( el, true );
     }
     if( position ){
       position = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( position );
@@ -66067,12 +66118,14 @@ const VolumeRenderShader1 = {
       steps: { value: 300 },
       scale_inv: { value: new three_module.Vector3() },
       bounding: { value : 0.5 },
+      depthMix: { value: 1 },
       // ndc_center: { value: new Vector3() },
     },
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
 in vec3 position;
+in vec3 normal;
 uniform sampler3D cmap;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -66116,7 +66169,6 @@ void main() {
   // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
   vOrigin = (position) * scale_inv - vDirection;
 
-
 }`),
     fragmentShader: remove_comments(`#version 300 es
 precision highp float;
@@ -66132,6 +66184,7 @@ uniform float alpha;
 uniform float steps;
 uniform vec3 scale_inv;
 uniform float bounding;
+uniform float depthMix;
 vec4 fcolor;
 vec2 hitBox( vec3 orig, vec3 dir ) {
   vec3 box_min = vec3( - bounding );
@@ -66162,7 +66215,7 @@ vec4 sample2( vec3 p ) {
   return texture( cmap, p + vSamplerBias );
 }
 vec3 getNormal( vec3 p ) {
-  vec3 re = vec3( texture( nmap, p + vSamplerBias ).rgb *  255.0 - 127.0 );
+  vec3 re = texture( nmap, p + vSamplerBias ).rgb  *  255.0 - 127.0 ;
   return normalize( re );
 }
 
@@ -66199,11 +66252,13 @@ void main(){
 
         last_color = fcolor;
 
-        // reflect light
-        fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
+        fcolor.rgb *= pow(
+          max(abs(dot(rayDir, getNormal( p ))), 0.25),
+          0.45
+        );
 
         if( nn == 0 ){
-          gl_FragDepth = getDepth( p );
+          gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
           color = fcolor;
           color.a = max( color.a, 0.2 );
         } else {
@@ -67757,7 +67812,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     this.type = 'DataCube2';
     this.isDataCube2 = true;
-    this._hide_flag = false;
+    this._display_mode = "hidden";
 
     let mesh;
 
@@ -67967,20 +68022,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
   get_track_data( track_name, reset_material ){}
 
-  pre_render( results ){
-    // const camera = canvas.main_camera;
-    // this._uniforms.ndc_center.value.set(
-    //   (camera.left + camera.right) / (camera.left - camera.right),
-    //   (camera.top + camera.bottom) / (camera.bottom - camera.top),
-    //   0
-    // );
-
-    // if surface is using it
-    if( this._canvas.__hide_voxels ){
-      this.object.visible = false;
-    }
-  }
-
   finish_init(){
     // this.object
 
@@ -67996,6 +68037,8 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.register_object( ['atlases'] );
 
   }
+
+
 }
 
 
@@ -68872,6 +68915,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
   pre_render( results ){
     // check material
+    super.pre_render( results );
     this._check_material( false );
 
     if( !this.object.visible ) { return; }
@@ -70292,7 +70336,8 @@ class THREEBRAIN_CANVAS {
     if( m.children.length > 0 ){
       m.children.forEach((_c) => {
         if( _c.isMesh && _c.userData.is_highlight_helper ){
-          _c.visible = !reset;
+          (0,utils/* set_visibility */.K3)( _c, !reset );
+          // _c.visible = !reset;
         }
       });
     }
@@ -72632,42 +72677,39 @@ class THREEBRAIN_CANVAS {
     this.surfaces.forEach( (sf, subject_code) => {
       for( let surface_name in sf ){
         const m = sf[ surface_name ];
-        m.visible = false;
+        // m.visible = false;
+        (0,utils/* set_visibility */.K3)( m, false );
         if( subject_code === target_subject ){
 
           if(
             surface_name === `Standard 141 Left Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Left Hemisphere - ${surface_type} (${target_subject})`
           ){
-            if( material_type[0] === 'hidden' ){
-              m.visible = false;
-            }else{
-              m.material.wireframe = ( material_type[0] === 'wireframe' );
-              m.visible = true;
-              m.material.opacity = opacity[0];
-              m.material.transparent = opacity[0] < 0.99;
-            }
+            (0,utils/* set_display_mode */.J1)( m, material_type[0] );
+            (0,utils/* set_visibility */.K3)( m, material_type[0] !== 'hidden' );
+            m.material.wireframe = ( material_type[0] === 'wireframe' );
+            m.material.opacity = opacity[0];
+            m.material.transparent = opacity[0] < 0.99;
           }else if(
             surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
           ){
-            if( material_type[1] === 'hidden' ){
-              m.visible = false;
-            }else{
-              m.material.wireframe = ( material_type[1] === 'wireframe' );
-              m.visible = true;
-              m.material.opacity = opacity[1];
-              m.material.transparent = opacity[1] < 0.99;
-            }
-
-            // Re-calculate controls center so that rotation center is the center of mesh bounding box
-            this.bounding_box.setFromObject( m.parent );
-            this.bounding_box.geometry.computeBoundingBox();
-            const _b = this.bounding_box.geometry.boundingBox;
-            this.controls.target.copy( _b.min.clone() ).add( _b.max ).multiplyScalar( 0.5 );
-            this.control_center = this.controls.target.toArray();
-            this.controls.update();
+            (0,utils/* set_display_mode */.J1)( m, material_type[1] );
+            (0,utils/* set_visibility */.K3)( m, material_type[1] !== 'hidden' );
+            m.material.wireframe = ( material_type[1] === 'wireframe' );
+            m.material.opacity = opacity[1];
+            m.material.transparent = opacity[1] < 0.99;
           }
+
+
+          // Re-calculate controls center so that rotation center is the center of mesh bounding box
+          this.bounding_box.setFromObject( m.parent );
+          this.bounding_box.geometry.computeBoundingBox();
+          const _b = this.bounding_box.geometry.boundingBox;
+          this.controls.target.copy( _b.min.clone() )
+            .add( _b.max ).multiplyScalar( 0.5 );
+          this.control_center = this.controls.target.toArray();
+          this.controls.update();
 
         }
       }
@@ -72681,10 +72723,12 @@ class THREEBRAIN_CANVAS {
       for( let volume_name in vol ){
         const m = vol[ volume_name ];
         if( subject_code === target_subject && volume_name === `${volume_type} (${subject_code})`){
-          m[0].parent.visible = true;
+          //m[0].parent.visible = true;
+          (0,utils/* set_visibility */.K3)( m[0].parent, true );
           this._register_datacube( m );
         }else{
-          m[0].parent.visible = false;
+          // m[0].parent.visible = false;
+          (0,utils/* set_visibility */.K3)( m[0].parent, false );
         }
       }
     });
@@ -72704,9 +72748,11 @@ class THREEBRAIN_CANVAS {
       for( let atlas_name in al ){
         const m = al[ atlas_name ];
         if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
-          m.visible = true;
+          // m.visible = true;
+          (0,utils/* set_visibility */.K3)( m, true );
         }else{
-          m.visible = false;
+          // m.visible = false;
+          (0,utils/* set_visibility */.K3)( m, false );
         }
       }
     });
@@ -72718,10 +72764,12 @@ class THREEBRAIN_CANVAS {
       for( let ct_name in vol ){
         const m = vol[ ct_name ];
         if( subject_code === target_subject && ct_name === `${ct_type} (${subject_code})`){
-          m.parent.visible = this._show_ct;
+          // m.parent.visible = this._show_ct;
+          (0,utils/* set_visibility */.K3)( m.parent, this._show_ct );
           m.material.uniforms.u_renderthreshold.value = ct_threshold;
         }else{
-          m.parent.visible = false;
+          // m.parent.visible = false;
+          (0,utils/* set_visibility */.K3)( m.parent, false );
         }
       }
     });
@@ -72861,7 +72909,8 @@ mapped = false,
           el.userData._template_hemisphere = g.hemisphere;
         }
         if( hide_electrode ){
-          el.visible = false;
+          // el.visible = false;
+          (0,utils/* set_visibility */.K3)( el, false );
         }
 
       }
@@ -73058,7 +73107,9 @@ mapped = false,
 /* harmony export */   "Wk": () => (/* binding */ vec3_to_string),
 /* harmony export */   "xy": () => (/* binding */ has_meta_keys),
 /* harmony export */   "FD": () => (/* binding */ write_clipboard),
-/* harmony export */   "xl": () => (/* binding */ as_Matrix4)
+/* harmony export */   "xl": () => (/* binding */ as_Matrix4),
+/* harmony export */   "K3": () => (/* binding */ set_visibility),
+/* harmony export */   "J1": () => (/* binding */ set_display_mode)
 /* harmony export */ });
 /* unused harmony exports float_to_int32, throttle_promise */
 /* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2152);
@@ -73209,6 +73260,28 @@ function vec3_to_string(v, ifInvalid = "", precision = 2){
     return(`${v.x.toFixed(precision)}, ${v.y.toFixed(precision)}, ${v.z.toFixed(precision)}`)
   }
   return( ifInvalid );
+}
+
+function set_visibility( m, visible ) {
+  if( visible === undefined ){ return; }
+  if( m.isObject3D ){
+    if( m.userData.instance && m.userData.instance.isThreeBrainObject ) {
+      m.userData.instance.set_visibility( visible );
+    } else {
+      m.visible = visible;
+    }
+  }
+}
+
+function set_display_mode( m, mode ) {
+  if( typeof mode !== "string" ){ return; }
+  if( m.isObject3D ){
+    if( m.userData.instance && m.userData.instance.isThreeBrainObject ) {
+      m.userData.instance.set_display_mode( mode );
+      return;
+    }
+  }
+  set_visibility( m, mode !== "hidden" );
 }
 
 

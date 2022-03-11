@@ -1,5 +1,6 @@
 import { to_array, get_or_default, has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
+import { set_visibility } from '../utils.js';
 
 // 15. animation, play/pause, speed, clips...
 
@@ -127,7 +128,8 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
           if( v === '[None]' ){
             this.canvas.electrodes.forEach((_d) => {
               for( let _kk in _d ){
-                _d[ _kk ].visible = true;
+                // _d[ _kk ].visible = true;
+                set_visibility( _d[ _kk ], true );
               }
             });
           }
