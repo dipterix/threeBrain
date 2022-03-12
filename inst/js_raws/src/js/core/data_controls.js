@@ -71,7 +71,7 @@ class THREEBRAIN_PRESETS{
   // update gui controllers
   update_self(){
     this.update_voxel_type();
-    this.set_surface_ctype( true );
+    // this.set_surface_ctype( true );
 
     if( typeof(this._calculate_intersection_coord) === 'function' ){
       this._calculate_intersection_coord();

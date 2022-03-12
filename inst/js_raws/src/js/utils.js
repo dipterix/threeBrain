@@ -168,6 +168,15 @@ function set_display_mode( m, mode ) {
 }
 
 
+function remove_comments(s){
+  return(s.split("\n").map((e) => {
+      return(
+        e.replaceAll(/\/\/.*/g, "")
+      );
+    }).join("\n"));
+}
+
+
 function throttle_promise(){
   let blocked = false;
 
@@ -355,7 +364,7 @@ export { invertColor, padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
   sub2, float_to_int32, vec3_to_string, throttle_promise,
   has_meta_keys, write_clipboard, as_Matrix4,
-  set_visibility, set_display_mode };
+  set_visibility, set_display_mode, remove_comments };
 
 
 

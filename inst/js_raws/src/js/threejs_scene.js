@@ -3372,6 +3372,18 @@ class THREEBRAIN_CANVAS {
     return( Object.keys( re ) );
   }
 
+  set_state( key, val ) {
+    this.state_data.set(key, val);
+    this.dispatch_event( "canvas.set_state", {
+      key: key,
+      value: val
+    });
+  }
+
+  get_state( key, missing = undefined ) {
+    return(get_or_default( this.state_data, key, missing ));
+  }
+
   switch_subject( target_subject = '/', args = {}){
 
     if( this.subject_codes.length === 0 ){
@@ -3512,7 +3524,7 @@ class THREEBRAIN_CANVAS {
             set_visibility( m, material_type[0] !== 'hidden' );
             m.material.wireframe = ( material_type[0] === 'wireframe' );
             m.material.opacity = opacity[0];
-            m.material.transparent = opacity[0] < 0.99;
+            // m.material.transparent = opacity[0] < 0.99;
           }else if(
             surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
@@ -3521,7 +3533,7 @@ class THREEBRAIN_CANVAS {
             set_visibility( m, material_type[1] !== 'hidden' );
             m.material.wireframe = ( material_type[1] === 'wireframe' );
             m.material.opacity = opacity[1];
-            m.material.transparent = opacity[1] < 0.99;
+            // m.material.transparent = opacity[1] < 0.99;
           }
 
 

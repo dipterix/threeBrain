@@ -82,6 +82,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           }
         }
       });
+      this.canvas.set_state( "surface_color_refresh", Date() );
       this._update_canvas();
     });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, 'Voxel Display', folder_name);
@@ -144,6 +145,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
             inst._set_palette( candidates );
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();
           });
 
@@ -183,6 +185,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
               .filter((v) => {return !isNaN(v)});
             inst._set_palette( candidates );
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();
           });
 

@@ -1,12 +1,5 @@
 import { Vector3 } from '../../build/three.module.js';
-
-const remove_comments = (s) => {
-  return(s.split("\n").map((e) => {
-      return(
-        e.replaceAll(/\/\/.*/g, "")
-      );
-    }).join("\n"));
-};
+import { remove_comments } from '../utils.js';
 
 const VolumeRenderShader1 = {
     uniforms: {
@@ -68,7 +61,8 @@ void main() {
   // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
   vOrigin = (position) * scale_inv - vDirection;
 
-}`),
+}
+`),
     fragmentShader: remove_comments(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
@@ -188,7 +182,8 @@ void main(){
   if ( nn == 0 || color.a == 0.0 ) discard;
 
   // calculate alpha at depth
-}`)};
+}
+`)};
 
 
 export { VolumeRenderShader1 };

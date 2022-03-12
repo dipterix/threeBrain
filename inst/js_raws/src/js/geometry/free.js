@@ -144,11 +144,16 @@ class FreeMesh extends AbstractThreeBrainObject {
   }
 
   _set_color_from_datacube2( m, bias = 3.0 ){
+    console.debug("Generating surface colors from volume data...");
+
     if( !m || !m.isDataCube2 ){
-      this._material_options.which_map.value = CONSTANTS.DEFAULT_COLOR;
+      this._material_options.mapping_type.value = CONSTANTS.DEFAULT_COLOR;
       return;
     }
 
+    if( this._material_options.mapping_type.value === CONSTANTS.DEFAULT_COLOR ) {
+      return;
+    }
 
     this._volume_texture.image = m._color_texture.image;
 
@@ -164,7 +169,6 @@ class FreeMesh extends AbstractThreeBrainObject {
      * https://github.com/mrdoob/three.js/blob/be137e6da5fd682555cdcf5c8002717e4528f879/src/renderers/WebGLRenderer.js#L1442
     */
     this._mesh.material.vertexColors = true;
-    this._material_options.which_map.value = CONSTANTS.VOXEL_COLOR;
     this._material_options.sampler_bias.value = bias;
     this._material_options.sampler_step.value = bias / 2;
     this._volume_texture.needsUpdate = true;
@@ -295,24 +299,84 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     if( !this.object.visible ) { return; }
 
-    // get current frame
-    if( this._material_options.which_map.value === CONSTANTS.VERTEX_COLOR){
-      if( this.time_stamp.length ){
-        let skip_frame = 0;
+    // need to get current active datacube2
+    const atlas_type = this._canvas.get_state("atlas_type", "none"),
+          sub = this._canvas.get_state("target_subject", "none"),
+          inst = this._canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+          ctype = this._canvas.get_state("surface_color_type", "vertices"),
+          sigma = this._canvas.get_state("surface_color_sigma", 3.0),
+          blend = this._canvas.get_state("surface_color_blend", 0.4),
+          decay = this._canvas.get_state("surface_color_decay", 0.15),
+          radius = this._canvas.get_state("surface_color_radius", 10.0),
+          refresh_flag = this._canvas.get_state("surface_color_refresh", undefined);
 
-        this.time_stamp.forEach((v, ii) => {
-          if( v <= results.current_time ){
-            skip_frame = ii - 1;
+    let col_code, material_needs_update = false;
+
+    this._mesh.material.transparent = this._mesh.material.opacity < 0.99;
+    switch (ctype) {
+      case 'vertices':
+        col_code = CONSTANTS.VERTEX_COLOR;
+        break;
+
+      case 'sync from voxels':
+        col_code = CONSTANTS.VOXEL_COLOR;
+        this._mesh.material.transparent = true;
+
+        // get current frame
+        if( this.time_stamp.length ){
+          let skip_frame = 0;
+
+          this.time_stamp.forEach((v, ii) => {
+            if( v <= results.current_time ){
+              skip_frame = ii - 1;
+            }
+          });
+          if( skip_frame < 0 ){ skip_frame = 0; }
+
+          if( this.__skip_frame !== skip_frame){
+            this._set_track( skip_frame );
           }
-        });
-        if( skip_frame < 0 ){ skip_frame = 0; }
-
-        if( this.__skip_frame !== skip_frame){
-          this._set_track( skip_frame );
         }
-      }
-    } else if( this._material_options.which_map.value === CONSTANTS.ELECTRODE_COLOR){
-      this._link_electrodes();
+        break;
+
+      case 'sync from electrodes':
+        col_code = CONSTANTS.ELECTRODE_COLOR;
+        this._link_electrodes();
+        break;
+
+      default:
+        col_code = CONSTANTS.DEFAULT_COLOR;
+    };
+
+    if( this._material_options.mapping_type.value !== col_code ){
+      this._material_options.mapping_type.value = col_code;
+      material_needs_update = true;
+    }
+    if( this._material_options.blend_factor.value !== blend ){
+      this._material_options.blend_factor.value = blend;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_decay.value !== decay ){
+      this._material_options.elec_decay.value = decay;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_radius.value !== radius ){
+      this._material_options.elec_radius.value = radius;
+      material_needs_update = true;
+    }
+    if( this._blend_sigma !== sigma ){
+      this._blend_sigma = sigma;
+      material_needs_update = true;
+    }
+    if( this._refresh_flag !== refresh_flag ){
+      this._refresh_flag = refresh_flag;
+      material_needs_update = true;
+    }
+
+    // This step is slow
+    if( material_needs_update && col_code === CONSTANTS.VOXEL_COLOR ){
+      // need to get current active datacube2
+      this._set_color_from_datacube2(inst, this._blend_sigma);
     }
   }
 
@@ -367,7 +431,7 @@ class FreeMesh extends AbstractThreeBrainObject {
 
 
     this._material_options = {
-      'which_map'         : { value : CONSTANTS.DEFAULT_COLOR },
+      'mapping_type'      : { value : CONSTANTS.DEFAULT_COLOR },
       'volume_map'        : { value : this._volume_texture },
       'scale_inv'         : {
         value : new Vector3(

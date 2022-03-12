@@ -56037,77 +56037,11 @@ function register_controls_subject( THREEBRAIN_PRESETS ){
 
 function register_controls_surface( THREEBRAIN_PRESETS ){
 
+
   THREEBRAIN_PRESETS.prototype.get_surface_ctype = function(){
     const _c = this.gui.get_controller( 'Surface Color' );
     if( _c.isfake ){ return( "none" ); }
     return( _c.getValue() );
-  };
-  THREEBRAIN_PRESETS.prototype.set_surface_ctype = function(
-    t, params = {}
-  ){
-
-    if( !this._surface_ctype_map ){ return; }
-    if (t === undefined){ return; }
-    let ctype = t,
-        sigma = params.sigma,
-        blend = params.blend,
-        decay = params.decay,
-        radius = params.radius;
-
-    if( t === true ){
-      // refresh
-      ctype = this._current_surface_ctype;
-    }
-    if( !ctype ){ ctype = "vertices"; }
-    this._current_surface_ctype = ctype;
-
-    let _c;
-    if( sigma === undefined ){
-      _c = this.gui.get_controller( 'Sigma' );
-      if( _c.isfake ){ sigma = 3.0; } else { sigma = _c.getValue(); }
-    }
-    if( blend === undefined ){
-      _c = this.gui.get_controller( 'Blend Factor' );
-      if( _c.isfake ){ blend = 0.4; } else { blend = _c.getValue(); }
-    }
-    if( decay === undefined ){
-      _c = this.gui.get_controller( 'Decay' );
-      if( _c.isfake ){ decay = 0.15; } else { decay = _c.getValue(); }
-    }
-    if( radius === undefined ){
-      _c = this.gui.get_controller( 'Range Limit' );
-      if( _c.isfake ){ radius = 10.0; } else { radius = _c.getValue(); }
-    }
-
-    let col_code = this._surface_ctype_map[ ctype ];
-    if( col_code === undefined ){
-      col_code = constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR;
-      this._current_surface_ctype = "vertices";
-    }
-    let f = (el) => {
-      if( !(el.isFreeMesh && el._material_options) ){ return; }
-      el._material_options.which_map.value = col_code;
-      el._material_options.blend_factor.value = blend;
-      el._material_options.elec_decay.value = decay;
-      el._material_options.elec_radius.value = radius;
-
-      if( el.object.visible && col_code === constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR ){
-        // need to get current active datacube2
-        const inst = this.current_voxel_type();
-        if( inst ){
-          el._set_color_from_datacube2(inst, sigma);
-        } else {
-          el._material_options.which_map.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
-        }
-      }
-    };
-
-
-    this.canvas.threebrain_instances.forEach( f );
-
-    this._update_canvas();
-    this.fire_change({ 'surface_color_type' : this._current_surface_ctype });
-
   };
 
   THREEBRAIN_PRESETS.prototype.c_surface_type2 = function(){
@@ -56239,13 +56173,11 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     this._surface_ctype_map = maps;
     let col = 'vertices';
 
+    this.canvas.state_data.set("surface_color_type", col);
     this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
       .onChange((v) => {
-        this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
-        const last_ctype = this._current_surface_ctype;
-        this.set_surface_ctype( v );
 
-        switch (this._current_surface_ctype) {
+        switch (v) {
           case "sync from voxels":
             this.gui.show_item(['Sigma', 'Blend Factor'], folder_name);
             this.gui.hide_item(['Decay', 'Range Limit'], folder_name);
@@ -56263,11 +56195,15 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
 
           default:
             // none
+            v = "none";
             this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         }
 
+        this.canvas.state_data.set("surface_color_type", v);
+        this.fire_change({ 'surface_color_type' : v });
         this._update_canvas();
       });
+
 
     this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_SURFACE_COLOR */.t.KEY_CYCLE_SURFACE_COLOR, (evt) => {
       if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
@@ -56293,9 +56229,11 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
         } else if (v > 1){
           v = 1;
         }
-        this.set_surface_ctype( true, { 'blend' : v } );
+        // this.set_surface_ctype( true, { 'blend' : v } );
+        this.canvas.state_data.set("surface_color_blend", v);
         this._update_canvas();
-      })
+      });
+      this.canvas.state_data.set("surface_color_blend", 0.4);
 
     // ---------- for voxel-color ---------------
 
@@ -56304,10 +56242,12 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 0 ){ v = 0; }
-          this.set_surface_ctype( true, { 'sigma' : v } );
+          // this.set_surface_ctype( true, { 'sigma' : v } );
+          this.canvas.state_data.set("surface_color_sigma", v);
           this._update_canvas();
         }
       });
+    this.canvas.state_data.set("surface_color_sigma", 3.0);
 
     // ---------- for electrode maps ------------
     this.gui.add_item("Decay", 0.15, { folder_name : folder_name })
@@ -56315,20 +56255,24 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 0.05 ){ v = 0.05; }
-          this.set_surface_ctype( true, { 'decay' : v } );
+          // this.set_surface_ctype( true, { 'decay' : v } );
+          this.canvas.state_data.set("surface_color_decay", v);
           this._update_canvas();
         }
       });
+    this.canvas.state_data.set("surface_color_decay", 0.15);
 
     this.gui.add_item("Range Limit", 10.0, { folder_name : folder_name })
       .min( 1.0 ).max( 30.0 ).step( 1.0 )
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 1.0 ){ v = 1.0; }
-          this.set_surface_ctype( true, { 'radius' : v } );
+          // this.set_surface_ctype( true, { 'radius' : v } );
+          this.canvas.state_data.set("surface_color_radius", v);
           this._update_canvas();
         }
       });
+    this.canvas.state_data.set("surface_color_radius", 10.0);
 
     // 'elec_decay'        : { value : 2.0 },
     // 'blend_factor'      : { value : 0.4 }
@@ -57019,6 +56963,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           }
         }
       });
+      this.canvas.set_state( "surface_color_refresh", Date() );
       this._update_canvas();
     });
     this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE */.t.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, 'Voxel Display', folder_name);
@@ -57081,6 +57026,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
             inst._set_palette( candidates );
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();
           });
 
@@ -57120,6 +57066,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
               .filter((v) => {return !isNaN(v)});
             inst._set_palette( candidates );
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();
           });
 
@@ -59721,7 +59668,7 @@ class THREEBRAIN_PRESETS{
   // update gui controllers
   update_self(){
     this.update_voxel_type();
-    this.set_surface_ctype( true );
+    // this.set_surface_ctype( true );
 
     if( typeof(this._calculate_intersection_coord) === 'function' ){
       this._calculate_intersection_coord();
@@ -66101,13 +66048,6 @@ function gen_datacube(g, canvas){
 ;// CONCATENATED MODULE: ./src/js/shaders/VolumeShader.js
 
 
-const remove_comments = (s) => {
-  return(s.split("\n").map((e) => {
-      return(
-        e.replaceAll(/\/\/.*/g, "")
-      );
-    }).join("\n"));
-};
 
 const VolumeRenderShader1 = {
     uniforms: {
@@ -66121,7 +66061,7 @@ const VolumeRenderShader1 = {
       depthMix: { value: 1 },
       // ndc_center: { value: new Vector3() },
     },
-    vertexShader: remove_comments(`#version 300 es
+    vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
 in vec3 position;
@@ -66169,8 +66109,9 @@ void main() {
   // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
   vOrigin = (position) * scale_inv - vDirection;
 
-}`),
-    fragmentShader: remove_comments(`#version 300 es
+}
+`),
+    fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
@@ -66289,7 +66230,8 @@ void main(){
   if ( nn == 0 || color.a == 0.0 ) discard;
 
   // calculate alpha at depth
-}`)};
+}
+`)};
 
 
 
@@ -68437,6 +68379,7 @@ function gen_tube(g, canvas){
 
 ;// CONCATENATED MODULE: ./src/js/shaders/SurfaceShader.js
 
+
 const compile_free_material = ( material, options, target_renderer ) => {
 
   if( material.userData.compiled ){ return; }
@@ -68446,7 +68389,7 @@ const compile_free_material = ( material, options, target_renderer ) => {
 
   material.onBeforeCompile = ( shader , renderer ) => {
 
-    shader.uniforms.which_map = options.which_map;
+    shader.uniforms.mapping_type = options.mapping_type;
     shader.uniforms.volume_map = options.volume_map;
     shader.uniforms.scale_inv = options.scale_inv;
     shader.uniforms.shift = options.shift;
@@ -68471,10 +68414,10 @@ const compile_free_material = ( material, options, target_renderer ) => {
     }
     material.userData.compiled = true;
 
-    shader.vertexShader = `
+    shader.vertexShader = (0,utils/* remove_comments */.yi)(`
 precision mediump sampler2D;
 precision mediump sampler3D;
-uniform int which_map;
+uniform int mapping_type;
 uniform float elec_size;
 uniform float elec_active_size;
 uniform sampler3D volume_map;
@@ -68556,53 +68499,53 @@ vec3 sample2( vec3 p ) {
   }
   return (re / count);
 }
-    ` + shader.vertexShader;
+`) + shader.vertexShader;
 
     shader.vertexShader = shader.vertexShader.replace(
       "#include <fog_vertex>",
-      `#include <fog_vertex>
+      (0,utils/* remove_comments */.yi)(
+`#include <fog_vertex>
 
 vec4 data_color0 = vec4( 0.0 );
 
-if( which_map == 1 ){
+if( mapping_type == 1 ){
     // is track_color is missing, or all zeros, it's invalid
     if( track_color.rgb != zeros ){
       vColor.rgb = mix( vColor.rgb, track_color.rgb, blend_factor );
     }
-} else if( which_map == 2 ){
-  vec3 data_position = (position + shift) * scale_inv + 0.5;
-  data_color0 = sample1(
-    data_position -
-    scale_inv * vec3(0.5,-0.5,0.5)
-  );
+} else if( mapping_type == 2 ){
+  // vec3 data_position = (position + shift) * scale_inv + 0.5;
+  // data_color0 = sample1(
+  //   data_position -
+  //   scale_inv * vec3(0.5,-0.5,0.5)
+  // );
+  vec3 data_position = position + shift - vec3(0.5,-0.5,0.5);
+  data_color0 = sample1( data_position * scale_inv + 0.5 );
 
 #if defined( USE_COLOR_ALPHA )
+  vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
   if( data_color0.a == 0.0 ){
     vColor.a = 0.0;
-  } else {
-    vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
-    vColor.a = 1.0;
   }
 
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
 	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
 #endif
-} else if( which_map == 3 ){
+} else if( mapping_type == 3 ){
   if( elec_active_size > 0.0 ){
     data_color0.rgb = sample2( position + shift );
     vColor.rgb = mix( vColor.rgb, data_color0.rgb, blend_factor );
   }
-}     `.split("\n").map((e) => {
-          return(
-            e.replaceAll(/\/\/.*/g, "")
-          );
-        }).join("\n")
+}
+`)
     );
 
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <clipping_planes_fragment>",
-      `
+      (0,utils/* remove_comments */.yi)(
+`
 // Remove transparent fragments
+
 #if defined( USE_COLOR_ALPHA )
   if( vColor.a == 0.0 ){
     // gl_FragColor.a = 0.0;
@@ -68611,11 +68554,7 @@ if( which_map == 1 ){
   }
 #endif
 #include <clipping_planes_fragment>
-      `.split("\n").map((e) => {
-          return(
-            e.replaceAll(/\/\/.*/g, "")
-          );
-        }).join("\n")
+`)
     );
   };
 
@@ -68769,11 +68708,16 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
   }
 
   _set_color_from_datacube2( m, bias = 3.0 ){
+    console.debug("Generating surface colors from volume data...");
+
     if( !m || !m.isDataCube2 ){
-      this._material_options.which_map.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
+      this._material_options.mapping_type.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
       return;
     }
 
+    if( this._material_options.mapping_type.value === constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR ) {
+      return;
+    }
 
     this._volume_texture.image = m._color_texture.image;
 
@@ -68789,7 +68733,6 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
      * https://github.com/mrdoob/three.js/blob/be137e6da5fd682555cdcf5c8002717e4528f879/src/renderers/WebGLRenderer.js#L1442
     */
     this._mesh.material.vertexColors = true;
-    this._material_options.which_map.value = constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR;
     this._material_options.sampler_bias.value = bias;
     this._material_options.sampler_step.value = bias / 2;
     this._volume_texture.needsUpdate = true;
@@ -68920,24 +68863,84 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     if( !this.object.visible ) { return; }
 
-    // get current frame
-    if( this._material_options.which_map.value === constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR){
-      if( this.time_stamp.length ){
-        let skip_frame = 0;
+    // need to get current active datacube2
+    const atlas_type = this._canvas.get_state("atlas_type", "none"),
+          sub = this._canvas.get_state("target_subject", "none"),
+          inst = this._canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+          ctype = this._canvas.get_state("surface_color_type", "vertices"),
+          sigma = this._canvas.get_state("surface_color_sigma", 3.0),
+          blend = this._canvas.get_state("surface_color_blend", 0.4),
+          decay = this._canvas.get_state("surface_color_decay", 0.15),
+          radius = this._canvas.get_state("surface_color_radius", 10.0),
+          refresh_flag = this._canvas.get_state("surface_color_refresh", undefined);
 
-        this.time_stamp.forEach((v, ii) => {
-          if( v <= results.current_time ){
-            skip_frame = ii - 1;
+    let col_code, material_needs_update = false;
+
+    this._mesh.material.transparent = this._mesh.material.opacity < 0.99;
+    switch (ctype) {
+      case 'vertices':
+        col_code = constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR;
+        break;
+
+      case 'sync from voxels':
+        col_code = constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR;
+        this._mesh.material.transparent = true;
+
+        // get current frame
+        if( this.time_stamp.length ){
+          let skip_frame = 0;
+
+          this.time_stamp.forEach((v, ii) => {
+            if( v <= results.current_time ){
+              skip_frame = ii - 1;
+            }
+          });
+          if( skip_frame < 0 ){ skip_frame = 0; }
+
+          if( this.__skip_frame !== skip_frame){
+            this._set_track( skip_frame );
           }
-        });
-        if( skip_frame < 0 ){ skip_frame = 0; }
-
-        if( this.__skip_frame !== skip_frame){
-          this._set_track( skip_frame );
         }
-      }
-    } else if( this._material_options.which_map.value === constants/* CONSTANTS.ELECTRODE_COLOR */.t.ELECTRODE_COLOR){
-      this._link_electrodes();
+        break;
+
+      case 'sync from electrodes':
+        col_code = constants/* CONSTANTS.ELECTRODE_COLOR */.t.ELECTRODE_COLOR;
+        this._link_electrodes();
+        break;
+
+      default:
+        col_code = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
+    };
+
+    if( this._material_options.mapping_type.value !== col_code ){
+      this._material_options.mapping_type.value = col_code;
+      material_needs_update = true;
+    }
+    if( this._material_options.blend_factor.value !== blend ){
+      this._material_options.blend_factor.value = blend;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_decay.value !== decay ){
+      this._material_options.elec_decay.value = decay;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_radius.value !== radius ){
+      this._material_options.elec_radius.value = radius;
+      material_needs_update = true;
+    }
+    if( this._blend_sigma !== sigma ){
+      this._blend_sigma = sigma;
+      material_needs_update = true;
+    }
+    if( this._refresh_flag !== refresh_flag ){
+      this._refresh_flag = refresh_flag;
+      material_needs_update = true;
+    }
+
+    // This step is slow
+    if( material_needs_update && col_code === constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR ){
+      // need to get current active datacube2
+      this._set_color_from_datacube2(inst, this._blend_sigma);
     }
   }
 
@@ -68992,7 +68995,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
 
     this._material_options = {
-      'which_map'         : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
+      'mapping_type'      : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
       'volume_map'        : { value : this._volume_texture },
       'scale_inv'         : {
         value : new three_module.Vector3(
@@ -72549,6 +72552,18 @@ class THREEBRAIN_CANVAS {
     return( Object.keys( re ) );
   }
 
+  set_state( key, val ) {
+    this.state_data.set(key, val);
+    this.dispatch_event( "canvas.set_state", {
+      key: key,
+      value: val
+    });
+  }
+
+  get_state( key, missing = undefined ) {
+    return((0,utils/* get_or_default */.jM)( this.state_data, key, missing ));
+  }
+
   switch_subject( target_subject = '/', args = {}){
 
     if( this.subject_codes.length === 0 ){
@@ -72689,7 +72704,7 @@ class THREEBRAIN_CANVAS {
             (0,utils/* set_visibility */.K3)( m, material_type[0] !== 'hidden' );
             m.material.wireframe = ( material_type[0] === 'wireframe' );
             m.material.opacity = opacity[0];
-            m.material.transparent = opacity[0] < 0.99;
+            // m.material.transparent = opacity[0] < 0.99;
           }else if(
             surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
@@ -72698,7 +72713,7 @@ class THREEBRAIN_CANVAS {
             (0,utils/* set_visibility */.K3)( m, material_type[1] !== 'hidden' );
             m.material.wireframe = ( material_type[1] === 'wireframe' );
             m.material.opacity = opacity[1];
-            m.material.transparent = opacity[1] < 0.99;
+            // m.material.transparent = opacity[1] < 0.99;
           }
 
 
@@ -73109,7 +73124,8 @@ mapped = false,
 /* harmony export */   "FD": () => (/* binding */ write_clipboard),
 /* harmony export */   "xl": () => (/* binding */ as_Matrix4),
 /* harmony export */   "K3": () => (/* binding */ set_visibility),
-/* harmony export */   "J1": () => (/* binding */ set_display_mode)
+/* harmony export */   "J1": () => (/* binding */ set_display_mode),
+/* harmony export */   "yi": () => (/* binding */ remove_comments)
 /* harmony export */ });
 /* unused harmony exports float_to_int32, throttle_promise */
 /* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2152);
@@ -73282,6 +73298,15 @@ function set_display_mode( m, mode ) {
     }
   }
   set_visibility( m, mode !== "hidden" );
+}
+
+
+function remove_comments(s){
+  return(s.split("\n").map((e) => {
+      return(
+        e.replaceAll(/\/\/.*/g, "")
+      );
+    }).join("\n"));
 }
 
 

@@ -1,3 +1,4 @@
+import { remove_comments } from '../utils.js';
 
 const compile_free_material = ( material, options, target_renderer ) => {
 
@@ -8,7 +9,7 @@ const compile_free_material = ( material, options, target_renderer ) => {
 
   material.onBeforeCompile = ( shader , renderer ) => {
 
-    shader.uniforms.which_map = options.which_map;
+    shader.uniforms.mapping_type = options.mapping_type;
     shader.uniforms.volume_map = options.volume_map;
     shader.uniforms.scale_inv = options.scale_inv;
     shader.uniforms.shift = options.shift;
@@ -33,10 +34,10 @@ const compile_free_material = ( material, options, target_renderer ) => {
     }
     material.userData.compiled = true;
 
-    shader.vertexShader = `
+    shader.vertexShader = remove_comments(`
 precision mediump sampler2D;
 precision mediump sampler3D;
-uniform int which_map;
+uniform int mapping_type;
 uniform float elec_size;
 uniform float elec_active_size;
 uniform sampler3D volume_map;
@@ -118,53 +119,53 @@ vec3 sample2( vec3 p ) {
   }
   return (re / count);
 }
-    ` + shader.vertexShader;
+`) + shader.vertexShader;
 
     shader.vertexShader = shader.vertexShader.replace(
       "#include <fog_vertex>",
-      `#include <fog_vertex>
+      remove_comments(
+`#include <fog_vertex>
 
 vec4 data_color0 = vec4( 0.0 );
 
-if( which_map == 1 ){
+if( mapping_type == 1 ){
     // is track_color is missing, or all zeros, it's invalid
     if( track_color.rgb != zeros ){
       vColor.rgb = mix( vColor.rgb, track_color.rgb, blend_factor );
     }
-} else if( which_map == 2 ){
-  vec3 data_position = (position + shift) * scale_inv + 0.5;
-  data_color0 = sample1(
-    data_position -
-    scale_inv * vec3(0.5,-0.5,0.5)
-  );
+} else if( mapping_type == 2 ){
+  // vec3 data_position = (position + shift) * scale_inv + 0.5;
+  // data_color0 = sample1(
+  //   data_position -
+  //   scale_inv * vec3(0.5,-0.5,0.5)
+  // );
+  vec3 data_position = position + shift - vec3(0.5,-0.5,0.5);
+  data_color0 = sample1( data_position * scale_inv + 0.5 );
 
 #if defined( USE_COLOR_ALPHA )
+  vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
   if( data_color0.a == 0.0 ){
     vColor.a = 0.0;
-  } else {
-    vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
-    vColor.a = 1.0;
   }
 
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
 	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
 #endif
-} else if( which_map == 3 ){
+} else if( mapping_type == 3 ){
   if( elec_active_size > 0.0 ){
     data_color0.rgb = sample2( position + shift );
     vColor.rgb = mix( vColor.rgb, data_color0.rgb, blend_factor );
   }
-}     `.split("\n").map((e) => {
-          return(
-            e.replaceAll(/\/\/.*/g, "")
-          );
-        }).join("\n")
+}
+`)
     );
 
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <clipping_planes_fragment>",
-      `
+      remove_comments(
+`
 // Remove transparent fragments
+
 #if defined( USE_COLOR_ALPHA )
   if( vColor.a == 0.0 ){
     // gl_FragColor.a = 0.0;
@@ -173,11 +174,7 @@ if( which_map == 1 ){
   }
 #endif
 #include <clipping_planes_fragment>
-      `.split("\n").map((e) => {
-          return(
-            e.replaceAll(/\/\/.*/g, "")
-          );
-        }).join("\n")
+`)
     );
   };
 

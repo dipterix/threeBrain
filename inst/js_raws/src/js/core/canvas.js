@@ -2988,7 +2988,7 @@ class ThreeBrainCanvas {
               m.material.wireframe = ( material_type[0] === 'wireframe' );
               m.visible = true;
               m.material.opacity = opacity[0];
-              m.material.transparent = opacity[0] < 0.99;
+              // m.material.transparent = opacity[0] < 0.99;
             }
           }else if(
             surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
@@ -3000,7 +3000,7 @@ class ThreeBrainCanvas {
               m.material.wireframe = ( material_type[1] === 'wireframe' );
               m.visible = true;
               m.material.opacity = opacity[1];
-              m.material.transparent = opacity[1] < 0.99;
+              // m.material.transparent = opacity[1] < 0.99;
             }
 
             // Re-calculate controls center so that rotation center is the center of mesh bounding box
