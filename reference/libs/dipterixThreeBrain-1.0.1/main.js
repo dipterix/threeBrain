@@ -52750,7 +52750,7 @@ CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = "Comma";        // `,` - choosing previo
 CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = "KeyV";         // `v` - toggle electrode visibility
 CONSTANTS.KEY_CYCLE_SURFACE           = "KeyP";         // `p` - cycle through surfaces types
 CONSTANTS.KEY_CYCLE_MATERIAL          = "KeyM";         // `⇧M` - change surface material types (lighting model)
-CONSTANTS.KEY_CYCLE_ATLAS             = "KeyL";         // `l` - cycle through voxel data such as atlases
+CONSTANTS.KEY_CYCLE_ATLAS_MODE        = "KeyL";         // `l` - cycle through voxel display mode
 CONSTANTS.KEY_OVERLAY_CORONAL         = "KeyC";         // `⇧C` - toggle coronal plane in main scene
 CONSTANTS.KEY_OVERLAY_AXIAL           = "KeyA";         // `⇧A` - toggle axial plane in main scene
 CONSTANTS.KEY_OVERLAY_SAGITTAL        = "KeyS";         // `⇧S` - toggle sagittal plane in main scene
@@ -52792,7 +52792,7 @@ CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFTYPE_EDITOR   = "4";
 CONSTANTS.TOOLTIPS.KEY_NEW_ELECTRODE_EDITOR    = "1";
 CONSTANTS.TOOLTIPS.KEY_LABEL_FOCUS_EDITOR      = "2";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_REMOVE_EDITOR     = "r";
-CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS             = "l";
+CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE        = "l";
 CONSTANTS.TOOLTIPS.KEY_CLIP_INFO_FOCUSED       = "ctrl+c";
 CONSTANTS.TOOLTIPS.KEY_ADJUST_ELECTRODE_LOCATION_R = "1/⇧1";
 CONSTANTS.TOOLTIPS.KEY_ADJUST_ELECTRODE_LOCATION_A = "2/⇧2";
@@ -55643,6 +55643,8 @@ function register_controls_record( THREEBRAIN_PRESETS ){
 
 
 
+// EXTERNAL MODULE: ./src/build/three.module.js
+var three_module = __webpack_require__(7000);
 ;// CONCATENATED MODULE: ./src/js/controls/camera.js
 
 
@@ -55713,7 +55715,7 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
      */
 
     if( this.canvas.__reset_flag ){
-      const inital_camera_pos = new THREE.Vector3().fromArray(
+      const inital_camera_pos = new three_module.Vector3().fromArray(
         this.settings.camera_pos
       );
       if (inital_camera_pos.length() > 0){
@@ -55762,6 +55764,7 @@ function register_controls_axis( THREEBRAIN_PRESETS ){
 
 
 ;// CONCATENATED MODULE: ./src/js/controls/side_canvas.js
+
 
 
 
@@ -55819,7 +55822,7 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
       const ints_z = this.canvas.state_data.get( 'axial_posz' ) || 0,
             ints_y = this.canvas.state_data.get( 'coronal_posy' ) || 0,
             ints_x = this.canvas.state_data.get( 'sagittal_posx' ) || 0;
-      const point = new THREE.Vector3().set(ints_x, ints_y, ints_z);
+      const point = new three_module.Vector3().set(ints_x, ints_y, ints_z);
       this.canvas.calculate_mni305( point );
       // set controller
       _controller_mni305.setValue(`${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)}`);
@@ -56034,77 +56037,11 @@ function register_controls_subject( THREEBRAIN_PRESETS ){
 
 function register_controls_surface( THREEBRAIN_PRESETS ){
 
+
   THREEBRAIN_PRESETS.prototype.get_surface_ctype = function(){
     const _c = this.gui.get_controller( 'Surface Color' );
     if( _c.isfake ){ return( "none" ); }
     return( _c.getValue() );
-  };
-  THREEBRAIN_PRESETS.prototype.set_surface_ctype = function(
-    t, params = {}
-  ){
-
-    if( !this._surface_ctype_map ){ return; }
-    if (t === undefined){ return; }
-    let ctype = t,
-        sigma = params.sigma,
-        blend = params.blend,
-        decay = params.decay,
-        radius = params.radius;
-
-    if( t === true ){
-      // refresh
-      ctype = this._current_surface_ctype;
-    }
-    if( !ctype ){ ctype = "vertices"; }
-    this._current_surface_ctype = ctype;
-
-    let _c;
-    if( sigma === undefined ){
-      _c = this.gui.get_controller( 'Sigma' );
-      if( _c.isfake ){ sigma = 3.0; } else { sigma = _c.getValue(); }
-    }
-    if( blend === undefined ){
-      _c = this.gui.get_controller( 'Blend Factor' );
-      if( _c.isfake ){ blend = 0.4; } else { blend = _c.getValue(); }
-    }
-    if( decay === undefined ){
-      _c = this.gui.get_controller( 'Decay' );
-      if( _c.isfake ){ decay = 0.15; } else { decay = _c.getValue(); }
-    }
-    if( radius === undefined ){
-      _c = this.gui.get_controller( 'Range Limit' );
-      if( _c.isfake ){ radius = 10.0; } else { radius = _c.getValue(); }
-    }
-
-    let col_code = this._surface_ctype_map[ ctype ];
-    if( col_code === undefined ){
-      col_code = constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR;
-      this._current_surface_ctype = "vertices";
-    }
-    let f = (el) => {
-      if( !(el.isFreeMesh && el._material_options) ){ return; }
-      el._material_options.which_map.value = col_code;
-      el._material_options.blend_factor.value = blend;
-      el._material_options.elec_decay.value = decay;
-      el._material_options.elec_radius.value = radius;
-
-      if( el.object.visible && col_code === constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR ){
-        // need to get current active datacube2
-        const inst = this.current_voxel_type();
-        if( inst ){
-          el._set_color_from_datacube2(inst, sigma);
-        } else {
-          el._material_options.which_map.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
-        }
-      }
-    };
-
-
-    this.canvas.threebrain_instances.forEach( f );
-
-    this._update_canvas();
-    this.fire_change({ 'surface_color_type' : this._current_surface_ctype });
-
   };
 
   THREEBRAIN_PRESETS.prototype.c_surface_type2 = function(){
@@ -56236,31 +56173,37 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     this._surface_ctype_map = maps;
     let col = 'vertices';
 
+    this.canvas.state_data.set("surface_color_type", col);
     this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
       .onChange((v) => {
-        this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
-        const last_ctype = this._current_surface_ctype;
-        this.canvas.__hide_voxels = false;
-        this.set_surface_ctype( v );
 
-        if( this._current_surface_ctype !== "none" ){
-          this.gui.show_item(['Blend Factor'], folder_name);
+        switch (v) {
+          case "sync from voxels":
+            this.gui.show_item(['Sigma', 'Blend Factor'], folder_name);
+            this.gui.hide_item(['Decay', 'Range Limit'], folder_name);
+            break;
+
+          case "sync from electrodes":
+            this.gui.show_item(['Decay', 'Range Limit', 'Blend Factor'], folder_name);
+            this.gui.hide_item(['Sigma'], folder_name);
+            break;
+
+          case "vertices":
+            this.gui.show_item(['Blend Factor'], folder_name);
+            this.gui.hide_item(['Sigma', 'Decay', 'Range Limit'], folder_name);
+            break;
+
+          default:
+            // none
+            v = "none";
+            this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         }
 
-        if( this._current_surface_ctype === "sync from voxels" ){
-          this.gui.show_item(['Sigma'], folder_name);
-          this.canvas.__hide_voxels = true;
-        } else {
-          if( last_ctype === "sync from voxels" ) {
-            // leaving, have to set voxels to none
-            this.canvas.__hide_voxels = true;
-          }
-          if( this._current_surface_ctype === "sync from electrodes" ){
-            this.gui.show_item(['Decay', 'Range Limit'], folder_name);
-          }
-        }
+        this.canvas.state_data.set("surface_color_type", v);
+        this.fire_change({ 'surface_color_type' : v });
         this._update_canvas();
       });
+
 
     this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_SURFACE_COLOR */.t.KEY_CYCLE_SURFACE_COLOR, (evt) => {
       if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
@@ -56286,9 +56229,11 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
         } else if (v > 1){
           v = 1;
         }
-        this.set_surface_ctype( true, { 'blend' : v } );
+        // this.set_surface_ctype( true, { 'blend' : v } );
+        this.canvas.state_data.set("surface_color_blend", v);
         this._update_canvas();
-      })
+      });
+      this.canvas.state_data.set("surface_color_blend", 0.4);
 
     // ---------- for voxel-color ---------------
 
@@ -56297,10 +56242,12 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 0 ){ v = 0; }
-          this.set_surface_ctype( true, { 'sigma' : v } );
+          // this.set_surface_ctype( true, { 'sigma' : v } );
+          this.canvas.state_data.set("surface_color_sigma", v);
           this._update_canvas();
         }
       });
+    this.canvas.state_data.set("surface_color_sigma", 3.0);
 
     // ---------- for electrode maps ------------
     this.gui.add_item("Decay", 0.15, { folder_name : folder_name })
@@ -56308,20 +56255,24 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 0.05 ){ v = 0.05; }
-          this.set_surface_ctype( true, { 'decay' : v } );
+          // this.set_surface_ctype( true, { 'decay' : v } );
+          this.canvas.state_data.set("surface_color_decay", v);
           this._update_canvas();
         }
       });
+    this.canvas.state_data.set("surface_color_decay", 0.15);
 
     this.gui.add_item("Range Limit", 10.0, { folder_name : folder_name })
       .min( 1.0 ).max( 30.0 ).step( 1.0 )
       .onChange((v) => {
         if( v !== undefined ){
           if( v < 1.0 ){ v = 1.0; }
-          this.set_surface_ctype( true, { 'radius' : v } );
+          // this.set_surface_ctype( true, { 'radius' : v } );
+          this.canvas.state_data.set("surface_color_radius", v);
           this._update_canvas();
         }
       });
+    this.canvas.state_data.set("surface_color_radius", 10.0);
 
     // 'elec_decay'        : { value : 2.0 },
     // 'blend_factor'      : { value : 0.4 }
@@ -56339,6 +56290,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
 // EXTERNAL MODULE: ./src/js/geometry/sphere.js
 var sphere = __webpack_require__(960);
 ;// CONCATENATED MODULE: ./src/js/controls/electrodes.js
+
 
 
 
@@ -56386,17 +56338,21 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
       switch (v) {
         case 'hidden':
           // el is invisible
-          el.visible = false;
+          // el.visible = false;
+          (0,utils/* set_visibility */.K3)( el, false );
           break;
         case 'hide inactives':
           if( el.material.isMeshLambertMaterial ){
-            el.visible = false;
+            // el.visible = false;
+            (0,utils/* set_visibility */.K3)( el, false );
           }else{
-            el.visible = true;
+            // el.visible = true;
+            (0,utils/* set_visibility */.K3)( el, true );
           }
           break;
         default:
-          el.visible = true;
+          // el.visible = true;
+          (0,utils/* set_visibility */.K3)( el, true );
       }
     };
 
@@ -56490,6 +56446,7 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
 
 
 ;// CONCATENATED MODULE: ./src/js/controls/animation.js
+
 
 
 
@@ -56619,7 +56576,8 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
           if( v === '[None]' ){
             this.canvas.electrodes.forEach((_d) => {
               for( let _kk in _d ){
-                _d[ _kk ].visible = true;
+                // _d[ _kk ].visible = true;
+                (0,utils/* set_visibility */.K3)( _d[ _kk ], true );
               }
             });
           }
@@ -56949,8 +56907,9 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           })
         }
         if( flag ){
-          flag = this.gui.alter_item("Voxel Type", atlases, () => {
+          flag = this.gui.alter_item("Voxel Type", atlases, ( c ) => {
             this._ctl_voxel_type_options = atlases;
+            c.setValue( atlases[0] );
           })
         }
       }
@@ -56977,34 +56936,50 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
     this._ctl_voxel_type_options = ['none'];
     this._ctl_voxel_type_callback = (v) => {
       if( v ){
-        if( this._current_surface_ctype !== "sync from voxels" ){
-          this.canvas.__hide_voxels = false;
-        }
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
         this.fire_change({ 'atlas_type' : v });
       }
-    }
+    };
 
     this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
       .onChange( this._ctl_voxel_type_callback );
 
     this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
-    this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS */.t.TOOLTIPS.KEY_CYCLE_ATLAS, 'Voxel Type', folder_name);
+
+    // display type
+    this.gui.add_item('Voxel Display', 'hidden', {
+      args : ['hidden', 'normal'], folder_name : folder_name
+    }).onChange( (v) => {
+      this.canvas.atlases.forEach( (al, subject_code) => {
+        for( let atlas_name in al ){
+          const m = al[ atlas_name ];
+          if( m.isMesh && m.userData.instance.isThreeBrainObject ){
+            const inst = m.userData.instance;
+            if( inst.isDataCube2 ){
+              inst.set_display_mode( v );
+            }
+          }
+        }
+      });
+      this.canvas.set_state( "surface_color_refresh", Date() );
+      this._update_canvas();
+    });
+    this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE */.t.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, 'Voxel Display', folder_name);
 
     // register key callbacks
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ATLAS */.t.KEY_CYCLE_ATLAS, (evt) => {
+    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ATLAS_MODE */.t.KEY_CYCLE_ATLAS_MODE, (evt) => {
       if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
         // have to update dynamically because it could change
-        const ctl = this.gui.get_controller("Voxel Type");
-        const _c = this._ctl_voxel_type_options;
-        let current_idx = (_c.indexOf( ctl.getValue() ) + 1) % _c.length;
-        if( current_idx >= 0 ){
-          ctl.setValue( _c[ current_idx ] );
+        const ctl = this.gui.get_controller("Voxel Display");
+        if( ctl.getValue() === 'hidden' ) {
+          ctl.setValue( "normal" );
+        } else {
+          ctl.setValue( "hidden" );
         }
       }
-    }, 'gui_atlas_type');
+    }, 'gui_atlas_display_mode');
 
     // If color map supports alpha, add override option
     const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
@@ -57051,6 +57026,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
             inst._set_palette( candidates );
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();
           });
 
@@ -57090,6 +57066,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
               .filter((v) => {return !isNaN(v)});
             inst._set_palette( candidates );
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
+            this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();
           });
 
@@ -57106,8 +57083,6 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
 
 
 
-// EXTERNAL MODULE: ./src/build/three.module.js
-var three_module = __webpack_require__(7000);
 ;// CONCATENATED MODULE: ./src/js/Math/raycast_volume.js
 
 
@@ -59693,7 +59668,7 @@ class THREEBRAIN_PRESETS{
   // update gui controllers
   update_self(){
     this.update_voxel_type();
-    this.set_surface_ctype( true );
+    // this.set_surface_ctype( true );
 
     if( typeof(this._calculate_intersection_coord) === 'function' ){
       this._calculate_intersection_coord();
@@ -62358,7 +62333,7 @@ class THREEBRAIN_CONTROL{
       "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
       "Display Range", "Threshold Data", "Threshold Range", "Threshold Method", "Video Mode",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Voxel Type", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
+      "Voxel Type", "Voxel Display", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
       'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',
       'Edit Mode'
     ];
@@ -62481,6 +62456,11 @@ class THREEBRAIN_CONTROL{
       const v = c.getValue(),
             o = (0,utils/* to_array */.AA)( options ),
             callback = c.__onChange;
+      let tooltip;
+      if( c.__li ){
+        tooltip = c.__li.getAttribute('viewer-tooltip');
+      }
+
       if( !o.includes(v) && o.length > 0 ){
         v = o[0];
       }
@@ -62490,8 +62470,13 @@ class THREEBRAIN_CONTROL{
       c.__onChange = undefined;
       c.setValue( v );
       c.__onChange = callback;
+
+      if( typeof tooltip === 'string' ){
+        c.__li.setAttribute('viewer-tooltip', tooltip);
+      }
+
       if( typeof(onSucceed) === 'function' ){
-        onSucceed();
+        onSucceed( c );
       }
       return( true );
     }
@@ -62868,6 +62853,8 @@ class TextTexture extends _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Te
 /* harmony export */ });
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3658);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(975);
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(7000);
+
 
 
 
@@ -62875,6 +62862,8 @@ class AbstractThreeBrainObject {
   constructor(g, canvas){
     this._params = g;
     this._canvas = canvas;
+    this._display_mode = "normal";
+    this._visible = true;
     this.type = 'AbstractThreeBrainObject';
     this.isThreeBrainObject = true;
     this.name = g.name;
@@ -62884,7 +62873,7 @@ class AbstractThreeBrainObject {
     this.subject_code = g.subject_code || '';
     canvas.threebrain_instances.set( this.name, this );
     this.clickable = g.clickable === true;
-    this.world_position = new THREE.Vector3();
+    this.world_position = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_2__.Vector3();
   }
 
   set_layer( addition = [], object = null ){
@@ -62944,6 +62933,14 @@ class AbstractThreeBrainObject {
 
   pre_render( results ){
     this.get_world_position( results );
+    if( this.object && this.object.isMesh ){
+      if( this._visible && this._display_mode !== "hidden" ) {
+        this.object.visible = true;
+      } else {
+        this.object.visible = false;
+      }
+    }
+
     this._last_rendered = results.elapsed_time;
   }
 
@@ -62990,6 +62987,18 @@ class AbstractThreeBrainObject {
       }
 
     }
+  }
+
+
+  set_display_mode( mode ){
+    // hidden will set visible to false
+    if( typeof mode === "string" ){
+      this._display_mode = mode;
+    }
+  }
+
+  set_visibility( visible ){
+    this._visible = visible;
   }
 }
 
@@ -64228,9 +64237,11 @@ class THREE_BRAIN_SHINY {
 
     if( !valid ){
       // el.position.set(0,0,0);
-      el.visible = false;
+      // el.visible = false;
+      (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .set_visibility */ .K3)( el, false );
     }else{
-      el.visible = true;
+      // el.visible = true;
+      (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .set_visibility */ .K3)( el, true );
     }
     if( position ){
       position = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( position );
@@ -64440,7 +64451,7 @@ class THREEBRAIN_STORAGE {
 
 /***/ }),
 
-/***/ 2631:
+/***/ 5719:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -66037,13 +66048,6 @@ function gen_datacube(g, canvas){
 ;// CONCATENATED MODULE: ./src/js/shaders/VolumeShader.js
 
 
-const remove_comments = (s) => {
-  return(s.split("\n").map((e) => {
-      return(
-        e.replaceAll(/\/\/.*/g, "")
-      );
-    }).join("\n"));
-};
 
 const VolumeRenderShader1 = {
     uniforms: {
@@ -66053,25 +66057,36 @@ const VolumeRenderShader1 = {
       alpha : { value: -1.0 },
       steps: { value: 300 },
       scale_inv: { value: new three_module.Vector3() },
-      screenPos: { value: new three_module.Vector3() },
-      bounding: { value : 0.5 }
+      bounding: { value : 0.5 },
+      depthMix: { value: 1 },
+      // ndc_center: { value: new Vector3() },
     },
-    vertexShader: remove_comments(`#version 300 es
+    vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
 precision highp float;
+precision mediump sampler3D;
 in vec3 position;
+in vec3 normal;
+uniform sampler3D cmap;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 cameraPosition;
 uniform vec3 scale_inv;
-uniform vec3 screenPos;
+uniform float steps;
+uniform float bounding;
+// uniform vec3 ndc_center;
 
 out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
+out vec3 vSamplerBias;
+
+
 void main() {
   pmv = projectionMatrix * modelViewMatrix;
+
+  gl_Position = pmv * vec4( position, 1.0 );
 
   // For perspective camera, vorigin is camera
   // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
@@ -66085,23 +66100,23 @@ void main() {
 
   // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
   // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( screenPos.x / screenPos.z, screenPos.y / screenPos.z, 1.0, 1.0 );
+  vec4 vdir = inverse( pmv ) * vec4( gl_Position.xy, 0.0, 1.0 );
   vDirection = vdir.xyz * scale_inv  / vdir.w;
+  vSamplerBias =  - vec3(0.5, -0.5, 0.5) * scale_inv + 0.5;
 
   // Previous test code, seems to be poor because camera position is not well-calculated?
   // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
   // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
   vOrigin = (position) * scale_inv - vDirection;
 
-  // sample need to shift by 0.5 voxel
-  // gl_Position = pmv * vec4( position + 0.5, 1.0 );
-  gl_Position = pmv * vec4( position, 1.0 );
-}`),
-    fragmentShader: remove_comments(`#version 300 es
+}
+`),
+    fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
 precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vDirection;
+in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
@@ -66110,6 +66125,7 @@ uniform float alpha;
 uniform float steps;
 uniform vec3 scale_inv;
 uniform float bounding;
+uniform float depthMix;
 vec4 fcolor;
 vec2 hitBox( vec3 orig, vec3 dir ) {
   vec3 box_min = vec3( - bounding );
@@ -66125,13 +66141,22 @@ vec2 hitBox( vec3 orig, vec3 dir ) {
 }
 float getDepth( vec3 p ){
   vec4 frag2 = pmv * vec4( p, scale_inv );
-  return (frag2.z / frag2.w / 2.0 + 0.5);
+
+  return(
+    (frag2.z / frag2.w * (gl_DepthRange.far - gl_DepthRange.near) +
+      gl_DepthRange.near + gl_DepthRange.far) * 0.5
+  );
+
+
+  // ndc.z = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) /
+  //      (gl_DepthRange.far - gl_DepthRange.near);
+  // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  return texture( cmap, p + 0.5 );
+  return texture( cmap, p + vSamplerBias );
 }
 vec3 getNormal( vec3 p ) {
-  vec3 re = vec3( texture( nmap, p + 0.5 ).rgb *  255.0 - 127.0 );
+  vec3 re = texture( nmap, p + vSamplerBias ).rgb  *  255.0 - 127.0 ;
   return normalize( re );
 }
 
@@ -66168,11 +66193,13 @@ void main(){
 
         last_color = fcolor;
 
-        // reflect light
-        fcolor.rgb *= max( dot(-rayDir, getNormal( p )) , 0.5 );
+        fcolor.rgb *= pow(
+          max(abs(dot(rayDir, getNormal( p ))), 0.25),
+          0.45
+        );
 
         if( nn == 0 ){
-          gl_FragDepth = getDepth( p );
+          gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
           color = fcolor;
           color.a = max( color.a, 0.2 );
         } else {
@@ -66203,12 +66230,1355 @@ void main(){
   if ( nn == 0 || color.a == 0.0 ) discard;
 
   // calculate alpha at depth
-}`)};
+}
+`)};
 
+
+
+
+;// CONCATENATED MODULE: ./src/js/jsm/math/ConvexHull.js
+
+
+/**
+ * Ported from: https://github.com/maurizzzio/quickhull3d/ by Mauricio Poppe (https://github.com/maurizzzio)
+ */
+
+const Visible = 0;
+const Deleted = 1;
+
+const _v1 = new three_module.Vector3();
+const _line3 = new three_module.Line3();
+const _plane = new three_module.Plane();
+const _closestPoint = new three_module.Vector3();
+const _triangle = new three_module.Triangle();
+
+class ConvexHull {
+
+	constructor() {
+
+		this.tolerance = - 1;
+
+		this.faces = []; // the generated faces of the convex hull
+		this.newFaces = []; // this array holds the faces that are generated within a single iteration
+
+		// the vertex lists work as follows:
+		//
+		// let 'a' and 'b' be 'Face' instances
+		// let 'v' be points wrapped as instance of 'Vertex'
+		//
+		//     [v, v, ..., v, v, v, ...]
+		//      ^             ^
+		//      |             |
+		//  a.outside     b.outside
+		//
+		this.assigned = new VertexList();
+		this.unassigned = new VertexList();
+
+		this.vertices = []; 	// vertices of the hull (internal representation of given geometry data)
+
+	}
+
+	setFromPoints( points ) {
+
+		if ( Array.isArray( points ) !== true ) {
+
+			console.error( 'THREE.ConvexHull: Points parameter is not an array.' );
+
+		}
+
+		if ( points.length < 4 ) {
+
+			console.error( 'THREE.ConvexHull: The algorithm needs at least four points.' );
+
+		}
+
+		this.makeEmpty();
+
+		for ( let i = 0, l = points.length; i < l; i ++ ) {
+
+			this.vertices.push( new VertexNode( points[ i ] ) );
+
+		}
+
+		this.compute();
+
+		return this;
+
+	}
+
+	setFromObject( object ) {
+
+		const points = [];
+
+		object.updateMatrixWorld( true );
+
+		object.traverse( function ( node ) {
+
+			const geometry = node.geometry;
+
+			if ( geometry !== undefined ) {
+
+				if ( geometry.isGeometry ) {
+
+					console.error( 'THREE.ConvexHull no longer supports Geometry. Use THREE.BufferGeometry instead.' );
+					return;
+
+				} else if ( geometry.isBufferGeometry ) {
+
+					const attribute = geometry.attributes.position;
+
+					if ( attribute !== undefined ) {
+
+						for ( let i = 0, l = attribute.count; i < l; i ++ ) {
+
+							const point = new three_module.Vector3();
+
+							point.fromBufferAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
+
+							points.push( point );
+
+						}
+
+					}
+
+				}
+
+			}
+
+		} );
+
+		return this.setFromPoints( points );
+
+	}
+
+	containsPoint( point ) {
+
+		const faces = this.faces;
+
+		for ( let i = 0, l = faces.length; i < l; i ++ ) {
+
+			const face = faces[ i ];
+
+			// compute signed distance and check on what half space the point lies
+
+			if ( face.distanceToPoint( point ) > this.tolerance ) return false;
+
+		}
+
+		return true;
+
+	}
+
+	intersectRay( ray, target ) {
+
+		// based on "Fast Ray-Convex Polyhedron Intersection"  by Eric Haines, GRAPHICS GEMS II
+
+		const faces = this.faces;
+
+		let tNear = - Infinity;
+		let tFar = Infinity;
+
+		for ( let i = 0, l = faces.length; i < l; i ++ ) {
+
+			const face = faces[ i ];
+
+			// interpret faces as planes for the further computation
+
+			const vN = face.distanceToPoint( ray.origin );
+			const vD = face.normal.dot( ray.direction );
+
+			// if the origin is on the positive side of a plane (so the plane can "see" the origin) and
+			// the ray is turned away or parallel to the plane, there is no intersection
+
+			if ( vN > 0 && vD >= 0 ) return null;
+
+			// compute the distance from the ray’s origin to the intersection with the plane
+
+			const t = ( vD !== 0 ) ? ( - vN / vD ) : 0;
+
+			// only proceed if the distance is positive. a negative distance means the intersection point
+			// lies "behind" the origin
+
+			if ( t <= 0 ) continue;
+
+			// now categorized plane as front-facing or back-facing
+
+			if ( vD > 0 ) {
+
+				//  plane faces away from the ray, so this plane is a back-face
+
+				tFar = Math.min( t, tFar );
+
+			} else {
+
+				// front-face
+
+				tNear = Math.max( t, tNear );
+
+			}
+
+			if ( tNear > tFar ) {
+
+				// if tNear ever is greater than tFar, the ray must miss the convex hull
+
+				return null;
+
+			}
+
+		}
+
+		// evaluate intersection point
+
+		// always try tNear first since its the closer intersection point
+
+		if ( tNear !== - Infinity ) {
+
+			ray.at( tNear, target );
+
+		} else {
+
+			ray.at( tFar, target );
+
+		}
+
+		return target;
+
+	}
+
+	intersectsRay( ray ) {
+
+		return this.intersectRay( ray, _v1 ) !== null;
+
+	}
+
+	makeEmpty() {
+
+		this.faces = [];
+		this.vertices = [];
+
+		return this;
+
+	}
+
+	// Adds a vertex to the 'assigned' list of vertices and assigns it to the given face
+
+	addVertexToFace( vertex, face ) {
+
+		vertex.face = face;
+
+		if ( face.outside === null ) {
+
+			this.assigned.append( vertex );
+
+		} else {
+
+			this.assigned.insertBefore( face.outside, vertex );
+
+		}
+
+		face.outside = vertex;
+
+		return this;
+
+	}
+
+	// Removes a vertex from the 'assigned' list of vertices and from the given face
+
+	removeVertexFromFace( vertex, face ) {
+
+		if ( vertex === face.outside ) {
+
+			// fix face.outside link
+
+			if ( vertex.next !== null && vertex.next.face === face ) {
+
+				// face has at least 2 outside vertices, move the 'outside' reference
+
+				face.outside = vertex.next;
+
+			} else {
+
+				// vertex was the only outside vertex that face had
+
+				face.outside = null;
+
+			}
+
+		}
+
+		this.assigned.remove( vertex );
+
+		return this;
+
+	}
+
+	// Removes all the visible vertices that a given face is able to see which are stored in the 'assigned' vertext list
+
+	removeAllVerticesFromFace( face ) {
+
+		if ( face.outside !== null ) {
+
+			// reference to the first and last vertex of this face
+
+			const start = face.outside;
+			let end = face.outside;
+
+			while ( end.next !== null && end.next.face === face ) {
+
+				end = end.next;
+
+			}
+
+			this.assigned.removeSubList( start, end );
+
+			// fix references
+
+			start.prev = end.next = null;
+			face.outside = null;
+
+			return start;
+
+		}
+
+	}
+
+	// Removes all the visible vertices that 'face' is able to see
+
+	deleteFaceVertices( face, absorbingFace ) {
+
+		const faceVertices = this.removeAllVerticesFromFace( face );
+
+		if ( faceVertices !== undefined ) {
+
+			if ( absorbingFace === undefined ) {
+
+				// mark the vertices to be reassigned to some other face
+
+				this.unassigned.appendChain( faceVertices );
+
+
+			} else {
+
+				// if there's an absorbing face try to assign as many vertices as possible to it
+
+				let vertex = faceVertices;
+
+				do {
+
+					// we need to buffer the subsequent vertex at this point because the 'vertex.next' reference
+					// will be changed by upcoming method calls
+
+					const nextVertex = vertex.next;
+
+					const distance = absorbingFace.distanceToPoint( vertex.point );
+
+					// check if 'vertex' is able to see 'absorbingFace'
+
+					if ( distance > this.tolerance ) {
+
+						this.addVertexToFace( vertex, absorbingFace );
+
+					} else {
+
+						this.unassigned.append( vertex );
+
+					}
+
+					// now assign next vertex
+
+					vertex = nextVertex;
+
+				} while ( vertex !== null );
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+	// Reassigns as many vertices as possible from the unassigned list to the new faces
+
+	resolveUnassignedPoints( newFaces ) {
+
+		if ( this.unassigned.isEmpty() === false ) {
+
+			let vertex = this.unassigned.first();
+
+			do {
+
+				// buffer 'next' reference, see .deleteFaceVertices()
+
+				const nextVertex = vertex.next;
+
+				let maxDistance = this.tolerance;
+
+				let maxFace = null;
+
+				for ( let i = 0; i < newFaces.length; i ++ ) {
+
+					const face = newFaces[ i ];
+
+					if ( face.mark === Visible ) {
+
+						const distance = face.distanceToPoint( vertex.point );
+
+						if ( distance > maxDistance ) {
+
+							maxDistance = distance;
+							maxFace = face;
+
+						}
+
+						if ( maxDistance > 1000 * this.tolerance ) break;
+
+					}
+
+				}
+
+				// 'maxFace' can be null e.g. if there are identical vertices
+
+				if ( maxFace !== null ) {
+
+					this.addVertexToFace( vertex, maxFace );
+
+				}
+
+				vertex = nextVertex;
+
+			} while ( vertex !== null );
+
+		}
+
+		return this;
+
+	}
+
+	// Computes the extremes of a simplex which will be the initial hull
+
+	computeExtremes() {
+
+		const min = new three_module.Vector3();
+		const max = new three_module.Vector3();
+
+		const minVertices = [];
+		const maxVertices = [];
+
+		// initially assume that the first vertex is the min/max
+
+		for ( let i = 0; i < 3; i ++ ) {
+
+			minVertices[ i ] = maxVertices[ i ] = this.vertices[ 0 ];
+
+		}
+
+		min.copy( this.vertices[ 0 ].point );
+		max.copy( this.vertices[ 0 ].point );
+
+		// compute the min/max vertex on all six directions
+
+		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
+
+			const vertex = this.vertices[ i ];
+			const point = vertex.point;
+
+			// update the min coordinates
+
+			for ( let j = 0; j < 3; j ++ ) {
+
+				if ( point.getComponent( j ) < min.getComponent( j ) ) {
+
+					min.setComponent( j, point.getComponent( j ) );
+					minVertices[ j ] = vertex;
+
+				}
+
+			}
+
+			// update the max coordinates
+
+			for ( let j = 0; j < 3; j ++ ) {
+
+				if ( point.getComponent( j ) > max.getComponent( j ) ) {
+
+					max.setComponent( j, point.getComponent( j ) );
+					maxVertices[ j ] = vertex;
+
+				}
+
+			}
+
+		}
+
+		// use min/max vectors to compute an optimal epsilon
+
+		this.tolerance = 3 * Number.EPSILON * (
+			Math.max( Math.abs( min.x ), Math.abs( max.x ) ) +
+			Math.max( Math.abs( min.y ), Math.abs( max.y ) ) +
+			Math.max( Math.abs( min.z ), Math.abs( max.z ) )
+		);
+
+		return { min: minVertices, max: maxVertices };
+
+	}
+
+	// Computes the initial simplex assigning to its faces all the points
+	// that are candidates to form part of the hull
+
+	computeInitialHull() {
+
+		const vertices = this.vertices;
+		const extremes = this.computeExtremes();
+		const min = extremes.min;
+		const max = extremes.max;
+
+		// 1. Find the two vertices 'v0' and 'v1' with the greatest 1d separation
+		// (max.x - min.x)
+		// (max.y - min.y)
+		// (max.z - min.z)
+
+		let maxDistance = 0;
+		let index = 0;
+
+		for ( let i = 0; i < 3; i ++ ) {
+
+			const distance = max[ i ].point.getComponent( i ) - min[ i ].point.getComponent( i );
+
+			if ( distance > maxDistance ) {
+
+				maxDistance = distance;
+				index = i;
+
+			}
+
+		}
+
+		const v0 = min[ index ];
+		const v1 = max[ index ];
+		let v2;
+		let v3;
+
+		// 2. The next vertex 'v2' is the one farthest to the line formed by 'v0' and 'v1'
+
+		maxDistance = 0;
+		_line3.set( v0.point, v1.point );
+
+		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
+
+			const vertex = vertices[ i ];
+
+			if ( vertex !== v0 && vertex !== v1 ) {
+
+				_line3.closestPointToPoint( vertex.point, true, _closestPoint );
+
+				const distance = _closestPoint.distanceToSquared( vertex.point );
+
+				if ( distance > maxDistance ) {
+
+					maxDistance = distance;
+					v2 = vertex;
+
+				}
+
+			}
+
+		}
+
+		// 3. The next vertex 'v3' is the one farthest to the plane 'v0', 'v1', 'v2'
+
+		maxDistance = - 1;
+		_plane.setFromCoplanarPoints( v0.point, v1.point, v2.point );
+
+		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
+
+			const vertex = vertices[ i ];
+
+			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 ) {
+
+				const distance = Math.abs( _plane.distanceToPoint( vertex.point ) );
+
+				if ( distance > maxDistance ) {
+
+					maxDistance = distance;
+					v3 = vertex;
+
+				}
+
+			}
+
+		}
+
+		const faces = [];
+
+		if ( _plane.distanceToPoint( v3.point ) < 0 ) {
+
+			// the face is not able to see the point so 'plane.normal' is pointing outside the tetrahedron
+
+			faces.push(
+				Face.create( v0, v1, v2 ),
+				Face.create( v3, v1, v0 ),
+				Face.create( v3, v2, v1 ),
+				Face.create( v3, v0, v2 )
+			);
+
+			// set the twin edge
+
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const j = ( i + 1 ) % 3;
+
+				// join face[ i ] i > 0, with the first face
+
+				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( j ) );
+
+				// join face[ i ] with face[ i + 1 ], 1 <= i <= 3
+
+				faces[ i + 1 ].getEdge( 1 ).setTwin( faces[ j + 1 ].getEdge( 0 ) );
+
+			}
+
+		} else {
+
+			// the face is able to see the point so 'plane.normal' is pointing inside the tetrahedron
+
+			faces.push(
+				Face.create( v0, v2, v1 ),
+				Face.create( v3, v0, v1 ),
+				Face.create( v3, v1, v2 ),
+				Face.create( v3, v2, v0 )
+			);
+
+			// set the twin edge
+
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const j = ( i + 1 ) % 3;
+
+				// join face[ i ] i > 0, with the first face
+
+				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( ( 3 - i ) % 3 ) );
+
+				// join face[ i ] with face[ i + 1 ]
+
+				faces[ i + 1 ].getEdge( 0 ).setTwin( faces[ j + 1 ].getEdge( 1 ) );
+
+			}
+
+		}
+
+		// the initial hull is the tetrahedron
+
+		for ( let i = 0; i < 4; i ++ ) {
+
+			this.faces.push( faces[ i ] );
+
+		}
+
+		// initial assignment of vertices to the faces of the tetrahedron
+
+		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
+
+			const vertex = vertices[ i ];
+
+			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 && vertex !== v3 ) {
+
+				maxDistance = this.tolerance;
+				let maxFace = null;
+
+				for ( let j = 0; j < 4; j ++ ) {
+
+					const distance = this.faces[ j ].distanceToPoint( vertex.point );
+
+					if ( distance > maxDistance ) {
+
+						maxDistance = distance;
+						maxFace = this.faces[ j ];
+
+					}
+
+				}
+
+				if ( maxFace !== null ) {
+
+					this.addVertexToFace( vertex, maxFace );
+
+				}
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+	// Removes inactive faces
+
+	reindexFaces() {
+
+		const activeFaces = [];
+
+		for ( let i = 0; i < this.faces.length; i ++ ) {
+
+			const face = this.faces[ i ];
+
+			if ( face.mark === Visible ) {
+
+				activeFaces.push( face );
+
+			}
+
+		}
+
+		this.faces = activeFaces;
+
+		return this;
+
+	}
+
+	// Finds the next vertex to create faces with the current hull
+
+	nextVertexToAdd() {
+
+		// if the 'assigned' list of vertices is empty, no vertices are left. return with 'undefined'
+
+		if ( this.assigned.isEmpty() === false ) {
+
+			let eyeVertex, maxDistance = 0;
+
+			// grap the first available face and start with the first visible vertex of that face
+
+			const eyeFace = this.assigned.first().face;
+			let vertex = eyeFace.outside;
+
+			// now calculate the farthest vertex that face can see
+
+			do {
+
+				const distance = eyeFace.distanceToPoint( vertex.point );
+
+				if ( distance > maxDistance ) {
+
+					maxDistance = distance;
+					eyeVertex = vertex;
+
+				}
+
+				vertex = vertex.next;
+
+			} while ( vertex !== null && vertex.face === eyeFace );
+
+			return eyeVertex;
+
+		}
+
+	}
+
+	// Computes a chain of half edges in CCW order called the 'horizon'.
+	// For an edge to be part of the horizon it must join a face that can see
+	// 'eyePoint' and a face that cannot see 'eyePoint'.
+
+	computeHorizon( eyePoint, crossEdge, face, horizon ) {
+
+		// moves face's vertices to the 'unassigned' vertex list
+
+		this.deleteFaceVertices( face );
+
+		face.mark = Deleted;
+
+		let edge;
+
+		if ( crossEdge === null ) {
+
+			edge = crossEdge = face.getEdge( 0 );
+
+		} else {
+
+			// start from the next edge since 'crossEdge' was already analyzed
+			// (actually 'crossEdge.twin' was the edge who called this method recursively)
+
+			edge = crossEdge.next;
+
+		}
+
+		do {
+
+			const twinEdge = edge.twin;
+			const oppositeFace = twinEdge.face;
+
+			if ( oppositeFace.mark === Visible ) {
+
+				if ( oppositeFace.distanceToPoint( eyePoint ) > this.tolerance ) {
+
+					// the opposite face can see the vertex, so proceed with next edge
+
+					this.computeHorizon( eyePoint, twinEdge, oppositeFace, horizon );
+
+				} else {
+
+					// the opposite face can't see the vertex, so this edge is part of the horizon
+
+					horizon.push( edge );
+
+				}
+
+			}
+
+			edge = edge.next;
+
+		} while ( edge !== crossEdge );
+
+		return this;
+
+	}
+
+	// Creates a face with the vertices 'eyeVertex.point', 'horizonEdge.tail' and 'horizonEdge.head' in CCW order
+
+	addAdjoiningFace( eyeVertex, horizonEdge ) {
+
+		// all the half edges are created in ccw order thus the face is always pointing outside the hull
+
+		const face = Face.create( eyeVertex, horizonEdge.tail(), horizonEdge.head() );
+
+		this.faces.push( face );
+
+		// join face.getEdge( - 1 ) with the horizon's opposite edge face.getEdge( - 1 ) = face.getEdge( 2 )
+
+		face.getEdge( - 1 ).setTwin( horizonEdge.twin );
+
+		return face.getEdge( 0 ); // the half edge whose vertex is the eyeVertex
+
+
+	}
+
+	//  Adds 'horizon.length' faces to the hull, each face will be linked with the
+	//  horizon opposite face and the face on the left/right
+
+	addNewFaces( eyeVertex, horizon ) {
+
+		this.newFaces = [];
+
+		let firstSideEdge = null;
+		let previousSideEdge = null;
+
+		for ( let i = 0; i < horizon.length; i ++ ) {
+
+			const horizonEdge = horizon[ i ];
+
+			// returns the right side edge
+
+			const sideEdge = this.addAdjoiningFace( eyeVertex, horizonEdge );
+
+			if ( firstSideEdge === null ) {
+
+				firstSideEdge = sideEdge;
+
+			} else {
+
+				// joins face.getEdge( 1 ) with previousFace.getEdge( 0 )
+
+				sideEdge.next.setTwin( previousSideEdge );
+
+			}
+
+			this.newFaces.push( sideEdge.face );
+			previousSideEdge = sideEdge;
+
+		}
+
+		// perform final join of new faces
+
+		firstSideEdge.next.setTwin( previousSideEdge );
+
+		return this;
+
+	}
+
+	// Adds a vertex to the hull
+
+	addVertexToHull( eyeVertex ) {
+
+		const horizon = [];
+
+		this.unassigned.clear();
+
+		// remove 'eyeVertex' from 'eyeVertex.face' so that it can't be added to the 'unassigned' vertex list
+
+		this.removeVertexFromFace( eyeVertex, eyeVertex.face );
+
+		this.computeHorizon( eyeVertex.point, null, eyeVertex.face, horizon );
+
+		this.addNewFaces( eyeVertex, horizon );
+
+		// reassign 'unassigned' vertices to the new faces
+
+		this.resolveUnassignedPoints( this.newFaces );
+
+		return	this;
+
+	}
+
+	cleanup() {
+
+		this.assigned.clear();
+		this.unassigned.clear();
+		this.newFaces = [];
+
+		return this;
+
+	}
+
+	compute() {
+
+		let vertex;
+
+		this.computeInitialHull();
+
+		// add all available vertices gradually to the hull
+
+		while ( ( vertex = this.nextVertexToAdd() ) !== undefined ) {
+
+			this.addVertexToHull( vertex );
+
+		}
+
+		this.reindexFaces();
+
+		this.cleanup();
+
+		return this;
+
+	}
+
+}
+
+//
+
+class Face {
+
+	constructor() {
+
+		this.normal = new three_module.Vector3();
+		this.midpoint = new three_module.Vector3();
+		this.area = 0;
+
+		this.constant = 0; // signed distance from face to the origin
+		this.outside = null; // reference to a vertex in a vertex list this face can see
+		this.mark = Visible;
+		this.edge = null;
+
+	}
+
+	static create( a, b, c ) {
+
+		const face = new Face();
+
+		const e0 = new HalfEdge( a, face );
+		const e1 = new HalfEdge( b, face );
+		const e2 = new HalfEdge( c, face );
+
+		// join edges
+
+		e0.next = e2.prev = e1;
+		e1.next = e0.prev = e2;
+		e2.next = e1.prev = e0;
+
+		// main half edge reference
+
+		face.edge = e0;
+
+		return face.compute();
+
+	}
+
+	getEdge( i ) {
+
+		let edge = this.edge;
+
+		while ( i > 0 ) {
+
+			edge = edge.next;
+			i --;
+
+		}
+
+		while ( i < 0 ) {
+
+			edge = edge.prev;
+			i ++;
+
+		}
+
+		return edge;
+
+	}
+
+	compute() {
+
+		const a = this.edge.tail();
+		const b = this.edge.head();
+		const c = this.edge.next.head();
+
+		_triangle.set( a.point, b.point, c.point );
+
+		_triangle.getNormal( this.normal );
+		_triangle.getMidpoint( this.midpoint );
+		this.area = _triangle.getArea();
+
+		this.constant = this.normal.dot( this.midpoint );
+
+		return this;
+
+	}
+
+	distanceToPoint( point ) {
+
+		return this.normal.dot( point ) - this.constant;
+
+	}
+
+}
+
+// Entity for a Doubly-Connected Edge List (DCEL).
+
+class HalfEdge {
+
+
+	constructor( vertex, face ) {
+
+		this.vertex = vertex;
+		this.prev = null;
+		this.next = null;
+		this.twin = null;
+		this.face = face;
+
+	}
+
+	head() {
+
+		return this.vertex;
+
+	}
+
+	tail() {
+
+		return this.prev ? this.prev.vertex : null;
+
+	}
+
+	length() {
+
+		const head = this.head();
+		const tail = this.tail();
+
+		if ( tail !== null ) {
+
+			return tail.point.distanceTo( head.point );
+
+		}
+
+		return - 1;
+
+	}
+
+	lengthSquared() {
+
+		const head = this.head();
+		const tail = this.tail();
+
+		if ( tail !== null ) {
+
+			return tail.point.distanceToSquared( head.point );
+
+		}
+
+		return - 1;
+
+	}
+
+	setTwin( edge ) {
+
+		this.twin = edge;
+		edge.twin = this;
+
+		return this;
+
+	}
+
+}
+
+// A vertex as a double linked list node.
+
+class VertexNode {
+
+	constructor( point ) {
+
+		this.point = point;
+		this.prev = null;
+		this.next = null;
+		this.face = null; // the face that is able to see this vertex
+
+	}
+
+}
+
+// A double linked list that contains vertex nodes.
+
+class VertexList {
+
+	constructor() {
+
+		this.head = null;
+		this.tail = null;
+
+	}
+
+	first() {
+
+		return this.head;
+
+	}
+
+	last() {
+
+		return this.tail;
+
+	}
+
+	clear() {
+
+		this.head = this.tail = null;
+
+		return this;
+
+	}
+
+	// Inserts a vertex before the target vertex
+
+	insertBefore( target, vertex ) {
+
+		vertex.prev = target.prev;
+		vertex.next = target;
+
+		if ( vertex.prev === null ) {
+
+			this.head = vertex;
+
+		} else {
+
+			vertex.prev.next = vertex;
+
+		}
+
+		target.prev = vertex;
+
+		return this;
+
+	}
+
+	// Inserts a vertex after the target vertex
+
+	insertAfter( target, vertex ) {
+
+		vertex.prev = target;
+		vertex.next = target.next;
+
+		if ( vertex.next === null ) {
+
+			this.tail = vertex;
+
+		} else {
+
+			vertex.next.prev = vertex;
+
+		}
+
+		target.next = vertex;
+
+		return this;
+
+	}
+
+	// Appends a vertex to the end of the linked list
+
+	append( vertex ) {
+
+		if ( this.head === null ) {
+
+			this.head = vertex;
+
+		} else {
+
+			this.tail.next = vertex;
+
+		}
+
+		vertex.prev = this.tail;
+		vertex.next = null; // the tail has no subsequent vertex
+
+		this.tail = vertex;
+
+		return this;
+
+	}
+
+	// Appends a chain of vertices where 'vertex' is the head.
+
+	appendChain( vertex ) {
+
+		if ( this.head === null ) {
+
+			this.head = vertex;
+
+		} else {
+
+			this.tail.next = vertex;
+
+		}
+
+		vertex.prev = this.tail;
+
+		// ensure that the 'tail' reference points to the last vertex of the chain
+
+		while ( vertex.next !== null ) {
+
+			vertex = vertex.next;
+
+		}
+
+		this.tail = vertex;
+
+		return this;
+
+	}
+
+	// Removes a vertex from the linked list
+
+	remove( vertex ) {
+
+		if ( vertex.prev === null ) {
+
+			this.head = vertex.next;
+
+		} else {
+
+			vertex.prev.next = vertex.next;
+
+		}
+
+		if ( vertex.next === null ) {
+
+			this.tail = vertex.prev;
+
+		} else {
+
+			vertex.next.prev = vertex.prev;
+
+		}
+
+		return this;
+
+	}
+
+	// Removes a list of vertices whose 'head' is 'a' and whose 'tail' is b
+
+	removeSubList( a, b ) {
+
+		if ( a.prev === null ) {
+
+			this.head = b.next;
+
+		} else {
+
+			a.prev.next = b.next;
+
+		}
+
+		if ( b.next === null ) {
+
+			this.tail = a.prev;
+
+		} else {
+
+			b.next.prev = a.prev;
+
+		}
+
+		return this;
+
+	}
+
+	isEmpty() {
+
+		return this.head === null;
+
+	}
+
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/jsm/geometries/ConvexGeometry.js
+
+
+
+class ConvexGeometry extends three_module.BufferGeometry {
+
+	constructor( points ) {
+
+		super();
+
+		// buffers
+
+		const vertices = [];
+		const normals = [];
+
+		if ( ConvexHull === undefined ) {
+
+			console.error( 'THREE.ConvexBufferGeometry: ConvexBufferGeometry relies on ConvexHull' );
+
+		}
+
+		const convexHull = new ConvexHull().setFromPoints( points );
+
+		// generate vertices and normals
+
+		const faces = convexHull.faces;
+
+		for ( let i = 0; i < faces.length; i ++ ) {
+
+			const face = faces[ i ];
+			let edge = face.edge;
+
+			// we move along a doubly-connected edge list to access all face points (see HalfEdge docs)
+
+			do {
+
+				const point = edge.head().point;
+
+				vertices.push( point.x, point.y, point.z );
+				normals.push( face.normal.x, face.normal.y, face.normal.z );
+
+				edge = edge.next;
+
+			} while ( edge !== face.edge );
+
+		}
+
+		// build geometry
+
+		this.setAttribute( 'position', new three_module.Float32BufferAttribute( vertices, 3 ) );
+		this.setAttribute( 'normal', new three_module.Float32BufferAttribute( normals, 3 ) );
+
+	}
+
+}
 
 
 
 ;// CONCATENATED MODULE: ./src/js/geometry/datacube2.js
+
 
 
 
@@ -66384,7 +67754,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     this.type = 'DataCube2';
     this.isDataCube2 = true;
-    this._hide_flag = false;
+    this._display_mode = "hidden";
 
     let mesh;
 
@@ -66409,6 +67779,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       // const data = new Float32Array( this._voxel_length );
       const color = new Uint8Array( this._voxel_length * 4 );
       const normals = new Uint8Array( this._voxel_length * 3 );
+      const vertex_position = [];
 
       this._cube_values = cube_values;
       this._lut = lut;
@@ -66457,6 +67828,16 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
                   bounding_max = Math.max(x,y,z);
                 }
                 // this._map_data[ ii ] = i;
+
+                // calculate vertex positions
+                vertex_position.push(
+                  new three_module.Vector3().set(
+                    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
+                    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
+                    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
+                  )
+                );
+
               }
             }
             /**
@@ -66518,14 +67899,14 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       const shader = VolumeRenderShader1;
 
 
-      let uniforms = three_module.UniformsUtils.clone( shader.uniforms );
+      const uniforms = three_module.UniformsUtils.clone( shader.uniforms );
+      this._uniforms = uniforms;
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
       uniforms.nmap.value = normals_texture;
 
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
-      uniforms.screenPos.value.set( 0.0, 0.0, 1.0 );
 
       this._bounding_min = bounding_min;
       this._bounding_max = bounding_max;
@@ -66545,12 +67926,11 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
         transparent : true
       } );
 
-      let geometry = new three_module.SphereBufferGeometry(
-        new three_module.Vector3().fromArray(cube_half_size).length(), 29, 14
-      );
+      // let geometry = new SphereBufferGeometry(
+      //   new Vector3().fromArray(cube_half_size).length(), 29, 14
+      // );
 
-      // let geometry = new BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
-
+      const geometry = new ConvexGeometry( vertex_position );
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
@@ -66584,23 +67964,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
   get_track_data( track_name, reset_material ){}
 
-  pre_render( results ){
-    const orig = this._canvas.origin;
-    if( typeof( orig.setFromMatrixPosition ) === "function" ){
-      orig
-        .getWorldPosition(
-          this._mesh.material.uniforms.screenPos
-        )
-        .applyMatrix4(this._canvas.main_camera.matrixWorldInverse)
-        .applyMatrix4(this._canvas.main_camera.projectionMatrix);
-    }
-
-    // if surface is using it
-    if( this._canvas.__hide_voxels ){
-      this.object.visible = false;
-    }
-  }
-
   finish_init(){
     // this.object
 
@@ -66616,6 +67979,8 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.register_object( ['atlases'] );
 
   }
+
+
 }
 
 
@@ -67014,6 +68379,7 @@ function gen_tube(g, canvas){
 
 ;// CONCATENATED MODULE: ./src/js/shaders/SurfaceShader.js
 
+
 const compile_free_material = ( material, options, target_renderer ) => {
 
   if( material.userData.compiled ){ return; }
@@ -67023,7 +68389,7 @@ const compile_free_material = ( material, options, target_renderer ) => {
 
   material.onBeforeCompile = ( shader , renderer ) => {
 
-    shader.uniforms.which_map = options.which_map;
+    shader.uniforms.mapping_type = options.mapping_type;
     shader.uniforms.volume_map = options.volume_map;
     shader.uniforms.scale_inv = options.scale_inv;
     shader.uniforms.shift = options.shift;
@@ -67048,10 +68414,10 @@ const compile_free_material = ( material, options, target_renderer ) => {
     }
     material.userData.compiled = true;
 
-    shader.vertexShader = `
+    shader.vertexShader = (0,utils/* remove_comments */.yi)(`
 precision mediump sampler2D;
 precision mediump sampler3D;
-uniform int which_map;
+uniform int mapping_type;
 uniform float elec_size;
 uniform float elec_active_size;
 uniform sampler3D volume_map;
@@ -67133,48 +68499,68 @@ vec3 sample2( vec3 p ) {
   }
   return (re / count);
 }
-    ` + shader.vertexShader;
+`) + shader.vertexShader;
 
     shader.vertexShader = shader.vertexShader.replace(
       "#include <fog_vertex>",
-      `#include <fog_vertex>
+      (0,utils/* remove_comments */.yi)(
+`#include <fog_vertex>
 
 vec4 data_color0 = vec4( 0.0 );
 
-if( which_map == 1 ){
+if( mapping_type == 1 ){
     // is track_color is missing, or all zeros, it's invalid
     if( track_color.rgb != zeros ){
-      vColor.rgb = mix( vColor.rgb, track_color, blend_factor );
+      vColor.rgb = mix( vColor.rgb, track_color.rgb, blend_factor );
     }
-} else if( which_map == 2 ){
-  vec3 data_position = (position + shift) * scale_inv + 0.5;
-  data_color0 = sample1(
-    data_position -
-    scale_inv * vec3(0.5,-0.5,0.5)
-  );
+} else if( mapping_type == 2 ){
+  // vec3 data_position = (position + shift) * scale_inv + 0.5;
+  // data_color0 = sample1(
+  //   data_position -
+  //   scale_inv * vec3(0.5,-0.5,0.5)
+  // );
+  vec3 data_position = position + shift - vec3(0.5,-0.5,0.5);
+  data_color0 = sample1( data_position * scale_inv + 0.5 );
 
 #if defined( USE_COLOR_ALPHA )
-	vColor = mix( max(vec3( 1.0 ) - vColor / 2.0, vColor), data_color0, blend_factor );
+  vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
+  if( data_color0.a == 0.0 ){
+    vColor.a = 0.0;
+  }
+
 #elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
 	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
 #endif
-} else if( which_map == 3 ){
+} else if( mapping_type == 3 ){
   if( elec_active_size > 0.0 ){
     data_color0.rgb = sample2( position + shift );
     vColor.rgb = mix( vColor.rgb, data_color0.rgb, blend_factor );
   }
-}     `.split("\n").map((e) => {
-          return(
-            e.replaceAll(/\/\/.*/g, "")
-          );
-        }).join("\n")
+}
+`)
     );
 
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <clipping_planes_fragment>",
+      (0,utils/* remove_comments */.yi)(
+`
+// Remove transparent fragments
+
+#if defined( USE_COLOR_ALPHA )
+  if( vColor.a == 0.0 ){
+    // gl_FragColor.a = 0.0;
+    // gl_FragColor.rgba = vec4(0.0);
+    discard;
+  }
+#endif
+#include <clipping_planes_fragment>
+`)
+    );
   };
 
 
   return( material );
-}
+};
 
 
 
@@ -67246,16 +68632,19 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
         tcol[ ii * 3 ] = 0;
         tcol[ ii * 3 + 1 ] = 0;
         tcol[ ii * 3 + 2 ] = 0;
+        // tcol[ ii * 4 + 3 ] = 0;
       } else {
         c = lut_map[ value[ jj ] ];
         if( c ){
           tcol[ ii * 3 ] = c.R;
           tcol[ ii * 3 + 1 ] = c.G;
           tcol[ ii * 3 + 2 ] = c.B;
+          // tcol[ ii * 4 + 3 ] = 255;
         } else {
           tcol[ ii * 3 ] = 0;
           tcol[ ii * 3 + 1 ] = 0;
           tcol[ ii * 3 + 2 ] = 0;
+          // tcol[ ii * 4 + 3 ] = 0;
         }
       }
     }
@@ -67298,9 +68687,10 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       if( ii >= nvertices ){ return; }
       // Make it lighter using sigmoid function
       let col = _transform(v);
-      this._vertex_color[ ii * 3 ] = col;
-      this._vertex_color[ ii * 3 + 1 ] = col;
-      this._vertex_color[ ii * 3 + 2 ] = col;
+      this._vertex_color[ ii * 4 ] = col;
+      this._vertex_color[ ii * 4 + 1 ] = col;
+      this._vertex_color[ ii * 4 + 2 ] = col;
+      this._vertex_color[ ii * 4 + 3 ] = 1;
     });
 
     if( update_color ){
@@ -67318,11 +68708,16 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
   }
 
   _set_color_from_datacube2( m, bias = 3.0 ){
+    console.debug("Generating surface colors from volume data...");
+
     if( !m || !m.isDataCube2 ){
-      this._material_options.which_map.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
+      this._material_options.mapping_type.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
       return;
     }
 
+    if( this._material_options.mapping_type.value === constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR ) {
+      return;
+    }
 
     this._volume_texture.image = m._color_texture.image;
 
@@ -67330,11 +68725,17 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       1 / m._cube_dim[0],
       1 / m._cube_dim[1],
       1 / m._cube_dim[2]
-    )
-    this._volume_texture.needsUpdate = true;
-    this._material_options.which_map.value = constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR;
+    );
+
+    /**
+     * We want to enable USE_COLOR_ALPHA so that vColor is vec4,
+     * This requires vertexAlphas to be true
+     * https://github.com/mrdoob/three.js/blob/be137e6da5fd682555cdcf5c8002717e4528f879/src/renderers/WebGLRenderer.js#L1442
+    */
+    this._mesh.material.vertexColors = true;
     this._material_options.sampler_bias.value = bias;
     this._material_options.sampler_step.value = bias / 2;
+    this._volume_texture.needsUpdate = true;
 
   }
 
@@ -67457,28 +68858,89 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
   pre_render( results ){
     // check material
+    super.pre_render( results );
     this._check_material( false );
 
     if( !this.object.visible ) { return; }
 
-    // get current frame
-    if( this._material_options.which_map.value === constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR){
-      if( this.time_stamp.length ){
-        let skip_frame = 0;
+    // need to get current active datacube2
+    const atlas_type = this._canvas.get_state("atlas_type", "none"),
+          sub = this._canvas.get_state("target_subject", "none"),
+          inst = this._canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+          ctype = this._canvas.get_state("surface_color_type", "vertices"),
+          sigma = this._canvas.get_state("surface_color_sigma", 3.0),
+          blend = this._canvas.get_state("surface_color_blend", 0.4),
+          decay = this._canvas.get_state("surface_color_decay", 0.15),
+          radius = this._canvas.get_state("surface_color_radius", 10.0),
+          refresh_flag = this._canvas.get_state("surface_color_refresh", undefined);
 
-        this.time_stamp.forEach((v, ii) => {
-          if( v <= results.current_time ){
-            skip_frame = ii - 1;
+    let col_code, material_needs_update = false;
+
+    this._mesh.material.transparent = this._mesh.material.opacity < 0.99;
+    switch (ctype) {
+      case 'vertices':
+        col_code = constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR;
+        break;
+
+      case 'sync from voxels':
+        col_code = constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR;
+        this._mesh.material.transparent = true;
+
+        // get current frame
+        if( this.time_stamp.length ){
+          let skip_frame = 0;
+
+          this.time_stamp.forEach((v, ii) => {
+            if( v <= results.current_time ){
+              skip_frame = ii - 1;
+            }
+          });
+          if( skip_frame < 0 ){ skip_frame = 0; }
+
+          if( this.__skip_frame !== skip_frame){
+            this._set_track( skip_frame );
           }
-        });
-        if( skip_frame < 0 ){ skip_frame = 0; }
-
-        if( this.__skip_frame !== skip_frame){
-          this._set_track( skip_frame );
         }
-      }
-    } else if( this._material_options.which_map.value === constants/* CONSTANTS.ELECTRODE_COLOR */.t.ELECTRODE_COLOR){
-      this._link_electrodes();
+        break;
+
+      case 'sync from electrodes':
+        col_code = constants/* CONSTANTS.ELECTRODE_COLOR */.t.ELECTRODE_COLOR;
+        this._link_electrodes();
+        break;
+
+      default:
+        col_code = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
+    };
+
+    if( this._material_options.mapping_type.value !== col_code ){
+      this._material_options.mapping_type.value = col_code;
+      material_needs_update = true;
+    }
+    if( this._material_options.blend_factor.value !== blend ){
+      this._material_options.blend_factor.value = blend;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_decay.value !== decay ){
+      this._material_options.elec_decay.value = decay;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_radius.value !== radius ){
+      this._material_options.elec_radius.value = radius;
+      material_needs_update = true;
+    }
+    if( this._blend_sigma !== sigma ){
+      this._blend_sigma = sigma;
+      material_needs_update = true;
+    }
+    if( this._refresh_flag !== refresh_flag ){
+      this._refresh_flag = refresh_flag;
+      material_needs_update = true;
+    }
+
+    // This step is slow
+    if( material_needs_update && col_code === constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR ){
+      // need to get current active datacube2
+      this._set_color_from_datacube2(inst, this._blend_sigma);
     }
   }
 
@@ -67533,7 +68995,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
 
     this._material_options = {
-      'which_map'         : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
+      'mapping_type'      : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
       'volume_map'        : { value : this._volume_texture },
       'scale_inv'         : {
         value : new three_module.Vector3(
@@ -67570,7 +69032,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.__nvertices = vertices.length;
     const vertex_positions = new Float32Array( this.__nvertices * 3 ),
           face_orders = new Uint32Array( faces.length * 3 ),
-          vertex_color = new Float32Array( this.__nvertices * 3 ).fill(1);
+          vertex_color = new Float32Array( this.__nvertices * 4 ).fill(1);
 
     this._vertex_color = vertex_color;
 
@@ -67587,7 +69049,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     this._geometry.setIndex( new three_module.BufferAttribute(face_orders, 1) );
     this._geometry.setAttribute( 'position', new three_module.BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'color', new three_module.BufferAttribute( vertex_color, 3, true ) );
+    this._geometry.setAttribute( 'color', new three_module.BufferAttribute( vertex_color, 4, true ) );
 
 
     // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );
@@ -68877,7 +70339,8 @@ class THREEBRAIN_CANVAS {
     if( m.children.length > 0 ){
       m.children.forEach((_c) => {
         if( _c.isMesh && _c.userData.is_highlight_helper ){
-          _c.visible = !reset;
+          (0,utils/* set_visibility */.K3)( _c, !reset );
+          // _c.visible = !reset;
         }
       });
     }
@@ -71089,6 +72552,18 @@ class THREEBRAIN_CANVAS {
     return( Object.keys( re ) );
   }
 
+  set_state( key, val ) {
+    this.state_data.set(key, val);
+    this.dispatch_event( "canvas.set_state", {
+      key: key,
+      value: val
+    });
+  }
+
+  get_state( key, missing = undefined ) {
+    return((0,utils/* get_or_default */.jM)( this.state_data, key, missing ));
+  }
+
   switch_subject( target_subject = '/', args = {}){
 
     if( this.subject_codes.length === 0 ){
@@ -71217,42 +72692,39 @@ class THREEBRAIN_CANVAS {
     this.surfaces.forEach( (sf, subject_code) => {
       for( let surface_name in sf ){
         const m = sf[ surface_name ];
-        m.visible = false;
+        // m.visible = false;
+        (0,utils/* set_visibility */.K3)( m, false );
         if( subject_code === target_subject ){
 
           if(
             surface_name === `Standard 141 Left Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Left Hemisphere - ${surface_type} (${target_subject})`
           ){
-            if( material_type[0] === 'hidden' ){
-              m.visible = false;
-            }else{
-              m.material.wireframe = ( material_type[0] === 'wireframe' );
-              m.visible = true;
-              m.material.opacity = opacity[0];
-              m.material.transparent = opacity[0] < 0.99;
-            }
+            (0,utils/* set_display_mode */.J1)( m, material_type[0] );
+            (0,utils/* set_visibility */.K3)( m, material_type[0] !== 'hidden' );
+            m.material.wireframe = ( material_type[0] === 'wireframe' );
+            m.material.opacity = opacity[0];
+            // m.material.transparent = opacity[0] < 0.99;
           }else if(
             surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
             surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
           ){
-            if( material_type[1] === 'hidden' ){
-              m.visible = false;
-            }else{
-              m.material.wireframe = ( material_type[1] === 'wireframe' );
-              m.visible = true;
-              m.material.opacity = opacity[1];
-              m.material.transparent = opacity[1] < 0.99;
-            }
-
-            // Re-calculate controls center so that rotation center is the center of mesh bounding box
-            this.bounding_box.setFromObject( m.parent );
-            this.bounding_box.geometry.computeBoundingBox();
-            const _b = this.bounding_box.geometry.boundingBox;
-            this.controls.target.copy( _b.min.clone() ).add( _b.max ).multiplyScalar( 0.5 );
-            this.control_center = this.controls.target.toArray();
-            this.controls.update();
+            (0,utils/* set_display_mode */.J1)( m, material_type[1] );
+            (0,utils/* set_visibility */.K3)( m, material_type[1] !== 'hidden' );
+            m.material.wireframe = ( material_type[1] === 'wireframe' );
+            m.material.opacity = opacity[1];
+            // m.material.transparent = opacity[1] < 0.99;
           }
+
+
+          // Re-calculate controls center so that rotation center is the center of mesh bounding box
+          this.bounding_box.setFromObject( m.parent );
+          this.bounding_box.geometry.computeBoundingBox();
+          const _b = this.bounding_box.geometry.boundingBox;
+          this.controls.target.copy( _b.min.clone() )
+            .add( _b.max ).multiplyScalar( 0.5 );
+          this.control_center = this.controls.target.toArray();
+          this.controls.update();
 
         }
       }
@@ -71266,10 +72738,12 @@ class THREEBRAIN_CANVAS {
       for( let volume_name in vol ){
         const m = vol[ volume_name ];
         if( subject_code === target_subject && volume_name === `${volume_type} (${subject_code})`){
-          m[0].parent.visible = true;
+          //m[0].parent.visible = true;
+          (0,utils/* set_visibility */.K3)( m[0].parent, true );
           this._register_datacube( m );
         }else{
-          m[0].parent.visible = false;
+          // m[0].parent.visible = false;
+          (0,utils/* set_visibility */.K3)( m[0].parent, false );
         }
       }
     });
@@ -71289,9 +72763,11 @@ class THREEBRAIN_CANVAS {
       for( let atlas_name in al ){
         const m = al[ atlas_name ];
         if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
-          m.visible = true;
+          // m.visible = true;
+          (0,utils/* set_visibility */.K3)( m, true );
         }else{
-          m.visible = false;
+          // m.visible = false;
+          (0,utils/* set_visibility */.K3)( m, false );
         }
       }
     });
@@ -71303,10 +72779,12 @@ class THREEBRAIN_CANVAS {
       for( let ct_name in vol ){
         const m = vol[ ct_name ];
         if( subject_code === target_subject && ct_name === `${ct_type} (${subject_code})`){
-          m.parent.visible = this._show_ct;
+          // m.parent.visible = this._show_ct;
+          (0,utils/* set_visibility */.K3)( m.parent, this._show_ct );
           m.material.uniforms.u_renderthreshold.value = ct_threshold;
         }else{
-          m.parent.visible = false;
+          // m.parent.visible = false;
+          (0,utils/* set_visibility */.K3)( m.parent, false );
         }
       }
     });
@@ -71446,7 +72924,8 @@ mapped = false,
           el.userData._template_hemisphere = g.hemisphere;
         }
         if( hide_electrode ){
-          el.visible = false;
+          // el.visible = false;
+          (0,utils/* set_visibility */.K3)( el, false );
         }
 
       }
@@ -71643,7 +73122,10 @@ mapped = false,
 /* harmony export */   "Wk": () => (/* binding */ vec3_to_string),
 /* harmony export */   "xy": () => (/* binding */ has_meta_keys),
 /* harmony export */   "FD": () => (/* binding */ write_clipboard),
-/* harmony export */   "xl": () => (/* binding */ as_Matrix4)
+/* harmony export */   "xl": () => (/* binding */ as_Matrix4),
+/* harmony export */   "K3": () => (/* binding */ set_visibility),
+/* harmony export */   "J1": () => (/* binding */ set_display_mode),
+/* harmony export */   "yi": () => (/* binding */ remove_comments)
 /* harmony export */ });
 /* unused harmony exports float_to_int32, throttle_promise */
 /* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2152);
@@ -71794,6 +73276,37 @@ function vec3_to_string(v, ifInvalid = "", precision = 2){
     return(`${v.x.toFixed(precision)}, ${v.y.toFixed(precision)}, ${v.z.toFixed(precision)}`)
   }
   return( ifInvalid );
+}
+
+function set_visibility( m, visible ) {
+  if( visible === undefined ){ return; }
+  if( m.isObject3D ){
+    if( m.userData.instance && m.userData.instance.isThreeBrainObject ) {
+      m.userData.instance.set_visibility( visible );
+    } else {
+      m.visible = visible;
+    }
+  }
+}
+
+function set_display_mode( m, mode ) {
+  if( typeof mode !== "string" ){ return; }
+  if( m.isObject3D ){
+    if( m.userData.instance && m.userData.instance.isThreeBrainObject ) {
+      m.userData.instance.set_display_mode( mode );
+      return;
+    }
+  }
+  set_visibility( m, mode !== "hidden" );
+}
+
+
+function remove_comments(s){
+  return(s.split("\n").map((e) => {
+      return(
+        e.replaceAll(/\/\/.*/g, "")
+      );
+    }).join("\n"));
 }
 
 
@@ -72274,7 +73787,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var _js_core_gui_wrapper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2814);
 /* harmony import */ var _js_core_data_controls_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6683);
 /* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(8173);
-/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(2631);
+/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5719);
 /* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(5664);
 /* harmony import */ var _js_constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(975);
 /* harmony import */ var _js_utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(3658);

@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.4.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.4.9002</span>
       </span>
     </div>
 
@@ -26,7 +26,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -63,6 +63,27 @@
       <small>Source: <a href="https://github.com/dipterix/threeBrain/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.2.5" id="threebrain-025">threeBrain 0.2.5<a class="anchor" aria-label="anchor" href="#threebrain-025"></a></h2>
+<div class="section level3">
+<h3 id="changes-0-2-5">Changes<a class="anchor" aria-label="anchor" href="#changes-0-2-5"></a></h3>
+<ul><li>Surface <code>sync from voxels</code> now clamp the surface nodes</li>
+<li>Added <code>Voxel Display</code> controller to toggle volume display modes</li>
+<li>Changed shortcut <code>l</code> from <code>Voxel Type</code> to <code>Voxel Display</code>
+</li>
+<li>Volume <code>fragmentShader</code> uses non-linear function to calculate fragment colors combined with face normal; this will create smoother results</li>
+<li>
+<code>DataCube2</code> geometry uses <code>ConvexHull</code> instead of box/sphere to improve the performance</li>
+<li>
+<code>DataCube2</code> are no longer hidden when <code>sync from voxels</code> is on: users can use shortcuts <code>l</code> and <code>k</code> to easily control the visibility.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-5">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-5"></a></h3>
+<ul><li>Fixed a volume rendering issue where ray-marching directions are not calculated correctly</li>
+<li>Fixed color not set correctly when changing <code>Voxel Labels</code> while surface colors are <code>sync from voxels</code>
+</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.4" id="threebrain-024">threeBrain 0.2.4<small>2021-12-03</small><a class="anchor" aria-label="anchor" href="#threebrain-024"></a></h2>
 <p>This version mainly works on the electrode localization. Most changes occur in the <code>JavaScript</code> engine.</p>
@@ -301,7 +322,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer></div>
