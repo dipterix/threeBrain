@@ -1,3 +1,21 @@
+threeBrain 0.2.5
+=======
+
+## Changes
+
+* Surface `sync from voxels` now clamp the surface nodes
+* Added `Voxel Display` controller to toggle volume display modes
+* Changed shortcut `l` from `Voxel Type` to `Voxel Display`
+* Volume `fragmentShader` uses non-linear function to calculate fragment colors combined with face normal; this will create smoother results
+* `DataCube2` geometry uses `ConvexHull` instead of box/sphere to improve the performance
+* `DataCube2` are no longer hidden when `sync from voxels` is on: users can use shortcuts `l` and `k` to easily control the visibility.
+
+## Bug fixes
+
+* Fixed a volume rendering issue where ray-marching directions are not calculated correctly
+* Fixed color not set correctly when changing `Voxel Labels` while surface colors are `sync from voxels`
+ 
+
 threeBrain 0.2.4
 =======
 
