@@ -179,3 +179,49 @@ threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never
   return(invisible())
 }
 
+
+#' @rdname template_subject
+#' @export
+available_templates <- function() {
+
+  url <- "https://api.github.com/repos/dipterix/threeBrain-sample/releases"
+  tf <- tempfile()
+  on.exit({
+    if(file.exists(tf)) {
+      unlink(tf)
+    }
+  })
+
+  res <- tryCatch({
+    utils::download.file(url, destfile = tf, quiet = TRUE)
+    res <- jsonlite::read_json(tf)[[1]]
+    res <- lapply(res$assets, function(asset){
+      list(
+        subject_name = gsub("\\..*", "", asset$name),
+        download_url = asset$browser_download_url
+      )
+    })
+
+    scodes <- vapply(res, FUN = '[[', FUN.VALUE = "", 'subject_name')
+    urls <- lapply(res, FUN = '[[', 'download_url')
+
+    names(urls) <- scodes
+    urls
+
+  }, error = function(e){
+    # As of 2022-05-09
+    list(
+      bert = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/bert.zip",
+      cvs_avg35 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35.zip",
+      cvs_avg35_inMNI152 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35_inMNI152.zip",
+      fsaverage = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage.zip",
+      fsaverage_sym = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage_sym.zip",
+      `N27-complete` = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27-complete.zip",
+      N27 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip"
+    )
+  })
+
+  return(res)
+}
+
+

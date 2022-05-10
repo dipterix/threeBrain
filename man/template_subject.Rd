@@ -7,6 +7,7 @@
 \alias{download_N27}
 \alias{set_default_template}
 \alias{threebrain_finalize_installation}
+\alias{available_templates}
 \title{Download and Manage Template Subjects}
 \usage{
 download_template_subject(
@@ -27,6 +28,8 @@ threebrain_finalize_installation(
   upgrade = c("ask", "always", "never"),
   async = TRUE
 )
+
+available_templates()
 }
 \arguments{
 \item{subject_code}{character with only letters and numbers (Important). Default is `N27`}
