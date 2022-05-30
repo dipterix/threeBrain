@@ -121,3 +121,43 @@ get_os <- function(){
   }
   return('unknown')
 }
+
+package_installed <- function(pkgs, all = FALSE){
+  re <- sapply(pkgs, function(p){
+    system.file('', package = p) != ''
+  })
+  if(all){
+    re <- all(re)
+  }
+  re
+}
+
+col2hexStr <- function(col, alpha = NULL, prefix = '#', ...){
+  if(is.null(alpha)){
+    alpha <- 1
+    transparent <- FALSE
+  }else{
+    transparent <- TRUE
+  }
+  re <- grDevices::adjustcolor(col, alpha.f = alpha)
+  if(!transparent){
+    re <- substr(re, start = 1L, stop = 7L)
+  }
+  gsub('^[^0-9A-F]*', replacement = prefix, x = re)
+}
+
+rs_avail <- function(){
+  tryCatch({
+    spath <- search()
+    if('tools:rstudio' %in% spath) {
+      rs_ver <- get("RStudio.Version", inherits = TRUE, envir = parent.env(globalenv()))
+      if(is.function(rs_ver)) {
+        rs_ver()
+        return(TRUE)
+      }
+    }
+    return(FALSE)
+  }, error = function(e){
+    return(FALSE)
+  })
+}

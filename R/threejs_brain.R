@@ -265,8 +265,8 @@ threejs_brain <- function(
   }
 
   # backgrounds
-  background <- dipsaus::col2hexStr(background)
-  # side_background = dipsaus::col2hexStr(side_background)
+  background <- col2hexStr(background)
+  # side_background = col2hexStr(side_background)
 
 
 
@@ -519,7 +519,7 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
 }
 
 grey_col <- function(...){
-  if( dipsaus::rs_avail() ){
+  if( rs_avail() ){
     cat("\033[38;5;246m", paste(..., sep = " ", collapse = "\n"),
         "\033[39m", sep = "")
   } else {
@@ -528,7 +528,7 @@ grey_col <- function(...){
 }
 
 green_col <- function(...){
-  if( dipsaus::rs_avail() ){
+  if( rs_avail() ){
     cat("\033[38;5;35m", paste(..., sep = " ", collapse = "\n"),
         "\033[39m", sep = "")
   } else {
@@ -537,7 +537,7 @@ green_col <- function(...){
 }
 
 red_col <- function(...){
-  if( dipsaus::rs_avail() ){
+  if( rs_avail() ){
     cat("\033[38;5;215m", paste(..., sep = " ", collapse = "\n"),
         "\033[39m", sep = "")
   } else {

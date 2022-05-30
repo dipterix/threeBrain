@@ -38,7 +38,7 @@ localization_module <- function(
   ..., control_presets = NULL, side_display = FALSE, controllers = list()
 ){
 
-  if(!dipsaus::package_installed("DT")){
+  if(!package_installed("DT")){
     stop("Package `DT` is needed to run this module. Please install it by running\n  ",
          "install.packages('DT')")
   }

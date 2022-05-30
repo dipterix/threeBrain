@@ -12,7 +12,7 @@
 \usage{
 download_template_subject(
   subject_code = "N27",
-  url = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip",
+  url,
   template_dir = default_template_directory()
 )
 
@@ -32,9 +32,9 @@ threebrain_finalize_installation(
 available_templates()
 }
 \arguments{
-\item{subject_code}{character with only letters and numbers (Important). Default is `N27`}
+\item{subject_code}{character with only letters and numbers (Important); default is `N27`}
 
-\item{url}{zip file address}
+\item{url}{zip file address; must be specified if \code{subject_code} is not from the followings: \code{'bert'}, \code{'cvs_avg35'}, \code{'cvs_avg35_inMNI152'}, \code{'fsaverage'}, \code{'fsaverage_sym'}, or \code{'N27'}}
 
 \item{template_dir}{parent directory where subject's `FreeSurfer` folder should be stored}
 

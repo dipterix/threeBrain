@@ -54,7 +54,7 @@ cat2 <- function(
     'WARNING' = '#ec942c',
     'ERROR' = '#f02c2c',
     'FATAL' = '#763053',
-    'DEFAULT' = '#000000'
+    'DEFAULT' = 'grey60'
   )
 ){
   level <- toupper(level)
@@ -63,11 +63,11 @@ cat2 <- function(
   }
   .col <- pal[[level]]
   if(is.null(.col)){
-    .col <- '#000000'
+    .col <- 'grey60'
   }
 
   # check if interactive
-  if(dipsaus::rs_avail() && !nzchar(file)){
+  if(rs_avail() && !nzchar(file)){
     if(print_level){
       base::cat('[', level, ']: ', sep = '')
     }
@@ -79,10 +79,10 @@ cat2 <- function(
       'WARNING' = '\033[38;5;215m',
       'ERROR' = '\033[38;5;203m',
       'FATAL' = '\033[38;5;95m',
-      'DEFAULT' = '\033[38;5;232m'
+      'DEFAULT' = '\033[38;5;246m'
     )[[level]]
     if(is.null(prefix)){
-      prefix <- '\033[38;5;232m'
+      prefix <- '\033[38;5;246m'
     }
     s <- paste(..., sep = sep)
     base::cat(prefix, s, "\033[39m", end, file = file, fill = fill, labels = labels, append = append, sep = '')

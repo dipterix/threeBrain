@@ -68,7 +68,7 @@ ViewerProxy <- R6::R6Class(
     },
 
     set_background = function(col){
-      private$set_value('background', dipsaus::col2hexStr(col))
+      private$set_value('background', col2hexStr(col))
     },
 
     set_zoom_level = function( zoom ){

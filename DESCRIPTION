@@ -1,7 +1,7 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 0.2.4.9003
+Version: 0.2.5
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("aut")),
@@ -15,19 +15,20 @@ Description: A fast, interactive cross-platform, and easy to share
     'WebGL'-based 3D brain viewer that visualizes 'FreeSurfer' and/or
     'AFNI/SUMA' surfaces. The viewer widget can be either standalone or 
     embedded into 'R-shiny' applications. The standalone version only require
-    a web browser with 'WebGL2' support (for example, 'Chrome'). It can be
-    inserted into any websites; see <https://dipterix.org/project/threebrain/>).
-    as an example. The 'R-shiny' support allows the 3D viewer to be dynamically 
-    generated from reactive user inputs. This feature has been fully adopted by
-    'RAVE' <https://openwetware.org/wiki/RAVE>, an interactive toolbox to 
-    analyze 'iEEG/eCoG' data. Documentation about 'threeBrain' is provided
+    a web browser with 'WebGL2' support (for example, 'Chrome', 'Firefox', 
+    'Safari'). It can be inserted into any websites; see 
+    <https://dipterix.org/project/threebrain/>) as an example. The 'R-shiny' 
+    support allows the 3D viewer to be dynamically generated from reactive user 
+    inputs. This feature has been fully adopted by 'RAVE' 
+    <https://openwetware.org/wiki/RAVE>, an interactive toolbox to 
+    analyze 'iEEG' data. Documentation about 'threeBrain' is provided
     by <https://dipterix.org/threeBrain/> and several vignettes included 
     in this package. To cite the package, please check our 'NeuroImage' paper 
     by Magnotti, Wang, and Beauchamp (2020, <doi:10.1016/j.neuroimage.2020.117341>),
     or see 'citation("threeBrain")' for details.
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 Roxygen: list(r6 = FALSE)
 Language: en-US
 URL: https://dipterix.org/threeBrain/ https://github.com/dipterix/threeBrain

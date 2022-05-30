@@ -9,6 +9,7 @@ threeBrain 0.2.5
 * Volume `fragmentShader` uses non-linear function to calculate fragment colors combined with face normal; this will create smoother results
 * `DataCube2` geometry uses `ConvexHull` instead of box/sphere to improve the performance
 * `DataCube2` are no longer hidden when `sync from voxels` is on: users can use shortcuts `l` and `k` to easily control the visibility.
+* `download_template_subject` can download other templates such as `fsaverage`, `cvs_avg35`, `bert`.
 
 ## Bug fixes
 
