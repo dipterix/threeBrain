@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.4.9003</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
       </span>
     </div>
 
@@ -71,7 +71,7 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">download_template_subject</span><span class="op">(</span>
   subject_code <span class="op">=</span> <span class="st">"N27"</span>,
-  url <span class="op">=</span> <span class="st">"https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip"</span>,
+  <span class="va">url</span>,
   template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>
 <span class="op">)</span>
 
@@ -94,9 +94,9 @@
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>subject_code</dt>
-<dd><p>character with only letters and numbers (Important). Default is `N27`</p></dd>
+<dd><p>character with only letters and numbers (Important); default is `N27`</p></dd>
 <dt>url</dt>
-<dd><p>zip file address</p></dd>
+<dd><p>zip file address; must be specified if <code>subject_code</code> is not from the followings: <code>'bert'</code>, <code>'cvs_avg35'</code>, <code>'cvs_avg35_inMNI152'</code>, <code>'fsaverage'</code>, <code>'fsaverage_sym'</code>, or <code>'N27'</code></p></dd>
 <dt>template_dir</dt>
 <dd><p>parent directory where subject's `FreeSurfer` folder should be stored</p></dd>
 <dt>make_default</dt>
