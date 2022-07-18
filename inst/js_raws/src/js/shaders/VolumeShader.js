@@ -1,4 +1,4 @@
-import { Vector3 } from '../../build/three.module.js';
+import { Vector2, Vector3 } from '../../build/three.module.js';
 import { remove_comments } from '../utils.js';
 
 const VolumeRenderShader1 = {
@@ -7,11 +7,11 @@ const VolumeRenderShader1 = {
       nmap: { value: null },
       mask: { value: null },
       alpha : { value: -1.0 },
-      steps: { value: 300 },
+      // steps: { value: 300 },
       scale_inv: { value: new Vector3() },
       bounding: { value : 0.5 },
-      depthMix: { value: 1 },
-      // ndc_center: { value: new Vector3() },
+      depthMix: { value: 1 }
+      // camera_center: { value: new Vector2() },
     },
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
@@ -25,9 +25,9 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 cameraPosition;
 uniform vec3 scale_inv;
-uniform float steps;
+// uniform float steps;
 uniform float bounding;
-// uniform vec3 ndc_center;
+// uniform vec2 camera_center;
 
 out mat4 pmv;
 out vec3 vOrigin;
@@ -39,6 +39,7 @@ void main() {
   pmv = projectionMatrix * modelViewMatrix;
 
   gl_Position = pmv * vec4( position, 1.0 );
+  // gl_Position.xy += camera_center;
 
   // For perspective camera, vorigin is camera
   // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
@@ -52,14 +53,16 @@ void main() {
 
   // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
   // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( gl_Position.xy, 0.0, 1.0 );
-  vDirection = vdir.xyz * scale_inv  / vdir.w;
-  vSamplerBias =  - vec3(0.5, -0.5, 0.5) * scale_inv + 0.5;
+  vec4 vdir = inverse( pmv ) * vec4( 0.0, 0.0, 1.0, 0.0 );
+  vDirection = vdir.xyz * scale_inv; //  / vdir.w;
+  vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
 
   // Previous test code, seems to be poor because camera position is not well-calculated?
   // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
   // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
+  // vOrigin = (inverse( pmv ) * vec4( camera_center, gl_Position.z - 1.0, gl_Position.w )).xyz * scale_inv;
   vOrigin = (position) * scale_inv - vDirection;
+
 
 }
 `),
@@ -74,11 +77,13 @@ out vec4 color;
 uniform sampler3D cmap;
 uniform sampler3D nmap;
 uniform float alpha;
-uniform float steps;
+// uniform float steps;
 uniform vec3 scale_inv;
 uniform float bounding;
 uniform float depthMix;
 vec4 fcolor;
+vec3 fOrigin;
+vec3 fDirection;
 vec2 hitBox( vec3 orig, vec3 dir ) {
   vec3 box_min = vec3( - bounding );
   vec3 box_max = vec3( bounding );
@@ -113,15 +118,19 @@ vec3 getNormal( vec3 p ) {
 }
 
 void main(){
-  vec3 rayDir = normalize( vDirection );
-  vec2 bounds = hitBox( vOrigin, rayDir );
+  fDirection = vDirection;
+  fOrigin = vOrigin;
+
+  vec3 rayDir = normalize( fDirection );
+  vec2 bounds = hitBox( fOrigin, rayDir );
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
   // 0-255 need to be 0.5-255.5
-  vec3 p = vOrigin + bounds.x * rayDir;
-  vec3 inc = 1.0 / abs( rayDir );
+
+  // bounds.x is the length of ray
+  vec3 p = fOrigin + bounds.x * rayDir;
+  vec3 inc = scale_inv / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
-  delta /= steps;
 
   int nn = 0;
   int valid_voxel = 0;

@@ -1,3 +1,16 @@
+threeBrain 0.2.6
+=======
+
+## Changes
+
+* Allow users to pan the camera when localizing electrodes
+
+## Bug fixes
+
+* Fixed `NifTi` orientation issues and use `sform`
+* Fixed localization issue when `NifTi` transform matrix has determinant not equally to 1
+* Fixed volume shader, resolved shift issues when panning the camera
+
 threeBrain 0.2.5
 =======
 

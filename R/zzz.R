@@ -160,18 +160,11 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     vox_size <- oro.nifti::voxdim(nii)
     dm * vox_size
   }
-  get_center_matrix <- function(){
-    sz <- get_size() / 2
-    matrix(c(
-      1,0,0,0,
-      0,1,0,0,
-      0,0,1,0,
-      sz, 1
-    ), nrow = 4, byrow = FALSE)
-  }
+
   get_qform <- function(){
     return(oro.nifti::qform(nii))
   }
+
   get_voxel_size <- function(){ oro.nifti::voxdim(nii) }
 
   get_boundary <- function(){
@@ -187,6 +180,86 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     re
   }
 
+  # IJK to
+  get_IJK_to_RAS <- function() {
+    sform_code <- c(nii@sform_code, 0)[[1]]
+    qform_code <- c(nii@qform_code, 0)[[1]]
+
+    # https://github.com/dipterix/threeBrain/issues/15
+    if(sform_code == 0 && qform_code == 0) {
+      mat <- diag(c(nii@pixdim[seq(2,4)], 1))
+      return(list(
+        matrix = mat,
+        code = 0,
+        space = "Unknown"
+      ))
+    }
+    use_sform <- TRUE
+    prefered_code <- c(1, 4, 2, 5, 3, 0)
+
+    if(which(prefered_code == sform_code) >
+       which(prefered_code == qform_code)) {
+      use_sform <- FALSE
+    }
+
+    if( use_sform ) {
+      # method 3
+      mat <- rbind(
+        nii@srow_x,
+        nii@srow_y,
+        nii@srow_z,
+        c(0,0,0,1)
+      )
+      code <- sform_code
+    } else {
+      # method 2
+      mat <- diag(c(nii@pixdim[seq(2,4)], 1))
+      mat[3, ] <- mat[3, ] * nii@pixdim[[1]]
+      mat[1, 4] <- nii@qoffset_x
+      mat[2, 4] <- nii@qoffset_y
+      mat[3, 4] <- nii@qoffset_z
+      code <- qform_code
+    }
+
+    return(list(
+      matrix = mat,
+      code = code,
+      space = switch(
+        as.character(code),
+        `1` = "Scanner RAS",
+        `2` = "Aligned to anatomy/external file",
+        `3` = "Talairach template",
+        `4` = "MNI152 template",
+        `5` = "Other Template",
+        "Unknown"
+      )
+    ))
+  }
+
+  get_IJK_to_tkrRAS <- function(brain) {
+    ijk2ras <- get_IJK_to_RAS()
+    if(ijk2ras$code %in% c(0, 2, 3, 5)) {
+      warning("The NifTi file contains a transform matrix, projecting IJK indices to a XYZ space that is not supported: [", ijk2ras$space, "]. The rendering result might be improper.")
+    }
+    mat <- ijk2ras$matrix
+    switch (
+      as.character(ijk2ras$code),
+      `0` = {
+        # as is, but add transform
+        mat[1:3, 4] <- - get_size() / 2
+      },
+      `1` = {
+        # scanner RAS
+        mat <- brain$Torig %*% solve(brain$Norig) %*% mat
+      },
+      `4` = {
+        # MNI-152, MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+        mat <- brain$Torig %*% solve(brain$Norig) %*% solve(brain$xfm) %*% mat
+      }
+    )
+    mat
+  }
+
   list(
     header = nii,
     get_range = get_range,
@@ -194,10 +267,11 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     get_data = function(){ nii@.Data },
     # Torig
     get_qform = get_qform,
-    get_center_matrix = get_center_matrix,
     get_voxel_size = get_voxel_size,
     get_size = get_size,
-    get_boundary = get_boundary
+    get_boundary = get_boundary,
+    get_IJK_to_RAS = get_IJK_to_RAS,
+    get_IJK_to_tkrRAS = get_IJK_to_tkrRAS
   )
 
 }

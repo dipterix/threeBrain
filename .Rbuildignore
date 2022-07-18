@@ -33,3 +33,4 @@ inst/htmlwidgets/lib/webmwriter-0.2.0/
 ^pkgdown$
 ^ui\.R$
 ^_rs_job\.R$
+^CRAN-SUBMISSION$

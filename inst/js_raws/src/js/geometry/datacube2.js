@@ -403,6 +403,18 @@ class DataCube2 extends AbstractThreeBrainObject {
 
   }
 
+/*
+  pre_render( results ) {
+    if(!this.object) { return; }
+    const camera = this._canvas.main_camera;
+    this._uniforms.camera_center.value.set(
+      (camera.right + camera.left) / (camera.left - camera.right),
+      (camera.top + camera.bottom) / (camera.bottom - camera.top)
+    );
+    this._mesh.material.uniformsNeedUpdate = true;
+  }
+  */
+
 
 }
 

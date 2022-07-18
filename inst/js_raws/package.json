@@ -24,6 +24,10 @@
     "threejs",
     "WebGL"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dipterix/threeBrain.git"
+  },
   "author": "Zhengjia Wang",
   "license": "MIT",
   "description": "Library to visualize brain in modern web browsers via WebGL"

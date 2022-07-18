@@ -84,11 +84,12 @@ localization_module <- function(
 
         # TODO: FIXME
         # calculate matrixWorld
-        ct_shift <- ct$get_center_matrix()
-        ct_qform <- ct$get_qform()
-        matrix_world <- brain$Torig %*% solve(brain$Norig) %*% ct_qform %*% ct_shift
-        # matrix_world <- NULL
-        add_voxel_cube(brain, "CT", ct$get_data(), size = ct$get_size(),
+        ct_shape <- ct$get_shape()
+        matrix_world <- diag(rep(1, 4))
+        matrix_world[1:3, 4] <- ct_shape / 2
+        matrix_world <- ct$get_IJK_to_tkrRAS(brain) %*% matrix_world
+
+        add_voxel_cube(brain, "CT", ct$get_data(), size = ct_shape,
                        matrix_world = matrix_world)
         key <- seq(0, max(ct$get_range()))
         cmap <- create_colormap(
@@ -110,7 +111,7 @@ localization_module <- function(
             controllers = controllers,
             side_display = side_display,
             ...,
-            custom_javascript = "canvas.controls.noPan=true;",
+            # custom_javascript = "canvas.controls.noPan=true;",
             show_modal = FALSE
           )
         }

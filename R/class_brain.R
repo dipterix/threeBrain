@@ -388,11 +388,12 @@ Brain2 <- R6::R6Class(
         # TODO: FIXME
 
         # add_voxel_cube(self, "CT", cube)
-        ct_shift <- ct$get_center_matrix()
-        ct_qform <- ct$get_qform()
-        matrix_world <- brain$Torig %*% solve(brain$Norig) %*% ct_qform %*% ct_shift
-        # matrix_world <- NULL
-        add_voxel_cube(self, "CT", ct$get_data(), size = ct$get_size(),
+        ct_shape <- ct$get_shape()
+        matrix_world <- diag(rep(1, 4))
+        matrix_world[1:3, 4] <- ct_shape / 2
+        matrix_world <- ct$get_IJK_to_tkrRAS(self) %*% matrix_world
+
+        add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
                        matrix_world = matrix_world)
 
         key <- seq(0, max(ct$get_range()))
@@ -411,7 +412,7 @@ Brain2 <- R6::R6Class(
           control_presets = control_presets,
           voxel_colormap = cmap,
           controllers = controllers,
-          custom_javascript = "canvas.controls.noPan=true;",
+          # custom_javascript = "canvas.controls.noPan=true;",
           ...
         )
       } else {
@@ -425,7 +426,7 @@ Brain2 <- R6::R6Class(
         self$plot(
           control_presets = control_presets,
           controllers = controllers,
-          custom_javascript = "canvas.controls.noPan=true;",
+          # custom_javascript = "canvas.controls.noPan=true;",
           ...
         )
       }

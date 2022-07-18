@@ -65,7 +65,8 @@ function raycast_volume_geneator(){
 
     for( i = 0; i < margin_voxels.x; i++ ){
       for( j = 0; j < margin_voxels.y; j++ ){
-        p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0 );
+        // p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0.5 * f.z );
+        p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0.5 * f.z );
         p1.copy( p );
         p.applyMatrix3( projection );
         p.set(
