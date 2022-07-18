@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5.9000</span>
       </span>
     </div>
 
@@ -69,31 +69,42 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">check_freesurfer_path</span><span class="op">(</span>
-  <span class="va">fs_subject_folder</span>,
-  autoinstall_template <span class="op">=</span> <span class="cn">FALSE</span>,
-  return_path <span class="op">=</span> <span class="cn">FALSE</span>,
-  check_volume <span class="op">=</span> <span class="cn">FALSE</span>,
-  check_surface <span class="op">=</span> <span class="cn">FALSE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_freesurfer_path</span><span class="op">(</span></span>
+<span>  <span class="va">fs_subject_folder</span>,</span>
+<span>  autoinstall_template <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  return_path <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  check_volume <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  check_surface <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>fs_subject_folder</dt>
 <dd><p>character, path to `fs` project directory or `RAVE` subject directory</p></dd>
+
+
 <dt>autoinstall_template</dt>
 <dd><p>logical, whether `N27` brain should be installed if missing</p></dd>
+
+
 <dt>return_path</dt>
 <dd><p>logical, whether to return `FreeSurfer` path</p></dd>
+
+
 <dt>check_volume</dt>
 <dd><p>logical, whether to check volume data</p></dd>
+
+
 <dt>check_surface</dt>
 <dd><p>logical, whether to check surface data (not implemented yet)</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>logical whether the directory is valid or, if <code>return_path</code> is true,
+    
+
+<p>logical whether the directory is valid or, if <code>return_path</code> is true,
 return `FreeSurfer` path</p>
     </div>
 
@@ -109,7 +120,7 @@ return `FreeSurfer` path</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

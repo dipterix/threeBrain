@@ -20,7 +20,7 @@ instead."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/ma
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5.9000</span>
       </span>
     </div>
 
@@ -75,48 +75,61 @@ instead.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">import_fs</span><span class="op">(</span>
-  <span class="va">subject_name</span>,
-  <span class="va">fs_path</span>,
-  quiet <span class="op">=</span> <span class="cn">FALSE</span>,
-  dtype <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"T1"</span>, <span class="st">"surface"</span>, <span class="st">"curv"</span>, <span class="st">"atlas_volume"</span>, <span class="st">"atlas_surface"</span>, <span class="st">"xform"</span><span class="op">)</span>,
-  sub_type <span class="op">=</span> <span class="cn">NULL</span>,
-  hemisphere <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l"</span>, <span class="st">"r"</span><span class="op">)</span>,
-  <span class="va">...</span>
-<span class="op">)</span>
-
-<span class="fu">import_suma</span><span class="op">(</span>
-  <span class="va">subject_name</span>,
-  <span class="va">fs_path</span>,
-  quiet <span class="op">=</span> <span class="cn">FALSE</span>,
-  dtype <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"T1"</span>, <span class="st">"surface"</span>, <span class="st">"curv"</span>, <span class="st">"atlas_volume"</span>, <span class="st">"atlas_surface"</span>, <span class="st">"xform"</span><span class="op">)</span>,
-  sub_type <span class="op">=</span> <span class="cn">NULL</span>,
-  hemisphere <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l"</span>, <span class="st">"r"</span><span class="op">)</span>,
-  <span class="va">...</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">import_fs</span><span class="op">(</span></span>
+<span>  <span class="va">subject_name</span>,</span>
+<span>  <span class="va">fs_path</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  dtype <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"T1"</span>, <span class="st">"surface"</span>, <span class="st">"curv"</span>, <span class="st">"atlas_volume"</span>, <span class="st">"atlas_surface"</span>, <span class="st">"xform"</span><span class="op">)</span>,</span>
+<span>  sub_type <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  hemisphere <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l"</span>, <span class="st">"r"</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">import_suma</span><span class="op">(</span></span>
+<span>  <span class="va">subject_name</span>,</span>
+<span>  <span class="va">fs_path</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  dtype <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"T1"</span>, <span class="st">"surface"</span>, <span class="st">"curv"</span>, <span class="st">"atlas_volume"</span>, <span class="st">"atlas_surface"</span>, <span class="st">"xform"</span><span class="op">)</span>,</span>
+<span>  sub_type <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  hemisphere <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l"</span>, <span class="st">"r"</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>subject_name</dt>
 <dd><p>character, subject code</p></dd>
+
+
 <dt>fs_path</dt>
 <dd><p>path to 'FreeSurfer' folder</p></dd>
+
+
 <dt>quiet, ...</dt>
 <dd><p>passed from or to other methods.</p></dd>
+
+
 <dt>dtype</dt>
 <dd><p>data type to import, choices are <code>'T1'</code>, <code>'surface'</code>,
 <code>'curv'</code>, <code>'atlas_volume'</code>, <code>'atlas_surface'</code>, <code>'xform'</code></p></dd>
+
+
 <dt>sub_type</dt>
 <dd><p>detailed files to import. <code>'atlas_surface'</code>
 is not supported for now</p></dd>
+
+
 <dt>hemisphere</dt>
 <dd><p>which hemisphere to import, ignored when <code>dtype</code> is in
 <code>'T1'</code>, <code>'atlas_volume'</code>, <code>'atlas_surface'</code>, <code>'xform'</code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>logical, <code>TRUE</code> if the file is or has been cached, or
+    
+
+<p>logical, <code>TRUE</code> if the file is or has been cached, or
 <code>FALSE</code> if the file is missing.</p>
     </div>
 
@@ -132,7 +145,7 @@ is not supported for now</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

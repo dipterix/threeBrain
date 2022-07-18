@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5.9000</span>
       </span>
     </div>
 
@@ -69,120 +69,186 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">threejs_brain</span><span class="op">(</span>
-  <span class="va">...</span>,
-  .list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
-  width <span class="op">=</span> <span class="cn">NULL</span>,
-  height <span class="op">=</span> <span class="cn">NULL</span>,
-  background <span class="op">=</span> <span class="st">"#FFFFFF"</span>,
-  cex <span class="op">=</span> <span class="fl">1</span>,
-  timestamp <span class="op">=</span> <span class="cn">TRUE</span>,
-  side_canvas <span class="op">=</span> <span class="cn">FALSE</span>,
-  side_zoom <span class="op">=</span> <span class="fl">1</span>,
-  side_width <span class="op">=</span> <span class="fl">250</span>,
-  side_shift <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,
-  side_display <span class="op">=</span> <span class="cn">TRUE</span>,
-  control_panel <span class="op">=</span> <span class="cn">TRUE</span>,
-  control_presets <span class="op">=</span> <span class="cn">NULL</span>,
-  control_display <span class="op">=</span> <span class="cn">TRUE</span>,
-  camera_center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,
-  camera_pos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,
-  start_zoom <span class="op">=</span> <span class="fl">1</span>,
-  coords <span class="op">=</span> <span class="cn">NULL</span>,
-  symmetric <span class="op">=</span> <span class="fl">0</span>,
-  default_colormap <span class="op">=</span> <span class="st">"Value"</span>,
-  palettes <span class="op">=</span> <span class="cn">NULL</span>,
-  value_ranges <span class="op">=</span> <span class="cn">NULL</span>,
-  value_alias <span class="op">=</span> <span class="cn">NULL</span>,
-  show_inactive_electrodes <span class="op">=</span> <span class="cn">TRUE</span>,
-  surface_colormap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"palettes"</span>, <span class="st">"surface"</span>, <span class="st">"ContinuousSample.json"</span>,
-    package <span class="op">=</span> <span class="st">"threeBrain"</span><span class="op">)</span>,
-  voxel_colormap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"palettes"</span>, <span class="st">"datacube2"</span>, <span class="st">"FreeSurferColorLUT.json"</span>,
-    package <span class="op">=</span> <span class="st">"threeBrain"</span><span class="op">)</span>,
-  videos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
-  widget_id <span class="op">=</span> <span class="st">"threebrain_data"</span>,
-  tmp_dirname <span class="op">=</span> <span class="cn">NULL</span>,
-  debug <span class="op">=</span> <span class="cn">FALSE</span>,
-  token <span class="op">=</span> <span class="cn">NULL</span>,
-  controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
-  browser_external <span class="op">=</span> <span class="cn">TRUE</span>,
-  global_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
-  global_files <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
-  custom_javascript <span class="op">=</span> <span class="cn">NULL</span>,
-  show_modal <span class="op">=</span> <span class="st">"auto"</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">threejs_brain</span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  .list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  height <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  background <span class="op">=</span> <span class="st">"#FFFFFF"</span>,</span>
+<span>  cex <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  timestamp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  side_canvas <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  side_zoom <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  side_width <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>  side_shift <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>  side_display <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  control_panel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  control_presets <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  control_display <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  camera_center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>  camera_pos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>  start_zoom <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  coords <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  symmetric <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  default_colormap <span class="op">=</span> <span class="st">"Value"</span>,</span>
+<span>  palettes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  value_ranges <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  value_alias <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  show_inactive_electrodes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  surface_colormap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"palettes"</span>, <span class="st">"surface"</span>, <span class="st">"ContinuousSample.json"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"threeBrain"</span><span class="op">)</span>,</span>
+<span>  voxel_colormap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"palettes"</span>, <span class="st">"datacube2"</span>, <span class="st">"FreeSurferColorLUT.json"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"threeBrain"</span><span class="op">)</span>,</span>
+<span>  videos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  widget_id <span class="op">=</span> <span class="st">"threebrain_data"</span>,</span>
+<span>  tmp_dirname <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  debug <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  token <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  browser_external <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  global_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  global_files <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  custom_javascript <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  show_modal <span class="op">=</span> <span class="st">"auto"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>..., .list</dt>
 <dd><p>geometries inherit from AbstractGeom</p></dd>
+
+
 <dt>width, height</dt>
 <dd><p>positive integers. Width and height of the widget.
 By default width=`100%`, and height varies.</p></dd>
+
+
 <dt>background</dt>
 <dd><p>character, background color such as <code>"#FFFFFF"</code> or <code>"white"</code></p></dd>
+
+
 <dt>cex</dt>
 <dd><p>positive number, relative text magnification level</p></dd>
+
+
 <dt>timestamp</dt>
 <dd><p>logical, whether to show time-stamp at the beginning</p></dd>
+
+
 <dt>side_canvas</dt>
 <dd><p>logical, enable side cameras to view objects from fixed perspective</p></dd>
+
+
 <dt>side_zoom</dt>
 <dd><p>numerical, if side camera is enabled, zoom-in level, from 1 to 5</p></dd>
+
+
 <dt>side_width</dt>
 <dd><p>positive integer, side panel size in pixels</p></dd>
+
+
 <dt>side_shift</dt>
 <dd><p>integer of length two, side panel shift in pixels (`CSS style`: top, left)</p></dd>
+
+
 <dt>side_display</dt>
 <dd><p>logical, show/hide side panels at beginning</p></dd>
+
+
 <dt>control_panel</dt>
 <dd><p>logical, enable control panels for the widget</p></dd>
+
+
 <dt>control_presets</dt>
 <dd><p>characters, presets to be shown in control panels</p></dd>
+
+
 <dt>control_display</dt>
 <dd><p>logical, whether to expand/collapse control UI at the beginning</p></dd>
+
+
 <dt>camera_center</dt>
 <dd><p>numerical, length of three, XYZ position where camera should focus at</p></dd>
+
+
 <dt>camera_pos</dt>
 <dd><p>XYZ position of camera itself, default (0, 0, 500)</p></dd>
+
+
 <dt>start_zoom</dt>
 <dd><p>numerical, positive number indicating camera zoom level</p></dd>
+
+
 <dt>coords</dt>
 <dd><p><code>NULL</code> to hide coordinates or numeric vector of three.</p></dd>
+
+
 <dt>symmetric</dt>
 <dd><p>numerical, default 0, color center will be mapped to this value</p></dd>
+
+
 <dt>default_colormap</dt>
 <dd><p>character, which color map name to display at startup</p></dd>
+
+
 <dt>palettes</dt>
 <dd><p>named list, names corresponds to color-map names if you want to change color palettes</p></dd>
+
+
 <dt>value_ranges</dt>
 <dd><p>named list, similar to <code>palettes</code>, value range for each values</p></dd>
+
+
 <dt>value_alias</dt>
 <dd><p>named list, legend title for corresponding variable</p></dd>
+
+
 <dt>show_inactive_electrodes</dt>
 <dd><p>logical, whether to show electrodes with no values</p></dd>
+
+
 <dt>surface_colormap</dt>
 <dd><p>a color map or its path generated by <code>create_colormap(gtype="surface")</code> to render surfaces vertices; see <code><a href="voxel_colormap.html">create_colormap</a></code> for details.</p></dd>
+
+
 <dt>voxel_colormap</dt>
 <dd><p>a color map or its path generated by <code>create_colormap(gtype="volume")</code> to render volume such as atlases; see <code><a href="voxel_colormap.html">create_colormap</a></code> for details.</p></dd>
+
+
 <dt>videos</dt>
 <dd><p>named list, names corresponds to color-map names, and items are generated from <code><a href="video_content.html">video_content</a></code></p></dd>
+
+
 <dt>widget_id</dt>
 <dd><p>character, internally used as unique identifiers for widgets;
 only use it when you have multiple widgets in one website</p></dd>
+
+
 <dt>tmp_dirname</dt>
 <dd><p>character path, internally used, where to store temporary files</p></dd>
+
+
 <dt>debug</dt>
 <dd><p>logical, internally used for debugging</p></dd>
+
+
 <dt>token</dt>
 <dd><p>unique character, internally used to identify widgets in JS localStorage</p></dd>
+
+
 <dt>controllers</dt>
 <dd><p>list to override the settings, for example <code>proxy$get_controllers()</code></p></dd>
+
+
 <dt>browser_external</dt>
 <dd><p>logical, use system default browser (default) or builtin one.</p></dd>
+
+
 <dt>global_data, global_files</dt>
 <dd><p>internally use, mainly to store orientation matrices and files.</p></dd>
+
+
 <dt>custom_javascript</dt>
 <dd><p>customized temporary 'JavaScript' code that runs after ready state; available 'JavaScript' variables are:</p><dl><dt><code>'groups'</code></dt>
 <dd><p>input information about each group</p></dd>
@@ -207,8 +273,11 @@ only use it when you have multiple widgets in one website</p></dd>
 
 
 </dl></dd>
+
+
 <dt>show_modal</dt>
 <dd><p>logical or <code>"auto"</code>, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications</p></dd>
+
 </dl></div>
     <div id="author">
     <h2>Author</h2>
@@ -217,32 +286,32 @@ only use it when you have multiple widgets in one website</p></dd>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"></span>
-<span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Please use `download_N27` to download N27 Collins template brain</span></span>
-<span class="r-in"><span class="va">n27_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span></span>
-<span class="r-in"><span class="kw">if</span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">n27_path</span><span class="op">)</span> <span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"></span>
-<span class="r-in">  <span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">n27_path</span>, <span class="st">"N27"</span>,</span>
-<span class="r-in">                             surface_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'pial'</span>, <span class="st">'smoothwm'</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">brain</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in">  <span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span></span>
-<span class="r-in">    background <span class="op">=</span> <span class="st">"#000000"</span>,</span>
-<span class="r-in">    controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">      <span class="st">'Voxel Type'</span> <span class="op">=</span> <span class="st">'aparc_aseg'</span>,</span>
-<span class="r-in">      <span class="st">'Surface Type'</span> <span class="op">=</span> <span class="st">'smoothwm'</span>,</span>
-<span class="r-in">      <span class="st">'Surface Color'</span> <span class="op">=</span> <span class="st">'sync from voxels'</span>,</span>
-<span class="r-in">      <span class="st">'Blend Factor'</span> <span class="op">=</span> <span class="fl">1</span>,</span>
-<span class="r-in">      <span class="st">'Right Opacity'</span> <span class="op">=</span> <span class="fl">0.3</span>,</span>
-<span class="r-in">      <span class="st">'Overlay Sagittal'</span> <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span class="r-in">    <span class="op">)</span>,</span>
-<span class="r-in">    show_modal <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span class="r-in">  <span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="op">}</span></span>
-<span class="r-in"></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Please use `download_N27` to download N27 Collins template brain</span></span></span>
+<span class="r-in"><span><span class="va">n27_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">n27_path</span><span class="op">)</span> <span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">n27_path</span>, <span class="st">"N27"</span>,</span></span>
+<span class="r-in"><span>                             surface_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'pial'</span>, <span class="st">'smoothwm'</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">brain</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    background <span class="op">=</span> <span class="st">"#000000"</span>,</span></span>
+<span class="r-in"><span>    controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="st">'Voxel Type'</span> <span class="op">=</span> <span class="st">'aparc_aseg'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'Surface Type'</span> <span class="op">=</span> <span class="st">'smoothwm'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'Surface Color'</span> <span class="op">=</span> <span class="st">'sync from voxels'</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'Blend Factor'</span> <span class="op">=</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'Right Opacity'</span> <span class="op">=</span> <span class="fl">0.3</span>,</span></span>
+<span class="r-in"><span>      <span class="st">'Overlay Sagittal'</span> <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    show_modal <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -257,7 +326,7 @@ only use it when you have multiple widgets in one website</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

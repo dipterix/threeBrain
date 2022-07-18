@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5.9000</span>
       </span>
     </div>
 
@@ -69,25 +69,32 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">merge_brain</span><span class="op">(</span>
-  <span class="va">...</span>,
-  .list <span class="op">=</span> <span class="cn">NULL</span>,
-  template_surface_types <span class="op">=</span> <span class="cn">NULL</span>,
-  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span>,
-  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">merge_brain</span><span class="op">(</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  .list <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  template_surface_types <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>..., .list</dt>
 <dd><p><code>Brain2</code> objects</p></dd>
+
+
 <dt>template_surface_types</dt>
 <dd><p>which template surface types to load, default is auto-guess</p></dd>
+
+
 <dt>template_subject</dt>
 <dd><p>character, subject code to be treated as template, default is `N27`</p></dd>
+
+
 <dt>template_dir</dt>
 <dd><p>the parent directory where template subject is stored in</p></dd>
+
 </dl></div>
     <div id="author">
     <h2>Author</h2>
@@ -106,7 +113,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

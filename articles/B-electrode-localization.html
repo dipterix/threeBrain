@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5.9000</span>
       </span>
     </div>
 
@@ -97,10 +97,10 @@
 <p>In <code>iEEG/ECoG</code> study, it is very common to localize the electrodes using ‘CT’ scans. The CT images have different orientations to the MR images, hence co-registration is often needed. This package does not provide co-registration functions, as different labs might have different approaches. <code>threeBrain</code> only takes co-registered CT scans and visualize them directly. Therefore if you have already co-registered CT, skip the next part.</p>
 <p>The rest part of this article uses <code>N27</code> sample files mentioned by the previous vignette. If you are using this example, please execute the following R code to set up. Alternatively, you can substitute variables <code>subject_code</code> and <code>subject_path</code> accordingly.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span>
-<span class="va">subject_code</span> <span class="op">&lt;-</span> <span class="st">"N27"</span>
-<span class="va">subject_path</span> <span class="op">&lt;-</span> <span class="st">"~/Downloads/N27"</span>
-<span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="va">subject_code</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span></span>
+<span><span class="va">subject_code</span> <span class="op">&lt;-</span> <span class="st">"N27"</span></span>
+<span><span class="va">subject_path</span> <span class="op">&lt;-</span> <span class="st">"~/Downloads/N27"</span></span>
+<span><span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="va">subject_code</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="ct-co-registration">CT Co-registration<a class="anchor" aria-label="anchor" href="#ct-co-registration"></a>
 </h2>
@@ -124,10 +124,10 @@
 </ul>
 <p>Next, type in and change the file path to <code>ct_in_t1.nii</code> just created</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ct_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="st">"mri/ct_in_t1.nii"</span><span class="op">)</span>
-<span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="../reference/localization_module.html">localization_module</a></span><span class="op">(</span>subject_code <span class="op">=</span> <span class="va">subject_code</span>,
-                                fs_path <span class="op">=</span> <span class="va">subject_path</span>,
-                                ct_path <span class="op">=</span> <span class="va">ct_path</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ct_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="st">"mri/ct_in_t1.nii"</span><span class="op">)</span></span>
+<span><span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="../reference/localization_module.html">localization_module</a></span><span class="op">(</span>subject_code <span class="op">=</span> <span class="va">subject_code</span>,</span>
+<span>                                fs_path <span class="op">=</span> <span class="va">subject_path</span>,</span>
+<span>                                ct_path <span class="op">=</span> <span class="va">ct_path</span><span class="op">)</span></span></code></pre></div>
 <p>You will see the threshold CT displayed along with the pial surfaces.</p>
 <p><img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-03.png" width="100%"></p>
 <p>Make sure <code>Edit Mode</code> (in the <code>Electrode Localization</code> panel) is <code>CT/Volume</code>. Now move your mouse cursor to the green electrodes, the localization control panel will display the <code>tkrRAS</code> (<code>FreeSurfer</code> coordinate), <code>T1</code> (native RAS coordinate), and <code>MNI305</code> (‘MNI’ template coordinate). <strong>Double-click</strong> on the green areas, and a new electrode will be created.</p>
@@ -207,7 +207,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

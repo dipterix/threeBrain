@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5.9000</span>
       </span>
     </div>
 
@@ -69,47 +69,62 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">download_template_subject</span><span class="op">(</span>
-  subject_code <span class="op">=</span> <span class="st">"N27"</span>,
-  <span class="va">url</span>,
-  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="fu">download_N27</span><span class="op">(</span>make_default <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span>
-
-<span class="fu">set_default_template</span><span class="op">(</span>
-  <span class="va">subject_code</span>,
-  view <span class="op">=</span> <span class="cn">TRUE</span>,
-  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="fu">threebrain_finalize_installation</span><span class="op">(</span>
-  upgrade <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ask"</span>, <span class="st">"always"</span>, <span class="st">"never"</span><span class="op">)</span>,
-  async <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span>
-
-<span class="fu">available_templates</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">download_template_subject</span><span class="op">(</span></span>
+<span>  subject_code <span class="op">=</span> <span class="st">"N27"</span>,</span>
+<span>  <span class="va">url</span>,</span>
+<span>  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">download_N27</span><span class="op">(</span>make_default <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">set_default_template</span><span class="op">(</span></span>
+<span>  <span class="va">subject_code</span>,</span>
+<span>  view <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">threebrain_finalize_installation</span><span class="op">(</span></span>
+<span>  upgrade <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ask"</span>, <span class="st">"always"</span>, <span class="st">"never"</span><span class="op">)</span>,</span>
+<span>  async <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">available_templates</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>subject_code</dt>
 <dd><p>character with only letters and numbers (Important); default is `N27`</p></dd>
+
+
 <dt>url</dt>
 <dd><p>zip file address; must be specified if <code>subject_code</code> is not from the followings: <code>'bert'</code>, <code>'cvs_avg35'</code>, <code>'cvs_avg35_inMNI152'</code>, <code>'fsaverage'</code>, <code>'fsaverage_sym'</code>, or <code>'N27'</code></p></dd>
+
+
 <dt>template_dir</dt>
 <dd><p>parent directory where subject's `FreeSurfer` folder should be stored</p></dd>
+
+
 <dt>make_default</dt>
 <dd><p>logical, whether to make `N27` default subject</p></dd>
+
+
 <dt>...</dt>
 <dd><p>more to pass to <code>download_template_subject</code></p></dd>
+
+
 <dt>view</dt>
 <dd><p>whether to view the subject</p></dd>
+
+
 <dt>upgrade</dt>
 <dd><p>whether to check and download 'N27' brain interactively.
 Choices are 'ask', 'always', and 'never'</p></dd>
+
+
 <dt>async</dt>
 <dd><p>whether to run the job in parallel to others; default is true</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -142,7 +157,7 @@ provide function <code>download_template_subject</code> to automatically install
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

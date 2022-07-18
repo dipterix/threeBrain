@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.5.9000</span>
       </span>
     </div>
 
@@ -69,69 +69,90 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">localization_module</span><span class="op">(</span>
-  <span class="va">subject_code</span>,
-  <span class="va">fs_path</span>,
-  ct_path <span class="op">=</span> <span class="cn">NULL</span>,
-  surfaces <span class="op">=</span> <span class="st">"pial"</span>,
-  use_141 <span class="op">=</span> <span class="cn">TRUE</span>,
-  shiny_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>launch.browser <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,
-  save_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>pattern <span class="op">=</span> <span class="st">"electrode"</span>, fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span>,
-  <span class="va">...</span>,
-  control_presets <span class="op">=</span> <span class="cn">NULL</span>,
-  side_display <span class="op">=</span> <span class="cn">FALSE</span>,
-  controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">localization_module</span><span class="op">(</span></span>
+<span>  <span class="va">subject_code</span>,</span>
+<span>  <span class="va">fs_path</span>,</span>
+<span>  ct_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  surfaces <span class="op">=</span> <span class="st">"pial"</span>,</span>
+<span>  use_141 <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  shiny_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>launch.browser <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  save_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>pattern <span class="op">=</span> <span class="st">"electrode"</span>, fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  control_presets <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  side_display <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>subject_code</dt>
 <dd><p>subject code</p></dd>
+
+
 <dt>fs_path</dt>
 <dd><p>the subject's 'FreeSurfer' path</p></dd>
+
+
 <dt>ct_path</dt>
 <dd><p>the file path of 'CT' scans that have already been aligned
 to 'T1'; must be in 'NIFTI' format</p></dd>
+
+
 <dt>surfaces</dt>
 <dd><p>which surfaces to load</p></dd>
+
+
 <dt>use_141</dt>
 <dd><p>whether to try 'SUMA' standard 141 surface; default is true</p></dd>
+
+
 <dt>shiny_options</dt>
 <dd><p>shiny application options; see <code>options</code> in
 <code><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></code></p></dd>
+
+
 <dt>save_path</dt>
 <dd><p>a temporary file where the electrode table should be
 cached; this file will be used to keep track of changes in case the
 application is crashed or shutdown</p></dd>
+
+
 <dt>...</dt>
 <dd><p>other parameters to pass into <code><a href="freesurfer_brain.html">freesurfer_brain2</a></code></p></dd>
+
+
 <dt>control_presets, side_display, controllers</dt>
 <dd><p>passed to
 <code><a href="threejs_brain.html">threejs_brain</a></code></p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A list of <code>'ui'</code> elements, <code>'server'</code> function, and
+    
+
+<p>A list of <code>'ui'</code> elements, <code>'server'</code> function, and
 a stand-alone <code>'app'</code></p>
+
+
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"></span>
-<span class="r-in"><span class="co"># This example require N27 template brain to be installed</span></span>
-<span class="r-in"><span class="co"># see `?download_N27` for details</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># using N27 to localize</span></span>
-<span class="r-in"><span class="va">fs_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span></span>
-<span class="r-in"><span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">fs_path</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
-<span class="r-in">  <span class="va">module</span> <span class="op">&lt;-</span> <span class="fu">localization_module</span><span class="op">(</span><span class="st">"N27"</span>, <span class="va">fs_path</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in">  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
-<span class="r-in">    <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">module</span><span class="op">$</span><span class="va">app</span><span class="op">)</span></span>
-<span class="r-in">  <span class="op">}</span></span>
-<span class="r-in"><span class="op">}</span></span>
-<span class="r-in"></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># This example require N27 template brain to be installed</span></span></span>
+<span class="r-in"><span><span class="co"># see `?download_N27` for details</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># using N27 to localize</span></span></span>
+<span class="r-in"><span><span class="va">fs_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.exists</a></span><span class="op">(</span><span class="va">fs_path</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">module</span> <span class="op">&lt;-</span> <span class="fu">localization_module</span><span class="op">(</span><span class="st">"N27"</span>, <span class="va">fs_path</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">module</span><span class="op">$</span><span class="va">app</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -146,7 +167,7 @@ a stand-alone <code>'app'</code></p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>
