@@ -25,7 +25,7 @@ set_default_template(
 )
 
 threebrain_finalize_installation(
-  upgrade = c("ask", "always", "never"),
+  upgrade = c("ask", "always", "never", "data-only", "config-only"),
   async = TRUE
 )
 

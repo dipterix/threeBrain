@@ -130,7 +130,7 @@ set_default_template <- function(subject_code, view = TRUE,
 #' Choices are 'ask', 'always', and 'never'
 #' @param async whether to run the job in parallel to others; default is true
 #' @export
-threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never'), async = TRUE){
+threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never', 'data-only', 'config-only'), async = TRUE){
   upgrade <- match.arg(upgrade)
 
   template_dir <- default_template_directory()
@@ -147,7 +147,11 @@ threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never
     return(invisible())
   }
 
-  if(has_n27 && upgrade %in% c('ask')){
+  if(has_n27 && upgrade %in% c('config-only')){
+    return(invisible())
+  }
+
+  if(has_n27 && upgrade %in% c('ask', 'data-only')){
     if(interactive()){
       reinst <- tryCatch({
         if(package_installed("dipsaus")) {
