@@ -260,18 +260,21 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     mat
   }
 
-  list(
-    header = nii,
-    get_range = get_range,
-    get_shape = get_shape,
-    get_data = function(){ nii@.Data },
-    # Torig
-    get_qform = get_qform,
-    get_voxel_size = get_voxel_size,
-    get_size = get_size,
-    get_boundary = get_boundary,
-    get_IJK_to_RAS = get_IJK_to_RAS,
-    get_IJK_to_tkrRAS = get_IJK_to_tkrRAS
+  structure(
+    list(
+      header = nii,
+      get_range = get_range,
+      get_shape = get_shape,
+      get_data = function(){ nii@.Data },
+      # Torig
+      get_qform = get_qform,
+      get_voxel_size = get_voxel_size,
+      get_size = get_size,
+      get_boundary = get_boundary,
+      get_IJK_to_RAS = get_IJK_to_RAS,
+      get_IJK_to_tkrRAS = get_IJK_to_tkrRAS
+    ),
+    class = c("threeBrain.nii", "list")
   )
 
 }

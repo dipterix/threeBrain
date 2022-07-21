@@ -112,7 +112,12 @@ MultiBrain2 <- R6::R6Class(
       controllers[["Highlight Box"]] <- FALSE
 
       if(!missing( coregistered_ct )){
-        ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )
+        if(!inherits(coregistered_ct, "threeBrain.nii")) {
+          ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )
+        } else {
+          ct <- coregistered_ct
+        }
+
         cube <- reorient_volume( ct$get_data(), self$Torig )
         add_voxel_cube(self, "CT", cube)
 
