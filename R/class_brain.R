@@ -331,12 +331,12 @@ Brain2 <- R6::R6Class(
 
       cat('Transforms:\n\n- FreeSurfer TalXFM [from scanner to MNI305]:\n')
       base::print( self$xfm )
-      cat('\n- Torig [Voxel CRS to FreeSurfer origin, vox2ras-tkr]\n')
+      cat('\n- Torig [Voxel IJK/CRS to FreeSurfer space tkrRAS, vox2ras-tkr]\n')
       base::print( self$Torig )
-      cat('\n- Norig [Voxel CRS to Scanner center, vox2ras]\n')
+      cat('\n- Norig [Voxel IJK/CRS to Scanner space, vox2ras]\n')
       base::print( self$Norig )
 
-      cat('\n- Scanner center relative to FreeSurfer origin\n')
+      cat('\n- Scanner origin in FreeSurfer tkrRAS coordinate\n')
       base::print( self$scanner_center )
       cat('\n- FreeSurfer RAS to MNI305, vox2vox-MNI305\n')
       base::print( self$vox2vox_MNI305 )
@@ -413,7 +413,7 @@ Brain2 <- R6::R6Class(
         controllers[["Voxel Type"]] <- "CT"
         controllers[["Voxel Display"]] <- "normal"
         controllers[["Voxel Min"]] <- 3000
-        controllers[["Edit Mode"]] <- "CT/volume"
+        controllers[["Edit Mode"]] %?<-% "CT/volume"
         self$plot(
           control_presets = control_presets,
           voxel_colormap = cmap,
@@ -423,7 +423,7 @@ Brain2 <- R6::R6Class(
         )
       } else {
         # No CT scan, use 3 planes to localize
-        controllers[["Edit Mode"]] <- "MRI slice"
+        controllers[["Edit Mode"]] %?<-% "MRI slice"
         controllers[["Overlay Coronal"]] <- TRUE
         controllers[["Overlay Axial"]] <- TRUE
         controllers[["Overlay Sagittal"]] <- TRUE
