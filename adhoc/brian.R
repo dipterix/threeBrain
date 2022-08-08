@@ -48,7 +48,7 @@ brain$template_object$misc <- lapply(
 
     line
   }
-)[1]
+)
 
 tbl$ContactPair <- as.factor(tbl$ContactPair)
 brain$template_object$set_electrodes(tbl)

@@ -109,11 +109,10 @@ LineSegmentsGeom <- R6::R6Class(
       } else {
         col <- rep(col, nverts)
       }
-      nsizes <- ceiling(nverts / 2)
       if(length(siz) > 1) {
-        siz <- approx(siz, n = nsizes)$y
+        siz <- approx(siz, n = nverts)$y
       } else {
-        siz <- rep(siz, nsizes)
+        siz <- rep(siz, nverts)
       }
 
       c(
