@@ -25,20 +25,28 @@ class LineSegmentsSingleton {
 
   ensure_nvertices( len ) {
 
-    if( this.vertices.length < len * 3 ) {
+    if( this.vertex_positions.length < len * 3 ) {
       // this._reset_attributes = true;
-      let tmp = this.vertices;
-      this.vertices = new Float32Array( len * 3 * 2 );
-      this.vertices.set( tmp );
+      let tmp = this.vertex_positions;
+      this.vertex_positions = new Float32Array( len * 3 * 2 );
+      this.vertex_positions.set( tmp );
 
       tmp = this.vertex_colors;
       this.vertex_colors = new Float32Array( len * 3 * 2 );
       this.vertex_colors.set( tmp );
 
-      this.geometry.setPositions( this.vertices );
+
+      // tmp = this.line_widths;
+      // this.line_widths = new Float32Array( len );
+      // this.line_widths.set( tmp );
+
+      this.geometry.setPositions( this.vertex_positions );
       this.geometry.setColors( this.vertex_colors );
+      // this.geometry.setAttribute(
+        // "linewidth",
+        // new BufferAttribute(this.line_widths, 1));
       // this.geometry.setDrawRange( 0, this.nvertices );
-      this.update();
+      this.needsUpdate = true;
     }
   }
 
@@ -46,12 +54,17 @@ class LineSegmentsSingleton {
 
     this._canvas = canvas;
     this._segments = [];
-    this.vertices = new Float32Array( 1500 );
+    this.vertex_positions = new Float32Array( 1500 );
     this.vertex_colors = new Float32Array( 1500 );
+    // this.line_widths = new Float32Array( 250 );
     this.nvertices = 0;
     this.geometry = new LineSegmentsGeometry();
-    this.geometry.setPositions( this.vertices );
+    this.geometry.setPositions( this.vertex_positions );
     this.geometry.setColors( this.vertex_colors );
+
+    // this.geometry.setAttribute(
+    //     "linewidth",
+    //     new BufferAttribute(this.line_widths, 1));
     this.needsUpdate = false;
     // this.geometry.setDrawRange( 0, 0 );
 
@@ -62,18 +75,16 @@ class LineSegmentsSingleton {
       dashed: false,
       worldUnits: false,
       linewidth: 1,
-      side: DoubleSide,
+      // side: DoubleSide,
       alphaToCoverage: false,
 
-      /*
-      onBeforeCompile: shader => {
-        shader.vertexShader = `
-          ${shader.vertexShader}
-        `.replace(`uniform float linewidth;`, `attribute float linewidth;`);
-        //console.log(shader.vertexShader)
-      }
-      */
+      // onBeforeCompile: (shader) => {
+      //   shader.vertexShader = `
+      //     ${shader.vertexShader}
+      //   `.replace(`uniform float linewidth;`, `attribute float linewidth;`);
+      // }
     });
+
 
     this.mesh = new LineSegments2( this.geometry, this.material );
     this.mesh.computeLineDistances();
@@ -96,29 +107,31 @@ class LineSegmentsSingleton {
     }
     const buff_starts = this.nvertices;
 
-    const n_ext = 2 * (nverts - 1);
-    this.ensure_nvertices( this.nvertices + n_ext );
+    this.ensure_nvertices( this.nvertices + nverts );
 
     // add inst to _segments
     this._segments.push( inst );
 
     // fill with 0 for both colors and vertices
 
-    for( let i = this.nvertices; i < this.nvertices + n_ext; i++ ) {
+    for( let i = this.nvertices; i < this.nvertices + nverts; i++ ) {
 
       // set segment positions
-      this.vertices[ 3 * i ] = 0;
-      this.vertices[ 3 * i + 1 ] = 0;
-      this.vertices[ 3 * i + 2 ] = 0;
+      this.vertex_positions[ 3 * i ] = 0;
+      this.vertex_positions[ 3 * i + 1 ] = 0;
+      this.vertex_positions[ 3 * i + 2 ] = 0;
 
       // set colors
       this.vertex_colors[ 3 * i ] = 0;
       this.vertex_colors[ 3 * i + 1 ] = 0;
       this.vertex_colors[ 3 * i + 2 ] = 0;
 
+      // set line widths
+      // this.line_widths[ Math.floor(i / 2) ] = 0;
+
     }
 
-    this.nvertices = this.nvertices + n_ext;
+    this.nvertices = this.nvertices + nverts;
     const buff_ends = this.nvertices;
 
     inst._buffer_starts = buff_starts;
@@ -135,7 +148,7 @@ class LineSegmentsSingleton {
     this._segments.length = 0;
     this.geometry.dispose();
     this.material.dispose();
-    this.vertices = null;
+    this.vertex_positions = null;
     this.vertex_colors = null;
     if( this._canvas.singletons.has(CONSTANTS.SINGLETONS["line-segments"]) ) {
       this._canvas.singletons.delete(CONSTANTS.SINGLETONS["line-segments"]);
@@ -146,7 +159,7 @@ class LineSegmentsSingleton {
 
     this._segments.forEach((s) => {
       s.compute_vertices();
-    })
+    });
 
   }
 
@@ -163,6 +176,7 @@ class LineSegmentsSingleton {
       this.geometry.attributes.instanceEnd.needsUpdate = true;
       this.geometry.attributes.instanceColorStart.needsUpdate = true;
       this.geometry.attributes.instanceColorEnd.needsUpdate = true;
+      // this.geometry.attributes.linewidth.needsUpdate = true;
     }
   }
 
@@ -177,16 +191,14 @@ class LineSegmentMesh extends AbstractThreeBrainObject {
     const bstarts = this._buffer_starts;
     if( bstarts < 0 ) { return; }
 
-    const vertices = this._singleton.vertices;
+    const vpositions = this._singleton.vertex_positions;
     const vcolors = this._singleton.vertex_colors;
+    // const lwidths = this._singleton.line_widths;
 
     if( this.valid ) {
-      let color_idx = 0;
-      const this_vcolors = this.vertex_colors;
-
       if( this.isDynamic ) {
 
-        for( let ii = 0; ii < this._anchors.length; ii++, color_idx++ ){
+        for( let ii = 0; ii < this._anchors.length; ii++ ){
           const buff_pos = bstarts + ii;
 
           const anchor = this._anchors[ii];
@@ -196,39 +208,49 @@ class LineSegmentMesh extends AbstractThreeBrainObject {
             tmp_vec3.fromArray( anchor.linked_to );
           }
 
-          vertices[ buff_pos * 3 ] = tmp_vec3.x;
-          vertices[ buff_pos * 3 + 1 ] = tmp_vec3.y;
-          vertices[ buff_pos * 3 + 2 ] = tmp_vec3.z;
-
-
-          if( 3 * color_idx >= this_vcolors.length ) {
-            color_idx = 0;
-          }
-
-          vcolors[ buff_pos * 3 ] = this_vcolors[ color_idx * 3 ];
-          vcolors[ buff_pos * 3 + 1 ] = this_vcolors[ color_idx * 3 + 1 ];
-          vcolors[ buff_pos * 3 + 2 ] = this_vcolors[ color_idx * 3 + 2 ];
+          vpositions[ buff_pos * 3 ] = tmp_vec3.x;
+          vpositions[ buff_pos * 3 + 1 ] = tmp_vec3.y;
+          vpositions[ buff_pos * 3 + 2 ] = tmp_vec3.z;
 
         }
 
       } else {
 
-        for( let ii = 0; ii < this._nvertices; ii++, color_idx++ ) {
+        for( let ii = 0; ii < this._nvertices; ii++ ) {
 
           const buff_pos = bstarts + ii;
-          vertices[ buff_pos * 3 ] = this._vertices[ ii * 3 ];
-          vertices[ buff_pos * 3 + 1 ] = this._vertices[ ii * 3 + 1 ];
-          vertices[ buff_pos * 3 + 2 ] = this._vertices[ ii * 3 + 2 ];
-
-          if( 3 * color_idx >= this_vcolors.length ) {
-            color_idx = 0;
-          }
-
-          vcolors[ buff_pos * 3 ] = this_vcolors[ color_idx * 3 ];
-          vcolors[ buff_pos * 3 + 1 ] = this_vcolors[ color_idx * 3 + 1 ];
-          vcolors[ buff_pos * 3 + 2 ] = this_vcolors[ color_idx * 3 + 2 ];
+          vpositions[ buff_pos * 3 ] = this._vertices[ ii * 3 ];
+          vpositions[ buff_pos * 3 + 1 ] = this._vertices[ ii * 3 + 1 ];
+          vpositions[ buff_pos * 3 + 2 ] = this._vertices[ ii * 3 + 2 ];
 
         }
+      }
+
+      let color_idx = 0;
+      // let width_idx = 0;
+      const this_vcolors = this.vertex_colors;
+      // const this_lwidths = this.line_widths;
+
+      for( let ii = bstarts; ii < bstarts + this._nvertices; ii++, color_idx++ ){
+        if( 3 * color_idx >= this_vcolors.length ) {
+          color_idx = 0;
+        }
+
+        vcolors[ ii * 3 ] = this_vcolors[ color_idx * 3 ];
+        vcolors[ ii * 3 + 1 ] = this_vcolors[ color_idx * 3 + 1 ];
+        vcolors[ ii * 3 + 2 ] = this_vcolors[ color_idx * 3 + 2 ];
+
+
+        // if( width_idx >= this_lwidths.length ) {
+        //   width_idx = 0;
+        // }
+
+        // if( ii % 2 === 0 ) {
+        //   lwidths[ ii / 2 ] = this_lwidths[ Math.floor(width_idx) ];
+        // }
+
+        // width_idx += 0.5;
+
       }
 
     } else {
@@ -236,7 +258,7 @@ class LineSegmentMesh extends AbstractThreeBrainObject {
       let j;
       for( let i = bstarts; i < bstarts + this._nvertices; i++ ) {
         for( j = 0; j < 3; j++ ) {
-          vertices[ i * 3 + j ] = 0;
+          vpositions[ i * 3 + j ] = 0;
           vcolors[ i * 3 + j ] = 0;
         }
       }
@@ -284,6 +306,13 @@ class LineSegmentMesh extends AbstractThreeBrainObject {
         this.vertex_colors[ i * 3 + 2 ] = tmp_col.b;
       });
     }
+
+    // const lwidths = to_array( this._params.line_widths || this._params.width );
+    // if( lwidths.length === 0 ) {
+    //   this.line_widths = [1];
+    // } else {
+    //   this.line_widths = lwidths;
+    // }
 
     this._singleton.add_segment(this);
 

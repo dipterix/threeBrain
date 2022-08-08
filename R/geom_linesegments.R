@@ -16,11 +16,15 @@ LineSegmentsGeom <- R6::R6Class(
     type = 'linesegments',
 
     color = character(0),
+    size = numeric(0),
     vertices = NULL,
+
 
     initialize = function(name, dynamic = FALSE, ...){
       super$initialize(name, position = c(0, 0, 0), ...)
       private$.dynamic = dynamic
+      self$size = 1.0
+      self$color = "#000000"
     },
 
     set_vertices = function(..., .list = list(), append = FALSE) {
@@ -80,12 +84,36 @@ LineSegmentsGeom <- R6::R6Class(
       invisible()
     },
 
+    set_size = function(...) {
+      new_size <- unlist(c(...))
+      if(!length(new_size) || any(is.na(new_size) | new_size < 0)) {
+        stop("LineSegmentsGeom line size (widths) can either be a number or a numeric vector with positive length with only non-negative values.")
+      }
+      self$size <- new_size
+    },
+
     to_list = function(){
 
+      nverts <- length(self$vertices)
       if(self$dynamic) {
         verts <- self$vertices
       } else {
         verts <- t(self$vertices)
+        nverts <- nverts / 3
+      }
+
+      col <- self$color
+      siz <- self$size
+      if(length(col) > 1) {
+        col <- grDevices::colorRampPalette(colors = col)(nverts)
+      } else {
+        col <- rep(col, nverts)
+      }
+      nsizes <- ceiling(nverts / 2)
+      if(length(siz) > 1) {
+        siz <- approx(siz, n = nsizes)$y
+      } else {
+        siz <- rep(siz, nsizes)
       }
 
       c(
@@ -93,7 +121,8 @@ LineSegmentsGeom <- R6::R6Class(
         list(
           dynamic = self$dynamic,
           vertices = verts,
-          color = self$color
+          color = col,
+          width = siz
         )
       )
     }
