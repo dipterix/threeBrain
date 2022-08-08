@@ -25,6 +25,7 @@ Brain2 <- R6::R6Class(
     #Stores a list of BrainElectrodes objects
     electrodes = NULL,
 
+    globals = NULL,
     misc = NULL,
 
     ## Transforms
@@ -45,6 +46,7 @@ Brain2 <- R6::R6Class(
                   msg = 'Torig must be 4x4 matrix')
 
       private$.subject_code <- subject_code
+      self$misc <- list()
 
       self$xfm <- xfm
       self$Norig <- Norig
@@ -56,7 +58,7 @@ Brain2 <- R6::R6Class(
       self$meta <- list()
 
       # TODO: put all brain global data (transform etc...) here
-      self$misc <- BlankGeom$new(
+      self$globals <- BlankGeom$new(
         group = GeomGroup$new(name = sprintf('_internal_group_data_%s', subject_code)),
         name = sprintf('_misc_%s', subject_code)
       )
@@ -141,7 +143,7 @@ Brain2 <- R6::R6Class(
     # special: must be cached path
     add_vertex_color = function(name, path, lazy = TRUE){
       path <- normalizePath(path)
-      self$misc$group$set_group_data(
+      self$globals$group$set_group_data(
         name = name,
         value = list(
           path = path,
@@ -288,7 +290,7 @@ Brain2 <- R6::R6Class(
 
     get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE, atlases = TRUE){
 
-      geoms <- list(self$misc)
+      geoms <- list(self$globals)
 
       if( is.logical(volumes) ){
         if(isTRUE(volumes)){ volumes <- self$volume_types }else{ volumes <- NULL }
@@ -320,6 +322,8 @@ Brain2 <- R6::R6Class(
         # self$electrodes$set_values()
         geoms <- c(geoms, self$electrodes$objects)
       }
+
+      geoms <- c(geoms, self$misc)
 
       return( unlist( geoms ) )
 

@@ -164,7 +164,11 @@ This value allows the default rendering order of scene graph objects to be overr
 CONSTANTS.RENDER_ORDER = {
   'DataCube2' : -1,
   'DataCube'  : CONSTANTS.MAX_RENDER_ORDER - 1
-}
+};
+
+CONSTANTS.SINGLETONS = {
+  "line-segments" : "line_segments_singleton"
+};
 
 
 export { CONSTANTS };

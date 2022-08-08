@@ -153,6 +153,7 @@ BrainElectrodes <- R6::R6Class(
         el <- ElectrodeGeom$new(name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
                                 position = c(row$Coord_x, row$Coord_y, row$Coord_z),
                                 radius = radius, group = self$group)
+        el$number <- row$Electrode
         el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
         el$hemisphere <- which_side
         el$surface_type <- surf_type

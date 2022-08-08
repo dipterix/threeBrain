@@ -30,8 +30,8 @@ threejs_brain(
   value_ranges = NULL,
   value_alias = NULL,
   show_inactive_electrodes = TRUE,
-  surface_colormap = system.file("palettes", "surface", "ContinuousSample.json",
-    package = "threeBrain"),
+  surface_colormap = system.file("palettes", "surface", "ContinuousSample.json", package
+    = "threeBrain"),
   voxel_colormap = system.file("palettes", "datacube2", "FreeSurferColorLUT.json",
     package = "threeBrain"),
   videos = list(),

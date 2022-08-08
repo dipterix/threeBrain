@@ -24,6 +24,7 @@ import { gen_datacube } from './geometry/datacube.js';
 import { gen_datacube2 } from './geometry/datacube2.js';
 import { gen_tube } from './geometry/tube.js';
 import { gen_free } from './geometry/free.js';
+import { gen_linesements } from './geometry/line.js';
 import { Compass } from './geometry/compass.js';
 import { Lut, addToColorMapKeywords } from './jsm/math/Lut2.js';
 import { json2csv } from 'json-2-csv';
@@ -35,7 +36,8 @@ const GEOMETRY_FACTORY = {
   'free'      : gen_free,
   'datacube'  : gen_datacube,
   'datacube2' : gen_datacube2,
-  'tube'     : gen_tube,
+  'tube'      : gen_tube,
+  'linesegments' : gen_linesements,
   'blank'     : (g, canvas) => { return(null) }
 };
 
@@ -127,6 +129,7 @@ class THREEBRAIN_CANVAS {
     this.volumes = new Map();
     this.ct_scan = new Map();
     this.atlases = new Map();
+    this.singletons = new Map();
     this._show_ct = false;
     this.surfaces = new Map();
     this.state_data = new Map();
@@ -1755,6 +1758,23 @@ class THREEBRAIN_CANVAS {
       }
     });
 
+    // Pre render all singletons
+    this.singletons.forEach((s) => {
+
+      if( s && typeof(s) === "object" && typeof s.pre_render === 'function' ) {
+        try {
+          s.pre_render( results );
+        } catch (e) {
+          if( !this.__render_error ) {
+            console.warn(e);
+            console.log( results );
+            this.__render_error = true;
+          }
+        }
+      }
+
+    });
+
     this.main_renderer.render( this.scene, this.main_camera );
 
     if(this.has_side_cameras){
@@ -2700,6 +2720,13 @@ class THREEBRAIN_CANVAS {
     this.mesh.clear();
     this.threebrain_instances.clear();
     this.group.clear();
+
+    this.singletons.forEach( (el) => {
+      try {
+        el.dispose();
+      } catch (e) {}
+    });
+    this.singletons.clear();
 
     // set default values
     this.state_data.set( 'coronal_depth', 0 );
@@ -3751,6 +3778,13 @@ mapped = false,
       }
     });
 
+    // also update singletons
+    const line_segs = this.singletons.get(
+      CONSTANTS.SINGLETONS["line-segments"]
+    );
+    if( line_segs ) {
+      line_segs.update_segments();
+    }
     this.start_animation( 0 );
   }
 

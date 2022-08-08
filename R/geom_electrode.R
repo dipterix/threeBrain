@@ -18,6 +18,7 @@ ElectrodeGeom <- R6::R6Class(
     hemisphere = NULL,
     vertex_number = -1,
     MNI305_position = c(0,0,0),
+    number = NULL,
 
     # ------------ for sub cortical electrodes only ------------
 
@@ -36,7 +37,8 @@ ElectrodeGeom <- R6::R6Class(
           vertex_number = self$vertex_number,
           MNI305_position = self$MNI305_position,
           sub_cortical = !self$is_surface_electrode,
-          search_geoms = self$hemisphere
+          search_geoms = self$hemisphere,
+          number = c(self$number, NA)[[1]]
         )
       )
       return( re )
