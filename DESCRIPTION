@@ -1,7 +1,7 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 0.2.5.9004
+Version: 0.2.6
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("aut")),
@@ -16,8 +16,7 @@ Description: A fast, interactive cross-platform, and easy to share
     'AFNI/SUMA' surfaces. The viewer widget can be either standalone or 
     embedded into 'R-shiny' applications. The standalone version only require
     a web browser with 'WebGL2' support (for example, 'Chrome', 'Firefox', 
-    'Safari'). It can be inserted into any websites; see 
-    <https://dipterix.org/project/threebrain/>) as an example. The 'R-shiny' 
+    'Safari'), and can be inserted into any websites. The 'R-shiny' 
     support allows the 3D viewer to be dynamically generated from reactive user 
     inputs. This feature has been fully adopted by 'RAVE' 
     <https://openwetware.org/wiki/RAVE>, an interactive toolbox to 

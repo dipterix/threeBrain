@@ -22,9 +22,9 @@ LineSegmentsGeom <- R6::R6Class(
 
     initialize = function(name, dynamic = FALSE, ...){
       super$initialize(name, position = c(0, 0, 0), ...)
-      private$.dynamic = dynamic
-      self$size = 1.0
-      self$color = "#000000"
+      private$.dynamic <- dynamic
+      self$size <- 1.0
+      self$color <- "#000000"
     },
 
     set_vertices = function(..., .list = list(), append = FALSE) {
@@ -78,7 +78,7 @@ LineSegmentsGeom <- R6::R6Class(
     },
 
     set_color = function(...) {
-      new_color = dipsaus::col2hexStr(unlist(c(...)))
+      new_color <- dipsaus::col2hexStr(unlist(c(...)))
       new_color[is.na(new_color)] <- "#000000"
       self$color <- new_color
       invisible()

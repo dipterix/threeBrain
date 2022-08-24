@@ -1,4 +1,4 @@
-# [threeBrain - HTML, WebGL based 3D Viewer](https://dipterix.github.io/threeBrain/index.html)
+# [threeBrain - HTML, WebGL based 3D Viewer](https://dipterix.org/threeBrain/index.html)
 
 <!-- badges: start -->
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/threeBrain)](https://cran.r-project.org/package=threeBrain)
@@ -12,7 +12,7 @@
 <!-- demo static: start -->
 <img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />
 
-<div style = 'text-align:center; font-size: 20px'><a href="https://dipterix.github.io/project/threebrain/" target="_blank">A live demo is live NOW! (Recommended: view it with Chrome)</a></div>
+<div style = 'text-align:center; font-size: 20px'><a href="https://dipterix.org/threeBrain/" target="_blank">A live demo is live NOW! (Recommended: view it with Chrome)</a></div>
 <!-- demo static: end -->
 
 <!-- demo dynamic: start 
@@ -38,7 +38,7 @@
 * Volume rendering and surface/electrode **animation**
 * Integration with interactive `R-shiny` framework
 
-[News](https://dipterix.github.io/threeBrain/news/index.html) | [reference page](https://dipterix.github.io/threeBrain/reference/index.html) | [keyboard shortcuts](https://dipterix.github.io/threeBrain/shortcuts.html)
+[News](https://dipterix.org/threeBrain/news/index.html) | [reference page](https://dipterix.org/threeBrain/reference/index.html) | [keyboard shortcuts](https://dipterix.org/threeBrain/shortcuts.html)
 
 #### System Requirement
 
