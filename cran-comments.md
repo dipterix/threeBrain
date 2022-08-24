@@ -1,7 +1,12 @@
 # Update logs (for R-cran only)
 
+## 2022-08-24
+**Version 0.2.6 (current)**
+
+Self check: 0 errors | 0 warnings | 0 notes
+
 ## 2022-05-29
-**Version 0.2.5 (current)**
+**Version 0.2.5 (passed)**
 
 Self check: 0 errors | 0 warnings | 1 notes
 
