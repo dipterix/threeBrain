@@ -14,7 +14,7 @@ echo "Current directory: $DIRECTORY"
 
 # Use Python because linux and mac come with python
 
-py_path=$(which python)
+py_path=$(which python3)
 
 py_version=$($py_path -V 2>&1)
 
