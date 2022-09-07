@@ -115,7 +115,7 @@ threejs_brain <- function(
       show_modal <- FALSE
     } else {
       # check if rave is launched
-      if( isNamespaceLoaded("rave") ){
+      if( isNamespaceLoaded("rave") || isNamespaceLoaded("ravedash") ){
         show_modal <- FALSE
       } else {
         show_modal <- TRUE
