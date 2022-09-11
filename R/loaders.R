@@ -152,7 +152,7 @@ threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never
   }
 
   if(has_n27 && upgrade %in% c('ask', 'data-only')){
-    if(interactive()){
+    if(interactive() && upgrade %in% 'ask'){
       reinst <- tryCatch({
         if(package_installed("dipsaus")) {
           dipsaus::ask_yesno('N27 template brain detected at \n  ', template_dir,
@@ -187,7 +187,7 @@ threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never
   # load N27
   threeBrain:::cat2('Expand the template, creating cache...', level = 'INFO')
   threeBrain::merge_brain(template_subject = 'N27')
-  }", template_dir)
+  }", normalizePath(template_dir, mustWork = FALSE, winslash = "/") )
 
     dipsaus::rs_exec(parse(text = code)[[1]], name = 'Finalize threeBrain N27 installation', quoted = TRUE)
   } else {
