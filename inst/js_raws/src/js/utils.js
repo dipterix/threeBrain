@@ -177,26 +177,6 @@ function remove_comments(s){
 }
 
 
-function throttle_promise(){
-  let blocked = false;
-
-  const new_promise = (f) => {
-    if( blocked ){ return; }
-    blocked = true;
-    const p = new Promise((resolve, reject) => {
-      try {
-        f(resolve, reject);
-      } catch (e) {}
-      blocked = false;
-    });
-    return( p );
-  };
-
-  return( new_promise );
-
-}
-
-
 // Credit: David Walsh (https://davidwalsh.name/javascript-debounce-function)
 
 // Returns a function, that, as long as it continues to be invoked, will not
@@ -243,7 +223,6 @@ function debounce(func, wait, immediate) {
     if (callNow) func.apply(context, args);
   };
 };
-
 
 // source: https://github.com/mrdoob/three.js/blob/790811db742ea9d7c54fe28f83865d7576f14134/examples/jsm/loaders/RGBELoader.js#L352-L396
 const float_to_int32 = ( function () {
@@ -362,7 +341,7 @@ function as_Matrix4(m) {
 
 export { invertColor, padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
-  sub2, float_to_int32, vec3_to_string, throttle_promise,
+  sub2, float_to_int32, vec3_to_string,
   has_meta_keys, write_clipboard, as_Matrix4,
   set_visibility, set_display_mode, remove_comments };
 

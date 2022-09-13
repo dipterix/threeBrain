@@ -92,18 +92,10 @@ class THREEBRAIN_PRESETS{
   }
 
   fire_change( args, priority = "deferred" ){
-
-    // fire gui.params first
-    this.shiny.to_shiny2('controllers', this.gui.params, "deferred");
-
-    if( typeof args === 'object' ){
-      for(let k in args){
-        // this.parameters[k] = args[k];
-
-        this.shiny.to_shiny2(k, args[k], priority);
-      }
-    }
-
+    this.canvas.dispatch_event( "canvas.controllers.onChange", {
+      data: args,
+      priority: priority
+    });
   }
 
   c_syncviewer(){

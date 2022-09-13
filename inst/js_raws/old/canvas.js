@@ -55,9 +55,9 @@ class ThreeBrainCanvas {
     this._disposed = false;
     this._dispose_functions = new Map();
     // set default values
-    this.state_data.set( 'coronal_depth', 0 );
-    this.state_data.set( 'axial_depth', 0 );
-    this.state_data.set( 'sagittal_depth', 0 );
+    this.set_state( 'coronal_depth', 0 );
+    this.set_state( 'axial_depth', 0 );
+    this.set_state( 'sagittal_depth', 0 );
 
     // for global usage
     this.shared_data = new Map();
@@ -347,7 +347,7 @@ class ThreeBrainCanvas {
 
   finish_init(){
     // finalizing initialization of each geom
-    this.dispatch_event( "canvas_finish_init" );
+    this.dispatch_event( "canvas.finish_init" );
   }
 
   dispatch_event( type, data ){
@@ -359,6 +359,21 @@ class ThreeBrainCanvas {
 
     // Dispatch the event.
     this.el.dispatchEvent(event);
+  }
+
+  // ------------------------------ Begin: setter/getter methods --------------
+  set_state( key, value ) {
+    this.state_data.set( key, value );
+    // fire events
+    this.dispatch_event( "canvas.state.onChange", {
+      key: key,
+      value: value
+    });
+    return( this.state_data );
+  }
+  get_state( key, if_missing = undefined ) {
+    const v = get_or_default( this.state_data, key, if_missing );
+    return( v );
   }
 
   add_to_scene( m, global = false ){
@@ -763,10 +778,8 @@ class ThreeBrainCanvas {
   */
   highlight( m, reset = false ){
 
-    const highlight_disabled = get_or_default(
-      this.state_data,
-      'highlight_disabled',
-      false
+    const highlight_disabled = this.get_state(
+      'highlight_disabled', false
     );
 
     // use bounding box with this.focus_box
@@ -1010,22 +1023,22 @@ class ThreeBrainCanvas {
   switch_colormap( name, value_range = [] ){
     let cmap;
     if( name ){
-      this.state_data.set( 'color_map', name );
+      this.set_state( 'color_map', name );
 
       cmap = this.color_maps.get( name );
 
       // also need to query surface & datacube2 to check the time range
 
       if( cmap ){
-        this.state_data.set( 'time_range_min', cmap.time_range[0] );
-        this.state_data.set( 'time_range_max', cmap.time_range[1] );
+        this.set_state( 'time_range_min', cmap.time_range[0] );
+        this.set_state( 'time_range_max', cmap.time_range[1] );
       }else{
-        this.state_data.set( 'time_range_min', 0 );
-        this.state_data.set( 'time_range_max', 1 );
+        this.set_state( 'time_range_min', 0 );
+        this.set_state( 'time_range_max', 1 );
       }
 
     }else{
-      name = get_or_default( this.state_data, 'color_map', '' );
+      name = this.get_state( 'color_map', '' );
       cmap = this.color_maps.get( name );
       // return( this.color_maps.get( name ) );
     }
@@ -1071,7 +1084,7 @@ class ThreeBrainCanvas {
     if( name ){
       cmap = this.color_maps.get( name );
     }else{
-      cmap = this.color_maps.get( get_or_default( this.state_data, 'color_map', '' ) );
+      cmap = this.color_maps.get( this.get_state( 'color_map', '' ) );
     }
 
     if(cmap === undefined){
@@ -1159,7 +1172,7 @@ class ThreeBrainCanvas {
 
   }
 
-  update_control_center( v ){
+  set_control_center( v ){
     v = to_array(v);
     this.controls.target.fromArray( v );
     this.control_center = to_array( v );
@@ -1286,10 +1299,10 @@ class ThreeBrainCanvas {
   }
 
   update_time_range(){
-    let min_t0 = this.state_data.get( 'time_range_min0' );
-    let max_t0 = this.state_data.get( 'time_range_max0' );
-    let min_t = get_or_default( this.state_data, 'time_range_min', 0 );
-    let max_t = get_or_default( this.state_data, 'time_range_max', 0 );
+    let min_t0 = this.get_state( 'time_range_min0' );
+    let max_t0 = this.get_state( 'time_range_max0' );
+    let min_t = this.get_state( 'time_range_min', 0 );
+    let max_t = this.get_state( 'time_range_max', 0 );
 
     if( min_t0 !== undefined ){
       min_t = Math.min( min_t, min_t0 );
@@ -1382,7 +1395,7 @@ class ThreeBrainCanvas {
     // show mesh value info
     if( results.has_object && this.object_chosen.userData.ani_exists ){
 
-      const track_type = this.state_data.get("color_map");
+      const track_type = this.get_state("color_map");
 
       const track_data = this.object_chosen.userData.get_track_data( track_type );
 
@@ -1483,7 +1496,7 @@ class ThreeBrainCanvas {
 
     // Added: if info text is disabled, then legend should not display
     // correspoding value
-    const info_disabled = this.state_data.get( 'info_text_disabled');
+    const info_disabled = this.get_state( 'info_text_disabled');
 
     // whether to draw legend
     const has_color_map = this.render_legend && cmap && (cmap.lut.n !== undefined);
@@ -1726,7 +1739,7 @@ class ThreeBrainCanvas {
                       x = 10, y = 10, w = 100, h = 100,
                       context_wrapper = undefined, force_left = false ){
     // Add selected object information, or if not showing is set
-    if( !results.has_object || this.state_data.get( 'info_text_disabled') ){
+    if( !results.has_object || this.get_state( 'info_text_disabled') ){
       // no object selected, discard
       return( null );
     }
@@ -1981,7 +1994,7 @@ class ThreeBrainCanvas {
   		// show mesh value info
       if( results.selected_object && this.object_chosen.userData.ani_exists ){
 
-        const track_type = this.state_data.get("color_map");
+        const track_type = this.get_state("color_map");
 
         const track_data = this.object_chosen.userData.get_track_data( track_type );
 
@@ -2177,9 +2190,9 @@ class ThreeBrainCanvas {
     this.group.clear();
 
     // set default values
-    this.state_data.set( 'coronal_depth', 0 );
-    this.state_data.set( 'axial_depth', 0 );
-    this.state_data.set( 'sagittal_depth', 0 );
+    this.set_state( 'coronal_depth', 0 );
+    this.set_state( 'axial_depth', 0 );
+    this.set_state( 'sagittal_depth', 0 );
 
   }
 
@@ -2321,8 +2334,8 @@ class ThreeBrainCanvas {
       m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
       m[0].material.needsUpdate = true;
       // this._coronal_depth = depth;
-      this.state_data.set( 'coronal_depth', depth );
-      this.state_data.set( 'coronal_posy', m[0].position.y );
+      this.set_state( 'coronal_depth', depth );
+      this.set_state( 'coronal_posy', m[0].position.y );
       this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
@@ -2335,8 +2348,8 @@ class ThreeBrainCanvas {
       m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
       m[1].material.needsUpdate = true;
       // this._axial_depth = depth;
-      this.state_data.set( 'axial_depth', depth );
-      this.state_data.set( 'axial_posz', m[1].position.z );
+      this.set_state( 'axial_depth', depth );
+      this.set_state( 'axial_posz', m[1].position.z );
       this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
@@ -2349,8 +2362,8 @@ class ThreeBrainCanvas {
       m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
       m[2].material.needsUpdate = true;
       // this._sagittal_depth = depth;
-      this.state_data.set( 'sagittal_depth', depth );
-      this.state_data.set( 'sagittal_posx', m[2].position.x );
+      this.set_state( 'sagittal_depth', depth );
+      this.set_state( 'sagittal_posx', m[2].position.x );
       this.trim_electrodes();
       // Animate on next refresh
       this.start_animation( 0 );
@@ -2366,20 +2379,20 @@ class ThreeBrainCanvas {
       let fn = visible ? 'enable' : 'disable';
       if( which === 'coronal' ){
         m[0].layers[fn](8);
-        this.state_data.set( 'coronal_overlay', visible );
+        this.set_state( 'coronal_overlay', visible );
       }else if( which === 'axial' ){
         m[1].layers[fn](8);
-        this.state_data.set( 'axial_overlay', visible );
+        this.set_state( 'axial_overlay', visible );
       }else if( which === 'sagittal' ){
         m[2].layers[fn](8);
-        this.state_data.set( 'sagittal_overlay', visible );
+        this.set_state( 'sagittal_overlay', visible );
       }else{
         // reset, using cached
-        fn = get_or_default( this.state_data, 'coronal_overlay', false ) ? 'enable' : 'disable';
+        fn = this.get_state( 'coronal_overlay', false ) ? 'enable' : 'disable';
         m[0].layers[fn](8);
-        fn = get_or_default( this.state_data, 'axial_overlay', false ) ? 'enable' : 'disable';
+        fn = this.get_state( 'axial_overlay', false ) ? 'enable' : 'disable';
         m[1].layers[fn](8);
-        fn = get_or_default( this.state_data, 'sagittal_overlay', false ) ? 'enable' : 'disable';
+        fn = this.get_state( 'sagittal_overlay', false ) ? 'enable' : 'disable';
         m[2].layers[fn](8);
       }
 
@@ -2794,7 +2807,7 @@ class ThreeBrainCanvas {
   }
 
   get_atlas_types(){
-    const current_subject = this.state_data.get('target_subject') || "";
+    const current_subject = this.get_state('target_subject') || "";
     let atlases = this.atlases.get( current_subject );
     if( !atlases ) {
       return([]);
@@ -2958,7 +2971,7 @@ class ThreeBrainCanvas {
       throw('vec must be a Vector3 instance');
     }
 
-    const tkRAS_MNI305 = this.state_data.get('tkRAS_MNI305');
+    const tkRAS_MNI305 = this.get_state('tkRAS_MNI305');
     if( tkRAS_MNI305 && tkRAS_MNI305.isMatrix4 ){
       // calculate MNI 305 position
       vec.applyMatrix4(tkRAS_MNI305);
@@ -3334,13 +3347,13 @@ mapped = false,
   // Only show electrodes near 3 planes
   trim_electrodes( distance ){
     if( typeof distance !== 'number' ){
-      distance = get_or_default( this.state_data, 'threshold_electrode_plane', Infinity);
+      distance = this.get_state( 'threshold_electrode_plane', Infinity);
     }else{
-      this.state_data.set( 'threshold_electrode_plane', distance );
+      this.set_state( 'threshold_electrode_plane', distance );
     }
-    const _x = get_or_default( this.state_data, 'sagittal_posx', 0);
-    const _y = get_or_default( this.state_data, 'coronal_posy', 0);
-    const _z = get_or_default( this.state_data, 'axial_posz', 0);
+    const _x = this.get_state( 'sagittal_posx', 0);
+    const _y = this.get_state( 'coronal_posy', 0);
+    const _z = this.get_state( 'axial_posz', 0);
     const plane_pos = new Vector3().set( _x, _y, _z );
     const diff = new Vector3();
 

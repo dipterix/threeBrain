@@ -17,9 +17,9 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
   THREEBRAIN_PRESETS.prototype.c_surface_type2 = function(){
 
     const folder_name = CONSTANTS.FOLDERS[ 'surface-selector' ],
-          _s = this.canvas.state_data.get( 'surface_type' ) || 'pial',
+          _s = this.canvas.get_state( 'surface_type' ) || 'pial',
           _c = this.canvas.get_surface_types(),
-          _mty = this.canvas.state_data.get( 'surface_material_type' ) || 'MeshPhongMaterial',
+          _mty = this.canvas.get_state( 'surface_material_type' ) || 'MeshPhongMaterial',
           _mtyc = ['MeshPhongMaterial', 'MeshLambertMaterial'];
 
     if( _c.length === 0 ){
@@ -48,7 +48,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     const surf_material = this.gui.add_item('Surface Material', _mty, {
       args : _mtyc, folder_name : folder_name })
       .onChange((v) => {
-        this.canvas.state_data.set( 'surface_material_type', v );
+        this.canvas.set_state( 'surface_material_type', v );
         this.fire_change({ 'surface_material' : v });
         this._update_canvas();
       });
@@ -143,7 +143,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
     this._surface_ctype_map = maps;
     let col = 'vertices';
 
-    this.canvas.state_data.set("surface_color_type", col);
+    this.canvas.set_state("surface_color_type", col);
     this.gui.add_item('Surface Color', col, {args : options, folder_name : folder_name })
       .onChange((v) => {
 
@@ -169,7 +169,7 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
             this.gui.hide_item(['Blend Factor', 'Sigma', 'Decay', 'Range Limit'], folder_name);
         }
 
-        this.canvas.state_data.set("surface_color_type", v);
+        this.canvas.set_state("surface_color_type", v);
         this.fire_change({ 'surface_color_type' : v });
         this._update_canvas();
       });
@@ -200,10 +200,10 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
           v = 1;
         }
         // this.set_surface_ctype( true, { 'blend' : v } );
-        this.canvas.state_data.set("surface_color_blend", v);
+        this.canvas.set_state("surface_color_blend", v);
         this._update_canvas();
       });
-      this.canvas.state_data.set("surface_color_blend", 0.4);
+      this.canvas.set_state("surface_color_blend", 0.4);
 
     // ---------- for voxel-color ---------------
 
@@ -213,11 +213,11 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
         if( v !== undefined ){
           if( v < 0 ){ v = 0; }
           // this.set_surface_ctype( true, { 'sigma' : v } );
-          this.canvas.state_data.set("surface_color_sigma", v);
+          this.canvas.set_state("surface_color_sigma", v);
           this._update_canvas();
         }
       });
-    this.canvas.state_data.set("surface_color_sigma", 3.0);
+    this.canvas.set_state("surface_color_sigma", 3.0);
 
     // ---------- for electrode maps ------------
     this.gui.add_item("Decay", 0.15, { folder_name : folder_name })
@@ -226,11 +226,11 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
         if( v !== undefined ){
           if( v < 0.05 ){ v = 0.05; }
           // this.set_surface_ctype( true, { 'decay' : v } );
-          this.canvas.state_data.set("surface_color_decay", v);
+          this.canvas.set_state("surface_color_decay", v);
           this._update_canvas();
         }
       });
-    this.canvas.state_data.set("surface_color_decay", 0.15);
+    this.canvas.set_state("surface_color_decay", 0.15);
 
     this.gui.add_item("Range Limit", 10.0, { folder_name : folder_name })
       .min( 1.0 ).max( 30.0 ).step( 1.0 )
@@ -238,11 +238,11 @@ function register_controls_surface( THREEBRAIN_PRESETS ){
         if( v !== undefined ){
           if( v < 1.0 ){ v = 1.0; }
           // this.set_surface_ctype( true, { 'radius' : v } );
-          this.canvas.state_data.set("surface_color_radius", v);
+          this.canvas.set_state("surface_color_radius", v);
           this._update_canvas();
         }
       });
-    this.canvas.state_data.set("surface_color_radius", 10.0);
+    this.canvas.set_state("surface_color_radius", 10.0);
 
     // 'elec_decay'        : { value : 2.0 },
     // 'blend_factor'      : { value : 0.4 }

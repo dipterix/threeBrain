@@ -65,13 +65,14 @@ class THREE_BRAIN_SHINY {
 
     // Add canvas listeners
     // 1. controls
-    this.canvas.bind( 'camera_parameters', 'end', (evt) => {
+    this.canvas.bind( 'report_main_camera', 'canvas.main_camera.onEnd', (evt) => {
+      const args = evt.detail;
       this.to_shiny2('main_camera', {
-        position  : this.canvas.main_camera.position,
-        zoom      : this.canvas.main_camera.zoom,
-        up        : this.canvas.main_camera.up
+        position  : args.position,
+        zoom      : args.zoom || 1,
+        up        : args.up
       });
-    }, this.canvas.controls );
+    }, this.canvas.el );
 
     // 2. click callback
     // finalize registering
@@ -106,7 +107,7 @@ class THREE_BRAIN_SHINY {
           };
 
           if( this.canvas.state_data.has( 'color_map' ) ){
-            const cmap_name = this.canvas.state_data.get( 'color_map' );
+            const cmap_name = this.canvas.get_state( 'color_map' );
             shiny_data.color_map = this.canvas.color_maps.get( cmap_name );
           }
 
@@ -152,23 +153,86 @@ class THREE_BRAIN_SHINY {
       },
       'click-electrodes-callbacks'
     );
+
+    // 3. Canvas state
+    this.canvas.bind( "report_canvas_state", "canvas.state.onChange", (evt) => {
+      const data = Object.fromEntries( this.canvas.state_data );
+      this.to_shiny2('canvas_state', data);
+    }, this.canvas.el );
+
+
+    // 4. subject information
+    this.canvas.bind( "report_subject", "switch_subject", (evt) => {
+      const subject_code = evt.detail.target_subject;
+      const subject_info = this.canvas.shared_data.get( subject_code );
+      if(typeof(subject_info) !== "object") {
+        return;
+      }
+
+      this.to_shiny2('current_subject', {
+        subject_code: subject_code,
+        Norig: subject_info.Norig,
+        Torig: subject_info.Torig,
+        xfm: subject_info.xfm,
+      });
+    }, this.canvas.el );
   }
 
   register_gui( gui, presets ){
     this.gui = gui;
     this.presets = presets;
 
+    this.canvas.bind( "report_controller", "canvas.controllers.onChange", (evt) => {
+      this.to_shiny2('controllers', this.gui.params, "deferred");
+      const args = evt.detail;
+      if( typeof args.data === 'object' ){
+        for(let k in args.data){
+          this.to_shiny2(k, args.data[k], args.priority);
+        }
+      }
+    }, this.canvas.el);
+
     if( this.shiny_mode ){
       // register shiny customized message
       Shiny.addCustomMessageHandler(`threeBrain-RtoJS-${this.outputId}`, (data) => {
+
+        if( typeof data.name !== "string" || data.name.length === 0 ) { return; }
+
+        this.canvas.dispatch_event(
+          "canvas.handle." + data.name,
+          data.value
+        );
+
+        /*
         const message_type = data.name,
               message_content = data.value,
               method_name = 'handle_' + message_type;
         if( typeof this[method_name] === 'function' ){
           this[method_name]( message_content );
         }
+        */
       });
     }
+
+    // register handlers
+    Object.getOwnPropertyNames(Object.getPrototypeOf(__presets.shiny))
+      .filter((v) => { return(v.startsWith("handle_")); })
+      .map((v) => { return(v.replace("handle_", "")); })
+    const handler_names = [
+      "background", "zoom_level", "camera", "display_data", "font_magnification",
+      "set_localization_electrode", "clear_localization", "add_localization_electrode",
+      "controllers", "focused_electrode", "set_plane",
+
+      // broken
+      "add_clip"
+    ];
+    handler_names.forEach((nm) => {
+      this.canvas.bind( "handle_set_" + nm, "canvas.handle." + nm, (evt) => {
+        this["handle_" + nm]( evt.detail );
+      }, this.canvas.el);
+    });
+
+
   }
 
   set_token( token ){
@@ -276,6 +340,18 @@ class THREE_BRAIN_SHINY {
 
   }
 
+  handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
+    if( typeof args.x === "number" ) {
+      this.canvas.set_sagittal_depth(args.x);
+    }
+    if( typeof args.y === "number" ) {
+      this.canvas.set_coronal_depth(args.y);
+    }
+    if( typeof args.z === "number" ) {
+      this.canvas.set_axial_depth(args.z);
+    }
+  }
+
   // FIXME: this handler is Broken
   handle_add_clip( args ){
     // window.aaa = args;
@@ -331,7 +407,7 @@ class THREE_BRAIN_SHINY {
     if( els === undefined ){ return( null ); }
     if( group_name === "__localization__" ){
       // we use target_subject instead
-      current_subject = this.canvas.state_data.get("target_subject");
+      current_subject = this.canvas.get_state("target_subject");
       if( !current_subject ){
         // To enter this statement, either we don't even have a subject
         // or canvas.switch_subject is not ran (highly impossible)
@@ -424,8 +500,6 @@ class THREE_BRAIN_SHINY {
     Shiny.addCustomMessageHandler(this.shinyId, (data) => {
       if( !data || typeof data.command !== 'string' || !this.canvas ){ return ( null ); }
 
-      console.log(data);
-
       switch (data.command) {
 
         // 1. get electrode info
@@ -467,6 +541,7 @@ class THREE_BRAIN_SHINY {
           // code
       }
     });
+    // dispatch_event
   }
 
 
@@ -522,13 +597,16 @@ class THREE_BRAIN_SHINY {
   to_shiny2(name, value, priority = "deferred"){
 
     // make sure shiny is running
-    if( this.shiny_mode && Shiny.shinyapp.$socket ){
+    if( !this.shiny_mode ){ return; }
 
-      const callback = this.outputId + '_' + name;
-      console.debug(callback + ' is set to ', JSON.stringify(value));
-      Shiny.setInputValue(callback, value, { priority : priority });
 
+    const inputId = this.outputId + '_' + name;
+    // console.debug(inputId + ' is set to ', JSON.stringify(value));
+
+    if( Shiny.shinyapp.$socket ) {
+      Shiny.setInputValue(inputId, value, { priority : priority });
     }
+
   }
 
 }

@@ -33,7 +33,7 @@ function atlas_label_from_index(index, canvas){
 }
 
 function atlas_label(pos_array, canvas){
-  const sub = canvas.state_data.get("target_subject") || "none",
+  const sub = canvas.get_state("target_subject") || "none",
         inst = canvas.threebrain_instances.get(`Atlas - aparc_aseg (${sub})`);
   if( !inst ){ return( [ "Unknown", 0 ] ); }
 
@@ -144,7 +144,7 @@ class LocElectrode {
     if( m && m.length >= 2 ){
       this.Hemisphere = m[1] == "r" ? "right" : "left";
     } else {
-      let ac_pos = canvas.state_data.get("anterior_commissure");
+      let ac_pos = canvas.get_state("anterior_commissure");
       if( ac_pos && ac_pos.isVector3 ){
         ac_pos = ac_pos.x;
       } else {
@@ -397,7 +397,7 @@ class LocElectrode {
   }
 
   get_volume_instance(){
-    const atlas_type = this._canvas.state_data.get("atlas_type") || "none",
+    const atlas_type = this._canvas.get_state("atlas_type") || "none",
           sub = this.subject_code,
           inst = this._canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
     if( inst && inst.isDataCube2 ){
@@ -633,7 +633,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
   THREEBRAIN_PRESETS.prototype.localization_clear = function(update_shiny = true){
     const electrodes = this.__localize_electrode_list;
-    const scode = this.canvas.state_data.get("target_subject");
+    const scode = this.canvas.get_state("target_subject");
     const collection = this.canvas.electrodes.get(scode) || {};
     electrodes.forEach((el) => {
       el.dispose();
@@ -650,7 +650,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     x, y, z, mode, update_shiny = true
   ){
     const electrodes = this.__localize_electrode_list;
-    const scode = this.canvas.state_data.get("target_subject");
+    const scode = this.canvas.get_state("target_subject");
     let edit_mode = mode;
     if(!edit_mode){
       const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
@@ -678,7 +678,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     which, params, update_shiny = true
   ){
     const electrodes = this.__localize_electrode_list;
-    const scode = this.canvas.state_data.get("target_subject");
+    const scode = this.canvas.get_state("target_subject");
 
     const _regexp = new RegExp(`^${scode}, ([0-9]+) \\- (.*)$`);
 
@@ -842,7 +842,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         let v = Math.round( interpolate_size.getValue() );
         if( !v ){ return; }
         const mode = edit_mode.getValue();
-        const scode = this.canvas.state_data.get("target_subject");
+        const scode = this.canvas.get_state("target_subject");
         if( !mode || mode == "disabled" ||
             mode == "refine" ||
             !scode || scode === ""
@@ -905,7 +905,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     // will get tkrRAS
     const electrode_pos = () => {
       const mode = edit_mode.getValue();
-      const scode = this.canvas.state_data.get("target_subject");
+      const scode = this.canvas.get_state("target_subject");
       if( !mode || !scode || scode === "" ){ return; }
       let pos_alt;
       switch(mode){
@@ -943,7 +943,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         t1_loc.setValue("");
         return;
       }
-      const scode = this.canvas.state_data.get("target_subject"),
+      const scode = this.canvas.get_state("target_subject"),
             subject_data = this.canvas.shared_data.get( scode );
 
       // tkrRAS
@@ -966,7 +966,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     // bind dblclick
     this.canvas.bind( 'localization_dblclick', 'dblclick',
       (event) => {
-        const scode = this.canvas.state_data.get("target_subject"),
+        const scode = this.canvas.get_state("target_subject"),
               mode = edit_mode.getValue();
         if(
           !mode || mode == "disabled" ||

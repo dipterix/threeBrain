@@ -23,7 +23,7 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
         this._electrode_visibility( e , ii , v );
       });
     });
-    this.canvas.state_data.set('electrode_visibility', v);
+    this.canvas.set_state('electrode_visibility', v);
 
     this._update_canvas();
     this.fire_change({ 'electrode_visibility' : v });
@@ -36,7 +36,7 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
     const vis_types = ['all visible', 'hide inactives', 'hidden'];
     const initial_value = show_inactives? 'all visible': 'hide inactives';
 
-    this.canvas.state_data.set('electrode_visibility', initial_value);
+    this.canvas.set_state('electrode_visibility', initial_value);
 
     // please check if el is electrode before dumpping into this function
     this._electrode_visibility = (el, ii, v) => {
@@ -133,7 +133,7 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
     const folder_name = CONSTANTS.FOLDERS['highlight-selection'] || 'Data Visualization';
     this.gui.add_item('Highlight Box', true, { folder_name : folder_name })
       .onChange((v) => {
-        this.canvas.state_data.set( 'highlight_disabled', !v );
+        this.canvas.set_state( 'highlight_disabled', !v );
         this.canvas.focus_object( this.canvas.object_chosen );
         this.fire_change();
         this._update_canvas(0);
@@ -141,7 +141,7 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
 
     this.gui.add_item('Info Text', true, { folder_name : folder_name })
       .onChange((v) => {
-        this.canvas.state_data.set( 'info_text_disabled', !v );
+        this.canvas.set_state( 'info_text_disabled', !v );
         this.fire_change();
         this._update_canvas(0);
       });

@@ -194,6 +194,93 @@ ViewerProxy <- R6::R6Class(
         color_vals = cl$color_vals,
         focusui = switch_display
       ))
+    },
+
+    get_crosshair_position = function(space = c("tkrRAS", "MNI305", "MNI152", "scanner", "CRS")) {
+      pos <- c(self$plane_position, 1)
+      space <- match.arg(space)
+      subject <- shiny::isolate(self$current_subject)
+      if(is.null(subject$subject_code)) {
+        return(c(0, 0, 0))
+      }
+      Norig <- subject$Norig
+      Torig <- subject$Torig
+      xfm <- subject$xfm
+
+      switch(
+        space,
+        "CRS" = {
+          pos <- solve(Torig) %*% pos
+        },
+        "scanner" = {
+          # ScannerRAS = Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+          pos <- Norig %*% solve(Torig) %*% pos
+        },
+        "MNI305" = {
+          # MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+          pos <- xfm %*% Norig %*% solve(Torig) %*% pos
+        },
+        "MNI152" = {
+          pos <- MNI305_to_MNI152 %*% xfm %*% Norig %*% solve(Torig) %*% pos
+        }
+      )
+
+      return(pos[c(1,2,3)])
+
+    },
+
+    set_crosshair_position = function(position, space = c("tkrRAS", "MNI305", "MNI152", "scanner", "CRS")) {
+
+      space <- match.arg(space)
+
+      if(length(position) != 3) {
+        stop("set_crosshair_position: `position` length must be 3")
+      }
+      position <- as.numeric(position)
+      if(anyNA(position) || !all(is.finite(position))) {
+        stop("set_crosshair_position: `position` length must be finite")
+      }
+
+      pos <- c(position, 1)
+      subject <- shiny::isolate(self$current_subject)
+      if(!is.null(subject$subject_code)) {
+        Norig <- subject$Norig
+        Torig <- subject$Torig
+        xfm <- subject$xfm
+
+        switch(
+          space,
+          "CRS" = {
+            pos <- Torig %*% pos
+          },
+          "scanner" = {
+            # ScannerRAS = Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+            pos <- Torig %*% solve(Norig) %*% pos
+          },
+          "MNI305" = {
+            # MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+            pos <- Torig %*% solve(Norig) %*% solve(xfm) %*% pos
+          },
+          "MNI152" = {
+            pos <- Torig %*% solve(Norig) %*% solve(xfm) %*% solve(MNI305_to_MNI152) %*% pos
+          }
+        )
+
+      }
+
+      pos <- pos[seq_len(3)]
+
+      self$set_controllers(list(
+        "Sagittal (L - R)" = pos[[1]],
+        "Coronal (P - A)" = pos[[2]],
+        "Axial (I - S)" = pos[[3]]
+      ))
+
+      # private$set_value('set_plane', list(
+      #   x = pos[[1]],
+      #   y = pos[[2]],
+      #   z = pos[[3]]
+      # ))
     }
 
   ),
@@ -207,15 +294,34 @@ ViewerProxy <- R6::R6Class(
       camera <- private$get_value('main_camera', NULL)
       if(!is.list(camera)){ camera <- list() }
 
-      # make sure position exists
-      if(length(camera$position) != 3){ camera$position <- c(500, 0, 0) }
+      # make sure position exists, numerical, and not NA/origin
+      position <- c(500, 0, 0)
+      pos <- unname(unlist(camera$position))
+      if(length(pos) == 3) {
+        pos <- as.numeric(pos)
+        if(!anyNA(pos) && !all(pos == 0)) {
+          position <- pos
+        }
+      }
+      camera$position <- position
 
-      # make sure up exists
-      if(length(camera$up) != 3){ camera$position <- c(0, 0, 1) }
+      # make sure `up` exists, numerical, and not NA/origin
+      up0 <- c(0, 0, 1)
+      up <- unname(unlist(camera$up))
+      if(length(up) == 3) {
+        up <- as.numeric(up)
+        if(!anyNA(up) && !all(up == 0)) {
+          up0 <- up
+        }
+      }
+      camera$up <- up0
 
       # make sure zoom exists
-      if(!length(camera$zoom)){ camera$zoom <- 1 }
-
+      zoom <- as.numeric(camera$zoom)
+      if(length(zoom) != 1 || is.na(zoom) || zoom <= 0) {
+        zoom <- 1
+      }
+      camera$zoom <- zoom
       camera
     },
 
@@ -235,10 +341,18 @@ ViewerProxy <- R6::R6Class(
     },
 
     plane_position = function(){
-      private$ensure_session()
-      sagittal_depth <- private$get_value('sagittal_depth', 0)
-      coronal_depth <- private$get_value('coronal_depth', 0)
-      axial_depth <- private$get_value('axial_depth', 0)
+      controllers <- self$get_controllers()
+      sagittal_depth <- controllers[["Sagittal (L - R)"]]
+      if(length(sagittal_depth) != 1) { sagittal_depth <- 0 }
+
+      coronal_depth <- controllers[["Coronal (P - A)"]]
+      if(length(coronal_depth) != 1) { coronal_depth <- 0 }
+
+      axial_depth <- controllers[["Axial (I - S)"]]
+      if(length(axial_depth) != 1) { axial_depth <- 0 }
+      # sagittal_depth <- private$get_value('sagittal_depth', 0)
+      # coronal_depth <- private$get_value('coronal_depth', 0)
+      # axial_depth <- private$get_value('axial_depth', 0)
       re <- c(sagittal_depth, coronal_depth, axial_depth)
       names(re) <- c('R', 'A', 'S')
       re
@@ -267,6 +381,16 @@ ViewerProxy <- R6::R6Class(
 
     controllers = function(){
       private$get_value('controllers', list())
+    },
+
+    current_subject = function(){
+      data <- private$get_value('current_subject', list())
+      if(length(data)) {
+        data$Norig <- matrix(unlist(data$Norig), nrow = 4, byrow = TRUE)
+        data$Torig <- matrix(unlist(data$Torig), nrow = 4, byrow = TRUE)
+        data$xfm <- matrix(unlist(data$xfm), nrow = 4, byrow = TRUE)
+      }
+      data
     },
 
     sync = function(){

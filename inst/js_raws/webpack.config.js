@@ -1,5 +1,5 @@
-/* const webpack = require("webpack");
-// const path = require('path');
+//* const webpack = require("webpack");
+const path = require('path');
 const minimizer = require('terser-webpack-plugin');
 
 module.exports = {
@@ -18,8 +18,9 @@ module.exports = {
     })]
   }
 };
-*/
+//*/
 
+/*
 const path = require('path');
 
 module.exports = {
@@ -34,3 +35,4 @@ module.exports = {
   },
   devtool: 'source-map',
 };
+//*/

@@ -160,7 +160,7 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
         }
         this._update_canvas();
       });
-      this.canvas.state_data.set('display_variable', v);
+      this.canvas.set_state('display_variable', v);
       this.fire_change({ 'clip_name' : v, 'display_data' : v });
     };
 
@@ -169,19 +169,19 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
       if(!cmap){
         // this is not a value we can refer to
         thres_range.setValue('');
-        this.canvas.state_data.set('threshold_active', false);
+        this.canvas.set_state('threshold_active', false);
         return;
       }
 
-      const previous_type = this.canvas.state_data.get('threshold_type');
-      const previous_value = this.canvas.state_data.get('threshold_type');
+      const previous_type = this.canvas.get_state('threshold_type');
+      const previous_value = this.canvas.get_state('threshold_type');
 
       // set flags to canvas
-      this.canvas.state_data.set('threshold_active', true);
-      this.canvas.state_data.set('threshold_variable', v);
+      this.canvas.set_state('threshold_active', true);
+      this.canvas.set_state('threshold_variable', v);
 
       if(cmap.value_type === 'continuous'){
-        this.canvas.state_data.set('threshold_type', 'continuous');
+        this.canvas.set_state('threshold_type', 'continuous');
         this.gui.show_item('Threshold Method');
 
         if( previous_type !== 'continuous' ){
@@ -190,7 +190,7 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
 
       }else{
         // '' means no threshold
-        this.canvas.state_data.set('threshold_type', 'discrete');
+        this.canvas.set_state('threshold_type', 'discrete');
         thres_range.setValue(cmap.value_names.join('|'));
         this.gui.hide_item('Threshold Method');
       }
@@ -275,7 +275,7 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
 
     const thres_range = this.gui.add_item('Threshold Range', '', { folder_name : folder_name })
       .onChange((v) => {
-        const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
+        const is_continuous = this.canvas.get_state( 'threshold_type', 'discrete') == 'continuous';
         let candidates = v.split(/[\|,]/).map((x) => { return(x.trim()); });
 
         if(is_continuous){
@@ -302,18 +302,18 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
         }
         // set flag
 
-        this.canvas.state_data.set('threshold_values', candidates);
+        this.canvas.set_state('threshold_values', candidates);
         this.fire_change();
         this._update_canvas();
       });
 
     const thres_method = this.gui.add_item('Threshold Method', '|v| >= T1', { folder_name : folder_name, args : CONSTANTS.THRESHOLD_OPERATORS })
       .onChange((v) => {
-        const is_continuous = get_or_default(this.canvas.state_data, 'threshold_type', 'discrete') == 'continuous';
+        const is_continuous = this.canvas.get_state( 'threshold_type', 'discrete') == 'continuous';
         if( is_continuous ){
           const op = CONSTANTS.THRESHOLD_OPERATORS.indexOf(v);
           if( op > -1 ){
-            this.canvas.state_data.set('threshold_method', op);
+            this.canvas.set_state('threshold_method', op);
             this.fire_change();
             this._update_canvas();
           }
@@ -321,7 +321,7 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
           // TODO: handle discrete data
         }
       });
-    this.canvas.state_data.set('threshold_method', 2);
+    this.canvas.set_state('threshold_method', 2);
 
     this._ani_status = this.gui.add_item( 'Play/Pause', false,
                                           { folder_name : folder_name },

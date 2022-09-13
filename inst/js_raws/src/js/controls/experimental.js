@@ -198,7 +198,7 @@ function register_controls_experimental( THREEBRAIN_PRESETS ){
         // If double click + new electrodes
         if( evt.action === 'dblclick' && this.edit_mode === 'new electrodes' ){
           const is_surface = elec_surface.getValue() === 'Surface',
-                current_subject = this.canvas.state_data.get("target_subject");
+                current_subject = this.canvas.get_state("target_subject");
           if( !current_subject ){
             return({pass : false});
           }
@@ -274,7 +274,7 @@ function register_controls_experimental( THREEBRAIN_PRESETS ){
               position = res.first_item.point.toArray(),
               is_surface_electrode = elec_surface.getValue() === 'Surface';
 
-          const surface_type = get_or_default( this.canvas.state_data, 'surface_type', 'pial');
+          const surface_type = this.canvas.get_state( 'surface_type', 'pial');
           add_electrode(this.canvas, current_electrode, `__localization__, ${current_electrode} - ` ,
                                 position, surface_type, label, is_surface_electrode, 1);
 
@@ -398,7 +398,7 @@ function register_controls_experimental( THREEBRAIN_PRESETS ){
     this.gui.add_item('Guess Electrodes', () => {
       const thred = ct_thred.getValue() * 255;
       const n_electrodes = Math.ceil(n_elec.getValue());
-      const current_subject = this.canvas.state_data.get("target_subject") || '';
+      const current_subject = this.canvas.get_state("target_subject") || '';
       const ct_cube = this.canvas.mesh.get(`ct.aligned.t1 (${current_subject})`);
       if( !ct_cube || ct_cube.userData.construct_params.type !== 'datacube2' ){
         alert(`Cannot find aligned CT (${current_subject})`);

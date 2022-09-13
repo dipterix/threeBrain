@@ -137,10 +137,13 @@ class THREEBRAIN_CANVAS {
     // action event listener functions and dispose flags
     this._disposed = false;
     this._dispose_functions = new Map();
+    this._event_buffer = new Map();
+    this.dispatcher_timeout = 100;
+    this.dispatcher_throttle = true;
     // set default values
-    this.state_data.set( 'coronal_depth', 0 );
-    this.state_data.set( 'axial_depth', 0 );
-    this.state_data.set( 'sagittal_depth', 0 );
+    this.set_state( 'coronal_depth', 0 );
+    this.set_state( 'axial_depth', 0 );
+    this.set_state( 'sagittal_depth', 0 );
 
     // for global usage
     this.shared_data = new Map();
@@ -350,9 +353,9 @@ class THREEBRAIN_CANVAS {
 			  const cvs_size = get_element_size( cvs );
 			  const div_size = get_element_size( div );
 			  const depths = [
-          this.state_data.get( 'sagittal_depth' ),
-          this.state_data.get( 'coronal_depth' ),
-          this.state_data.get( 'axial_depth' )
+          this.get_state( 'sagittal_depth' ),
+          this.get_state( 'coronal_depth' ),
+          this.get_state( 'axial_depth' )
         ];
 			  //  this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
 
@@ -498,31 +501,31 @@ class THREEBRAIN_CANVAS {
 
           console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
           if( nm === 'coronal' ){
-            this.state_data.set( 'sagittal_depth', _x );
-            this.state_data.set( 'axial_depth', -_y );
+            this.set_state( 'sagittal_depth', _x );
+            this.set_state( 'axial_depth', -_y );
             // this._sagittal_depth = _x;
             // this._axial_depth = -_y;
           }else if( nm === 'axial' ){
-            this.state_data.set( 'sagittal_depth', _x );
-            this.state_data.set( 'coronal_depth', -_y );
+            this.set_state( 'sagittal_depth', _x );
+            this.set_state( 'coronal_depth', -_y );
             // this._sagittal_depth = _x;
             // this._coronal_depth = -_y;
           }else if( nm === 'sagittal' ){
-            this.state_data.set( 'coronal_depth', -_x );
-            this.state_data.set( 'axial_depth', -_y );
+            this.set_state( 'coronal_depth', -_x );
+            this.set_state( 'axial_depth', -_y );
             // this._coronal_depth = -_x;
             // this._axial_depth = -_y;
           }
           // Also set main_camera
           const _d = new Vector3(
             // this._sagittal_depth || 0,
-            this.state_data.get( 'sagittal_depth' ),
+            this.get_state( 'sagittal_depth' ),
 
             // this._coronal_depth || 0,
-            this.state_data.get( 'coronal_depth' ),
+            this.get_state( 'coronal_depth' ),
 
             // this._axial_depth || 0
-            this.state_data.get( 'axial_depth' )
+            this.get_state( 'axial_depth' )
           ).normalize().multiplyScalar(500);
           if( _d.length() === 0 ){
             _d.x = 500;
@@ -546,9 +549,9 @@ class THREEBRAIN_CANVAS {
           }
 
           this.set_side_depth(
-            this.state_data.get( 'coronal_depth' ),
-            this.state_data.get( 'axial_depth' ),
-            this.state_data.get( 'sagittal_depth' )
+            this.get_state( 'coronal_depth' ),
+            this.get_state( 'axial_depth' ),
+            this.get_state( 'sagittal_depth' )
           );
 
         }
@@ -560,18 +563,18 @@ class THREEBRAIN_CANVAS {
         evt.preventDefault();
         if( evt.altKey ){
           if( evt.deltaY > 0 ){
-            this.state_data.set( nm + '_depth', 1 + this.state_data.get(nm + '_depth') );
+            this.set_state( nm + '_depth', 1 + this.get_state(nm + '_depth') );
             // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
           }else if( evt.deltaY < 0 ){
-            this.state_data.set( nm + '_depth', -1 + this.state_data.get(nm + '_depth') );
+            this.set_state( nm + '_depth', -1 + this.get_state(nm + '_depth') );
             // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
           }
         }
         // this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
         this.set_side_depth(
-          this.state_data.get( 'coronal_depth' ),
-          this.state_data.get( 'axial_depth' ),
-          this.state_data.get( 'sagittal_depth' )
+          this.get_state( 'coronal_depth' ),
+          this.get_state( 'axial_depth' ),
+          this.get_state( 'sagittal_depth' )
         );
       }, cvs);
 
@@ -659,6 +662,10 @@ class THREEBRAIN_CANVAS {
     this.bind( 'controls_end', 'end', (v) => {
       // normal pause, can be overridden
       this.pause_animation(1);
+      this.dispatch_event(
+        "canvas.main_camera.onEnd",
+        this.main_camera
+      )
     }, this.controls );
 
     // Follower that fixed at bottom-left
@@ -729,121 +736,52 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  finish_init(){
-    // finalizing initialization of each geom
-    this.dispatch_event( "canvas_finish_init" );
-  }
+  /*---- Finalize init ------------------------------------------------------*/
 
-  dispatch_event( type, data ){
-    let event = new CustomEvent(type, {
-      container_id: this.container_id,
-      detail: data
-    });
-    // elem.addEventListener('build', function (e) { /* ... */ }, false);
-
-    // Dispatch the event.
-    this.el.dispatchEvent(event);
-  }
-
-  add_to_scene( m, global = false ){
-    if( global ){
-      this.scene.add( m );
-    }else{
-      this.origin.add( m );
+  _loader_finishied(){
+    if(this.json_load_finished === undefined){
+      this.json_load_finished = true;
+      return(true);
     }
-  }
-
-  set_font_size( magnification = 1 ){
-    // font size
-    this._lineHeight_normal = Math.round( 24 * this.pixel_ratio[0] * magnification );
-    this._lineHeight_small = Math.round( 20 * this.pixel_ratio[0] * magnification );
-    this._fontSize_normal = Math.round( 20 * this.pixel_ratio[0] * magnification );
-    this._fontSize_small = Math.round( 16 * this.pixel_ratio[0] * magnification );
-    this._lineHeight_legend = Math.round( 20 * this.pixel_ratio[0] * magnification );
-    this._fontSize_legend = Math.round( 16 * this.pixel_ratio[0] * magnification );
-  }
-
-  bind( name, evtstr, fun, target, options = false ){
-    const _target = target || this.main_canvas;
-
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      _f();
+    if(this.json_load_queue.length > 0){
+      this.json_load_finished = false;
     }
-    this._dispose_functions.set( name, () => {
-      console.debug('Calling dispose function ' + name);
-      try {
-        _target.removeEventListener( evtstr , fun );
-      } catch (e) {
-        console.warn('Unable to dispose ' + name);
+    return(this.json_load_finished);
+  }
+
+  load_file(path, onLoad, loader = 'json_loader'){
+
+    loader = this[ loader ];
+    if( !loader ){
+      loader = this.json_loader;
+    }
+
+
+    if( this.use_cache ){
+
+      // check cache first,
+      if( this.cache.check_item( path ) ){
+        onLoad( this.cache.get_item( path ) );
+      }else{
+        this.loader_triggered = true;
+        loader.load( path, (v) => {
+          if(typeof(v) === 'string'){
+            v = JSON.parse(v);
+          }
+          this.cache.set_item( path, v );
+          onLoad( v );
+        });
       }
-    });
-
-    console.debug(`Registering event ${evtstr} (${name})`);
-    _target.addEventListener( evtstr , fun, options );
-  }
-
-  dispose_eventlisters(){
-    this._dispose_functions.forEach( (_f) => {
-      _f();
-    });
-    this._dispose_functions.clear();
-  }
-
-  get_main_camera_params(){
-    return({
-      'target' : this.main_camera.localToWorld(new Vector3(
-        -this.main_camera.userData.pos[0],
-        -this.main_camera.userData.pos[1],
-        -this.main_camera.userData.pos[2]
-      )), //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
-      'up' : this.main_camera.up, // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
-      'position': this.main_camera.position //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
-    });
-  }
-
-  draw_axis( x , y , z ){
-    if( !this._coordinates ){
-      this._coordinates = {};
-      const origin = new Vector3( 0, 0, 0 );
-      // x
-      this._coordinates.x = new ArrowHelper( new Vector3( 1, 0, 0 ),
-              origin, x === 0 ? 1: x, 0xff0000 );
-
-      this._coordinates.y = new ArrowHelper( new Vector3( 0, 1, 0 ),
-              origin, y === 0 ? 1: y, 0x00ff00 );
-
-      this._coordinates.z = new ArrowHelper( new Vector3( 0, 0, 1 ),
-              origin, z === 0 ? 1: z, 0x0000ff );
-      this._coordinates.x.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
-      this._coordinates.y.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
-      this._coordinates.z.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
-      this.add_to_scene( this._coordinates.x );
-      this.add_to_scene( this._coordinates.y );
-      this.add_to_scene( this._coordinates.z );
-    }
-    // If ? === 0, then hide this axis
-    if( x === 0 ){
-      this._coordinates.x.visible = false;
     }else{
-      this._coordinates.x.visible = true;
+      this.loader_triggered = true;
+      loader.load( path , (v) => {
+        if(typeof(v) === 'string'){
+          v = JSON.parse(v);
+        }
+        onLoad( v );
+      });
     }
-
-    if( y === 0 ){
-      this._coordinates.y.visible = false;
-    }else{
-      this._coordinates.y.visible = true;
-    }
-
-    if( z === 0 ){
-      this._coordinates.z.visible = false;
-    }else{
-      this._coordinates.z.visible = true;
-    }
-
-
   }
-
   register_main_canvas_events(){
 
     // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
@@ -1110,83 +1048,324 @@ class THREEBRAIN_CANVAS {
     }, 'copy_electrode_info');
 
   }
+  finish_init(){
+    // finalizing initialization of each geom
+    this.dispatch_event( "canvas.finish_init" );
+  }
 
-  focus_object( m = undefined, helper = false, auto_unfocus = false ){
-
-    if( m ){
-      if( this.object_chosen ){
-        this.highlight( this.object_chosen, true );
-      }
-      this.object_chosen = m;
-      this._last_object_chosen = m;
-      this.highlight( this.object_chosen, false );
-      console.debug('object selected ' + m.name);
-
-      if( helper ){
-        m.getWorldPosition( this.mouse_helper.position );
-        this.mouse_helper.visible = true;
-      }
-
-
+  /*---- Add objects --------------------------------------------*/
+  add_to_scene( m, global = false ){
+    if( global ){
+      this.scene.add( m );
     }else{
-      if( auto_unfocus && this.object_chosen ){
-        this.highlight( this.object_chosen, true );
-        this.object_chosen = undefined;
-      }
+      this.origin.add( m );
     }
   }
 
-  /*
-  * @param reset whether to reset (hide) box that is snapped to m
-  */
-  highlight( m, reset = false ){
+  // Generic method to add objects
+  add_object(g){
+    //
+    if(this.DEBUG){
+      console.debug('Generating geometry '+g.type);
+    }
+    let gen_f = GEOMETRY_FACTORY[g.type],
+        inst = gen_f(g, this);
 
-    const highlight_disabled = get_or_default(
-      this.state_data,
-      'highlight_disabled',
-      false
-    );
-
-    // use bounding box with this.focus_box
-    if( !m || !m.isObject3D ){ return(null); }
-
-    this.focus_box.setFromObject( m );
-    if( !this.focus_box.userData.added ){
-      this.focus_box.userData.added = true;
-      this.add_to_scene( this.focus_box, true );
+    if( !inst || typeof(inst) !== 'object' || !inst.object ){
+      return;
     }
 
-    this.focus_box.visible = !reset && !highlight_disabled;
+    // make sure subject array exists
+    this.init_subject( inst.subject_code );
 
-    // check if there is highlight helper
-    if( m.children.length > 0 ){
-      m.children.forEach((_c) => {
-        if( _c.isMesh && _c.userData.is_highlight_helper ){
-          set_visibility( _c, !reset );
-          // _c.visible = !reset;
+
+    inst.finish_init();
+    return( inst );
+  }
+
+  // Make object clickable (mainly electrodes)
+  add_clickable( name, obj ){
+    if( this.clickable.has( name ) ){
+      // remove from this.clickable_array
+      const sub = this.clickable.get( name ),
+            idx = this.clickable_array.indexOf( sub );
+      if( idx > -1 ){
+        this.clickable_array.splice(idx, 1);
+      }
+    }
+    this.clickable.set( name, obj );
+    this.clickable_array.push( obj );
+  }
+
+  // Ugly functions to add volumes
+  _register_datacube( m ){
+
+    const g = m[0].userData.construct_params,
+          gp = m[0].parent;
+
+    // Register depth functions
+
+    const cube_dimension = this.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
+          // XYZ slice counts
+
+          cube_half_size = this.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
+          // XYZ pixel heights (* 0.5)
+
+          cube_center = g.position;
+
+    // Add handlers to set plane location when an electrode is clicked
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.isMesh && obj.userData.construct_params ){
+          const pos = obj.getWorldPosition( gp.position.clone() );
+          // calculate depth
+          this.set_side_depth(
+            (pos.y) * 128 / cube_half_size[1] - 0.5,
+            (pos.z) * 128 / cube_half_size[2] - 0.5,
+            (pos.x) * 128 / cube_half_size[0] - 0.5
+          );
+
         }
+      },
+      'side_viewer_depth'
+    );
+
+
+    this._set_coronal_depth = ( depth ) => {
+      let idx_mid = cube_dimension[1] / 2;
+      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+
+      m[0].position.y = (depth + 0.5) / 128 * cube_half_size[1];
+      // cube_anchor.position.y = m[0].position.y;
+      m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+      m[0].material.needsUpdate = true;
+      // this._coronal_depth = depth;
+      this.set_state( 'coronal_depth', depth );
+      this.set_state( 'coronal_posy', m[0].position.y );
+      this.trim_electrodes();
+      // Animate on next refresh
+      this.start_animation( 0 );
+    };
+    this._set_axial_depth = ( depth ) => {
+      let idx_mid = cube_dimension[2] / 2;
+      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+      m[1].position.z = (depth + 0.5) / 128 * cube_half_size[2];
+      // cube_anchor.position.z = m[1].position.z;
+      m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+      m[1].material.needsUpdate = true;
+      // this._axial_depth = depth;
+      this.set_state( 'axial_depth', depth );
+      this.set_state( 'axial_posz', m[1].position.z );
+      this.trim_electrodes();
+      // Animate on next refresh
+      this.start_animation( 0 );
+    };
+    this._set_sagittal_depth = ( depth ) => {
+      let idx_mid = cube_dimension[0] / 2;
+      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
+      m[2].position.x = (depth + 0.5) / 128 * cube_half_size[0];
+      // cube_anchor.position.x = m[2].position.x;
+      m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
+      m[2].material.needsUpdate = true;
+      // this._sagittal_depth = depth;
+      this.set_state( 'sagittal_depth', depth );
+      this.set_state( 'sagittal_posx', m[2].position.x );
+      this.trim_electrodes();
+      // Animate on next refresh
+      this.start_animation( 0 );
+    };
+    this._side_plane_sendback = ( sendback ) => {
+      m.forEach( (p) => {
+        p.material.uniforms.renderDepth.value = sendback ? 0.0 : 1.0;
+        p.material.needsUpdate = true;
+      });
+    };
+
+    this.set_side_visibility = ( which, visible ) => {
+      let fn = visible ? 'enable' : 'disable';
+      if( which === 'coronal' ){
+        m[0].layers[fn](8);
+        this.set_state( 'coronal_overlay', visible );
+      }else if( which === 'axial' ){
+        m[1].layers[fn](8);
+        this.set_state( 'axial_overlay', visible );
+      }else if( which === 'sagittal' ){
+        m[2].layers[fn](8);
+        this.set_state( 'sagittal_overlay', visible );
+      }else{
+        // reset, using cached
+        fn = this.get_state( 'coronal_overlay', false ) ? 'enable' : 'disable';
+        m[0].layers[fn](8);
+        fn = this.get_state( 'axial_overlay', false ) ? 'enable' : 'disable';
+        m[1].layers[fn](8);
+        fn = this.get_state( 'sagittal_overlay', false ) ? 'enable' : 'disable';
+        m[2].layers[fn](8);
+      }
+
+      this.start_animation( 0 );
+    };
+
+    // reset side camera positions
+    this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
+    this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
+
+  }
+
+
+  // Add geom groups
+  add_group(g, cache_folder = 'threebrain_data', onProgress = null){
+    var gp = new Object3D();
+
+    gp.name = 'group_' + g.name;
+    to_array(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
+    gp.position.fromArray( g.position );
+
+    if(g.trans_mat !== null){
+      let trans = new Matrix4();
+      trans.set(...g.trans_mat);
+      let inverse_trans = new Matrix4().copy( trans ).invert();
+
+      gp.userData.trans_mat = trans;
+      gp.userData.inv_trans_mat = inverse_trans;
+
+      if(!g.disable_trans_mat){
+        gp.applyMatrix4(trans);
+      }
+    }
+
+    gp.userData.construct_params = g;
+
+    // This is now a tricky part, we are going to load from dependencies!
+    // This is experimental and might disable standalone widget!
+
+    let cached_items = to_array( g.cached_items ),
+        item_size = cached_items.length;
+    if(item_size > 0){
+      cached_items.forEach((nm) => {
+        let cache_info = g.group_data[nm];
+
+        if(cache_info === undefined || cache_info === null ||
+          Array.isArray(cache_info) || cache_info.file_name === undefined ){
+          // Already cached
+          item_size -= 1;
+        /*}else if( cache_info.lazy ){
+          // lazy-load the data
+          cache_info.loaded = false;
+          cache_info.server_path = cache_folder + g.cache_name + '/' + cache_info.file_name;
+          item_size -= 1;*/
+        } else {
+
+
+          // Need to check shiny mode
+          let path = cache_folder + g.cache_name + '/' + cache_info.file_name;
+          /*
+          if(!this.shiny_mode){
+            path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
+          }
+          */
+          console.debug(path);
+
+          this.load_file(
+            path, ( v ) => {
+
+          	  const keys = Object.keys(v);
+
+          	  keys.forEach((k) => {
+                g.group_data[k] = v[k];
+              });
+
+              item_size -= 1;
+          	},
+          	onProgress
+          );
+
+        }
+
       });
     }
 
-  }
+    gp.userData.group_data = g.group_data;
+    this.group.set( g.name, gp );
 
-  get_mouse(){
-    if(this.mouse_event !== undefined && !this.mouse_event.dispose){
-      let event = this.mouse_event.event;
+    this.add_to_scene(gp);
 
-      if( !event.offsetX && !event.offsetY ){
-        // Firefox, where offsetX,Y are always 0
-        const rect = this.domElement.getBoundingClientRect();
-        this.mouse_pointer.x = 2 * (event.clientX - rect.x) / rect.width - 1;
-        // three.js origin is from bottom-left while html origin is top-left
-        this.mouse_pointer.y = 2 * (rect.y - event.clientY) / rect.height + 1;
-      } else {
-        this.mouse_pointer.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
-        this.mouse_pointer.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
+    // special case, if group name is "__global_data", then set group variable
+    if( g.name === '__global_data' && g.group_data ){
+      for( let _n in g.group_data ){
+        this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
       }
+
+      // check if ".subject_codes" is in the name
+      const subject_codes = to_array( this.shared_data.get(".subject_codes") );
+      if( subject_codes.length > 0 ){
+
+        // generate transform matrices
+        subject_codes.forEach((scode) => {
+
+          let subject_data = this.shared_data.get(scode);
+          if( !subject_data ){
+            subject_data = {};
+            this.shared_data.set(scode, subject_data);
+          }
+
+          const Norig = as_Matrix4( subject_data.Norig );
+          const Torig = as_Matrix4( subject_data.Torig );
+          const xfm = as_Matrix4( subject_data.xfm );
+          const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
+          const MNI305_tkrRAS = new Matrix4()
+            .copy(tkrRAS_MNI305).invert();
+          const tkrRAS_Scanner = new Matrix4()
+            .copy(Norig)
+            .multiply(
+              new Matrix4()
+                .copy(Torig)
+                .invert()
+            );
+          subject_data.matrices = {
+            Norig : Norig,
+            Torig : Torig,
+            xfm : xfm,
+            tkrRAS_MNI305 : tkrRAS_MNI305,
+            MNI305_tkrRAS : MNI305_tkrRAS,
+            tkrRAS_Scanner: tkrRAS_Scanner
+          };
+
+        });
+
+      }
+
+      const media_content = this.shared_data.get(".media_content");
+      if( media_content ){
+        for(let video_name in media_content){
+          const content = media_content[video_name];
+          if( !content.is_url ){
+            content.url = cache_folder + g.cache_name + '/' + content.url;
+            content.is_url = true;
+            window.fetch(content.url).then(r => r.blob()).then(blob => {
+              content.url = URL.createObjectURL(blob);
+            });
+          }
+        }
+      }
+
     }
+
+    const check = function(){
+      return(item_size === 0);
+    };
+
+    return(check);
+
   }
 
+  // Debug stats (framerate)
   _add_stats(){
     // if DEBUG, add stats information
     // Stats
@@ -1201,266 +1380,235 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  set_raycaster(){
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+  /*---- Remove, dispose objects --------------------------------------------*/
+  remove_object( obj, resursive = true, dispose = true, depth = 100 ){
+    if( !obj && depth < 0 ){ return; }
+    if( resursive ){
+      if( Array.isArray( obj.children ) ){
+        for( let ii = obj.children.length - 1; ii >= 0; ii = Math.min(ii-1, obj.children.length) ){
+          if( ii < obj.children.length ){
+            this.remove_object( obj.children[ ii ], resursive, dispose, depth - 1 );
+          }
+        }
+      }
+    }
+    if( obj.parent ){
+      console.debug( 'removing object - ' + (obj.name || obj.type) );
+      obj.parent.remove( obj );
+    }
+
+    if( dispose ){
+      this.dispose_object( obj );
+    }
+  }
+  dispose_object( obj, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    const obj_name = obj.name || obj.type || 'unknown';
+    if( !quiet ){
+      console.debug('Disposing - ' + obj_name);
+    }
+    if( obj.userData && typeof obj.userData.dispose === 'function' ){
+      this._try_dispose( obj.userData, obj.name, quiet );
+    }else{
+      // Not implemented, try to guess dispose methods
+      this._try_dispose( obj.material, obj_name + '-material', quiet );
+      this._try_dispose( obj.geometry, obj_name + '-geometry', quiet );
+      this._try_dispose( obj, obj_name, quiet );
+    }
   }
 
-  _fast_raycast( request_type ){
+  _try_dispose( obj, obj_name = undefined, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    if( typeof obj.dispose === 'function' ){
+      try {
+        obj.dispose();
+      } catch(e) {
+        if( !quiet ){
+          console.warn( 'Failed to dispose ' + (obj_name || obj.name || 'unknown') );
+        }
+      }
+    }
+  }
 
-    let items;
+  dispose(){
+    // Remove all objects, listeners, and dispose all
+    this._disposed = true;
+    this.ready = false;
+    this.clock.stop();
 
-    this.set_raycaster();
+    // update functions
+    this._custom_updates.clear();
 
-    this.mouse_raycaster.layers.disableAll();
+    // Remove custom listeners
+    this.dispose_eventlisters();
 
-    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
-      // intersect with all clickables
-      // set raycaster to be layer 14
-      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
+    // Remove customized objects
+    this.clear_all();
 
-      // Only raycast with visible
-      items = this.mouse_raycaster.intersectObjects(
-        // to_array( this.clickable )
-        this.clickable_array.filter((e) => { return(e.visible === true) })
+    // Remove the rest objects in the scene
+    this.remove_object( this.scene );
+
+    // Call dispose method
+    this.threebrain_instances.forEach((el) => {
+      el.dispose();
+    });
+
+    // dispose scene
+    this.scene.dispose();
+    this.scene = null;
+
+    // Remove el
+    this.el.innerHTML = '';
+
+    // How to dispose renderers? Not sure
+    this.domContext = null;
+    this.domContextWrapper = null;
+    this.main_renderer.dispose();
+    this.side_renderer.dispose();
+
+  }
+
+  // Function to clear all meshes
+  clear_all(){
+    // Stop showing information of any selected objects
+    this.object_chosen=undefined;
+    this.clickable.clear();
+    this.clickable_array.length = 0;
+
+    this.subject_codes.length = 0;
+    this.electrodes.clear();
+    this.volumes.clear();
+    this.ct_scan.clear();
+    this.surfaces.clear();
+    this.atlases.clear();
+
+    this.state_data.clear();
+    this.shared_data.clear();
+    this.color_maps.clear();
+    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+
+    console.log('TODO: Need to dispose animation clips');
+    this.animation_clips.clear();
+
+    this.group.forEach((g) => {
+      // g.parent.remove( g );
+      this.remove_object( g );
+    });
+    this.mesh.forEach((m) => {
+      this.remove_object( m );
+      // m.parent.remove( m );
+      // this.dispose_object(m);
+      // this.scene.remove( m );
+    });
+    this.mesh.clear();
+    this.threebrain_instances.clear();
+    this.group.clear();
+
+    this.singletons.forEach( (el) => {
+      try {
+        el.dispose();
+      } catch (e) {}
+    });
+    this.singletons.clear();
+
+    // set default values
+    this.set_state( 'coronal_depth', 0 );
+    this.set_state( 'axial_depth', 0 );
+    this.set_state( 'sagittal_depth', 0 );
+    this.dispatch_event( 'canvas.clear_all' );
+
+  }
+
+
+
+  /*---- Events -------------------------------------------------------------*/
+  bind( name, evtstr, fun, target, options = false ){
+    const _target = target || this.main_canvas;
+
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      _f();
+    }
+    this._dispose_functions.set( name, () => {
+      console.debug('Calling dispose function ' + name);
+      try {
+        _target.removeEventListener( evtstr , fun );
+      } catch (e) {
+        console.warn('Unable to dispose ' + name);
+      }
+    });
+
+    console.debug(`Registering event ${evtstr} (${name})`);
+    _target.addEventListener( evtstr , fun, options );
+  }
+  dispatch_event( type, data, immediate = false ){
+
+    if( typeof(type) !== "string" || type.length === 0 ) {
+      throw new TypeError( 'Can only dispatch event with type of none-empty string' );
+    }
+
+    if( !this._event_buffer.has(type) ) {
+      this._event_buffer.set(type, {
+        type: type,
+        throttlePause: false,
+        data: data,
+        dispatched: false
+      });
+    }
+    const evt_buffer = this._event_buffer.get(type);
+    evt_buffer.data = data;
+    evt_buffer.dispatched = false;
+
+    const immediate_ = this.dispatcher_throttle || immediate;
+    if( !immediate && evt_buffer.throttlePause ) {
+      // update data, but hold it
+      return;
+    }
+
+    evt_buffer.throttlePause = true;
+
+    const do_dispatch = () => {
+      evt_buffer.throttlePause = false;
+      if( evt_buffer.dispatched ) { return; }
+
+      // fire event with the newest data
+      const event = new CustomEvent(
+        evt_buffer.type,
+        {
+          container_id: this.container_id,
+          detail: evt_buffer.data
+        }
       );
-      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
-    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
-      // set raycaster to be layer 8 (main camera)
-      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
-      items = this.mouse_raycaster.intersectObjects( to_array( request_type ), true );
-    }
 
-    if(this.DEBUG){
-      this._items = items;
-    }
+      // Dispatch the event.
+      console.debug("3D Viewer: dispatching event: " + evt_buffer.type);
+      this.el.dispatchEvent(event);
+      evt_buffer.dispatched = true;
+    };
 
-		return(items);
+    if( immediate ) {
+      do_dispatch();
+    } else {
+      setTimeout(() => { do_dispatch(); }, this.dispatcher_timeout);
+    }
 
   }
 
+  dispose_eventlisters(){
+    this._dispose_functions.forEach( (_f) => {
+      _f();
+    });
+    this._dispose_functions.clear();
+  }
+
+
+  // callbacks
   add_mouse_callback(check, callback, name){
     this._mouse_click_callbacks[name] = [check, callback];
   }
   add_keyboard_callabck(keycode, callback, name){
     this._keyboard_callbacks[name] = [keycode, callback];
   }
-
-  keyboard_update(){
-
-    if( !this.keyboard_event || this.keyboard_event.dispose ){
-      return( null );
-    }
-    this.keyboard_event.dispose = true;
-    if(this.keyboard_event.level <= 2){
-      this.keyboard_event.level = 0;
-    }
-
-    // handle
-    for( let _cb_name in this._keyboard_callbacks ){
-
-      if( this._keyboard_callbacks[ _cb_name ] &&
-          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
-        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
-      }
-
-    }
-  }
-
-  // method to target object with mouse pointed at
-  mouse_update(){
-
-    if( !this.mouse_event || this.mouse_event.dispose ){
-      return(null);
-    }
-
-    // dispose first as the callbacks might have error
-    this.mouse_event.dispose = true;
-    if(this.mouse_event.level <= 2){
-      this.mouse_event.level = 0;
-    }
-
-
-    // Call callbacks
-    let raycast_result, request_type, callback, request;
-
-    for( let _cb_name in this._mouse_click_callbacks ){
-      callback = this._mouse_click_callbacks[ _cb_name ];
-      if( callback === undefined ){
-        continue;
-      }
-      request = callback[0]( this.mouse_event );
-
-      if( request && request.pass ){
-
-        // raycast object
-        // check which object(s) to raycast on
-        request_type = request.type || 'clickable';
-
-        if( raycast_result === undefined ||
-            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
-          raycast_result = {
-            type  : request_type,
-            items : this._fast_raycast( request_type ),
-            meta  : request.meta
-          };
-        }
-
-        // Find object_chosen
-        if( raycast_result.items.length > 0 ){
-          // Has intersects!
-          const first_item = raycast_result.items[0],
-                target_object = first_item.object;
-
-          raycast_result.first_item = first_item;
-          raycast_result.target_object = target_object;
-        }
-
-        callback[1]( raycast_result, this.mouse_event );
-      }
-    }
-
-
-
-  }
-
-  add_colormap( name, alias, value_type, value_names, value_range, time_range,
-                color_keys, color_vals, n_levels, hard_range ){
-
-    const color_name = name + '--'  + this.container_id;
-
-    // Step 1: register to ColorMapKeywords
-    const cmap_keys = [];
-
-    // n_color is number of colors in Lut, not the true levels of colors
-    const n_color = Math.max( 2 , to_array( color_keys ).length );
-
-    // Step 2:
-    for( let ii=0; ii < n_color; ii++ ){
-      cmap_keys.push([ ii / (n_color-1) , color_vals[ii] ]);
-    }
-
-    addToColorMapKeywords(
-      color_name,
-      cmap_keys
-    );
-
-    const lut = new Lut( color_name , n_color );
-
-    // min and max cannot be the same, otherwise colors will not be rendered
-    if( value_type === 'continuous' ){
-      lut.setMin( value_range[0] );
-      if( value_range[1] === value_range[0] ){
-        lut.setMax( value_range[0] + 1 );
-      }else{
-        lut.setMax( value_range[1] );
-      }
-    }else{
-      lut.setMin( 0 );
-      lut.setMax( Math.max( n_levels - 1, 1) );
-    }
-
-    // step 3: register hard range
-    let theoretical_range;
-    if( Array.isArray(hard_range) && hard_range.length == 2 ){
-      theoretical_range = [hard_range[0], hard_range[1]];
-    }
-
-    // step 4: set alias
-    let alt_name = alias;
-    if( typeof alt_name !== 'string' || alt_name === '' ){
-      alt_name = name;
-    }
-
-    this.color_maps.set( name, {
-      lut               : lut,
-      name              : name,
-      alias             : alt_name,
-      value_type        : value_type,
-      value_names       : to_array( value_names ),
-      time_range        : time_range,
-      n_levels          : n_levels,
-      // Used for back-up
-      value_range       : [ lut.minV, lut.maxV ],
-      theoretical_range : theoretical_range
-    });
-
-  }
-
-  switch_colormap( name, value_range = [] ){
-    let cmap;
-    if( name ){
-      this.state_data.set( 'color_map', name );
-
-      cmap = this.color_maps.get( name );
-
-      // also need to query surface & datacube2 to check the time range
-
-      if( cmap ){
-        this.state_data.set( 'time_range_min', cmap.time_range[0] );
-        this.state_data.set( 'time_range_max', cmap.time_range[1] );
-      }else{
-        this.state_data.set( 'time_range_min', 0 );
-        this.state_data.set( 'time_range_max', 1 );
-      }
-
-    }else{
-      name = get_or_default( this.state_data, 'color_map', '' );
-      cmap = this.color_maps.get( name );
-      // return( this.color_maps.get( name ) );
-    }
-    if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
-        // Must be continuous color map
-        cmap.value_type === 'continuous' ){
-      // Check hard ranges
-      const hard_range = cmap.theoretical_range;
-      let minv = value_range[0],
-          maxv = value_range[1];
-      if( Array.isArray(hard_range) && hard_range.length == 2 ){
-        if( minv < hard_range[0] ){
-          minv = hard_range[0];
-          if( maxv < minv ){
-            maxv = minv + 1e-100;
-          }
-        }
-        if( maxv > hard_range[1] ){
-          maxv = hard_range[1];
-          if( maxv < minv ){
-            minv = maxv - 1e-100;
-          }
-        }
-      }
-
-      // set cmap value_range
-      cmap.lut.setMax( maxv );
-      cmap.lut.setMin( minv );
-      // Legend needs to be updated
-      this.start_animation( 0 );
-    }
-
-    this.update_time_range();
-    if( cmap ){
-      cmap.time_range[0] = this.__min_t;
-      cmap.time_range[1] = this.__max_t;
-    }
-    return( cmap );
-  }
-
-  get_color(v, name){
-    let cmap;
-    if( name ){
-      cmap = this.color_maps.get( name );
-    }else{
-      cmap = this.color_maps.get( get_or_default( this.state_data, 'color_map', '' ) );
-    }
-
-    if(cmap === undefined){
-      return('#e2e2e2');
-    }else{
-      return(cmap.lut.getColor(v));
-    }
-  }
-
-
   handle_resize(width, height, lazy = false, center_camera = false){
 
     if( this._disposed ) { return; }
@@ -1538,7 +1686,201 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  update_control_center( v ){
+  /*---- Setter/getters -----------------------------------------------------*/
+  global_data(data_name){
+    const gp = this.group.get("__global_data");
+    let re = null;
+    // group exists
+    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+
+      re = gp.userData.group_data[data_name];
+    }
+
+    return(re);
+
+  }
+
+  // Get data from some geometry settings. Try to get from geom first, then get from group
+  get_data(data_name, from_geom, group_hint){
+
+    const m = this.mesh.get( from_geom );
+    let re, gp;
+
+    if( m ){
+      if(m.userData.hasOwnProperty(data_name)){
+        // Object itself own the property, no group needs to go to
+        return(m.userData[data_name]);
+      }else{
+        let g = m.userData.construct_params.group;
+        if(g !== null){
+          let group_name = g.group_name;
+          gp = this.group.get( group_name );
+          // set re
+        }
+      }
+    }else if(group_hint !== undefined){
+      let group_name = group_hint;
+      gp = this.group.get( group_name );
+      // set re
+
+    }else if(this.DEBUG){
+      console.error('Cannot find data with name ' + from_geom + ' at group ' + group_hint);
+    }
+
+    // group exists
+    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+
+      re = gp.userData.group_data[data_name];
+      /*
+      if( re ){
+        const is_lazy = re.lazy;
+        const tobe_loaded = re.loaded === false;
+
+        // if re is not lazy, run `lazy_onload`,
+        // if re is lazy but loaded, run
+        if( !(is_lazy && tobe_loaded) && typeof lazy_onload === 'function' ){
+          // this means re is loaded. However, data is not overridden or missing
+          // because otherwise re should be the actual object.
+          // return re anyway to see if `lazy_onload` can further handle it
+          lazy_onload( re );
+        }
+
+        if( is_lazy && tobe_loaded ){
+
+          // otherwise load data
+
+          // make sure we never load data again
+          re.loaded = true;
+
+          this.load_file(
+            re.server_path, ( v ) => {
+          	  const keys = Object.keys(v);
+          	  keys.forEach((k) => {
+                gp.userData.group_data[k] = v[k];
+              });
+              // recall function
+              re = gp.userData.group_data[data_name];
+              if( re && typeof lazy_onload === 'function' ){
+                lazy_onload( re );
+              }
+          	},
+          	( url, itemsLoaded, itemsTotal ) => {
+            	console.debug( 'Loading file: ' + url + ' (lazy-load).\nLoaded ' +
+            	              itemsLoaded + ' of ' + itemsTotal + ' files.' );
+            }
+          );
+        }
+
+      }*/
+    }
+
+    return(re);
+  }
+
+
+  // Canvas state
+  set_state( key, val ) {
+    this.state_data.set(key, val);
+    this.dispatch_event( "canvas.state.onChange", {
+      key: key,
+      value: val
+    });
+  }
+  get_state( key, missing = undefined ) {
+    return(get_or_default( this.state_data, key, missing ));
+  }
+
+  // Font size magnification
+  set_font_size( magnification = 1 ){
+    // font size
+    this._lineHeight_normal = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_small = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_normal = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_small = Math.round( 16 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_legend = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_legend = Math.round( 16 * this.pixel_ratio[0] * magnification );
+    this.set_state("font_magnification", magnification);
+  }
+
+  // Get camera position & up
+  get_main_camera_params(){
+    return({
+      'target' : this.main_camera.localToWorld(new Vector3(
+        -this.main_camera.userData.pos[0],
+        -this.main_camera.userData.pos[1],
+        -this.main_camera.userData.pos[2]
+      )), //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
+      'up' : this.main_camera.up, // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
+      'position': this.main_camera.position //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
+    });
+  }
+
+  // Get mouse position (normalized)
+  get_mouse(){
+    if(this.mouse_event !== undefined && !this.mouse_event.dispose){
+      let event = this.mouse_event.event;
+
+      if( !event.offsetX && !event.offsetY ){
+        // Firefox, where offsetX,Y are always 0
+        const rect = this.domElement.getBoundingClientRect();
+        this.mouse_pointer.x = 2 * (event.clientX - rect.x) / rect.width - 1;
+        // three.js origin is from bottom-left while html origin is top-left
+        this.mouse_pointer.y = 2 * (rect.y - event.clientY) / rect.height + 1;
+      } else {
+        this.mouse_pointer.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
+        this.mouse_pointer.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
+      }
+    }
+  }
+
+  // Show/hide bottom-left compass
+  set_compass_visibility( visible ){
+    if( this.compass ){
+      this.compass.set_visibility( visible, () => {
+        this.start_animation( 0 );
+      });
+    }
+  }
+
+
+  // To be implemented (abstract methods)
+  set_coronal_depth( depth ){
+    if( typeof this._set_coronal_depth === 'function' ){
+      this._set_coronal_depth( depth );
+    }else{
+      console.debug('Set coronal depth not implemented');
+    }
+  }
+  set_axial_depth( depth ){
+    if( typeof this._set_axial_depth === 'function' ){
+      this._set_axial_depth( depth );
+    }else{
+      console.debug('Set axial depth not implemented');
+    }
+  }
+  set_sagittal_depth( depth ){
+    if( typeof this._set_sagittal_depth === 'function' ){
+      this._set_sagittal_depth( depth );
+    }else{
+      console.debug('Set sagittal depth not implemented');
+    }
+  }
+  set_side_depth( c_d, a_d, s_d ){
+    console.debug('Set side depth not implemented');
+  }
+  set_side_visibility( which, visible ){
+    console.debug('Set side visibility not implemented');
+  }
+  side_plane_sendback( is_back ){
+    if( typeof this._side_plane_sendback === 'function' ){
+      this._side_plane_sendback( is_back );
+    }
+  }
+
+
+  // -------- Camera, control trackballs ........
+  // Set trackball center target
+  set_control_center( v ){
     v = to_array(v);
     this.controls.target.fromArray( v );
     this.control_center = to_array( v );
@@ -1585,7 +1927,6 @@ class THREEBRAIN_CANVAS {
     this.handle_resize( undefined, undefined );
 
   }
-
   reset_side_cameras( pos, scale = 300, distance = 500 ){
 
     if( pos ){
@@ -1629,7 +1970,6 @@ class THREEBRAIN_CANVAS {
 
     this.start_animation( 0 );
   }
-
   reset_controls(){
 	  // reset will erase target, manually reset target
 	  // let target = this.controls.target.toArray();
@@ -1657,6 +1997,679 @@ class THREEBRAIN_CANVAS {
 		// immediately render once
     this.start_animation(0);
 	}
+
+  enable_side_cameras(){
+	  // Add side renderers to the element
+	  this.has_side_cameras = true;
+	  for( let k in this.side_canvas ){
+	    this.side_canvas[ k ].container.style.display = 'block';
+	  }
+	  this.handle_resize();
+	}
+	disable_side_cameras(force = false){
+	  //this.side_canvas.style.display = 'none';
+	  for( let k in this.side_canvas ){
+	    this.side_canvas[ k ].container.style.display = 'none';
+	  }
+	  this.has_side_cameras = false;
+	  this.handle_resize();
+	}
+  /*---- Choose & highlight objects -----------------------------------------*/
+  set_raycaster(){
+    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+  }
+
+  _fast_raycast( request_type ){
+
+    let items;
+
+    this.set_raycaster();
+
+    this.mouse_raycaster.layers.disableAll();
+
+    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
+      // intersect with all clickables
+      // set raycaster to be layer 14
+      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
+
+      // Only raycast with visible
+      items = this.mouse_raycaster.intersectObjects(
+        // to_array( this.clickable )
+        this.clickable_array.filter((e) => { return(e.visible === true) })
+      );
+      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
+    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
+      // set raycaster to be layer 8 (main camera)
+      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      items = this.mouse_raycaster.intersectObjects( to_array( request_type ), true );
+    }
+
+    if(this.DEBUG){
+      this._items = items;
+    }
+
+		return(items);
+
+  }
+
+  focus_object( m = undefined, helper = false, auto_unfocus = false ){
+
+    if( m ){
+      if( this.object_chosen ){
+        this.highlight( this.object_chosen, true );
+      }
+      this.object_chosen = m;
+      this._last_object_chosen = m;
+      this.highlight( this.object_chosen, false );
+      console.debug('object selected ' + m.name);
+
+      if( helper ){
+        m.getWorldPosition( this.mouse_helper.position );
+        this.mouse_helper.visible = true;
+      }
+
+
+    }else{
+      if( auto_unfocus ){
+        if( this.object_chosen ) {
+          this.highlight( this.object_chosen, true );
+          this.object_chosen = undefined;
+        }
+        this.mouse_helper.visible = false;
+      }
+    }
+  }
+
+  /*
+  * @param reset whether to reset (hide) box that is snapped to m
+  */
+  highlight( m, reset = false ){
+
+    const highlight_disabled = get_or_default(
+      this.state_data,
+      'highlight_disabled',
+      false
+    );
+
+    // use bounding box with this.focus_box
+    if( !m || !m.isObject3D ){ return(null); }
+
+    this.focus_box.setFromObject( m );
+    if( !this.focus_box.userData.added ){
+      this.focus_box.userData.added = true;
+      this.add_to_scene( this.focus_box, true );
+    }
+
+    this.focus_box.visible = !reset && !highlight_disabled;
+
+    // check if there is highlight helper
+    if( m.children.length > 0 ){
+      m.children.forEach((_c) => {
+        if( _c.isMesh && _c.userData.is_highlight_helper ){
+          set_visibility( _c, !reset );
+          // _c.visible = !reset;
+        }
+      });
+    }
+
+  }
+
+  /*---- MISC ---------------------------------------------------------------*/
+
+
+  // Add Axis coordinates to the side-cameras
+  draw_axis( x , y , z ){
+    if( !this._coordinates ){
+      this._coordinates = {};
+      const origin = new Vector3( 0, 0, 0 );
+      // x
+      this._coordinates.x = new ArrowHelper( new Vector3( 1, 0, 0 ),
+              origin, x === 0 ? 1: x, 0xff0000 );
+
+      this._coordinates.y = new ArrowHelper( new Vector3( 0, 1, 0 ),
+              origin, y === 0 ? 1: y, 0x00ff00 );
+
+      this._coordinates.z = new ArrowHelper( new Vector3( 0, 0, 1 ),
+              origin, z === 0 ? 1: z, 0x0000ff );
+      this._coordinates.x.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+      this._coordinates.y.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+      this._coordinates.z.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
+      this.add_to_scene( this._coordinates.x );
+      this.add_to_scene( this._coordinates.y );
+      this.add_to_scene( this._coordinates.z );
+    }
+    // If ? === 0, then hide this axis
+    if( x === 0 ){
+      this._coordinates.x.visible = false;
+    }else{
+      this._coordinates.x.visible = true;
+    }
+
+    if( y === 0 ){
+      this._coordinates.y.visible = false;
+    }else{
+      this._coordinates.y.visible = true;
+    }
+
+    if( z === 0 ){
+      this._coordinates.z.visible = false;
+    }else{
+      this._coordinates.z.visible = true;
+    }
+
+
+  }
+
+
+
+  /*---- Colors, animations, media ------------------------------------------*/
+  add_colormap( name, alias, value_type, value_names, value_range, time_range,
+                color_keys, color_vals, n_levels, hard_range ){
+
+    const color_name = name + '--'  + this.container_id;
+
+    // Step 1: register to ColorMapKeywords
+    const cmap_keys = [];
+
+    // n_color is number of colors in Lut, not the true levels of colors
+    const n_color = Math.max( 2 , to_array( color_keys ).length );
+
+    // Step 2:
+    for( let ii=0; ii < n_color; ii++ ){
+      cmap_keys.push([ ii / (n_color-1) , color_vals[ii] ]);
+    }
+
+    addToColorMapKeywords(
+      color_name,
+      cmap_keys
+    );
+
+    const lut = new Lut( color_name , n_color );
+
+    // min and max cannot be the same, otherwise colors will not be rendered
+    if( value_type === 'continuous' ){
+      lut.setMin( value_range[0] );
+      if( value_range[1] === value_range[0] ){
+        lut.setMax( value_range[0] + 1 );
+      }else{
+        lut.setMax( value_range[1] );
+      }
+    }else{
+      lut.setMin( 0 );
+      lut.setMax( Math.max( n_levels - 1, 1) );
+    }
+
+    // step 3: register hard range
+    let theoretical_range;
+    if( Array.isArray(hard_range) && hard_range.length == 2 ){
+      theoretical_range = [hard_range[0], hard_range[1]];
+    }
+
+    // step 4: set alias
+    let alt_name = alias;
+    if( typeof alt_name !== 'string' || alt_name === '' ){
+      alt_name = name;
+    }
+
+    this.color_maps.set( name, {
+      lut               : lut,
+      name              : name,
+      alias             : alt_name,
+      value_type        : value_type,
+      value_names       : to_array( value_names ),
+      time_range        : time_range,
+      n_levels          : n_levels,
+      // Used for back-up
+      value_range       : [ lut.minV, lut.maxV ],
+      theoretical_range : theoretical_range
+    });
+
+  }
+
+  switch_colormap( name, value_range = [] ){
+    let cmap;
+    if( name ){
+      this.set_state( 'color_map', name );
+
+      cmap = this.color_maps.get( name );
+
+      // also need to query surface & datacube2 to check the time range
+
+      if( cmap ){
+        this.set_state( 'time_range_min', cmap.time_range[0] );
+        this.set_state( 'time_range_max', cmap.time_range[1] );
+      }else{
+        this.set_state( 'time_range_min', 0 );
+        this.set_state( 'time_range_max', 1 );
+      }
+
+    }else{
+      name = this.get_state( 'color_map', '' );
+      cmap = this.color_maps.get( name );
+      // return( this.color_maps.get( name ) );
+    }
+    if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
+        // Must be continuous color map
+        cmap.value_type === 'continuous' ){
+      // Check hard ranges
+      const hard_range = cmap.theoretical_range;
+      let minv = value_range[0],
+          maxv = value_range[1];
+      if( Array.isArray(hard_range) && hard_range.length == 2 ){
+        if( minv < hard_range[0] ){
+          minv = hard_range[0];
+          if( maxv < minv ){
+            maxv = minv + 1e-100;
+          }
+        }
+        if( maxv > hard_range[1] ){
+          maxv = hard_range[1];
+          if( maxv < minv ){
+            minv = maxv - 1e-100;
+          }
+        }
+      }
+
+      // set cmap value_range
+      cmap.lut.setMax( maxv );
+      cmap.lut.setMin( minv );
+      // Legend needs to be updated
+      this.start_animation( 0 );
+    }
+
+    this.update_time_range();
+    if( cmap ){
+      cmap.time_range[0] = this.__min_t;
+      cmap.time_range[1] = this.__max_t;
+    }
+    return( cmap );
+  }
+
+  get_color(v, name){
+    let cmap;
+    if( name ){
+      cmap = this.color_maps.get( name );
+    }else{
+      cmap = this.color_maps.get( this.get_state( 'color_map', '' ) );
+    }
+
+    if(cmap === undefined){
+      return('#e2e2e2');
+    }else{
+      return(cmap.lut.getColor(v));
+    }
+  }
+
+  switch_media( name ){
+    this.video_canvas._playing = false;
+    this.video_canvas.pause();
+    this.video_canvas.currentTime = 0;
+    this.video_canvas._enabled = false;
+
+    const media_content = this.shared_data.get(".media_content");
+    if( !media_content ){ return; }
+    const content = media_content[ name ];
+    if( !content ){ return; }
+    // name (animation name), durtion, time_start, asp_ratio, url
+    // set this.video_canvas;
+    const video_height = this.video_canvas.height;
+    this.video_canvas.src = content.url;
+    this.video_canvas._time_start = content.time_start;
+    this.video_canvas._asp_ratio = content.asp_ratio || (16/9);
+    this.video_canvas._duration = content.duration || Infinity;
+    this.video_canvas._name = content.name;
+    this.video_canvas._enabled = true;
+
+  }
+
+  start_video( speed, video_time ){
+    if( speed < 0.1 ){
+      this.pause_video( video_time );
+      return;
+    }
+    if( this.video_canvas.playbackRate !== speed ){
+      this.video_canvas.playbackRate = speed;
+    }
+
+    if( !this.video_canvas._playing ) {
+      this.video_canvas._playing = true;
+      this.video_canvas.play(() => {
+        this.video_canvas.currentTime = video_time.toFixed(2);
+      });
+    }
+  }
+
+  pause_video( video_time ){
+    if( this.video_canvas._playing || !this.video_canvas.paused ){
+      this.video_canvas._playing = false;
+      this.video_canvas.pause();
+    }
+
+    if ( video_time !== undefined ){
+      const delta = Math.abs(parseFloat(this.video_canvas.currentTime) - video_time);
+      if( delta > 0.05 ){
+        this.video_canvas.currentTime = video_time.toFixed(2);
+      }
+      // this.video_canvas.currentTime = video_time.toFixed(2);
+    }
+  }
+
+  // Generate animation clips and mixes
+  generate_animation_clips( animation_name = 'Value', set_current=true,
+                            callback = (e) => {} ){
+
+    if( animation_name === undefined ){
+      animation_name = this.shared_data.get('animation_name') || 'Value';
+    }else{
+      this.shared_data.set('animation_name', animation_name);
+    }
+
+    this.switch_media( animation_name );
+
+    // TODO: make sure cmap exists or use default lut
+    const cmap = this.switch_colormap( animation_name );
+    // this.color_maps
+
+    this.mesh.forEach( (m, k) => {
+      if( !m.isMesh || !m.userData.get_track_data ){ return(null); }
+
+      if( !m.userData.ani_exists ){ return(null); }
+
+      // keyframe is not none, generate animation clip(s)
+      /**
+       * Steps to make an animation
+       *
+       * 1. get keyframes, here is "ColorKeyframeTrack"
+       *        new ColorKeyframeTrack( '.material.color', time_key, color_value, InterpolateDiscrete )
+       *    keyframe doesn't specify which object, it also can only change one attribute
+       * 2. generate clip via "AnimationClip"
+       *        new AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
+       *    animation clip combines multiple keyframe, still, doesn't specify which object
+       * 3. mixer via "AnimationMixer"
+       *        new AnimationMixer( m );
+       *    A mixer specifies an object
+       * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
+       *    action.play() will play the animation clips
+       */
+
+      // Step 0: get animation time_stamp start time
+      // lut: lut,
+      // value_type: value_type,
+      // value_names: value_names, time_range: time_range
+
+      // Obtain mixer, which will be used in multiple places
+      let keyframe;
+
+      // Step 1: Obtain keyframe tracks
+      // if animation_name exists, get tracks, otherwise reset to default material
+      const track_data = m.userData.get_track_data( animation_name, true );
+
+      // no keyframe tracks, remove animation
+      if( !track_data ){
+
+        // If action is going, stop them all
+        if( m.userData.ani_mixer ){ m.userData.ani_mixer.stopAllAction(); }
+        return( null );
+
+      }
+
+      if( typeof m.userData.generate_animation === 'function'){
+        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, m.userData.ani_mixer );
+      }else{
+        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, m.userData.ani_mixer );
+      }
+      if( !keyframe ){ return; }
+
+      const _time_min = cmap.time_range[0],
+            _time_max = cmap.time_range[1];
+
+      const clip_name = 'action_' + m.name + '__' + track_data.name;
+      let clip = this.animation_clips.get( clip_name ), new_clip = false;
+
+      if( !clip ){
+        clip = new AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
+        this.animation_clips.set( clip_name, clip );
+        new_clip = true;
+      }else{
+        clip.duration = _time_max - _time_min;
+        clip.tracks[0].name = keyframe.name;
+        clip.tracks[0].times = keyframe.times;
+        clip.tracks[0].values = keyframe.values;
+      }
+
+      // Step 3: create mixer
+      if( m.userData.ani_mixer ){
+        m.userData.ani_mixer.stopAllAction();
+      }
+      m.userData.ani_mixer = new AnimationMixer( m );
+      m.userData.ani_mixer.stopAllAction();
+
+      // Step 4: combine mixer with clip
+      const action = m.userData.ani_mixer.clipAction( clip );
+      action.play();
+
+
+    });
+
+
+
+    callback( cmap );
+  }
+
+
+  /*---- Update function at each animationframe -----------------------------*/
+  keyboard_update(){
+
+    if( !this.keyboard_event || this.keyboard_event.dispose ){
+      return( null );
+    }
+    this.keyboard_event.dispose = true;
+    if(this.keyboard_event.level <= 2){
+      this.keyboard_event.level = 0;
+    }
+
+    // handle
+    for( let _cb_name in this._keyboard_callbacks ){
+
+      if( this._keyboard_callbacks[ _cb_name ] &&
+          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
+        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
+      }
+
+    }
+  }
+  // method to target object with mouse pointed at
+  mouse_update(){
+
+    if( !this.mouse_event || this.mouse_event.dispose ){
+      return(null);
+    }
+
+    // dispose first as the callbacks might have error
+    this.mouse_event.dispose = true;
+    if(this.mouse_event.level <= 2){
+      this.mouse_event.level = 0;
+    }
+
+
+    // Call callbacks
+    let raycast_result, request_type, callback, request;
+
+    for( let _cb_name in this._mouse_click_callbacks ){
+      callback = this._mouse_click_callbacks[ _cb_name ];
+      if( callback === undefined ){
+        continue;
+      }
+      request = callback[0]( this.mouse_event );
+
+      if( request && request.pass ){
+
+        // raycast object
+        // check which object(s) to raycast on
+        request_type = request.type || 'clickable';
+
+        if( raycast_result === undefined ||
+            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
+          raycast_result = {
+            type  : request_type,
+            items : this._fast_raycast( request_type ),
+            meta  : request.meta
+          };
+        }
+
+        // Find object_chosen
+        if( raycast_result.items.length > 0 ){
+          // Has intersects!
+          const first_item = raycast_result.items[0],
+                target_object = first_item.object;
+
+          raycast_result.first_item = first_item;
+          raycast_result.target_object = target_object;
+        }
+
+        callback[1]( raycast_result, this.mouse_event );
+      }
+    }
+
+
+
+  }
+
+  // Animation-related: time-increment
+  inc_time(){
+    // this.animation_controls = {};
+    // this.clock = new Clock();
+
+    const clock_time_delta = this.clock.getDelta();
+    const results = this._time_info;
+    const sel_obj = results.selected_object;
+    results.current_time_delta = 0;
+    results.last_time = 0;
+    results.current_time = 0;
+    results.speed = 1;
+    results.elapsed_time = (this.clock.oldTime - this.clock.startTime) / 1000;
+
+    results.time_range_min = this.__min_t;
+
+    // show mesh value info
+    if(this.object_chosen !== undefined &&
+        this.object_chosen.userData ){
+
+        results.has_object = true;
+
+        sel_obj.name = this.object_chosen.userData.construct_params.name;
+        this.object_chosen.getWorldPosition( sel_obj.position );
+        sel_obj.custom_info = this.object_chosen.userData.construct_params.custom_info;
+        sel_obj.is_electrode = this.object_chosen.userData.construct_params.is_electrode || false;
+        sel_obj.MNI305_position = this.object_chosen.userData.MNI305_position;
+
+        if( !sel_obj.template_mapping ){
+          sel_obj.template_mapping = {};
+        }
+        sel_obj.template_mapping.mapped = this.object_chosen.userData._template_mapped || false;
+        sel_obj.template_mapping.shift = this.object_chosen.userData._template_shift || 0;
+        sel_obj.template_mapping.space = this.object_chosen.userData._template_space || 'original';
+        sel_obj.template_mapping.surface = this.object_chosen.userData._template_surface || 'NA';
+        sel_obj.template_mapping.hemisphere = this.object_chosen.userData._template_hemisphere || 'NA';
+        sel_obj.template_mapping.mni305 = this.object_chosen.userData._template_mni305;
+
+      } else {
+      results.has_object = false;
+    }
+
+
+    if( typeof( this.animation_controls.get_params ) === 'function' ){
+
+      // animation is enabled
+
+      const params = this.animation_controls.get_params();
+
+      // next_time =
+      //  1. if not is_playing, last_time
+      //  2. if is_playing, last_time + time_delta * speed
+      results.current_time = params.play ? (params.time + clock_time_delta * params.speed) : params.time;
+      results.speed = params.speed;
+      results.is_playing = params.play;
+      results.last_time = params.time;
+
+      if( results.current_time > params.max ){
+        results.current_time = params.min;
+        results.last_time = params.min;
+      }
+
+      // Change animation
+      results.current_time_delta = results.current_time - results.time_range_min;
+      /*
+      this.animation_mixers.forEach( (mixer) => {
+        mixer.update( current_time - time_range_min - mixer.time );
+      });
+      */
+
+      // set timer
+      if( params.play ){
+        this.animation_controls.set_time( results.current_time );
+      }
+
+
+    }
+
+    // show mesh value info
+    if( results.has_object && this.object_chosen.userData.ani_exists ){
+
+      const track_type = this.get_state("color_map");
+
+      const track_data = this.object_chosen.userData.get_track_data( track_type );
+
+      if( track_data ){
+        const time_stamp = to_array( track_data.time );
+        const values = to_array( track_data.value );
+        let _tmp = - Infinity;
+        for( let ii in time_stamp ){
+          if(time_stamp[ ii ] <= results.current_time && time_stamp[ ii ] > _tmp){
+            results.current_value = values[ ii ];
+            _tmp = time_stamp[ ii ];
+          }
+        }
+      }
+    }
+
+    return(results);
+
+  }
+
+  // set renderer's flag (persist):
+  // 0: render once at next cycle
+  start_animation( persist = 0 ){
+    // persist 0, render once
+    // persist > 0, loop
+
+    const _flag = this.render_flag;
+    if(persist >= _flag){
+      this.render_flag = persist;
+    }
+    if( persist >= 2 && _flag < 2 ){
+      // _flag < 2 means prior state only renders the scene, but animation is paused
+      // if _flag >= 2, then clock was running, then there is no need to start clock
+      // persist >= 2 is a flag for animation to run
+      // animation clips need a clock
+      this.clock.start();
+    }
+  }
+
+  // Pause animation
+  pause_animation( level = 1 ){
+    const _flag = this.render_flag;
+    if(_flag <= level){
+      this.render_flag = -1;
+
+      // When animation is stopped, we need to check if clock is running, if so, stop it
+      if( _flag >= 2 ){
+        this.clock.stop();
+      }
+    }
+  }
+
+
   update(){
 
     this.get_mouse();
@@ -1694,7 +2707,7 @@ class THREEBRAIN_CANVAS {
 
   }
 
-
+  // re-render canvas to display additional information without 3D
   mapToCanvas(){
     const _width = this.domElement.width,
           _height = this.domElement.height;
@@ -1729,6 +2742,7 @@ class THREEBRAIN_CANVAS {
 
   }
 
+  // Main render function, automatically scheduled
   render( results ){
 
     if( !results ){
@@ -1813,10 +2827,10 @@ class THREEBRAIN_CANVAS {
   }
 
   update_time_range(){
-    let min_t0 = this.state_data.get( 'time_range_min0' );
-    let max_t0 = this.state_data.get( 'time_range_max0' );
-    let min_t = get_or_default( this.state_data, 'time_range_min', 0 );
-    let max_t = get_or_default( this.state_data, 'time_range_max', 0 );
+    let min_t0 = this.get_state( 'time_range_min0' );
+    let max_t0 = this.get_state( 'time_range_max0' );
+    let min_t = this.get_state( 'time_range_min', 0 );
+    let max_t = this.get_state( 'time_range_max', 0 );
 
     if( min_t0 !== undefined ){
       min_t = Math.min( min_t, min_t0 );
@@ -1828,137 +2842,6 @@ class THREEBRAIN_CANVAS {
     this.__min_t = min_t;
     this.__max_t = max_t;
   }
-
-  inc_time(){
-    // this.animation_controls = {};
-    // this.clock = new Clock();
-
-    const clock_time_delta = this.clock.getDelta();
-    const results = this._time_info;
-    const sel_obj = results.selected_object;
-    results.current_time_delta = 0;
-    results.last_time = 0;
-    results.current_time = 0;
-    results.speed = 1;
-    results.elapsed_time = (this.clock.oldTime - this.clock.startTime) / 1000;
-
-    results.time_range_min = this.__min_t;
-
-    // show mesh value info
-    if(this.object_chosen !== undefined &&
-        this.object_chosen.userData ){
-
-        results.has_object = true;
-
-        sel_obj.name = this.object_chosen.userData.construct_params.name;
-        this.object_chosen.getWorldPosition( sel_obj.position );
-        sel_obj.custom_info = this.object_chosen.userData.construct_params.custom_info;
-        sel_obj.is_electrode = this.object_chosen.userData.construct_params.is_electrode || false;
-        sel_obj.MNI305_position = this.object_chosen.userData.MNI305_position;
-
-        if( !sel_obj.template_mapping ){
-          sel_obj.template_mapping = {};
-        }
-        sel_obj.template_mapping.mapped = this.object_chosen.userData._template_mapped || false;
-        sel_obj.template_mapping.shift = this.object_chosen.userData._template_shift || 0;
-        sel_obj.template_mapping.space = this.object_chosen.userData._template_space || 'original';
-        sel_obj.template_mapping.surface = this.object_chosen.userData._template_surface || 'NA';
-        sel_obj.template_mapping.hemisphere = this.object_chosen.userData._template_hemisphere || 'NA';
-        sel_obj.template_mapping.mni305 = this.object_chosen.userData._template_mni305;
-
-      } else {
-      results.has_object = false;
-    }
-
-
-    if( typeof( this.animation_controls.get_params ) === 'function' ){
-
-      // animation is enabled
-
-      const params = this.animation_controls.get_params();
-
-      // next_time =
-      //  1. if not is_playing, last_time
-      //  2. if is_playing, last_time + time_delta * speed
-      results.current_time = params.play ? (params.time + clock_time_delta * params.speed) : params.time;
-      results.speed = params.speed;
-      results.is_playing = params.play;
-      results.last_time = params.time;
-
-      if( results.current_time > params.max ){
-        results.current_time = params.min;
-        results.last_time = params.min;
-      }
-
-      // Change animation
-      results.current_time_delta = results.current_time - results.time_range_min;
-      /*
-      this.animation_mixers.forEach( (mixer) => {
-        mixer.update( current_time - time_range_min - mixer.time );
-      });
-      */
-
-      // set timer
-      if( params.play ){
-        this.animation_controls.set_time( results.current_time );
-      }
-
-
-    }
-
-    // show mesh value info
-    if( results.has_object && this.object_chosen.userData.ani_exists ){
-
-      const track_type = this.state_data.get("color_map");
-
-      const track_data = this.object_chosen.userData.get_track_data( track_type );
-
-      if( track_data ){
-        const time_stamp = to_array( track_data.time );
-        const values = to_array( track_data.value );
-        let _tmp = - Infinity;
-        for( let ii in time_stamp ){
-          if(time_stamp[ ii ] <= results.current_time && time_stamp[ ii ] > _tmp){
-            results.current_value = values[ ii ];
-            _tmp = time_stamp[ ii ];
-          }
-        }
-      }
-    }
-
-    return(results);
-
-  }
-
-  start_animation( persist = 0 ){
-    // persist 0, render once
-    // persist > 0, loop
-
-    const _flag = this.render_flag;
-    if(persist >= _flag){
-      this.render_flag = persist;
-    }
-    if( persist >= 2 && _flag < 2 ){
-      // _flag < 2 means prior state only renders the scene, but animation is paused
-      // if _flag >= 2, then clock was running, then there is no need to start clock
-      // persist >= 2 is a flag for animation to run
-      // animation clips need a clock
-      this.clock.start();
-    }
-  }
-
-  pause_animation( level = 1 ){
-    const _flag = this.render_flag;
-    if(_flag <= level){
-      this.render_flag = -1;
-
-      // When animation is stopped, we need to check if clock is running, if so, stop it
-      if( _flag >= 2 ){
-        this.clock.stop();
-      }
-    }
-  }
-
 
 
   _draw_title( results, x = 10, y = 10, w = 100, h = 100 ){
@@ -2028,7 +2911,7 @@ class THREEBRAIN_CANVAS {
 
     // Added: if info text is disabled, then legend should not display
     // correspoding value
-    const info_disabled = this.state_data.get( 'info_text_disabled');
+    const info_disabled = this.get_state( 'info_text_disabled');
 
     // whether to draw legend
     const has_color_map = this.render_legend && cmap && (cmap.lut.n !== undefined);
@@ -2271,7 +3154,7 @@ class THREEBRAIN_CANVAS {
                       x = 10, y = 10, w = 100, h = 100,
                       context_wrapper = undefined, force_left = false ){
     // Add selected object information, or if not showing is set
-    if( !results.has_object || this.state_data.get( 'info_text_disabled') ){
+    if( !results.has_object || this.get_state( 'info_text_disabled') ){
       // no object selected, discard
       return( null );
     }
@@ -2401,60 +3284,6 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  switch_media( name ){
-    this.video_canvas._playing = false;
-    this.video_canvas.pause();
-    this.video_canvas.currentTime = 0;
-    this.video_canvas._enabled = false;
-
-    const media_content = this.shared_data.get(".media_content");
-    if( !media_content ){ return; }
-    const content = media_content[ name ];
-    if( !content ){ return; }
-    // name (animation name), durtion, time_start, asp_ratio, url
-    // set this.video_canvas;
-    const video_height = this.video_canvas.height;
-    this.video_canvas.src = content.url;
-    this.video_canvas._time_start = content.time_start;
-    this.video_canvas._asp_ratio = content.asp_ratio || (16/9);
-    this.video_canvas._duration = content.duration || Infinity;
-    this.video_canvas._name = content.name;
-    this.video_canvas._enabled = true;
-
-  }
-
-  start_video( speed, video_time ){
-    if( speed < 0.1 ){
-      this.pause_video( video_time );
-      return;
-    }
-    if( this.video_canvas.playbackRate !== speed ){
-      this.video_canvas.playbackRate = speed;
-    }
-
-    if( !this.video_canvas._playing ) {
-      this.video_canvas._playing = true;
-      this.video_canvas.play(() => {
-        this.video_canvas.currentTime = video_time.toFixed(2);
-      });
-    }
-  }
-
-  pause_video( video_time ){
-    if( this.video_canvas._playing || !this.video_canvas.paused ){
-      this.video_canvas._playing = false;
-      this.video_canvas.pause();
-    }
-
-    if ( video_time !== undefined ){
-      const delta = Math.abs(parseFloat(this.video_canvas.currentTime) - video_time);
-      if( delta > 0.05 ){
-        this.video_canvas.currentTime = video_time.toFixed(2);
-      }
-      // this.video_canvas.currentTime = video_time.toFixed(2);
-    }
-  }
-
   _draw_video( results, w, h, context_wrapper ){
     if( !this.video_canvas._enabled || this.video_canvas._mode === 'hidden' ){ return; }
     // set video time
@@ -2526,7 +3355,7 @@ class THREEBRAIN_CANVAS {
   		// show mesh value info
       if( results.selected_object && this.object_chosen.userData.ani_exists ){
 
-        const track_type = this.state_data.get("color_map");
+        const track_type = this.get_state("color_map");
 
         const track_data = this.object_chosen.userData.get_track_data( track_type );
 
@@ -2581,224 +3410,7 @@ class THREEBRAIN_CANVAS {
 	}
 
 
-	enable_side_cameras(){
-	  // Add side renderers to the element
-	  this.has_side_cameras = true;
-	  for( let k in this.side_canvas ){
-	    this.side_canvas[ k ].container.style.display = 'block';
-	  }
-	  this.handle_resize();
-	}
-	disable_side_cameras(force = false){
-	  //this.side_canvas.style.display = 'none';
-	  for( let k in this.side_canvas ){
-	    this.side_canvas[ k ].container.style.display = 'none';
-	  }
-	  this.has_side_cameras = false;
-	  this.handle_resize();
-	}
-
-  remove_object( obj, resursive = true, dispose = true, depth = 100 ){
-    if( !obj && depth < 0 ){ return; }
-    if( resursive ){
-      if( Array.isArray( obj.children ) ){
-        for( let ii = obj.children.length - 1; ii >= 0; ii = Math.min(ii-1, obj.children.length) ){
-          if( ii < obj.children.length ){
-            this.remove_object( obj.children[ ii ], resursive, dispose, depth - 1 );
-          }
-        }
-      }
-    }
-    if( obj.parent ){
-      console.debug( 'removing object - ' + (obj.name || obj.type) );
-      obj.parent.remove( obj );
-    }
-
-    if( dispose ){
-      this.dispose_object( obj );
-    }
-  }
-  dispose_object( obj, quiet = false ){
-    if( !obj || typeof obj !== 'object' ) { return; }
-    const obj_name = obj.name || obj.type || 'unknown';
-    if( !quiet ){
-      console.debug('Disposing - ' + obj_name);
-    }
-    if( obj.userData && typeof obj.userData.dispose === 'function' ){
-      this._try_dispose( obj.userData, obj.name, quiet );
-    }else{
-      // Not implemented, try to guess dispose methods
-      this._try_dispose( obj.material, obj_name + '-material', quiet );
-      this._try_dispose( obj.geometry, obj_name + '-geometry', quiet );
-      this._try_dispose( obj, obj_name, quiet );
-    }
-  }
-
-  _try_dispose( obj, obj_name = undefined, quiet = false ){
-    if( !obj || typeof obj !== 'object' ) { return; }
-    if( typeof obj.dispose === 'function' ){
-      try {
-        obj.dispose();
-      } catch(e) {
-        if( !quiet ){
-          console.warn( 'Failed to dispose ' + (obj_name || obj.name || 'unknown') );
-        }
-      }
-    }
-  }
-
-  dispose(){
-    // Remove all objects, listeners, and dispose all
-    this._disposed = true;
-    this.ready = false;
-    this.clock.stop();
-
-    // update functions
-    this._custom_updates.clear();
-
-    // Remove custom listeners
-    this.dispose_eventlisters();
-
-    // Remove customized objects
-    this.clear_all();
-
-    // Remove the rest objects in the scene
-    this.remove_object( this.scene );
-
-    // Call dispose method
-    this.threebrain_instances.forEach((el) => {
-      el.dispose();
-    });
-
-    // dispose scene
-    this.scene.dispose();
-    this.scene = null;
-
-    // Remove el
-    this.el.innerHTML = '';
-
-    // How to dispose renderers? Not sure
-    this.domContext = null;
-    this.domContextWrapper = null;
-    this.main_renderer.dispose();
-    this.side_renderer.dispose();
-
-  }
-
-  // Function to clear all meshes
-  clear_all(){
-    // Stop showing information of any selected objects
-    this.object_chosen=undefined;
-    this.clickable.clear();
-    this.clickable_array.length = 0;
-
-    this.subject_codes.length = 0;
-    this.electrodes.clear();
-    this.volumes.clear();
-    this.ct_scan.clear();
-    this.surfaces.clear();
-    this.atlases.clear();
-
-    this.state_data.clear();
-    this.shared_data.clear();
-    this.color_maps.clear();
-    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
-
-    console.log('TODO: Need to dispose animation clips');
-    this.animation_clips.clear();
-
-    this.group.forEach((g) => {
-      // g.parent.remove( g );
-      this.remove_object( g );
-    });
-    this.mesh.forEach((m) => {
-      this.remove_object( m );
-      // m.parent.remove( m );
-      // this.dispose_object(m);
-      // this.scene.remove( m );
-    });
-    this.mesh.clear();
-    this.threebrain_instances.clear();
-    this.group.clear();
-
-    this.singletons.forEach( (el) => {
-      try {
-        el.dispose();
-      } catch (e) {}
-    });
-    this.singletons.clear();
-
-    // set default values
-    this.state_data.set( 'coronal_depth', 0 );
-    this.state_data.set( 'axial_depth', 0 );
-    this.state_data.set( 'sagittal_depth', 0 );
-
-  }
-
-  // To be implemented (abstract methods)
-  set_coronal_depth( depth ){
-    if( typeof this._set_coronal_depth === 'function' ){
-      this._set_coronal_depth( depth );
-    }else{
-      console.debug('Set coronal depth not implemented');
-    }
-  }
-  set_axial_depth( depth ){
-    if( typeof this._set_axial_depth === 'function' ){
-      this._set_axial_depth( depth );
-    }else{
-      console.debug('Set axial depth not implemented');
-    }
-  }
-  set_sagittal_depth( depth ){
-    if( typeof this._set_sagittal_depth === 'function' ){
-      this._set_sagittal_depth( depth );
-    }else{
-      console.debug('Set sagittal depth not implemented');
-    }
-  }
-  set_side_depth( c_d, a_d, s_d ){
-    console.debug('Set side depth not implemented');
-  }
-  set_side_visibility( which, visible ){
-    console.debug('Set side visibility not implemented');
-  }
-  side_plane_sendback( is_back ){
-    if( typeof this._side_plane_sendback === 'function' ){
-      this._side_plane_sendback( is_back );
-    }
-  }
-
-  set_cube_anchor_visibility( visible ){
-    if( this.compass ){
-      this.compass.set_visibility( visible, () => {
-        this.start_animation( 0 );
-      });
-    }
-  }
-
-
-  // Generic method to add objects
-  add_object(g){
-    //
-    if(this.DEBUG){
-      console.debug('Generating geometry '+g.type);
-    }
-    let gen_f = GEOMETRY_FACTORY[g.type],
-        inst = gen_f(g, this);
-
-    if( !inst || typeof(inst) !== 'object' || !inst.object ){
-      return;
-    }
-
-    // make sure subject array exists
-    this.init_subject( inst.subject_code );
-
-
-    inst.finish_init();
-    return( inst );
-  }
-
+  /*---- Subjects, electrodes, surfaces, volumes ----------------------------*/
   init_subject( subject_code ){
     if( !subject_code ){ return; }
     if( ! this.subject_codes.includes( subject_code ) ){
@@ -2810,526 +3422,6 @@ class THREEBRAIN_CANVAS {
       this.atlases.set( subject_code, {} );
     }
   }
-
-  add_clickable( name, obj ){
-    if( this.clickable.has( name ) ){
-      // remove from this.clickable_array
-      const sub = this.clickable.get( name ),
-            idx = this.clickable_array.indexOf( sub );
-      if( idx > -1 ){
-        this.clickable_array.splice(idx, 1);
-      }
-    }
-    this.clickable.set( name, obj );
-    this.clickable_array.push( obj );
-  }
-
-  _register_datacube( m ){
-
-    const g = m[0].userData.construct_params,
-          gp = m[0].parent;
-
-    // Register depth functions
-
-    const cube_dimension = this.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
-          // XYZ slice counts
-
-          cube_half_size = this.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-          // XYZ pixel heights (* 0.5)
-
-          cube_center = g.position;
-
-    // Add handlers to set plane location when an electrode is clicked
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.isMesh && obj.userData.construct_params ){
-          const pos = obj.getWorldPosition( gp.position.clone() );
-          // calculate depth
-          this.set_side_depth(
-            (pos.y) * 128 / cube_half_size[1] - 0.5,
-            (pos.z) * 128 / cube_half_size[2] - 0.5,
-            (pos.x) * 128 / cube_half_size[0] - 0.5
-          );
-
-        }
-      },
-      'side_viewer_depth'
-    );
-
-
-    this._set_coronal_depth = ( depth ) => {
-      let idx_mid = cube_dimension[1] / 2;
-      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-
-      m[0].position.y = (depth + 0.5) / 128 * cube_half_size[1];
-      // cube_anchor.position.y = m[0].position.y;
-      m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-      m[0].material.needsUpdate = true;
-      // this._coronal_depth = depth;
-      this.state_data.set( 'coronal_depth', depth );
-      this.state_data.set( 'coronal_posy', m[0].position.y );
-      this.trim_electrodes();
-      // Animate on next refresh
-      this.start_animation( 0 );
-    };
-    this._set_axial_depth = ( depth ) => {
-      let idx_mid = cube_dimension[2] / 2;
-      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-      m[1].position.z = (depth + 0.5) / 128 * cube_half_size[2];
-      // cube_anchor.position.z = m[1].position.z;
-      m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-      m[1].material.needsUpdate = true;
-      // this._axial_depth = depth;
-      this.state_data.set( 'axial_depth', depth );
-      this.state_data.set( 'axial_posz', m[1].position.z );
-      this.trim_electrodes();
-      // Animate on next refresh
-      this.start_animation( 0 );
-    };
-    this._set_sagittal_depth = ( depth ) => {
-      let idx_mid = cube_dimension[0] / 2;
-      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-      m[2].position.x = (depth + 0.5) / 128 * cube_half_size[0];
-      // cube_anchor.position.x = m[2].position.x;
-      m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-      m[2].material.needsUpdate = true;
-      // this._sagittal_depth = depth;
-      this.state_data.set( 'sagittal_depth', depth );
-      this.state_data.set( 'sagittal_posx', m[2].position.x );
-      this.trim_electrodes();
-      // Animate on next refresh
-      this.start_animation( 0 );
-    };
-    this._side_plane_sendback = ( sendback ) => {
-      m.forEach( (p) => {
-        p.material.uniforms.renderDepth.value = sendback ? 0.0 : 1.0;
-        p.material.needsUpdate = true;
-      });
-    };
-
-    this.set_side_visibility = ( which, visible ) => {
-      let fn = visible ? 'enable' : 'disable';
-      if( which === 'coronal' ){
-        m[0].layers[fn](8);
-        this.state_data.set( 'coronal_overlay', visible );
-      }else if( which === 'axial' ){
-        m[1].layers[fn](8);
-        this.state_data.set( 'axial_overlay', visible );
-      }else if( which === 'sagittal' ){
-        m[2].layers[fn](8);
-        this.state_data.set( 'sagittal_overlay', visible );
-      }else{
-        // reset, using cached
-        fn = get_or_default( this.state_data, 'coronal_overlay', false ) ? 'enable' : 'disable';
-        m[0].layers[fn](8);
-        fn = get_or_default( this.state_data, 'axial_overlay', false ) ? 'enable' : 'disable';
-        m[1].layers[fn](8);
-        fn = get_or_default( this.state_data, 'sagittal_overlay', false ) ? 'enable' : 'disable';
-        m[2].layers[fn](8);
-      }
-
-      this.start_animation( 0 );
-    };
-
-    // reset side camera positions
-    this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
-    this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
-
-  }
-
-  _loader_finishied(){
-    if(this.json_load_finished === undefined){
-      this.json_load_finished = true;
-      return(true);
-    }
-    if(this.json_load_queue.length > 0){
-      this.json_load_finished = false;
-    }
-    return(this.json_load_finished);
-  }
-
-  load_file(path, onLoad, loader = 'json_loader'){
-
-    loader = this[ loader ];
-    if( !loader ){
-      loader = this.json_loader;
-    }
-
-
-    if( this.use_cache ){
-
-      // check cache first,
-      if( this.cache.check_item( path ) ){
-        onLoad( this.cache.get_item( path ) );
-      }else{
-        this.loader_triggered = true;
-        loader.load( path, (v) => {
-          if(typeof(v) === 'string'){
-            v = JSON.parse(v);
-          }
-          this.cache.set_item( path, v );
-          onLoad( v );
-        });
-      }
-    }else{
-      this.loader_triggered = true;
-      loader.load( path , (v) => {
-        if(typeof(v) === 'string'){
-          v = JSON.parse(v);
-        }
-        onLoad( v );
-      });
-    }
-  }
-
-  // Add geom groups
-  add_group(g, cache_folder = 'threebrain_data', onProgress = null){
-    var gp = new Object3D();
-
-    gp.name = 'group_' + g.name;
-    to_array(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
-    gp.position.fromArray( g.position );
-
-    if(g.trans_mat !== null){
-      let trans = new Matrix4();
-      trans.set(...g.trans_mat);
-      let inverse_trans = new Matrix4().copy( trans ).invert();
-
-      gp.userData.trans_mat = trans;
-      gp.userData.inv_trans_mat = inverse_trans;
-
-      if(!g.disable_trans_mat){
-        gp.applyMatrix4(trans);
-      }
-    }
-
-    gp.userData.construct_params = g;
-
-    // This is now a tricky part, we are going to load from dependencies!
-    // This is experimental and might disable standalone widget!
-
-    let cached_items = to_array( g.cached_items ),
-        item_size = cached_items.length;
-    if(item_size > 0){
-      cached_items.forEach((nm) => {
-        let cache_info = g.group_data[nm];
-
-        if(cache_info === undefined || cache_info === null ||
-          Array.isArray(cache_info) || cache_info.file_name === undefined ){
-          // Already cached
-          item_size -= 1;
-        /*}else if( cache_info.lazy ){
-          // lazy-load the data
-          cache_info.loaded = false;
-          cache_info.server_path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-          item_size -= 1;*/
-        } else {
-
-
-          // Need to check shiny mode
-          let path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-          /*
-          if(!this.shiny_mode){
-            path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
-          }
-          */
-          console.debug(path);
-
-          this.load_file(
-            path, ( v ) => {
-
-          	  const keys = Object.keys(v);
-
-          	  keys.forEach((k) => {
-                g.group_data[k] = v[k];
-              });
-
-              item_size -= 1;
-          	},
-          	onProgress
-          );
-
-        }
-
-      });
-    }
-
-    gp.userData.group_data = g.group_data;
-    this.group.set( g.name, gp );
-
-    this.add_to_scene(gp);
-
-    // special case, if group name is "__global_data", then set group variable
-    if( g.name === '__global_data' && g.group_data ){
-      for( let _n in g.group_data ){
-        this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
-      }
-
-      // check if ".subject_codes" is in the name
-      const subject_codes = to_array( this.shared_data.get(".subject_codes") );
-      if( subject_codes.length > 0 ){
-
-        // generate transform matrices
-        subject_codes.forEach((scode) => {
-
-          let subject_data = this.shared_data.get(scode);
-          if( !subject_data ){
-            subject_data = {};
-            this.shared_data.set(scode, subject_data);
-          }
-
-          const Norig = as_Matrix4( subject_data.Norig );
-          const Torig = as_Matrix4( subject_data.Torig );
-          const xfm = as_Matrix4( subject_data.xfm );
-          const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
-          const MNI305_tkrRAS = new Matrix4()
-            .copy(tkrRAS_MNI305).invert();
-          const tkrRAS_Scanner = new Matrix4()
-            .copy(Norig)
-            .multiply(
-              new Matrix4()
-                .copy(Torig)
-                .invert()
-            );
-          subject_data.matrices = {
-            Norig : Norig,
-            Torig : Torig,
-            xfm : xfm,
-            tkrRAS_MNI305 : tkrRAS_MNI305,
-            MNI305_tkrRAS : MNI305_tkrRAS,
-            tkrRAS_Scanner: tkrRAS_Scanner
-          };
-
-        });
-
-      }
-
-      const media_content = this.shared_data.get(".media_content");
-      if( media_content ){
-        for(let video_name in media_content){
-          const content = media_content[video_name];
-          if( !content.is_url ){
-            content.url = cache_folder + g.cache_name + '/' + content.url;
-            content.is_url = true;
-            window.fetch(content.url).then(r => r.blob()).then(blob => {
-              content.url = URL.createObjectURL(blob);
-            });
-          }
-        }
-      }
-
-    }
-
-    const check = function(){
-      return(item_size === 0);
-    };
-
-    return(check);
-
-  }
-
-  global_data(data_name){
-    const gp = this.group.get("__global_data");
-    let re = null;
-    // group exists
-    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
-
-      re = gp.userData.group_data[data_name];
-    }
-
-    return(re);
-
-  }
-
-  // Get data from some geometry. Try to get from geom first, then get from group
-  get_data(data_name, from_geom, group_hint){
-
-    const m = this.mesh.get( from_geom );
-    let re, gp;
-
-    if( m ){
-      if(m.userData.hasOwnProperty(data_name)){
-        // Object itself own the property, no group needs to go to
-        return(m.userData[data_name]);
-      }else{
-        let g = m.userData.construct_params.group;
-        if(g !== null){
-          let group_name = g.group_name;
-          gp = this.group.get( group_name );
-          // set re
-        }
-      }
-    }else if(group_hint !== undefined){
-      let group_name = group_hint;
-      gp = this.group.get( group_name );
-      // set re
-
-    }else if(this.DEBUG){
-      console.error('Cannot find data with name ' + from_geom + ' at group ' + group_hint);
-    }
-
-    // group exists
-    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
-
-      re = gp.userData.group_data[data_name];
-      /*
-      if( re ){
-        const is_lazy = re.lazy;
-        const tobe_loaded = re.loaded === false;
-
-        // if re is not lazy, run `lazy_onload`,
-        // if re is lazy but loaded, run
-        if( !(is_lazy && tobe_loaded) && typeof lazy_onload === 'function' ){
-          // this means re is loaded. However, data is not overridden or missing
-          // because otherwise re should be the actual object.
-          // return re anyway to see if `lazy_onload` can further handle it
-          lazy_onload( re );
-        }
-
-        if( is_lazy && tobe_loaded ){
-
-          // otherwise load data
-
-          // make sure we never load data again
-          re.loaded = true;
-
-          this.load_file(
-            re.server_path, ( v ) => {
-          	  const keys = Object.keys(v);
-          	  keys.forEach((k) => {
-                gp.userData.group_data[k] = v[k];
-              });
-              // recall function
-              re = gp.userData.group_data[data_name];
-              if( re && typeof lazy_onload === 'function' ){
-                lazy_onload( re );
-              }
-          	},
-          	( url, itemsLoaded, itemsTotal ) => {
-            	console.debug( 'Loading file: ' + url + ' (lazy-load).\nLoaded ' +
-            	              itemsLoaded + ' of ' + itemsTotal + ' files.' );
-            }
-          );
-        }
-
-      }*/
-    }
-
-    return(re);
-  }
-
-
-  // Generate animation clips and mixes
-  generate_animation_clips( animation_name = 'Value', set_current=true,
-                            callback = (e) => {} ){
-
-    if( animation_name === undefined ){
-      animation_name = this.shared_data.get('animation_name') || 'Value';
-    }else{
-      this.shared_data.set('animation_name', animation_name);
-    }
-
-    this.switch_media( animation_name );
-
-    // TODO: make sure cmap exists or use default lut
-    const cmap = this.switch_colormap( animation_name );
-    // this.color_maps
-
-    this.mesh.forEach( (m, k) => {
-      if( !m.isMesh || !m.userData.get_track_data ){ return(null); }
-
-      if( !m.userData.ani_exists ){ return(null); }
-
-      // keyframe is not none, generate animation clip(s)
-      /**
-       * Steps to make an animation
-       *
-       * 1. get keyframes, here is "ColorKeyframeTrack"
-       *        new ColorKeyframeTrack( '.material.color', time_key, color_value, InterpolateDiscrete )
-       *    keyframe doesn't specify which object, it also can only change one attribute
-       * 2. generate clip via "AnimationClip"
-       *        new AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
-       *    animation clip combines multiple keyframe, still, doesn't specify which object
-       * 3. mixer via "AnimationMixer"
-       *        new AnimationMixer( m );
-       *    A mixer specifies an object
-       * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
-       *    action.play() will play the animation clips
-       */
-
-      // Step 0: get animation time_stamp start time
-      // lut: lut,
-      // value_type: value_type,
-      // value_names: value_names, time_range: time_range
-
-      // Obtain mixer, which will be used in multiple places
-      let keyframe;
-
-      // Step 1: Obtain keyframe tracks
-      // if animation_name exists, get tracks, otherwise reset to default material
-      const track_data = m.userData.get_track_data( animation_name, true );
-
-      // no keyframe tracks, remove animation
-      if( !track_data ){
-
-        // If action is going, stop them all
-        if( m.userData.ani_mixer ){ m.userData.ani_mixer.stopAllAction(); }
-        return( null );
-
-      }
-
-      if( typeof m.userData.generate_animation === 'function'){
-        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, m.userData.ani_mixer );
-      }else{
-        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, m.userData.ani_mixer );
-      }
-      if( !keyframe ){ return; }
-
-      const _time_min = cmap.time_range[0],
-            _time_max = cmap.time_range[1];
-
-      const clip_name = 'action_' + m.name + '__' + track_data.name;
-      let clip = this.animation_clips.get( clip_name ), new_clip = false;
-
-      if( !clip ){
-        clip = new AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
-        this.animation_clips.set( clip_name, clip );
-        new_clip = true;
-      }else{
-        clip.duration = _time_max - _time_min;
-        clip.tracks[0].name = keyframe.name;
-        clip.tracks[0].times = keyframe.times;
-        clip.tracks[0].values = keyframe.values;
-      }
-
-      // Step 3: create mixer
-      if( m.userData.ani_mixer ){
-        m.userData.ani_mixer.stopAllAction();
-      }
-      m.userData.ani_mixer = new AnimationMixer( m );
-      m.userData.ani_mixer.stopAllAction();
-
-      // Step 4: combine mixer with clip
-      const action = m.userData.ani_mixer.clipAction( clip );
-      action.play();
-
-
-    });
-
-
-
-    callback( cmap );
-  }
-
-
-  // -------- Especially designed for brain viewer
 
   get_surface_types(){
     const re = { 'pial' : 1 }; // always put pials to the first one
@@ -3346,7 +3438,7 @@ class THREEBRAIN_CANVAS {
   }
 
   get_atlas_types(){
-    const current_subject = this.state_data.get('target_subject') || "";
+    const current_subject = this.get_state('target_subject') || "";
     let atlases = this.atlases.get( current_subject );
     if( !atlases ) {
       return([]);
@@ -3399,17 +3491,6 @@ class THREEBRAIN_CANVAS {
     return( Object.keys( re ) );
   }
 
-  set_state( key, val ) {
-    this.state_data.set(key, val);
-    this.dispatch_event( "canvas.set_state", {
-      key: key,
-      value: val
-    });
-  }
-
-  get_state( key, missing = undefined ) {
-    return(get_or_default( this.state_data, key, missing ));
-  }
 
   switch_subject( target_subject = '/', args = {}){
 
@@ -3522,7 +3603,7 @@ class THREEBRAIN_CANVAS {
       throw('vec must be a Vector3 instance');
     }
 
-    const tkRAS_MNI305 = this.state_data.get('tkRAS_MNI305');
+    const tkRAS_MNI305 = this.get_state('tkRAS_MNI305');
     if( tkRAS_MNI305 && tkRAS_MNI305.isMatrix4 ){
       // calculate MNI 305 position
       vec.applyMatrix4(tkRAS_MNI305);
@@ -3909,13 +3990,13 @@ mapped = false,
   // Only show electrodes near 3 planes
   trim_electrodes( distance ){
     if( typeof distance !== 'number' ){
-      distance = get_or_default( this.state_data, 'threshold_electrode_plane', Infinity);
+      distance = this.get_state( 'threshold_electrode_plane', Infinity);
     }else{
-      this.state_data.set( 'threshold_electrode_plane', distance );
+      this.set_state( 'threshold_electrode_plane', distance );
     }
-    const _x = get_or_default( this.state_data, 'sagittal_posx', 0);
-    const _y = get_or_default( this.state_data, 'coronal_posy', 0);
-    const _z = get_or_default( this.state_data, 'axial_posz', 0);
+    const _x = this.get_state( 'sagittal_posx', 0);
+    const _y = this.get_state( 'coronal_posy', 0);
+    const _z = this.get_state( 'axial_posz', 0);
     const plane_pos = new Vector3().set( _x, _y, _z );
     const diff = new Vector3();
 

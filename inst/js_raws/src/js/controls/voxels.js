@@ -36,8 +36,8 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
   };
 
   THREEBRAIN_PRESETS.prototype.current_voxel_type = function(){
-    const atlas_type = this.canvas.state_data.get("atlas_type") || "none",
-          sub = this.canvas.state_data.get("target_subject") || "none",
+    const atlas_type = this.canvas.get_state("atlas_type") || "none",
+          sub = this.canvas.get_state("target_subject") || "none",
           inst = this.canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`);
     if( inst && inst.isDataCube2 ){
       return( inst );
@@ -51,7 +51,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           lut_map = lut.map,
           lut_alpha = lut.mapAlpha,
           lut_type = lut.mapDataType;
-          // _atype = this.canvas.state_data.get( 'atlas_type' ) || 'none';  //_s
+          // _atype = this.canvas.get_state( 'atlas_type' ) || 'none';  //_s
     this._ctl_voxel_type_options = ['none'];
     this._ctl_voxel_type_callback = (v) => {
       if( v ){

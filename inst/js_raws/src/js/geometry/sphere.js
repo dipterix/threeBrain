@@ -110,9 +110,9 @@ class Sphere extends AbstractThreeBrainObject {
     // 1. whether passed threshold
     let threshold_test = true;
     let current_value;
-    const track_name = canvas.state_data.get('threshold_variable');
+    const track_name = canvas.get_state('threshold_variable');
 
-    if( get_or_default(canvas.state_data, 'threshold_active', false) ){
+    if( canvas.get_state( 'threshold_active', false) ){
       // need to check the threshold
       threshold_test = false;
 
@@ -142,9 +142,9 @@ class Sphere extends AbstractThreeBrainObject {
 
         // get threshold criteria
         if(current_value !== undefined){
-          const ranges = to_array(canvas.state_data.get('threshold_values'));
-          const opers = canvas.state_data.get('threshold_method');
-          if( get_or_default(canvas.state_data, 'threshold_type', 'continuous') === 'continuous' ){
+          const ranges = to_array(canvas.get_state('threshold_values'));
+          const opers = canvas.get_state('threshold_method');
+          if( canvas.get_state( 'threshold_type', 'continuous') === 'continuous' ){
             // contunuous
             threshold_test = false;
 
@@ -216,7 +216,7 @@ class Sphere extends AbstractThreeBrainObject {
     }
 
     // 4. set visibility
-    const vis = get_or_default(canvas.state_data, 'electrode_visibility', 'all visible');
+    const vis = canvas.get_state( 'electrode_visibility', 'all visible');
 
     switch (vis) {
       case 'all visible':
@@ -243,7 +243,7 @@ class Sphere extends AbstractThreeBrainObject {
     if( mesh === canvas.object_chosen ){
       mesh.userData.display_info.threshold_name = track_name;
       mesh.userData.display_info.threshold_value = current_value;
-      mesh.userData.display_info.display_name = canvas.state_data.get('display_variable') || '[None]';
+      mesh.userData.display_info.display_name = canvas.get_state('display_variable') || '[None]';
     }
 
   }
@@ -456,7 +456,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
 
   if( subject_code === '__localization__' ){
     // look for current subject code
-    const scode = canvas.state_data.get("target_subject");
+    const scode = canvas.get_state("target_subject");
     const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
 
     const gp_position = new Vector3(),

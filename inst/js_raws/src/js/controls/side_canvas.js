@@ -53,9 +53,9 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const _calculate_intersection_coord = () => {
       console.debug('Recalculate MNI305 for plane intersections');
       // MNI 305 position of the intersection
-      const ints_z = this.canvas.state_data.get( 'axial_posz' ) || 0,
-            ints_y = this.canvas.state_data.get( 'coronal_posy' ) || 0,
-            ints_x = this.canvas.state_data.get( 'sagittal_posx' ) || 0;
+      const ints_z = this.canvas.get_state( 'axial_depth' ) || 0,
+            ints_y = this.canvas.get_state( 'coronal_depth' ) || 0,
+            ints_x = this.canvas.get_state( 'sagittal_depth' ) || 0;
       const point = new Vector3().set(ints_x, ints_y, ints_z);
       this.canvas.calculate_mni305( point );
       // set controller

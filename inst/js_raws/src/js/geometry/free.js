@@ -137,7 +137,7 @@ class FreeMesh extends AbstractThreeBrainObject {
   }
 
   _check_material( update_canvas = false ){
-    const _mty = this._canvas.state_data.get('surface_material_type') || this._material_type;
+    const _mty = this._canvas.get_state('surface_material_type') || this._material_type;
     if( !this._mesh.material['is' + _mty] ){
       this.switch_material( _mty, update_canvas );
     }
@@ -178,7 +178,7 @@ class FreeMesh extends AbstractThreeBrainObject {
   switch_material( material_type, update_canvas = false ){
     if( material_type in this._materials ){
       const _m = this._materials[ material_type ];
-      const _o = this._canvas.state_data.get("surface_opacity_left") || 0;
+      const _o = this._canvas.get_state("surface_opacity_left") || 0;
 
       this._material_type = material_type;
       this._mesh.material = _m;
@@ -271,7 +271,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this._set_track( 0 );
 
 
-    /*this._canvas.bind( this.name + "_link_electrodes", "canvas_finish_init", () => {
+    /*this._canvas.bind( this.name + "_link_electrodes", "canvas.finish_init", () => {
       let nm, el;
       this._canvas.electrodes.forEach((v) => {
         for(nm in v){
@@ -514,15 +514,15 @@ class FreeMesh extends AbstractThreeBrainObject {
         if( max === undefined || max < v){ max = v; }
       });
       if( min !== undefined ){
-        let min_t = this._canvas.state_data.get( 'time_range_min0' );
+        let min_t = this._canvas.get_state( 'time_range_min0' );
         if( min_t === undefined || min < min_t ){
-          this._canvas.state_data.set( 'time_range_min0', min );
+          this._canvas.set_state( 'time_range_min0', min );
         }
       }
       if( max !== undefined ){
-        let max_t = this._canvas.state_data.get( 'time_range_max0' );
+        let max_t = this._canvas.get_state( 'time_range_max0' );
         if( max_t === undefined || max < max_t ){
-          this._canvas.state_data.set( 'time_range_max0', max );
+          this._canvas.set_state( 'time_range_max0', max );
         }
       }
 
