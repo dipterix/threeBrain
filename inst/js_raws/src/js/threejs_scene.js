@@ -1581,7 +1581,6 @@ class THREEBRAIN_CANVAS {
       );
 
       // Dispatch the event.
-      console.debug("3D Viewer: dispatching event: " + evt_buffer.type);
       this.el.dispatchEvent(event);
       evt_buffer.dispatched = true;
     };

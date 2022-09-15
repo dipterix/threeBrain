@@ -64082,9 +64082,10 @@ class THREE_BRAIN_SHINY {
 
         if( typeof data.name !== "string" || data.name.length === 0 ) { return; }
 
+        // dispatch event with immediate signal
         this.canvas.dispatch_event(
           "canvas.handle." + data.name,
-          data.value
+          data.value, true
         );
 
         /*
@@ -71337,7 +71338,6 @@ class THREEBRAIN_CANVAS {
       );
 
       // Dispatch the event.
-      console.debug("3D Viewer: dispatching event: " + evt_buffer.type);
       this.el.dispatchEvent(event);
       evt_buffer.dispatched = true;
     };
