@@ -61107,12 +61107,14 @@ class THREEBRAIN_CONTROL{
   remember( args ){
 
     const keys = [
-      "Background Color", "Camera Position", "Display Coordinates", "Show Panels", "Coronal (P - A)",
-      "Axial (I - S)", "Sagittal (L - R)", "Overlay Coronal", "Overlay Axial", "Overlay Sagittal",
-      "Dist. Threshold", "Surface Type", "Surface Material", "Left Hemisphere", "Right Hemisphere",
-      "Left Opacity", "Right Opacity",
-      "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility", "Display Data",
-      "Display Range", "Threshold Data", "Threshold Range", "Threshold Method", "Video Mode",
+      "Background Color", "Camera Position", "Display Coordinates", "Show Panels",
+      "Coronal (P - A)", "Axial (I - S)", "Sagittal (L - R)",
+      "Overlay Coronal", "Overlay Axial", "Overlay Sagittal",
+      "Dist. Threshold", "Surface Type", "Surface Material",
+      "Left Hemisphere", "Right Hemisphere", "Left Opacity", "Right Opacity",
+      "Map Electrodes", "Surface Mapping", "Volume Mapping", "Visibility",
+      "Display Data", "Display Range", "Threshold Data", "Threshold Range",
+      "Threshold Method", "Video Mode", "Speed", "Play/Pause",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
       "Voxel Type", "Voxel Display", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
       'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',
