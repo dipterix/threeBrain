@@ -1,3 +1,17 @@
+threeBrain 0.2.7
+=======
+
+## Changes
+
+* Rewired events, allowing to drive the viewer via `JavaScript` events
+* Allowed to set animation playback status
+* Remove modal by default if `raveio` or `ravedash` is loaded
+* Edited launch script to always use `Python3`
+
+## Bug fixes
+
+* Fixed installation issues (template brain) on `Windows`, avoid backslashes
+
 threeBrain 0.2.6
 =======
 

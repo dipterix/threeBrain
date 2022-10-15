@@ -1,19 +1,22 @@
 # Update logs (for R-cran only)
 
-## 2022-08-24
+## 2022-10-15
 **Version 0.2.6 (current)**
-
-Self check: 0 errors | 0 warnings | 0 notes
-
-## 2022-05-29
-**Version 0.2.5 (passed)**
 
 Self check: 0 errors | 0 warnings | 1 notes
 
 ```
 checking installed package size ... NOTE
-  installed size is  5.3Mb
+  installed size is  5.4Mb
 ```
+
+Unable to reduce the engine size.
+
+## 2022-08-24
+**Version 0.2.6 (passed)**
+
+## 2022-05-29
+**Version 0.2.5 (passed)**
 
 ## 2021-12-02
 **Version 0.2.4 (passed)**
