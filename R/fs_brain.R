@@ -123,7 +123,7 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
   has_volume <- FALSE
   if( file.exists(path_xform) ){
     ss <- readLines(path_xform)
-    ss <- stringr::str_match(ss, '^([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$')
+    ss <- stringr::str_match(ss, '^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$')
     ss <- ss[!is.na(ss[,1]), -1, drop = FALSE]
     if( nrow(ss) >= 3 ){
       ss <- ss[1:3,1:4]

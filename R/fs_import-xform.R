@@ -10,7 +10,7 @@ import_fs.xform <- function(subject_name, fs_path, quiet = FALSE, dtype, sub_typ
   xfm <- diag(c(1,1,1,1))
   if( file.exists(path_xform) ){
     ss <- readLines(path_xform)
-    ss <- stringr::str_match(ss, '^([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+) ([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$')
+    ss <- stringr::str_match(ss, '^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$')
     ss <- ss[!is.na(ss[,1]), -1, drop = FALSE]
     if( nrow(ss) >= 3 ){
       ss <- ss[1:3,1:4]
