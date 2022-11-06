@@ -15,6 +15,7 @@ import { OrthographicTrackballControls } from './core/OrthographicTrackballContr
 import { CanvasContext2D } from './core/context.js';
 import { Stats } from './libs/stats.min.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
+import { CanvasEvent } from './core/events.js';
 import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
 import { CONSTANTS } from './constants.js';
@@ -119,6 +120,11 @@ class THREEBRAIN_CANVAS {
     // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
     this.shiny_mode = shiny_mode;
 
+    // Element container
+    this.main_canvas = document.createElement('div');
+    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
+    this.main_canvas.style.width = width + 'px';
+
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
     this.threebrain_instances = new Map();
@@ -136,10 +142,8 @@ class THREEBRAIN_CANVAS {
 
     // action event listener functions and dispose flags
     this._disposed = false;
-    this._dispose_functions = new Map();
-    this._event_buffer = new Map();
-    this.dispatcher_timeout = 100;
-    this.dispatcher_throttle = true;
+    this.event_dispatcher = new CanvasEvent(
+      this.main_canvas, this.container_id);
     // set default values
     this.set_state( 'coronal_depth', 0 );
     this.set_state( 'axial_depth', 0 );
@@ -292,10 +296,6 @@ class THREEBRAIN_CANVAS {
     this.side_renderer.setSize( _render_height * 3 , _render_height );
   	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
 
-    // Element container
-    this.main_canvas = document.createElement('div');
-    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
-    this.main_canvas.style.width = width + 'px';
     // register mouse events to save time from fetching from DOM elements
     this.register_main_canvas_events();
 
@@ -1523,81 +1523,14 @@ class THREEBRAIN_CANVAS {
 
   /*---- Events -------------------------------------------------------------*/
   bind( name, evtstr, fun, target, options = false ){
-    const _target = target || this.main_canvas;
-
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      _f();
-    }
-    this._dispose_functions.set( name, () => {
-      console.debug('Calling dispose function ' + name);
-      try {
-        _target.removeEventListener( evtstr , fun );
-      } catch (e) {
-        console.warn('Unable to dispose ' + name);
-      }
-    });
-
-    console.debug(`Registering event ${evtstr} (${name})`);
-    _target.addEventListener( evtstr , fun, options );
+    this.event_dispatcher.bind(name, evtstr, fun, target, options);
   }
   dispatch_event( type, data, immediate = false ){
-
-    if( typeof(type) !== "string" || type.length === 0 ) {
-      throw new TypeError( 'Can only dispatch event with type of none-empty string' );
-    }
-
-    if( !this._event_buffer.has(type) ) {
-      this._event_buffer.set(type, {
-        type: type,
-        throttlePause: false,
-        data: data,
-        dispatched: false
-      });
-    }
-    const evt_buffer = this._event_buffer.get(type);
-    evt_buffer.data = data;
-    evt_buffer.dispatched = false;
-
-    const immediate_ = this.dispatcher_throttle || immediate;
-    if( !immediate && evt_buffer.throttlePause ) {
-      // update data, but hold it
-      return;
-    }
-
-    evt_buffer.throttlePause = true;
-
-    const do_dispatch = () => {
-      evt_buffer.throttlePause = false;
-      if( evt_buffer.dispatched ) { return; }
-
-      // fire event with the newest data
-      const event = new CustomEvent(
-        evt_buffer.type,
-        {
-          container_id: this.container_id,
-          detail: evt_buffer.data
-        }
-      );
-
-      // Dispatch the event.
-      this.el.dispatchEvent(event);
-      evt_buffer.dispatched = true;
-    };
-
-    if( immediate ) {
-      do_dispatch();
-    } else {
-      setTimeout(() => { do_dispatch(); }, this.dispatcher_timeout);
-    }
-
+    this.event_dispatcher.dispatch_event( type, data, immediate );
   }
 
   dispose_eventlisters(){
-    this._dispose_functions.forEach( (_f) => {
-      _f();
-    });
-    this._dispose_functions.clear();
+    this.event_dispatcher.dispose();
   }
 
 

@@ -64,7 +64,7 @@ class THREEBRAIN_PRESETS{
     this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
       (evt) => {
         this.update_self();
-      }, this.canvas.el );
+      }, this.canvas.main_canvas );
 
   }
 

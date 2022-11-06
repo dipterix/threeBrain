@@ -7,6 +7,7 @@ import { WEBGL } from './js/WebGL.js';
 import * as THREE from './build/three.module.js';
 import { THREEBRAIN_CONTROL } from './js/core/gui_wrapper.js';
 import { THREEBRAIN_PRESETS } from './js/core/data_controls.js';
+import { CanvasEvent } from './js/core/events.js';
 import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
 import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
 import { THREEBRAIN_STORAGE } from './js/threebrain_cache.js';
@@ -122,7 +123,7 @@ class BrainCanvas{
 		}
   }
 
-  resize_widget(width, height){
+  __resize_widget(width, height){
     if( width <= 0 || height <= 0 ){
       // Do nothing! as the canvas is usually invisible
       return(null);
@@ -139,6 +140,36 @@ class BrainCanvas{
       this.canvas.reset_side_canvas();
     }
     this.canvas.start_animation(0);
+  }
+
+  resize_widget(width, height){
+
+    // delay resizing if the widget size is too small
+
+    if(!width || width <= 0) {
+      this.__width = 0;
+    } else {
+      this.__width = width;
+    }
+
+    if(!height || height <= 0) {
+      this.__height = 0;
+    } else {
+      this.__height = height;
+    }
+
+    const _f = () => {
+      const _w = this.__width || this.el.clientWidth;
+      const _h = this.__height || this.el.clientHeight;
+      if(_w <= 10 || _h <= 10) {
+        setTimeout(_f, 1000);
+      } else {
+        this.__resize_widget(_w, _h);
+      }
+    }
+
+    _f();
+
   }
 
   _register_gui_control(){
@@ -533,7 +564,6 @@ class BrainWidgetWrapper {
       this.el.appendChild( this._container );
 
       // Make sure the canvas is resized
-      console.log(`Reusing previous 3D handler with dimension: ${width} x ${height}`);
       this.handler.resize_widget(width, height);
 
       this.initalized = true;
@@ -560,19 +590,13 @@ class BrainWidgetWrapper {
         this.el.classList.remove("threejs-brain-blank-container");
         this.el.appendChild( this._container );
 
-        let _w = width, _h = height;
-        if(_w <= 10 || _h <= 10) {
-          _w = this._container.clientWidth;
-          _h = this._container.clientHeight;
-        }
-        console.log(`Creating new 3D handler with dimension: ${_w} x ${_h}`);
         this.handler = new BrainCanvas(
 
           // Element to store 3D viewer
           this._container,
 
           // dimension of the viewer
-          _w, _h,
+          width, height,
 
           // Different sizing policy, as well as callbacks
           HTMLWidgets.shinyMode, HTMLWidgets.viewerMode,
@@ -593,9 +617,11 @@ class BrainWidgetWrapper {
         if( this.values !== undefined ){
           this.render( this.values, true );
         }
+        this.handler.resize_widget(width, height);
       };
 
     }
+
 
   }
 

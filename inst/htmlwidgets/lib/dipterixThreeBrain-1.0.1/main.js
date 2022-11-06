@@ -58450,7 +58450,7 @@ class THREEBRAIN_PRESETS{
     this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
       (evt) => {
         this.update_self();
-      }, this.canvas.el );
+      }, this.canvas.main_canvas );
 
   }
 
@@ -63958,7 +63958,7 @@ class THREE_BRAIN_SHINY {
         zoom      : args.zoom || 1,
         up        : args.up
       });
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
 
     // 2. click callback
     // finalize registering
@@ -64044,7 +64044,7 @@ class THREE_BRAIN_SHINY {
     this.canvas.bind( "report_canvas_state", "canvas.state.onChange", (evt) => {
       const data = Object.fromEntries( this.canvas.state_data );
       this.to_shiny2('canvas_state', data);
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
 
 
     // 4. subject information
@@ -64061,7 +64061,7 @@ class THREE_BRAIN_SHINY {
         Torig: subject_info.Torig,
         xfm: subject_info.xfm,
       });
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
   }
 
   register_gui( gui, presets ){
@@ -64076,7 +64076,7 @@ class THREE_BRAIN_SHINY {
           this.to_shiny2(k, args.data[k], args.priority);
         }
       }
-    }, this.canvas.el);
+    }, this.canvas.main_canvas);
 
     if( this.shiny_mode ){
       // register shiny customized message
@@ -64116,7 +64116,7 @@ class THREE_BRAIN_SHINY {
     handler_names.forEach((nm) => {
       this.canvas.bind( "handle_set_" + nm, "canvas.handle." + nm, (evt) => {
         this["handle_" + nm]( evt.detail );
-      }, this.canvas.el);
+      }, this.canvas.main_canvas);
     });
 
 
@@ -64567,7 +64567,7 @@ class THREEBRAIN_STORAGE {
 
 /***/ }),
 
-/***/ 1483:
+/***/ 3523:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -65444,6 +65444,132 @@ Stats.Panel = function ( name, fg, bg ) {
 
 // EXTERNAL MODULE: ./src/js/threebrain_cache.js
 var threebrain_cache = __webpack_require__(5664);
+;// CONCATENATED MODULE: ./src/js/core/events.js
+
+
+class CanvasEvent {
+  constructor(el, container_id) {
+    // el must be a DOM element, no check here
+    if( el ) {
+      if(! el instanceof window.HTMLElement ) {
+        throw Error("CanvasEvent(el): el must be an HTMLElement.")
+      }
+      this._el = el;
+    } else {
+      this._el = document.createElement("div");
+    }
+
+    this._dispose_functions = new Map();
+    this._event_buffer = new Map();
+    this._container_id = container_id || this._el.getAttribute( 'data-target' );
+
+    this.throttle = true;
+    this.timeout = 100;
+  }
+
+  bind( name, evtstr, fun, target, options = false ){
+    // this.bind( "event name", "click", (evt) => {...} );
+
+    const _target = target || this._el;
+
+    // Dispose existing function
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      try {
+        _f();
+      } catch (e) {}
+      this._dispose_functions.delete( name );
+    }
+    this._dispose_functions.set( name, () => {
+      console.debug('Calling dispose function ' + name);
+      try {
+        _target.removeEventListener( evtstr , fun );
+      } catch (e) {
+        console.warn('Unable to dispose ' + name);
+      }
+    });
+
+    console.debug(`Registering event ${evtstr} (${name})`);
+    _target.addEventListener( evtstr , fun, options );
+  }
+
+  unbind( name ) {
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      try {
+        _f();
+      } catch (e) {}
+      this._dispose_functions.delete( name );
+    }
+  }
+
+  dispose() {
+    this._dispose_functions.forEach((_, _name) => {
+      this.unbind(_name);
+    });
+    this._dispose_functions.clear();
+  }
+
+  dispatch_event( type, data, immediate = false ){
+
+    if( typeof(type) !== "string" || type.length === 0 ) {
+      throw TypeError( 'CanvasEvent.dispatch_event: Can only dispatch event with type of none-empty string' );
+    }
+
+    if( !this._event_buffer.has(type) ) {
+      this._event_buffer.set(type, {
+        type: type,
+        throttlePause: false,
+        data: data,
+        dispatched: false
+      });
+    }
+    const evt_buffer = this._event_buffer.get(type);
+    evt_buffer.data = data;
+    evt_buffer.dispatched = false;
+
+    const immediate_ = this.throttle || immediate;
+    if( !immediate && evt_buffer.throttlePause ) {
+      // update data, but hold it
+      return;
+    }
+
+    evt_buffer.throttlePause = true;
+
+    const do_dispatch = () => {
+      evt_buffer.throttlePause = false;
+      if( evt_buffer.dispatched ) { return; }
+
+      // fire event with the newest data
+      const event = new CustomEvent(
+        evt_buffer.type,
+        {
+          container_id: this._container_id,
+          detail: evt_buffer.data
+        }
+      );
+
+      // Dispatch the event.
+      console.debug(`Dispatching event: ${evt_buffer.type} - ${evt_buffer.data}`);
+      this._el.dispatchEvent(event);
+      evt_buffer.dispatched = true;
+    };
+
+    if( immediate ) {
+      do_dispatch();
+    } else {
+      setTimeout(() => { do_dispatch(); }, this.timeout);
+    }
+
+  }
+
+  available_events() {
+    return [...this._dispose_functions.keys()];
+  }
+}
+
+
+
 ;// CONCATENATED MODULE: ./src/js/libs/draggable.js
 
 function get_size(el){
@@ -69789,6 +69915,7 @@ var download_default = /*#__PURE__*/__webpack_require__.n(download);
 
 
 
+
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
   'sphere'    : sphere/* gen_sphere */.Lk,
@@ -69878,6 +70005,11 @@ class THREEBRAIN_CANVAS {
     // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
     this.shiny_mode = shiny_mode;
 
+    // Element container
+    this.main_canvas = document.createElement('div');
+    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
+    this.main_canvas.style.width = width + 'px';
+
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
     this.threebrain_instances = new Map();
@@ -69895,10 +70027,8 @@ class THREEBRAIN_CANVAS {
 
     // action event listener functions and dispose flags
     this._disposed = false;
-    this._dispose_functions = new Map();
-    this._event_buffer = new Map();
-    this.dispatcher_timeout = 100;
-    this.dispatcher_throttle = true;
+    this.event_dispatcher = new CanvasEvent(
+      this.main_canvas, this.container_id);
     // set default values
     this.set_state( 'coronal_depth', 0 );
     this.set_state( 'axial_depth', 0 );
@@ -70051,10 +70181,6 @@ class THREEBRAIN_CANVAS {
     this.side_renderer.setSize( _render_height * 3 , _render_height );
   	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
 
-    // Element container
-    this.main_canvas = document.createElement('div');
-    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
-    this.main_canvas.style.width = width + 'px';
     // register mouse events to save time from fetching from DOM elements
     this.register_main_canvas_events();
 
@@ -71282,81 +71408,14 @@ class THREEBRAIN_CANVAS {
 
   /*---- Events -------------------------------------------------------------*/
   bind( name, evtstr, fun, target, options = false ){
-    const _target = target || this.main_canvas;
-
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      _f();
-    }
-    this._dispose_functions.set( name, () => {
-      console.debug('Calling dispose function ' + name);
-      try {
-        _target.removeEventListener( evtstr , fun );
-      } catch (e) {
-        console.warn('Unable to dispose ' + name);
-      }
-    });
-
-    console.debug(`Registering event ${evtstr} (${name})`);
-    _target.addEventListener( evtstr , fun, options );
+    this.event_dispatcher.bind(name, evtstr, fun, target, options);
   }
   dispatch_event( type, data, immediate = false ){
-
-    if( typeof(type) !== "string" || type.length === 0 ) {
-      throw new TypeError( 'Can only dispatch event with type of none-empty string' );
-    }
-
-    if( !this._event_buffer.has(type) ) {
-      this._event_buffer.set(type, {
-        type: type,
-        throttlePause: false,
-        data: data,
-        dispatched: false
-      });
-    }
-    const evt_buffer = this._event_buffer.get(type);
-    evt_buffer.data = data;
-    evt_buffer.dispatched = false;
-
-    const immediate_ = this.dispatcher_throttle || immediate;
-    if( !immediate && evt_buffer.throttlePause ) {
-      // update data, but hold it
-      return;
-    }
-
-    evt_buffer.throttlePause = true;
-
-    const do_dispatch = () => {
-      evt_buffer.throttlePause = false;
-      if( evt_buffer.dispatched ) { return; }
-
-      // fire event with the newest data
-      const event = new CustomEvent(
-        evt_buffer.type,
-        {
-          container_id: this.container_id,
-          detail: evt_buffer.data
-        }
-      );
-
-      // Dispatch the event.
-      this.el.dispatchEvent(event);
-      evt_buffer.dispatched = true;
-    };
-
-    if( immediate ) {
-      do_dispatch();
-    } else {
-      setTimeout(() => { do_dispatch(); }, this.dispatcher_timeout);
-    }
-
+    this.event_dispatcher.dispatch_event( type, data, immediate );
   }
 
   dispose_eventlisters(){
-    this._dispose_functions.forEach( (_f) => {
-      _f();
-    });
-    this._dispose_functions.clear();
+    this.event_dispatcher.dispose();
   }
 
 
@@ -73095,11 +73154,18 @@ class THREEBRAIN_CANVAS {
       return;
     }
 
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
+
     this.update();
 
     const results = this.inc_time();
-    const _width = this.domElement.width;
-    const _height = this.domElement.height;
+
+
 
     if(this.render_flag >= 0){
 
@@ -74459,7 +74525,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var _js_core_gui_wrapper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2814);
 /* harmony import */ var _js_core_data_controls_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6303);
 /* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(8173);
-/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(1483);
+/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(3523);
 /* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(5664);
 /* harmony import */ var _js_constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(975);
 /* harmony import */ var _js_utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(3658);
@@ -74470,6 +74536,7 @@ var __webpack_exports__ = {};
  * @Author: Zhengjia Wang
  * Adapter of model (threejs_scene) and viewer (htmlwidgets)
  */
+
 
 
 
@@ -74590,7 +74657,7 @@ class BrainCanvas{
 		}
   }
 
-  resize_widget(width, height){
+  __resize_widget(width, height){
     if( width <= 0 || height <= 0 ){
       // Do nothing! as the canvas is usually invisible
       return(null);
@@ -74607,6 +74674,36 @@ class BrainCanvas{
       this.canvas.reset_side_canvas();
     }
     this.canvas.start_animation(0);
+  }
+
+  resize_widget(width, height){
+
+    // delay resizing if the widget size is too small
+
+    if(!width || width <= 0) {
+      this.__width = 0;
+    } else {
+      this.__width = width;
+    }
+
+    if(!height || height <= 0) {
+      this.__height = 0;
+    } else {
+      this.__height = height;
+    }
+
+    const _f = () => {
+      const _w = this.__width || this.el.clientWidth;
+      const _h = this.__height || this.el.clientHeight;
+      if(_w <= 10 || _h <= 10) {
+        setTimeout(_f, 1000);
+      } else {
+        this.__resize_widget(_w, _h);
+      }
+    }
+
+    _f();
+
   }
 
   _register_gui_control(){
@@ -74999,6 +75096,10 @@ class BrainWidgetWrapper {
       this.el.classList.remove("threejs-brain-blank-container");
 
       this.el.appendChild( this._container );
+
+      // Make sure the canvas is resized
+      this.handler.resize_widget(width, height);
+
       this.initalized = true;
     } else {
 
@@ -75050,9 +75151,11 @@ class BrainWidgetWrapper {
         if( this.values !== undefined ){
           this.render( this.values, true );
         }
+        this.handler.resize_widget(width, height);
       };
 
     }
+
 
   }
 

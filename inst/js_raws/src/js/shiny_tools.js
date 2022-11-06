@@ -72,7 +72,7 @@ class THREE_BRAIN_SHINY {
         zoom      : args.zoom || 1,
         up        : args.up
       });
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
 
     // 2. click callback
     // finalize registering
@@ -158,7 +158,7 @@ class THREE_BRAIN_SHINY {
     this.canvas.bind( "report_canvas_state", "canvas.state.onChange", (evt) => {
       const data = Object.fromEntries( this.canvas.state_data );
       this.to_shiny2('canvas_state', data);
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
 
 
     // 4. subject information
@@ -175,7 +175,7 @@ class THREE_BRAIN_SHINY {
         Torig: subject_info.Torig,
         xfm: subject_info.xfm,
       });
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
   }
 
   register_gui( gui, presets ){
@@ -190,7 +190,7 @@ class THREE_BRAIN_SHINY {
           this.to_shiny2(k, args.data[k], args.priority);
         }
       }
-    }, this.canvas.el);
+    }, this.canvas.main_canvas);
 
     if( this.shiny_mode ){
       // register shiny customized message
@@ -230,7 +230,7 @@ class THREE_BRAIN_SHINY {
     handler_names.forEach((nm) => {
       this.canvas.bind( "handle_set_" + nm, "canvas.handle." + nm, (evt) => {
         this["handle_" + nm]( evt.detail );
-      }, this.canvas.el);
+      }, this.canvas.main_canvas);
     });
 
 
