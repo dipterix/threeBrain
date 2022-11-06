@@ -531,6 +531,11 @@ class BrainWidgetWrapper {
       this.el.classList.remove("threejs-brain-blank-container");
 
       this.el.appendChild( this._container );
+
+      // Make sure the canvas is resized
+      console.log(`Reusing previous 3D handler with dimension: ${width} x ${height}`);
+      this.handler.resize_widget(width, height);
+
       this.initalized = true;
     } else {
 
@@ -555,13 +560,19 @@ class BrainWidgetWrapper {
         this.el.classList.remove("threejs-brain-blank-container");
         this.el.appendChild( this._container );
 
+        let _w = width, _h = height;
+        if(_w <= 10 || _h <= 10) {
+          _w = this._container.clientWidth;
+          _h = this._container.clientHeight;
+        }
+        console.log(`Creating new 3D handler with dimension: ${_w} x ${_h}`);
         this.handler = new BrainCanvas(
 
           // Element to store 3D viewer
           this._container,
 
           // dimension of the viewer
-          width, height,
+          _w, _h,
 
           // Different sizing policy, as well as callbacks
           HTMLWidgets.shinyMode, HTMLWidgets.viewerMode,

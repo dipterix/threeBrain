@@ -3336,11 +3336,18 @@ class THREEBRAIN_CANVAS {
       return;
     }
 
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
+
     this.update();
 
     const results = this.inc_time();
-    const _width = this.domElement.width;
-    const _height = this.domElement.height;
+
+
 
     if(this.render_flag >= 0){
 
