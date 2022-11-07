@@ -1,6 +1,8 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { MeshBasicMaterial, MeshLambertMaterial, SphereBufferGeometry,
-         Mesh, Vector3, Matrix4 } from '../../build/three.module.js';
+import { MeshBasicMaterial, MeshLambertMaterial, SpriteMaterial,
+         SphereBufferGeometry, Mesh, Vector3,
+         Matrix4 } from '../../build/three.module.js';
+import { Sprite2, TextTexture } from '../ext/text_sprite.js';
 import { to_array, get_or_default } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 
@@ -12,6 +14,7 @@ class Sphere extends AbstractThreeBrainObject {
 
     this.type = 'Sphere';
     this.isSphere = true;
+    this.isElectrode = false;
 
     this._materials = {
       'MeshBasicMaterial' : new MeshBasicMaterial( MATERIAL_PARAMS ),
@@ -66,6 +69,24 @@ class Sphere extends AbstractThreeBrainObject {
     this._mesh = mesh;
     this.object = mesh;
 
+    // Add text label to electrodes
+    this._text_label = `${this._params.number || ""}`;
+    const map = new TextTexture( this._text_label );
+    const material = new SpriteMaterial( {
+      map: map,
+      transparent: true,
+      depthTest : false,
+      depthWrite : false,
+      color: 0xffffff
+    } );
+    const sprite = new Sprite2( material );
+    sprite.visible = false;
+    this._mesh.add( sprite );
+
+
+    this._text_sprite = sprite;
+    this._text_map = map;
+
     this._link_userData();
   }
 
@@ -85,10 +106,44 @@ class Sphere extends AbstractThreeBrainObject {
     return( this._canvas.animation_controls.get_params() );
   }
 
+  get label() {
+    return this._text_label;
+  }
+
+  set label(name) {
+    this._text_label = `${name}`;
+    console.debug(`Setting label: ${this._text_label}`);
+    this._text_map.draw_text( this._text_label );
+  }
+
+  set_label_scale ( v ) {
+    if( !this.isElectrode ) { return; }
+    if( v && v > 0 ) {
+      this._text_map.update_scale( v * (this._params.radius || 1) );
+    }
+  }
+
+  set_label_visible (visible) {
+    if( !this.isElectrode ) { return; }
+    if( visible ) {
+      this._text_sprite.visible = true;
+    } else {
+      this._text_sprite.visible = false;
+    }
+  }
+
   dispose(){
+    try {
+      this._text_sprite.removeFromParent();
+      this._text_sprite.material.map.dispose();
+      this._text_sprite.material.dispose();
+      this._text_sprite.geometry.dispose();
+    } catch (e) {}
+
     try {
       this._mesh.removeFromParent();
     } catch (e) {}
+
     this._mesh.material.dispose();
     this._mesh.geometry.dispose();
   }
@@ -320,6 +375,8 @@ class Sphere extends AbstractThreeBrainObject {
 
     if( is_electrode( this.object ) ){
 
+      this.isElectrode = true;
+
       const g = this._params,
             subject_code = this.subject_code;
 
@@ -327,6 +384,13 @@ class Sphere extends AbstractThreeBrainObject {
       // electrodes must be clickable, ignore the default settings
       this._canvas.add_clickable( this.name, this.object );
 
+      // this._text_sprite.visible = true;
+      const electrode_label = this._canvas.state_data.get("electrode_label");
+      if( typeof electrode_label === "object" && electrode_label ) {
+        this.set_label_scale( electrode_label.scale || 1.5 );
+      } else {
+        this.set_label_scale( 1.5 );
+      }
 
       let gp_position = this.get_group_object().position.clone();
 
