@@ -114,9 +114,9 @@ class AbstractThreeBrainObject {
       }
 
       if( this.group_name ){
-        this.get_group_object().add( this.object );
+        this.get_group_object().add( this.root_object || this.object );
       } else {
-        this._canvas.add_to_scene( this.object );
+        this._canvas.add_to_scene( this.root_object || this.object );
       }
 
       if( this.object.isMesh ){
