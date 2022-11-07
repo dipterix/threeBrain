@@ -7,7 +7,6 @@ import * as download from 'downloadjs';
 import { LineSegments2 } from '../jsm/lines/LineSegments2.js';
 import { LineMaterial } from '../jsm/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from '../jsm/lines/LineSegmentsGeometry.js';
-import { Sprite2, TextTexture } from '../ext/text_sprite.js';
 
 
 // Electrode localization
@@ -118,7 +117,7 @@ const pal = [0x1874CD, 0x1F75C6, 0x2677BF, 0x2E78B9, 0x357AB2, 0x3C7BAC, 0x447DA
 
 class LocElectrode {
   constructor(subject_code, localization_order, initial_position, canvas,
-              electrode_scale = 1, text_scale = 1.0) {
+              electrode_scale = 1) {
     this.isLocElectrode = true;
     // temp vector 3
     this.__vec3 = new Vector3().set( 0, 0, 0 );
@@ -158,7 +157,6 @@ class LocElectrode {
     this.FSIndex = undefined;
     this._orig_name = `${this.subject_code}, ${this.localization_order} - ${this.Label}`;
     this._scale = electrode_scale;
-    this._text_scale = text_scale;
 
     const inst = canvas.add_object({
       "name": this._orig_name,
@@ -189,31 +187,15 @@ class LocElectrode {
       "search_geoms": null
     });
 
-
     this.instance = inst;
     this.object = inst.object;
     this.object.material.color.set( COL_ENABLED );
-
-    const map = new TextTexture( `${localization_order}` );
-    const material = new SpriteMaterial( {
-      map: map,
-      depthTest : false,
-      depthWrite : false
-    } );
-    const sprite = new Sprite2( material );
-    this.object.add( sprite );
-    this._map = map;
-
-    this.object.userData.dispose = () => {
-      sprite.removeFromParent();
-      sprite.material.map.dispose();
-      sprite.geometry.dispose();
-      sprite.material.dispose();
-      this.instance.dispose();
-    };
     this.object.userData.localization_instance = this;
-    // this.object.scale.set( this._scale, this._scale, this._scale );
 
+    // set up label;
+    this.instance.label = this.localization_order;
+    this.instance.set_label_visible(true);
+    // this.object.scale.set( this._scale, this._scale, this._scale );
 
     // Add line to indicate shift
     const line_geometry = new LineSegmentsGeometry();
@@ -268,8 +250,8 @@ class LocElectrode {
   update_label( label ){
     this.Label = label || ("N/A " + this.localization_order);
     const name = `${this.subject_code}, ${this.localization_order} - ${this.Label}`;
-
-    this._map.draw_text( `${this.localization_order}-${this.Label}` );
+    this.instance.label = `${this.localization_order}-${this.Label}`;
+    // this._map.draw_text( `${this.localization_order}-${this.Label}` );
     this.instance._params.name = name;
   }
 
@@ -314,16 +296,16 @@ class LocElectrode {
     }
   }
 
-  update_scale( scale, text_scale ){
+  update_scale( scale ){
     if( scale ){
       this._scale = scale;
     }
-    if( text_scale ){
-      this._text_scale = text_scale;
-    }
+    // if( text_scale ){
+    //   this._text_scale = text_scale;
+    // }
     const v = this._scale * this.instance._params.radius;
     this.object.scale.set( v, v, v );
-    this._map.update_scale( this._text_scale / v );
+    // this._map.update_scale( this._text_scale / v );
     this._line.scale.set( 1 / v, 1 / v, 1 / v );
   }
 
@@ -656,13 +638,12 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
     }
     let electrode_size = this.gui.get_controller('Electrode Scale', folder_name).getValue() || 1.0;
-    let text_size = this.gui.get_controller('Text Scale', folder_name).getValue() || 1.0;
     if(edit_mode === "disabled" ||
        edit_mode === "refine"){ return; }
 
     const el = new LocElectrode(
       scode, electrodes.length + 1, [x,y,z],
-      this.canvas, electrode_size, text_size);
+      this.canvas, electrode_size);
     el.set_mode( edit_mode );
     electrodes.push( el );
     this.canvas.switch_subject();
@@ -741,18 +722,6 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         electrodes.forEach((el) => {
           el.update_scale( v );
-        });
-
-        this._update_canvas();
-
-      });
-
-    const elec_text_size = this.gui.add_item( 'Text Scale', 1.0, { folder_name: folder_name })
-      .min(1).max(3).step(0.1)
-      .onChange((v) => {
-
-        electrodes.forEach((el) => {
-          el.update_scale( undefined, v );
         });
 
         this._update_canvas();
@@ -877,7 +846,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
           res.positions.forEach((pos) => {
             const el = new LocElectrode(
               scode, electrodes.length + 1, pos, this.canvas,
-              elec_size.getValue(), elec_text_size.getValue());
+              elec_size.getValue());
             el.set_mode( mode );
             el.__interpolate_direction = res.direction.clone().normalize();
             electrodes.push( el );
@@ -988,7 +957,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
               group_name = `group_Electrodes (${scode})`;
           const el = new LocElectrode(
             scode, num, electrode_position, this.canvas,
-            elec_size.getValue(), elec_text_size.getValue());
+            elec_size.getValue());
           el.set_mode( mode );
           electrodes.push( el );
           this.canvas.switch_subject();

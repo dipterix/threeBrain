@@ -55,6 +55,7 @@ CONSTANTS.KEY_CYCLE_SURFACE_COLOR     = "KeyK";         // `k` - cycling surface
 CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = "Period";       // `.` - choosing next electrodes
 CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = "Comma";        // `,` - choosing previous electrodes
 CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = "KeyV";         // `v` - toggle electrode visibility
+CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY   = "KeyV";  // `⇧V` - toggle electrode label visibility
 CONSTANTS.KEY_CYCLE_SURFACE           = "KeyP";         // `p` - cycle through surfaces types
 CONSTANTS.KEY_CYCLE_MATERIAL          = "KeyM";         // `⇧M` - change surface material types (lighting model)
 CONSTANTS.KEY_CYCLE_ATLAS_MODE        = "KeyL";         // `l` - cycle through voxel display mode

@@ -30,6 +30,52 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
     return(true);
   };
 
+  THREEBRAIN_PRESETS.prototype.set_electrodes_label = function(args){
+    if(typeof args !== "object" || !args) { return; }
+
+    let change_scale = false, scale = 0,
+        change_visible = false, visible = false;
+
+    if(typeof args.scale === "number" && args.scale > 0) {
+      change_scale = true;
+      scale = args.scale;
+    }
+    if( args.visible !== undefined ) {
+      change_visible = true;
+      visible = args.visible ? true: false;
+    }
+
+    if(!change_scale && !change_visible) { return; }
+
+    // render electrode colors by subjects
+    this.canvas.subject_codes.forEach((subject_code, ii) => {
+      to_array( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
+        if(e.isMesh && e.userData.instance && e.userData.instance.isElectrode ) {
+          if( change_visible ) {
+            e.userData.instance.set_label_visible( visible );
+          }
+          if( change_scale ) {
+            e.userData.instance.set_label_scale ( scale )
+          }
+        }
+      });
+    });
+
+    const electrode_label = this.canvas.get_state('electrode_label', {});
+
+    if( change_scale ) {
+      electrode_label.scale = scale;
+    }
+    if( change_visible ) {
+      electrode_label.visible = visible;
+    }
+    this.canvas.set_state('electrode_label', electrode_label);
+
+    this._update_canvas();
+    this.fire_change({ 'electrode_label' : electrode_label });
+    return(true);
+  };
+
   THREEBRAIN_PRESETS.prototype.c_electrodes = function(){
     const folder_name = CONSTANTS.FOLDERS[ 'electrode-style' ];
     const show_inactives = this.settings.show_inactive_electrodes;
@@ -82,6 +128,36 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
         }
       }
     }, 'gui_c_electrodes');
+
+    this.canvas.set_state('electrode_label', {
+      scale : 2,
+      visible : true
+    });
+    this.gui.add_item('Text Scale', 1.5,
+      {folder_name : folder_name })
+      .min(1).max(6)
+      .onChange((v) => {
+        this.set_electrodes_label({
+          scale : v
+        });
+        this.fire_change();
+      });
+
+    const electrode_label_visible = this.gui.add_item('Text Visibility', false,
+      {folder_name : folder_name })
+      .onChange((v) => {
+        this.set_electrodes_label({
+          visible : v
+        });
+        this.fire_change();
+      });
+
+    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY, (evt) => {
+      if( has_meta_keys( evt.event, true, false, false ) ){
+        const v = electrode_label_visible.getValue();
+        electrode_label_visible.setValue( !v );
+      }
+    }, 'gui_c_electrode_labels');
 
   };
 
