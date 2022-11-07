@@ -16,27 +16,33 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
     }
   };
 
+
+  const _animation_params = {
+    exists: false,
+    play : false,
+    time : 0,
+    speed : 0,
+    min : 0,
+    max : 0,
+    display : '[None]',
+    threshold : '[None]'
+  };
+
   THREEBRAIN_PRESETS.prototype.get_animation_params = function(){
     if(this._ani_time && this._ani_speed && this._ani_status){
-      return({
-        play : this._ani_status.getValue(),
-        time : this.__current_time || 0, //this._ani_time.getValue(),
-        speed : this._ani_speed.getValue(),
-        min : this.animation_time[0],
-        max : this.animation_time[1],
-        display : this._ani_name.getValue(),
-        threshold : this._thres_name.getValue()
-      });
+      _animation_params.exists = true;
+      _animation_params.play = this._ani_status.getValue();
+      _animation_params.time = this.__current_time || 0; //this._ani_time.getValue(),
+      _animation_params.speed = this._ani_speed.getValue();
+      _animation_params.min = this.animation_time[0];
+      _animation_params.max = this.animation_time[1];
+      _animation_params.display = this._ani_name.getValue();
+      _animation_params.threshold = this._thres_name.getValue();
+      return(_animation_params);
     }else{
-      return({
-        play : false,
-        time : 0,
-        speed : 0,
-        min : 0,
-        max : 0,
-        display : '[None]',
-        threshold : '[None]'
-      });
+      _animation_params.exists = false;
+      _animation_params.play = false;
+      return(_animation_params);
     }
   };
 

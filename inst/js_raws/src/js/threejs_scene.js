@@ -2519,6 +2519,7 @@ class THREEBRAIN_CANVAS {
       // next_time =
       //  1. if not is_playing, last_time
       //  2. if is_playing, last_time + time_delta * speed
+      results.has_animation = params.exists;
       results.current_time = params.play ? (params.time + clock_time_delta * params.speed) : params.time;
       results.speed = params.speed;
       results.is_playing = params.play;
@@ -2814,6 +2815,8 @@ class THREEBRAIN_CANVAS {
   }
 
   _draw_ani( results, x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
+
+    if( !results.has_animation ) { return; }
 
     if( !context_wrapper ){
       context_wrapper = this.domContextWrapper;
