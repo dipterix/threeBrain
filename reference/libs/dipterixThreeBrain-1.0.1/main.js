@@ -52748,6 +52748,7 @@ CONSTANTS.KEY_CYCLE_SURFACE_COLOR     = "KeyK";         // `k` - cycling surface
 CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = "Period";       // `.` - choosing next electrodes
 CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = "Comma";        // `,` - choosing previous electrodes
 CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY   = "KeyV";         // `v` - toggle electrode visibility
+CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY   = "KeyV";  // `⇧V` - toggle electrode label visibility
 CONSTANTS.KEY_CYCLE_SURFACE           = "KeyP";         // `p` - cycle through surfaces types
 CONSTANTS.KEY_CYCLE_MATERIAL          = "KeyM";         // `⇧M` - change surface material types (lighting model)
 CONSTANTS.KEY_CYCLE_ATLAS_MODE        = "KeyL";         // `l` - cycle through voxel display mode
@@ -56326,6 +56327,52 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
     return(true);
   };
 
+  THREEBRAIN_PRESETS.prototype.set_electrodes_label = function(args){
+    if(typeof args !== "object" || !args) { return; }
+
+    let change_scale = false, scale = 0,
+        change_visible = false, visible = false;
+
+    if(typeof args.scale === "number" && args.scale > 0) {
+      change_scale = true;
+      scale = args.scale;
+    }
+    if( args.visible !== undefined ) {
+      change_visible = true;
+      visible = args.visible ? true: false;
+    }
+
+    if(!change_scale && !change_visible) { return; }
+
+    // render electrode colors by subjects
+    this.canvas.subject_codes.forEach((subject_code, ii) => {
+      (0,utils/* to_array */.AA)( this.canvas.electrodes.get( subject_code ) ).forEach((e) => {
+        if(e.isMesh && e.userData.instance && e.userData.instance.isElectrode ) {
+          if( change_visible ) {
+            e.userData.instance.set_label_visible( visible );
+          }
+          if( change_scale ) {
+            e.userData.instance.set_label_scale ( scale )
+          }
+        }
+      });
+    });
+
+    const electrode_label = this.canvas.get_state('electrode_label', {});
+
+    if( change_scale ) {
+      electrode_label.scale = scale;
+    }
+    if( change_visible ) {
+      electrode_label.visible = visible;
+    }
+    this.canvas.set_state('electrode_label', electrode_label);
+
+    this._update_canvas();
+    this.fire_change({ 'electrode_label' : electrode_label });
+    return(true);
+  };
+
   THREEBRAIN_PRESETS.prototype.c_electrodes = function(){
     const folder_name = constants/* CONSTANTS.FOLDERS.electrode-style */.t.FOLDERS["electrode-style"];
     const show_inactives = this.settings.show_inactive_electrodes;
@@ -56378,6 +56425,36 @@ function register_controls_electrodes( THREEBRAIN_PRESETS ){
         }
       }
     }, 'gui_c_electrodes');
+
+    this.canvas.set_state('electrode_label', {
+      scale : 2,
+      visible : true
+    });
+    this.gui.add_item('Text Scale', 1.5,
+      {folder_name : folder_name })
+      .min(1).max(6)
+      .onChange((v) => {
+        this.set_electrodes_label({
+          scale : v
+        });
+        this.fire_change();
+      });
+
+    const electrode_label_visible = this.gui.add_item('Text Visibility', false,
+      {folder_name : folder_name })
+      .onChange((v) => {
+        this.set_electrodes_label({
+          visible : v
+        });
+        this.fire_change();
+      });
+
+    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY */.t.KEY_TOGGLE_ELEC_LABEL_VISIBILITY, (evt) => {
+      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
+        const v = electrode_label_visible.getValue();
+        electrode_label_visible.setValue( !v );
+      }
+    }, 'gui_c_electrode_labels');
 
   };
 
@@ -56468,27 +56545,33 @@ function register_controls_animation( THREEBRAIN_PRESETS ){
     }
   };
 
+
+  const _animation_params = {
+    exists: false,
+    play : false,
+    time : 0,
+    speed : 0,
+    min : 0,
+    max : 0,
+    display : '[None]',
+    threshold : '[None]'
+  };
+
   THREEBRAIN_PRESETS.prototype.get_animation_params = function(){
     if(this._ani_time && this._ani_speed && this._ani_status){
-      return({
-        play : this._ani_status.getValue(),
-        time : this.__current_time || 0, //this._ani_time.getValue(),
-        speed : this._ani_speed.getValue(),
-        min : this.animation_time[0],
-        max : this.animation_time[1],
-        display : this._ani_name.getValue(),
-        threshold : this._thres_name.getValue()
-      });
+      _animation_params.exists = true;
+      _animation_params.play = this._ani_status.getValue();
+      _animation_params.time = this.__current_time || 0; //this._ani_time.getValue(),
+      _animation_params.speed = this._ani_speed.getValue();
+      _animation_params.min = this.animation_time[0];
+      _animation_params.max = this.animation_time[1];
+      _animation_params.display = this._ani_name.getValue();
+      _animation_params.threshold = this._thres_name.getValue();
+      return(_animation_params);
     }else{
-      return({
-        play : false,
-        time : 0,
-        speed : 0,
-        min : 0,
-        max : 0,
-        display : '[None]',
-        threshold : '[None]'
-      });
+      _animation_params.exists = false;
+      _animation_params.play = false;
+      return(_animation_params);
     }
   };
 
@@ -57314,10 +57397,7 @@ var LineSegments2 = __webpack_require__(1445);
 var LineMaterial = __webpack_require__(1580);
 // EXTERNAL MODULE: ./src/js/jsm/lines/LineSegmentsGeometry.js
 var LineSegmentsGeometry = __webpack_require__(9376);
-// EXTERNAL MODULE: ./src/js/ext/text_sprite.js
-var text_sprite = __webpack_require__(1086);
 ;// CONCATENATED MODULE: ./src/js/controls/localization.js
-
 
 
 
@@ -57437,7 +57517,7 @@ const pal = [0x1874CD, 0x1F75C6, 0x2677BF, 0x2E78B9, 0x357AB2, 0x3C7BAC, 0x447DA
 
 class LocElectrode {
   constructor(subject_code, localization_order, initial_position, canvas,
-              electrode_scale = 1, text_scale = 1.0) {
+              electrode_scale = 1) {
     this.isLocElectrode = true;
     // temp vector 3
     this.__vec3 = new three_module.Vector3().set( 0, 0, 0 );
@@ -57477,7 +57557,6 @@ class LocElectrode {
     this.FSIndex = undefined;
     this._orig_name = `${this.subject_code}, ${this.localization_order} - ${this.Label}`;
     this._scale = electrode_scale;
-    this._text_scale = text_scale;
 
     const inst = canvas.add_object({
       "name": this._orig_name,
@@ -57508,31 +57587,15 @@ class LocElectrode {
       "search_geoms": null
     });
 
-
     this.instance = inst;
     this.object = inst.object;
     this.object.material.color.set( COL_ENABLED );
-
-    const map = new text_sprite/* TextTexture */.OD( `${localization_order}` );
-    const material = new three_module.SpriteMaterial( {
-      map: map,
-      depthTest : false,
-      depthWrite : false
-    } );
-    const sprite = new text_sprite/* Sprite2 */.oj( material );
-    this.object.add( sprite );
-    this._map = map;
-
-    this.object.userData.dispose = () => {
-      sprite.removeFromParent();
-      sprite.material.map.dispose();
-      sprite.geometry.dispose();
-      sprite.material.dispose();
-      this.instance.dispose();
-    };
     this.object.userData.localization_instance = this;
-    // this.object.scale.set( this._scale, this._scale, this._scale );
 
+    // set up label;
+    this.instance.label = this.localization_order;
+    this.instance.set_label_visible(true);
+    // this.object.scale.set( this._scale, this._scale, this._scale );
 
     // Add line to indicate shift
     const line_geometry = new LineSegmentsGeometry/* LineSegmentsGeometry */.z();
@@ -57587,8 +57650,8 @@ class LocElectrode {
   update_label( label ){
     this.Label = label || ("N/A " + this.localization_order);
     const name = `${this.subject_code}, ${this.localization_order} - ${this.Label}`;
-
-    this._map.draw_text( `${this.localization_order}-${this.Label}` );
+    this.instance.label = `${this.localization_order}-${this.Label}`;
+    // this._map.draw_text( `${this.localization_order}-${this.Label}` );
     this.instance._params.name = name;
   }
 
@@ -57633,16 +57696,16 @@ class LocElectrode {
     }
   }
 
-  update_scale( scale, text_scale ){
+  update_scale( scale ){
     if( scale ){
       this._scale = scale;
     }
-    if( text_scale ){
-      this._text_scale = text_scale;
-    }
+    // if( text_scale ){
+    //   this._text_scale = text_scale;
+    // }
     const v = this._scale * this.instance._params.radius;
     this.object.scale.set( v, v, v );
-    this._map.update_scale( this._text_scale / v );
+    // this._map.update_scale( this._text_scale / v );
     this._line.scale.set( 1 / v, 1 / v, 1 / v );
   }
 
@@ -57975,13 +58038,12 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
     }
     let electrode_size = this.gui.get_controller('Electrode Scale', folder_name).getValue() || 1.0;
-    let text_size = this.gui.get_controller('Text Scale', folder_name).getValue() || 1.0;
     if(edit_mode === "disabled" ||
        edit_mode === "refine"){ return; }
 
     const el = new LocElectrode(
       scode, electrodes.length + 1, [x,y,z],
-      this.canvas, electrode_size, text_size);
+      this.canvas, electrode_size);
     el.set_mode( edit_mode );
     electrodes.push( el );
     this.canvas.switch_subject();
@@ -58060,18 +58122,6 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         electrodes.forEach((el) => {
           el.update_scale( v );
-        });
-
-        this._update_canvas();
-
-      });
-
-    const elec_text_size = this.gui.add_item( 'Text Scale', 1.0, { folder_name: folder_name })
-      .min(1).max(3).step(0.1)
-      .onChange((v) => {
-
-        electrodes.forEach((el) => {
-          el.update_scale( undefined, v );
         });
 
         this._update_canvas();
@@ -58196,7 +58246,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
           res.positions.forEach((pos) => {
             const el = new LocElectrode(
               scode, electrodes.length + 1, pos, this.canvas,
-              elec_size.getValue(), elec_text_size.getValue());
+              elec_size.getValue());
             el.set_mode( mode );
             el.__interpolate_direction = res.direction.clone().normalize();
             electrodes.push( el );
@@ -58307,7 +58357,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
               group_name = `group_Electrodes (${scode})`;
           const el = new LocElectrode(
             scode, num, electrode_position, this.canvas,
-            elec_size.getValue(), elec_text_size.getValue());
+            elec_size.getValue());
           el.set_mode( mode );
           electrodes.push( el );
           this.canvas.switch_subject();
@@ -58450,7 +58500,7 @@ class THREEBRAIN_PRESETS{
     this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
       (evt) => {
         this.update_self();
-      }, this.canvas.el );
+      }, this.canvas.main_canvas );
 
   }
 
@@ -61116,9 +61166,9 @@ class THREEBRAIN_CONTROL{
       "Display Data", "Display Range", "Threshold Data", "Threshold Range",
       "Threshold Method", "Video Mode", "Speed", "Play/Pause",
       "Show Legend", "Show Time", "Highlight Box", "Info Text",
-      "Voxel Type", "Voxel Display", "Voxel Label", "Voxel Opacity", 'Voxel Min', 'Voxel Max',
-      'Surface Color', 'Blend Factor', 'Sigma', 'Decay', 'Range Limit',
-      'Edit Mode'
+      "Voxel Type", "Voxel Display", "Voxel Label", "Voxel Opacity", "Voxel Min", "Voxel Max",
+      "Surface Color", "Blend Factor", "Sigma", "Decay", "Range Limit",
+      "Edit Mode", "Text Scale", "Text Visibility"
     ];
     const args_dict = (0,utils/* to_dict */.nr)( args );
 
@@ -61753,9 +61803,9 @@ class AbstractThreeBrainObject {
       }
 
       if( this.group_name ){
-        this.get_group_object().add( this.object );
+        this.get_group_object().add( this.root_object || this.object );
       } else {
-        this._canvas.add_to_scene( this.object );
+        this._canvas.add_to_scene( this.root_object || this.object );
       }
 
       if( this.object.isMesh ){
@@ -61802,8 +61852,10 @@ class AbstractThreeBrainObject {
 /* unused harmony export add_electrode2 */
 /* harmony import */ var _abstract_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(470);
 /* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7000);
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(3658);
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(975);
+/* harmony import */ var _ext_text_sprite_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(1086);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3658);
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(975);
+
 
 
 
@@ -61817,6 +61869,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
 
     this.type = 'Sphere';
     this.isSphere = true;
+    this.isElectrode = false;
 
     this._materials = {
       'MeshBasicMaterial' : new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.MeshBasicMaterial( MATERIAL_PARAMS ),
@@ -61825,7 +61878,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
 
     const gb = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
           values = g.keyframes,
-          n_keyframes = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .to_array */ .AA)( g.keyframes ).length;
+          n_keyframes = (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__/* .to_array */ .AA)( g.keyframes ).length;
     this._geometry = gb;
 
     gb.name = 'geom_sphere_' + g.name;
@@ -61871,6 +61924,24 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
     this._mesh = mesh;
     this.object = mesh;
 
+    // Add text label to electrodes
+    this._text_label = `${this._params.number || ""}`;
+    const map = new _ext_text_sprite_js__WEBPACK_IMPORTED_MODULE_2__/* .TextTexture */ .OD( this._text_label );
+    const material = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.SpriteMaterial( {
+      map: map,
+      transparent: true,
+      depthTest : false,
+      depthWrite : false,
+      color: 0xffffff
+    } );
+    const sprite = new _ext_text_sprite_js__WEBPACK_IMPORTED_MODULE_2__/* .Sprite2 */ .oj( material );
+    sprite.visible = false;
+    this._mesh.add( sprite );
+
+
+    this._text_sprite = sprite;
+    this._text_map = map;
+
     this._link_userData();
   }
 
@@ -61890,10 +61961,44 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
     return( this._canvas.animation_controls.get_params() );
   }
 
+  get label() {
+    return this._text_label;
+  }
+
+  set label(name) {
+    this._text_label = `${name}`;
+    console.debug(`Setting label: ${this._text_label}`);
+    this._text_map.draw_text( this._text_label );
+  }
+
+  set_label_scale ( v ) {
+    if( !this.isElectrode ) { return; }
+    if( v && v > 0 ) {
+      this._text_map.update_scale( v * (this._params.radius || 1) );
+    }
+  }
+
+  set_label_visible (visible) {
+    if( !this.isElectrode ) { return; }
+    if( visible ) {
+      this._text_sprite.visible = true;
+    } else {
+      this._text_sprite.visible = false;
+    }
+  }
+
   dispose(){
+    try {
+      this._text_sprite.removeFromParent();
+      this._text_sprite.material.map.dispose();
+      this._text_sprite.material.dispose();
+      this._text_sprite.geometry.dispose();
+    } catch (e) {}
+
     try {
       this._mesh.removeFromParent();
     } catch (e) {}
+
     this._mesh.material.dispose();
     this._mesh.geometry.dispose();
   }
@@ -61947,7 +62052,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
 
         // get threshold criteria
         if(current_value !== undefined){
-          const ranges = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .to_array */ .AA)(canvas.get_state('threshold_values'));
+          const ranges = (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__/* .to_array */ .AA)(canvas.get_state('threshold_values'));
           const opers = canvas.get_state('threshold_method');
           if( canvas.get_state( 'threshold_type', 'continuous') === 'continuous' ){
             // contunuous
@@ -61955,8 +62060,8 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
 
             // '|v| < T1', '|v| >= T1', 'v < T1',
             // 'v >= T1', 'v in [T1, T2]', 'v not in [T1,T2]'
-            if( ranges.length > 0 && opers >= 0 && opers < _constants_js__WEBPACK_IMPORTED_MODULE_3__/* .CONSTANTS.THRESHOLD_OPERATORS.length */ .t.THRESHOLD_OPERATORS.length ){
-              const opstr = _constants_js__WEBPACK_IMPORTED_MODULE_3__/* .CONSTANTS.THRESHOLD_OPERATORS */ .t.THRESHOLD_OPERATORS[ opers ]
+            if( ranges.length > 0 && opers >= 0 && opers < _constants_js__WEBPACK_IMPORTED_MODULE_4__/* .CONSTANTS.THRESHOLD_OPERATORS.length */ .t.THRESHOLD_OPERATORS.length ){
+              const opstr = _constants_js__WEBPACK_IMPORTED_MODULE_4__/* .CONSTANTS.THRESHOLD_OPERATORS */ .t.THRESHOLD_OPERATORS[ opers ]
               let t1 = ranges[0];
 
               if( opstr === 'v = T1' && current_value == t1 ){
@@ -62125,6 +62230,8 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
 
     if( is_electrode( this.object ) ){
 
+      this.isElectrode = true;
+
       const g = this._params,
             subject_code = this.subject_code;
 
@@ -62132,6 +62239,13 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
       // electrodes must be clickable, ignore the default settings
       this._canvas.add_clickable( this.name, this.object );
 
+      // this._text_sprite.visible = true;
+      const electrode_label = this._canvas.state_data.get("electrode_label");
+      if( typeof electrode_label === "object" && electrode_label ) {
+        this.set_label_scale( electrode_label.scale || 1.5 );
+      } else {
+        this.set_label_scale( 1.5 );
+      }
 
       let gp_position = this.get_group_object().position.clone();
 
@@ -62323,7 +62437,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
     // calculate MNI305 coordinate
     const mat1 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Matrix4(),
           pos_targ = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3();
-    const v2v_orig = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__/* .get_or_default */ .jM)( canvas.shared_data, scode, {} ).vox2vox_MNI305;
+    const v2v_orig = (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__/* .get_or_default */ .jM)( canvas.shared_data, scode, {} ).vox2vox_MNI305;
 
     if( v2v_orig ){
       mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
@@ -63958,7 +64072,7 @@ class THREE_BRAIN_SHINY {
         zoom      : args.zoom || 1,
         up        : args.up
       });
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
 
     // 2. click callback
     // finalize registering
@@ -64044,7 +64158,7 @@ class THREE_BRAIN_SHINY {
     this.canvas.bind( "report_canvas_state", "canvas.state.onChange", (evt) => {
       const data = Object.fromEntries( this.canvas.state_data );
       this.to_shiny2('canvas_state', data);
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
 
 
     // 4. subject information
@@ -64061,7 +64175,7 @@ class THREE_BRAIN_SHINY {
         Torig: subject_info.Torig,
         xfm: subject_info.xfm,
       });
-    }, this.canvas.el );
+    }, this.canvas.main_canvas );
   }
 
   register_gui( gui, presets ){
@@ -64076,7 +64190,7 @@ class THREE_BRAIN_SHINY {
           this.to_shiny2(k, args.data[k], args.priority);
         }
       }
-    }, this.canvas.el);
+    }, this.canvas.main_canvas);
 
     if( this.shiny_mode ){
       // register shiny customized message
@@ -64116,7 +64230,7 @@ class THREE_BRAIN_SHINY {
     handler_names.forEach((nm) => {
       this.canvas.bind( "handle_set_" + nm, "canvas.handle." + nm, (evt) => {
         this["handle_" + nm]( evt.detail );
-      }, this.canvas.el);
+      }, this.canvas.main_canvas);
     });
 
 
@@ -64567,7 +64681,7 @@ class THREEBRAIN_STORAGE {
 
 /***/ }),
 
-/***/ 1483:
+/***/ 3523:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -65444,6 +65558,132 @@ Stats.Panel = function ( name, fg, bg ) {
 
 // EXTERNAL MODULE: ./src/js/threebrain_cache.js
 var threebrain_cache = __webpack_require__(5664);
+;// CONCATENATED MODULE: ./src/js/core/events.js
+
+
+class CanvasEvent {
+  constructor(el, container_id) {
+    // el must be a DOM element, no check here
+    if( el ) {
+      if(! el instanceof window.HTMLElement ) {
+        throw Error("CanvasEvent(el): el must be an HTMLElement.")
+      }
+      this._el = el;
+    } else {
+      this._el = document.createElement("div");
+    }
+
+    this._dispose_functions = new Map();
+    this._event_buffer = new Map();
+    this._container_id = container_id || this._el.getAttribute( 'data-target' );
+
+    this.throttle = true;
+    this.timeout = 100;
+  }
+
+  bind( name, evtstr, fun, target, options = false ){
+    // this.bind( "event name", "click", (evt) => {...} );
+
+    const _target = target || this._el;
+
+    // Dispose existing function
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      try {
+        _f();
+      } catch (e) {}
+      this._dispose_functions.delete( name );
+    }
+    this._dispose_functions.set( name, () => {
+      console.debug('Calling dispose function ' + name);
+      try {
+        _target.removeEventListener( evtstr , fun );
+      } catch (e) {
+        console.warn('Unable to dispose ' + name);
+      }
+    });
+
+    console.debug(`Registering event ${evtstr} (${name})`);
+    _target.addEventListener( evtstr , fun, options );
+  }
+
+  unbind( name ) {
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      try {
+        _f();
+      } catch (e) {}
+      this._dispose_functions.delete( name );
+    }
+  }
+
+  dispose() {
+    this._dispose_functions.forEach((_, _name) => {
+      this.unbind(_name);
+    });
+    this._dispose_functions.clear();
+  }
+
+  dispatch_event( type, data, immediate = false ){
+
+    if( typeof(type) !== "string" || type.length === 0 ) {
+      throw TypeError( 'CanvasEvent.dispatch_event: Can only dispatch event with type of none-empty string' );
+    }
+
+    if( !this._event_buffer.has(type) ) {
+      this._event_buffer.set(type, {
+        type: type,
+        throttlePause: false,
+        data: data,
+        dispatched: false
+      });
+    }
+    const evt_buffer = this._event_buffer.get(type);
+    evt_buffer.data = data;
+    evt_buffer.dispatched = false;
+
+    const immediate_ = this.throttle || immediate;
+    if( !immediate && evt_buffer.throttlePause ) {
+      // update data, but hold it
+      return;
+    }
+
+    evt_buffer.throttlePause = true;
+
+    const do_dispatch = () => {
+      evt_buffer.throttlePause = false;
+      if( evt_buffer.dispatched ) { return; }
+
+      // fire event with the newest data
+      const event = new CustomEvent(
+        evt_buffer.type,
+        {
+          container_id: this._container_id,
+          detail: evt_buffer.data
+        }
+      );
+
+      // Dispatch the event.
+      console.debug(`Dispatching event: ${evt_buffer.type} - ${evt_buffer.data}`);
+      this._el.dispatchEvent(event);
+      evt_buffer.dispatched = true;
+    };
+
+    if( immediate ) {
+      do_dispatch();
+    } else {
+      setTimeout(() => { do_dispatch(); }, this.timeout);
+    }
+
+  }
+
+  available_events() {
+    return [...this._dispose_functions.keys()];
+  }
+}
+
+
+
 ;// CONCATENATED MODULE: ./src/js/libs/draggable.js
 
 function get_size(el){
@@ -69789,6 +70029,7 @@ var download_default = /*#__PURE__*/__webpack_require__.n(download);
 
 
 
+
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
   'sphere'    : sphere/* gen_sphere */.Lk,
@@ -69878,6 +70119,11 @@ class THREEBRAIN_CANVAS {
     // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
     this.shiny_mode = shiny_mode;
 
+    // Element container
+    this.main_canvas = document.createElement('div');
+    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
+    this.main_canvas.style.width = width + 'px';
+
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
     this.threebrain_instances = new Map();
@@ -69895,10 +70141,8 @@ class THREEBRAIN_CANVAS {
 
     // action event listener functions and dispose flags
     this._disposed = false;
-    this._dispose_functions = new Map();
-    this._event_buffer = new Map();
-    this.dispatcher_timeout = 100;
-    this.dispatcher_throttle = true;
+    this.event_dispatcher = new CanvasEvent(
+      this.main_canvas, this.container_id);
     // set default values
     this.set_state( 'coronal_depth', 0 );
     this.set_state( 'axial_depth', 0 );
@@ -70051,10 +70295,6 @@ class THREEBRAIN_CANVAS {
     this.side_renderer.setSize( _render_height * 3 , _render_height );
   	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
 
-    // Element container
-    this.main_canvas = document.createElement('div');
-    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
-    this.main_canvas.style.width = width + 'px';
     // register mouse events to save time from fetching from DOM elements
     this.register_main_canvas_events();
 
@@ -71282,81 +71522,14 @@ class THREEBRAIN_CANVAS {
 
   /*---- Events -------------------------------------------------------------*/
   bind( name, evtstr, fun, target, options = false ){
-    const _target = target || this.main_canvas;
-
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      _f();
-    }
-    this._dispose_functions.set( name, () => {
-      console.debug('Calling dispose function ' + name);
-      try {
-        _target.removeEventListener( evtstr , fun );
-      } catch (e) {
-        console.warn('Unable to dispose ' + name);
-      }
-    });
-
-    console.debug(`Registering event ${evtstr} (${name})`);
-    _target.addEventListener( evtstr , fun, options );
+    this.event_dispatcher.bind(name, evtstr, fun, target, options);
   }
   dispatch_event( type, data, immediate = false ){
-
-    if( typeof(type) !== "string" || type.length === 0 ) {
-      throw new TypeError( 'Can only dispatch event with type of none-empty string' );
-    }
-
-    if( !this._event_buffer.has(type) ) {
-      this._event_buffer.set(type, {
-        type: type,
-        throttlePause: false,
-        data: data,
-        dispatched: false
-      });
-    }
-    const evt_buffer = this._event_buffer.get(type);
-    evt_buffer.data = data;
-    evt_buffer.dispatched = false;
-
-    const immediate_ = this.dispatcher_throttle || immediate;
-    if( !immediate && evt_buffer.throttlePause ) {
-      // update data, but hold it
-      return;
-    }
-
-    evt_buffer.throttlePause = true;
-
-    const do_dispatch = () => {
-      evt_buffer.throttlePause = false;
-      if( evt_buffer.dispatched ) { return; }
-
-      // fire event with the newest data
-      const event = new CustomEvent(
-        evt_buffer.type,
-        {
-          container_id: this.container_id,
-          detail: evt_buffer.data
-        }
-      );
-
-      // Dispatch the event.
-      this.el.dispatchEvent(event);
-      evt_buffer.dispatched = true;
-    };
-
-    if( immediate ) {
-      do_dispatch();
-    } else {
-      setTimeout(() => { do_dispatch(); }, this.dispatcher_timeout);
-    }
-
+    this.event_dispatcher.dispatch_event( type, data, immediate );
   }
 
   dispose_eventlisters(){
-    this._dispose_functions.forEach( (_f) => {
-      _f();
-    });
-    this._dispose_functions.clear();
+    this.event_dispatcher.dispose();
   }
 
 
@@ -72345,6 +72518,7 @@ class THREEBRAIN_CANVAS {
       // next_time =
       //  1. if not is_playing, last_time
       //  2. if is_playing, last_time + time_delta * speed
+      results.has_animation = params.exists;
       results.current_time = params.play ? (params.time + clock_time_delta * params.speed) : params.time;
       results.speed = params.speed;
       results.is_playing = params.play;
@@ -72640,6 +72814,8 @@ class THREEBRAIN_CANVAS {
   }
 
   _draw_ani( results, x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
+
+    if( !results.has_animation ) { return; }
 
     if( !context_wrapper ){
       context_wrapper = this.domContextWrapper;
@@ -73095,11 +73271,18 @@ class THREEBRAIN_CANVAS {
       return;
     }
 
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
+
     this.update();
 
     const results = this.inc_time();
-    const _width = this.domElement.width;
-    const _height = this.domElement.height;
+
+
 
     if(this.render_flag >= 0){
 
@@ -74459,7 +74642,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var _js_core_gui_wrapper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2814);
 /* harmony import */ var _js_core_data_controls_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6303);
 /* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(8173);
-/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(1483);
+/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(3523);
 /* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(5664);
 /* harmony import */ var _js_constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(975);
 /* harmony import */ var _js_utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(3658);
@@ -74470,6 +74653,7 @@ var __webpack_exports__ = {};
  * @Author: Zhengjia Wang
  * Adapter of model (threejs_scene) and viewer (htmlwidgets)
  */
+
 
 
 
@@ -74590,7 +74774,7 @@ class BrainCanvas{
 		}
   }
 
-  resize_widget(width, height){
+  __resize_widget(width, height){
     if( width <= 0 || height <= 0 ){
       // Do nothing! as the canvas is usually invisible
       return(null);
@@ -74607,6 +74791,36 @@ class BrainCanvas{
       this.canvas.reset_side_canvas();
     }
     this.canvas.start_animation(0);
+  }
+
+  resize_widget(width, height){
+
+    // delay resizing if the widget size is too small
+
+    if(!width || width <= 0) {
+      this.__width = 0;
+    } else {
+      this.__width = width;
+    }
+
+    if(!height || height <= 0) {
+      this.__height = 0;
+    } else {
+      this.__height = height;
+    }
+
+    const _f = () => {
+      const _w = this.__width || this.el.clientWidth;
+      const _h = this.__height || this.el.clientHeight;
+      if(_w <= 10 || _h <= 10) {
+        setTimeout(_f, 1000);
+      } else {
+        this.__resize_widget(_w, _h);
+      }
+    }
+
+    _f();
+
   }
 
   _register_gui_control(){
@@ -74999,6 +75213,10 @@ class BrainWidgetWrapper {
       this.el.classList.remove("threejs-brain-blank-container");
 
       this.el.appendChild( this._container );
+
+      // Make sure the canvas is resized
+      this.handler.resize_widget(width, height);
+
       this.initalized = true;
     } else {
 
@@ -75050,9 +75268,11 @@ class BrainWidgetWrapper {
         if( this.values !== undefined ){
           this.render( this.values, true );
         }
+        this.handler.resize_widget(width, height);
       };
 
     }
+
 
   }
 
