@@ -64,6 +64,24 @@
     </div>
 
     <div class="section level2">
+<h2 class="page-header" data-toc-text="0.2.8" id="threebrain-028">threeBrain 0.2.8<a class="anchor" aria-label="anchor" href="#threebrain-028"></a></h2>
+<div class="section level3">
+<h3 id="changes-0-2-8">Changes<a class="anchor" aria-label="anchor" href="#changes-0-2-8"></a></h3>
+<ul><li>Peel event dispatcher from the canvas class so the events can be managed separately</li>
+<li>Hide time-stamps when there is no data/animation available</li>
+<li>Added experimental support to show labels on regular electrodes; currently no depth-test is turned on</li>
+<li>Added <code>GUI</code> support to change electrode label visibility and size</li>
+<li>Electrode label size adjusts along with electrode radius</li>
+<li>
+<code>handle_resize</code> now put off resizing function when detecting widget size is too small</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-8">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-8"></a></h3>
+<ul><li>Fixing <code>xfm</code> not parsed correctly when the line starts with blank spaces</li>
+<li>Stopped rendering canvas when canvas is too small (less than 10 pixels)</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.7" id="threebrain-027">threeBrain 0.2.7<small>2022-10-15</small><a class="anchor" aria-label="anchor" href="#threebrain-027"></a></h2>
 <div class="section level3">
 <h3 id="changes-0-2-7">Changes<a class="anchor" aria-label="anchor" href="#changes-0-2-7"></a></h3>
