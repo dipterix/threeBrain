@@ -1,3 +1,20 @@
+threeBrain 0.2.8
+=======
+
+## Changes
+
+* Peel event dispatcher from the canvas class so the events can be managed separately
+* Hide time-stamps when there is no data/animation available
+* Added experimental support to show labels on regular electrodes; currently no depth-test is turned on
+* Added `GUI` support to change electrode label visibility and size
+* Electrode label size adjusts along with electrode radius
+* `handle_resize` now put off resizing function when detecting widget size is too small
+
+## Bug fixes
+
+* Fixing `xfm` not parsed correctly when the line starts with blank spaces
+* Stopped rendering canvas when canvas is too small (less than 10 pixels)
+
 threeBrain 0.2.7
 =======
 
