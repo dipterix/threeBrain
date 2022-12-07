@@ -57326,7 +57326,7 @@ function electrode_from_ct_generator(){
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
 
-    matrix_.copy(inst.object.parent.matrixWorld);
+    matrix_.copy(inst.object.matrixWorld);
     matrix_inv.copy(matrix_).invert();
     origin.copy(src).applyMatrix4(matrix_inv);
 
@@ -57793,7 +57793,7 @@ class LocElectrode {
     const inst = this.get_volume_instance();
     if( !inst ){ return; }
 
-    const matrix_ = inst.object.parent.matrixWorld.clone(),
+    const matrix_ = inst.object.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
     const margin_voxels = new three_module.Vector3().fromArray( inst._cube_dim );
@@ -61808,15 +61808,26 @@ class AbstractThreeBrainObject {
         this._canvas.add_to_scene( this.root_object || this.object );
       }
 
-      if( this.object.isMesh ){
-        this.object.updateMatrixWorld();
-      }
-
       if( this.object.isObject3D ){
         this.object.userData.instance = this;
         this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
         this.object.userData.dispose = () => { this.dispose(); };
         this.object.renderOrder = _constants_js__WEBPACK_IMPORTED_MODULE_1__/* .CONSTANTS.RENDER_ORDER */ .t.RENDER_ORDER[ this.type ] || 0;
+      }
+
+      if( this.object.isMesh ){
+        if( Array.isArray(this._params.trans_mat) &&
+            this._params.trans_mat.length === 16 ) {
+          let trans = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_2__.Matrix4();
+          trans.set(...this._params.trans_mat);
+          this.object.userData.trans_mat = trans;
+
+          if( !this._params.disable_trans_mat ) {
+            this.object.applyMatrix4(trans);
+          }
+        }
+
+        this.object.updateMatrixWorld();
       }
 
     }
@@ -66408,7 +66419,6 @@ function gen_datacube(g, canvas){
 const VolumeRenderShader1 = {
     uniforms: {
       cmap: { value: null },
-      nmap: { value: null },
       mask: { value: null },
       alpha : { value: -1.0 },
       // steps: { value: 300 },
@@ -66422,7 +66432,6 @@ precision highp float;
 precision mediump sampler3D;
 in vec3 position;
 in vec3 normal;
-uniform sampler3D cmap;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
@@ -66479,7 +66488,6 @@ in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
-uniform sampler3D nmap;
 uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
@@ -66515,10 +66523,6 @@ float getDepth( vec3 p ){
 }
 vec4 sample2( vec3 p ) {
   return texture( cmap, p + vSamplerBias );
-}
-vec3 getNormal( vec3 p ) {
-  vec3 re = texture( nmap, p + vSamplerBias ).rgb  *  255.0 - 127.0 ;
-  return normalize( re );
 }
 
 void main(){
@@ -66558,11 +66562,6 @@ void main(){
 
         last_color = fcolor;
 
-        fcolor.rgb *= pow(
-          max(abs(dot(rayDir, getNormal( p ))), 0.25),
-          0.45
-        );
-
         if( nn == 0 ){
           gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
           color = fcolor;
@@ -66575,6 +66574,10 @@ void main(){
         }
 
         nn++;
+
+      } else {
+
+        color.a = min(color.a + 0.005, 1.0);
 
       }
 
@@ -67953,61 +67956,6 @@ class ConvexGeometry extends three_module.BufferGeometry {
 
 class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
-  // must be after _map_data _map_color are set
-  _compute_normals() {
-
-    let i = 0, ii = 0, jj,
-        nml = new three_module.Vector3(), u = new three_module.Vector3(),
-        tmp, x, y, z, a, b, c;
-    const zdim = this._cube_dim[0],
-          ydim = this._cube_dim[1],
-          xdim = this._cube_dim[2],
-          pad = 1;
-
-    for ( z = pad; z < zdim - pad; z += 1 ) {
-      for ( y = pad; y < ydim - pad; y += 1 ) {
-        for ( x = pad; x < xdim - pad; x += 1 ) {
-
-          ii = x + xdim * ( y + ydim * z );
-
-          if( this._map_color[ 4 * ii + 3 ] !== 0){
-            jj = ii + this._value_index_skip * this._voxel_length;
-            i = this._cube_values[ jj ];
-
-            nml.set( 0, 0, 0 );
-
-            for( a = -pad; a <= pad; a+=1 ){
-              for( b = -pad; b <= pad; b+=1 ){
-                for( c = -pad; c <= pad; c+=1 ){
-
-                  if( this._cube_values[ jj + a + (b + c * ydim) * xdim ] != i ) {
-                    u.set( a, b, c ).normalize();
-                    nml.add( u );
-                  }
-
-                }
-              }
-            }
-
-            nml.normalize()
-
-
-            this._map_normals[ ii * 3 ] = (nml.x / 2.0 + 1.0) * 127;
-            this._map_normals[ ii * 3 + 1 ] = (nml.y / 2.0 + 1.0) * 127;
-            this._map_normals[ ii * 3 + 2 ] = (nml.z / 2.0 + 1.0) * 127;
-
-          }
-        }
-      }
-    }
-
-    if( this._normals_texture ){
-      this._normals_texture.needsUpdate = true;
-    }
-
-
-  }
-
   _set_palette( color_ids, skip, compute_boundingbox = false ){
 
     if( this._canvas.has_webgl2 ){
@@ -68103,8 +68051,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       if( this._color_texture ){
         this._color_texture.needsUpdate = true;
       }
-      // this._normals_texture.needsUpdate = true;
-
 
     }
 
@@ -68214,8 +68160,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
         }
       }
 
-      this._compute_normals();
-
       // 3D texture
       /*let data_texture = new DataTexture3D(
         this._map_data, cube_dim[0], cube_dim[1], cube_dim[2]
@@ -68244,22 +68188,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._color_texture = color_texture;
       this._color_texture.needsUpdate = true;
 
-      // normals
-      let normals_texture = new three_module.DataTexture3D(
-        normals, cube_dim[0], cube_dim[1], cube_dim[2]
-      );
-
-      // magFilter must be nearest
-      // minFilter can be locally smoothed
-      normals_texture.minFilter = three_module.LinearFilter;
-      normals_texture.magFilter = three_module.NearestFilter;
-      normals_texture.format = three_module.RGBFormat;
-      normals_texture.type = three_module.UnsignedByteType;
-      normals_texture.unpackAlignment = 1;
-
-      this._normals_texture = normals_texture;
-      this._normals_texture.needsUpdate = true;
-
       // Material
       const shader = VolumeRenderShader1;
 
@@ -68268,7 +68196,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._uniforms = uniforms;
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
-      uniforms.nmap.value = normals_texture;
 
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
@@ -68320,7 +68247,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._mesh.geometry.dispose();
       // this._data_texture.dispose();
       this._color_texture.dispose();
-      this._normals_texture.dispose();
 
       // this._map_data = undefined;
       // this._cube_values = undefined;

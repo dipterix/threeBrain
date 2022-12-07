@@ -163,19 +163,25 @@ AbstractGeom <- R6::R6Class(
     keyframes = list(),
 
     position = c(0,0,0),
+    trans_mat = NULL,
+    disable_trans_mat = FALSE,
     group = NULL,
     clickable = TRUE,
     layer = 0,
     use_cache = FALSE,
     custom_info = '',
     subject_code = NULL,
-    initialize = function(name, position = c(0,0,0), group = NULL, layer = 0, ...){
+    initialize = function(name, position = c(0,0,0), group = NULL, layer = 0, trans_mat = NULL, ...){
       self$name <- name
       # self$time_stamp = time_stamp
       self$set_position(position)
       self$group <- group
       stopifnot2(all(layer %in% 0:13), msg = 'Layer(s) must be from 0 to 13, use 0 for main camera-only, 1 for all cameras, 13 is invisible.')
       self$layer <- layer
+
+      if(length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4 && is.numeric(trans_mat)) {
+        self$trans_mat <- trans_mat
+      }
     },
     set_position = function(...){
       pos <- c(...)
@@ -231,6 +237,12 @@ AbstractGeom <- R6::R6Class(
         }
       }
 
+      if(length(self$trans_mat) == 16L) {
+        trans_mat <- as.vector(t(self$trans_mat))
+      } else {
+        trans_mat <- NULL
+      }
+
 
       list(
         name = self$name,
@@ -238,6 +250,8 @@ AbstractGeom <- R6::R6Class(
         render_order = self$render_order,
         time_stamp = as.numeric(self$time_stamp),
         position = as.vector(self$position),
+        trans_mat = trans_mat,
+        disable_trans_mat = self$disable_trans_mat,
         value = as.vector(self$value),
         clickable = self$clickable,
         layer = as.integer(self$layer),

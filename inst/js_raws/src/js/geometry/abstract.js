@@ -1,6 +1,6 @@
 import { to_array, get_element_size, get_or_default } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
-import { Vector3 } from '../../build/three.module.js';
+import { Vector3, Matrix4 } from '../../build/three.module.js';
 
 class AbstractThreeBrainObject {
   constructor(g, canvas){
@@ -119,15 +119,26 @@ class AbstractThreeBrainObject {
         this._canvas.add_to_scene( this.root_object || this.object );
       }
 
-      if( this.object.isMesh ){
-        this.object.updateMatrixWorld();
-      }
-
       if( this.object.isObject3D ){
         this.object.userData.instance = this;
         this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
         this.object.userData.dispose = () => { this.dispose(); };
         this.object.renderOrder = CONSTANTS.RENDER_ORDER[ this.type ] || 0;
+      }
+
+      if( this.object.isMesh ){
+        if( Array.isArray(this._params.trans_mat) &&
+            this._params.trans_mat.length === 16 ) {
+          let trans = new Matrix4();
+          trans.set(...this._params.trans_mat);
+          this.object.userData.trans_mat = trans;
+
+          if( !this._params.disable_trans_mat ) {
+            this.object.applyMatrix4(trans);
+          }
+        }
+
+        this.object.updateMatrixWorld();
       }
 
     }

@@ -87,7 +87,7 @@ BrainAtlas <- R6::R6Class(
 #' @param name the name of voxel cube, only letters, digits and \code{'_'} are allowed; other characters will be replaced by \code{'_'}
 #' @param cube a 3-mode array; see the following example
 #' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size
-#' @param matrix_world the transform matrix of the volume
+#' @param trans_mat the transform matrix of the volume
 #'
 #' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
 #' \code{add_voxel_cube} returns the \code{brain} object
@@ -135,11 +135,11 @@ NULL
 
 #' @rdname voxel_cube
 #' @export
-add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256), matrix_world = NULL){
+add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256), trans_mat = NULL){
   stopifnot2(length(size) == 3 && all(size > 0), msg = "add_voxel_cube: `size` must be length of 3 and all positive")
-  stopifnot2(is.null(matrix_world) || (
-    length(matrix_world) == 16 && is.matrix(matrix_world) && nrow(matrix_world) == 4
-  ), msg = "add_voxel_cube: `matrix_world` must be either NULL or a 4x4 matrix")
+  stopifnot2(is.null(trans_mat) || (
+    length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4
+  ), msg = "add_voxel_cube: `trans_mat` must be either NULL or a 4x4 matrix")
 
   re <- brain
   if("multi-rave-brain" %in% class(brain)){
@@ -150,15 +150,16 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256), matrix_wo
   group <- GeomGroup$new(name = nm)
   group$subject_code <- subject
 
-  if(length(matrix_world) == 16){
-    group$trans_mat <- matrix_world
-  }
+  # if(length(trans_mat) == 16){
+  #   group$trans_mat <- trans_mat
+  # }
 
 
   geom <- DataCubeGeom2$new(
     name = nm, dim = dim(cube),
     half_size = size / 2, group = group,
-    position = c(0,0,0), value = cube)
+    position = c(0,0,0), value = cube,
+    trans_mat = trans_mat)
   geom$subject_code <- subject
 
   obj <- BrainAtlas$new(

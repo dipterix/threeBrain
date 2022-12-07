@@ -393,7 +393,7 @@ class LocElectrode {
     const inst = this.get_volume_instance();
     if( !inst ){ return; }
 
-    const matrix_ = inst.object.parent.matrixWorld.clone(),
+    const matrix_ = inst.object.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
     const margin_voxels = new Vector3().fromArray( inst._cube_dim );

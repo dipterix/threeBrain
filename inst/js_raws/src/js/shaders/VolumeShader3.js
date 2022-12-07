@@ -4,6 +4,7 @@ import { remove_comments } from '../utils.js';
 const VolumeRenderShader1 = {
     uniforms: {
       cmap: { value: null },
+      nmap: { value: null },
       mask: { value: null },
       alpha : { value: -1.0 },
       // steps: { value: 300 },
@@ -73,6 +74,7 @@ in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
+uniform sampler3D nmap;
 uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
@@ -108,6 +110,10 @@ float getDepth( vec3 p ){
 }
 vec4 sample2( vec3 p ) {
   return texture( cmap, p + vSamplerBias );
+}
+vec3 getNormal( vec3 p ) {
+  vec3 re = texture( nmap, p + vSamplerBias ).rgb  *  255.0 - 127.0 ;
+  return normalize( re );
 }
 
 void main(){
@@ -147,6 +153,11 @@ void main(){
 
         last_color = fcolor;
 
+        fcolor.rgb *= pow(
+          max(abs(dot(rayDir, getNormal( p ))), 0.25),
+          0.45
+        );
+
         if( nn == 0 ){
           gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
           color = fcolor;
@@ -159,10 +170,6 @@ void main(){
         }
 
         nn++;
-
-      } else {
-
-        color.a = min(color.a + 0.005, 1.0);
 
       }
 

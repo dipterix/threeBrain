@@ -22,14 +22,17 @@ DataCubeGeom2 <- R6::R6Class(
       # Make sure value is from 0 to 255
       if(missing(value)){
         super$initialize(name = name, dim = dim, half_size = half_size,
-                         group = group, position = position, cache_file = cache_file,
+                         group = group, position = position,
+                         cache_file = cache_file,
                          layer = layer, digest = digest, ...)
       } else {
         value <- as.integer(value)
         super$initialize(name = name, value = value, dim = dim, half_size = half_size,
-                         group = group, position = position, cache_file = cache_file,
+                         group = group, position = position,
+                         cache_file = cache_file,
                          layer = layer, digest = digest, ...)
       }
+
     },
 
     to_list = function(){

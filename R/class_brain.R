@@ -399,12 +399,12 @@ Brain2 <- R6::R6Class(
 
         # add_voxel_cube(self, "CT", cube)
         ct_shape <- ct$get_shape()
-        matrix_world <- diag(rep(1, 4))
-        matrix_world[1:3, 4] <- ct_shape / 2
-        matrix_world <- ct$get_IJK_to_tkrRAS(self) %*% matrix_world
+        trans_mat <- diag(rep(1, 4))
+        trans_mat[1:3, 4] <- ct_shape / 2
+        trans_mat <- ct$get_IJK_to_tkrRAS(self) %*% trans_mat
 
         add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
-                       matrix_world = matrix_world)
+                       trans_mat = trans_mat)
 
         key <- seq(0, max(ct$get_range()))
         cmap <- create_colormap(

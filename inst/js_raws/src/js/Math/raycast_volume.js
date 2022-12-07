@@ -153,7 +153,7 @@ function electrode_from_ct_generator(){
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
 
-    matrix_.copy(inst.object.parent.matrixWorld);
+    matrix_.copy(inst.object.matrixWorld);
     matrix_inv.copy(matrix_).invert();
     origin.copy(src).applyMatrix4(matrix_inv);
 
