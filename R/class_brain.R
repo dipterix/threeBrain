@@ -404,7 +404,7 @@ Brain2 <- R6::R6Class(
         trans_mat <- ct$get_IJK_to_tkrRAS(self) %*% trans_mat
 
         add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
-                       trans_mat = trans_mat)
+                       trans_mat = trans_mat, color_format = "AlphaFormat")
 
         key <- seq(0, max(ct$get_range()))
         cmap <- create_colormap(

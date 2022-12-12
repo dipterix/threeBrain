@@ -236,6 +236,25 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     ))
   }
 
+  get_IJK_to_FSL <- function() {
+    shape <- get_shape()
+    pixdim <- nii@pixdim[seq(2,4)]
+    voxToWorldMat <- get_IJK_to_RAS()$matrix
+    voxToScaledVoxMat <- diag(c(pixdim, 1))
+    isneuro <- det(voxToWorldMat) > 0
+    if( isneuro ) {
+      flip <- matrix(c(
+        -1, 0, 0, (shape[1] - 1) * pixdim[1],
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ), nrow = 4L, byrow = TRUE)
+      voxToScaledVoxMat <- flip %*% voxToScaledVoxMat
+    }
+
+    voxToScaledVoxMat
+  }
+
   get_IJK_to_tkrRAS <- function(brain) {
     ijk2ras <- get_IJK_to_RAS()
     if(ijk2ras$code %in% c(0, 2, 3, 5)) {
@@ -255,6 +274,8 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
       `4` = {
         # MNI-152, MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
         mat <- brain$Torig %*% solve(brain$Norig) %*% solve(brain$xfm) %*% mat
+      }, {
+        mat <- brain$Torig %*% solve(brain$Norig) %*% mat
       }
     )
     mat
@@ -272,6 +293,7 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
       get_size = get_size,
       get_boundary = get_boundary,
       get_IJK_to_RAS = get_IJK_to_RAS,
+      get_IJK_to_FSL = get_IJK_to_FSL,
       get_IJK_to_tkrRAS = get_IJK_to_tkrRAS
     ),
     class = c("threeBrain.nii", "list")

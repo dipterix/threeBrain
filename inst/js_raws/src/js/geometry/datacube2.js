@@ -1,6 +1,6 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { Vector3, DataTexture3D, NearestFilter, FloatType, RedFormat,
-         RGBAFormat, UnsignedByteType, LinearFilter, RGBFormat, UniformsUtils,
+import { Vector3, DataTexture3D, NearestFilter, FloatType,
+         RGBAFormat, AlphaFormat, UnsignedByteType, LinearFilter, UniformsUtils,
          RawShaderMaterial, BackSide, SphereBufferGeometry, Mesh,
          BoxBufferGeometry } from '../../build/three.module.js';
 import { CONSTANTS } from '../constants.js';
@@ -39,6 +39,7 @@ class DataCube2 extends AbstractThreeBrainObject {
         this._bounding_max = 0;
       }
 
+      let within_filter;
       for ( z = 0; z < this._cube_dim[0]; z ++ ) {
         for ( y = 0; y < this._cube_dim[1]; y ++ ) {
           for ( x = 0; x < this._cube_dim[2]; x ++ ) {
@@ -54,12 +55,22 @@ class DataCube2 extends AbstractThreeBrainObject {
 
                 // valid voxel to render
 
-                this._map_color[ 4 * ii ] = tmp.R;
-                this._map_color[ 4 * ii + 1 ] = tmp.G;
-                this._map_color[ 4 * ii + 2 ] = tmp.B;
+                within_filter = this._color_ids_length === 0 || this._color_ids[ i ];
 
-                if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
-                  this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                } else {
+
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+
+                  if( within_filter ) {
+                    this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                  }
+                }
+
+                if( within_filter ) {
 
                   // this._map_data[ ii ] = i;
 
@@ -84,7 +95,12 @@ class DataCube2 extends AbstractThreeBrainObject {
             }
             // voxel is invisible, no need to render! hence data is 0
             // this._map_data[ ii ] = 0;
-            this._map_color[ 4 * ii + 3 ] = 0;
+
+            if( this._color_format === "AlphaFormat" ) {
+              this._map_color[ ii ] = 0;
+            } else {
+              this._map_color[ 4 * ii + 3 ] = 0;
+            }
             ii++;
             jj++;
           }
@@ -113,6 +129,7 @@ class DataCube2 extends AbstractThreeBrainObject {
 
   constructor(g, canvas){
 
+
     super( g, canvas );
     // this._params is g
     // this.name = this._params.name;
@@ -121,6 +138,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     this.type = 'DataCube2';
     this.isDataCube2 = true;
     this._display_mode = "hidden";
+    this._color_format = "RGBAFormat";
 
     let mesh;
 
@@ -135,17 +153,26 @@ class DataCube2 extends AbstractThreeBrainObject {
           },
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
-          max_colID = lut.mapMaxColorID;
+          max_colID = lut.mapMaxColorID,
+          color_format = g.color_format;
     this._margin_length = volume;
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
+
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._voxel_length = cube_dim[0] * cube_dim[1] * cube_dim[2];
       // const data = new Float32Array( this._voxel_length );
-      const color = new Uint8Array( this._voxel_length * 4 );
-      const normals = new Uint8Array( this._voxel_length * 3 );
-      const vertex_position = [];
+
+      let color;
+
+      if( color_format === "AlphaFormat" ) {
+        this._color_format = "AlphaFormat";
+        color = new Uint8Array( this._voxel_length );
+      } else {
+        this._color_format = "RGBAFormat";
+        color = new Uint8Array( this._voxel_length * 4 );
+      }
 
       this._cube_values = cube_values;
       this._lut = lut;
@@ -153,7 +180,6 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._cube_dim = cube_dim;
       // this._map_data = data;
       this._map_color = color;
-      this._map_normals = normals;
       this._map_alpha = lut.mapAlpha;
       this._color_ids = [];
       this._color_ids_length = 0;
@@ -182,10 +208,14 @@ class DataCube2 extends AbstractThreeBrainObject {
             if( i !== 0 ){
               tmp = lut_map[i];
               if( tmp ) {
-                color[ 4 * ii ] = tmp.R;
-                color[ 4 * ii + 1 ] = tmp.G;
-                color[ 4 * ii + 2 ] = tmp.B;
-                color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                } else {
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+                  this._map_color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                }
 
                 if( Math.min(x,y,z) < bounding_min ){
                   bounding_min = Math.min(x,y,z);
@@ -194,15 +224,6 @@ class DataCube2 extends AbstractThreeBrainObject {
                   bounding_max = Math.max(x,y,z);
                 }
                 // this._map_data[ ii ] = i;
-
-                // calculate vertex positions
-                vertex_position.push(
-                  new Vector3().set(
-                    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
-                    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
-                    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
-                  )
-                );
 
               }
             }
@@ -214,6 +235,17 @@ class DataCube2 extends AbstractThreeBrainObject {
           }
         }
       }
+
+      // for ( let z = 0; z < cube_dim[0]; z ++ ) {
+      //  for ( let y = 0; y < cube_dim[1]; y ++ ) {
+      //    for ( let x = 0; x < cube_dim[2]; x ++ ) {
+      //vertex_position.push(
+      //  new Vector3().set(
+      //    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
+      //    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
+      //    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
+      //  )
+      //);
 
       // 3D texture
       /*let data_texture = new DataTexture3D(
@@ -228,15 +260,14 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._data_texture = data_texture;
       this._data_texture.needsUpdate = true;*/
 
-
       // Color texture - used to render colors
       let color_texture = new DataTexture3D(
-        color, cube_dim[0], cube_dim[1], cube_dim[2]
+        this._map_color, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
       color_texture.minFilter = NearestFilter;
       color_texture.magFilter = NearestFilter;
-      color_texture.format = RGBAFormat;
+      color_texture.format = this._color_format === "AlphaFormat" ? AlphaFormat : RGBAFormat;
       color_texture.type = UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
@@ -251,7 +282,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._uniforms = uniforms;
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
-
+      uniforms.colorChannels.value = this._color_format === "AlphaFormat" ? 1 : 4;
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
 
@@ -277,7 +308,8 @@ class DataCube2 extends AbstractThreeBrainObject {
       //   new Vector3().fromArray(cube_half_size).length(), 29, 14
       // );
 
-      const geometry = new ConvexGeometry( vertex_position );
+      // const geometry = new ConvexGeometry( vertex_position );
+      const geometry = new BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );

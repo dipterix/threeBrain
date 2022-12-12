@@ -6,6 +6,7 @@ const VolumeRenderShader1 = {
       cmap: { value: null },
       mask: { value: null },
       alpha : { value: -1.0 },
+      colorChannels : { value: 4 },
       // steps: { value: 300 },
       scale_inv: { value: new Vector3() },
       bounding: { value : 0.5 },
@@ -73,6 +74,7 @@ in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
+uniform int colorChannels;
 uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
@@ -107,7 +109,80 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  return texture( cmap, p + vSamplerBias );
+  vec4 re = texture( cmap, p + vSamplerBias );
+  if( colorChannels == 1 ) {
+    re.r = re.a;
+    re.g = re.a;
+    re.b = re.a;
+  }
+  return re;
+}
+
+vec3 getNormal( vec3 p ) {
+  vec4 ne;
+  vec3 zero3 = vec3(0.0, 0.0, 0.0);
+  vec3 normal = zero3;
+  vec3 pos0 = p + vSamplerBias;
+  vec3 pos = pos0;
+  vec4 re = texture( cmap, pos0 );
+
+  if( re.a == 0.0 || re.rgb == zero3 ) {
+    return normal;
+  }
+
+  float stp = max(max(abs(scale_inv.x), abs(scale_inv.y)), abs(scale_inv.z)) * 1.74;
+  vec2 dt = vec2(stp, stp);
+
+
+  // normal along xy
+  pos.xy = pos0.xy + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy += dt;
+  }
+
+  pos.xy = pos0.xy - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy -= dt;
+  }
+
+  // normal along xz
+  pos.y = pos0.y;
+  pos.xz = pos0.xz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz += dt;
+  }
+
+  pos.xz = pos0.xz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz -= dt;
+  }
+
+  // normal along yz
+  pos.x = pos0.x;
+  pos.yz = pos0.yz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz += dt;
+  }
+
+  pos.yz = pos0.yz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz -= dt;
+  }
+
+
+  return normalize( normal );
 }
 
 void main(){
@@ -130,6 +205,7 @@ void main(){
   float mix_factor = 1.0;
   vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
   vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
+  vec3 nmal;
 
   for ( float t = bounds.x; t < bounds.y; t += delta ) {
     fcolor = sample2( p );
@@ -150,6 +226,17 @@ void main(){
         if( nn == 0 ){
           gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
           color = fcolor;
+
+
+          if( colorChannels > 1 ) {
+            nmal = getNormal( p );
+            if(nmal != vec3(0.0, 0.0, 0.0)) {
+
+              color.rgb *= pow(max( abs(dot(rayDir, normalize(nmal - rayDir) )) , 0.25), 0.3);
+            }
+          }
+
+
           color.a = max( color.a, 0.2 );
         } else {
           // blend

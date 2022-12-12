@@ -20,6 +20,13 @@ DataCubeGeom <- R6::R6Class(
         super$initialize(name, position = position, layer = layer, ...)
         self$group <- group
 
+        if(length(self$trans_mat) == 16L) {
+          trans_mat <- as.vector(t(self$trans_mat))
+        } else {
+          trans_mat <- NULL
+        }
+
+
         if(length(cache_file)){
           if(isTRUE(cache_file)){
             cache_file <- tempfile(fileext = '.json')
@@ -47,9 +54,10 @@ DataCubeGeom <- R6::R6Class(
             value <- as.vector(value)
 
             data <- structure(
-              list(value, dim, half_size),
+              list(value, dim, half_size, trans_mat),
               names = sprintf(c(
-                'datacube_value_%s', 'datacube_dim_%s', 'datacube_half_size_%s'
+                'datacube_value_%s', 'datacube_dim_%s', 'datacube_half_size_%s',
+                'datacube_trans_mat_%s'
               ), name)
             )
 
@@ -59,6 +67,7 @@ DataCubeGeom <- R6::R6Class(
           group$set_group_data(sprintf('datacube_value_%s', name), value = re, is_cached = TRUE)
           group$set_group_data(sprintf('datacube_dim_%s', name), value = re, is_cached = TRUE)
           group$set_group_data(sprintf('datacube_half_size_%s', name), value = re, is_cached = TRUE)
+          group$set_group_data(sprintf('datacube_trans_mat_%s', name), value = re, is_cached = TRUE)
 
         }else{
           stopifnot2(length(value) == prod(dim) && length(dim) == 3,
@@ -69,6 +78,7 @@ DataCubeGeom <- R6::R6Class(
           self$group$set_group_data(sprintf('datacube_value_%s', self$name), value)
           self$group$set_group_data(sprintf('datacube_dim_%s', self$name), dim)
           self$group$set_group_data(sprintf('datacube_half_size_%s', self$name), half_size)
+          self$group$set_group_data(sprintf('datacube_trans_mat_%s', self$name), trans_mat)
 
         }
 

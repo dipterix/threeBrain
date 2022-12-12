@@ -135,11 +135,13 @@ NULL
 
 #' @rdname voxel_cube
 #' @export
-add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256), trans_mat = NULL){
+add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
+                           trans_mat = NULL, color_format = c("RGBAFormat", "AlphaFormat")){
   stopifnot2(length(size) == 3 && all(size > 0), msg = "add_voxel_cube: `size` must be length of 3 and all positive")
   stopifnot2(is.null(trans_mat) || (
     length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4
   ), msg = "add_voxel_cube: `trans_mat` must be either NULL or a 4x4 matrix")
+  color_format <- match.arg(color_format)
 
   re <- brain
   if("multi-rave-brain" %in% class(brain)){
@@ -159,7 +161,7 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256), trans_mat
     name = nm, dim = dim(cube),
     half_size = size / 2, group = group,
     position = c(0,0,0), value = cube,
-    trans_mat = trans_mat)
+    trans_mat = trans_mat, color_format = color_format)
   geom$subject_code <- subject
 
   obj <- BrainAtlas$new(

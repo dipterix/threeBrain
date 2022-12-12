@@ -57192,7 +57192,7 @@ function raycast_volume_geneator(){
 
   const raycast_volume = (
     origin, direction, margin_voxels, margin_lengths,
-    map_array, delta = 0.5, snap_raycaster = true ) => {
+    map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {
     // canvas.mouse_raycaster.ray.origin
     // canvas.mouse_raycaster.ray.direction
 
@@ -57263,9 +57263,13 @@ function raycast_volume_geneator(){
             if( k2 >= mz ){ k2 = mz - 1 ; }
 
             for( k = k1; k <= k2; k++ ){
+              // tmp = map_array[(
+              //   i + j * mx + k * mx * my
+              // ) * 4 + 3 ];
               tmp = map_array[(
                 i + j * mx + k * mx * my
-              ) * 4 + 3 ];
+              ) * colorChannels + (colorChannels - 1) ];
+
               if( tmp > 0 ){
                 p.set(
                   (i+0.5) * f.x - orig.x,
@@ -57323,8 +57327,12 @@ function electrode_from_ct_generator(){
         matrix_inv = new three_module.Matrix4(),
         matrix_rot = new three_module.Matrix3();
 
+  let colorChannels = 4;
+
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
+
+    colorChannels = inst._color_format === "AlphaFormat" ? 1 : 4;
 
     matrix_.copy(inst.object.matrixWorld);
     matrix_inv.copy(matrix_).invert();
@@ -57352,7 +57360,7 @@ function electrode_from_ct_generator(){
     const res = raycast_volume(
       origin, direction, cube_dim, cube_size,
       inst._color_texture.image.data,
-      delta, snap_raycaster
+      delta, snap_raycaster, colorChannels
     );
     pos.x = res[3];
     pos.y = res[4];
@@ -64227,7 +64235,7 @@ class THREE_BRAIN_SHINY {
     }
 
     // register handlers
-    Object.getOwnPropertyNames(Object.getPrototypeOf(__presets.shiny))
+    Object.getOwnPropertyNames(Object.getPrototypeOf(presets.shiny))
       .filter((v) => { return(v.startsWith("handle_")); })
       .map((v) => { return(v.replace("handle_", "")); })
     const handler_names = [
@@ -66421,6 +66429,7 @@ const VolumeRenderShader1 = {
       cmap: { value: null },
       mask: { value: null },
       alpha : { value: -1.0 },
+      colorChannels : { value: 4 },
       // steps: { value: 300 },
       scale_inv: { value: new three_module.Vector3() },
       bounding: { value : 0.5 },
@@ -66452,31 +66461,22 @@ void main() {
   pmv = projectionMatrix * modelViewMatrix;
 
   gl_Position = pmv * vec4( position, 1.0 );
-  // gl_Position.xy += camera_center;
+
+  vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
 
   // For perspective camera, vorigin is camera
   // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
   // vOrigin = - vorig.xyz * scale_inv;
   // vDirection = position * scale_inv - vOrigin;
 
-  // Orthopgraphic camera, camera position in theory is at infinite
-  // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
-  // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
-  // obtains Orthopgraphic direction, which can be directly used as ray direction
+  // Orthopgraphic camera, camera position in theory is at infinite,
 
-  // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-  // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( 0.0, 0.0, 1.0, 0.0 );
-  vDirection = vdir.xyz * scale_inv; //  / vdir.w;
-  vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
-
-  // Previous test code, seems to be poor because camera position is not well-calculated?
-  // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-  // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
-  // vOrigin = (inverse( pmv ) * vec4( camera_center, gl_Position.z - 1.0, gl_Position.w )).xyz * scale_inv;
-  vOrigin = (position) * scale_inv - vDirection;
-
-
+  float scale_inv_max = max( max( scale_inv.x, scale_inv.y ), scale_inv.z );
+  vOrigin = (inverse( modelMatrix ) * vec4( cameraPosition, 1.0 )).xyz;
+  vDirection = position - vOrigin;
+  vOrigin.x *= scale_inv_max;
+  vOrigin.y *= scale_inv_max;
+  vOrigin.z *= scale_inv_max;
 }
 `),
     fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
@@ -66488,6 +66488,7 @@ in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
+uniform int colorChannels;
 uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
@@ -66495,7 +66496,6 @@ uniform float bounding;
 uniform float depthMix;
 vec4 fcolor;
 vec3 fOrigin;
-vec3 fDirection;
 vec2 hitBox( vec3 orig, vec3 dir ) {
   vec3 box_min = vec3( - bounding );
   vec3 box_max = vec3( bounding );
@@ -66522,14 +66522,86 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  return texture( cmap, p + vSamplerBias );
+  vec4 re = texture( cmap, p + vSamplerBias );
+  if( colorChannels == 1 ) {
+    re.r = re.a;
+    re.g = re.a;
+    re.b = re.a;
+  }
+  return re;
+}
+
+vec3 getNormal( vec3 p ) {
+  vec4 ne;
+  vec3 zero3 = vec3(0.0, 0.0, 0.0);
+  vec3 normal = zero3;
+  vec3 pos0 = p + vSamplerBias;
+  vec3 pos = pos0;
+  vec4 re = texture( cmap, pos0 );
+
+  if( re.a == 0.0 || re.rgb == zero3 ) {
+    return normal;
+  }
+
+  float stp = max(max(abs(scale_inv.x), abs(scale_inv.y)), abs(scale_inv.z)) * 1.74;
+  vec2 dt = vec2(stp, stp);
+
+
+  // normal along xy
+  pos.xy = pos0.xy + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy += dt;
+  }
+
+  pos.xy = pos0.xy - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy -= dt;
+  }
+
+  // normal along xz
+  pos.y = pos0.y;
+  pos.xz = pos0.xz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz += dt;
+  }
+
+  pos.xz = pos0.xz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz -= dt;
+  }
+
+  // normal along yz
+  pos.x = pos0.x;
+  pos.yz = pos0.yz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz += dt;
+  }
+
+  pos.yz = pos0.yz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz -= dt;
+  }
+
+
+  return normalize( normal );
 }
 
 void main(){
-  fDirection = vDirection;
   fOrigin = vOrigin;
 
-  vec3 rayDir = normalize( fDirection );
+  vec3 rayDir = normalize( vDirection );
   vec2 bounds = hitBox( fOrigin, rayDir );
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
@@ -66545,6 +66617,7 @@ void main(){
   float mix_factor = 1.0;
   vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
   vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
+  vec3 nmal;
 
   for ( float t = bounds.x; t < bounds.y; t += delta ) {
     fcolor = sample2( p );
@@ -66565,6 +66638,17 @@ void main(){
         if( nn == 0 ){
           gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
           color = fcolor;
+
+
+          if( colorChannels > 1 ) {
+            nmal = getNormal( p );
+            if(nmal != vec3(0.0, 0.0, 0.0)) {
+
+              color.rgb *= pow(max( abs(dot(rayDir, normalize(nmal - rayDir) )) , 0.25), 0.3);
+            }
+          }
+
+
           color.a = max( color.a, 0.2 );
         } else {
           // blend
@@ -66620,7 +66704,7 @@ const _plane = new three_module.Plane();
 const _closestPoint = new three_module.Vector3();
 const _triangle = new three_module.Triangle();
 
-class ConvexHull {
+class ConvexHull_ConvexHull {
 
 	constructor() {
 
@@ -66699,7 +66783,7 @@ class ConvexHull {
 
 						for ( let i = 0, l = attribute.count; i < l; i ++ ) {
 
-							const point = new three_module.Vector3();
+							const point = new Vector3();
 
 							point.fromBufferAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
 
@@ -67027,8 +67111,8 @@ class ConvexHull {
 
 	computeExtremes() {
 
-		const min = new three_module.Vector3();
-		const max = new three_module.Vector3();
+		const min = new Vector3();
+		const max = new Vector3();
 
 		const minVertices = [];
 		const maxVertices = [];
@@ -67527,8 +67611,8 @@ class Face {
 
 	constructor() {
 
-		this.normal = new three_module.Vector3();
-		this.midpoint = new three_module.Vector3();
+		this.normal = new Vector3();
+		this.midpoint = new Vector3();
 		this.area = 0;
 
 		this.constant = 0; // signed distance from face to the origin
@@ -67891,7 +67975,7 @@ class VertexList {
 
 
 
-class ConvexGeometry extends three_module.BufferGeometry {
+class ConvexGeometry extends (/* unused pure expression or super */ null && (BufferGeometry)) {
 
 	constructor( points ) {
 
@@ -67936,8 +68020,8 @@ class ConvexGeometry extends three_module.BufferGeometry {
 
 		// build geometry
 
-		this.setAttribute( 'position', new three_module.Float32BufferAttribute( vertices, 3 ) );
-		this.setAttribute( 'normal', new three_module.Float32BufferAttribute( normals, 3 ) );
+		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+		this.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
 
 	}
 
@@ -67984,6 +68068,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
         this._bounding_max = 0;
       }
 
+      let within_filter;
       for ( z = 0; z < this._cube_dim[0]; z ++ ) {
         for ( y = 0; y < this._cube_dim[1]; y ++ ) {
           for ( x = 0; x < this._cube_dim[2]; x ++ ) {
@@ -67999,12 +68084,22 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
                 // valid voxel to render
 
-                this._map_color[ 4 * ii ] = tmp.R;
-                this._map_color[ 4 * ii + 1 ] = tmp.G;
-                this._map_color[ 4 * ii + 2 ] = tmp.B;
+                within_filter = this._color_ids_length === 0 || this._color_ids[ i ];
 
-                if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
-                  this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                } else {
+
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+
+                  if( within_filter ) {
+                    this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                  }
+                }
+
+                if( within_filter ) {
 
                   // this._map_data[ ii ] = i;
 
@@ -68029,7 +68124,12 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
             }
             // voxel is invisible, no need to render! hence data is 0
             // this._map_data[ ii ] = 0;
-            this._map_color[ 4 * ii + 3 ] = 0;
+
+            if( this._color_format === "AlphaFormat" ) {
+              this._map_color[ ii ] = 0;
+            } else {
+              this._map_color[ 4 * ii + 3 ] = 0;
+            }
             ii++;
             jj++;
           }
@@ -68058,6 +68158,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
   constructor(g, canvas){
 
+
     super( g, canvas );
     // this._params is g
     // this.name = this._params.name;
@@ -68066,6 +68167,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.type = 'DataCube2';
     this.isDataCube2 = true;
     this._display_mode = "hidden";
+    this._color_format = "RGBAFormat";
 
     let mesh;
 
@@ -68080,17 +68182,26 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
           },
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
-          max_colID = lut.mapMaxColorID;
+          max_colID = lut.mapMaxColorID,
+          color_format = g.color_format;
     this._margin_length = volume;
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
+
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._voxel_length = cube_dim[0] * cube_dim[1] * cube_dim[2];
       // const data = new Float32Array( this._voxel_length );
-      const color = new Uint8Array( this._voxel_length * 4 );
-      const normals = new Uint8Array( this._voxel_length * 3 );
-      const vertex_position = [];
+
+      let color;
+
+      if( color_format === "AlphaFormat" ) {
+        this._color_format = "AlphaFormat";
+        color = new Uint8Array( this._voxel_length );
+      } else {
+        this._color_format = "RGBAFormat";
+        color = new Uint8Array( this._voxel_length * 4 );
+      }
 
       this._cube_values = cube_values;
       this._lut = lut;
@@ -68098,7 +68209,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._cube_dim = cube_dim;
       // this._map_data = data;
       this._map_color = color;
-      this._map_normals = normals;
       this._map_alpha = lut.mapAlpha;
       this._color_ids = [];
       this._color_ids_length = 0;
@@ -68127,10 +68237,14 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
             if( i !== 0 ){
               tmp = lut_map[i];
               if( tmp ) {
-                color[ 4 * ii ] = tmp.R;
-                color[ 4 * ii + 1 ] = tmp.G;
-                color[ 4 * ii + 2 ] = tmp.B;
-                color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                } else {
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+                  this._map_color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                }
 
                 if( Math.min(x,y,z) < bounding_min ){
                   bounding_min = Math.min(x,y,z);
@@ -68139,15 +68253,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
                   bounding_max = Math.max(x,y,z);
                 }
                 // this._map_data[ ii ] = i;
-
-                // calculate vertex positions
-                vertex_position.push(
-                  new three_module.Vector3().set(
-                    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
-                    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
-                    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
-                  )
-                );
 
               }
             }
@@ -68159,6 +68264,17 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
           }
         }
       }
+
+      // for ( let z = 0; z < cube_dim[0]; z ++ ) {
+      //  for ( let y = 0; y < cube_dim[1]; y ++ ) {
+      //    for ( let x = 0; x < cube_dim[2]; x ++ ) {
+      //vertex_position.push(
+      //  new Vector3().set(
+      //    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
+      //    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
+      //    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
+      //  )
+      //);
 
       // 3D texture
       /*let data_texture = new DataTexture3D(
@@ -68173,15 +68289,14 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._data_texture = data_texture;
       this._data_texture.needsUpdate = true;*/
 
-
       // Color texture - used to render colors
       let color_texture = new three_module.DataTexture3D(
-        color, cube_dim[0], cube_dim[1], cube_dim[2]
+        this._map_color, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
       color_texture.minFilter = three_module.NearestFilter;
       color_texture.magFilter = three_module.NearestFilter;
-      color_texture.format = three_module.RGBAFormat;
+      color_texture.format = this._color_format === "AlphaFormat" ? three_module.AlphaFormat : three_module.RGBAFormat;
       color_texture.type = three_module.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
@@ -68196,7 +68311,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._uniforms = uniforms;
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
-
+      uniforms.colorChannels.value = this._color_format === "AlphaFormat" ? 1 : 4;
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
 
@@ -68222,7 +68337,8 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       //   new Vector3().fromArray(cube_half_size).length(), 29, 14
       // );
 
-      const geometry = new ConvexGeometry( vertex_position );
+      // const geometry = new ConvexGeometry( vertex_position );
+      const geometry = new three_module.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );

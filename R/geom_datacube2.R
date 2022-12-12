@@ -13,10 +13,13 @@ DataCubeGeom2 <- R6::R6Class(
 
     threshold = 0.6,
 
+    color_format = "RGBAFormat",
+
     initialize = function(name, value, dim = dim(value),
                           half_size = c(128,128,128),
                           group = GeomGroup$new(name = 'default'),
                           position = c( 0, 0, 0),
+                          color_format = c("RGBAFormat", "AlphaFormat"),
                           cache_file = NULL,
                           layer = 8, digest = TRUE, ...){
       # Make sure value is from 0 to 255
@@ -33,6 +36,9 @@ DataCubeGeom2 <- R6::R6Class(
                          layer = layer, digest = digest, ...)
       }
 
+      color_format <- match.arg(color_format)
+      self$color_format <- color_format
+
     },
 
     to_list = function(){
@@ -40,7 +46,8 @@ DataCubeGeom2 <- R6::R6Class(
       c(
         re,
         list(
-          threshold = self$threshold
+          threshold = self$threshold,
+          color_format = self$color_format
         )
       )
     }
