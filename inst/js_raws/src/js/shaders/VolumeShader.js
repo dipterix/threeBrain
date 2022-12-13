@@ -9,13 +9,11 @@ const VolumeRenderShader1 = {
       colorChannels : { value: 4 },
       // steps: { value: 300 },
       scale_inv: { value: new Vector3() },
-      bounding: { value : 0.5 },
-      depthMix: { value: 1 }
+      bounding: { value : 0.5 }
       // camera_center: { value: new Vector2() },
     },
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
-precision mediump sampler3D;
 in vec3 position;
 in vec3 normal;
 uniform mat4 modelMatrix;
@@ -31,46 +29,40 @@ uniform float bounding;
 out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
-out vec3 vSamplerBias;
+// out vec3 vSamplerBias;
 
 
 void main() {
   pmv = projectionMatrix * modelViewMatrix;
 
   gl_Position = pmv * vec4( position, 1.0 );
-  // gl_Position.xy += camera_center;
+  // vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
 
   // For perspective camera, vorigin is camera
   // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
   // vOrigin = - vorig.xyz * scale_inv;
   // vDirection = position * scale_inv - vOrigin;
 
-  // Orthopgraphic camera, camera position in theory is at infinite
-  // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
-  // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
-  // obtains Orthopgraphic direction, which can be directly used as ray direction
+  // Orthopgraphic camera, camera position in theory is at infinite,
 
-  // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-  // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( 0.0, 0.0, 1.0, 0.0 );
-  vDirection = vdir.xyz * scale_inv; //  / vdir.w;
-  vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
+  // Ideally the following calculation should generate correct results
+  // vOrigin will be interpolated in fragmentShader, hence project and unproject
+  vec4 vOriginProjected = gl_Position;
+  // - (projectionMatrix * viewMatrix * vec4( cameraPosition, 0.0 ));
 
-  // Previous test code, seems to be poor because camera position is not well-calculated?
-  // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-  // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
-  // vOrigin = (inverse( pmv ) * vec4( camera_center, gl_Position.z - 1.0, gl_Position.w )).xyz * scale_inv;
-  vOrigin = (position) * scale_inv - vDirection;
-
+  vOriginProjected.z = -vOriginProjected.w;
+  vOrigin = (inverse(pmv) * vOriginProjected).xyz;
+  vDirection = normalize(position - vOrigin);
+  // vDirection = -normalize((inverse( modelMatrix ) * vec4( cameraPosition, 1.0 )).xyz);
 
 }
 `),
     fragmentShader: remove_comments(`#version 300 es
 precision highp float;
-precision mediump sampler3D;
+precision highp sampler3D;
 in vec3 vOrigin;
 in vec3 vDirection;
-in vec3 vSamplerBias;
+// in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
@@ -79,13 +71,11 @@ uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
 uniform float bounding;
-uniform float depthMix;
 vec4 fcolor;
 vec3 fOrigin;
-vec3 fDirection;
 vec2 hitBox( vec3 orig, vec3 dir ) {
-  vec3 box_min = vec3( - bounding );
-  vec3 box_max = vec3( bounding );
+  vec3 box_min = vec3( - bounding ) / scale_inv;
+  vec3 box_max = vec3( bounding ) / scale_inv;
   vec3 inv_dir = 1.0 / dir;
   vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
   vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
@@ -96,7 +86,7 @@ vec2 hitBox( vec3 orig, vec3 dir ) {
   return vec2( t0, t1 );
 }
 float getDepth( vec3 p ){
-  vec4 frag2 = pmv * vec4( p, scale_inv );
+  vec4 frag2 = pmv * vec4( p, 1.0 );
 
   return(
     (frag2.z / frag2.w * (gl_DepthRange.far - gl_DepthRange.near) +
@@ -109,7 +99,7 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  vec4 re = texture( cmap, p + vSamplerBias );
+  vec4 re = texture( cmap, p * scale_inv + 0.5 );
   if( colorChannels == 1 ) {
     re.r = re.a;
     re.g = re.a;
@@ -122,7 +112,7 @@ vec3 getNormal( vec3 p ) {
   vec4 ne;
   vec3 zero3 = vec3(0.0, 0.0, 0.0);
   vec3 normal = zero3;
-  vec3 pos0 = p + vSamplerBias;
+  vec3 pos0 = p * scale_inv + 0.5;
   vec3 pos = pos0;
   vec4 re = texture( cmap, pos0 );
 
@@ -186,10 +176,9 @@ vec3 getNormal( vec3 p ) {
 }
 
 void main(){
-  fDirection = vDirection;
   fOrigin = vOrigin;
 
-  vec3 rayDir = normalize( fDirection );
+  vec3 rayDir = normalize( vDirection );
   vec2 bounds = hitBox( fOrigin, rayDir );
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
@@ -197,8 +186,9 @@ void main(){
 
   // bounds.x is the length of ray
   vec3 p = fOrigin + bounds.x * rayDir;
-  vec3 inc = scale_inv / abs( rayDir );
+  vec3 inc = 0.5 / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
+  // float delta = 0.5 / max( abs(rayDir.x), max( abs(rayDir.y), abs(rayDir.z) ) );
 
   int nn = 0;
   int valid_voxel = 0;
@@ -213,8 +203,10 @@ void main(){
     // Hit voxel
     if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
 
-      if( alpha >= 0.0 ){
-        fcolor.a = alpha;
+      if( alpha > 0.0 ){
+        fcolor.a *= alpha;
+      } else {
+        fcolor.a = 1.0;
       }
 
 
@@ -224,7 +216,7 @@ void main(){
         last_color = fcolor;
 
         if( nn == 0 ){
-          gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
+          gl_FragDepth = getDepth( p );
           color = fcolor;
 
 
@@ -236,13 +228,12 @@ void main(){
             }
           }
 
-
           color.a = max( color.a, 0.2 );
         } else {
           // blend
           color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
           color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
-          // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
+          color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
         }
 
         nn++;
