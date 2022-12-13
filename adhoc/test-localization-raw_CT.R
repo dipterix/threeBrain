@@ -36,7 +36,7 @@ mat2 <- ijk2ras_mri$matrix
 ### This `mat3` transform IJK to tkrRAS
 mat3 <- brain$Torig %*% solve(brain$Norig) %*% mat2 %*% solve(ijk2fsl_mri) %*% ct2t1 %*% ijk2fsl %*% matrix_world1
 threeBrain::add_voxel_cube(brain, "CT", ct$get_data(), size = ct$get_shape(),
-                           trans_mat = mat3)
+                           trans_mat = mat3, color_format = "AlphaFormat")
 
 
 

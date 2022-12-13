@@ -376,7 +376,7 @@ Brain2 <- R6::R6Class(
 
     localize = function(
       coregistered_ct,
-      col = c("white", "green", 'darkgreen'),
+      col = c("gray80", 'darkgreen'),
       controllers = list(),
       control_presets = NULL,
       voxel_colormap = NULL,
@@ -410,7 +410,9 @@ Brain2 <- R6::R6Class(
         cmap <- create_colormap(
           gtype = 'volume', dtype = 'continuous',
           key = key, value = key,
-          color = col
+
+          # using AlphaFormat so color map is the color intensity in gray
+          color = c("black", "white")
         )
         controllers[["Left Opacity"]] <- 0.4
         controllers[["Right Opacity"]] <- 0.4

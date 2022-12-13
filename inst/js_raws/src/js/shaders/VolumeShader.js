@@ -1,4 +1,4 @@
-import { Vector2, Vector3 } from '../../build/three.module.js';
+import { Vector2, Vector3, Color } from '../../build/three.module.js';
 import { remove_comments } from '../utils.js';
 
 const VolumeRenderShader1 = {
@@ -9,7 +9,11 @@ const VolumeRenderShader1 = {
       colorChannels : { value: 4 },
       // steps: { value: 300 },
       scale_inv: { value: new Vector3() },
-      bounding: { value : 0.5 }
+      bounding: { value : 0.5 },
+
+      // only works when number of color channels is 1
+      color1WhenSingleChannel: { value: new Color().setHex(0x006400) },
+      color2WhenSingleChannel: { value: new Color().setHex(0x999999) },
       // camera_center: { value: new Vector2() },
     },
     vertexShader: remove_comments(`#version 300 es
@@ -29,11 +33,14 @@ uniform float bounding;
 out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
+out vec3 vPosition;
 // out vec3 vSamplerBias;
 
 
 void main() {
   pmv = projectionMatrix * modelViewMatrix;
+
+  vPosition = position;
 
   gl_Position = pmv * vec4( position, 1.0 );
   // vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
@@ -48,25 +55,26 @@ void main() {
   // Ideally the following calculation should generate correct results
   // vOrigin will be interpolated in fragmentShader, hence project and unproject
   vec4 vOriginProjected = gl_Position;
-  // - (projectionMatrix * viewMatrix * vec4( cameraPosition, 0.0 ));
-
   vOriginProjected.z = -vOriginProjected.w;
   vOrigin = (inverse(pmv) * vOriginProjected).xyz;
+  // vOrigin = gl_Position.xyw;
   vDirection = normalize(position - vOrigin);
-  // vDirection = -normalize((inverse( modelMatrix ) * vec4( cameraPosition, 1.0 )).xyz);
 
 }
 `),
     fragmentShader: remove_comments(`#version 300 es
 precision highp float;
-precision highp sampler3D;
+precision mediump sampler3D;
 in vec3 vOrigin;
+in vec3 vPosition;
 in vec3 vDirection;
 // in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
 uniform int colorChannels;
+uniform vec3 color1WhenSingleChannel;
+uniform vec3 color2WhenSingleChannel;
 uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
@@ -99,11 +107,9 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  vec4 re = texture( cmap, p * scale_inv + 0.5 );
+  vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
   if( colorChannels == 1 ) {
-    re.r = re.a;
-    re.g = re.a;
-    re.b = re.a;
+    re.rgb = color1WhenSingleChannel * re.a + color2WhenSingleChannel * (1.0 - re.a);
   }
   return re;
 }
@@ -112,7 +118,7 @@ vec3 getNormal( vec3 p ) {
   vec4 ne;
   vec3 zero3 = vec3(0.0, 0.0, 0.0);
   vec3 normal = zero3;
-  vec3 pos0 = p * scale_inv + 0.5;
+  vec3 pos0 = (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5;
   vec3 pos = pos0;
   vec4 re = texture( cmap, pos0 );
 
@@ -176,9 +182,15 @@ vec3 getNormal( vec3 p ) {
 }
 
 void main(){
+
+  // vec4 vOriginProjected = pmv * vec4( vPosition, 1.0 );
+  // vOriginProjected.z = -vOriginProjected.w;
+  // fOrigin = (inverse(pmv) * vOriginProjected).xyz;
   fOrigin = vOrigin;
 
-  vec3 rayDir = normalize( vDirection );
+  // vec3 rayDir = normalize( vDirection );
+  vec3 rayDir = normalize( vPosition - vOrigin );
+
   vec2 bounds = hitBox( fOrigin, rayDir );
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
@@ -186,7 +198,7 @@ void main(){
 
   // bounds.x is the length of ray
   vec3 p = fOrigin + bounds.x * rayDir;
-  vec3 inc = 0.5 / abs( rayDir );
+  vec3 inc = 1.0 / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
   // float delta = 0.5 / max( abs(rayDir.x), max( abs(rayDir.y), abs(rayDir.z) ) );
 

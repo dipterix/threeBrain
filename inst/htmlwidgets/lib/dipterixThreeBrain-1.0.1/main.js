@@ -57463,9 +57463,9 @@ function atlas_label(pos_array, canvas){
   const delta = 4;
   const position = pos_array;
 
-  let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x + 0.5;
-  let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y + 0.5;
-  let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z - 0.5;
+  let i = ( position[0] + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
+  let j = ( position[1] + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
+  let k = ( position[2] + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
 
   i = Math.round( i );
   j = Math.round( j );
@@ -57930,7 +57930,7 @@ function electrode_from_slice( scode, canvas ){
   return( pos );
 }
 
-function electrode_line_from_ct( inst, canvas, electrodes, size ){
+function interpolate_electrode_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
@@ -57947,6 +57947,8 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
 
   const dir = new three_module.Vector3();
   const re = [];
+
+  let added = false;
   for( let ii = 1; ii < n; ii++ ){
 
     tmp.copy( step ).multiplyScalar( ii );
@@ -57954,12 +57956,16 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
     dir.copy( est ).sub( src ).normalize();
 
     // adjust
-
+    added = false;
     for( let delta = 0.5; delta < 100; delta += 0.5 ){
       const res = intersect_volume(src, dir, inst, canvas, delta, false);
       if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
         re.push( res.clone() );
+        added = true;
         break;
+      }
+      if(!added) {
+        re.push( est.clone() );
       }
       /*
       res = raycast_volume(
@@ -57984,7 +57990,53 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   });
 }
 
-function electrode_line_from_slice( canvas, electrodes, size ){
+function extend_electrode_from_ct( inst, canvas, electrodes, size ){
+  if( !inst ){ return; }
+  if( electrodes.length < 2 ){ return; }
+  if( size <= 2 ){ return; }
+  const src = canvas.main_camera.position;
+  const dst = new three_module.Vector3();
+  electrodes[electrodes.length - 2].object.getWorldPosition( dst );
+
+  const n = size - 1;
+  const step = new three_module.Vector3();
+  electrodes[electrodes.length - 1].object.getWorldPosition( step );
+  step.sub( dst );
+  const step_length = step.length();
+  const tmp = new three_module.Vector3();
+  const est = new three_module.Vector3();
+
+  const dir = new three_module.Vector3();
+  const re = [];
+
+  est.copy(dst).add( step );
+  let added = false;
+  for( let ii = 1; ii < n; ii++ ){
+
+    est.add( step );
+    dir.copy( est ).sub( src ).normalize();
+
+    // adjust the est
+    added = false
+    for( let delta = 0.5; delta < 100; delta += 0.5 ){
+      const res = intersect_volume(src, dir, inst, canvas, delta, false);
+      if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
+        step.add( res ).sub( est ).normalize().multiplyScalar(step_length);
+        est.copy( res );
+        added = true;
+        break;
+      }
+    }
+    re.push( est.clone() );
+  }
+
+  return({
+    positions : re,
+    direction : step
+  });
+}
+
+function interpolate_electrode_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
 
@@ -57999,6 +58051,42 @@ function electrode_line_from_slice( canvas, electrodes, size ){
   const step = new three_module.Vector3();
   electrodes[electrodes.length - 1].object.getWorldPosition( step );
   step.sub( dst ).multiplyScalar( 1 / n );
+  const tmp = new three_module.Vector3();
+  const est = new three_module.Vector3();
+
+  let res;
+  const re = [];
+
+  for( let ii = 1; ii < n; ii++ ){
+
+    tmp.copy( step ).multiplyScalar( ii );
+    est.copy( dst ).add( tmp );
+
+    re.push( new three_module.Vector3().copy(est) );
+  }
+
+  return({
+    positions : re,
+    direction : step
+  });
+}
+
+function extend_electrode_from_slice( canvas, electrodes, size ){
+  if( electrodes.length < 2 ){ return; }
+  if( size <= 2 ){ return; }
+
+  const src = canvas.main_camera.position;
+  const dst = new three_module.Vector3();
+
+  canvas.set_raycaster();
+  canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+  electrodes[electrodes.length - 2].object.getWorldPosition( dst );
+
+  const n = size - 1;
+  const step = new three_module.Vector3();
+  electrodes[electrodes.length - 1].object.getWorldPosition( step );
+  step.sub( dst );
+  dst.add( step );
   const tmp = new three_module.Vector3();
   const est = new three_module.Vector3();
 
@@ -58104,7 +58192,8 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       }
       this.gui.hide_item([
         ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-        'Interpolate from Recently Added', 'Reset Highlighted',
+        'Interpolate from Recently Added', 'Extend from Recently Added',
+        'Reset Highlighted',
         'Auto-Adjust Highlighted', 'Auto-Adjust All'
       ], folder_name);
       if( v === 'disabled' ){ return; }
@@ -58116,7 +58205,8 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       } else {
         this.gui.show_item([
           ' - tkrRAS', ' - MNI305', ' - T1 RAS',
-          'Interpolate Size', 'Interpolate from Recently Added'
+          'Interpolate Size', 'Interpolate from Recently Added',
+          'Extend from Recently Added'
         ], folder_name);
       }
 
@@ -58234,9 +58324,9 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         if( mode == "CT/volume" ){
           const inst = this.current_voxel_type();
-          res = electrode_line_from_ct( inst, this.canvas, electrodes, v + 2 );
+          res = interpolate_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
         } else {
-          res = electrode_line_from_slice( this.canvas, electrodes, v + 2 );
+          res = interpolate_electrode_from_slice( this.canvas, electrodes, v + 2 );
         }
         // return({
         //   positions : re,
@@ -58271,9 +58361,56 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       { folder_name: folder_name }
     );
 
+    this.gui.add_item(
+      'Extend from Recently Added',
+      () => {
+        let v = Math.round( interpolate_size.getValue() );
+        if( !v ){ return; }
+        const mode = edit_mode.getValue();
+        const scode = this.canvas.get_state("target_subject");
+        if( !mode || mode == "disabled" ||
+            mode == "refine" ||
+            !scode || scode === ""
+        ){ return; }
+
+        if( electrodes.length < 2 ){
+          alert("Please localize at least 2 electrodes first.");
+          return;
+        }
+
+        let res;
+
+        if( mode == "CT/volume" ){
+          const inst = this.current_voxel_type();
+          res = extend_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
+        } else {
+          res = extend_electrode_from_slice( this.canvas, electrodes, v + 2, true );
+        }
+
+        if( res.positions.length ){
+          res.direction.normalize();
+          res.positions.forEach((pos) => {
+            const el = new LocElectrode(
+              scode, electrodes.length + 1, pos, this.canvas,
+              elec_size.getValue());
+            el.set_mode( mode );
+            electrodes.push( el );
+          });
+
+          this.canvas.switch_subject();
+        }
+
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        }
+
+      },
+      { folder_name: folder_name }
+    );
+
 
     // Download as CSV
-    this.gui.add_item( 'Download as csv', () => {
+    this.gui.add_item( 'Download Current as CSV', () => {
       this.canvas.download_electrodes("csv");
     }, {
       folder_name: folder_name
@@ -58430,7 +58567,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
     this.gui.hide_item([
       ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-      'Interpolate from Recently Added',
+      'Interpolate from Recently Added', 'Extend from Recently Added',
       'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
     ], folder_name);
   };
@@ -66432,7 +66569,11 @@ const VolumeRenderShader1 = {
       colorChannels : { value: 4 },
       // steps: { value: 300 },
       scale_inv: { value: new three_module.Vector3() },
-      bounding: { value : 0.5 }
+      bounding: { value : 0.5 },
+
+      // only works when number of color channels is 1
+      color1WhenSingleChannel: { value: new three_module.Color().setHex(0x006400) },
+      color2WhenSingleChannel: { value: new three_module.Color().setHex(0x999999) },
       // camera_center: { value: new Vector2() },
     },
     vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
@@ -66452,11 +66593,14 @@ uniform float bounding;
 out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
+out vec3 vPosition;
 // out vec3 vSamplerBias;
 
 
 void main() {
   pmv = projectionMatrix * modelViewMatrix;
+
+  vPosition = position;
 
   gl_Position = pmv * vec4( position, 1.0 );
   // vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
@@ -66471,25 +66615,26 @@ void main() {
   // Ideally the following calculation should generate correct results
   // vOrigin will be interpolated in fragmentShader, hence project and unproject
   vec4 vOriginProjected = gl_Position;
-  // - (projectionMatrix * viewMatrix * vec4( cameraPosition, 0.0 ));
-
   vOriginProjected.z = -vOriginProjected.w;
   vOrigin = (inverse(pmv) * vOriginProjected).xyz;
+  // vOrigin = gl_Position.xyw;
   vDirection = normalize(position - vOrigin);
-  // vDirection = -normalize((inverse( modelMatrix ) * vec4( cameraPosition, 1.0 )).xyz);
 
 }
 `),
     fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
 precision highp float;
-precision highp sampler3D;
+precision mediump sampler3D;
 in vec3 vOrigin;
+in vec3 vPosition;
 in vec3 vDirection;
 // in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
 uniform int colorChannels;
+uniform vec3 color1WhenSingleChannel;
+uniform vec3 color2WhenSingleChannel;
 uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
@@ -66522,11 +66667,9 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  vec4 re = texture( cmap, p * scale_inv + 0.5 );
+  vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
   if( colorChannels == 1 ) {
-    re.r = re.a;
-    re.g = re.a;
-    re.b = re.a;
+    re.rgb = color1WhenSingleChannel * re.a + color2WhenSingleChannel * (1.0 - re.a);
   }
   return re;
 }
@@ -66535,7 +66678,7 @@ vec3 getNormal( vec3 p ) {
   vec4 ne;
   vec3 zero3 = vec3(0.0, 0.0, 0.0);
   vec3 normal = zero3;
-  vec3 pos0 = p * scale_inv + 0.5;
+  vec3 pos0 = (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5;
   vec3 pos = pos0;
   vec4 re = texture( cmap, pos0 );
 
@@ -66599,9 +66742,15 @@ vec3 getNormal( vec3 p ) {
 }
 
 void main(){
+
+  // vec4 vOriginProjected = pmv * vec4( vPosition, 1.0 );
+  // vOriginProjected.z = -vOriginProjected.w;
+  // fOrigin = (inverse(pmv) * vOriginProjected).xyz;
   fOrigin = vOrigin;
 
-  vec3 rayDir = normalize( vDirection );
+  // vec3 rayDir = normalize( vDirection );
+  vec3 rayDir = normalize( vPosition - vOrigin );
+
   vec2 bounds = hitBox( fOrigin, rayDir );
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
@@ -66609,7 +66758,7 @@ void main(){
 
   // bounds.x is the length of ray
   vec3 p = fOrigin + bounds.x * rayDir;
-  vec3 inc = 0.5 / abs( rayDir );
+  vec3 inc = 1.0 / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
   // float delta = 0.5 / max( abs(rayDir.x), max( abs(rayDir.y), abs(rayDir.z) ) );
 
@@ -68089,7 +68238,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
                 within_filter = this._color_ids_length === 0 || this._color_ids[ i ];
 
                 if( this._color_format === "AlphaFormat" ) {
-                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                  this._map_color[ ii ] = tmp.R;
                 } else {
 
                   this._map_color[ 4 * ii ] = tmp.R;
@@ -68240,7 +68389,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
               tmp = lut_map[i];
               if( tmp ) {
                 if( this._color_format === "AlphaFormat" ) {
-                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                  this._map_color[ ii ] = tmp.R;
                 } else {
                   this._map_color[ 4 * ii ] = tmp.R;
                   this._map_color[ 4 * ii + 1 ] = tmp.G;

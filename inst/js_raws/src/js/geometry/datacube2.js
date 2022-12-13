@@ -58,7 +58,7 @@ class DataCube2 extends AbstractThreeBrainObject {
                 within_filter = this._color_ids_length === 0 || this._color_ids[ i ];
 
                 if( this._color_format === "AlphaFormat" ) {
-                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                  this._map_color[ ii ] = tmp.R;
                 } else {
 
                   this._map_color[ 4 * ii ] = tmp.R;
@@ -209,7 +209,7 @@ class DataCube2 extends AbstractThreeBrainObject {
               tmp = lut_map[i];
               if( tmp ) {
                 if( this._color_format === "AlphaFormat" ) {
-                  this._map_color[ ii ] = Math.max( tmp.R, tmp.G, tmp.B );
+                  this._map_color[ ii ] = tmp.R;
                 } else {
                   this._map_color[ 4 * ii ] = tmp.R;
                   this._map_color[ 4 * ii + 1 ] = tmp.G;
