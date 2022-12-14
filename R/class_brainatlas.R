@@ -88,6 +88,7 @@ BrainAtlas <- R6::R6Class(
 #' @param cube a 3-mode array; see the following example
 #' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size
 #' @param trans_mat the transform matrix of the volume
+#' @param color_format color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'AlphaFormat'}
 #'
 #' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
 #' \code{add_voxel_cube} returns the \code{brain} object

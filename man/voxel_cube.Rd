@@ -6,7 +6,14 @@
 \alias{create_voxel_cube}
 \title{Generate volume data from 'MNI' coordinates}
 \usage{
-add_voxel_cube(brain, name, cube, size = c(256, 256, 256), matrix_world = NULL)
+add_voxel_cube(
+  brain,
+  name,
+  cube,
+  size = c(256, 256, 256),
+  trans_mat = NULL,
+  color_format = c("RGBAFormat", "AlphaFormat")
+)
 
 create_voxel_cube(
   mni_ras,
@@ -25,7 +32,9 @@ create_voxel_cube(
 
 \item{size}{the actual size of the volume, usually dot multiplication of the dimension and voxel size}
 
-\item{matrix_world}{the transform matrix of the volume}
+\item{trans_mat}{the transform matrix of the volume}
+
+\item{color_format}{color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'AlphaFormat'}}
 
 \item{mni_ras}{'MNI' 'RAS' coordinates, should be a \code{n}-by-3 matrix}
 

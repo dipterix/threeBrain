@@ -375,33 +375,73 @@ Brain2 <- R6::R6Class(
     },
 
     localize = function(
-      coregistered_ct,
+      ct_path,
+      transform_matrix = NULL,
+      transform_space = c("resampled", "fsl"),
+      mri_path = NULL,
       col = c("gray80", 'darkgreen'),
       controllers = list(),
       control_presets = NULL,
       voxel_colormap = NULL,
-      ...
+      ...,
+      coregistered_ct
     ){
       control_presets <- c('localization', control_presets)
       controllers[["Highlight Box"]] <- FALSE
 
-      if(!missing( coregistered_ct )){
-
-        if(!inherits(coregistered_ct, "threeBrain.nii")) {
-          ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )
+      if(missing(ct_path)) {
+        if(!missing(coregistered_ct)) {
+          ct_path <- coregistered_ct
         } else {
-          ct <- coregistered_ct
+          ct_path <- NULL
+        }
+      }
+
+      if(!is.null( ct_path )){
+
+        transform_space <- match.arg(transform_space)
+
+        if(!inherits(ct_path, "threeBrain.nii")) {
+          ct <- read_nii2( normalizePath(ct_path, mustWork = TRUE) )
+        } else {
+          ct <- ct_path
         }
 
-        # cube <- reorient_volume( ct$get_data(), self$Torig )
-
-        # TODO: FIXME
-
-        # add_voxel_cube(self, "CT", cube)
         ct_shape <- ct$get_shape()
-        trans_mat <- diag(rep(1, 4))
-        trans_mat[1:3, 4] <- ct_shape / 2
-        trans_mat <- ct$get_IJK_to_tkrRAS(self) %*% trans_mat
+
+        switch(
+          transform_space,
+          resampled = {
+            trans_mat <- diag(rep(1, 4))
+            trans_mat[1:3, 4] <- ct_shape / 2
+            trans_mat <- ct$get_IJK_to_tkrRAS(self) %*% trans_mat
+          },
+          fsl = {
+            trans_mat <- diag(rep(1, 4))
+            trans_mat[1:3, 4] <- ct_shape / 2
+            ct_ijk2fsl <- ct$get_IJK_to_FSL()
+
+            if(length(transform_matrix) == 1 && is.character(transform_matrix)) {
+              transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+            }
+            if(length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
+              stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+            }
+            if(!inherits(mri_path, "threeBrain.nii")) {
+              mri <- read_nii2( normalizePath(mri_path, mustWork = TRUE), head_only = TRUE )
+            } else {
+              mri <- mri_path
+            }
+            mri_ijk2fsl <- mri$get_IJK_to_FSL()
+            mri_ijk2ras <- mri$get_IJK_to_RAS()$matrix
+
+            # ct_ijk2fsl: CT IJK to FSL
+            # transform_matrix CT FSL to MRI FSL
+            # solve(mri_ijk2fsl): MRI FSL to MRI IJK
+            # mri_ijk2ras: MRI IJK to RAS
+            trans_mat <- self$Torig %*% solve(self$Norig) %*% mri_ijk2ras %*% solve(mri_ijk2fsl) %*% transform_matrix %*% ct_ijk2fsl %*% trans_mat
+          }
+        )
 
         add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
                        trans_mat = trans_mat, color_format = "AlphaFormat")

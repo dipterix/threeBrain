@@ -1,4 +1,10 @@
 brain <- threeBrain::freesurfer_brain2("~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/fs/", subject_name = 'PAV010')
+brain$localize(
+  ct_path = '~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/inputs/CT/POST_IMPLANT_CT_1_IEEG_HEAD_20221130155104_3.nii',
+  mri_path = '~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/inputs/MRI/PRE_IMPLANT_MRI_AXIAL_T1_MPRAGE_BRAIN_POST_STEALTH_20221023132448_14.nii',
+  transform_matrix = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/ct2t1.mat",
+  transform_space = "fsl"
+)
 controllers <- list()
 control_presets <- 'localization'
 controllers[["Highlight Box"]] <- FALSE
