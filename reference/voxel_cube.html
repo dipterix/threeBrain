@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.7.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.7.9002</span>
       </span>
     </div>
 
@@ -69,7 +69,14 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_voxel_cube</span><span class="op">(</span><span class="va">brain</span>, <span class="va">name</span>, <span class="va">cube</span>, size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">256</span>, <span class="fl">256</span>, <span class="fl">256</span><span class="op">)</span>, matrix_world <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_voxel_cube</span><span class="op">(</span></span>
+<span>  <span class="va">brain</span>,</span>
+<span>  <span class="va">name</span>,</span>
+<span>  <span class="va">cube</span>,</span>
+<span>  size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">256</span>, <span class="fl">256</span>, <span class="fl">256</span><span class="op">)</span>,</span>
+<span>  trans_mat <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  color_format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RGBAFormat"</span>, <span class="st">"AlphaFormat"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">create_voxel_cube</span><span class="op">(</span></span>
 <span>  <span class="va">mni_ras</span>,</span>
@@ -98,8 +105,12 @@
 <dd><p>the actual size of the volume, usually dot multiplication of the dimension and voxel size</p></dd>
 
 
-<dt>matrix_world</dt>
+<dt>trans_mat</dt>
 <dd><p>the transform matrix of the volume</p></dd>
+
+
+<dt>color_format</dt>
+<dd><p>color format for the internal texture. Default is 4-channel <code>'RGBAFormat'</code>; alternative choice is <code>'AlphaFormat'</code></p></dd>
 
 
 <dt>mni_ras</dt>

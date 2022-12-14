@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.7.9001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.7.9002</span>
       </span>
     </div>
 
@@ -289,7 +289,7 @@
 <li>Added alternative methods to read <code>.nii</code> files, <code>nibabel</code> is now optional</li>
 <li>Customized color palettes and value range for better visualizations with outliers</li>
 <li>Only requires <code>T1.mgz</code> or <code>brainmask</code> of <code>brain.finalsurf</code> is not found. This allows users only run <code>FreeSurfer</code> to the first stage, which only takes around 8 to 10 minutes instead of 6 hours.</li>
-<li>Fully compatible with <code>htmlwidgets</code> in <code>shiny</code> mode. When calling <code>threejsBrainOutput</code> under <code><a href="https://rdrr.io/pkg/shiny/man/renderUI.html" class="external-link">shiny::renderUI</a></code>, the <code>DOM</code> element might get reset by <code>shiny</code>, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn’t reset correctly. A cache is created and now is reusing the canvas.</li>
+<li>Fully compatible with <code>htmlwidgets</code> in <code>shiny</code> mode. When calling <code>threejsBrainOutput</code> under <code><a href="https://shiny.rstudio.com/reference/shiny/latest/renderUI.html" class="external-link">shiny::renderUI</a></code>, the <code>DOM</code> element might get reset by <code>shiny</code>, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn’t reset correctly. A cache is created and now is reusing the canvas.</li>
 </ul><div class="section level4">
 <h4 id="improvements-0-1-4">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-1-4"></a></h4>
 <ul><li>More flexible directory requirement</li>
