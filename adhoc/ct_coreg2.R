@@ -50,7 +50,7 @@ mat <-
   brain$Torig %*% solve(brain$Norig) %*% ct2t1 %*% ct_qform %*% ct_shift
 
 
-threeBrain::add_voxel_cube(brain, "AA", ct$get_data(), size = ct$get_size(), matrix_world = mat)
+threeBrain::add_voxel_cube(brain, "AA", ct$get_data(), size = ct$get_size(), trans_mat = mat)
 brain$plot(
   control_presets = "localization",
   voxel_colormap = cmap,

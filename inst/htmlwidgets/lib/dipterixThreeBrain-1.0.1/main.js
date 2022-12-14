@@ -57192,7 +57192,7 @@ function raycast_volume_geneator(){
 
   const raycast_volume = (
     origin, direction, margin_voxels, margin_lengths,
-    map_array, delta = 0.5, snap_raycaster = true ) => {
+    map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {
     // canvas.mouse_raycaster.ray.origin
     // canvas.mouse_raycaster.ray.direction
 
@@ -57263,9 +57263,13 @@ function raycast_volume_geneator(){
             if( k2 >= mz ){ k2 = mz - 1 ; }
 
             for( k = k1; k <= k2; k++ ){
+              // tmp = map_array[(
+              //   i + j * mx + k * mx * my
+              // ) * 4 + 3 ];
               tmp = map_array[(
                 i + j * mx + k * mx * my
-              ) * 4 + 3 ];
+              ) * colorChannels + (colorChannels - 1) ];
+
               if( tmp > 0 ){
                 p.set(
                   (i+0.5) * f.x - orig.x,
@@ -57323,10 +57327,14 @@ function electrode_from_ct_generator(){
         matrix_inv = new three_module.Matrix4(),
         matrix_rot = new three_module.Matrix3();
 
+  let colorChannels = 4;
+
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
 
-    matrix_.copy(inst.object.parent.matrixWorld);
+    colorChannels = inst._color_format === "AlphaFormat" ? 1 : 4;
+
+    matrix_.copy(inst.object.matrixWorld);
     matrix_inv.copy(matrix_).invert();
     origin.copy(src).applyMatrix4(matrix_inv);
 
@@ -57352,7 +57360,7 @@ function electrode_from_ct_generator(){
     const res = raycast_volume(
       origin, direction, cube_dim, cube_size,
       inst._color_texture.image.data,
-      delta, snap_raycaster
+      delta, snap_raycaster, colorChannels
     );
     pos.x = res[3];
     pos.y = res[4];
@@ -57455,9 +57463,9 @@ function atlas_label(pos_array, canvas){
   const delta = 4;
   const position = pos_array;
 
-  let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x + 0.5;
-  let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y + 0.5;
-  let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z - 0.5;
+  let i = ( position[0] + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
+  let j = ( position[1] + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
+  let k = ( position[2] + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
 
   i = Math.round( i );
   j = Math.round( j );
@@ -57793,7 +57801,7 @@ class LocElectrode {
     const inst = this.get_volume_instance();
     if( !inst ){ return; }
 
-    const matrix_ = inst.object.parent.matrixWorld.clone(),
+    const matrix_ = inst.object.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
     const margin_voxels = new three_module.Vector3().fromArray( inst._cube_dim );
@@ -57922,7 +57930,7 @@ function electrode_from_slice( scode, canvas ){
   return( pos );
 }
 
-function electrode_line_from_ct( inst, canvas, electrodes, size ){
+function interpolate_electrode_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
@@ -57939,6 +57947,8 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
 
   const dir = new three_module.Vector3();
   const re = [];
+
+  let added = false;
   for( let ii = 1; ii < n; ii++ ){
 
     tmp.copy( step ).multiplyScalar( ii );
@@ -57946,12 +57956,16 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
     dir.copy( est ).sub( src ).normalize();
 
     // adjust
-
+    added = false;
     for( let delta = 0.5; delta < 100; delta += 0.5 ){
       const res = intersect_volume(src, dir, inst, canvas, delta, false);
       if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
         re.push( res.clone() );
+        added = true;
         break;
+      }
+      if(!added) {
+        re.push( est.clone() );
       }
       /*
       res = raycast_volume(
@@ -57976,7 +57990,53 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   });
 }
 
-function electrode_line_from_slice( canvas, electrodes, size ){
+function extend_electrode_from_ct( inst, canvas, electrodes, size ){
+  if( !inst ){ return; }
+  if( electrodes.length < 2 ){ return; }
+  if( size <= 2 ){ return; }
+  const src = canvas.main_camera.position;
+  const dst = new three_module.Vector3();
+  electrodes[electrodes.length - 2].object.getWorldPosition( dst );
+
+  const n = size - 1;
+  const step = new three_module.Vector3();
+  electrodes[electrodes.length - 1].object.getWorldPosition( step );
+  step.sub( dst );
+  const step_length = step.length();
+  const tmp = new three_module.Vector3();
+  const est = new three_module.Vector3();
+
+  const dir = new three_module.Vector3();
+  const re = [];
+
+  est.copy(dst).add( step );
+  let added = false;
+  for( let ii = 1; ii < n; ii++ ){
+
+    est.add( step );
+    dir.copy( est ).sub( src ).normalize();
+
+    // adjust the est
+    added = false
+    for( let delta = 0.5; delta < 100; delta += 0.5 ){
+      const res = intersect_volume(src, dir, inst, canvas, delta, false);
+      if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
+        step.add( res ).sub( est ).normalize().multiplyScalar(step_length);
+        est.copy( res );
+        added = true;
+        break;
+      }
+    }
+    re.push( est.clone() );
+  }
+
+  return({
+    positions : re,
+    direction : step
+  });
+}
+
+function interpolate_electrode_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
 
@@ -57991,6 +58051,42 @@ function electrode_line_from_slice( canvas, electrodes, size ){
   const step = new three_module.Vector3();
   electrodes[electrodes.length - 1].object.getWorldPosition( step );
   step.sub( dst ).multiplyScalar( 1 / n );
+  const tmp = new three_module.Vector3();
+  const est = new three_module.Vector3();
+
+  let res;
+  const re = [];
+
+  for( let ii = 1; ii < n; ii++ ){
+
+    tmp.copy( step ).multiplyScalar( ii );
+    est.copy( dst ).add( tmp );
+
+    re.push( new three_module.Vector3().copy(est) );
+  }
+
+  return({
+    positions : re,
+    direction : step
+  });
+}
+
+function extend_electrode_from_slice( canvas, electrodes, size ){
+  if( electrodes.length < 2 ){ return; }
+  if( size <= 2 ){ return; }
+
+  const src = canvas.main_camera.position;
+  const dst = new three_module.Vector3();
+
+  canvas.set_raycaster();
+  canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+  electrodes[electrodes.length - 2].object.getWorldPosition( dst );
+
+  const n = size - 1;
+  const step = new three_module.Vector3();
+  electrodes[electrodes.length - 1].object.getWorldPosition( step );
+  step.sub( dst );
+  dst.add( step );
   const tmp = new three_module.Vector3();
   const est = new three_module.Vector3();
 
@@ -58096,7 +58192,8 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       }
       this.gui.hide_item([
         ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-        'Interpolate from Recently Added', 'Reset Highlighted',
+        'Interpolate from Recently Added', 'Extend from Recently Added',
+        'Reset Highlighted',
         'Auto-Adjust Highlighted', 'Auto-Adjust All'
       ], folder_name);
       if( v === 'disabled' ){ return; }
@@ -58108,7 +58205,8 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       } else {
         this.gui.show_item([
           ' - tkrRAS', ' - MNI305', ' - T1 RAS',
-          'Interpolate Size', 'Interpolate from Recently Added'
+          'Interpolate Size', 'Interpolate from Recently Added',
+          'Extend from Recently Added'
         ], folder_name);
       }
 
@@ -58226,9 +58324,9 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         if( mode == "CT/volume" ){
           const inst = this.current_voxel_type();
-          res = electrode_line_from_ct( inst, this.canvas, electrodes, v + 2 );
+          res = interpolate_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
         } else {
-          res = electrode_line_from_slice( this.canvas, electrodes, v + 2 );
+          res = interpolate_electrode_from_slice( this.canvas, electrodes, v + 2 );
         }
         // return({
         //   positions : re,
@@ -58263,9 +58361,56 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       { folder_name: folder_name }
     );
 
+    this.gui.add_item(
+      'Extend from Recently Added',
+      () => {
+        let v = Math.round( interpolate_size.getValue() );
+        if( !v ){ return; }
+        const mode = edit_mode.getValue();
+        const scode = this.canvas.get_state("target_subject");
+        if( !mode || mode == "disabled" ||
+            mode == "refine" ||
+            !scode || scode === ""
+        ){ return; }
+
+        if( electrodes.length < 2 ){
+          alert("Please localize at least 2 electrodes first.");
+          return;
+        }
+
+        let res;
+
+        if( mode == "CT/volume" ){
+          const inst = this.current_voxel_type();
+          res = extend_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
+        } else {
+          res = extend_electrode_from_slice( this.canvas, electrodes, v + 2, true );
+        }
+
+        if( res.positions.length ){
+          res.direction.normalize();
+          res.positions.forEach((pos) => {
+            const el = new LocElectrode(
+              scode, electrodes.length + 1, pos, this.canvas,
+              elec_size.getValue());
+            el.set_mode( mode );
+            electrodes.push( el );
+          });
+
+          this.canvas.switch_subject();
+        }
+
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        }
+
+      },
+      { folder_name: folder_name }
+    );
+
 
     // Download as CSV
-    this.gui.add_item( 'Download as csv', () => {
+    this.gui.add_item( 'Download Current as CSV', () => {
       this.canvas.download_electrodes("csv");
     }, {
       folder_name: folder_name
@@ -58422,7 +58567,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
     this.gui.hide_item([
       ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-      'Interpolate from Recently Added',
+      'Interpolate from Recently Added', 'Extend from Recently Added',
       'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
     ], folder_name);
   };
@@ -61808,15 +61953,26 @@ class AbstractThreeBrainObject {
         this._canvas.add_to_scene( this.root_object || this.object );
       }
 
-      if( this.object.isMesh ){
-        this.object.updateMatrixWorld();
-      }
-
       if( this.object.isObject3D ){
         this.object.userData.instance = this;
         this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
         this.object.userData.dispose = () => { this.dispose(); };
         this.object.renderOrder = _constants_js__WEBPACK_IMPORTED_MODULE_1__/* .CONSTANTS.RENDER_ORDER */ .t.RENDER_ORDER[ this.type ] || 0;
+      }
+
+      if( this.object.isMesh ){
+        if( Array.isArray(this._params.trans_mat) &&
+            this._params.trans_mat.length === 16 ) {
+          let trans = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_2__.Matrix4();
+          trans.set(...this._params.trans_mat);
+          this.object.userData.trans_mat = trans;
+
+          if( !this._params.disable_trans_mat ) {
+            this.object.applyMatrix4(trans);
+          }
+        }
+
+        this.object.updateMatrixWorld();
       }
 
     }
@@ -64216,7 +64372,7 @@ class THREE_BRAIN_SHINY {
     }
 
     // register handlers
-    Object.getOwnPropertyNames(Object.getPrototypeOf(__presets.shiny))
+    Object.getOwnPropertyNames(Object.getPrototypeOf(presets.shiny))
       .filter((v) => { return(v.startsWith("handle_")); })
       .map((v) => { return(v.replace("handle_", "")); })
     const handler_names = [
@@ -66408,21 +66564,22 @@ function gen_datacube(g, canvas){
 const VolumeRenderShader1 = {
     uniforms: {
       cmap: { value: null },
-      nmap: { value: null },
       mask: { value: null },
       alpha : { value: -1.0 },
+      colorChannels : { value: 4 },
       // steps: { value: 300 },
       scale_inv: { value: new three_module.Vector3() },
       bounding: { value : 0.5 },
-      depthMix: { value: 1 }
+
+      // only works when number of color channels is 1
+      color1WhenSingleChannel: { value: new three_module.Color().setHex(0x006400) },
+      color2WhenSingleChannel: { value: new three_module.Color().setHex(0x999999) },
       // camera_center: { value: new Vector2() },
     },
     vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
 precision highp float;
-precision mediump sampler3D;
 in vec3 position;
 in vec3 normal;
-uniform sampler3D cmap;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
@@ -66436,37 +66593,32 @@ uniform float bounding;
 out mat4 pmv;
 out vec3 vOrigin;
 out vec3 vDirection;
-out vec3 vSamplerBias;
+out vec3 vPosition;
+// out vec3 vSamplerBias;
 
 
 void main() {
   pmv = projectionMatrix * modelViewMatrix;
 
+  vPosition = position;
+
   gl_Position = pmv * vec4( position, 1.0 );
-  // gl_Position.xy += camera_center;
+  // vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
 
   // For perspective camera, vorigin is camera
   // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
   // vOrigin = - vorig.xyz * scale_inv;
   // vDirection = position * scale_inv - vOrigin;
 
-  // Orthopgraphic camera, camera position in theory is at infinite
-  // instead of using camera's position, we can directly inverse (projectionMatrix * modelViewMatrix)
-  // Because projectionMatrix * modelViewMatrix * anything is centered at 0,0,0,1, hence inverse this procedure
-  // obtains Orthopgraphic direction, which can be directly used as ray direction
+  // Orthopgraphic camera, camera position in theory is at infinite,
 
-  // 'vDirection = vec3( inverse( pmv ) * vec4( 0.0,0.0,0.0,1.0 ) ) / scale;',
-  // vDirection = inverse( pmv )[3].xyz * scale_inv;
-  vec4 vdir = inverse( pmv ) * vec4( 0.0, 0.0, 1.0, 0.0 );
-  vDirection = vdir.xyz * scale_inv; //  / vdir.w;
-  vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
-
-  // Previous test code, seems to be poor because camera position is not well-calculated?
-  // 'vDirection = - normalize( vec3( inverse( modelMatrix ) * vec4( cameraPos , 1.0 ) ).xyz ) * 1000.0;',
-  // vOrigin = (position - vec3(0.6,-0.6,0.6)) * scale_inv - vDirection;
-  // vOrigin = (inverse( pmv ) * vec4( camera_center, gl_Position.z - 1.0, gl_Position.w )).xyz * scale_inv;
-  vOrigin = (position) * scale_inv - vDirection;
-
+  // Ideally the following calculation should generate correct results
+  // vOrigin will be interpolated in fragmentShader, hence project and unproject
+  vec4 vOriginProjected = gl_Position;
+  vOriginProjected.z = -vOriginProjected.w;
+  vOrigin = (inverse(pmv) * vOriginProjected).xyz;
+  // vOrigin = gl_Position.xyw;
+  vDirection = normalize(position - vOrigin);
 
 }
 `),
@@ -66474,23 +66626,24 @@ void main() {
 precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
+in vec3 vPosition;
 in vec3 vDirection;
-in vec3 vSamplerBias;
+// in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
 uniform sampler3D cmap;
-uniform sampler3D nmap;
+uniform int colorChannels;
+uniform vec3 color1WhenSingleChannel;
+uniform vec3 color2WhenSingleChannel;
 uniform float alpha;
 // uniform float steps;
 uniform vec3 scale_inv;
 uniform float bounding;
-uniform float depthMix;
 vec4 fcolor;
 vec3 fOrigin;
-vec3 fDirection;
 vec2 hitBox( vec3 orig, vec3 dir ) {
-  vec3 box_min = vec3( - bounding );
-  vec3 box_max = vec3( bounding );
+  vec3 box_min = vec3( - bounding ) / scale_inv;
+  vec3 box_max = vec3( bounding ) / scale_inv;
   vec3 inv_dir = 1.0 / dir;
   vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
   vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
@@ -66501,7 +66654,7 @@ vec2 hitBox( vec3 orig, vec3 dir ) {
   return vec2( t0, t1 );
 }
 float getDepth( vec3 p ){
-  vec4 frag2 = pmv * vec4( p, scale_inv );
+  vec4 frag2 = pmv * vec4( p, 1.0 );
 
   return(
     (frag2.z / frag2.w * (gl_DepthRange.far - gl_DepthRange.near) +
@@ -66514,18 +66667,90 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  return texture( cmap, p + vSamplerBias );
+  vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
+  if( colorChannels == 1 ) {
+    re.rgb = color1WhenSingleChannel * re.a + color2WhenSingleChannel * (1.0 - re.a);
+  }
+  return re;
 }
+
 vec3 getNormal( vec3 p ) {
-  vec3 re = texture( nmap, p + vSamplerBias ).rgb  *  255.0 - 127.0 ;
-  return normalize( re );
+  vec4 ne;
+  vec3 zero3 = vec3(0.0, 0.0, 0.0);
+  vec3 normal = zero3;
+  vec3 pos0 = (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5;
+  vec3 pos = pos0;
+  vec4 re = texture( cmap, pos0 );
+
+  if( re.a == 0.0 || re.rgb == zero3 ) {
+    return normal;
+  }
+
+  float stp = max(max(abs(scale_inv.x), abs(scale_inv.y)), abs(scale_inv.z)) * 1.74;
+  vec2 dt = vec2(stp, stp);
+
+
+  // normal along xy
+  pos.xy = pos0.xy + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy += dt;
+  }
+
+  pos.xy = pos0.xy - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy -= dt;
+  }
+
+  // normal along xz
+  pos.y = pos0.y;
+  pos.xz = pos0.xz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz += dt;
+  }
+
+  pos.xz = pos0.xz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz -= dt;
+  }
+
+  // normal along yz
+  pos.x = pos0.x;
+  pos.yz = pos0.yz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz += dt;
+  }
+
+  pos.yz = pos0.yz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz -= dt;
+  }
+
+
+  return normalize( normal );
 }
 
 void main(){
-  fDirection = vDirection;
+
+  // vec4 vOriginProjected = pmv * vec4( vPosition, 1.0 );
+  // vOriginProjected.z = -vOriginProjected.w;
+  // fOrigin = (inverse(pmv) * vOriginProjected).xyz;
   fOrigin = vOrigin;
 
-  vec3 rayDir = normalize( fDirection );
+  // vec3 rayDir = normalize( vDirection );
+  vec3 rayDir = normalize( vPosition - vOrigin );
+
   vec2 bounds = hitBox( fOrigin, rayDir );
   if ( bounds.x > bounds.y ) discard;
   bounds.x = max( bounds.x, 0.0 );
@@ -66533,14 +66758,16 @@ void main(){
 
   // bounds.x is the length of ray
   vec3 p = fOrigin + bounds.x * rayDir;
-  vec3 inc = scale_inv / abs( rayDir );
+  vec3 inc = 1.0 / abs( rayDir );
   float delta = min( inc.x, min( inc.y, inc.z ) );
+  // float delta = 0.5 / max( abs(rayDir.x), max( abs(rayDir.y), abs(rayDir.z) ) );
 
   int nn = 0;
   int valid_voxel = 0;
   float mix_factor = 1.0;
   vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
   vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
+  vec3 nmal;
 
   for ( float t = bounds.x; t < bounds.y; t += delta ) {
     fcolor = sample2( p );
@@ -66548,8 +66775,10 @@ void main(){
     // Hit voxel
     if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
 
-      if( alpha >= 0.0 ){
-        fcolor.a = alpha;
+      if( alpha > 0.0 ){
+        fcolor.a *= alpha;
+      } else {
+        fcolor.a = 1.0;
       }
 
 
@@ -66558,23 +66787,32 @@ void main(){
 
         last_color = fcolor;
 
-        fcolor.rgb *= pow(
-          max(abs(dot(rayDir, getNormal( p ))), 0.25),
-          0.45
-        );
-
         if( nn == 0 ){
-          gl_FragDepth = getDepth( p ) * depthMix + gl_FragDepth * (1.0 - depthMix);
+          gl_FragDepth = getDepth( p );
           color = fcolor;
+
+
+          if( colorChannels > 1 ) {
+            nmal = getNormal( p );
+            if(nmal != vec3(0.0, 0.0, 0.0)) {
+
+              color.rgb *= pow(max( abs(dot(rayDir, normalize(nmal - rayDir) )) , 0.25), 0.3);
+            }
+          }
+
           color.a = max( color.a, 0.2 );
         } else {
           // blend
           color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
           color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
-          // color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
+          color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
         }
 
         nn++;
+
+      } else {
+
+        color.a = min(color.a + 0.005, 1.0);
 
       }
 
@@ -66617,7 +66855,7 @@ const _plane = new three_module.Plane();
 const _closestPoint = new three_module.Vector3();
 const _triangle = new three_module.Triangle();
 
-class ConvexHull {
+class ConvexHull_ConvexHull {
 
 	constructor() {
 
@@ -66696,7 +66934,7 @@ class ConvexHull {
 
 						for ( let i = 0, l = attribute.count; i < l; i ++ ) {
 
-							const point = new three_module.Vector3();
+							const point = new Vector3();
 
 							point.fromBufferAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
 
@@ -67024,8 +67262,8 @@ class ConvexHull {
 
 	computeExtremes() {
 
-		const min = new three_module.Vector3();
-		const max = new three_module.Vector3();
+		const min = new Vector3();
+		const max = new Vector3();
 
 		const minVertices = [];
 		const maxVertices = [];
@@ -67524,8 +67762,8 @@ class Face {
 
 	constructor() {
 
-		this.normal = new three_module.Vector3();
-		this.midpoint = new three_module.Vector3();
+		this.normal = new Vector3();
+		this.midpoint = new Vector3();
 		this.area = 0;
 
 		this.constant = 0; // signed distance from face to the origin
@@ -67888,7 +68126,7 @@ class VertexList {
 
 
 
-class ConvexGeometry extends three_module.BufferGeometry {
+class ConvexGeometry extends (/* unused pure expression or super */ null && (BufferGeometry)) {
 
 	constructor( points ) {
 
@@ -67933,8 +68171,8 @@ class ConvexGeometry extends three_module.BufferGeometry {
 
 		// build geometry
 
-		this.setAttribute( 'position', new three_module.Float32BufferAttribute( vertices, 3 ) );
-		this.setAttribute( 'normal', new three_module.Float32BufferAttribute( normals, 3 ) );
+		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+		this.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
 
 	}
 
@@ -67952,61 +68190,6 @@ class ConvexGeometry extends three_module.BufferGeometry {
 
 
 class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
-
-  // must be after _map_data _map_color are set
-  _compute_normals() {
-
-    let i = 0, ii = 0, jj,
-        nml = new three_module.Vector3(), u = new three_module.Vector3(),
-        tmp, x, y, z, a, b, c;
-    const zdim = this._cube_dim[0],
-          ydim = this._cube_dim[1],
-          xdim = this._cube_dim[2],
-          pad = 1;
-
-    for ( z = pad; z < zdim - pad; z += 1 ) {
-      for ( y = pad; y < ydim - pad; y += 1 ) {
-        for ( x = pad; x < xdim - pad; x += 1 ) {
-
-          ii = x + xdim * ( y + ydim * z );
-
-          if( this._map_color[ 4 * ii + 3 ] !== 0){
-            jj = ii + this._value_index_skip * this._voxel_length;
-            i = this._cube_values[ jj ];
-
-            nml.set( 0, 0, 0 );
-
-            for( a = -pad; a <= pad; a+=1 ){
-              for( b = -pad; b <= pad; b+=1 ){
-                for( c = -pad; c <= pad; c+=1 ){
-
-                  if( this._cube_values[ jj + a + (b + c * ydim) * xdim ] != i ) {
-                    u.set( a, b, c ).normalize();
-                    nml.add( u );
-                  }
-
-                }
-              }
-            }
-
-            nml.normalize()
-
-
-            this._map_normals[ ii * 3 ] = (nml.x / 2.0 + 1.0) * 127;
-            this._map_normals[ ii * 3 + 1 ] = (nml.y / 2.0 + 1.0) * 127;
-            this._map_normals[ ii * 3 + 2 ] = (nml.z / 2.0 + 1.0) * 127;
-
-          }
-        }
-      }
-    }
-
-    if( this._normals_texture ){
-      this._normals_texture.needsUpdate = true;
-    }
-
-
-  }
 
   _set_palette( color_ids, skip, compute_boundingbox = false ){
 
@@ -68036,6 +68219,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
         this._bounding_max = 0;
       }
 
+      let within_filter;
       for ( z = 0; z < this._cube_dim[0]; z ++ ) {
         for ( y = 0; y < this._cube_dim[1]; y ++ ) {
           for ( x = 0; x < this._cube_dim[2]; x ++ ) {
@@ -68051,12 +68235,22 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
                 // valid voxel to render
 
-                this._map_color[ 4 * ii ] = tmp.R;
-                this._map_color[ 4 * ii + 1 ] = tmp.G;
-                this._map_color[ 4 * ii + 2 ] = tmp.B;
+                within_filter = this._color_ids_length === 0 || this._color_ids[ i ];
 
-                if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
-                  this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = tmp.R;
+                } else {
+
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+
+                  if( within_filter ) {
+                    this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                  }
+                }
+
+                if( within_filter ) {
 
                   // this._map_data[ ii ] = i;
 
@@ -68081,7 +68275,12 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
             }
             // voxel is invisible, no need to render! hence data is 0
             // this._map_data[ ii ] = 0;
-            this._map_color[ 4 * ii + 3 ] = 0;
+
+            if( this._color_format === "AlphaFormat" ) {
+              this._map_color[ ii ] = 0;
+            } else {
+              this._map_color[ 4 * ii + 3 ] = 0;
+            }
             ii++;
             jj++;
           }
@@ -68103,14 +68302,13 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       if( this._color_texture ){
         this._color_texture.needsUpdate = true;
       }
-      // this._normals_texture.needsUpdate = true;
-
 
     }
 
   }
 
   constructor(g, canvas){
+
 
     super( g, canvas );
     // this._params is g
@@ -68120,6 +68318,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.type = 'DataCube2';
     this.isDataCube2 = true;
     this._display_mode = "hidden";
+    this._color_format = "RGBAFormat";
 
     let mesh;
 
@@ -68134,17 +68333,26 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
           },
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
-          max_colID = lut.mapMaxColorID;
+          max_colID = lut.mapMaxColorID,
+          color_format = g.color_format;
     this._margin_length = volume;
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
+
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._voxel_length = cube_dim[0] * cube_dim[1] * cube_dim[2];
       // const data = new Float32Array( this._voxel_length );
-      const color = new Uint8Array( this._voxel_length * 4 );
-      const normals = new Uint8Array( this._voxel_length * 3 );
-      const vertex_position = [];
+
+      let color;
+
+      if( color_format === "AlphaFormat" ) {
+        this._color_format = "AlphaFormat";
+        color = new Uint8Array( this._voxel_length );
+      } else {
+        this._color_format = "RGBAFormat";
+        color = new Uint8Array( this._voxel_length * 4 );
+      }
 
       this._cube_values = cube_values;
       this._lut = lut;
@@ -68152,7 +68360,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._cube_dim = cube_dim;
       // this._map_data = data;
       this._map_color = color;
-      this._map_normals = normals;
       this._map_alpha = lut.mapAlpha;
       this._color_ids = [];
       this._color_ids_length = 0;
@@ -68181,10 +68388,14 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
             if( i !== 0 ){
               tmp = lut_map[i];
               if( tmp ) {
-                color[ 4 * ii ] = tmp.R;
-                color[ 4 * ii + 1 ] = tmp.G;
-                color[ 4 * ii + 2 ] = tmp.B;
-                color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = tmp.R;
+                } else {
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+                  this._map_color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                }
 
                 if( Math.min(x,y,z) < bounding_min ){
                   bounding_min = Math.min(x,y,z);
@@ -68193,15 +68404,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
                   bounding_max = Math.max(x,y,z);
                 }
                 // this._map_data[ ii ] = i;
-
-                // calculate vertex positions
-                vertex_position.push(
-                  new three_module.Vector3().set(
-                    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
-                    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
-                    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
-                  )
-                );
 
               }
             }
@@ -68214,7 +68416,16 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
         }
       }
 
-      this._compute_normals();
+      // for ( let z = 0; z < cube_dim[0]; z ++ ) {
+      //  for ( let y = 0; y < cube_dim[1]; y ++ ) {
+      //    for ( let x = 0; x < cube_dim[2]; x ++ ) {
+      //vertex_position.push(
+      //  new Vector3().set(
+      //    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
+      //    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
+      //    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
+      //  )
+      //);
 
       // 3D texture
       /*let data_texture = new DataTexture3D(
@@ -68229,36 +68440,19 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._data_texture = data_texture;
       this._data_texture.needsUpdate = true;*/
 
-
       // Color texture - used to render colors
       let color_texture = new three_module.DataTexture3D(
-        color, cube_dim[0], cube_dim[1], cube_dim[2]
+        this._map_color, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
       color_texture.minFilter = three_module.NearestFilter;
       color_texture.magFilter = three_module.NearestFilter;
-      color_texture.format = three_module.RGBAFormat;
+      color_texture.format = this._color_format === "AlphaFormat" ? three_module.AlphaFormat : three_module.RGBAFormat;
       color_texture.type = three_module.UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
       this._color_texture = color_texture;
       this._color_texture.needsUpdate = true;
-
-      // normals
-      let normals_texture = new three_module.DataTexture3D(
-        normals, cube_dim[0], cube_dim[1], cube_dim[2]
-      );
-
-      // magFilter must be nearest
-      // minFilter can be locally smoothed
-      normals_texture.minFilter = three_module.LinearFilter;
-      normals_texture.magFilter = three_module.NearestFilter;
-      normals_texture.format = three_module.RGBFormat;
-      normals_texture.type = three_module.UnsignedByteType;
-      normals_texture.unpackAlignment = 1;
-
-      this._normals_texture = normals_texture;
-      this._normals_texture.needsUpdate = true;
 
       // Material
       const shader = VolumeRenderShader1;
@@ -68268,8 +68462,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._uniforms = uniforms;
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
-      uniforms.nmap.value = normals_texture;
-
+      uniforms.colorChannels.value = this._color_format === "AlphaFormat" ? 1 : 4;
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
 
@@ -68295,7 +68488,8 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       //   new Vector3().fromArray(cube_half_size).length(), 29, 14
       // );
 
-      const geometry = new ConvexGeometry( vertex_position );
+      // const geometry = new ConvexGeometry( vertex_position );
+      const geometry = new three_module.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
@@ -68320,7 +68514,6 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._mesh.geometry.dispose();
       // this._data_texture.dispose();
       this._color_texture.dispose();
-      this._normals_texture.dispose();
 
       // this._map_data = undefined;
       // this._cube_values = undefined;

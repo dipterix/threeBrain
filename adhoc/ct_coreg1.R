@@ -23,9 +23,9 @@ ct2t1 <- solve(rbind(t12ct, c(0,0,0,1)))
 ct_shift <- ct$get_center_matrix()
 ct_qform <- ct$get_qform()
 ct$get_voxel_size()
-matrix_world <- brain$Torig %*% solve(brain$Norig) %*% ct2t1 %*% ct_qform %*% ct_shift
+trans_mat <- brain$Torig %*% solve(brain$Norig) %*% ct2t1 %*% ct_qform %*% ct_shift
 add_voxel_cube(brain, "CT", ct$get_data(), size = ct$get_size(),
-               matrix_world = matrix_world)
+               trans_mat = trans_mat)
 
 brain$plot(
   control_presets = "localization",

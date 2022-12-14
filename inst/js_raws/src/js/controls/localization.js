@@ -55,9 +55,9 @@ function atlas_label(pos_array, canvas){
   const delta = 4;
   const position = pos_array;
 
-  let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x + 0.5;
-  let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y + 0.5;
-  let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z - 0.5;
+  let i = ( position[0] + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
+  let j = ( position[1] + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
+  let k = ( position[2] + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
 
   i = Math.round( i );
   j = Math.round( j );
@@ -393,7 +393,7 @@ class LocElectrode {
     const inst = this.get_volume_instance();
     if( !inst ){ return; }
 
-    const matrix_ = inst.object.parent.matrixWorld.clone(),
+    const matrix_ = inst.object.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
     const margin_voxels = new Vector3().fromArray( inst._cube_dim );
@@ -522,7 +522,7 @@ function electrode_from_slice( scode, canvas ){
   return( pos );
 }
 
-function electrode_line_from_ct( inst, canvas, electrodes, size ){
+function interpolate_electrode_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
@@ -539,6 +539,8 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
 
   const dir = new Vector3();
   const re = [];
+
+  let added = false;
   for( let ii = 1; ii < n; ii++ ){
 
     tmp.copy( step ).multiplyScalar( ii );
@@ -546,12 +548,16 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
     dir.copy( est ).sub( src ).normalize();
 
     // adjust
-
+    added = false;
     for( let delta = 0.5; delta < 100; delta += 0.5 ){
       const res = intersect_volume(src, dir, inst, canvas, delta, false);
       if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
         re.push( res.clone() );
+        added = true;
         break;
+      }
+      if(!added) {
+        re.push( est.clone() );
       }
       /*
       res = raycast_volume(
@@ -576,7 +582,53 @@ function electrode_line_from_ct( inst, canvas, electrodes, size ){
   });
 }
 
-function electrode_line_from_slice( canvas, electrodes, size ){
+function extend_electrode_from_ct( inst, canvas, electrodes, size ){
+  if( !inst ){ return; }
+  if( electrodes.length < 2 ){ return; }
+  if( size <= 2 ){ return; }
+  const src = canvas.main_camera.position;
+  const dst = new Vector3();
+  electrodes[electrodes.length - 2].object.getWorldPosition( dst );
+
+  const n = size - 1;
+  const step = new Vector3();
+  electrodes[electrodes.length - 1].object.getWorldPosition( step );
+  step.sub( dst );
+  const step_length = step.length();
+  const tmp = new Vector3();
+  const est = new Vector3();
+
+  const dir = new Vector3();
+  const re = [];
+
+  est.copy(dst).add( step );
+  let added = false;
+  for( let ii = 1; ii < n; ii++ ){
+
+    est.add( step );
+    dir.copy( est ).sub( src ).normalize();
+
+    // adjust the est
+    added = false
+    for( let delta = 0.5; delta < 100; delta += 0.5 ){
+      const res = intersect_volume(src, dir, inst, canvas, delta, false);
+      if(!isNaN(res.x) && res.distanceTo(est) < 10 + delta / 10 ){
+        step.add( res ).sub( est ).normalize().multiplyScalar(step_length);
+        est.copy( res );
+        added = true;
+        break;
+      }
+    }
+    re.push( est.clone() );
+  }
+
+  return({
+    positions : re,
+    direction : step
+  });
+}
+
+function interpolate_electrode_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
 
@@ -591,6 +643,42 @@ function electrode_line_from_slice( canvas, electrodes, size ){
   const step = new Vector3();
   electrodes[electrodes.length - 1].object.getWorldPosition( step );
   step.sub( dst ).multiplyScalar( 1 / n );
+  const tmp = new Vector3();
+  const est = new Vector3();
+
+  let res;
+  const re = [];
+
+  for( let ii = 1; ii < n; ii++ ){
+
+    tmp.copy( step ).multiplyScalar( ii );
+    est.copy( dst ).add( tmp );
+
+    re.push( new Vector3().copy(est) );
+  }
+
+  return({
+    positions : re,
+    direction : step
+  });
+}
+
+function extend_electrode_from_slice( canvas, electrodes, size ){
+  if( electrodes.length < 2 ){ return; }
+  if( size <= 2 ){ return; }
+
+  const src = canvas.main_camera.position;
+  const dst = new Vector3();
+
+  canvas.set_raycaster();
+  canvas.mouse_raycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+  electrodes[electrodes.length - 2].object.getWorldPosition( dst );
+
+  const n = size - 1;
+  const step = new Vector3();
+  electrodes[electrodes.length - 1].object.getWorldPosition( step );
+  step.sub( dst );
+  dst.add( step );
   const tmp = new Vector3();
   const est = new Vector3();
 
@@ -696,7 +784,8 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       }
       this.gui.hide_item([
         ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-        'Interpolate from Recently Added', 'Reset Highlighted',
+        'Interpolate from Recently Added', 'Extend from Recently Added',
+        'Reset Highlighted',
         'Auto-Adjust Highlighted', 'Auto-Adjust All'
       ], folder_name);
       if( v === 'disabled' ){ return; }
@@ -708,7 +797,8 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       } else {
         this.gui.show_item([
           ' - tkrRAS', ' - MNI305', ' - T1 RAS',
-          'Interpolate Size', 'Interpolate from Recently Added'
+          'Interpolate Size', 'Interpolate from Recently Added',
+          'Extend from Recently Added'
         ], folder_name);
       }
 
@@ -826,9 +916,9 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         if( mode == "CT/volume" ){
           const inst = this.current_voxel_type();
-          res = electrode_line_from_ct( inst, this.canvas, electrodes, v + 2 );
+          res = interpolate_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
         } else {
-          res = electrode_line_from_slice( this.canvas, electrodes, v + 2 );
+          res = interpolate_electrode_from_slice( this.canvas, electrodes, v + 2 );
         }
         // return({
         //   positions : re,
@@ -863,9 +953,56 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       { folder_name: folder_name }
     );
 
+    this.gui.add_item(
+      'Extend from Recently Added',
+      () => {
+        let v = Math.round( interpolate_size.getValue() );
+        if( !v ){ return; }
+        const mode = edit_mode.getValue();
+        const scode = this.canvas.get_state("target_subject");
+        if( !mode || mode == "disabled" ||
+            mode == "refine" ||
+            !scode || scode === ""
+        ){ return; }
+
+        if( electrodes.length < 2 ){
+          alert("Please localize at least 2 electrodes first.");
+          return;
+        }
+
+        let res;
+
+        if( mode == "CT/volume" ){
+          const inst = this.current_voxel_type();
+          res = extend_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
+        } else {
+          res = extend_electrode_from_slice( this.canvas, electrodes, v + 2, true );
+        }
+
+        if( res.positions.length ){
+          res.direction.normalize();
+          res.positions.forEach((pos) => {
+            const el = new LocElectrode(
+              scode, electrodes.length + 1, pos, this.canvas,
+              elec_size.getValue());
+            el.set_mode( mode );
+            electrodes.push( el );
+          });
+
+          this.canvas.switch_subject();
+        }
+
+        if(this.shiny){
+          this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        }
+
+      },
+      { folder_name: folder_name }
+    );
+
 
     // Download as CSV
-    this.gui.add_item( 'Download as csv', () => {
+    this.gui.add_item( 'Download Current as CSV', () => {
       this.canvas.download_electrodes("csv");
     }, {
       folder_name: folder_name
@@ -1022,7 +1159,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
     this.gui.hide_item([
       ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-      'Interpolate from Recently Added',
+      'Interpolate from Recently Added', 'Extend from Recently Added',
       'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
     ], folder_name);
   };

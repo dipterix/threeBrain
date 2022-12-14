@@ -1,6 +1,6 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { Vector3, DataTexture3D, NearestFilter, FloatType, RedFormat,
-         RGBAFormat, UnsignedByteType, LinearFilter, RGBFormat, UniformsUtils,
+import { Vector3, DataTexture3D, NearestFilter, FloatType,
+         RGBAFormat, AlphaFormat, UnsignedByteType, LinearFilter, UniformsUtils,
          RawShaderMaterial, BackSide, SphereBufferGeometry, Mesh,
          BoxBufferGeometry } from '../../build/three.module.js';
 import { CONSTANTS } from '../constants.js';
@@ -10,61 +10,6 @@ import { ConvexGeometry } from '../jsm/geometries/ConvexGeometry.js';
 
 
 class DataCube2 extends AbstractThreeBrainObject {
-
-  // must be after _map_data _map_color are set
-  _compute_normals() {
-
-    let i = 0, ii = 0, jj,
-        nml = new Vector3(), u = new Vector3(),
-        tmp, x, y, z, a, b, c;
-    const zdim = this._cube_dim[0],
-          ydim = this._cube_dim[1],
-          xdim = this._cube_dim[2],
-          pad = 1;
-
-    for ( z = pad; z < zdim - pad; z += 1 ) {
-      for ( y = pad; y < ydim - pad; y += 1 ) {
-        for ( x = pad; x < xdim - pad; x += 1 ) {
-
-          ii = x + xdim * ( y + ydim * z );
-
-          if( this._map_color[ 4 * ii + 3 ] !== 0){
-            jj = ii + this._value_index_skip * this._voxel_length;
-            i = this._cube_values[ jj ];
-
-            nml.set( 0, 0, 0 );
-
-            for( a = -pad; a <= pad; a+=1 ){
-              for( b = -pad; b <= pad; b+=1 ){
-                for( c = -pad; c <= pad; c+=1 ){
-
-                  if( this._cube_values[ jj + a + (b + c * ydim) * xdim ] != i ) {
-                    u.set( a, b, c ).normalize();
-                    nml.add( u );
-                  }
-
-                }
-              }
-            }
-
-            nml.normalize()
-
-
-            this._map_normals[ ii * 3 ] = (nml.x / 2.0 + 1.0) * 127;
-            this._map_normals[ ii * 3 + 1 ] = (nml.y / 2.0 + 1.0) * 127;
-            this._map_normals[ ii * 3 + 2 ] = (nml.z / 2.0 + 1.0) * 127;
-
-          }
-        }
-      }
-    }
-
-    if( this._normals_texture ){
-      this._normals_texture.needsUpdate = true;
-    }
-
-
-  }
 
   _set_palette( color_ids, skip, compute_boundingbox = false ){
 
@@ -94,6 +39,7 @@ class DataCube2 extends AbstractThreeBrainObject {
         this._bounding_max = 0;
       }
 
+      let within_filter;
       for ( z = 0; z < this._cube_dim[0]; z ++ ) {
         for ( y = 0; y < this._cube_dim[1]; y ++ ) {
           for ( x = 0; x < this._cube_dim[2]; x ++ ) {
@@ -109,12 +55,22 @@ class DataCube2 extends AbstractThreeBrainObject {
 
                 // valid voxel to render
 
-                this._map_color[ 4 * ii ] = tmp.R;
-                this._map_color[ 4 * ii + 1 ] = tmp.G;
-                this._map_color[ 4 * ii + 2 ] = tmp.B;
+                within_filter = this._color_ids_length === 0 || this._color_ids[ i ];
 
-                if( this._color_ids_length === 0 || this._color_ids[ i ] ) {
-                  this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = tmp.R;
+                } else {
+
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+
+                  if( within_filter ) {
+                    this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
+                  }
+                }
+
+                if( within_filter ) {
 
                   // this._map_data[ ii ] = i;
 
@@ -139,7 +95,12 @@ class DataCube2 extends AbstractThreeBrainObject {
             }
             // voxel is invisible, no need to render! hence data is 0
             // this._map_data[ ii ] = 0;
-            this._map_color[ 4 * ii + 3 ] = 0;
+
+            if( this._color_format === "AlphaFormat" ) {
+              this._map_color[ ii ] = 0;
+            } else {
+              this._map_color[ 4 * ii + 3 ] = 0;
+            }
             ii++;
             jj++;
           }
@@ -161,14 +122,13 @@ class DataCube2 extends AbstractThreeBrainObject {
       if( this._color_texture ){
         this._color_texture.needsUpdate = true;
       }
-      // this._normals_texture.needsUpdate = true;
-
 
     }
 
   }
 
   constructor(g, canvas){
+
 
     super( g, canvas );
     // this._params is g
@@ -178,6 +138,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     this.type = 'DataCube2';
     this.isDataCube2 = true;
     this._display_mode = "hidden";
+    this._color_format = "RGBAFormat";
 
     let mesh;
 
@@ -192,17 +153,26 @@ class DataCube2 extends AbstractThreeBrainObject {
           },
           lut = canvas.global_data('__global_data__.VolumeColorLUT'),
           lut_map = lut.map,
-          max_colID = lut.mapMaxColorID;
+          max_colID = lut.mapMaxColorID,
+          color_format = g.color_format;
     this._margin_length = volume;
     // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
+
     if( canvas.has_webgl2 ){
       // Generate 3D texture, to do so, we need to customize shaders
 
       this._voxel_length = cube_dim[0] * cube_dim[1] * cube_dim[2];
       // const data = new Float32Array( this._voxel_length );
-      const color = new Uint8Array( this._voxel_length * 4 );
-      const normals = new Uint8Array( this._voxel_length * 3 );
-      const vertex_position = [];
+
+      let color;
+
+      if( color_format === "AlphaFormat" ) {
+        this._color_format = "AlphaFormat";
+        color = new Uint8Array( this._voxel_length );
+      } else {
+        this._color_format = "RGBAFormat";
+        color = new Uint8Array( this._voxel_length * 4 );
+      }
 
       this._cube_values = cube_values;
       this._lut = lut;
@@ -210,7 +180,6 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._cube_dim = cube_dim;
       // this._map_data = data;
       this._map_color = color;
-      this._map_normals = normals;
       this._map_alpha = lut.mapAlpha;
       this._color_ids = [];
       this._color_ids_length = 0;
@@ -239,10 +208,14 @@ class DataCube2 extends AbstractThreeBrainObject {
             if( i !== 0 ){
               tmp = lut_map[i];
               if( tmp ) {
-                color[ 4 * ii ] = tmp.R;
-                color[ 4 * ii + 1 ] = tmp.G;
-                color[ 4 * ii + 2 ] = tmp.B;
-                color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                if( this._color_format === "AlphaFormat" ) {
+                  this._map_color[ ii ] = tmp.R;
+                } else {
+                  this._map_color[ 4 * ii ] = tmp.R;
+                  this._map_color[ 4 * ii + 1 ] = tmp.G;
+                  this._map_color[ 4 * ii + 2 ] = tmp.B;
+                  this._map_color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
+                }
 
                 if( Math.min(x,y,z) < bounding_min ){
                   bounding_min = Math.min(x,y,z);
@@ -251,15 +224,6 @@ class DataCube2 extends AbstractThreeBrainObject {
                   bounding_max = Math.max(x,y,z);
                 }
                 // this._map_data[ ii ] = i;
-
-                // calculate vertex positions
-                vertex_position.push(
-                  new Vector3().set(
-                    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
-                    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
-                    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
-                  )
-                );
 
               }
             }
@@ -272,7 +236,16 @@ class DataCube2 extends AbstractThreeBrainObject {
         }
       }
 
-      this._compute_normals();
+      // for ( let z = 0; z < cube_dim[0]; z ++ ) {
+      //  for ( let y = 0; y < cube_dim[1]; y ++ ) {
+      //    for ( let x = 0; x < cube_dim[2]; x ++ ) {
+      //vertex_position.push(
+      //  new Vector3().set(
+      //    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
+      //    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
+      //    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
+      //  )
+      //);
 
       // 3D texture
       /*let data_texture = new DataTexture3D(
@@ -287,36 +260,19 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._data_texture = data_texture;
       this._data_texture.needsUpdate = true;*/
 
-
       // Color texture - used to render colors
       let color_texture = new DataTexture3D(
-        color, cube_dim[0], cube_dim[1], cube_dim[2]
+        this._map_color, cube_dim[0], cube_dim[1], cube_dim[2]
       );
 
       color_texture.minFilter = NearestFilter;
       color_texture.magFilter = NearestFilter;
-      color_texture.format = RGBAFormat;
+      color_texture.format = this._color_format === "AlphaFormat" ? AlphaFormat : RGBAFormat;
       color_texture.type = UnsignedByteType;
       color_texture.unpackAlignment = 1;
 
       this._color_texture = color_texture;
       this._color_texture.needsUpdate = true;
-
-      // normals
-      let normals_texture = new DataTexture3D(
-        normals, cube_dim[0], cube_dim[1], cube_dim[2]
-      );
-
-      // magFilter must be nearest
-      // minFilter can be locally smoothed
-      normals_texture.minFilter = LinearFilter;
-      normals_texture.magFilter = NearestFilter;
-      normals_texture.format = RGBFormat;
-      normals_texture.type = UnsignedByteType;
-      normals_texture.unpackAlignment = 1;
-
-      this._normals_texture = normals_texture;
-      this._normals_texture.needsUpdate = true;
 
       // Material
       const shader = VolumeRenderShader1;
@@ -326,8 +282,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._uniforms = uniforms;
       // uniforms.map.value = data_texture;
       uniforms.cmap.value = color_texture;
-      uniforms.nmap.value = normals_texture;
-
+      uniforms.colorChannels.value = this._color_format === "AlphaFormat" ? 1 : 4;
       uniforms.alpha.value = -1.0;
       uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
 
@@ -353,7 +308,8 @@ class DataCube2 extends AbstractThreeBrainObject {
       //   new Vector3().fromArray(cube_half_size).length(), 29, 14
       // );
 
-      const geometry = new ConvexGeometry( vertex_position );
+      // const geometry = new ConvexGeometry( vertex_position );
+      const geometry = new BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
 
       // This translate will make geometry rendered correctly
       // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
@@ -378,7 +334,6 @@ class DataCube2 extends AbstractThreeBrainObject {
       this._mesh.geometry.dispose();
       // this._data_texture.dispose();
       this._color_texture.dispose();
-      this._normals_texture.dispose();
 
       // this._map_data = undefined;
       // this._cube_values = undefined;

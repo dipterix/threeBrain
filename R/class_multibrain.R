@@ -101,7 +101,7 @@ MultiBrain2 <- R6::R6Class(
 
     localize = function(
       coregistered_ct,
-      col = c("white", "green", 'darkgreen'),
+      col = c("gray80", 'darkgreen'),
       controllers = list(),
       control_presets = NULL,
       voxel_colormap = NULL,
@@ -119,13 +119,13 @@ MultiBrain2 <- R6::R6Class(
         }
 
         cube <- reorient_volume( ct$get_data(), self$Torig )
-        add_voxel_cube(self, "CT", cube)
+        add_voxel_cube(self, "CT", cube, color_format = "AlphaFormat")
 
         key <- seq(0, max(cube))
         cmap <- create_colormap(
           gtype = 'volume', dtype = 'continuous',
           key = key, value = key,
-          color = col
+          color = c("black", "white")
         )
         controllers[["Voxel Type"]] <- "CT"
         controllers[["Voxel Display"]] <- "normal"

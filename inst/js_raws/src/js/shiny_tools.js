@@ -216,7 +216,7 @@ class THREE_BRAIN_SHINY {
     }
 
     // register handlers
-    Object.getOwnPropertyNames(Object.getPrototypeOf(__presets.shiny))
+    Object.getOwnPropertyNames(Object.getPrototypeOf(presets.shiny))
       .filter((v) => { return(v.startsWith("handle_")); })
       .map((v) => { return(v.replace("handle_", "")); })
     const handler_names = [

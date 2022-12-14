@@ -19,7 +19,7 @@ function raycast_volume_geneator(){
 
   const raycast_volume = (
     origin, direction, margin_voxels, margin_lengths,
-    map_array, delta = 0.5, snap_raycaster = true ) => {
+    map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {
     // canvas.mouse_raycaster.ray.origin
     // canvas.mouse_raycaster.ray.direction
 
@@ -90,9 +90,13 @@ function raycast_volume_geneator(){
             if( k2 >= mz ){ k2 = mz - 1 ; }
 
             for( k = k1; k <= k2; k++ ){
+              // tmp = map_array[(
+              //   i + j * mx + k * mx * my
+              // ) * 4 + 3 ];
               tmp = map_array[(
                 i + j * mx + k * mx * my
-              ) * 4 + 3 ];
+              ) * colorChannels + (colorChannels - 1) ];
+
               if( tmp > 0 ){
                 p.set(
                   (i+0.5) * f.x - orig.x,
@@ -150,10 +154,14 @@ function electrode_from_ct_generator(){
         matrix_inv = new Matrix4(),
         matrix_rot = new Matrix3();
 
+  let colorChannels = 4;
+
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
 
-    matrix_.copy(inst.object.parent.matrixWorld);
+    colorChannels = inst._color_format === "AlphaFormat" ? 1 : 4;
+
+    matrix_.copy(inst.object.matrixWorld);
     matrix_inv.copy(matrix_).invert();
     origin.copy(src).applyMatrix4(matrix_inv);
 
@@ -179,7 +187,7 @@ function electrode_from_ct_generator(){
     const res = raycast_volume(
       origin, direction, cube_dim, cube_size,
       inst._color_texture.image.data,
-      delta, snap_raycaster
+      delta, snap_raycaster, colorChannels
     );
     pos.x = res[3];
     pos.y = res[4];
