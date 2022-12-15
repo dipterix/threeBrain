@@ -556,26 +556,13 @@ function interpolate_electrode_from_ct( inst, canvas, electrodes, size ){
         added = true;
         break;
       }
-      if(!added) {
-        re.push( est.clone() );
-      }
-      /*
-      res = raycast_volume(
-        src, dir, margin_nvoxels, margin_lengths,
-        inst._color_texture.image.data,
-        delta
-      );
-      if( res && res.length >= 6 && !isNaN( res[3] )){
-        let est1 = new Vector3( res[3], res[4], res[5] );
-        if( est1.distanceTo(est) < 10 + delta / 10 ){
-          re.push(est1);
-          break;
-        }
-      }
-      */
+    }
+    if(!added) {
+      re.push( est.clone() );
     }
   }
 
+  console.log(re.length);
   return({
     positions : re,
     direction : step
