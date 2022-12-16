@@ -410,73 +410,83 @@ class LocElectrode {
     const mx = margin_voxels.x,
           my = margin_voxels.y,
           mz = margin_voxels.z;
-    const ct_data = inst._cube_values;
+    const ct_data = inst._cube_values,
+          ct_threshold_min = inst.__threshold_min;
 
-    const delta = 4;
-    const pos = new Vector3(),
-          pos0 = new Vector3();
-          // pos1 = new Vector3();
+
+    const pos = new Vector3().set(1, 0, 0),
+          pos0 = new Vector3().set(0, 0, 0).applyMatrix4(matrix_);
+    // calculate voxel size and IJK delta
+    const delta = new Vector3().set(
+      1 / pos.set(1, 0, 0).applyMatrix4(matrix_).sub(pos0).length(),
+      1 / pos.set(0, 1, 0).applyMatrix4(matrix_).sub(pos0).length(),
+      1 / pos.set(0, 0, 1).applyMatrix4(matrix_).sub(pos0).length()
+    );
+    const max_step_size = 2.0;
+
 
     // get position
     const position = this.instance._params.position;
     pos0.fromArray( position );
     pos.fromArray( position ).applyMatrix4( matrix_inv );
 
-    /*
-    (i+0.5) * f.x - l_x / 2,
-    (j+0.5) * f.y - l_y / 2,
-    (k+0.5) * f.z - l_z / 2
-    *?
+    // (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5
+    // (pos+margin_voxels/2) is in IJK voxel coordinate right now
+    // pos + margin_lengths/2 places the origin at voxel IJK corner
+    // (pos + margin_lengths/2) / f scales to the voxel IJK corner
+    //
+    const ijk0 = new Vector3().set(
+      Math.round( ( pos.x + margin_lengths.x / 2 ) - 1.0 ),
+      Math.round( ( pos.y + margin_lengths.y / 2 ) - 1.0 ),
+      Math.round( ( pos.z + margin_lengths.z / 2 ) - 1.0 )
+    );
+    const ijk1 = new Vector3().set(
+      Math.max( Math.min( ijk0.x, mx - delta.x * max_step_size - 1 ), delta.x * max_step_size ),
+      Math.max( Math.min( ijk0.y, my - delta.y * max_step_size - 1 ), delta.y * max_step_size ),
+      Math.max( Math.min( ijk0.z, mz - delta.z * max_step_size - 1 ), delta.z * max_step_size )
+    );
+    const ijk_new = new Vector3().set(0, 0, 0),
+          ijk_distance = new Vector3();
+    const multiply_factor = new Vector3().set( 1, mx, mx * my );
 
-    let i = ( position[0] + ( margin_lengths.x - 1 ) / 2 ) / f.x;
-    let j = ( position[1] + ( margin_lengths.y - 1 ) / 2 ) / f.y;
-    let k = ( position[2] + ( margin_lengths.z - 1 ) / 2 ) / f.z;
-    */
-    let i = ( pos.x + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
-    let j = ( pos.y + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
-    let k = ( pos.z + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
-
-    i = Math.round( i );
-    j = Math.round( j );
-    k = Math.round( k );
-
-    if( i < 0 ){ i = 0; }
-    if( i >= mx ){ i = mx - 1; }
-    if( j < 0 ){ k = 0; }
-    if( j >= my ){ j = my - 1; }
-    if( k < 0 ){ k = 0; }
-    if( k >= mz ){ k = mz - 1; }
-
-    const new_ijk = [0, 0, 0];
-    let thred = ct_data[ i + j * mx + k * mx * my ];
-    let tmp, total_v = 0;
-    for(let i0 = Math.max(0, i - delta); i0 < Math.min(i + delta, mx); i0++ ) {
-      for(let j0 = Math.max(0, j - delta); j0 < Math.min(j + delta, my); j0++ ) {
-        for(let k0 = Math.max(0, k - delta); k0 < Math.min(k + delta, mz); k0++ ) {
-          tmp = ct_data[ i0 + j0 * mx + k0 * mx * my ];
-          if( tmp >= thred ) {
+    const voxel_value = ct_data[ ijk0.dot(multiply_factor) ];
+    const ijk_idx = ijk1.clone();
+    let tmp, dist, total_v = 0;
+    for(
+      ijk_idx.x = Math.round( ijk1.x - delta.x * max_step_size );
+      ijk_idx.x <= Math.round( ijk1.x + delta.x * max_step_size );
+      ijk_idx.x += 1
+    ) {
+      for(
+        ijk_idx.y = Math.round( ijk1.y - delta.y * max_step_size );
+        ijk_idx.y <= Math.round( ijk1.y + delta.y * max_step_size );
+        ijk_idx.y += 1
+      ) {
+        for(
+          ijk_idx.z = Math.round( ijk1.z - delta.z * max_step_size );
+          ijk_idx.z <= Math.round( ijk1.z + delta.z * max_step_size );
+          ijk_idx.z += 1
+        ) {
+          tmp = ct_data[ ijk_idx.dot(multiply_factor) ];
+          if( tmp >= voxel_value ) {
+            // calculate weight
+            dist = ijk_distance.copy( ijk_idx ).sub( ijk0 ).length() / max_step_size;
+            tmp *= Math.exp( - (dist * dist) / 8.0 );
+            if(tmp > ct_threshold_min) { tmp *= 2; }
             total_v += tmp;
-            new_ijk[0] += tmp * i0;
-            new_ijk[1] += tmp * j0;
-            new_ijk[2] += tmp * k0;
+            ijk_new.x += tmp * (ijk_idx.x - ijk0.x);
+            ijk_new.y += tmp * (ijk_idx.y - ijk0.y);
+            ijk_new.z += tmp * (ijk_idx.z - ijk0.z);
           }
         }
       }
     }
     if( total_v <= 0 ){ return; }
-    new_ijk[0] /= total_v;
-    new_ijk[1] /= total_v;
-    new_ijk[2] /= total_v;
+    ijk_new.multiplyScalar( 1.0 / total_v ).add( ijk0 );
 
-
-    /*
-    let i = ( pos.x + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
-    let j = ( pos.y + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
-    let k = ( pos.z + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
-    */
-    pos.x = (new_ijk[0] + 0.5) * f.x - ( margin_lengths.x ) / 2;
-    pos.y = (new_ijk[1] + 0.5) * f.y - ( margin_lengths.y ) / 2;
-    pos.z = (new_ijk[2] + 0.5) * f.z - ( margin_lengths.z ) / 2;
+    // (ijk + 0.5 - margin_voxels / 2) * f
+    ijk_new.multiplyScalar( 2.0 ).sub( margin_voxels ).addScalar( 2.0 ).multiplyScalar( 0.5 );
+    pos.copy( ijk_new );
 
     // reverse back
     pos.applyMatrix4( matrix_ );

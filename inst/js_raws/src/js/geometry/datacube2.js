@@ -17,10 +17,15 @@ class DataCube2 extends AbstractThreeBrainObject {
 
       // WARNING, no check on color_ids to speed up
       // I assume color_ids is always array of integers
+      this.__threshold_min = Infinity;
       if( color_ids !== undefined ){
         this._color_ids.length = 0;
         for( let jj = 0; jj < color_ids.length; jj++ ) {
-          this._color_ids[ color_ids[ jj ] ] = true;
+          const color_id = color_ids[ jj ];
+          if( this.__threshold_min > color_id ) {
+            this.__threshold_min = color_id;
+          }
+          this._color_ids[ color_id ] = true;
         }
         if( this._color_ids[0] ){
           this._color_ids_length = 0;
@@ -139,6 +144,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     this.isDataCube2 = true;
     this._display_mode = "hidden";
     this._color_format = "RGBAFormat";
+    this.__threshold_min = Infinity;
 
     let mesh;
 
