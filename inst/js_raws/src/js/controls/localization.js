@@ -31,10 +31,17 @@ function atlas_label_from_index(index, canvas){
   }
 }
 
+
+// pos_array is in world coordinate
 function atlas_label(pos_array, canvas){
   const sub = canvas.get_state("target_subject") || "none",
         inst = canvas.threebrain_instances.get(`Atlas - aparc_aseg (${sub})`);
   if( !inst ){ return( [ "Unknown", 0 ] ); }
+
+  const fslut = canvas.global_data("__global_data__.FSColorLUT");
+
+  const matrix_ = inst.object.matrixWorld.clone(),
+        matrix_inv = matrix_.clone().invert();
 
   const margin_voxels = new Vector3().fromArray( inst._cube_dim );
   const margin_lengths = new Vector3().set(
@@ -47,61 +54,85 @@ function atlas_label(pos_array, canvas){
     margin_lengths.y / margin_voxels.y,
     margin_lengths.z / margin_voxels.z
   );
+
   const mx = margin_voxels.x,
         my = margin_voxels.y,
         mz = margin_voxels.z;
-  const ct_data = inst._cube_values;
+  const label_data = inst._cube_values;
 
-  const delta = 4;
-  const position = pos_array;
+  const pos = new Vector3().set(1, 0, 0),
+        pos0 = new Vector3().set(0, 0, 0).applyMatrix4(matrix_);
 
-  let i = ( position[0] + ( margin_lengths.x ) / 2 ) / f.x - 0.5;
-  let j = ( position[1] + ( margin_lengths.y ) / 2 ) / f.y - 0.5;
-  let k = ( position[2] + ( margin_lengths.z ) / 2 ) / f.z - 0.5;
+  const delta = new Vector3().set(
+    1 / pos.set(1, 0, 0).applyMatrix4(matrix_).sub(pos0).length(),
+    1 / pos.set(0, 1, 0).applyMatrix4(matrix_).sub(pos0).length(),
+    1 / pos.set(0, 0, 1).applyMatrix4(matrix_).sub(pos0).length()
+  );
+  const max_step_size = 2.0;
 
-  i = Math.round( i );
-  j = Math.round( j );
-  k = Math.round( k );
+  // world -> model (voxel coordinate)
+  pos.set(pos_array[0], pos_array[1], pos_array[2]).applyMatrix4(matrix_inv);
 
-  if( i < 0 ){ i = 0; }
-  if( i >= mx ){ i = mx - 1; }
-  if( j < 0 ){ k = 0; }
-  if( j >= my ){ j = my - 1; }
-  if( k < 0 ){ k = 0; }
-  if( k >= mz ){ k = mz - 1; }
+  // round model coord -> IJK coord
+  const ijk0 = new Vector3().set(
+    Math.round( ( pos.x + margin_lengths.x / 2 ) - 1.0 ),
+    Math.round( ( pos.y + margin_lengths.y / 2 ) - 1.0 ),
+    Math.round( ( pos.z + margin_lengths.z / 2 ) - 1.0 )
+  );
+  const ijk1 = new Vector3().set(
+    Math.max( Math.min( ijk0.x, mx - delta.x * max_step_size - 1 ), delta.x * max_step_size ),
+    Math.max( Math.min( ijk0.y, my - delta.y * max_step_size - 1 ), delta.y * max_step_size ),
+    Math.max( Math.min( ijk0.z, mz - delta.z * max_step_size - 1 ), delta.z * max_step_size )
+  );
 
-  let tmp, count = {};
+  const ijk_idx = ijk1.clone();
+  const multiply_factor = new Vector3().set( 1, mx, mx * my );
+  let label_id, count = {};
 
-  tmp = ct_data[ i + j * mx + k * mx * my ];
+  label_id = label_data[ ijk0.dot(multiply_factor) ] || 0;
 
-  if( tmp == 0 ){
-    for(let i0 = Math.max(0, i - delta); i0 < Math.min(i + delta, mx); i0++ ) {
-      for(let j0 = Math.max(0, j - delta); j0 < Math.min(j + delta, my); j0++ ) {
-        for(let k0 = Math.max(0, k - delta); k0 < Math.min(k + delta, mz); k0++ ) {
-          tmp = ct_data[ i0 + j0 * mx + k0 * mx * my ];
-          if( tmp > 0 ){
-            count[ tmp ] = ( count[ tmp ] || 0 ) + 1;
+  if( label_id == 0 ) {
+    for(
+      ijk_idx.x = Math.round( ijk1.x - delta.x * max_step_size );
+      ijk_idx.x <= Math.round( ijk1.x + delta.x * max_step_size );
+      ijk_idx.x += 1
+    ) {
+      for(
+        ijk_idx.y = Math.round( ijk1.y - delta.y * max_step_size );
+        ijk_idx.y <= Math.round( ijk1.y + delta.y * max_step_size );
+        ijk_idx.y += 1
+      ) {
+        for(
+          ijk_idx.z = Math.round( ijk1.z - delta.z * max_step_size );
+          ijk_idx.z <= Math.round( ijk1.z + delta.z * max_step_size );
+          ijk_idx.z += 1
+        ) {
+          label_id = label_data[ ijk_idx.dot(multiply_factor) ];
+          if( label_id > 0 ){
+            count[ label_id ] = ( count[ label_id ] || 0 ) + 1;
           }
         }
       }
     }
 
+
     const keys = Object.keys(count);
     if( keys.length > 0 ){
-      tmp = keys.reduce((a, b) => count[a] > count[b] ? a : b);
-      tmp = parseInt( tmp );
+      label_id = keys.reduce((a, b) => count[a] > count[b] ? a : b);
+      label_id = parseInt( label_id );
     }
   }
 
+
   // find label
-  if( tmp == 0 ){
+  if( label_id == 0 ){
     return([ "Unknown", 0 ]);
   }
-  const fslut = canvas.global_data("__global_data__.FSColorLUT");
+
   try {
-    const lbl = fslut.map[ tmp ].Label;
+    const lbl = fslut.map[ label_id ].Label;
     if( lbl ){
-      return([ lbl, tmp ]);
+      return([ lbl, label_id ]);
     } else {
       return([ "Unknown", 0 ]);
     }
