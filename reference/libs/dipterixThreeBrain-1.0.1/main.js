@@ -62407,6 +62407,115 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
     return( re );
   }
 
+  get_summary({
+    reset_fs_index = false,
+    enabled_only = true
+  } = {}) {
+    const localization_instance = this.object.userData.localization_instance;
+
+    let enabled = this._enabled !== false;
+    if(
+      localization_instance &&
+      typeof localization_instance === "object" &&
+      localization_instance.isLocElectrode === true
+    ) {
+      if( enabled && typeof( localization_instance.enabled ) === "function" ){
+        enabled = localization_instance.enabled();
+      }
+    } else {
+      localization_instance = {};
+    }
+
+    // return nothing if electrode is disabled
+    if( enabled_only && !enabled ) {
+      return;
+    }
+
+    // prepare data
+    const subject_code = this.subject_code,
+          subject_data  = this._canvas.shared_data.get( subject_code ),
+          tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
+          xfm = subject_data.matrices.xfm,
+          Torig_inv = subject_data.matrices.Torig.clone().invert(),
+          _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
+          parsed = _regexp.exec( this.name ),
+          pos = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_1__.Vector3();  // pos is reused
+
+    let electrode_number = localization_instance.Electrode || "",
+        tentative_label = "",
+        localization_order = localization_instance.localization_order;
+    if( parsed && parsed.length === 3 ) {
+      if( electrode_number === "" ) {
+        electrode_number = parsed[1];
+      }
+      tentative_label = parsed[2] || `NoLabel${electrode_number}`;
+      localization_order = localization_order || parseInt( parsed[1] );
+    } else {
+      tentative_label = `NoLabel${electrode_number}`;
+    }
+
+    // initialize summary data with Column `Subject`
+    const summary = {
+      Subject: this.subject_code,
+      Electrode: electrode_number
+    };
+
+    // get position in tkrRAS, set `Coord_xyz`
+    pos.fromArray( this._params.position );
+    summary.Coord_x = pos.x;
+    summary.Coord_y = pos.y;
+    summary.Coord_z = pos.z;
+
+    // Clinical `Label`
+    summary.Label = localization_instance.Label || tentative_label;
+
+    // Localization order (`LocalizationOrder`)
+    summary.LocalizationOrder = localization_order;
+
+    // get FreeSurfer Label `FSIndex` + `FSLabel`
+    if( reset_fs_index ) {
+      localization_instance.FSIndex = undefined;
+    }
+    let fs_label = [ "Unknown", 0 ];
+    try {
+      fs_label = localization_instance.get_fs_label();
+    } catch (e) {}
+
+    summary.FSIndex = fs_label[1];
+    summary.FSLabel = fs_label[0];
+
+    //  T1 MRI scanner RAS (T1RAS)
+    pos.applyMatrix4( tkrRAS_Scanner );
+    summary.T1_x = pos.x;
+    summary.T1_y = pos.y;
+    summary.T1_z = pos.z;
+
+    //  MNI305_x MNI305_y MNI305_z
+    pos.applyMatrix4( xfm );
+    summary.MNI305_x = pos.x;
+    summary.MNI305_y = pos.y;
+    summary.MNI305_z = pos.z;
+
+    // `SurfaceElectrode` `SurfaceType` `Radius` `VertexNumber` `Hemisphere`
+    summary.SurfaceElectrode = (
+      this._params.is_surface_electrode? 'TRUE' : 'FALSE'
+    );
+    summary.SurfaceType = this._params.surface_type || "pial";
+    summary.Radius =  this._params.radius;
+    summary.VertexNumber = this._params.vertex_number;     // vertex_number is already changed if std.141 is used
+    summary.Hemisphere = this._params.hemisphere;
+
+    // CustomizedInformation `Notes`
+    summary.Notes = this._params.custom_info || '';
+
+    // get MRI VoxCRS = inv(Torig)*[tkrR tkrA tkrS 1]'
+    pos.fromArray( this._params.position ).applyMatrix4( Torig_inv );
+    summary.Voxel_i = Math.round( pos.x );
+    summary.Voxel_j = Math.round( pos.y );
+    summary.Voxel_k = Math.round( pos.z );
+
+    return( summary );
+  }
 
   finish_init(){
 
@@ -74039,7 +74148,7 @@ mapped = false,
 
 
   // export electrodes
-  electrodes_info(){
+  electrodes_info(args={}){
 
     const res = [];
 
@@ -74050,7 +74159,6 @@ mapped = false,
             tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
             xfm = subject_data.matrices.xfm,
             pos = new three_module.Vector3();
-      let row = {};
       let parsed, e, g, inst, fs_label;
       const label_list = {};
 
@@ -74058,72 +74166,13 @@ mapped = false,
         parsed = _regexp.exec( k );
         // just incase
         if( parsed && parsed.length === 3 ){
-          row = { Subject : subject_code };
+
           e = collection[ k ];
-          g = e.userData.construct_params;
+          const row = e.userData.instance.get_summary( args );
 
-          inst = e.userData.instance;
-          const loc_inst = e.userData.localization_instance || {};
-
-          if( inst._enabled === false ){
-            continue;
+          if( row && typeof row ==="object" ) {
+            res.push( row );
           }
-          if( typeof( loc_inst.enabled ) === "function" ){
-            if(!loc_inst.enabled()){
-              continue;
-            }
-          }
-          if( typeof( loc_inst.get_fs_label ) === "function" ){
-            fs_label = loc_inst.get_fs_label();
-          } else {
-            fs_label = [ "Unknown", 0 ];
-          }
-
-          pos.fromArray( g.position );
-
-          // Electrode Coord_x Coord_y Coord_z Label Hemisphere
-          row.Electrode = loc_inst.Electrode || "";
-          row.Coord_x = pos.x;
-          row.Coord_y = pos.y;
-          row.Coord_z = pos.z;
-          if( loc_inst.Label ){
-            row.Label = loc_inst.Label;
-          } else {
-            row.Label = parsed[2] || "NoLabel";
-            if( row.Label && row.Label !== "" ){
-              label_list[[row.Label]] = (label_list[[row.Label]] || 0) + 1;
-              row.Label = `${row.Label}${label_list[[row.Label]]}`;
-            }
-          }
-          row.LocalizationOrder = loc_inst.localization_order || parseInt( parsed[1] );
-          row.FSIndex = fs_label[1];
-          row.FSLabel = fs_label[0];
-
-          //  T1_x y z
-          pos.applyMatrix4( tkrRAS_Scanner );
-          row.T1_x = pos.x;
-          row.T1_y = pos.y;
-          row.T1_z = pos.z;
-
-          //  MNI305_x MNI305_y MNI305_z
-          pos.applyMatrix4( xfm );
-          row.MNI305_x = pos.x;
-          row.MNI305_y = pos.y;
-          row.MNI305_z = pos.z;
-
-          // SurfaceElectrode SurfaceType Radius VertexNumber
-          row.SurfaceElectrode = (
-            g.is_surface_electrode? 'TRUE' : 'FALSE'
-          );
-          row.SurfaceType = g.surface_type;
-          row.Radius =  g.radius;
-          row.VertexNumber = g.vertex_number;     // vertex_number is already changed
-          row.Hemisphere = g.hemisphere;
-
-          // CustomizedInformation
-          row.Notes = g.custom_info || '';
-
-          res.push( row );
         }
 
       }
