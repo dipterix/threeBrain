@@ -3813,7 +3813,7 @@ mapped = false,
 
 
   // export electrodes
-  electrodes_info(){
+  electrodes_info(args={}){
 
     const res = [];
 
@@ -3824,7 +3824,6 @@ mapped = false,
             tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
             xfm = subject_data.matrices.xfm,
             pos = new Vector3();
-      let row = {};
       let parsed, e, g, inst, fs_label;
       const label_list = {};
 
@@ -3832,72 +3831,13 @@ mapped = false,
         parsed = _regexp.exec( k );
         // just incase
         if( parsed && parsed.length === 3 ){
-          row = { Subject : subject_code };
+
           e = collection[ k ];
-          g = e.userData.construct_params;
+          const row = e.userData.instance.get_summary( args );
 
-          inst = e.userData.instance;
-          const loc_inst = e.userData.localization_instance || {};
-
-          if( inst._enabled === false ){
-            continue;
+          if( row && typeof row ==="object" ) {
+            res.push( row );
           }
-          if( typeof( loc_inst.enabled ) === "function" ){
-            if(!loc_inst.enabled()){
-              continue;
-            }
-          }
-          if( typeof( loc_inst.get_fs_label ) === "function" ){
-            fs_label = loc_inst.get_fs_label();
-          } else {
-            fs_label = [ "Unknown", 0 ];
-          }
-
-          pos.fromArray( g.position );
-
-          // Electrode Coord_x Coord_y Coord_z Label Hemisphere
-          row.Electrode = loc_inst.Electrode || "";
-          row.Coord_x = pos.x;
-          row.Coord_y = pos.y;
-          row.Coord_z = pos.z;
-          if( loc_inst.Label ){
-            row.Label = loc_inst.Label;
-          } else {
-            row.Label = parsed[2] || "NoLabel";
-            if( row.Label && row.Label !== "" ){
-              label_list[[row.Label]] = (label_list[[row.Label]] || 0) + 1;
-              row.Label = `${row.Label}${label_list[[row.Label]]}`;
-            }
-          }
-          row.LocalizationOrder = loc_inst.localization_order || parseInt( parsed[1] );
-          row.FSIndex = fs_label[1];
-          row.FSLabel = fs_label[0];
-
-          //  T1_x y z
-          pos.applyMatrix4( tkrRAS_Scanner );
-          row.T1_x = pos.x;
-          row.T1_y = pos.y;
-          row.T1_z = pos.z;
-
-          //  MNI305_x MNI305_y MNI305_z
-          pos.applyMatrix4( xfm );
-          row.MNI305_x = pos.x;
-          row.MNI305_y = pos.y;
-          row.MNI305_z = pos.z;
-
-          // SurfaceElectrode SurfaceType Radius VertexNumber
-          row.SurfaceElectrode = (
-            g.is_surface_electrode? 'TRUE' : 'FALSE'
-          );
-          row.SurfaceType = g.surface_type;
-          row.Radius =  g.radius;
-          row.VertexNumber = g.vertex_number;     // vertex_number is already changed
-          row.Hemisphere = g.hemisphere;
-
-          // CustomizedInformation
-          row.Notes = g.custom_info || '';
-
-          res.push( row );
         }
 
       }

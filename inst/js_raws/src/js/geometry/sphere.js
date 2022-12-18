@@ -368,6 +368,115 @@ class Sphere extends AbstractThreeBrainObject {
     return( re );
   }
 
+  get_summary({
+    reset_fs_index = false,
+    enabled_only = true
+  } = {}) {
+    const localization_instance = this.object.userData.localization_instance;
+
+    let enabled = this._enabled !== false;
+    if(
+      localization_instance &&
+      typeof localization_instance === "object" &&
+      localization_instance.isLocElectrode === true
+    ) {
+      if( enabled && typeof( localization_instance.enabled ) === "function" ){
+        enabled = localization_instance.enabled();
+      }
+    } else {
+      localization_instance = {};
+    }
+
+    // return nothing if electrode is disabled
+    if( enabled_only && !enabled ) {
+      return;
+    }
+
+    // prepare data
+    const subject_code = this.subject_code,
+          subject_data  = this._canvas.shared_data.get( subject_code ),
+          tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
+          xfm = subject_data.matrices.xfm,
+          Torig_inv = subject_data.matrices.Torig.clone().invert(),
+          _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
+          parsed = _regexp.exec( this.name ),
+          pos = new Vector3();  // pos is reused
+
+    let electrode_number = localization_instance.Electrode || "",
+        tentative_label = "",
+        localization_order = localization_instance.localization_order;
+    if( parsed && parsed.length === 3 ) {
+      if( electrode_number === "" ) {
+        electrode_number = parsed[1];
+      }
+      tentative_label = parsed[2] || `NoLabel${electrode_number}`;
+      localization_order = localization_order || parseInt( parsed[1] );
+    } else {
+      tentative_label = `NoLabel${electrode_number}`;
+    }
+
+    // initialize summary data with Column `Subject`
+    const summary = {
+      Subject: this.subject_code,
+      Electrode: electrode_number
+    };
+
+    // get position in tkrRAS, set `Coord_xyz`
+    pos.fromArray( this._params.position );
+    summary.Coord_x = pos.x;
+    summary.Coord_y = pos.y;
+    summary.Coord_z = pos.z;
+
+    // Clinical `Label`
+    summary.Label = localization_instance.Label || tentative_label;
+
+    // Localization order (`LocalizationOrder`)
+    summary.LocalizationOrder = localization_order;
+
+    // get FreeSurfer Label `FSIndex` + `FSLabel`
+    if( reset_fs_index ) {
+      localization_instance.FSIndex = undefined;
+    }
+    let fs_label = [ "Unknown", 0 ];
+    try {
+      fs_label = localization_instance.get_fs_label();
+    } catch (e) {}
+
+    summary.FSIndex = fs_label[1];
+    summary.FSLabel = fs_label[0];
+
+    //  T1 MRI scanner RAS (T1RAS)
+    pos.applyMatrix4( tkrRAS_Scanner );
+    summary.T1_x = pos.x;
+    summary.T1_y = pos.y;
+    summary.T1_z = pos.z;
+
+    //  MNI305_x MNI305_y MNI305_z
+    pos.applyMatrix4( xfm );
+    summary.MNI305_x = pos.x;
+    summary.MNI305_y = pos.y;
+    summary.MNI305_z = pos.z;
+
+    // `SurfaceElectrode` `SurfaceType` `Radius` `VertexNumber` `Hemisphere`
+    summary.SurfaceElectrode = (
+      this._params.is_surface_electrode? 'TRUE' : 'FALSE'
+    );
+    summary.SurfaceType = this._params.surface_type || "pial";
+    summary.Radius =  this._params.radius;
+    summary.VertexNumber = this._params.vertex_number;     // vertex_number is already changed if std.141 is used
+    summary.Hemisphere = this._params.hemisphere;
+
+    // CustomizedInformation `Notes`
+    summary.Notes = this._params.custom_info || '';
+
+    // get MRI VoxCRS = inv(Torig)*[tkrR tkrA tkrS 1]'
+    pos.fromArray( this._params.position ).applyMatrix4( Torig_inv );
+    summary.Voxel_i = Math.round( pos.x );
+    summary.Voxel_j = Math.round( pos.y );
+    summary.Voxel_k = Math.round( pos.z );
+
+    return( summary );
+  }
 
   finish_init(){
 
