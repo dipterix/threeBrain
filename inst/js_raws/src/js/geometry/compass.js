@@ -39,13 +39,15 @@ class Compass {
   }
 
   update(){
-    this.container.position.copy( this._camera.up )
-      .cross( this._camera.position )
-      .normalize()
-      .multiplyScalar( this._camera.left + 10 )
-      .add( this._camera.up.clone().multiplyScalar( this._camera.bottom + 10 ) )
-      .multiplyScalar( 1 / this._camera.zoom )
-      .add( this._control.target );
+    if( this.container.visible ) {
+      this.container.position.copy( this._camera.up )
+        .cross( this._camera.position )
+        .normalize()
+        .multiplyScalar( this._camera.left + 10 )
+        .add( this._camera.up.clone().multiplyScalar( this._camera.bottom + 10 ) )
+        .multiplyScalar( 1 / this._camera.zoom )
+        .add( this._control.target );
+    }
   }
 
   set_visibility( visible, callback ){

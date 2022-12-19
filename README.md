@@ -3,7 +3,7 @@
 <!-- badges: start -->
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/threeBrain)](https://cran.r-project.org/package=threeBrain)
 [![license](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-[![R-CMD-check](https://github.com/dipterix/threeBrain/workflows/R-CMD-check/badge.svg)](https://github.com/dipterix/threeBrain/actions)
+[![R-CMD-check](https://github.com/dipterix/threeBrain/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dipterix/threeBrain/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![DOI](https://raw.githubusercontent.com/dipterix/threeBrain/master/inst/doi.svg)](https://doi.org/10.1016/j.neuroimage.2020.117341)
 
