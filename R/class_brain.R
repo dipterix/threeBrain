@@ -377,7 +377,7 @@ Brain2 <- R6::R6Class(
     localize = function(
       ct_path,
       transform_matrix = NULL,
-      transform_space = c("resampled", "fsl"),
+      transform_space = c("resampled", "ijk2ras", "fsl"),
       mri_path = NULL,
       col = c("gray80", 'darkgreen'),
       controllers = list(),
@@ -415,6 +415,19 @@ Brain2 <- R6::R6Class(
             trans_mat <- diag(rep(1, 4))
             trans_mat[1:3, 4] <- ct_shape / 2
             trans_mat <- ct$get_IJK_to_tkrRAS(self) %*% trans_mat
+          },
+          ijk2ras = {
+            trans_mat <- diag(rep(1, 4))
+            trans_mat[1:3, 4] <- ct_shape / 2
+            if(length(transform_matrix) == 1 && is.character(transform_matrix)) {
+              transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+            }
+            if(length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
+              stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+            }
+
+            trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix %*% trans_mat
+
           },
           fsl = {
             trans_mat <- diag(rep(1, 4))
