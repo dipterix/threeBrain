@@ -263,29 +263,7 @@ class BrainCanvas{
 
   }
 
-  _set_loader_callbacks( callback ){
-    this.canvas.loader_manager.onLoad = () => {
-      this.finalize_render( callback );
-    };
-
-    this.el_text.style.display = 'block';
-
-    this.canvas.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
-
-    	let path = /\/([^/]*)$/.exec(url)[1],
-    	    msg = '<p><small>Loaded file: ' + itemsLoaded + ' of ' + itemsTotal + ' files.<br>' + path + '</small></p>';
-
-      if(this.DEBUG){
-        console.debug(msg);
-      }
-
-      this.el_text.innerHTML = msg;
-
-    };
-  }
-
-
-  render_value( x, reset = false, callback = undefined ){
+  async render_value( x, reset = false, callback = undefined ){
     this.geoms = x.geoms;
     this.settings = x.settings;
     this.default_controllers = x.settings.default_controllers || {},
@@ -344,50 +322,24 @@ class BrainCanvas{
     });
 
 
-    // load data
-    this.canvas.loader_triggered = false;
-
-    // Register some callbacks
-    this._set_loader_callbacks( callback );
-
-    let promises = this.groups.map( (g) => {
-      return(new Promise( (resolve) => {
-        this.canvas.add_group(g, this.settings.cache_folder);
-        resolve( true );
-      }));
-    });
-
-    Promise.all(promises).then((values) => {
-      if( !this.canvas.loader_triggered ){
-        this.finalize_render( callback );
-      }
-    });
-
-    /*
-    this.groups.forEach((g) => {
-
-      this.canvas.add_group(g, this.settings.cache_folder);
-
-    });
-
-    // Make sure the data loading process is on
-    if( !this.canvas.loader_triggered ){
-      this.finalize_render();
+    // load group data
+    this.el_text.style.display = 'block';
+    for(let ii in this.groups) {
+      const g = this.groups[ii];
+      this.el_text.innerHTML = `<p><small>${ii+1}: Loading group ${g.name}</small></p>`;
+      await this.canvas.add_group(g, this.settings.cache_folder);
     }
-    */
-  }
 
+    this.el_text.innerHTML = `<p><small>Group data loaded. Generating geometries...</small></p>`;
 
-  finalize_render( callback ){
+    // creating objects
     console.debug(this.outputId + ' - Finished loading. Adding object');
-    // this.el_text2.innerHTML = '';
-    this.el_text.style.display = 'none';
-
     this.geoms.sort((a, b) => {
       return( a.render_order - b.render_order );
     });
 
     this.geoms.forEach((g) => {
+      this.el_text.innerHTML = `<p><small>Adding object ${g.name}</small></p>`;
       if( this.DEBUG ){
         this.canvas.add_object( g );
       }else{
@@ -398,6 +350,15 @@ class BrainCanvas{
         }
       }
     });
+
+
+    this.el_text.innerHTML = `<p><small>Finalizing...</small></p>`;
+    this.finalize_render( callback );
+    this.el_text.style.display = 'none';
+  }
+
+
+  finalize_render( callback ) {
 
     this.canvas.finish_init();
 
@@ -627,36 +588,31 @@ class BrainWidgetWrapper {
 
   render(v, reset = false, callback = undefined) {
     // read
-    const xobj = new XMLHttpRequest();
-    // path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
-    // lib/threebrain_data-0/config.json
-    let path = v.settings.cache_folder + v.data_filename;
+    const path = v.settings.cache_folder + v.data_filename;
 
+    this.handler.el_text.style.display = 'block';
+    this.handler.el_text.innerHTML = `<p><small>Loading configuration files...</small></p>`;
     console.debug( 'Reading configuration file from: ' + path );
 
-    xobj.overrideMimeType("application/json");
+    const fileReader = new FileReader();
 
-    const cb_ = () => {
-      if(typeof (callback) === "function"){
-        callback();
-      }
-      const modal = this.el.getElementsByClassName("threejs-brain-modal");
-      if( modal.length ){
-        modal[0].classList.add("hidden");
-      }
-    };
+    fileReader.onload = async (evt) => {
+      const x = JSON.parse(evt.target.result);
+      x.settings = v.settings;
+      this.handler.render_value( x, reset, () => {
+        if(typeof (callback) === "function"){
+          callback();
+        }
+        const modal = this.el.getElementsByClassName("threejs-brain-modal");
+        if( modal.length ){
+          modal[0].classList.add("hidden");
+        }
+      });
+    }
 
-    xobj.onreadystatechange = () => {
-      if (xobj.readyState == 4 && xobj.status == "200") {
-        new Promise( () => {
-          let x = JSON.parse(xobj.responseText);
-          x.settings = v.settings;
-          this.handler.render_value( x, reset, cb_ );
-        });
-      }
-    };
-    xobj.open('GET', path, true);
-    xobj.send(null);
+    fetch( path ).then( r => r.blob() ).then( blob => {
+      fileReader.readAsText( blob );
+    });
   }
 
   resize(width, height) {

@@ -13,6 +13,7 @@ import { to_array, get_element_size, get_or_default,
 } from './utils.js';
 import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
 import { CanvasContext2D } from './core/context.js';
+import { CanvasFileLoader } from './core/loaders.js';
 import { Stats } from './libs/stats.min.js';
 import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
 import { CanvasEvent } from './core/events.js';
@@ -30,6 +31,7 @@ import { Compass } from './geometry/compass.js';
 import { Lut, addToColorMapKeywords } from './jsm/math/Lut2.js';
 import { json2csv } from 'json-2-csv';
 import download from 'downloadjs';
+import nifti from 'nifti-reader-js';
 
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
@@ -43,6 +45,7 @@ const GEOMETRY_FACTORY = {
 };
 
 window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
+window.nifti = nifti;
 /* ------------------------------------ Layer setups ------------------------------------
   Defines for each camera which layers are visible.
   Protocols are
@@ -94,6 +97,7 @@ class THREEBRAIN_CANVAS {
       this.cache = cached_storage;
     }else if ( cache === false ){
       this.use_cache = false;
+      this.cache = cached_storage;
     }else{
       this.use_cache = true;
       this.cache = cache;
@@ -714,74 +718,11 @@ class THREEBRAIN_CANVAS {
     this.set_font_size();
 
 		// File loader
-    this.loader_triggered = false;
-    this.loader_manager = new LoadingManager();
-    this.loader_manager.onStart = () => {
-      this.loader_triggered = true;
-      console.debug( 'Loading start!');
-    };
-    this.loader_manager.onLoad = () => {
-      console.debug( 'Loading complete!');
-
-      // immediately render once
-      this.start_animation(0);
-    };
-    this.loader_manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
-    	console.debug( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
-    };
-    this.loader_manager.onError = function ( url ) { console.debug( 'There was an error loading ' + url ) };
-
-    this.json_loader = new FileLoader( this.loader_manager );
-    // this.font_loader = new FontLoader( this.loader_manager );
+    this.file_loader = new CanvasFileLoader( this );
 
   }
 
   /*---- Finalize init ------------------------------------------------------*/
-
-  _loader_finishied(){
-    if(this.json_load_finished === undefined){
-      this.json_load_finished = true;
-      return(true);
-    }
-    if(this.json_load_queue.length > 0){
-      this.json_load_finished = false;
-    }
-    return(this.json_load_finished);
-  }
-
-  load_file(path, onLoad, loader = 'json_loader'){
-
-    loader = this[ loader ];
-    if( !loader ){
-      loader = this.json_loader;
-    }
-
-
-    if( this.use_cache ){
-
-      // check cache first,
-      if( this.cache.check_item( path ) ){
-        onLoad( this.cache.get_item( path ) );
-      }else{
-        this.loader_triggered = true;
-        loader.load( path, (v) => {
-          if(typeof(v) === 'string'){
-            v = JSON.parse(v);
-          }
-          this.cache.set_item( path, v );
-          onLoad( v );
-        });
-      }
-    }else{
-      this.loader_triggered = true;
-      loader.load( path , (v) => {
-        if(typeof(v) === 'string'){
-          v = JSON.parse(v);
-        }
-        onLoad( v );
-      });
-    }
-  }
   register_main_canvas_events(){
 
     // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
@@ -1242,127 +1183,95 @@ class THREEBRAIN_CANVAS {
 
     gp.userData.construct_params = g;
 
-    // This is now a tricky part, we are going to load from dependencies!
-    // This is experimental and might disable standalone widget!
-
-    let cached_items = to_array( g.cached_items ),
-        item_size = cached_items.length;
-    if(item_size > 0){
-      cached_items.forEach((nm) => {
-        let cache_info = g.group_data[nm];
-
-        if(cache_info === undefined || cache_info === null ||
-          Array.isArray(cache_info) || cache_info.file_name === undefined ){
-          // Already cached
-          item_size -= 1;
-        /*}else if( cache_info.lazy ){
-          // lazy-load the data
-          cache_info.loaded = false;
-          cache_info.server_path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-          item_size -= 1;*/
-        } else {
-
-
-          // Need to check shiny mode
-          let path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-          /*
-          if(!this.shiny_mode){
-            path = 'lib/' + cache_folder + '-0/' + g.cache_name + '/' + cache_info.file_name;
-          }
-          */
-          console.debug(path);
-
-          this.load_file(
-            path, ( v ) => {
-
-          	  const keys = Object.keys(v);
-
-          	  keys.forEach((k) => {
-                g.group_data[k] = v[k];
-              });
-
-              item_size -= 1;
-          	},
-          	onProgress
-          );
-
-        }
-
-      });
+    if(!g.group_data || typeof g.group_data !== "object") {
+      g.group_data = {};
     }
 
     gp.userData.group_data = g.group_data;
     this.group.set( g.name, gp );
-
     this.add_to_scene(gp);
 
-    // special case, if group name is "__global_data", then set group variable
-    if( g.name === '__global_data' && g.group_data ){
-      for( let _n in g.group_data ){
-        this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
-      }
+    // This is now a tricky part, we are going to load from dependencies!
+    // This is experimental and might disable standalone widget!
 
-      // check if ".subject_codes" is in the name
-      const subject_codes = to_array( this.shared_data.get(".subject_codes") );
-      if( subject_codes.length > 0 ){
+    const cached_items = to_array( g.cached_items );
 
-        // generate transform matrices
-        subject_codes.forEach((scode) => {
+    const promises = cached_items.map(async (nm) => {
+      const cache_info = g.group_data[nm];
+      if(!cache_info || typeof(cache_info) !== "object") { return; }
 
-          let subject_data = this.shared_data.get(scode);
-          if( !subject_data ){
-            subject_data = {};
-            this.shared_data.set(scode, subject_data);
-          }
-
-          const Norig = as_Matrix4( subject_data.Norig );
-          const Torig = as_Matrix4( subject_data.Torig );
-          const xfm = as_Matrix4( subject_data.xfm );
-          const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
-          const MNI305_tkrRAS = new Matrix4()
-            .copy(tkrRAS_MNI305).invert();
-          const tkrRAS_Scanner = new Matrix4()
-            .copy(Norig)
-            .multiply(
-              new Matrix4()
-                .copy(Torig)
-                .invert()
-            );
-          subject_data.matrices = {
-            Norig : Norig,
-            Torig : Torig,
-            xfm : xfm,
-            tkrRAS_MNI305 : tkrRAS_MNI305,
-            MNI305_tkrRAS : MNI305_tkrRAS,
-            tkrRAS_Scanner: tkrRAS_Scanner
-          };
-
-        });
-
-      }
-
-      const media_content = this.shared_data.get(".media_content");
-      if( media_content ){
-        for(let video_name in media_content){
-          const content = media_content[video_name];
-          if( !content.is_url ){
-            content.url = cache_folder + g.cache_name + '/' + content.url;
-            content.is_url = true;
-            window.fetch(content.url).then(r => r.blob()).then(blob => {
-              content.url = URL.createObjectURL(blob);
-            });
-          }
+      const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
+      console.debug(path);
+      let v = await this.file_loader.read( path );
+      if( v && typeof(v) === "object" ) {
+        for(let key in v) {
+          g.group_data[key] = v[key];
         }
       }
 
-    }
+      // special case, if group name is "__global_data", then set group variable
+      if( g.name === '__global_data' && g.group_data ){
+        for( let _n in g.group_data ){
+          this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
+        }
 
-    const check = function(){
-      return(item_size === 0);
-    };
+        // check if ".subject_codes" is in the name
+        const subject_codes = to_array( this.shared_data.get(".subject_codes") );
+        if( subject_codes.length > 0 ){
 
-    return(check);
+          // generate transform matrices
+          subject_codes.forEach((scode) => {
 
+            let subject_data = this.shared_data.get(scode);
+            if( !subject_data ){
+              subject_data = {};
+              this.shared_data.set(scode, subject_data);
+            }
+
+            const Norig = as_Matrix4( subject_data.Norig );
+            const Torig = as_Matrix4( subject_data.Torig );
+            const xfm = as_Matrix4( subject_data.xfm );
+            const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
+            const MNI305_tkrRAS = new Matrix4()
+              .copy(tkrRAS_MNI305).invert();
+            const tkrRAS_Scanner = new Matrix4()
+              .copy(Norig)
+              .multiply(
+                new Matrix4()
+                  .copy(Torig)
+                  .invert()
+              );
+            subject_data.matrices = {
+              Norig : Norig,
+              Torig : Torig,
+              xfm : xfm,
+              tkrRAS_MNI305 : tkrRAS_MNI305,
+              MNI305_tkrRAS : MNI305_tkrRAS,
+              tkrRAS_Scanner: tkrRAS_Scanner
+            };
+
+          });
+
+        }
+
+        const media_content = this.shared_data.get(".media_content");
+        if( media_content ){
+          for(let video_name in media_content){
+            const content = media_content[video_name];
+            if( !content.is_url ){
+              content.url = cache_folder + g.cache_name + '/' + content.url;
+              content.is_url = true;
+              const blob = await fetch(content.url).then(r => r.blob());
+              content.url = URL.createObjectURL(blob);
+            }
+          }
+        }
+
+      }
+
+    });
+
+    return Promise.all(promises);
   }
 
   // Debug stats (framerate)
@@ -1663,47 +1572,6 @@ class THREEBRAIN_CANVAS {
     if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
 
       re = gp.userData.group_data[data_name];
-      /*
-      if( re ){
-        const is_lazy = re.lazy;
-        const tobe_loaded = re.loaded === false;
-
-        // if re is not lazy, run `lazy_onload`,
-        // if re is lazy but loaded, run
-        if( !(is_lazy && tobe_loaded) && typeof lazy_onload === 'function' ){
-          // this means re is loaded. However, data is not overridden or missing
-          // because otherwise re should be the actual object.
-          // return re anyway to see if `lazy_onload` can further handle it
-          lazy_onload( re );
-        }
-
-        if( is_lazy && tobe_loaded ){
-
-          // otherwise load data
-
-          // make sure we never load data again
-          re.loaded = true;
-
-          this.load_file(
-            re.server_path, ( v ) => {
-          	  const keys = Object.keys(v);
-          	  keys.forEach((k) => {
-                gp.userData.group_data[k] = v[k];
-              });
-              // recall function
-              re = gp.userData.group_data[data_name];
-              if( re && typeof lazy_onload === 'function' ){
-                lazy_onload( re );
-              }
-          	},
-          	( url, itemsLoaded, itemsTotal ) => {
-            	console.debug( 'Loading file: ' + url + ' (lazy-load).\nLoaded ' +
-            	              itemsLoaded + ' of ' + itemsTotal + ' files.' );
-            }
-          );
-        }
-
-      }*/
     }
 
     return(re);
@@ -3662,6 +3530,18 @@ class THREEBRAIN_CANVAS {
     this.start_animation( 0 );
   }
 
+  // get matrices
+  get_subject_transforms( subject_code ) {
+    const scode = typeof subject_code === "string" ? subject_code : this.get_state("target_subject", "/");
+    const subject_data = this.shared_data.get( scode );
+    if(
+      !subject_data || typeof subject_data !== "object" ||
+      typeof subject_data.matrices !== "object"
+    ) {
+      throw `Cannot obtain transform matrices from subject: ${scode}`;
+    }
+    return( subject_data.matrices );
+  }
 
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){

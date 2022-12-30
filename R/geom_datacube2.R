@@ -53,3 +53,52 @@ DataCubeGeom2 <- R6::R6Class(
     }
   )
 )
+
+#' @export
+NiftiGeom2 <- R6::R6Class(
+  classname = "NiftiGeom2",
+  inherit = AbstractGeom,
+  public = list(
+
+    type = 'datacube2',
+
+    threshold = 0.6,
+
+    color_format = "RGBAFormat",
+
+    initialize = function(
+      name, path, group = GeomGroup$new(name = 'default'), layer = 8,
+      color_format = c("RGBAFormat", "AlphaFormat"), ...){
+
+      color_format <- match.arg(color_format)
+      abspath <- normalizePath(path, mustWork = TRUE)
+      super$initialize(name, position = c(0, 0, 0), layer = layer, ...)
+      self$group <- group
+
+      re <- list(
+        path = path,
+        absolute_path = abspath,
+        file_name = filename(abspath),
+        is_nifti = TRUE,
+        is_new_cache = FALSE,
+        is_cache = TRUE
+      )
+      group$set_group_data("nifti_data", value = re, is_cached = TRUE)
+      self$color_format <- color_format
+
+    },
+
+    to_list = function(){
+      re <- super$to_list()
+      re$threshold <- self$threshold
+      re$color_format <- self$color_format
+      re$isDataCube2 <- self$is_datacube2
+      re$isNiftiCube <- self$is_nifticube
+      re
+    }
+  ),
+  active = list(
+    is_datacube2 = function(){ TRUE },
+    is_nifticube = function(){ TRUE }
+  )
+)

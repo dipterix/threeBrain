@@ -13,7 +13,7 @@ HTMLWidgets.widget({
 
   factory: function(el, width, height) {
 
-    const widget = new BrainWidgetWrapper(el, HTMLWidgets.shinyMode);
+    const widget = new BrainWidgetWrapper(el, true);
 
     if( window.THREEBRAIN ){
       window.THREEBRAIN.widget = widget;

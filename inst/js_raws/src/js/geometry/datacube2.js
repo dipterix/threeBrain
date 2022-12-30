@@ -1,5 +1,5 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { Vector3, DataTexture3D, NearestFilter, FloatType,
+import { Vector3, Matrix4, DataTexture3D, NearestFilter, FloatType,
          RGBAFormat, AlphaFormat, UnsignedByteType, LinearFilter, UniformsUtils,
          RawShaderMaterial, BackSide, SphereBufferGeometry, Mesh,
          BoxBufferGeometry } from '../../build/three.module.js';
@@ -148,11 +148,33 @@ class DataCube2 extends AbstractThreeBrainObject {
 
     let mesh;
 
+    // Need to check if this is nifticube
+    let cube_values, cube_half_size, cube_dim;
+    if( g.isNiftiCube ) {
+      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
+      cube_values = niftiData.image;
+      cube_half_size = [
+        niftiData.shape[0] / 2,
+        niftiData.shape[1] / 2,
+        niftiData.shape[2] / 2
+      ];
+      cube_dim = [...niftiData.shape];
+
+      // Make sure to register the initial transform matrix (from IJK to RAS)
+      if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
+        const m = new Matrix4().set(...g.trans_mat)
+                    .multiply( niftiData.model2RAS );
+        g.trans_mat = m.toArray();
+      } else {
+        g.trans_mat = niftiData.model2RAS.toArray();
+      }
+    } else {
+      cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
+      cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name);
+      cube_dim = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name);
+    }
     // Cube values Must be from 0 to 1, float
-    const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-          cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-          cube_dim = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
-          volume = {
+    const volume = {
             'xLength' : cube_half_size[0]*2,
             'yLength' : cube_half_size[1]*2,
             'zLength' : cube_half_size[2]*2,

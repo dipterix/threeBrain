@@ -3,6 +3,7 @@
 \name{voxel_cube}
 \alias{voxel_cube}
 \alias{add_voxel_cube}
+\alias{add_nifti}
 \alias{create_voxel_cube}
 \title{Generate volume data from 'MNI' coordinates}
 \usage{
@@ -12,6 +13,14 @@ add_voxel_cube(
   cube,
   size = c(256, 256, 256),
   trans_mat = NULL,
+  color_format = c("RGBAFormat", "AlphaFormat")
+)
+
+add_nifti(
+  brain,
+  name,
+  path,
+  trans_vox2world = NULL,
   color_format = c("RGBAFormat", "AlphaFormat")
 )
 
