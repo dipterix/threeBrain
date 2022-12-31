@@ -6,9 +6,8 @@ function raycast_volume_geneator(){
   const projection = new Matrix3();
   const p = new Vector3();
   const p1 = new Vector3();
-  const f = new Vector3();
   const dest = new Vector3();
-  let l_x, l_y, l_z, i, j, k, tmp, k1, k2, l_res;
+  let mx, my, mz, i, j, k, tmp, k1, k2, l_res;
   const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
 
   /*window.orig = orig;
@@ -18,25 +17,21 @@ function raycast_volume_geneator(){
   window.f = f;*/
 
   const raycast_volume = (
-    origin, direction, margin_voxels, margin_lengths,
+    origin, direction, volumeModelShape,
     map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {
     // canvas.mouse_raycaster.ray.origin
     // canvas.mouse_raycaster.ray.direction
 
-    l_x = margin_lengths.x;
-    l_y = margin_lengths.y;
-    l_z = margin_lengths.z;
+    mx = volumeModelShape.x;
+    my = volumeModelShape.y;
+    mz = volumeModelShape.z;
 
     direction.normalize();
 
-    f.x = margin_lengths.x / margin_voxels.x;
-    f.y = margin_lengths.y / margin_voxels.y;
-    f.z = margin_lengths.z / margin_voxels.z;
-
     // vOrigin = (position - vec3(0.5, 0.5, 0.5)) * scale_inv - vDirection;
-    orig.x = origin.x + l_x / 2;
-    orig.y = origin.y + l_y / 2;
-    orig.z = origin.z + l_z / 2;
+    orig.x = origin.x + mx / 2;
+    orig.y = origin.y + my / 2;
+    orig.z = origin.z + mz / 2;
     projection.set(
       1-direction.x * direction.x,
       -direction.x * direction.y,
@@ -54,19 +49,15 @@ function raycast_volume_geneator(){
           a23 = projection.elements[5],
           a33 = projection.elements[8];
     let i, j, k1, k2, tmp, k, dist = Infinity;
-    const mx = margin_voxels.x,
-          my = margin_voxels.y,
-          mz = margin_voxels.z;
-
 
     for(i = 0; i < 7; i++){
       res[i] = NaN;
     }
 
-    for( i = 0; i < margin_voxels.x; i++ ){
-      for( j = 0; j < margin_voxels.y; j++ ){
+    for( i = 0; i < mx; i++ ){
+      for( j = 0; j < my; j++ ){
         // p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0.5 * f.z );
-        p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0.5 * f.z );
+        p.set( (i+0.5) - orig.x, (j+0.5) - orig.y , 0.5 );
         p1.copy( p );
         p.applyMatrix3( projection );
         p.set(
@@ -83,8 +74,8 @@ function raycast_volume_geneator(){
 
           if( !isNaN(tmp) ){
 
-            k1 = Math.ceil(((-p.y / p.z - tmp) + orig.z) / f.z);
-            k2 = Math.floor(((-p.y / p.z + tmp) + orig.z) / f.z);
+            k1 = Math.ceil((-p.y / p.z - tmp) + orig.z);
+            k2 = Math.floor((-p.y / p.z + tmp) + orig.z);
 
             if( k1 < 0 ){ k1 = 0; }
             if( k2 >= mz ){ k2 = mz - 1 ; }
@@ -99,9 +90,9 @@ function raycast_volume_geneator(){
 
               if( tmp > 0 ){
                 p.set(
-                  (i+0.5) * f.x - orig.x,
-                  (j+0.5) * f.y - orig.y,
-                  (k+0.5) * f.z - orig.z
+                  (i+0.5) - orig.x,
+                  (j+0.5) - orig.y,
+                  (k+0.5) - orig.z
                 );
                 tmp = p.dot( direction );
                 if( tmp < dist ){
@@ -111,9 +102,9 @@ function raycast_volume_geneator(){
 
                   // voxel coordinate
                   dest.set(
-                    (i+0.5) * f.x - l_x / 2,
-                    (j+0.5) * f.y - l_y / 2,
-                    (k+0.5) * f.z - l_z / 2
+                    (i+0.5) - mx / 2,
+                    (j+0.5) - my / 2,
+                    (k+0.5) - mz / 2
                   );
 
                   if( snap_raycaster ){
@@ -145,9 +136,7 @@ const raycast_volume = raycast_volume_geneator();
 
 function electrode_from_ct_generator(){
 
-  const cube_dim = new Vector3(),
-        cube_size = new Vector3(),
-        origin = new Vector3(),
+  const origin = new Vector3(),
         direction = new Vector3(),
         pos = new Vector3();
   const matrix_ = new Matrix4(),
@@ -159,7 +148,8 @@ function electrode_from_ct_generator(){
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
 
-    colorChannels = inst._color_format === "AlphaFormat" ? 1 : 4;
+    // 1 or 4
+    colorChannels = inst.nColorChannels;
 
     matrix_.copy(inst.object.matrixWorld);
     matrix_inv.copy(matrix_).invert();
@@ -177,16 +167,9 @@ function electrode_from_ct_generator(){
     canvas.__localization_helper.setDirection(dir);
     */
 
-    cube_dim.fromArray( inst._cube_dim );
-    cube_size.set(
-      inst._margin_length.xLength,
-      inst._margin_length.yLength,
-      inst._margin_length.zLength
-    );
-
     const res = raycast_volume(
-      origin, direction, cube_dim, cube_size,
-      inst._color_texture.image.data,
+      origin, direction, inst.modelShape,
+      inst.voxelColor,
       delta, snap_raycaster, colorChannels
     );
     pos.x = res[3];

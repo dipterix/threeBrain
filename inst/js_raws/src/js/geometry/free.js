@@ -58,7 +58,7 @@ class FreeMesh extends AbstractThreeBrainObject {
 
     // start settings track values
     const lut = this._canvas.global_data('__global_data__.SurfaceColorLUT'),
-          lut_map = lut.map,
+          lutMap = lut.map,
           tcol = this._track_color;
 
     // only set RGB, ignore A
@@ -70,7 +70,7 @@ class FreeMesh extends AbstractThreeBrainObject {
         tcol[ ii * 3 + 2 ] = 0;
         // tcol[ ii * 4 + 3 ] = 0;
       } else {
-        c = lut_map[ value[ jj ] ];
+        c = lutMap[ value[ jj ] ];
         if( c ){
           tcol[ ii * 3 ] = c.R;
           tcol[ ii * 3 + 1 ] = c.G;
@@ -155,12 +155,13 @@ class FreeMesh extends AbstractThreeBrainObject {
       return;
     }
 
-    this._volume_texture.image = m._color_texture.image;
+    this._volume_texture.image = m.colorTexture.image;
+
 
     this._material_options.scale_inv.value.set(
-      1 / m._cube_dim[0],
-      1 / m._cube_dim[1],
-      1 / m._cube_dim[2]
+      1 / m.modelShape.x,
+      1 / m.modelShape.y,
+      1 / m.modelShape.z
     );
 
     /**

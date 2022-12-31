@@ -43,22 +43,12 @@ function atlas_label(pos_array, canvas){
   const matrix_ = inst.object.matrixWorld.clone(),
         matrix_inv = matrix_.clone().invert();
 
-  const margin_voxels = new Vector3().fromArray( inst._cube_dim );
-  const margin_lengths = new Vector3().set(
-    inst._margin_length.xLength,
-    inst._margin_length.yLength,
-    inst._margin_length.zLength
-  );
-  const f = new Vector3().set(
-    margin_lengths.x / margin_voxels.x,
-    margin_lengths.y / margin_voxels.y,
-    margin_lengths.z / margin_voxels.z
-  );
+  const modelShape = new Vector3().copy( inst.modelShape );
 
-  const mx = margin_voxels.x,
-        my = margin_voxels.y,
-        mz = margin_voxels.z;
-  const label_data = inst._cube_values;
+  const mx = modelShape.x,
+        my = modelShape.y,
+        mz = modelShape.z;
+  const label_data = inst.voxelData;
 
   const pos = new Vector3().set(1, 0, 0),
         pos0 = new Vector3().set(0, 0, 0).applyMatrix4(matrix_);
@@ -75,9 +65,9 @@ function atlas_label(pos_array, canvas){
 
   // round model coord -> IJK coord
   const ijk0 = new Vector3().set(
-    Math.round( ( pos.x + margin_lengths.x / 2 ) - 1.0 ),
-    Math.round( ( pos.y + margin_lengths.y / 2 ) - 1.0 ),
-    Math.round( ( pos.z + margin_lengths.z / 2 ) - 1.0 )
+    Math.round( ( pos.x + modelShape.x / 2 ) - 1.0 ),
+    Math.round( ( pos.y + modelShape.y / 2 ) - 1.0 ),
+    Math.round( ( pos.z + modelShape.z / 2 ) - 1.0 )
   );
   const ijk1 = new Vector3().set(
     Math.max( Math.min( ijk0.x, mx - delta.x * max_step_size - 1 ), delta.x * max_step_size ),
@@ -427,22 +417,12 @@ class LocElectrode {
     const matrix_ = inst.object.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
-    const margin_voxels = new Vector3().fromArray( inst._cube_dim );
-    const margin_lengths = new Vector3().set(
-      inst._margin_length.xLength,
-      inst._margin_length.yLength,
-      inst._margin_length.zLength
-    );
-    const f = new Vector3().set(
-      margin_lengths.x / margin_voxels.x,
-      margin_lengths.y / margin_voxels.y,
-      margin_lengths.z / margin_voxels.z
-    );
-    const mx = margin_voxels.x,
-          my = margin_voxels.y,
-          mz = margin_voxels.z;
-    const ct_data = inst._cube_values,
-          ct_threshold_min = inst.__threshold_min;
+    const modelShape = new Vector3().copy( inst.modelShape );
+    const mx = modelShape.x,
+          my = modelShape.y,
+          mz = modelShape.z;
+    const ct_data = inst.voxelData,
+          ct_threshold_min = inst.__thresholdMin;
 
 
     const pos = new Vector3().set(1, 0, 0),
@@ -467,9 +447,9 @@ class LocElectrode {
     // (pos + margin_lengths/2) / f scales to the voxel IJK corner
     //
     const ijk0 = new Vector3().set(
-      Math.round( ( pos.x + margin_lengths.x / 2 ) - 1.0 ),
-      Math.round( ( pos.y + margin_lengths.y / 2 ) - 1.0 ),
-      Math.round( ( pos.z + margin_lengths.z / 2 ) - 1.0 )
+      Math.round( ( pos.x + modelShape.x / 2 ) - 1.0 ),
+      Math.round( ( pos.y + modelShape.y / 2 ) - 1.0 ),
+      Math.round( ( pos.z + modelShape.z / 2 ) - 1.0 )
     );
     const ijk1 = new Vector3().set(
       Math.max( Math.min( ijk0.x, mx - delta.x * max_step_size - 1 ), delta.x * max_step_size ),
@@ -516,7 +496,7 @@ class LocElectrode {
     ijk_new.multiplyScalar( 1.0 / total_v ).add( ijk0 );
 
     // (ijk + 0.5 - margin_voxels / 2) * f
-    ijk_new.multiplyScalar( 2.0 ).sub( margin_voxels ).addScalar( 2.0 ).multiplyScalar( 0.5 );
+    ijk_new.multiplyScalar( 2.0 ).sub( modelShape ).addScalar( 2.0 ).multiplyScalar( 0.5 );
     pos.copy( ijk_new );
 
     // reverse back

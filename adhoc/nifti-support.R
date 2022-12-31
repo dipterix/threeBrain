@@ -19,7 +19,6 @@ ct_path <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/co
 
 threeBrain:::add_nifti(brain, "CT", path = ct_path, color_format = "AlphaFormat")
 
-
 key <- seq(0, 5000)
 cmap <- threeBrain:::create_colormap(
   gtype = 'volume', dtype = 'continuous',
@@ -28,6 +27,7 @@ cmap <- threeBrain:::create_colormap(
   # using AlphaFormat so color map is the color intensity in gray
   color = c("black", "white")
 )
+brain$atlases$CT$object$color_map <- cmap
 controllers[["Left Opacity"]] <- 0.4
 controllers[["Right Opacity"]] <- 0.4
 controllers[["Voxel Type"]] <- "CT"

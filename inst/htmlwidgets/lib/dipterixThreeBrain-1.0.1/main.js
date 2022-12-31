@@ -65654,7 +65654,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
   THREEBRAIN_PRESETS.prototype.c_voxel = function(){
     const folder_name = constants/* CONSTANTS.FOLDERS.atlas */.t.FOLDERS.atlas || 'Volume Settings',
           lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
-          lut_map = lut.map,
+          lutMap = lut.map,
           lut_alpha = lut.mapAlpha,
           lut_type = lut.mapDataType;
           // _atype = this.canvas.get_state( 'atlas_type' ) || 'none';  //_s
@@ -65716,7 +65716,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
         if( inst && inst.isDataCube2 ){
           inst.object.material.uniforms.alpha.value = opa;
           if( opa < 0 ){
-            inst._set_palette();
+            inst.updatePalette();
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
           }
         }
@@ -65729,7 +65729,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
     //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
     if( lut_type === "continuous" ){
 
-      const cmap_array = Object.values(lut_map);
+      const cmap_array = Object.values(lutMap);
       const voxel_value_range = (0,utils/* to_array */.AA)( lut.mapValueRange );
       const voxel_minmax = (l, u) => {
         const inst = this.current_voxel_type();
@@ -65748,7 +65748,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
               return(e.ColorID);
             });
 
-            inst._set_palette( candidates );
+            inst.updatePalette( candidates );
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this.canvas.set_state( "surface_color_refresh", Date() );
@@ -65789,7 +65789,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
             const candidates = v.split(",")
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});
-            inst._set_palette( candidates );
+            inst.updatePalette( candidates );
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();
@@ -65817,9 +65817,8 @@ function raycast_volume_geneator(){
   const projection = new three_module.Matrix3();
   const p = new three_module.Vector3();
   const p1 = new three_module.Vector3();
-  const f = new three_module.Vector3();
   const dest = new three_module.Vector3();
-  let l_x, l_y, l_z, i, j, k, tmp, k1, k2, l_res;
+  let mx, my, mz, i, j, k, tmp, k1, k2, l_res;
   const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
 
   /*window.orig = orig;
@@ -65829,25 +65828,21 @@ function raycast_volume_geneator(){
   window.f = f;*/
 
   const raycast_volume = (
-    origin, direction, margin_voxels, margin_lengths,
+    origin, direction, volumeModelShape,
     map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {
     // canvas.mouse_raycaster.ray.origin
     // canvas.mouse_raycaster.ray.direction
 
-    l_x = margin_lengths.x;
-    l_y = margin_lengths.y;
-    l_z = margin_lengths.z;
+    mx = volumeModelShape.x;
+    my = volumeModelShape.y;
+    mz = volumeModelShape.z;
 
     direction.normalize();
 
-    f.x = margin_lengths.x / margin_voxels.x;
-    f.y = margin_lengths.y / margin_voxels.y;
-    f.z = margin_lengths.z / margin_voxels.z;
-
     // vOrigin = (position - vec3(0.5, 0.5, 0.5)) * scale_inv - vDirection;
-    orig.x = origin.x + l_x / 2;
-    orig.y = origin.y + l_y / 2;
-    orig.z = origin.z + l_z / 2;
+    orig.x = origin.x + mx / 2;
+    orig.y = origin.y + my / 2;
+    orig.z = origin.z + mz / 2;
     projection.set(
       1-direction.x * direction.x,
       -direction.x * direction.y,
@@ -65865,19 +65860,15 @@ function raycast_volume_geneator(){
           a23 = projection.elements[5],
           a33 = projection.elements[8];
     let i, j, k1, k2, tmp, k, dist = Infinity;
-    const mx = margin_voxels.x,
-          my = margin_voxels.y,
-          mz = margin_voxels.z;
-
 
     for(i = 0; i < 7; i++){
       res[i] = NaN;
     }
 
-    for( i = 0; i < margin_voxels.x; i++ ){
-      for( j = 0; j < margin_voxels.y; j++ ){
+    for( i = 0; i < mx; i++ ){
+      for( j = 0; j < my; j++ ){
         // p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0.5 * f.z );
-        p.set( (i+0.5) * f.x - orig.x, (j+0.5) * f.y - orig.y , 0.5 * f.z );
+        p.set( (i+0.5) - orig.x, (j+0.5) - orig.y , 0.5 );
         p1.copy( p );
         p.applyMatrix3( projection );
         p.set(
@@ -65894,8 +65885,8 @@ function raycast_volume_geneator(){
 
           if( !isNaN(tmp) ){
 
-            k1 = Math.ceil(((-p.y / p.z - tmp) + orig.z) / f.z);
-            k2 = Math.floor(((-p.y / p.z + tmp) + orig.z) / f.z);
+            k1 = Math.ceil((-p.y / p.z - tmp) + orig.z);
+            k2 = Math.floor((-p.y / p.z + tmp) + orig.z);
 
             if( k1 < 0 ){ k1 = 0; }
             if( k2 >= mz ){ k2 = mz - 1 ; }
@@ -65910,9 +65901,9 @@ function raycast_volume_geneator(){
 
               if( tmp > 0 ){
                 p.set(
-                  (i+0.5) * f.x - orig.x,
-                  (j+0.5) * f.y - orig.y,
-                  (k+0.5) * f.z - orig.z
+                  (i+0.5) - orig.x,
+                  (j+0.5) - orig.y,
+                  (k+0.5) - orig.z
                 );
                 tmp = p.dot( direction );
                 if( tmp < dist ){
@@ -65922,9 +65913,9 @@ function raycast_volume_geneator(){
 
                   // voxel coordinate
                   dest.set(
-                    (i+0.5) * f.x - l_x / 2,
-                    (j+0.5) * f.y - l_y / 2,
-                    (k+0.5) * f.z - l_z / 2
+                    (i+0.5) - mx / 2,
+                    (j+0.5) - my / 2,
+                    (k+0.5) - mz / 2
                   );
 
                   if( snap_raycaster ){
@@ -65956,9 +65947,7 @@ const raycast_volume = raycast_volume_geneator();
 
 function electrode_from_ct_generator(){
 
-  const cube_dim = new three_module.Vector3(),
-        cube_size = new three_module.Vector3(),
-        origin = new three_module.Vector3(),
+  const origin = new three_module.Vector3(),
         direction = new three_module.Vector3(),
         pos = new three_module.Vector3();
   const matrix_ = new three_module.Matrix4(),
@@ -65970,7 +65959,8 @@ function electrode_from_ct_generator(){
   const intersect_volume = ( src, dir, inst, canvas, delta = 1, snap_raycaster = true ) => {
     if( !inst || !inst.isDataCube2 ){ return; }
 
-    colorChannels = inst._color_format === "AlphaFormat" ? 1 : 4;
+    // 1 or 4
+    colorChannels = inst.nColorChannels;
 
     matrix_.copy(inst.object.matrixWorld);
     matrix_inv.copy(matrix_).invert();
@@ -65988,16 +65978,9 @@ function electrode_from_ct_generator(){
     canvas.__localization_helper.setDirection(dir);
     */
 
-    cube_dim.fromArray( inst._cube_dim );
-    cube_size.set(
-      inst._margin_length.xLength,
-      inst._margin_length.yLength,
-      inst._margin_length.zLength
-    );
-
     const res = raycast_volume(
-      origin, direction, cube_dim, cube_size,
-      inst._color_texture.image.data,
+      origin, direction, inst.modelShape,
+      inst.voxelColor,
       delta, snap_raycaster, colorChannels
     );
     pos.x = res[3];
@@ -66089,22 +66072,12 @@ function atlas_label(pos_array, canvas){
   const matrix_ = inst.object.matrixWorld.clone(),
         matrix_inv = matrix_.clone().invert();
 
-  const margin_voxels = new three_module.Vector3().fromArray( inst._cube_dim );
-  const margin_lengths = new three_module.Vector3().set(
-    inst._margin_length.xLength,
-    inst._margin_length.yLength,
-    inst._margin_length.zLength
-  );
-  const f = new three_module.Vector3().set(
-    margin_lengths.x / margin_voxels.x,
-    margin_lengths.y / margin_voxels.y,
-    margin_lengths.z / margin_voxels.z
-  );
+  const modelShape = new three_module.Vector3().copy( inst.modelShape );
 
-  const mx = margin_voxels.x,
-        my = margin_voxels.y,
-        mz = margin_voxels.z;
-  const label_data = inst._cube_values;
+  const mx = modelShape.x,
+        my = modelShape.y,
+        mz = modelShape.z;
+  const label_data = inst.voxelData;
 
   const pos = new three_module.Vector3().set(1, 0, 0),
         pos0 = new three_module.Vector3().set(0, 0, 0).applyMatrix4(matrix_);
@@ -66121,9 +66094,9 @@ function atlas_label(pos_array, canvas){
 
   // round model coord -> IJK coord
   const ijk0 = new three_module.Vector3().set(
-    Math.round( ( pos.x + margin_lengths.x / 2 ) - 1.0 ),
-    Math.round( ( pos.y + margin_lengths.y / 2 ) - 1.0 ),
-    Math.round( ( pos.z + margin_lengths.z / 2 ) - 1.0 )
+    Math.round( ( pos.x + modelShape.x / 2 ) - 1.0 ),
+    Math.round( ( pos.y + modelShape.y / 2 ) - 1.0 ),
+    Math.round( ( pos.z + modelShape.z / 2 ) - 1.0 )
   );
   const ijk1 = new three_module.Vector3().set(
     Math.max( Math.min( ijk0.x, mx - delta.x * max_step_size - 1 ), delta.x * max_step_size ),
@@ -66473,22 +66446,12 @@ class LocElectrode {
     const matrix_ = inst.object.matrixWorld.clone(),
           matrix_inv = matrix_.clone().invert();
 
-    const margin_voxels = new three_module.Vector3().fromArray( inst._cube_dim );
-    const margin_lengths = new three_module.Vector3().set(
-      inst._margin_length.xLength,
-      inst._margin_length.yLength,
-      inst._margin_length.zLength
-    );
-    const f = new three_module.Vector3().set(
-      margin_lengths.x / margin_voxels.x,
-      margin_lengths.y / margin_voxels.y,
-      margin_lengths.z / margin_voxels.z
-    );
-    const mx = margin_voxels.x,
-          my = margin_voxels.y,
-          mz = margin_voxels.z;
-    const ct_data = inst._cube_values,
-          ct_threshold_min = inst.__threshold_min;
+    const modelShape = new three_module.Vector3().copy( inst.modelShape );
+    const mx = modelShape.x,
+          my = modelShape.y,
+          mz = modelShape.z;
+    const ct_data = inst.voxelData,
+          ct_threshold_min = inst.__thresholdMin;
 
 
     const pos = new three_module.Vector3().set(1, 0, 0),
@@ -66513,9 +66476,9 @@ class LocElectrode {
     // (pos + margin_lengths/2) / f scales to the voxel IJK corner
     //
     const ijk0 = new three_module.Vector3().set(
-      Math.round( ( pos.x + margin_lengths.x / 2 ) - 1.0 ),
-      Math.round( ( pos.y + margin_lengths.y / 2 ) - 1.0 ),
-      Math.round( ( pos.z + margin_lengths.z / 2 ) - 1.0 )
+      Math.round( ( pos.x + modelShape.x / 2 ) - 1.0 ),
+      Math.round( ( pos.y + modelShape.y / 2 ) - 1.0 ),
+      Math.round( ( pos.z + modelShape.z / 2 ) - 1.0 )
     );
     const ijk1 = new three_module.Vector3().set(
       Math.max( Math.min( ijk0.x, mx - delta.x * max_step_size - 1 ), delta.x * max_step_size ),
@@ -66562,7 +66525,7 @@ class LocElectrode {
     ijk_new.multiplyScalar( 1.0 / total_v ).add( ijk0 );
 
     // (ijk + 0.5 - margin_voxels / 2) * f
-    ijk_new.multiplyScalar( 2.0 ).sub( margin_voxels ).addScalar( 2.0 ).multiplyScalar( 0.5 );
+    ijk_new.multiplyScalar( 2.0 ).sub( modelShape ).addScalar( 2.0 ).multiplyScalar( 0.5 );
     pos.copy( ijk_new );
 
     // reverse back
@@ -77175,124 +77138,174 @@ class ConvexGeometry extends (/* unused pure expression or super */ null && (Buf
 
 class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
-  _set_palette( color_ids, skip, compute_boundingbox = false ){
+  updatePalette( selectedColorKeys, timeSlice, computeBoundingBox = false ){
 
-    if( this._canvas.has_webgl2 ){
+    if( !this._canvas.has_webgl2 ){ return; }
 
-      // WARNING, no check on color_ids to speed up
-      // I assume color_ids is always array of integers
-      this.__threshold_min = Infinity;
-      if( color_ids !== undefined ){
-        this._color_ids.length = 0;
-        for( let jj = 0; jj < color_ids.length; jj++ ) {
-          const color_id = color_ids[ jj ];
-          if( this.__threshold_min > color_id ) {
-            this.__threshold_min = color_id;
-          }
-          this._color_ids[ color_id ] = true;
+    if(
+      selectedColorKeys === undefined &&
+      timeSlice === undefined &&
+      !computeBoundingBox
+    ) {
+      return;
+    }
+
+    console.time("updatePalette")
+
+    // WARNING, no check on selectedColorKeys to speed up
+    // I assume selectedColorKeys is always array of non-negative integers
+    this.__thresholdMin = Infinity;
+    if( selectedColorKeys !== undefined ){
+      this._selectedColorKeys.length = 0;
+      for( let jj = 0; jj < selectedColorKeys.length; jj++ ) {
+        const color_id = selectedColorKeys[ jj ];
+        if( this.__thresholdMin > color_id ) {
+          this.__thresholdMin = color_id;
         }
-        if( this._color_ids[0] ){
-          this._color_ids_length = 0;
-        } else {
-          this._color_ids_length = color_ids.length;
+        if( color_id == 0 ) {
+          this._selectedColorKeys.length = 0;
+          break;
         }
-        compute_boundingbox = true;
+        this._selectedColorKeys[ color_id ] = true;
       }
-      if( typeof(skip) === "number" ){
-        this._value_index_skip = Math.floor( skip );
-      }
+      computeBoundingBox = true;
+    }
+    if( typeof(timeSlice) === "number" ){
+      this._timeSlice = Math.floor( timeSlice );
+    }
+    computeBoundingBox = false;
 
-      let i = 0, ii = 0, jj = this._value_index_skip * this._voxel_length, tmp, x, y, z;
-      if( compute_boundingbox ){
-        this._bounding_min = Math.max(this._cube_dim[0], this._cube_dim[1], this._cube_dim[2]);
-        this._bounding_max = 0;
-      }
+    const mapAlpha = this.lut.mapAlpha;
+    const includeAllColors = this._selectedColorKeys.length === 0;
+    const voxelData = this.voxelData;
+    const lutMap = this.lutMap;
+    const singleChannel = this.colorFormat === three_module.AlphaFormat;
+    const voxelColor = this.voxelColor;
 
-      let within_filter;
-      for ( z = 0; z < this._cube_dim[0]; z ++ ) {
-        for ( y = 0; y < this._cube_dim[1]; y ++ ) {
-          for ( x = 0; x < this._cube_dim[2]; x ++ ) {
+    const voxelIndexOffset = this._timeSlice * this.nVoxels;
+    let voxelIndex = 0,
+        boundingMinX = Infinity, boundingMinY = Infinity, boundingMinZ = Infinity,
+        boundingMaxX = -Infinity, boundingMaxY = -Infinity, boundingMaxZ = -Infinity;
+    let withinFilters, voxelValue;
+
+    if( singleChannel ) {
+
+      // voxel alpha value
+      let voxelA;
+
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
 
             // no need to round up as this has been done in the constructor
-            i = this._cube_values[jj];
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue === 0 ) {
+              // special: always hide this voxel
+              voxelColor[ voxelIndex ] = 0;
+            } else {
 
-            if( i !== 0 ){
+              voxelA = lutMap[ voxelValue ];
+              withinFilters = includeAllColors || this._selectedColorKeys[ voxelValue ];
 
-              tmp = this._lut_map[i];
+              if( voxelA !== undefined && withinFilters ) {
+                // this voxel should be displayed
+                voxelColor[ voxelIndex ] = voxelA.R;
 
-              if( tmp ){
-
-                // valid voxel to render
-
-                within_filter = this._color_ids_length === 0 || this._color_ids[ i ];
-
-                if( this._color_format === "AlphaFormat" ) {
-                  this._map_color[ ii ] = tmp.R;
-                } else {
-
-                  this._map_color[ 4 * ii ] = tmp.R;
-                  this._map_color[ 4 * ii + 1 ] = tmp.G;
-                  this._map_color[ 4 * ii + 2 ] = tmp.B;
-
-                  if( within_filter ) {
-                    this._map_color[ 4 * ii + 3 ] = this._map_alpha ? tmp.A : 255;
-                  }
+                if( computeBoundingBox ){
+                  // set bounding box
+                  if( boundingMinX > x ) { boundingMinX = x; }
+                  if( boundingMinY > y ) { boundingMinY = y; }
+                  if( boundingMinZ > z ) { boundingMinZ = z; }
+                  if( boundingMaxX < x ) { boundingMaxX = x; }
+                  if( boundingMaxY < y ) { boundingMaxY = y; }
+                  if( boundingMaxZ < z ) { boundingMaxZ = z; }
                 }
-
-                if( within_filter ) {
-
-                  // this._map_data[ ii ] = i;
-
-                  if( compute_boundingbox ){
-                    // set bounding box
-                    if( Math.min(x,y,z) < this._bounding_min ){
-                      this._bounding_min = Math.min(x,y,z);
-                    }
-                    if( Math.max(x,y,z) > this._bounding_max ){
-                      this._bounding_max = Math.max(x,y,z);
-                    }
-                  }
-
-                  ii++;
-                  jj++;
-                  continue;
-
-                }
-
+              } else {
+                voxelColor[ voxelIndex ] = 0;
               }
 
             }
-            // voxel is invisible, no need to render! hence data is 0
-            // this._map_data[ ii ] = 0;
 
-            if( this._color_format === "AlphaFormat" ) {
-              this._map_color[ ii ] = 0;
+          }
+        }
+      }
+    } else {
+
+      // voxel RGBA value
+      let voxelRGBA;
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue === 0 ) {
+              // special: always hide this voxel
+              voxelColor[ voxelIndex * 4 + 3 ] = 0;
             } else {
-              this._map_color[ 4 * ii + 3 ] = 0;
+
+              voxelRGBA = lutMap[ voxelValue ];
+              withinFilters = includeAllColors || this._selectedColorKeys[ voxelValue ];
+
+              if( voxelA !== undefined && withinFilters ) {
+                // this voxel should be displayed
+                voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
+                voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
+                voxelColor[ voxelIndex * 4 + 2 ] = voxelRGBA.B;
+
+                if( mapAlpha ) {
+                  voxelColor[ voxelIndex * 4 + 3 ] = voxelRGBA.A;
+                } else {
+                  voxelColor[ voxelIndex * 4 + 3 ] = 255;
+                }
+                if( computeBoundingBox ){
+                  // set bounding box
+                  if( boundingMinX > x ) { boundingMinX = x; }
+                  if( boundingMinY > y ) { boundingMinY = y; }
+                  if( boundingMinZ > z ) { boundingMinZ = z; }
+                  if( boundingMaxX < x ) { boundingMaxX = x; }
+                  if( boundingMaxY < y ) { boundingMaxY = y; }
+                  if( boundingMaxZ < z ) { boundingMaxZ = z; }
+                }
+              } else {
+                voxelColor[ voxelIndex * 4 + 3 ] = 0;
+              }
+
             }
-            ii++;
-            jj++;
+
           }
         }
       }
 
-      if( compute_boundingbox ){
-        this.object.material.uniforms.bounding.value = Math.min(
-          Math.max(
-            this._bounding_max / Math.min(...(this._cube_dim)) - 0.5,
-            0.5 - this._bounding_min / Math.max(...(this._cube_dim)),
-            0.0
-          ),
-          0.5
-        );
-        this.object.material.uniformsNeedUpdate = true;
-      }
-
-      if( this._color_texture ){
-        this._color_texture.needsUpdate = true;
-      }
-
     }
+
+    console.timeEnd("updatePalette");
+
+    if( computeBoundingBox ){
+      this.object.material.uniforms.bounding.value = Math.min(
+        Math.max(
+          boundingMaxX / this.modelShape.x - 0.5,
+          boundingMaxY / this.modelShape.y - 0.5,
+          boundingMaxZ / this.modelShape.z - 0.5,
+          0.5 - boundingMinX / this.modelShape.x,
+          0.5 - boundingMinY / this.modelShape.y,
+          0.5 - boundingMinZ / this.modelShape.z,
+          0.0
+        ),
+        0.5
+      );
+      this.object.material.uniformsNeedUpdate = true;
+    }
+    console.log([
+      boundingMaxX / this.modelShape.x - 0.5,
+          boundingMaxY / this.modelShape.y - 0.5,
+          boundingMaxZ / this.modelShape.z - 0.5,
+          0.5 - boundingMinX / this.modelShape.x,
+          0.5 - boundingMinY / this.modelShape.y,
+          0.5 - boundingMinZ / this.modelShape.z
+    ]);
+
+    this.colorTexture.needsUpdate = true;
 
   }
 
@@ -77300,6 +77313,11 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
 
     super( g, canvas );
+
+    if( !canvas.has_webgl2 ){
+      throw 'DataCube2, i.e. voxel cube must need WebGL2 support';
+    }
+
     // this._params is g
     // this.name = this._params.name;
     // this.group_name = this._params.group.group_name;
@@ -77307,22 +77325,18 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.type = 'DataCube2';
     this.isDataCube2 = true;
     this._display_mode = "hidden";
-    this._color_format = "RGBAFormat";
-    this.__threshold_min = Infinity;
+    this.__thresholdMin = Infinity;
+    this._selectedColorKeys = [];
+    this._timeSlice = 0;
 
     let mesh;
 
     // Need to check if this is nifticube
-    let cube_values, cube_half_size, cube_dim;
     if( g.isNiftiCube ) {
       const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
-      cube_values = niftiData.image;
-      cube_half_size = [
-        niftiData.shape[0] / 2,
-        niftiData.shape[1] / 2,
-        niftiData.shape[2] / 2
-      ];
-      cube_dim = [...niftiData.shape];
+      this.voxelData = niftiData.image;
+      // width, height, depth of the model (not in world)
+      this.modelShape = new three_module.Vector3().fromArray( niftiData.shape );
 
       // Make sure to register the initial transform matrix (from IJK to RAS)
       if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
@@ -77333,191 +77347,128 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
         g.trans_mat = niftiData.model2RAS.toArray();
       }
     } else {
-      cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
-      cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name);
-      cube_dim = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name);
+      this.voxelData = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
+      // width, height, depth of the model (not in world)
+      this.modelShape = new three_module.Vector3().fromArray(
+        canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name)
+      );
     }
-    // Cube values Must be from 0 to 1, float
-    const volume = {
-            'xLength' : cube_half_size[0]*2,
-            'yLength' : cube_half_size[1]*2,
-            'zLength' : cube_half_size[2]*2,
-          },
-          lut = canvas.global_data('__global_data__.VolumeColorLUT'),
-          lut_map = lut.map,
-          max_colID = lut.mapMaxColorID,
-          color_format = g.color_format;
-    this._margin_length = volume;
-    // If webgl2 is enabled, then we can show 3d texture, otherwise we can only show 3D plane
-
-    if( canvas.has_webgl2 ){
-      // Generate 3D texture, to do so, we need to customize shaders
-
-      this._voxel_length = cube_dim[0] * cube_dim[1] * cube_dim[2];
-      // const data = new Float32Array( this._voxel_length );
-
-      let color;
-
-      if( color_format === "AlphaFormat" ) {
-        this._color_format = "AlphaFormat";
-        color = new Uint8Array( this._voxel_length );
-      } else {
-        this._color_format = "RGBAFormat";
-        color = new Uint8Array( this._voxel_length * 4 );
+    // Change voxelData so all elements are integers (non-negative)
+    this.voxelData.forEach( (el, ii) => {
+      if( el > this.lutMaxColorID || el < 0 ){
+        this.voxelData[ ii ] = 0;
+        return;
       }
+      if ( !Number.isInteger( el ) ) {
+        this.voxelData[ ii ] = Math.round( el );
+      }
+    });
+    this.nVoxels = this.modelShape.x * this.modelShape.y * this.modelShape.z;
 
-      this._cube_values = cube_values;
-      this._lut = lut;
-      this._lut_map = lut_map;
-      this._cube_dim = cube_dim;
-      // this._map_data = data;
-      this._map_color = color;
-      this._map_alpha = lut.mapAlpha;
-      this._color_ids = [];
-      this._color_ids_length = 0;
-      this._value_index_skip = 0;
+    this.lut = canvas.global_data('__global_data__.VolumeColorLUT');
+    this.lutMap = this.lut.map;
+    this.lutMaxColorID = this.lut.mapMaxColorID;
 
-      let bounding_min = Math.min(cube_dim[0], cube_dim[1], cube_dim[2]) / 2,
-          bounding_max = bounding_min;
+    // Generate 3D texture, to do so, we need to customize shaders
+    if( g.color_format === "AlphaFormat" ) {
+      this.colorFormat = three_module.AlphaFormat;
+      this.nColorChannels = 1;
+      this.voxelColor = new Uint8Array( this.nVoxels );
+    } else {
+      this.colorFormat = three_module.RGBAFormat;
+      this.nColorChannels = 4;
+      this.voxelColor = new Uint8Array( this.nVoxels * 4 );
+    }
 
-      // Change cube_values so all elements are integers (non-negative)
-      cube_values.forEach( (el, ii) => {
-        if( el > max_colID || el < 0 ){
-          cube_values[ ii ] = 0;
-          return;
-        }
-        if ( !Number.isInteger( el ) ) {
-          cube_values[ ii ] = Math.round( el );
-        }
-      });
+    /*
+    let i = 0, ii = 0, tmp;
+    for ( let z = 0; z < this.modelShape.x; z ++ ) {
+      for ( let y = 0; y < this.modelShape.y; y ++ ) {
+        for ( let x = 0; x < this.modelShape.z; x ++ ) {
+          i = this.voxelData[ii];
 
-      let i = 0, ii = 0, tmp;
-      for ( let z = 0; z < cube_dim[0]; z ++ ) {
-        for ( let y = 0; y < cube_dim[1]; y ++ ) {
-          for ( let x = 0; x < cube_dim[2]; x ++ ) {
-            i = cube_values[ii];
-
-            if( i !== 0 ){
-              tmp = lut_map[i];
-              if( tmp ) {
-                if( this._color_format === "AlphaFormat" ) {
-                  this._map_color[ ii ] = tmp.R;
-                } else {
-                  this._map_color[ 4 * ii ] = tmp.R;
-                  this._map_color[ 4 * ii + 1 ] = tmp.G;
-                  this._map_color[ 4 * ii + 2 ] = tmp.B;
-                  this._map_color[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
-                }
-
-                if( Math.min(x,y,z) < bounding_min ){
-                  bounding_min = Math.min(x,y,z);
-                }
-                if( Math.max(x,y,z) > bounding_max ){
-                  bounding_max = Math.max(x,y,z);
-                }
-                // this._map_data[ ii ] = i;
-
+          if( i !== 0 ){
+            tmp = this.lutMap[i];
+            if( tmp ) {
+              if( this.colorFormat === "AlphaFormat" ) {
+                this.voxelColor[ ii ] = tmp.R;
+              } else {
+                this.voxelColor[ 4 * ii ] = tmp.R;
+                this.voxelColor[ 4 * ii + 1 ] = tmp.G;
+                this.voxelColor[ 4 * ii + 2 ] = tmp.B;
+                this.voxelColor[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
               }
+
+              if( Math.min(x,y,z) < this.__boundingMin ){
+                this.__boundingMin = Math.min(x,y,z);
+              }
+              if( Math.max(x,y,z) > this.__boundingMax ){
+                this.__boundingMax = Math.max(x,y,z);
+              }
+              // this._map_data[ ii ] = i;
+
             }
-            /**
-             * No need to assign data if keys are invalid
-             * data are initialized with 0 according to js specifications
-             */
-            ii++;
           }
+          ii++;
         }
       }
-
-      // for ( let z = 0; z < cube_dim[0]; z ++ ) {
-      //  for ( let y = 0; y < cube_dim[1]; y ++ ) {
-      //    for ( let x = 0; x < cube_dim[2]; x ++ ) {
-      //vertex_position.push(
-      //  new Vector3().set(
-      //    ((x + 0.5) / (cube_dim[2] - 1) - 0.5) * volume.xLength,
-      //    ((y - 0.5) / (cube_dim[1] - 1) - 0.5) * volume.yLength,
-      //    ((z + 0.5) / (cube_dim[0] - 1) - 0.5) * volume.zLength
-      //  )
-      //);
-
-      // 3D texture
-      /*let data_texture = new DataTexture3D(
-        this._map_data, cube_dim[0], cube_dim[1], cube_dim[2]
-      );
-      data_texture.minFilter = NearestFilter;
-      data_texture.magFilter = NearestFilter;
-      data_texture.format = RedFormat;
-      data_texture.type = FloatType;
-      data_texture.unpackAlignment = 1;
-      data_texture.needsUpdate = true;
-      this._data_texture = data_texture;
-      this._data_texture.needsUpdate = true;*/
-
-      // Color texture - used to render colors
-      let color_texture = new three_module.DataTexture3D(
-        this._map_color, cube_dim[0], cube_dim[1], cube_dim[2]
-      );
-
-      color_texture.minFilter = three_module.NearestFilter;
-      color_texture.magFilter = three_module.NearestFilter;
-      color_texture.format = this._color_format === "AlphaFormat" ? three_module.AlphaFormat : three_module.RGBAFormat;
-      color_texture.type = three_module.UnsignedByteType;
-      color_texture.unpackAlignment = 1;
-
-      this._color_texture = color_texture;
-      this._color_texture.needsUpdate = true;
-
-      // Material
-      const shader = VolumeRenderShader1;
-
-
-      const uniforms = three_module.UniformsUtils.clone( shader.uniforms );
-      this._uniforms = uniforms;
-      // uniforms.map.value = data_texture;
-      uniforms.cmap.value = color_texture;
-      uniforms.colorChannels.value = this._color_format === "AlphaFormat" ? 1 : 4;
-      uniforms.alpha.value = -1.0;
-      uniforms.scale_inv.value.set(1 / volume.xLength, 1 / volume.yLength, 1 / volume.zLength);
-
-      this._bounding_min = bounding_min;
-      this._bounding_max = bounding_max;
-      let bounding = Math.max(
-        bounding_max / Math.min(...cube_dim) - 0.5,
-        0.5 - bounding_min / Math.max(...cube_dim),
-        0.0
-      );
-      bounding = Math.min(bounding, 0.5);
-      uniforms.bounding.value = bounding;
-
-      let material = new three_module.RawShaderMaterial( {
-        uniforms: uniforms,
-        vertexShader: shader.vertexShader,
-        fragmentShader: shader.fragmentShader,
-        side: three_module.BackSide, // The volume shader uses the backface as its "reference point"
-        transparent : true
-      } );
-
-      // let geometry = new SphereBufferGeometry(
-      //   new Vector3().fromArray(cube_half_size).length(), 29, 14
-      // );
-
-      // const geometry = new ConvexGeometry( vertex_position );
-      const geometry = new three_module.BoxBufferGeometry(volume.xLength, volume.yLength, volume.zLength);
-
-      // This translate will make geometry rendered correctly
-      // geometry.translate( volume.xLength / 2, volume.yLength / 2, volume.zLength / 2 );
-
-      mesh = new three_module.Mesh( geometry, material );
-      mesh.name = 'mesh_datacube_' + g.name;
-
-      mesh.position.fromArray( g.position );
-      // TODO: need to check how threejs handle texture 3D to know why the s
-
-      mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
-      mesh.userData.dispose = () => { this.dispose(); };
-
     }
+    */
+
+    // Color texture - used to render colors
+    this.colorTexture = new three_module.DataTexture3D(
+      this.voxelColor, this.modelShape.x, this.modelShape.y, this.modelShape.z
+    );
+
+    this.colorTexture.minFilter = three_module.NearestFilter;
+    this.colorTexture.magFilter = three_module.NearestFilter;
+    this.colorTexture.format = this.colorFormat;
+    this.colorTexture.type = three_module.UnsignedByteType;
+    this.colorTexture.unpackAlignment = 1;
+
+    this.colorTexture.needsUpdate = true;
+
+    // Material
+    const shader = VolumeRenderShader1;
+
+
+    const uniforms = three_module.UniformsUtils.clone( shader.uniforms );
+    this._uniforms = uniforms;
+    // uniforms.map.value = data_texture;
+    uniforms.cmap.value = this.colorTexture;
+    uniforms.colorChannels.value = this.nColorChannels;
+    uniforms.alpha.value = -1.0;
+    uniforms.scale_inv.value.set(1 / this.modelShape.x, 1 / this.modelShape.y, 1 / this.modelShape.z);
+    uniforms.bounding.value = 0.5;
+
+    let material = new three_module.RawShaderMaterial( {
+      uniforms: uniforms,
+      vertexShader: shader.vertexShader,
+      fragmentShader: shader.fragmentShader,
+      side: three_module.BackSide, // The volume shader uses the backface as its "reference point"
+      transparent : true
+    } );
+
+    const geometry = new three_module.BoxBufferGeometry(
+      this.modelShape.x,
+      this.modelShape.y,
+      this.modelShape.z
+    );
+
+    mesh = new three_module.Mesh( geometry, material );
+    mesh.name = 'mesh_datacube_' + g.name;
+
+    mesh.position.fromArray( g.position );
+    // TODO: need to check how threejs handle texture 3D to know why the s
+
+    mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+    mesh.userData.dispose = () => { this.dispose(); };
+
     this._mesh = mesh;
     this.object = mesh;
+
+    // initialize voxelColor
+    this.updatePalette( [] );
   }
 
   dispose(){
@@ -77525,10 +77476,10 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._mesh.material.dispose();
       this._mesh.geometry.dispose();
       // this._data_texture.dispose();
-      this._color_texture.dispose();
+      this.colorTexture.dispose();
 
       // this._map_data = undefined;
-      // this._cube_values = undefined;
+      // this.voxelData = undefined;
     }
   }
 
@@ -78204,7 +78155,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     // start settings track values
     const lut = this._canvas.global_data('__global_data__.SurfaceColorLUT'),
-          lut_map = lut.map,
+          lutMap = lut.map,
           tcol = this._track_color;
 
     // only set RGB, ignore A
@@ -78216,7 +78167,7 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
         tcol[ ii * 3 + 2 ] = 0;
         // tcol[ ii * 4 + 3 ] = 0;
       } else {
-        c = lut_map[ value[ jj ] ];
+        c = lutMap[ value[ jj ] ];
         if( c ){
           tcol[ ii * 3 ] = c.R;
           tcol[ ii * 3 + 1 ] = c.G;
@@ -78301,12 +78252,13 @@ class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
       return;
     }
 
-    this._volume_texture.image = m._color_texture.image;
+    this._volume_texture.image = m.colorTexture.image;
+
 
     this._material_options.scale_inv.value.set(
-      1 / m._cube_dim[0],
-      1 / m._cube_dim[1],
-      1 / m._cube_dim[2]
+      1 / m.modelShape.x,
+      1 / m.modelShape.y,
+      1 / m.modelShape.z
     );
 
     /**

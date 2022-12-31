@@ -20,7 +20,7 @@ add_nifti(
   brain,
   name,
   path,
-  trans_vox2world = NULL,
+  trans_mat = NULL,
   color_format = c("RGBAFormat", "AlphaFormat")
 )
 

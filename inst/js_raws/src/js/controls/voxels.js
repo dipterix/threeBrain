@@ -48,7 +48,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
   THREEBRAIN_PRESETS.prototype.c_voxel = function(){
     const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
           lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
-          lut_map = lut.map,
+          lutMap = lut.map,
           lut_alpha = lut.mapAlpha,
           lut_type = lut.mapDataType;
           // _atype = this.canvas.get_state( 'atlas_type' ) || 'none';  //_s
@@ -110,7 +110,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
         if( inst && inst.isDataCube2 ){
           inst.object.material.uniforms.alpha.value = opa;
           if( opa < 0 ){
-            inst._set_palette();
+            inst.updatePalette();
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
           }
         }
@@ -123,7 +123,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
     //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
     if( lut_type === "continuous" ){
 
-      const cmap_array = Object.values(lut_map);
+      const cmap_array = Object.values(lutMap);
       const voxel_value_range = to_array( lut.mapValueRange );
       const voxel_minmax = (l, u) => {
         const inst = this.current_voxel_type();
@@ -142,7 +142,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
               return(e.ColorID);
             });
 
-            inst._set_palette( candidates );
+            inst.updatePalette( candidates );
 
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this.canvas.set_state( "surface_color_refresh", Date() );
@@ -183,7 +183,7 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
             const candidates = v.split(",")
               .map((v) => {return parseInt(v)})
               .filter((v) => {return !isNaN(v)});
-            inst._set_palette( candidates );
+            inst.updatePalette( candidates );
             inst.object.material.uniforms.cmap.value.needsUpdate = true;
             this.canvas.set_state( "surface_color_refresh", Date() );
             this._update_canvas();

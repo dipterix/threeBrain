@@ -15,6 +15,8 @@ DataCubeGeom2 <- R6::R6Class(
 
     color_format = "RGBAFormat",
 
+    color_map = NULL,
+
     initialize = function(name, value, dim = dim(value),
                           half_size = c(128,128,128),
                           group = GeomGroup$new(name = 'default'),
@@ -43,14 +45,15 @@ DataCubeGeom2 <- R6::R6Class(
 
     to_list = function(){
       re <- super$to_list()
-      c(
-        re,
-        list(
-          threshold = self$threshold,
-          color_format = self$color_format
-        )
-      )
+      re$threshold <- self$threshold
+      re$color_format <- self$color_format
+      re$color_map <- self$color_map
+      re$isDataCube2 <- self$is_datacube2
+      re
     }
+  ),
+  active = list(
+    is_datacube2 = function(){ TRUE }
   )
 )
 
@@ -65,6 +68,8 @@ NiftiGeom2 <- R6::R6Class(
     threshold = 0.6,
 
     color_format = "RGBAFormat",
+
+    color_map = NULL,
 
     initialize = function(
       name, path, group = GeomGroup$new(name = 'default'), layer = 8,
@@ -94,6 +99,7 @@ NiftiGeom2 <- R6::R6Class(
       re$color_format <- self$color_format
       re$isDataCube2 <- self$is_datacube2
       re$isNiftiCube <- self$is_nifticube
+      re$color_map <- self$color_map
       re
     }
   ),
