@@ -11,42 +11,174 @@ import { ConvexGeometry } from '../jsm/geometries/ConvexGeometry.js';
 
 class DataCube2 extends AbstractThreeBrainObject {
 
-  updatePalette( selectedColorKeys, timeSlice, computeBoundingBox = false ){
-
-    if( !this._canvas.has_webgl2 ){ return; }
-
-    if(
-      selectedColorKeys === undefined &&
-      timeSlice === undefined &&
-      !computeBoundingBox
-    ) {
-      return;
+  _filterDataContinuous( dataLB, dataUB, timeSlice ) {
+    if( dataLB < this.__dataLB ) {
+      dataLB = this.__dataLB;
+    }
+    if( dataUB > this.__dataUB ) {
+      dataUB = this.__dataUB;
     }
 
-    // WARNING, no check on selectedColorKeys to speed up
-    // I assume selectedColorKeys is always array of non-negative integers
-    this.__thresholdMin = Infinity;
-    if( selectedColorKeys !== undefined ){
-      this._selectedColorKeys.length = 0;
-      for( let jj = 0; jj < selectedColorKeys.length; jj++ ) {
-        const color_id = selectedColorKeys[ jj ];
-        if( this.__thresholdMin > color_id ) {
-          this.__thresholdMin = color_id;
-        }
-        if( color_id == 0 ) {
-          this._selectedColorKeys.length = 0;
-          break;
-        }
-        this._selectedColorKeys[ color_id ] = true;
-      }
-      computeBoundingBox = true;
+    this._selectedDataValues.length = 2;
+    this._selectedDataValues[ 0 ] = dataLB;
+    this._selectedDataValues[ 1 ] = dataUB;
+
+    // calculate voxelData -> colorKey transform
+    let data2ColorKeySlope = 1, data2ColorKeyIntercept = 0;
+    if( this.lutAutoRescale ) {
+      data2ColorKeySlope = (this.lutMaxColorID - this.lutMinColorID) / (this.__dataUB - this.__dataLB);
+      data2ColorKeyIntercept = (this.lutMinColorID + this.lutMaxColorID - data2ColorKeySlope * (this.__dataLB + this.__dataUB)) / 2.0;
     }
+
     if( typeof(timeSlice) === "number" ){
       this._timeSlice = Math.floor( timeSlice );
     }
 
     const mapAlpha = this.lut.mapAlpha;
-    const includeAllColors = this._selectedColorKeys.length === 0;
+    const voxelData = this.voxelData;
+    const lutMap = this.lutMap;
+    const singleChannel = this.colorFormat === AlphaFormat;
+    const voxelColor = this.voxelColor;
+
+    const voxelIndexOffset = this._timeSlice * this.nVoxels;
+    let voxelIndex = 0,
+        boundingMinX = Infinity, boundingMinY = Infinity, boundingMinZ = Infinity,
+        boundingMaxX = -Infinity, boundingMaxY = -Infinity, boundingMaxZ = -Infinity;
+    let withinFilters, voxelValue, voxelColorKey;
+
+    if( singleChannel ) {
+
+      // voxel alpha value
+      let voxelA;
+
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue < dataLB || voxelValue > dataUB) {
+              // hide this voxel as it's beyong threshold
+              voxelColor[ voxelIndex ] = 0;
+            } else {
+              voxelColorKey = Math.floor(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
+              voxelA = lutMap[ voxelColorKey ];
+
+              // NOTICE: we expect consecutive integer color keys!
+              if( voxelA === undefined ) {
+                // This shouldn't happen if color keys are consecutive
+                voxelColor[ voxelIndex ] = 0;
+              } else {
+
+                voxelColor[ voxelIndex ] = voxelA.R;
+
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+
+              }
+            }
+          }
+        }
+      }
+    } else {
+
+      // voxel RGBA value
+      let voxelRGBA;
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue < dataLB || voxelValue > dataUB) {
+              // hide this voxel as it's beyong threshold
+              voxelColor[ voxelIndex * 4 + 3 ] = 0;
+            } else {
+              voxelColorKey = Math.round(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
+              voxelRGBA = lutMap[ voxelColorKey ];
+
+              // NOTICE: we expect consecutive integer color keys!
+              if( voxelRGBA === undefined ) {
+                // This shouldn't happen if color keys are consecutive
+                voxelColor[ voxelIndex * 4 + 3 ] = 0;
+              } else {
+
+                voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
+                voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
+                voxelColor[ voxelIndex * 4 + 2 ] = voxelRGBA.B;
+
+                if( mapAlpha ) {
+                  voxelColor[ voxelIndex * 4 + 3 ] = voxelRGBA.A;
+                } else {
+                  voxelColor[ voxelIndex * 4 + 3 ] = 255;
+                }
+
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+
+              }
+            }
+
+          }
+        }
+      }
+
+    }
+
+    this.object.material.uniforms.bounding.value = Math.min(
+      Math.max(
+        boundingMaxX / this.modelShape.x - 0.5,
+        boundingMaxY / this.modelShape.y - 0.5,
+        boundingMaxZ / this.modelShape.z - 0.5,
+        0.5 - boundingMinX / this.modelShape.x,
+        0.5 - boundingMinY / this.modelShape.y,
+        0.5 - boundingMinZ / this.modelShape.z,
+        0.0
+      ),
+      0.5
+    );
+    this.object.material.uniformsNeedUpdate = true;
+
+    this.colorTexture.needsUpdate = true;
+  }
+  _filterDataDiscrete( selectedDataValues, timeSlice ) {
+
+    if( Array.isArray( selectedDataValues ) ){
+
+      // discrete color keys
+      this._selectedDataValues.length = 0;
+      let dataValue;
+
+      for( let jj = 0; jj < selectedDataValues.length; jj++ ) {
+        dataValue = selectedDataValues[ jj ];
+        if( dataValue <= this.lutMinColorID ) {
+          this._selectedDataValues.length = 0;
+          break;
+        }
+        this._selectedDataValues[ dataValue ] = true;
+      }
+      if( this._selectedDataValues.length === 0 ) {
+        for( dataValue = this.lutMinColorID + 1;
+              dataValue < this.lutMaxColorID; dataValue++ ) {
+          this._selectedDataValues[ dataValue ] = true;
+        }
+      }
+    }
+
+    if( typeof(timeSlice) === "number" ){
+      this._timeSlice = Math.floor( timeSlice );
+    }
+
+    const mapAlpha = this.lut.mapAlpha;
     const voxelData = this.voxelData;
     const lutMap = this.lutMap;
     const singleChannel = this.colorFormat === AlphaFormat;
@@ -69,27 +201,25 @@ class DataCube2 extends AbstractThreeBrainObject {
 
             // no need to round up as this has been done in the constructor
             voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue === 0 ) {
+            if( voxelValue <= this.lutMinColorID ) {
               // special: always hide this voxel
               voxelColor[ voxelIndex ] = 0;
             } else {
 
               voxelA = lutMap[ voxelValue ];
-              withinFilters = includeAllColors || this._selectedColorKeys[ voxelValue ];
+              withinFilters = this._selectedDataValues[ voxelValue ];
 
               if( voxelA !== undefined && withinFilters ) {
                 // this voxel should be displayed
                 voxelColor[ voxelIndex ] = voxelA.R;
 
-                if( computeBoundingBox ){
-                  // set bounding box
-                  if( boundingMinX > x ) { boundingMinX = x; }
-                  if( boundingMinY > y ) { boundingMinY = y; }
-                  if( boundingMinZ > z ) { boundingMinZ = z; }
-                  if( boundingMaxX < x ) { boundingMaxX = x; }
-                  if( boundingMaxY < y ) { boundingMaxY = y; }
-                  if( boundingMaxZ < z ) { boundingMaxZ = z; }
-                }
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
               } else {
                 voxelColor[ voxelIndex ] = 0;
               }
@@ -109,15 +239,15 @@ class DataCube2 extends AbstractThreeBrainObject {
 
             // no need to round up as this has been done in the constructor
             voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue === 0 ) {
+            if( voxelValue <= this.lutMinColorID ) {
               // special: always hide this voxel
               voxelColor[ voxelIndex * 4 + 3 ] = 0;
             } else {
 
               voxelRGBA = lutMap[ voxelValue ];
-              withinFilters = includeAllColors || this._selectedColorKeys[ voxelValue ];
+              withinFilters = this._selectedDataValues[ voxelValue ];
 
-              if( voxelA !== undefined && withinFilters ) {
+              if( voxelRGBA !== undefined && withinFilters ) {
                 // this voxel should be displayed
                 voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
                 voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
@@ -128,15 +258,13 @@ class DataCube2 extends AbstractThreeBrainObject {
                 } else {
                   voxelColor[ voxelIndex * 4 + 3 ] = 255;
                 }
-                if( computeBoundingBox ){
-                  // set bounding box
-                  if( boundingMinX > x ) { boundingMinX = x; }
-                  if( boundingMinY > y ) { boundingMinY = y; }
-                  if( boundingMinZ > z ) { boundingMinZ = z; }
-                  if( boundingMaxX < x ) { boundingMaxX = x; }
-                  if( boundingMaxY < y ) { boundingMaxY = y; }
-                  if( boundingMaxZ < z ) { boundingMaxZ = z; }
-                }
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
               } else {
                 voxelColor[ voxelIndex * 4 + 3 ] = 0;
               }
@@ -149,24 +277,51 @@ class DataCube2 extends AbstractThreeBrainObject {
 
     }
 
-    if( computeBoundingBox ){
-      this.object.material.uniforms.bounding.value = Math.min(
-        Math.max(
-          boundingMaxX / this.modelShape.x - 0.5,
-          boundingMaxY / this.modelShape.y - 0.5,
-          boundingMaxZ / this.modelShape.z - 0.5,
-          0.5 - boundingMinX / this.modelShape.x,
-          0.5 - boundingMinY / this.modelShape.y,
-          0.5 - boundingMinZ / this.modelShape.z,
-          0.0
-        ),
-        0.5
-      );
-      this.object.material.uniformsNeedUpdate = true;
-    }
-
+    this.object.material.uniforms.bounding.value = Math.min(
+      Math.max(
+        boundingMaxX / this.modelShape.x - 0.5,
+        boundingMaxY / this.modelShape.y - 0.5,
+        boundingMaxZ / this.modelShape.z - 0.5,
+        0.5 - boundingMinX / this.modelShape.x,
+        0.5 - boundingMinY / this.modelShape.y,
+        0.5 - boundingMinZ / this.modelShape.z,
+        0.0
+      ),
+      0.5
+    );
+    this.object.material.uniformsNeedUpdate = true;
     this.colorTexture.needsUpdate = true;
 
+  }
+
+  updatePalette( selectedDataValues, timeSlice ){
+    if( !this._canvas.has_webgl2 ){ return; }
+
+    if( this.isDataContinuous ) {
+
+      if( !Array.isArray( selectedDataValues ) ) {
+        selectedDataValues = this._selectedDataValues;
+      }
+      let lb, ub;
+      if( selectedDataValues.length >= 2 ) {
+        /*lb = selectedDataValues[ 0 ];
+        ub = selectedDataValues[ 1 ];*/
+        lb = Math.min(...selectedDataValues);
+        ub = Math.max(...selectedDataValues);
+      } else {
+        lb = this.lutMinColorID;
+        ub = this.lutMaxColorID;
+      }
+      this._filterDataContinuous( lb, ub, timeSlice );
+
+    } else {
+
+      if( !Array.isArray( selectedDataValues ) ) {
+        selectedDataValues = this._selectedDataValues;
+      }
+      this._filterDataDiscrete( selectedDataValues, timeSlice );
+
+    }
   }
 
   constructor(g, canvas){
@@ -185,8 +340,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     this.type = 'DataCube2';
     this.isDataCube2 = true;
     this._display_mode = "hidden";
-    this.__thresholdMin = Infinity;
-    this._selectedColorKeys = [];
+    this._selectedDataValues = [];
     this._timeSlice = 0;
 
     let mesh;
@@ -213,21 +367,16 @@ class DataCube2 extends AbstractThreeBrainObject {
         canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name)
       );
     }
-    // Change voxelData so all elements are integers (non-negative)
-    this.voxelData.forEach( (el, ii) => {
-      if( el > this.lutMaxColorID || el < 0 ){
-        this.voxelData[ ii ] = 0;
-        return;
-      }
-      if ( !Number.isInteger( el ) ) {
-        this.voxelData[ ii ] = Math.round( el );
-      }
-    });
     this.nVoxels = this.modelShape.x * this.modelShape.y * this.modelShape.z;
-
-    this.lut = canvas.global_data('__global_data__.VolumeColorLUT');
+    // The color map might be specified separately
+    this.lut = g.color_map || canvas.global_data('__global_data__.VolumeColorLUT');
     this.lutMap = this.lut.map;
     this.lutMaxColorID = this.lut.mapMaxColorID;
+    this.lutMinColorID = this.lut.mapMinColorID;
+    this.lutAutoRescale = this.lut.colorIDAutoRescale === true;
+    this.isDataContinuous = this.lut.mapDataType === "continuous";
+    this.__dataLB = this.lutMinColorID;
+    this.__dataUB = this.lutMaxColorID;
 
     // Generate 3D texture, to do so, we need to customize shaders
     if( g.color_format === "AlphaFormat" ) {
@@ -238,6 +387,37 @@ class DataCube2 extends AbstractThreeBrainObject {
       this.colorFormat = RGBAFormat;
       this.nColorChannels = 4;
       this.voxelColor = new Uint8Array( this.nVoxels * 4 );
+    }
+
+    // Change voxelData so all elements are integers (non-negative)
+    if( this.isDataContinuous ) {
+      if( this.lutAutoRescale ) {
+
+        this.__dataLB = Infinity;
+        this.__dataUB = -Infinity;
+        this.voxelData.forEach((vd) => {
+          if( this.__dataLB > vd ) { this.__dataLB = vd; }
+          if( this.__dataUB < vd ) { this.__dataUB = vd; }
+        })
+
+        if( this.__dataLB === Infinity ) {
+          this.__dataLB = this.lutMinColorID;
+        }
+        if( this.__dataUB === -Infinity ) {
+          this.__dataUB = this.lutMaxColorID;
+        }
+
+      }
+
+    } else {
+
+      this.voxelData.forEach((vd, ii) => {
+        if( vd < this.lutMinColorID || vd > this.lutMaxColorID ) {
+          this.voxelData[ ii ] = this.lutMinColorID;
+        } else if( !Number.isInteger(vd) ) {
+          this.voxelData[ ii ] =  Math.round( vd );
+        }
+      })
     }
 
     // Color texture - used to render colors
@@ -293,7 +473,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     this.object = mesh;
 
     // initialize voxelColor
-    this.updatePalette( [] );
+    this.updatePalette();
   }
 
   dispose(){

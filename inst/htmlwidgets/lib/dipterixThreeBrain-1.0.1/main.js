@@ -65651,29 +65651,26 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
     return;
   };
 
+
   THREEBRAIN_PRESETS.prototype.c_voxel = function(){
-    const folder_name = constants/* CONSTANTS.FOLDERS.atlas */.t.FOLDERS.atlas || 'Volume Settings',
-          lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
-          lutMap = lut.map,
-          lut_alpha = lut.mapAlpha,
-          lut_type = lut.mapDataType;
+    const folder_name = constants/* CONSTANTS.FOLDERS.atlas */.t.FOLDERS.atlas || 'Volume Settings';
           // _atype = this.canvas.get_state( 'atlas_type' ) || 'none';  //_s
+
+    // color look-up table
     this._ctl_voxel_type_options = ['none'];
-    this._ctl_voxel_type_callback = (v) => {
+
+    // Controls which datacube2 to display
+    this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
+      .onChange((v) => {
       if( v ){
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
         this.fire_change({ 'atlas_type' : v });
       }
-    };
+    });
 
-    this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
-      .onChange( this._ctl_voxel_type_callback );
-
-    this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
-
-    // display type
+    // Controls how the datacube should be displayed
     this.gui.add_item('Voxel Display', 'hidden', {
       args : ['hidden', 'normal'], folder_name : folder_name
     }).onChange( (v) => {
@@ -65691,9 +65688,8 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
       this.canvas.set_state( "surface_color_refresh", Date() );
       this._update_canvas();
     });
+    // register keyboard shortcut & callback
     this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE */.t.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, 'Voxel Display', folder_name);
-
-    // register key callbacks
     this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ATLAS_MODE */.t.KEY_CYCLE_ATLAS_MODE, (evt) => {
       if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
         // have to update dynamically because it could change
@@ -65706,8 +65702,8 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
       }
     }, 'gui_atlas_display_mode');
 
-    // If color map supports alpha, add override option
-    const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
+    // Controls the opacity of the voxels
+    this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
       .min(0).max(1).step(0.01)
       .onChange((v) => {
         const inst = this.current_voxel_type(),
@@ -65717,89 +65713,117 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           inst.object.material.uniforms.alpha.value = opa;
           if( opa < 0 ){
             inst.updatePalette();
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
           }
         }
         this._update_canvas();
         this.fire_change({ 'atlas_alpha' : opa });
       });
 
-    // this.gui.hide_item("Voxel Opacity")
 
-    //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
-    if( lut_type === "continuous" ){
+    // Add controllers for continuous lut
+    let voxelLB = -100000, voxelUB = 100000;
+    const applyContinuousSelection = () => {
+      const dataCubeInstance = this.current_voxel_type();
+      if( !dataCubeInstance ) { return; }
+      const lut = dataCubeInstance.lut;
+      if( !lut || lut.mapDataType !== "continuous" ) { return; }
+      dataCubeInstance._filterDataContinuous( voxelLB, voxelUB );
+      this.canvas.set_state( "surface_color_refresh", Date() );
+      this._update_canvas();
+    }
+    const ctrlContinuousThresholdLB = this.gui
+      .add_item('Voxel Min', -100000, { folder_name : folder_name })
+      .min(-100000).max(100000).step(0.01)
+      .onChange(( v ) => {
+        voxelLB = v;
+        applyContinuousSelection();
+      });
+    const ctrlContinuousThresholdUB = this.gui
+      .add_item('Voxel Max', 100000, { folder_name : folder_name })
+      .min(-100000).max(100000).step(0.01)
+      .onChange(( v ) => {
+        voxelUB = v;
+        applyContinuousSelection();
+      });
 
-      const cmap_array = Object.values(lutMap);
-      const voxel_value_range = (0,utils/* to_array */.AA)( lut.mapValueRange );
-      const voxel_minmax = (l, u) => {
-        const inst = this.current_voxel_type();
-        if( inst && inst.isDataCube2 ){
 
-          // might be large?
-          new Promise( () => {
-
-            let tmp;
-            const candidates = cmap_array.filter((e) => {
-              tmp = parseFloat(e.Label);
-              if(isNaN(tmp)){ return(false); }
-              if( tmp >= l && tmp <= u ){ return(true); }
-              return(false);
-            }).map( (e) => {
-              return(e.ColorID);
-            });
-
-            inst.updatePalette( candidates );
-
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
-            this.canvas.set_state( "surface_color_refresh", Date() );
-            this._update_canvas();
-          });
-
-        }
-      }
-      if(cmap_array.length > 0){
-        let vmin = voxel_value_range[0],
-            vmax = voxel_value_range[1];
-        this.gui.add_item('Voxel Min', vmin, { folder_name : folder_name })
-          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
-          .onChange((v) => {
-            vmin = v;
-            voxel_minmax(vmin, vmax);
-          });
-
-        this.gui.add_item('Voxel Max', vmax, { folder_name : folder_name })
-          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
-          .onChange((v) => {
-            vmax = v;
-            voxel_minmax(vmin, vmax);
-          });
-      }
-
-    } else {
-      const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
+    // Add controllers for discrete lut
+    let selectedLabels = [];
+    const applyDiscreteSelection = () => {
+      const dataCubeInstance = this.current_voxel_type();
+      if( !dataCubeInstance ) { return; }
+      const lut = dataCubeInstance.lut;
+      if( !lut || lut.mapDataType !== "discrete" ) { return; }
+      dataCubeInstance._filterDataDiscrete( selectedLabels );
+      this.canvas.set_state( "surface_color_refresh", Date() );
+      this._update_canvas();
+    }
+    const ctrlDiscreteSelector = this.gui.add_item('Voxel Label', "", { folder_name : folder_name })
       .onChange((v) => {
-
         if(typeof(v) !== "string"){ return; }
 
-        const inst = this.current_voxel_type();
-        if( inst && inst.isDataCube2 ){
+        selectedLabels.length = 0;
+        const selected = v.split(",").forEach((v) => {
+          v = v.trim();
+          if( v.match(/^[-]{0,1}[0-9]+$/g) ) {
+            v = parseInt(v);
+            if( !isNaN(v) ) {
+              selectedLabels.push( v );
+            }
+            return;
+          }
 
-          // might be large?
-          new Promise( () => {
-            const candidates = v.split(",")
-              .map((v) => {return parseInt(v)})
-              .filter((v) => {return !isNaN(v)});
-            inst.updatePalette( candidates );
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
-            this.canvas.set_state( "surface_color_refresh", Date() );
-            this._update_canvas();
-          });
+          const split = v.split(/[:-]/g);
+          if( !Array.isArray(split) || split.length <= 1 ) { return; }
 
+          const start = parseInt( split[0] ),
+                end = parseInt( split[1] );
+          if( isNaN(start) || isNaN(end) || start > end ) { return; }
+          for(let i = start; i <= end; i++ ) {
+            selectedLabels.push( i );
+          }
+        });
+        applyDiscreteSelection();
+      });
+
+
+    //
+    this.canvas.bind(
+      'c_updated_voxel_threshold', "canvas.controllers.onChange",
+      (evt) => {
+        if( !evt.detail || !evt.detail.data || evt.detail.data.atlas_type === undefined ) { return; }
+        const dataCubeInstance = this.current_voxel_type();
+        if( !dataCubeInstance ) {
+          // hide selection controllers
+          this.gui.hide_item(['Voxel Display', 'Voxel Label', 'Voxel Min', 'Voxel Max'], folder_name);
+          return;
         }
 
+        if( dataCubeInstance.isDataContinuous ) {
+          this.gui.show_item(['Voxel Display', 'Voxel Min', 'Voxel Max'], folder_name);
+          this.gui.hide_item(['Voxel Label'], folder_name);
+          // update controllers' min, max, steps
+          const nColorKeys = Object.keys(dataCubeInstance.lut.map).length;
+          const lb = Math.floor( dataCubeInstance.__dataLB ),
+                ub = Math.ceil( dataCubeInstance.__dataUB ),
+                step = (dataCubeInstance.__dataUB - dataCubeInstance.__dataLB) / ( nColorKeys + 1 );
+          ctrlContinuousThresholdLB.min( lb ).max( ub ).step( step )
+            .setValue( voxelLB );
+          ctrlContinuousThresholdUB.min( lb ).max( ub ).step( step )
+            .setValue( voxelUB );
+          // applyContinuousSelection();
+        } else {
+          this.gui.show_item(['Voxel Display', 'Voxel Label'], folder_name);
+          this.gui.hide_item(['Voxel Min', 'Voxel Max'], folder_name);
+          applyDiscreteSelection();
+        }
 
-      });
-    }
+      }
+    )
+
+
+    // initialize, let listeners to know the volume type is none
+    this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
   };
 
   return( THREEBRAIN_PRESETS );
@@ -66450,9 +66474,12 @@ class LocElectrode {
     const mx = modelShape.x,
           my = modelShape.y,
           mz = modelShape.z;
-    const ct_data = inst.voxelData,
-          ct_threshold_min = inst.__thresholdMin;
+    const ct_data = inst.voxelData;
 
+    let ct_threshold_min = inst.__dataLB;
+    if( inst._selectedDataValues.length > 0 ) {
+      ct_threshold_min = inst._selectedDataValues[0];
+    }
 
     const pos = new three_module.Vector3().set(1, 0, 0),
           pos0 = new three_module.Vector3().set(0, 0, 0).applyMatrix4(matrix_);
@@ -77138,45 +77165,174 @@ class ConvexGeometry extends (/* unused pure expression or super */ null && (Buf
 
 class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
-  updatePalette( selectedColorKeys, timeSlice, computeBoundingBox = false ){
-
-    if( !this._canvas.has_webgl2 ){ return; }
-
-    if(
-      selectedColorKeys === undefined &&
-      timeSlice === undefined &&
-      !computeBoundingBox
-    ) {
-      return;
+  _filterDataContinuous( dataLB, dataUB, timeSlice ) {
+    if( dataLB < this.__dataLB ) {
+      dataLB = this.__dataLB;
+    }
+    if( dataUB > this.__dataUB ) {
+      dataUB = this.__dataUB;
     }
 
-    console.time("updatePalette")
+    this._selectedDataValues.length = 2;
+    this._selectedDataValues[ 0 ] = dataLB;
+    this._selectedDataValues[ 1 ] = dataUB;
 
-    // WARNING, no check on selectedColorKeys to speed up
-    // I assume selectedColorKeys is always array of non-negative integers
-    this.__thresholdMin = Infinity;
-    if( selectedColorKeys !== undefined ){
-      this._selectedColorKeys.length = 0;
-      for( let jj = 0; jj < selectedColorKeys.length; jj++ ) {
-        const color_id = selectedColorKeys[ jj ];
-        if( this.__thresholdMin > color_id ) {
-          this.__thresholdMin = color_id;
-        }
-        if( color_id == 0 ) {
-          this._selectedColorKeys.length = 0;
-          break;
-        }
-        this._selectedColorKeys[ color_id ] = true;
-      }
-      computeBoundingBox = true;
+    // calculate voxelData -> colorKey transform
+    let data2ColorKeySlope = 1, data2ColorKeyIntercept = 0;
+    if( this.lutAutoRescale ) {
+      data2ColorKeySlope = (this.lutMaxColorID - this.lutMinColorID) / (this.__dataUB - this.__dataLB);
+      data2ColorKeyIntercept = (this.lutMinColorID + this.lutMaxColorID - data2ColorKeySlope * (this.__dataLB + this.__dataUB)) / 2.0;
     }
+
     if( typeof(timeSlice) === "number" ){
       this._timeSlice = Math.floor( timeSlice );
     }
-    computeBoundingBox = false;
 
     const mapAlpha = this.lut.mapAlpha;
-    const includeAllColors = this._selectedColorKeys.length === 0;
+    const voxelData = this.voxelData;
+    const lutMap = this.lutMap;
+    const singleChannel = this.colorFormat === three_module.AlphaFormat;
+    const voxelColor = this.voxelColor;
+
+    const voxelIndexOffset = this._timeSlice * this.nVoxels;
+    let voxelIndex = 0,
+        boundingMinX = Infinity, boundingMinY = Infinity, boundingMinZ = Infinity,
+        boundingMaxX = -Infinity, boundingMaxY = -Infinity, boundingMaxZ = -Infinity;
+    let withinFilters, voxelValue, voxelColorKey;
+
+    if( singleChannel ) {
+
+      // voxel alpha value
+      let voxelA;
+
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue < dataLB || voxelValue > dataUB) {
+              // hide this voxel as it's beyong threshold
+              voxelColor[ voxelIndex ] = 0;
+            } else {
+              voxelColorKey = Math.floor(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
+              voxelA = lutMap[ voxelColorKey ];
+
+              // NOTICE: we expect consecutive integer color keys!
+              if( voxelA === undefined ) {
+                // This shouldn't happen if color keys are consecutive
+                voxelColor[ voxelIndex ] = 0;
+              } else {
+
+                voxelColor[ voxelIndex ] = voxelA.R;
+
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+
+              }
+            }
+          }
+        }
+      }
+    } else {
+
+      // voxel RGBA value
+      let voxelRGBA;
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue < dataLB || voxelValue > dataUB) {
+              // hide this voxel as it's beyong threshold
+              voxelColor[ voxelIndex * 4 + 3 ] = 0;
+            } else {
+              voxelColorKey = Math.round(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
+              voxelRGBA = lutMap[ voxelColorKey ];
+
+              // NOTICE: we expect consecutive integer color keys!
+              if( voxelRGBA === undefined ) {
+                // This shouldn't happen if color keys are consecutive
+                voxelColor[ voxelIndex * 4 + 3 ] = 0;
+              } else {
+
+                voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
+                voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
+                voxelColor[ voxelIndex * 4 + 2 ] = voxelRGBA.B;
+
+                if( mapAlpha ) {
+                  voxelColor[ voxelIndex * 4 + 3 ] = voxelRGBA.A;
+                } else {
+                  voxelColor[ voxelIndex * 4 + 3 ] = 255;
+                }
+
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+
+              }
+            }
+
+          }
+        }
+      }
+
+    }
+
+    this.object.material.uniforms.bounding.value = Math.min(
+      Math.max(
+        boundingMaxX / this.modelShape.x - 0.5,
+        boundingMaxY / this.modelShape.y - 0.5,
+        boundingMaxZ / this.modelShape.z - 0.5,
+        0.5 - boundingMinX / this.modelShape.x,
+        0.5 - boundingMinY / this.modelShape.y,
+        0.5 - boundingMinZ / this.modelShape.z,
+        0.0
+      ),
+      0.5
+    );
+    this.object.material.uniformsNeedUpdate = true;
+
+    this.colorTexture.needsUpdate = true;
+  }
+  _filterDataDiscrete( selectedDataValues, timeSlice ) {
+
+    if( Array.isArray( selectedDataValues ) ){
+
+      // discrete color keys
+      this._selectedDataValues.length = 0;
+      let dataValue;
+
+      for( let jj = 0; jj < selectedDataValues.length; jj++ ) {
+        dataValue = selectedDataValues[ jj ];
+        if( dataValue <= this.lutMinColorID ) {
+          this._selectedDataValues.length = 0;
+          break;
+        }
+        this._selectedDataValues[ dataValue ] = true;
+      }
+      if( this._selectedDataValues.length === 0 ) {
+        for( dataValue = this.lutMinColorID + 1;
+              dataValue < this.lutMaxColorID; dataValue++ ) {
+          this._selectedDataValues[ dataValue ] = true;
+        }
+      }
+    }
+
+    if( typeof(timeSlice) === "number" ){
+      this._timeSlice = Math.floor( timeSlice );
+    }
+
+    const mapAlpha = this.lut.mapAlpha;
     const voxelData = this.voxelData;
     const lutMap = this.lutMap;
     const singleChannel = this.colorFormat === three_module.AlphaFormat;
@@ -77199,27 +77355,25 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
             // no need to round up as this has been done in the constructor
             voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue === 0 ) {
+            if( voxelValue <= this.lutMinColorID ) {
               // special: always hide this voxel
               voxelColor[ voxelIndex ] = 0;
             } else {
 
               voxelA = lutMap[ voxelValue ];
-              withinFilters = includeAllColors || this._selectedColorKeys[ voxelValue ];
+              withinFilters = this._selectedDataValues[ voxelValue ];
 
               if( voxelA !== undefined && withinFilters ) {
                 // this voxel should be displayed
                 voxelColor[ voxelIndex ] = voxelA.R;
 
-                if( computeBoundingBox ){
-                  // set bounding box
-                  if( boundingMinX > x ) { boundingMinX = x; }
-                  if( boundingMinY > y ) { boundingMinY = y; }
-                  if( boundingMinZ > z ) { boundingMinZ = z; }
-                  if( boundingMaxX < x ) { boundingMaxX = x; }
-                  if( boundingMaxY < y ) { boundingMaxY = y; }
-                  if( boundingMaxZ < z ) { boundingMaxZ = z; }
-                }
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
               } else {
                 voxelColor[ voxelIndex ] = 0;
               }
@@ -77239,15 +77393,15 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
             // no need to round up as this has been done in the constructor
             voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue === 0 ) {
+            if( voxelValue <= this.lutMinColorID ) {
               // special: always hide this voxel
               voxelColor[ voxelIndex * 4 + 3 ] = 0;
             } else {
 
               voxelRGBA = lutMap[ voxelValue ];
-              withinFilters = includeAllColors || this._selectedColorKeys[ voxelValue ];
+              withinFilters = this._selectedDataValues[ voxelValue ];
 
-              if( voxelA !== undefined && withinFilters ) {
+              if( voxelRGBA !== undefined && withinFilters ) {
                 // this voxel should be displayed
                 voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
                 voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
@@ -77258,15 +77412,13 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
                 } else {
                   voxelColor[ voxelIndex * 4 + 3 ] = 255;
                 }
-                if( computeBoundingBox ){
-                  // set bounding box
-                  if( boundingMinX > x ) { boundingMinX = x; }
-                  if( boundingMinY > y ) { boundingMinY = y; }
-                  if( boundingMinZ > z ) { boundingMinZ = z; }
-                  if( boundingMaxX < x ) { boundingMaxX = x; }
-                  if( boundingMaxY < y ) { boundingMaxY = y; }
-                  if( boundingMaxZ < z ) { boundingMaxZ = z; }
-                }
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
               } else {
                 voxelColor[ voxelIndex * 4 + 3 ] = 0;
               }
@@ -77279,34 +77431,51 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     }
 
-    console.timeEnd("updatePalette");
-
-    if( computeBoundingBox ){
-      this.object.material.uniforms.bounding.value = Math.min(
-        Math.max(
-          boundingMaxX / this.modelShape.x - 0.5,
-          boundingMaxY / this.modelShape.y - 0.5,
-          boundingMaxZ / this.modelShape.z - 0.5,
-          0.5 - boundingMinX / this.modelShape.x,
-          0.5 - boundingMinY / this.modelShape.y,
-          0.5 - boundingMinZ / this.modelShape.z,
-          0.0
-        ),
-        0.5
-      );
-      this.object.material.uniformsNeedUpdate = true;
-    }
-    console.log([
-      boundingMaxX / this.modelShape.x - 0.5,
-          boundingMaxY / this.modelShape.y - 0.5,
-          boundingMaxZ / this.modelShape.z - 0.5,
-          0.5 - boundingMinX / this.modelShape.x,
-          0.5 - boundingMinY / this.modelShape.y,
-          0.5 - boundingMinZ / this.modelShape.z
-    ]);
-
+    this.object.material.uniforms.bounding.value = Math.min(
+      Math.max(
+        boundingMaxX / this.modelShape.x - 0.5,
+        boundingMaxY / this.modelShape.y - 0.5,
+        boundingMaxZ / this.modelShape.z - 0.5,
+        0.5 - boundingMinX / this.modelShape.x,
+        0.5 - boundingMinY / this.modelShape.y,
+        0.5 - boundingMinZ / this.modelShape.z,
+        0.0
+      ),
+      0.5
+    );
+    this.object.material.uniformsNeedUpdate = true;
     this.colorTexture.needsUpdate = true;
 
+  }
+
+  updatePalette( selectedDataValues, timeSlice ){
+    if( !this._canvas.has_webgl2 ){ return; }
+
+    if( this.isDataContinuous ) {
+
+      if( !Array.isArray( selectedDataValues ) ) {
+        selectedDataValues = this._selectedDataValues;
+      }
+      let lb, ub;
+      if( selectedDataValues.length >= 2 ) {
+        /*lb = selectedDataValues[ 0 ];
+        ub = selectedDataValues[ 1 ];*/
+        lb = Math.min(...selectedDataValues);
+        ub = Math.max(...selectedDataValues);
+      } else {
+        lb = this.lutMinColorID;
+        ub = this.lutMaxColorID;
+      }
+      this._filterDataContinuous( lb, ub, timeSlice );
+
+    } else {
+
+      if( !Array.isArray( selectedDataValues ) ) {
+        selectedDataValues = this._selectedDataValues;
+      }
+      this._filterDataDiscrete( selectedDataValues, timeSlice );
+
+    }
   }
 
   constructor(g, canvas){
@@ -77325,8 +77494,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.type = 'DataCube2';
     this.isDataCube2 = true;
     this._display_mode = "hidden";
-    this.__thresholdMin = Infinity;
-    this._selectedColorKeys = [];
+    this._selectedDataValues = [];
     this._timeSlice = 0;
 
     let mesh;
@@ -77353,21 +77521,16 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
         canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name)
       );
     }
-    // Change voxelData so all elements are integers (non-negative)
-    this.voxelData.forEach( (el, ii) => {
-      if( el > this.lutMaxColorID || el < 0 ){
-        this.voxelData[ ii ] = 0;
-        return;
-      }
-      if ( !Number.isInteger( el ) ) {
-        this.voxelData[ ii ] = Math.round( el );
-      }
-    });
     this.nVoxels = this.modelShape.x * this.modelShape.y * this.modelShape.z;
-
-    this.lut = canvas.global_data('__global_data__.VolumeColorLUT');
+    // The color map might be specified separately
+    this.lut = g.color_map || canvas.global_data('__global_data__.VolumeColorLUT');
     this.lutMap = this.lut.map;
     this.lutMaxColorID = this.lut.mapMaxColorID;
+    this.lutMinColorID = this.lut.mapMinColorID;
+    this.lutAutoRescale = this.lut.colorIDAutoRescale === true;
+    this.isDataContinuous = this.lut.mapDataType === "continuous";
+    this.__dataLB = this.lutMinColorID;
+    this.__dataUB = this.lutMaxColorID;
 
     // Generate 3D texture, to do so, we need to customize shaders
     if( g.color_format === "AlphaFormat" ) {
@@ -77380,40 +77543,36 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this.voxelColor = new Uint8Array( this.nVoxels * 4 );
     }
 
-    /*
-    let i = 0, ii = 0, tmp;
-    for ( let z = 0; z < this.modelShape.x; z ++ ) {
-      for ( let y = 0; y < this.modelShape.y; y ++ ) {
-        for ( let x = 0; x < this.modelShape.z; x ++ ) {
-          i = this.voxelData[ii];
+    // Change voxelData so all elements are integers (non-negative)
+    if( this.isDataContinuous ) {
+      if( this.lutAutoRescale ) {
 
-          if( i !== 0 ){
-            tmp = this.lutMap[i];
-            if( tmp ) {
-              if( this.colorFormat === "AlphaFormat" ) {
-                this.voxelColor[ ii ] = tmp.R;
-              } else {
-                this.voxelColor[ 4 * ii ] = tmp.R;
-                this.voxelColor[ 4 * ii + 1 ] = tmp.G;
-                this.voxelColor[ 4 * ii + 2 ] = tmp.B;
-                this.voxelColor[ 4 * ii + 3 ] = tmp.A === undefined ? 255 : tmp.A;
-              }
+        this.__dataLB = Infinity;
+        this.__dataUB = -Infinity;
+        this.voxelData.forEach((vd) => {
+          if( this.__dataLB > vd ) { this.__dataLB = vd; }
+          if( this.__dataUB < vd ) { this.__dataUB = vd; }
+        })
 
-              if( Math.min(x,y,z) < this.__boundingMin ){
-                this.__boundingMin = Math.min(x,y,z);
-              }
-              if( Math.max(x,y,z) > this.__boundingMax ){
-                this.__boundingMax = Math.max(x,y,z);
-              }
-              // this._map_data[ ii ] = i;
-
-            }
-          }
-          ii++;
+        if( this.__dataLB === Infinity ) {
+          this.__dataLB = this.lutMinColorID;
         }
+        if( this.__dataUB === -Infinity ) {
+          this.__dataUB = this.lutMaxColorID;
+        }
+
       }
+
+    } else {
+
+      this.voxelData.forEach((vd, ii) => {
+        if( vd < this.lutMinColorID || vd > this.lutMaxColorID ) {
+          this.voxelData[ ii ] = this.lutMinColorID;
+        } else if( !Number.isInteger(vd) ) {
+          this.voxelData[ ii ] =  Math.round( vd );
+        }
+      })
     }
-    */
 
     // Color texture - used to render colors
     this.colorTexture = new three_module.DataTexture3D(
@@ -77468,7 +77627,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.object = mesh;
 
     // initialize voxelColor
-    this.updatePalette( [] );
+    this.updatePalette();
   }
 
   dispose(){
@@ -77492,7 +77651,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     super.finish_init();
 
     // data cube 2 must have groups and group parent is scene
-    let gp = this.get_group_object();
+    // let gp = this.get_group_object();
     // Move gp to global scene as its center is always 0,0,0
     // this._canvas.origin.remove( gp );
     // this._canvas.scene.add( gp );
@@ -83715,7 +83874,7 @@ class BrainCanvas{
 
     this.el_text = document.createElement('div');
     this.el_text.style.width = '100%';
-    this.el_text.style.padding = '10px';
+    this.el_text.style.padding = '10px 0';
 
     //this.el_text2 = document.createElement('svg');
     //this.el_text2.style.width = '200px';
@@ -83956,7 +84115,7 @@ class BrainCanvas{
     this.el_text.style.display = 'block';
     for(let ii in this.groups) {
       const g = this.groups[ii];
-      this.el_text.innerHTML = `<p><small>${ii+1}: Loading group ${g.name}</small></p>`;
+      this.el_text.innerHTML = `<p><small>Loading group ${parseInt(ii)+1} (out of ${this.groups.length}): ${g.name}</small></p>`;
       await this.canvas.add_group(g, this.settings.cache_folder);
     }
 

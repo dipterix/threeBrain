@@ -16,6 +16,7 @@ create_colormap(
   value,
   alpha = FALSE,
   con = NULL,
+  auto_rescale = FALSE,
   ...
 )
 

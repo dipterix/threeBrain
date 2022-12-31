@@ -85,7 +85,7 @@ class BrainCanvas{
 
     this.el_text = document.createElement('div');
     this.el_text.style.width = '100%';
-    this.el_text.style.padding = '10px';
+    this.el_text.style.padding = '10px 0';
 
     //this.el_text2 = document.createElement('svg');
     //this.el_text2.style.width = '200px';
@@ -326,7 +326,7 @@ class BrainCanvas{
     this.el_text.style.display = 'block';
     for(let ii in this.groups) {
       const g = this.groups[ii];
-      this.el_text.innerHTML = `<p><small>${ii+1}: Loading group ${g.name}</small></p>`;
+      this.el_text.innerHTML = `<p><small>Loading group ${parseInt(ii)+1} (out of ${this.groups.length}): ${g.name}</small></p>`;
       await this.canvas.add_group(g, this.settings.cache_folder);
     }
 

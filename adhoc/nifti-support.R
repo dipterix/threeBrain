@@ -15,9 +15,10 @@ control_presets <- 'localization'
 controllers <- list()
 controllers[["Highlight Box"]] <- FALSE
 
-ct_path <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/ct_in_t1.nii"
+ct_path <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/CT_RAW.nii"
+ct_transmat <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/CT_RAS_to_MR_RAS.txt"
 
-threeBrain:::add_nifti(brain, "CT", path = ct_path, color_format = "AlphaFormat")
+threeBrain:::add_nifti(brain, "CT", path = ct_path, color_format = "AlphaFormat", trans_mat = as.matrix(read.table(ct_transmat)))
 
 key <- seq(0, 5000)
 cmap <- threeBrain:::create_colormap(
@@ -25,7 +26,8 @@ cmap <- threeBrain:::create_colormap(
   key = key, value = key,
 
   # using AlphaFormat so color map is the color intensity in gray
-  color = c("black", "white")
+  color = c("black", "white"),
+  auto_rescale = TRUE
 )
 brain$atlases$CT$object$color_map <- cmap
 controllers[["Left Opacity"]] <- 0.4
@@ -36,6 +38,7 @@ controllers[["Voxel Min"]] <- 3000
 controllers[["Edit Mode"]] %?<-% "CT/volume"
 brain$plot(
   control_presets = control_presets,
-  voxel_colormap = cmap,
   controllers = controllers,
+  debug = TRUE
+  # voxel_colormap = cmap
 )

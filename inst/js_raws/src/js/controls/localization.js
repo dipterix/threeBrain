@@ -421,9 +421,12 @@ class LocElectrode {
     const mx = modelShape.x,
           my = modelShape.y,
           mz = modelShape.z;
-    const ct_data = inst.voxelData,
-          ct_threshold_min = inst.__thresholdMin;
+    const ct_data = inst.voxelData;
 
+    let ct_threshold_min = inst.__dataLB;
+    if( inst._selectedDataValues.length > 0 ) {
+      ct_threshold_min = inst._selectedDataValues[0];
+    }
 
     const pos = new Vector3().set(1, 0, 0),
           pos0 = new Vector3().set(0, 0, 0).applyMatrix4(matrix_);

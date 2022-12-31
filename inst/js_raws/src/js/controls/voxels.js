@@ -45,29 +45,26 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
     return;
   };
 
+
   THREEBRAIN_PRESETS.prototype.c_voxel = function(){
-    const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings',
-          lut = this.canvas.global_data('__global_data__.VolumeColorLUT'),
-          lutMap = lut.map,
-          lut_alpha = lut.mapAlpha,
-          lut_type = lut.mapDataType;
+    const folder_name = CONSTANTS.FOLDERS['atlas'] || 'Volume Settings';
           // _atype = this.canvas.get_state( 'atlas_type' ) || 'none';  //_s
+
+    // color look-up table
     this._ctl_voxel_type_options = ['none'];
-    this._ctl_voxel_type_callback = (v) => {
+
+    // Controls which datacube2 to display
+    this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
+      .onChange((v) => {
       if( v ){
         this.canvas.switch_subject( '/', {
           'atlas_type': v
         });
         this.fire_change({ 'atlas_type' : v });
       }
-    };
+    });
 
-    this.gui.add_item('Voxel Type', 'none', {args : ['none'], folder_name : folder_name })
-      .onChange( this._ctl_voxel_type_callback );
-
-    this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
-
-    // display type
+    // Controls how the datacube should be displayed
     this.gui.add_item('Voxel Display', 'hidden', {
       args : ['hidden', 'normal'], folder_name : folder_name
     }).onChange( (v) => {
@@ -85,9 +82,8 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
       this.canvas.set_state( "surface_color_refresh", Date() );
       this._update_canvas();
     });
+    // register keyboard shortcut & callback
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, 'Voxel Display', folder_name);
-
-    // register key callbacks
     this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS_MODE, (evt) => {
       if( has_meta_keys( evt.event, false, false, false ) ){
         // have to update dynamically because it could change
@@ -100,8 +96,8 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
       }
     }, 'gui_atlas_display_mode');
 
-    // If color map supports alpha, add override option
-    const atlas_alpha = this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
+    // Controls the opacity of the voxels
+    this.gui.add_item('Voxel Opacity', 0.0, { folder_name : folder_name })
       .min(0).max(1).step(0.01)
       .onChange((v) => {
         const inst = this.current_voxel_type(),
@@ -111,89 +107,117 @@ function register_controls_voxels( THREEBRAIN_PRESETS ){
           inst.object.material.uniforms.alpha.value = opa;
           if( opa < 0 ){
             inst.updatePalette();
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
           }
         }
         this._update_canvas();
         this.fire_change({ 'atlas_alpha' : opa });
       });
 
-    // this.gui.hide_item("Voxel Opacity")
 
-    //.add_item('Intersect MNI305', "NaN, NaN, NaN", {folder_name: folder_name});
-    if( lut_type === "continuous" ){
+    // Add controllers for continuous lut
+    let voxelLB = -100000, voxelUB = 100000;
+    const applyContinuousSelection = () => {
+      const dataCubeInstance = this.current_voxel_type();
+      if( !dataCubeInstance ) { return; }
+      const lut = dataCubeInstance.lut;
+      if( !lut || lut.mapDataType !== "continuous" ) { return; }
+      dataCubeInstance._filterDataContinuous( voxelLB, voxelUB );
+      this.canvas.set_state( "surface_color_refresh", Date() );
+      this._update_canvas();
+    }
+    const ctrlContinuousThresholdLB = this.gui
+      .add_item('Voxel Min', -100000, { folder_name : folder_name })
+      .min(-100000).max(100000).step(0.01)
+      .onChange(( v ) => {
+        voxelLB = v;
+        applyContinuousSelection();
+      });
+    const ctrlContinuousThresholdUB = this.gui
+      .add_item('Voxel Max', 100000, { folder_name : folder_name })
+      .min(-100000).max(100000).step(0.01)
+      .onChange(( v ) => {
+        voxelUB = v;
+        applyContinuousSelection();
+      });
 
-      const cmap_array = Object.values(lutMap);
-      const voxel_value_range = to_array( lut.mapValueRange );
-      const voxel_minmax = (l, u) => {
-        const inst = this.current_voxel_type();
-        if( inst && inst.isDataCube2 ){
 
-          // might be large?
-          new Promise( () => {
-
-            let tmp;
-            const candidates = cmap_array.filter((e) => {
-              tmp = parseFloat(e.Label);
-              if(isNaN(tmp)){ return(false); }
-              if( tmp >= l && tmp <= u ){ return(true); }
-              return(false);
-            }).map( (e) => {
-              return(e.ColorID);
-            });
-
-            inst.updatePalette( candidates );
-
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
-            this.canvas.set_state( "surface_color_refresh", Date() );
-            this._update_canvas();
-          });
-
-        }
-      }
-      if(cmap_array.length > 0){
-        let vmin = voxel_value_range[0],
-            vmax = voxel_value_range[1];
-        this.gui.add_item('Voxel Min', vmin, { folder_name : folder_name })
-          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
-          .onChange((v) => {
-            vmin = v;
-            voxel_minmax(vmin, vmax);
-          });
-
-        this.gui.add_item('Voxel Max', vmax, { folder_name : folder_name })
-          .min(vmin).max(vmax).step((vmax - vmin) / cmap_array.length)
-          .onChange((v) => {
-            vmax = v;
-            voxel_minmax(vmin, vmax);
-          });
-      }
-
-    } else {
-      const atlas_thred_text = this.gui.add_item('Voxel Label', "0", { folder_name : folder_name })
+    // Add controllers for discrete lut
+    let selectedLabels = [];
+    const applyDiscreteSelection = () => {
+      const dataCubeInstance = this.current_voxel_type();
+      if( !dataCubeInstance ) { return; }
+      const lut = dataCubeInstance.lut;
+      if( !lut || lut.mapDataType !== "discrete" ) { return; }
+      dataCubeInstance._filterDataDiscrete( selectedLabels );
+      this.canvas.set_state( "surface_color_refresh", Date() );
+      this._update_canvas();
+    }
+    const ctrlDiscreteSelector = this.gui.add_item('Voxel Label', "", { folder_name : folder_name })
       .onChange((v) => {
-
         if(typeof(v) !== "string"){ return; }
 
-        const inst = this.current_voxel_type();
-        if( inst && inst.isDataCube2 ){
+        selectedLabels.length = 0;
+        const selected = v.split(",").forEach((v) => {
+          v = v.trim();
+          if( v.match(/^[-]{0,1}[0-9]+$/g) ) {
+            v = parseInt(v);
+            if( !isNaN(v) ) {
+              selectedLabels.push( v );
+            }
+            return;
+          }
 
-          // might be large?
-          new Promise( () => {
-            const candidates = v.split(",")
-              .map((v) => {return parseInt(v)})
-              .filter((v) => {return !isNaN(v)});
-            inst.updatePalette( candidates );
-            inst.object.material.uniforms.cmap.value.needsUpdate = true;
-            this.canvas.set_state( "surface_color_refresh", Date() );
-            this._update_canvas();
-          });
+          const split = v.split(/[:-]/g);
+          if( !Array.isArray(split) || split.length <= 1 ) { return; }
 
+          const start = parseInt( split[0] ),
+                end = parseInt( split[1] );
+          if( isNaN(start) || isNaN(end) || start > end ) { return; }
+          for(let i = start; i <= end; i++ ) {
+            selectedLabels.push( i );
+          }
+        });
+        applyDiscreteSelection();
+      });
+
+
+    //
+    this.canvas.bind(
+      'c_updated_voxel_threshold', "canvas.controllers.onChange",
+      (evt) => {
+        if( !evt.detail || !evt.detail.data || evt.detail.data.atlas_type === undefined ) { return; }
+        const dataCubeInstance = this.current_voxel_type();
+        if( !dataCubeInstance ) {
+          // hide selection controllers
+          this.gui.hide_item(['Voxel Display', 'Voxel Label', 'Voxel Min', 'Voxel Max'], folder_name);
+          return;
         }
 
+        if( dataCubeInstance.isDataContinuous ) {
+          this.gui.show_item(['Voxel Display', 'Voxel Min', 'Voxel Max'], folder_name);
+          this.gui.hide_item(['Voxel Label'], folder_name);
+          // update controllers' min, max, steps
+          const nColorKeys = Object.keys(dataCubeInstance.lut.map).length;
+          const lb = Math.floor( dataCubeInstance.__dataLB ),
+                ub = Math.ceil( dataCubeInstance.__dataUB ),
+                step = (dataCubeInstance.__dataUB - dataCubeInstance.__dataLB) / ( nColorKeys + 1 );
+          ctrlContinuousThresholdLB.min( lb ).max( ub ).step( step )
+            .setValue( voxelLB );
+          ctrlContinuousThresholdUB.min( lb ).max( ub ).step( step )
+            .setValue( voxelUB );
+          // applyContinuousSelection();
+        } else {
+          this.gui.show_item(['Voxel Display', 'Voxel Label'], folder_name);
+          this.gui.hide_item(['Voxel Min', 'Voxel Max'], folder_name);
+          applyDiscreteSelection();
+        }
 
-      });
-    }
+      }
+    )
+
+
+    // initialize, let listeners to know the volume type is none
+    this.fire_change({ 'atlas_type' : 'none', 'atlas_enabled' : false});
   };
 
   return( THREEBRAIN_PRESETS );

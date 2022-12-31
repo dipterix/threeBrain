@@ -63,6 +63,8 @@ register_get_key <- function(re){
   gtype <- re$mapGeomType
 
   if(re$mapDataType == 'continuous'){
+    auto_rescale <- isTRUE(re$colorIDAutoRescale)
+    re$colorIDAutoRescale <- auto_rescale
     re$get_key <- function(value, max_delta = Inf, ...){
       map <- sapply(re$map, function(x){
         c(x$ColorID, x$Label)
@@ -75,9 +77,13 @@ register_get_key <- function(re){
         if(diff[[ii]] > max_delta) { return(0) }
         map[1, ii]
       })
+      if( auto_rescale ) {
+        warning("Color map has [colorIDAutoRescale] set to TRUE. The actual color key/ID might vary according to the actual data range.")
+      }
       as.integer(k)
     }
   } else {
+    re$colorIDAutoRescale <- FALSE
     re$get_key <- function(value, ...){
       sapply(value, function(v){
         if(is.na(v)){ return(0) }
@@ -97,14 +103,14 @@ register_get_key <- function(re){
 #' @rdname voxel_colormap
 #' @export
 create_colormap <- function(
-  gtype = c('surface', 'volume'),
-  dtype = c('continuous', 'discrete'),
-  key, color, value, alpha = FALSE, con = NULL, ...
+  gtype = c('surface', 'volume'), dtype = c('continuous', 'discrete'),
+  key, color, value, alpha = FALSE, con = NULL, auto_rescale = FALSE, ...
 ) {
   gtype <- match.arg(gtype)
   dtype <- match.arg(dtype)
   alpha <- isTRUE(alpha)
   key <- as.integer(key)
+  auto_rescale <- as.logical(auto_rescale)[[1]] && dtype == "continuous"
   stopifnot(length(key) > 1)
   stopifnot(!any(is.na(key)))
   if(!length(value)){
@@ -136,7 +142,8 @@ create_colormap <- function(
     mapValueRange = range(value, na.rm = TRUE),
     mapDataType = dtype,
     mapGeomType = gtype,
-    mapVersion = 1.0
+    colorIDAutoRescale = isTRUE(auto_rescale),
+    mapVersion = 1.1
   )
   re <- register_get_key(re)
   if(length(con)){
@@ -212,8 +219,9 @@ print.colormap <- function(x, ...){
       "  Data Type: %s",
       "  Transparent: %s",
       "  # of keys: %d",
-      "  Min key: %.0f",
-      "  Max key: %.0f\n"
+      "  Min Colorkey: %.0f",
+      "  Max Colorkey: %.0f",
+      "  Auto-rescale ColorKey: %s\n"
     ), collapse = '\n'),
     x[['mapVersion']],
     x[['mapGeomType']],
@@ -221,7 +229,8 @@ print.colormap <- function(x, ...){
     x[['mapAlpha']],
     length(x[['map']]),
     x[['mapMinColorID']],
-    x[['mapMaxColorID']]
+    x[['mapMaxColorID']],
+    ifelse(isTRUE(x[['colorIDAutoRescale']]), "yes", "no")
   ))
   if(isTRUE(x[['mapDataType']] == "continuous")){
     rg <- x[['mapValueRange']]

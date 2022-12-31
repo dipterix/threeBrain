@@ -10,13 +10,10 @@ DataCubeGeom2 <- R6::R6Class(
   public = list(
 
     type = 'datacube2',
-
+    clickable = FALSE,
     threshold = 0.6,
-
     color_format = "RGBAFormat",
-
     color_map = NULL,
-
     initialize = function(name, value, dim = dim(value),
                           half_size = c(128,128,128),
                           group = GeomGroup$new(name = 'default'),
@@ -62,15 +59,11 @@ NiftiGeom2 <- R6::R6Class(
   classname = "NiftiGeom2",
   inherit = AbstractGeom,
   public = list(
-
     type = 'datacube2',
-
+    clickable = FALSE,
     threshold = 0.6,
-
     color_format = "RGBAFormat",
-
     color_map = NULL,
-
     initialize = function(
       name, path, group = GeomGroup$new(name = 'default'), layer = 8,
       color_format = c("RGBAFormat", "AlphaFormat"), ...){
