@@ -70,6 +70,7 @@ class DataCube extends AbstractThreeBrainObject {
     sliceMeshXY.position.copy( CONSTANTS.VEC_ORIGIN );
     sliceMeshXY.name = 'mesh_datacube__axial_' + g.name;
 
+
     const sliceGeometryXZ = new PlaneBufferGeometry( 256, 256 );
     const sliceMeshXZ = new Mesh( sliceGeometryXZ, sliceMaterial );
     sliceMeshXZ.rotateX( Math.PI / 2 );
@@ -83,6 +84,7 @@ class DataCube extends AbstractThreeBrainObject {
     sliceMeshYZ.renderOrder = -1;
     sliceMeshYZ.position.copy( CONSTANTS.VEC_ORIGIN );
     sliceMeshYZ.name = 'mesh_datacube__sagittal_' + g.name;
+
 
   	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
 
@@ -276,6 +278,9 @@ class DataCube extends AbstractThreeBrainObject {
       this._canvas.add_clickable( '_axial_' + this.name, this.sliceXY );
       this._canvas.add_clickable( '_sagittal_' + this.name, this.sliceYZ );
     }
+    this.sliceXY.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
+    this.sliceXZ.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
+    this.sliceYZ.layers.set( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
 
     // data cube must have groups. The group is directly added to scene,
     // regardlessly

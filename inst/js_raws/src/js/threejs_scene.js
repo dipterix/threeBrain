@@ -1201,13 +1201,6 @@ class THREEBRAIN_CANVAS {
       console.debug('Set coronal depth not implemented');
     }
   }
-  set_axial_depth( depth ){
-    if( typeof this._set_axial_depth === 'function' ){
-      this._set_axial_depth( depth );
-    }else{
-      console.debug('Set axial depth not implemented');
-    }
-  }
   set_sagittal_depth( depth ){
     if( typeof this._set_sagittal_depth === 'function' ){
       this._set_sagittal_depth( depth );
@@ -1215,16 +1208,6 @@ class THREEBRAIN_CANVAS {
       console.debug('Set sagittal depth not implemented');
     }
   }
-  set_side_depth( c_d, a_d, s_d ){
-    console.debug('Set side depth not implemented');
-  }
-  set_side_visibility( which, visible ){
-    console.debug('Set side visibility not implemented');
-  }
-  side_plane_sendback( is_back ){
-    console.warn("canvas.side_plane_sendback is called; FIXME");
-  }
-
 
   // -------- Camera, control trackballs ........
   // Set trackball center target
@@ -1265,21 +1248,24 @@ class THREEBRAIN_CANVAS {
       if( coronal ) {
         this.sideCanvasList.coronal.reset({
           zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ]
+          position : [ offsetX, offsetY ],
+          crosshair: true
         });
       }
       offsetY += width;
       if( axial ) {
         this.sideCanvasList.axial.reset({
           zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ]
+          position : [ offsetX, offsetY ],
+          crosshair: true
         });
       }
       offsetY += width;
       if( sagittal ) {
         this.sideCanvasList.sagittal.reset({
           zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ]
+          position : [ offsetX, offsetY ],
+          crosshair: true
         });
       }
       offsetY += width;
@@ -1287,19 +1273,22 @@ class THREEBRAIN_CANVAS {
       if( coronal ) {
         this.sideCanvasList.coronal.reset({
           zoomLevel : zoomLevel,
-          position : position
+          position : position,
+          crosshair: true
         });
       }
       if( axial ) {
         this.sideCanvasList.axial.reset({
           zoomLevel : zoomLevel,
-          position : position
+          position : position,
+          crosshair: true
         });
       }
       if( sagittal ) {
         this.sideCanvasList.sagittal.reset({
           zoomLevel : zoomLevel,
-          position : position
+          position : position,
+          crosshair: true
         });
       }
     }
@@ -2833,6 +2822,26 @@ class THREEBRAIN_CANVAS {
     let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
 
+    let activeSlices = state.get("activeSliceInstance");
+    const shownSlices = [], hiddenSlices = [];
+    if( activeSlices && activeSlices.isDataCube ) {
+      if( activeSlices.coronalActive ) {
+        shownSlices.push( "coronal" );
+      } else {
+        hiddenSlices.push( "coronal" );
+      }
+      if( activeSlices.sagittalActive ) {
+        shownSlices.push( "sagittal" );
+      } else {
+        hiddenSlices.push( "sagittal" );
+      }
+      if( activeSlices.axialActive ) {
+        shownSlices.push( "axial" );
+      } else {
+        hiddenSlices.push( "axial" );
+      }
+    }
+
     // TODO: add checks
     const subject_data  = this.shared_data.get( target_subject );
 
@@ -2858,7 +2867,11 @@ class THREEBRAIN_CANVAS {
     }
 
     // reset overlay
-    this.set_side_visibility();
+    activeSlices = state.get("activeSliceInstance");
+    if( activeSlices && activeSlices.isDataCube ) {
+      activeSlices.showSlices( shownSlices );
+      activeSlices.hideSlices( hiddenSlices );
+    }
 
     state.set( 'surface_type', surface_type );
     state.set( 'atlas_type', atlas_type );

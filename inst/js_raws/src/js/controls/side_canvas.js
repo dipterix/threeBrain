@@ -70,8 +70,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     // side plane
     const _controller_coronal = this.gui
       .add_item('Coronal (P - A)', 0, {folder_name: folder_name})
-      .min(-128).max(128).step(1).onChange((v) => {
-        this.canvas.set_coronal_depth( v );
+      .min(-128).max(128).step(0.1).onChange((v) => {
+        const activeSlice = this.canvas.get_state("activeSliceInstance");
+        if( activeSlice && activeSlice.isDataCube ) {
+          activeSlice.setCrosshair({ y: v });
+        }
         this.fire_change({ 'coronal_depth' : v });
         _calculate_intersection_coord();
       });
@@ -79,8 +82,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
 
     const _controller_axial = this.gui
       .add_item('Axial (I - S)', 0, {folder_name: folder_name})
-      .min(-128).max(128).step(1).onChange((v) => {
-        this.canvas.set_axial_depth( v );
+      .min(-128).max(128).step(0.1).onChange((v) => {
+        const activeSlice = this.canvas.get_state("activeSliceInstance");
+        if( activeSlice && activeSlice.isDataCube ) {
+          activeSlice.setCrosshair({ z: v });
+        }
         this.fire_change({ 'axial_depth' : v });
         _calculate_intersection_coord();
       });
@@ -88,8 +94,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
 
     const _controller_sagittal = this.gui
       .add_item('Sagittal (L - R)', 0, {folder_name: folder_name})
-      .min(-128).max(128).step(1).onChange((v) => {
-        this.canvas.set_sagittal_depth( v );
+      .min(-128).max(128).step(0.1).onChange((v) => {
+        const activeSlice = this.canvas.get_state("activeSliceInstance");
+        if( activeSlice && activeSlice.isDataCube ) {
+          activeSlice.setCrosshair({ x: v });
+        }
         this.fire_change({ 'sagittal_depth' : v });
         _calculate_intersection_coord();
       });
@@ -115,17 +124,19 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
 
     });
 
-    this.canvas.set_side_depth = (c, a, s) => {
-      if( typeof c === 'number' ){
-        _controller_coronal.setValue( c );
-      }
-      if( typeof a === 'number' ){
-        _controller_axial.setValue( a || 0 );
-      }
-      if( typeof s === 'number' ){
-        _controller_sagittal.setValue( s || 0 );
-      }
-    };
+    this.canvas.bind( `canvasControllersDriveSlice`, 'canvas.controllers.drive.slice',
+      (evt) => {
+        evt.preventDefault();
+        if( typeof evt.detail.x === "number" ) {
+          _controller_sagittal.setValue( evt.detail.x );
+        }
+        if( typeof evt.detail.y === "number" ) {
+          _controller_coronal.setValue( evt.detail.y );
+        }
+        if( typeof evt.detail.z === "number" ) {
+          _controller_axial.setValue( evt.detail.z );
+        }
+      });
 
     const overlay_coronal = this.gui.add_item('Overlay Coronal', false,
       {folder_name: folder_name})

@@ -342,14 +342,9 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
-    if( typeof args.x === "number" ) {
-      this.canvas.set_sagittal_depth(args.x);
-    }
-    if( typeof args.y === "number" ) {
-      this.canvas.set_coronal_depth(args.y);
-    }
-    if( typeof args.z === "number" ) {
-      this.canvas.set_axial_depth(args.z);
+    const activeSlice = this.canvas.get_state("activeSliceInstance");
+    if( activeSlice && activeSlice.isDataCube ) {
+      activeSlice.setCrosshair( args );
     }
   }
 

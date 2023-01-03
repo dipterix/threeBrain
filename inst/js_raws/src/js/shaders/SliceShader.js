@@ -44,7 +44,7 @@ out vec4 color;
 void main() {
 // calculate IJK, then sampler position
 
-  vec3 samplerPosition = (world2IJK * worldPosition).xyz / mapShape;
+  vec3 samplerPosition = ((world2IJK * worldPosition).xyz - vec3(1.0, 0.0, 1.0)) / (mapShape - 1.0);
   color.rgb = texture(map, samplerPosition).rrr;
   if( color.r <= threshold ) {
     gl_FragDepth = gl_DepthRange.far;

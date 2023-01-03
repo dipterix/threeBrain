@@ -64482,8 +64482,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     // side plane
     const _controller_coronal = this.gui
       .add_item('Coronal (P - A)', 0, {folder_name: folder_name})
-      .min(-128).max(128).step(1).onChange((v) => {
-        this.canvas.set_coronal_depth( v );
+      .min(-128).max(128).step(0.1).onChange((v) => {
+        const activeSlice = this.canvas.get_state("activeSliceInstance");
+        if( activeSlice && activeSlice.isDataCube ) {
+          activeSlice.setCrosshair({ y: v });
+        }
         this.fire_change({ 'coronal_depth' : v });
         _calculate_intersection_coord();
       });
@@ -64491,8 +64494,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
 
     const _controller_axial = this.gui
       .add_item('Axial (I - S)', 0, {folder_name: folder_name})
-      .min(-128).max(128).step(1).onChange((v) => {
-        this.canvas.set_axial_depth( v );
+      .min(-128).max(128).step(0.1).onChange((v) => {
+        const activeSlice = this.canvas.get_state("activeSliceInstance");
+        if( activeSlice && activeSlice.isDataCube ) {
+          activeSlice.setCrosshair({ z: v });
+        }
         this.fire_change({ 'axial_depth' : v });
         _calculate_intersection_coord();
       });
@@ -64500,8 +64506,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
 
     const _controller_sagittal = this.gui
       .add_item('Sagittal (L - R)', 0, {folder_name: folder_name})
-      .min(-128).max(128).step(1).onChange((v) => {
-        this.canvas.set_sagittal_depth( v );
+      .min(-128).max(128).step(0.1).onChange((v) => {
+        const activeSlice = this.canvas.get_state("activeSliceInstance");
+        if( activeSlice && activeSlice.isDataCube ) {
+          activeSlice.setCrosshair({ x: v });
+        }
         this.fire_change({ 'sagittal_depth' : v });
         _calculate_intersection_coord();
       });
@@ -64527,17 +64536,19 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
 
     });
 
-    this.canvas.set_side_depth = (c, a, s) => {
-      if( typeof c === 'number' ){
-        _controller_coronal.setValue( c );
-      }
-      if( typeof a === 'number' ){
-        _controller_axial.setValue( a || 0 );
-      }
-      if( typeof s === 'number' ){
-        _controller_sagittal.setValue( s || 0 );
-      }
-    };
+    this.canvas.bind( `canvasControllersDriveSlice`, 'canvas.controllers.drive.slice',
+      (evt) => {
+        evt.preventDefault();
+        if( typeof evt.detail.x === "number" ) {
+          _controller_sagittal.setValue( evt.detail.x );
+        }
+        if( typeof evt.detail.y === "number" ) {
+          _controller_coronal.setValue( evt.detail.y );
+        }
+        if( typeof evt.detail.z === "number" ) {
+          _controller_axial.setValue( evt.detail.z );
+        }
+      });
 
     const overlay_coronal = this.gui.add_item('Overlay Coronal', false,
       {folder_name: folder_name})
@@ -73284,14 +73295,9 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
-    if( typeof args.x === "number" ) {
-      this.canvas.set_sagittal_depth(args.x);
-    }
-    if( typeof args.y === "number" ) {
-      this.canvas.set_coronal_depth(args.y);
-    }
-    if( typeof args.z === "number" ) {
-      this.canvas.set_axial_depth(args.z);
+    const activeSlice = this.canvas.get_state("activeSliceInstance");
+    if( activeSlice && activeSlice.isDataCube ) {
+      activeSlice.setCrosshair( args );
     }
   }
 
@@ -74806,69 +74812,45 @@ class SideCanvas {
     if( level ) {
       this.zoomLevel = level;
     }
-    this.$canvas.style.width = `${ parseInt( this.zoomLevel * 100 ) }%`;
-    this.$canvas.style.height = `${ parseInt( this.zoomLevel * 100 ) }%`;
-
-    // get element size
-    const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
-    const wrapperSize = (0,utils/* get_element_size */.nq)( this.$el );
-    const wrapperCenter2Left = wrapperSize[0] / 2,
-          wrapperCenter2Top = wrapperSize[1] / 2;
+    if( this.zoomLevel > 10 ) { this.zoomLevel = 10; }
+    if( this.zoomLevel < 1 ) { this.zoomLevel = 1; }
+    const cameraMargin = 128 / this.zoomLevel;
+    const maxTranslate = 128 - cameraMargin;
 
     // get depths
-    const depthSagittal = this.mainCanvas.get_state( 'sagittal_depth' ) || 0;
-    const depthCoronal = this.mainCanvas.get_state( 'coronal_depth' ) || 0;
-    const depthAxial = this.mainCanvas.get_state( 'axial_depth' ) || 0;
+    let translateX = this.mainCanvas.get_state( 'sagittal_depth' ) || 0,
+        translateY = this.mainCanvas.get_state( 'coronal_depth' ) || 0,
+        translateZ = this.mainCanvas.get_state( 'axial_depth' ) || 0;
 
-    // compute canvas overflow compared to wrapper
-    // using wrapperSize / 2 - ( crossHair relative to canvas topleft)
-    let overflowLeft = 0, overflowTop = 0;
-    const overflowMaxLeft = wrapperSize[0] - canvasSize[0],
-          overflowMaxTop = wrapperSize[1] - canvasSize[1];
-    const crossHairLeft = new three_module.Vector3()
-      .set( depthSagittal, depthCoronal, depthAxial )
-      .addScalar( 128 ).divideScalar( 256 )
-      .multiplyScalar( canvasSize[ 0 ] );
-    const crossHairTop = new three_module.Vector3()
-      .set( depthSagittal, depthCoronal, depthAxial )
-      .multiplyScalar( -1 ).addScalar( 128 ).divideScalar( 256 )
-      .multiplyScalar( canvasSize[ 1 ] );
+    if( translateX > maxTranslate ) { translateX = maxTranslate; }
+    if( translateX < -maxTranslate ) { translateX = -maxTranslate; }
+    if( translateY > maxTranslate ) { translateY = maxTranslate; }
+    if( translateY < -maxTranslate ) { translateY = -maxTranslate; }
+    if( translateZ > maxTranslate ) { translateZ = maxTranslate; }
+    if( translateZ < -maxTranslate ) { translateZ = -maxTranslate; }
 
-    switch (this.type) {
+    this.camera.left = -cameraMargin;
+    this.camera.right = cameraMargin;
+    this.camera.bottom = -cameraMargin;
+    this.camera.top = cameraMargin;
+
+    switch ( this.type ) {
       case 'coronal':
-        overflowLeft = Math.max(
-          Math.min( wrapperCenter2Left - crossHairLeft.x, 0 ),
-          overflowMaxLeft
-        );
-        overflowTop = Math.max(
-          Math.min( wrapperCenter2Top - crossHairTop.z, 0 ),
-          overflowMaxTop
-        );
+        this.camera.position.fromArray( [translateX, -500, translateZ] );
         break;
       case 'axial':
-        overflowLeft = Math.max(
-          Math.min( wrapperCenter2Left - crossHairLeft.x, 0 ),
-          overflowMaxLeft
-        );
-        overflowTop = Math.max(
-          Math.min( wrapperCenter2Top - crossHairTop.y, 0 ),
-          overflowMaxTop
-        );
+        this.camera.position.fromArray( [translateX, translateY, 500] );
         break;
       case 'sagittal':
-        overflowLeft = Math.max(
-          Math.min( wrapperCenter2Left - crossHairLeft.y, 0 ),
-          overflowMaxLeft
-        );
-        overflowTop = Math.max(
-          Math.min( wrapperCenter2Top - crossHairTop.z, 0 ),
-          overflowMaxTop
-        );
+        this.camera.position.fromArray( [-500, translateY, translateZ] );
         break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
     }
-
-    this.$canvas.style.left = `${ parseInt(overflowLeft) }px`;
-    this.$canvas.style.top = `${ parseInt(overflowTop) }px`;
+    this._lookAt.set( translateX, translateY, translateZ );
+    this.camera.lookAt( this._lookAt );
+    this.camera.updateProjectionMatrix();
+    this.mainCanvas.start_animation(0);
   }
 
   raiseTop() {
@@ -74889,7 +74871,9 @@ class SideCanvas {
     this.zIndex = 4;
   }
 
-  reset({ zoomLevel = false, position = true, size = true } = {}) {
+  reset({
+    zoomLevel = false, position = true, size = true, crosshair = false
+  } = {}) {
     let width, height, offsetX, offsetY;
     if( position === true ) {
       offsetX = 0;
@@ -74917,6 +74901,9 @@ class SideCanvas {
       if( zoomLevel < 1 ) { zoomLevel = 1; }
       this.zoom( zoomLevel );
     }
+    if( crosshair ) {
+      this.setCrosshair({ x : 0, y : 0, z : 0, immediate : false });
+    }
   }
   setDimension({ width, height, offsetX, offsetY } = {}) {
     // ignore height
@@ -74932,6 +74919,8 @@ class SideCanvas {
     }
     this.$el.style.width = `${w}px`;
     this.$el.style.height = `${w}px`;
+    this.$canvas.style.width = '100%';
+		this.$canvas.style.height = '100%';
 
     let _offsetX = Math.round( offsetX || 0 );
     let _offsetY = Math.round( offsetY || (this.order * w) );
@@ -74940,6 +74929,7 @@ class SideCanvas {
 
     this.$el.style.left = _offsetX;
     this.$el.style.top = _offsetY;
+
   }
 
 
@@ -74960,9 +74950,100 @@ class SideCanvas {
     this.$el.style.backgroundColor = color;
   }
 
+  setCrosshair({x, y, z, immediate = true} = {}) {
+    // instead of setting slice instances, set data gui
+    /* const sliceInstance = this.mainCanvas.state_data.get( "activeSliceInstance" );
+    if( sliceInstance && sliceInstance.isDataCube ) {
+      sliceInstance.setCrosshair({
+        x : sagittalDepth,
+        y : coronalDepth,
+        z : axialDepth
+      });
+    }
+    */
+    this.mainCanvas.dispatch_event(
+      'canvas.controllers.drive.slice',
+      {
+        x : x, y : y, z : z
+      },
+      immediate
+    );
+  }
+
+
+
+  pan({ right = 0, up = 0, unit = "css", updateMainCamera = false } = {}) {
+    //  this.raiseTop();
+
+    // data is xy coord relative to $canvas
+    let depthX, depthY;
+    if( unit === "css" ) {
+      const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
+      const canvasRenderSize = 256 / this.zoomLevel;
+      depthX = right / canvasSize[0] * canvasRenderSize;
+      depthY = up / canvasSize[1] * canvasRenderSize;
+    } else {
+      depthX = right;
+      depthY = up;
+    }
+
+    let sagittalDepth, coronalDepth, axialDepth;
+    switch ( this.type ) {
+      case 'coronal':
+        sagittalDepth = depthX + this._lookAt.x;
+        coronalDepth = this.mainCanvas.get_state( 'coronal_depth' );
+        axialDepth = depthY + this._lookAt.z;
+        break;
+      case 'axial':
+        sagittalDepth = depthX + this._lookAt.x;
+        coronalDepth = depthY + this._lookAt.y;
+        axialDepth = this.mainCanvas.get_state( 'axial_depth' );
+        break;
+      case 'sagittal':
+        sagittalDepth = this.mainCanvas.get_state( 'sagittal_depth' );
+        coronalDepth = -depthX + this._lookAt.y;
+        axialDepth = depthY + this._lookAt.z;
+        break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
+    }
+
+    // console.log(`x: ${depthX}, y: ${depthY} of [${canvasSize[0]}, ${canvasSize[1]}]`);
+    // console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
+
+    // update slice depths
+    this.setCrosshair({
+      x : sagittalDepth,
+      y : coronalDepth,
+      z : axialDepth
+    });
+    // need to update main_camera
+    if( updateMainCamera ) {
+      const newMainCameraPosition = new three_module.Vector3()
+        .set( sagittalDepth, coronalDepth, axialDepth )
+        .normalize().multiplyScalar(500);
+      if( newMainCameraPosition.length() === 0 ) {
+        newMainCameraPosition.x = 500;
+      }
+
+      // make S up as much as possible, try to heads up
+      const newMainCameraUp = this.mainCanvas.main_camera.position.clone()
+        .cross( new three_module.Vector3(0, 0, 1) ).cross( newMainCameraPosition )
+        .normalize();
+
+      if( newMainCameraUp.z < 0 ) {
+        newMainCameraUp.multiplyScalar(-1);
+      }
+
+      this.mainCanvas.main_camera.position.copy( newMainCameraPosition );
+      this.mainCanvas.main_camera.up.copy( newMainCameraUp );
+    }
+  }
+
   constructor ( mainCanvas, type = "coronal" ) {
 
-    switch (type) {
+    this.type = type;
+    switch ( this.type ) {
       case 'coronal':
         this.order = 0;
         this._headerText = "CORONAL (R=R)"
@@ -74978,18 +75059,17 @@ class SideCanvas {
       default:
         throw 'SideCanvas: type must be coronal, sagittal, or axial';
     }
-    this.type = type;
+
     this.mainCanvas = mainCanvas;
     this.zoomLevel = 1;
     this.pixelRatio = this.mainCanvas.pixel_ratio[1];
 
     this._enabled = true;
+    this._lookAt = new three_module.Vector3( 0, 0, 0 );
     this._container_id = mainCanvas.container_id;
     const _w = this.mainCanvas.client_width ?? 256;
     const _h = this.mainCanvas.client_height ?? 256;
-    this._renderHeight = Math.floor( Math.max( _w / 3, _h ) / this.pixelRatio / 2 );
-  	if( this._renderHeight < 256 ){ this._renderHeight = 256; }
-  	if( this._renderHeight > 512 ){ this._renderHeight = 512; }
+    this._renderHeight = 256;
     this._canvasHeight = this._renderHeight * this.mainCanvas.pixel_ratio[1];
 
     this.$el = document.createElement('div');
@@ -75055,25 +75135,18 @@ class SideCanvas {
 		}, this.$zoomOut);
 
 		// toggle pan (translate) tool
-		this.$pan = document.createElement('div');
-		this.$pan.className = 'zoom-tool';
-		this.$pan.style.top = '77px'; // header + $zoomIn + $zoomOut
-		this.$pan.innerText = 'P';
-		this.$el.appendChild( this.$pan );
-		this.mainCanvas.bind( `${ this.type }_toggle_pan_click`, 'click', (e) => {
-		  const panEnabled = this.$pan.classList.contains('pan-active');
-		  if( panEnabled ) {
-		    this.$pan.classList.remove('pan-active');
-		    this._setPanMode( 'select' );
-		  } else {
-		    this.$pan.classList.add('pan-active');
-		    this._setPanMode( 'pan' );
-		  }
-		}, this.$pan);
+		this.$recenter = document.createElement('div');
+		this.$recenter.className = 'zoom-tool';
+		this.$recenter.style.top = '77px'; // header + $zoomIn + $zoomOut
+		this.$recenter.innerText = 'C';
+		this.$el.appendChild( this.$recenter );
+		this.mainCanvas.bind( `${ this.type }_recenter_click`, 'click', (e) => {
+		  this.zoom();
+		}, this.$recenter);
 
 		this.$reset = document.createElement('div');
 		this.$reset.className = 'zoom-tool';
-		this.$reset.style.top = '104px'; // header + $zoomIn + $zoomOut + $pan
+		this.$reset.style.top = '104px'; // header + $zoomIn + $zoomOut + $recenter
 		this.$reset.innerText = '0';
 		this.$el.appendChild( this.$reset );
 		this.mainCanvas.bind( `${ this.type }_zoom_reset_click`, 'click', (e) => {
@@ -75095,96 +75168,50 @@ class SideCanvas {
       this.raiseTop();
     });
 
-    // Make side canvas draggable within $el
-    this._setPanMode = make_draggable( this.$canvas, undefined, this.$el, (e, data) => {
-      this.raiseTop();
+    // Make side canvas clickable
+    this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
+      this._focused = true;
+    }, this.$canvas );
+    this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
+      this._focused = false;
+    }, this.$canvas );
+    this.mainCanvas.bind( `${ this.type }_cvs_setCrosshair`, 'mousemove', (evt) => {
+      evt.preventDefault();
+      if( !this._focused ) { return; }
 
-      if( data.state !== 'select' && data.state !== 'move' ){ return; }
-
-      // obtain cursor location
+      const mouseX = evt.clientX;
+      const mouseY = evt.clientY;
+      const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
       const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
 
-      // data is xy coord relative to $canvas
-      const depthX = data.x / canvasSize[0] * 256 - 128;
-      const depthY = data.y / canvasSize[1] * 256 - 128;
+      const right = evt.clientX - canvasPosition.left - canvasSize[0]/2;
+      const up = canvasSize[1]/2 + canvasPosition.top - evt.clientY;
 
-      let sagittalDepth, coronalDepth, axialDepth;
-      switch ( this.type ) {
-        case 'coronal':
-          sagittalDepth = depthX;
-          axialDepth = -depthY;
-          coronalDepth = this.mainCanvas.get_state( 'coronal_depth' );
-          break;
-        case 'axial':
-          sagittalDepth = depthX;
-          coronalDepth = -depthY;
-          axialDepth = this.mainCanvas.get_state( 'axial_depth' );
-          break;
-        case 'sagittal':
-          coronalDepth = -depthX;
-          axialDepth = -depthY;
-          sagittalDepth = this.mainCanvas.get_state( 'sagittal_depth' );
-          break;
-        default:
-          throw 'SideCanvas: type must be coronal, sagittal, or axial';
-      }
+      this.raiseTop();
+      this.pan({
+        right : right, up : up, unit : "css",
+        updateMainCamera : evt.shiftKey
+      });
 
-      //console.log(`x: ${depthX}, y: ${depthY} of [${canvasSize[0]}, ${canvasSize[1]}]`);
-      //console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
-
-      // update slice depths
-      const sliceInstance = this.mainCanvas.state_data.get( "activeSliceInstance" );
-      if( sliceInstance && sliceInstance.isDataCube ) {
-        sliceInstance.setCrosshair({
-          x : sagittalDepth,
-          y : coronalDepth,
-          z : axialDepth
-        });
-      }
-      // need to update main_camera
-      if( e.shiftKey ) {
-        const newMainCameraPosition = new three_module.Vector3()
-          .set( sagittalDepth, coronalDepth, axialDepth )
-          .normalize().multiplyScalar(500);
-        if( newMainCameraPosition.length() === 0 ) {
-          newMainCameraPosition.x = 500;
-        }
-
-        // make S up as much as possible, try to heads up
-        const newMainCameraUp = this.mainCanvas.main_camera.position.clone()
-          .cross( new three_module.Vector3(0, 0, 1) ).cross( newMainCameraPosition )
-          .normalize();
-
-        if( newMainCameraUp.z < 0 ) {
-          newMainCameraUp.multiplyScalar(-1);
-        }
-
-        this.mainCanvas.main_camera.position.copy( newMainCameraPosition );
-        this.mainCanvas.main_camera.up.copy( newMainCameraUp );
-      }
-    })
-    this._setPanMode( 'select' );
+    }, this.$canvas );
 
     // Make $canvas scrollable, with changing slices
     this.mainCanvas.bind( `${ this.type }_cvs_mousewheel`, 'mousewheel', (evt) => {
       evt.preventDefault();
       if( evt.altKey ){
         const depthName = this.type + '_depth';
-        const currentDepth = this.get_state( depthName );
+        const currentDepth = this.mainCanvas.get_state( depthName );
         if( evt.deltaY > 0 ){
           this.mainCanvas.set_state( depthName, 1 + currentDepth );
         }else if( evt.deltaY < 0 ){
           this.mainCanvas.set_state( depthName, -1 + currentDepth );
         }
       }
-      const sliceInstance = this.mainCanvas.state_data.get( "activeSliceInstance" );
-      if( sliceInstance && sliceInstance.isDataCube ) {
-        sliceInstance.setCrosshair({
-          x : this.mainCanvas.get_state( 'coronal_depth' ),
-          y : this.mainCanvas.get_state( 'axial_depth' ),
-          z : this.mainCanvas.get_state( 'sagittal_depth' )
-        });
-      }
+      this.setCrosshair({
+        x : sagittalDepth,
+        y : coronalDepth,
+        z : axialDepth
+      });
     }, this.$canvas );
 
     // Make $el resizable, keep current width and height
@@ -75229,7 +75256,7 @@ class SideCanvas {
       default:
         throw 'SideCanvas: type must be coronal, sagittal, or axial';
     }
-    this.camera.lookAt( new three_module.Vector3(0,0,0) );
+    this.camera.lookAt( this._lookAt );
     this.camera.aspect = 1;
     this.camera.updateProjectionMatrix();
     // this.camera.add( this.directionalLight );
@@ -75657,7 +75684,7 @@ out vec4 color;
 void main() {
 // calculate IJK, then sampler position
 
-  vec3 samplerPosition = (world2IJK * worldPosition).xyz / mapShape;
+  vec3 samplerPosition = ((world2IJK * worldPosition).xyz - vec3(1.0, 0.0, 1.0)) / (mapShape - 1.0);
   color.rgb = texture(map, samplerPosition).rrr;
   if( color.r <= threshold ) {
     gl_FragDepth = gl_DepthRange.far;
@@ -75901,6 +75928,7 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     sliceMeshXY.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
     sliceMeshXY.name = 'mesh_datacube__axial_' + g.name;
 
+
     const sliceGeometryXZ = new three_module.PlaneBufferGeometry( 256, 256 );
     const sliceMeshXZ = new three_module.Mesh( sliceGeometryXZ, sliceMaterial );
     sliceMeshXZ.rotateX( Math.PI / 2 );
@@ -75914,6 +75942,7 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     sliceMeshYZ.renderOrder = -1;
     sliceMeshYZ.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
     sliceMeshYZ.name = 'mesh_datacube__sagittal_' + g.name;
+
 
   	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
 
@@ -76107,6 +76136,9 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this._canvas.add_clickable( '_axial_' + this.name, this.sliceXY );
       this._canvas.add_clickable( '_sagittal_' + this.name, this.sliceYZ );
     }
+    this.sliceXY.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    this.sliceXZ.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    this.sliceYZ.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
 
     // data cube must have groups. The group is directly added to scene,
     // regardlessly
@@ -81147,13 +81179,6 @@ class THREEBRAIN_CANVAS {
       console.debug('Set coronal depth not implemented');
     }
   }
-  set_axial_depth( depth ){
-    if( typeof this._set_axial_depth === 'function' ){
-      this._set_axial_depth( depth );
-    }else{
-      console.debug('Set axial depth not implemented');
-    }
-  }
   set_sagittal_depth( depth ){
     if( typeof this._set_sagittal_depth === 'function' ){
       this._set_sagittal_depth( depth );
@@ -81161,16 +81186,6 @@ class THREEBRAIN_CANVAS {
       console.debug('Set sagittal depth not implemented');
     }
   }
-  set_side_depth( c_d, a_d, s_d ){
-    console.debug('Set side depth not implemented');
-  }
-  set_side_visibility( which, visible ){
-    console.debug('Set side visibility not implemented');
-  }
-  side_plane_sendback( is_back ){
-    console.warn("canvas.side_plane_sendback is called; FIXME");
-  }
-
 
   // -------- Camera, control trackballs ........
   // Set trackball center target
@@ -81211,21 +81226,24 @@ class THREEBRAIN_CANVAS {
       if( coronal ) {
         this.sideCanvasList.coronal.reset({
           zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ]
+          position : [ offsetX, offsetY ],
+          crosshair: true
         });
       }
       offsetY += width;
       if( axial ) {
         this.sideCanvasList.axial.reset({
           zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ]
+          position : [ offsetX, offsetY ],
+          crosshair: true
         });
       }
       offsetY += width;
       if( sagittal ) {
         this.sideCanvasList.sagittal.reset({
           zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ]
+          position : [ offsetX, offsetY ],
+          crosshair: true
         });
       }
       offsetY += width;
@@ -81233,19 +81251,22 @@ class THREEBRAIN_CANVAS {
       if( coronal ) {
         this.sideCanvasList.coronal.reset({
           zoomLevel : zoomLevel,
-          position : position
+          position : position,
+          crosshair: true
         });
       }
       if( axial ) {
         this.sideCanvasList.axial.reset({
           zoomLevel : zoomLevel,
-          position : position
+          position : position,
+          crosshair: true
         });
       }
       if( sagittal ) {
         this.sideCanvasList.sagittal.reset({
           zoomLevel : zoomLevel,
-          position : position
+          position : position,
+          crosshair: true
         });
       }
     }
@@ -82779,6 +82800,26 @@ class THREEBRAIN_CANVAS {
     let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
     let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
 
+    let activeSlices = state.get("activeSliceInstance");
+    const shownSlices = [], hiddenSlices = [];
+    if( activeSlices && activeSlices.isDataCube ) {
+      if( activeSlices.coronalActive ) {
+        shownSlices.push( "coronal" );
+      } else {
+        hiddenSlices.push( "coronal" );
+      }
+      if( activeSlices.sagittalActive ) {
+        shownSlices.push( "sagittal" );
+      } else {
+        hiddenSlices.push( "sagittal" );
+      }
+      if( activeSlices.axialActive ) {
+        shownSlices.push( "axial" );
+      } else {
+        hiddenSlices.push( "axial" );
+      }
+    }
+
     // TODO: add checks
     const subject_data  = this.shared_data.get( target_subject );
 
@@ -82804,7 +82845,11 @@ class THREEBRAIN_CANVAS {
     }
 
     // reset overlay
-    this.set_side_visibility();
+    activeSlices = state.get("activeSliceInstance");
+    if( activeSlices && activeSlices.isDataCube ) {
+      activeSlices.showSlices( shownSlices );
+      activeSlices.hideSlices( hiddenSlices );
+    }
 
     state.set( 'surface_type', surface_type );
     state.set( 'atlas_type', atlas_type );
