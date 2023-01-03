@@ -64019,17 +64019,20 @@ function register_controls_background( THREEBRAIN_PRESETS ){
 
         // Set renderer background to be v
         this.canvas.main_renderer.setClearColor(v);
-        this.canvas.side_renderer.setClearColor(v);
-
-        // this.el_text.style.color=inversedColor;
-        // this.el_text2.style.color=inversedColor;
-        // this.el.style.backgroundColor = v;
         this.canvas.el.style.backgroundColor = v;
 
         this.fire_change({ 'background' : v });
 
         // force re-render
         this._update_canvas(0);
+
+        this.canvas.sideCanvasList.coronal.setBackground(v);
+        this.canvas.sideCanvasList.axial.setBackground(v);
+        this.canvas.sideCanvasList.sagittal.setBackground(v);
+
+        // this.el_text.style.color=inversedColor;
+        // this.el_text2.style.color=inversedColor;
+        // this.el.style.backgroundColor = v;
       })
       .setValue( initial_bgcolor );
 
@@ -64425,18 +64428,18 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const show_side = this.gui.add_item('Show Panels', _v, {folder_name: folder_name})
       .onChange((v) => {
         if( v ){
-          this.canvas.enable_side_cameras();
+          this.canvas.enableSideCanvas();
         }else{
-          this.canvas.disable_side_cameras();
+          this.canvas.disableSideCanvas();
         }
         this.fire_change({ 'side_display' : v });
       });
 
 
     if( _v ){
-      this.canvas.enable_side_cameras();
+      this.canvas.enableSideCanvas();
     }else{
-      this.canvas.disable_side_cameras();
+      this.canvas.disableSideCanvas();
     }
     this.fire_change({ 'side_display' : _v });
 
@@ -64448,12 +64451,12 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
           side_width = this.settings.side_canvas_width,
           side_shift = this.settings.side_canvas_shift;
     this.gui.add_item('Reset Position', () => {
-      this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
+      this.canvas.resetSideCanvas( zoom_level, side_width, side_shift );
     }, {folder_name: folder_name});
 
     // reset first
     this.canvas._side_width = side_width;
-    this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
+    this.canvas.resetSideCanvas( zoom_level, side_width, side_shift );
   }
 
   THREEBRAIN_PRESETS.prototype.c_side_depth = function(){
@@ -66581,7 +66584,7 @@ class LocElectrode {
 
 function electrode_from_slice( scode, canvas ){
   if( !canvas._has_datacube_registered ){ return; }
-  const l = canvas.volumes.get(scode);
+  const l = canvas.slices.get(scode);
   const k = Object.keys(l);
   if( !k.length ) { return; }
   const planes = l[k[0]];
@@ -73602,7 +73605,7 @@ class THREEBRAIN_STORAGE {
 
 /***/ }),
 
-/***/ 3525:
+/***/ 2652:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -74512,6 +74515,743 @@ class CanvasFileLoader {
 
 
 
+// EXTERNAL MODULE: ./src/js/constants.js
+var constants = __webpack_require__(975);
+;// CONCATENATED MODULE: ./src/js/libs/draggable.js
+
+function get_size(el){
+  const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
+  const height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
+  return([width, height]);
+}
+
+function make_draggable(
+  elmnt, elmnt_header,
+  // top range and left range
+  parent_el = undefined,
+  mousedown_callback = (e, state)=>{}) {
+  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  var range = [-Infinity, Infinity, -Infinity, Infinity];
+  var state = 'pan', state_old;
+  var el_x, el_y;
+
+  if ( elmnt_header ) {
+    /* if present, the header is where you move the DIV from:*/
+    elmnt_header.onmousedown = dragMouseDown;
+    elmnt_header.oncontextmenu = right_clicked;
+  } else {
+    /* otherwise, move the DIV from anywhere inside the DIV:*/
+    elmnt.onmousedown = dragMouseDown;
+    elmnt.oncontextmenu = right_clicked;
+  }
+
+
+  function right_clicked ( e ){
+    const state_old = state;
+    state = 'pan';
+    dragMouseDown(e);
+    state = state_old;
+    return(false);
+  }
+
+
+  function dragMouseDown(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // get the mouse cursor position at startup:
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+
+    if( state === 'pan' ){
+      if( parent_el ){
+        // calculate range
+        // parent size
+        const parent_size = get_size(parent_el);
+        const el_size = get_size(elmnt);
+        if( parent_size[0] > el_size[0] ){
+          range[1] = parent_size[0] - el_size[0];
+          range[0] = 0;
+        }else{
+          range[0] = parent_size[0] - el_size[0];
+          range[1] = 0;
+        }
+
+        if( parent_size[1] > el_size[1] ){
+          range[3] = parent_size[1] - el_size[1];
+          range[2] = 0;
+        }else{
+          range[2] = parent_size[1] - el_size[1];
+          range[3] = 0;
+        }
+      }
+
+
+
+
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+
+      mousedown_callback(e, {
+        state: 'pan'
+      });
+    }else{
+      // get xy location and return
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      document.onmousemove = mouseMove;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
+    }
+
+    document.onmouseup = closeDragElement;
+
+  }
+
+  function mouseMove(e) {
+    if( state === 'select' && e.shiftKey ){
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
+    }
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // calculate the new cursor position:
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    // set the element's new position:
+    let eltop = elmnt.offsetTop - pos2,
+        elleft = elmnt.offsetLeft - pos1;
+
+    if( eltop < range[0] ){ eltop = range[0]; }
+    if( eltop > range[1] ){ eltop = range[1]; }
+    if( elleft < range[2] ){ elleft = range[2]; }
+    if( elleft > range[3] ){ elleft = range[3]; }
+
+    elmnt.style.top = eltop + "px";
+    elmnt.style.left = elleft + "px";
+  }
+
+  function closeDragElement() {
+    /* stop moving when mouse button is released:*/
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
+
+  return((s) => {
+    state = s;
+  });
+}
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/libs/resizable.js
+/*Make resizable div by Hung Nguyen*/
+function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_stop = (w, h) => {}) {
+  const element = elem; // elem.querySelector('.resizable');
+  const resizers = elem.querySelectorAll('.resizable .resizer');
+  const minimum_size = 20;
+  let original_width = 0,
+      original_height = 0,
+      ratio = -1;
+  let original_x = 0,
+      original_y = 0,
+      original_mouse_x = 0,
+      original_mouse_y = 0;
+  let width = 0,
+      height = 0;
+  for (let i = 0; i < resizers.length; i++) {
+    let currentResizer = resizers[i];
+
+    let resize = (e) => {
+      width = original_width + (e.pageX - original_mouse_x);
+      height = original_height + (e.pageY - original_mouse_y);
+
+      if( force_ratio ){
+        if( original_width > original_height ){
+          width = height / ratio;
+        }else{
+          height = width * ratio;
+        }
+      }
+
+      width = width > minimum_size ? width : minimum_size;
+      if( force_ratio ){
+        height = height > (minimum_size * ratio)? height : (minimum_size*ratio);
+      }else{
+        height = height > minimum_size? height : minimum_size;
+      }
+
+
+
+      element.style.width = width + 'px';
+      element.style.height = height + 'px';
+      if (currentResizer.classList.contains('bottom-right')) {
+        // do nothing
+      }
+      else if (currentResizer.classList.contains('bottom-left')) {
+        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
+      }
+      else if (currentResizer.classList.contains('top-right')) {
+        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
+      }
+      else {
+        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
+        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
+      }
+
+      on_resize(width, height);
+    };
+
+    let stopResize = () => {
+      window.removeEventListener('mousemove', resize);
+      on_stop(width, height);
+    };
+
+
+    currentResizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      original_width = parseFloat(getComputedStyle(element, null).getPropertyValue('width').replace('px', ''));
+      original_height = parseFloat(getComputedStyle(element, null).getPropertyValue('height').replace('px', ''));
+      width = original_width;
+      height = original_height;
+      if( ratio <= 0 ){
+        ratio = original_height / original_width;
+      }
+
+      original_x = element.getBoundingClientRect().left;
+      original_y = element.getBoundingClientRect().top;
+      original_mouse_x = e.pageX;
+      original_mouse_y = e.pageY;
+      window.addEventListener('mousemove', resize);
+      window.addEventListener('mouseup', stopResize);
+    });
+
+  }
+}
+
+// makeResizableDiv('.resizable')
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/core/side_canvas.js
+
+
+
+
+
+
+class SideCanvas {
+
+  get zIndex () {
+    const re = parseInt( this.$el.style.zIndex );
+    if( isNaN(re) ) { return( 0 ); }
+    return re
+  }
+  set zIndex (v) {
+    this.$el.style.zIndex = v;
+  }
+
+  set enabled( v ) {
+    if( v ) {
+      this._enabled = true;
+	    this.$el.style.display = 'block';
+    } else {
+      this._enabled = false;
+	    this.$el.style.display = 'none';
+    }
+  }
+
+  get enabled () {
+    return this._enabled;
+  }
+
+  zoom( level ) {
+    if( level ) {
+      this.zoomLevel = level;
+    }
+    this.$canvas.style.width = `${ parseInt( this.zoomLevel * 100 ) }%`;
+    this.$canvas.style.height = `${ parseInt( this.zoomLevel * 100 ) }%`;
+
+    // get element size
+    const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
+    const wrapperSize = (0,utils/* get_element_size */.nq)( this.$el );
+    const wrapperCenter2Left = wrapperSize[0] / 2,
+          wrapperCenter2Top = wrapperSize[1] / 2;
+
+    // get depths
+    const depthSagittal = this.mainCanvas.get_state( 'sagittal_depth' ) || 0;
+    const depthCoronal = this.mainCanvas.get_state( 'coronal_depth' ) || 0;
+    const depthAxial = this.mainCanvas.get_state( 'axial_depth' ) || 0;
+
+    // compute canvas overflow compared to wrapper
+    // using wrapperSize / 2 - ( crossHair relative to canvas topleft)
+    let overflowLeft = 0, overflowTop = 0;
+    const overflowMaxLeft = wrapperSize[0] - canvasSize[0],
+          overflowMaxTop = wrapperSize[1] - canvasSize[1];
+    const crossHairLeft = new three_module.Vector3()
+      .set( depthSagittal, depthCoronal, depthAxial )
+      .addScalar( 128 ).divideScalar( 256 )
+      .multiplyScalar( canvasSize[ 0 ] );
+    const crossHairTop = new three_module.Vector3()
+      .set( depthSagittal, depthCoronal, depthAxial )
+      .multiplyScalar( -1 ).addScalar( 128 ).divideScalar( 256 )
+      .multiplyScalar( canvasSize[ 1 ] );
+
+    switch (this.type) {
+      case 'coronal':
+        overflowLeft = Math.max(
+          Math.min( wrapperCenter2Left - crossHairLeft.x, 0 ),
+          overflowMaxLeft
+        );
+        overflowTop = Math.max(
+          Math.min( wrapperCenter2Top - crossHairTop.z, 0 ),
+          overflowMaxTop
+        );
+        break;
+      case 'axial':
+        overflowLeft = Math.max(
+          Math.min( wrapperCenter2Left - crossHairLeft.x, 0 ),
+          overflowMaxLeft
+        );
+        overflowTop = Math.max(
+          Math.min( wrapperCenter2Top - crossHairTop.y, 0 ),
+          overflowMaxTop
+        );
+        break;
+      case 'sagittal':
+        overflowLeft = Math.max(
+          Math.min( wrapperCenter2Left - crossHairLeft.y, 0 ),
+          overflowMaxLeft
+        );
+        overflowTop = Math.max(
+          Math.min( wrapperCenter2Top - crossHairTop.z, 0 ),
+          overflowMaxTop
+        );
+        break;
+    }
+
+    this.$canvas.style.left = `${ parseInt(overflowLeft) }px`;
+    this.$canvas.style.top = `${ parseInt(overflowTop) }px`;
+  }
+
+  raiseTop() {
+    if( !this.mainCanvas.sideCanvasEnabled ) { return }
+
+    const sideCanvasCollection = this.mainCanvas.sideCanvasList;
+
+    let zIndex = [
+      [parseInt(sideCanvasCollection.coronal.zIndex), 'coronal'],
+      [parseInt(sideCanvasCollection.axial.zIndex), 'axial'],
+      [parseInt(sideCanvasCollection.sagittal.zIndex), 'sagittal']
+    ];
+    zIndex.sort((v1,v2) => {return(v1[0] - v2[0])});
+    zIndex.forEach((v, ii) => {
+      const type = v[ 1 ];
+      sideCanvasCollection[ type ].zIndex = ii;
+    });
+    this.zIndex = 4;
+  }
+
+  reset({ zoomLevel = false, position = true, size = true } = {}) {
+    let width, height, offsetX, offsetY;
+    if( position === true ) {
+      offsetX = 0;
+      offsetY = this.order * width;
+    } else if (Array.isArray(position) && position.length == 2) {
+      offsetX = position[0];
+      offsetY = position[1];
+    }
+    if( size === true ) {
+      const defaultWidth = Math.ceil( this.mainCanvas.side_width );
+      width = defaultWidth;
+      height = defaultWidth;
+    }
+    this.setDimension({
+      width   : width,
+      height  : height,
+      offsetX : offsetX,
+      offsetY : offsetY
+    });
+
+    if( zoomLevel === true ) {
+      this.zoom( 1 );
+    } else if( typeof zoomLevel === "number" ) {
+      if( zoomLevel > 10 ) { zoomLevel = 10; }
+      if( zoomLevel < 1 ) { zoomLevel = 1; }
+      this.zoom( zoomLevel );
+    }
+  }
+  setDimension({ width, height, offsetX, offsetY } = {}) {
+    // ignore height
+    let w = width ?? height;
+    if( w === undefined && offsetX === undefined && offsetY === undefined) {
+      return;
+    }
+    if( w === undefined ) {
+      w = Math.ceil( this.mainCanvas.side_width );
+    }
+    if( w <= 10 ) {
+      w = 10;
+    }
+    this.$el.style.width = `${w}px`;
+    this.$el.style.height = `${w}px`;
+
+    let _offsetX = Math.round( offsetX || 0 );
+    let _offsetY = Math.round( offsetY || (this.order * w) );
+    if( _offsetX === 0 ) { _offsetX = '0'; } else { _offsetX = `${_offsetX}px`; }
+    if( _offsetY === 0 ) { _offsetY = '0'; } else { _offsetY = `${_offsetY}px`; }
+
+    this.$el.style.left = _offsetX;
+    this.$el.style.top = _offsetY;
+  }
+
+
+
+  render() {
+    if( !this._enabled ) { return; }
+    this.renderer.clear();
+    this.renderer.render( this.mainCanvas.scene, this.camera );
+  }
+
+  dispose() {
+    this.renderer.dispose();
+  }
+
+  setBackground( color ) {
+    this._backgroundColor = color;
+    this.renderer.setClearColor( color );
+    this.$el.style.backgroundColor = color;
+  }
+
+  constructor ( mainCanvas, type = "coronal" ) {
+
+    switch (type) {
+      case 'coronal':
+        this.order = 0;
+        break;
+      case 'axial':
+        this.order = 1;
+        break;
+      case 'sagittal':
+        this.order = 2;
+        break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
+    }
+    this.type = type;
+    this.mainCanvas = mainCanvas;
+    this.zoomLevel = 1;
+    this.pixelRatio = this.mainCanvas.pixel_ratio[1];
+
+    this._enabled = true;
+    this._container_id = mainCanvas.container_id;
+    const _w = this.mainCanvas.client_width ?? 256;
+    const _h = this.mainCanvas.client_height ?? 256;
+    this._renderHeight = Math.floor( Math.max( _w / 3, _h ) / this.pixelRatio / 2 );
+  	if( this._renderHeight < 256 ){ this._renderHeight = 256; }
+  	if( this._renderHeight > 512 ){ this._renderHeight = 512; }
+    this._canvasHeight = this._renderHeight * this.mainCanvas.pixel_ratio[1];
+
+    this.$el = document.createElement('div');
+    this.$el.id = this._container_id + '__' + type;
+    this.$el.style.display = 'none';
+    this.$el.className = 'THREEBRAIN-SIDE resizable';
+    this.$el.style.zIndex = this.order;
+    this.$el.style.top = ( this.order * this.mainCanvas.side_width ) + 'px';
+
+    // Make header
+    this.$header = document.createElement('div');
+    this.$header.innerText = type.toUpperCase();
+    this.$header.className = 'THREEBRAIN-SIDE-HEADER';
+    this.$header.id = this._container_id + '__' + type + 'header';
+    this.$el.appendChild( this.$header );
+    // double-click on header to reset position
+    this.mainCanvas.bind( `${ this.type }_div_header_dblclick`, 'dblclick', (evt) => {
+      this.reset({ zoomLevel : false, position : true, size : true })
+    }, this.$header );
+
+    // Add side canvas element
+    this.$canvas = document.createElement('canvas');
+    this.$canvas.width = this._canvasHeight;
+    this.$canvas.height = this._canvasHeight;
+    this.$canvas.style.width = '100%';
+		this.$canvas.style.height = '100%';
+		this.$canvas.style.position = 'absolute';
+		this.$el.appendChild( this.$canvas );
+		this.context = this.$canvas.getContext('webgl2');
+
+		this.renderer = new three_module.WebGLRenderer({
+    	  antialias: false, alpha: true,
+    	  canvas: this.$canvas, context: this.context,
+    	  depths: false
+    	});
+  	this.renderer.setPixelRatio( this.mainCanvas.pixel_ratio[1] );
+  	this.renderer.autoClear = false; // Manual update so that it can render two scenes
+  	this.renderer.setSize( this._renderHeight, this._renderHeight );
+
+		// Add widgets
+		// zoom in tool
+		this.$zoomIn = document.createElement('div');
+		this.$zoomIn.className = 'zoom-tool';
+		this.$zoomIn.style.top = '23px'; // for header
+		this.$zoomIn.innerText = '+';
+		this.$el.appendChild( this.$zoomIn );
+		this.mainCanvas.bind( `${ this.type }_zoomin_click`, 'click', (e) => {
+		  let newZoomLevel = this.zoomLevel * 1.2;
+		  if( newZoomLevel > 10 ) { newZoomLevel = 10; }
+		  this.zoom( newZoomLevel );
+		}, this.$zoomIn);
+
+		// zoom out tool
+    this.$zoomOut = document.createElement('div');
+		this.$zoomOut.className = 'zoom-tool';
+		this.$zoomOut.style.top = '50px'; // header + $zoomIn
+		this.$zoomOut.innerText = '-';
+		this.$el.appendChild( this.$zoomOut );
+		this.mainCanvas.bind( `${ this.type }_zoomout_click`, 'click', (e) => {
+		  let newZoomLevel = this.zoomLevel / 1.2;
+		  if( newZoomLevel < 1.1 ) { newZoomLevel = 1; }
+		  this.zoom( newZoomLevel );
+		}, this.$zoomOut);
+
+		// toggle pan (translate) tool
+		this.$pan = document.createElement('div');
+		this.$pan.className = 'zoom-tool';
+		this.$pan.style.top = '77px'; // header + $zoomIn + $zoomOut
+		this.$pan.innerText = 'P';
+		this.$el.appendChild( this.$pan );
+		this.mainCanvas.bind( `${ this.type }_toggle_pan_click`, 'click', (e) => {
+		  const panEnabled = this.$pan.classList.contains('pan-active');
+		  if( panEnabled ) {
+		    this.$pan.classList.remove('pan-active');
+		    this._setPanMode( 'select' );
+		  } else {
+		    this.$pan.classList.add('pan-active');
+		    this._setPanMode( 'pan' );
+		  }
+		}, this.$pan);
+
+		this.$reset = document.createElement('div');
+		this.$reset.className = 'zoom-tool';
+		this.$reset.style.top = '104px'; // header + $zoomIn + $zoomOut + $pan
+		this.$reset.innerText = '0';
+		this.$el.appendChild( this.$reset );
+		this.mainCanvas.bind( `${ this.type }_zoom_reset_click`, 'click', (e) => {
+		  this.$canvas.style.top = '0';
+      this.$canvas.style.left = '0';
+		  this.zoom( 1 );
+		}, this.$reset );
+
+		// Add resize anchors to bottom-right
+		this.$resizeWrapper = document.createElement('div');
+		this.$resizeWrapper.className = 'resizers';
+		const $resizeAnchor = document.createElement('div');
+		$resizeAnchor.className = 'resizer bottom-right';
+		this.$resizeWrapper.appendChild( $resizeAnchor );
+		this.$el.appendChild( this.$resizeWrapper );
+
+		// Make header draggable within viewer
+    make_draggable( this.$el, this.$header, undefined, () => {
+      this.raiseTop();
+    });
+
+    // Make side canvas draggable within $el
+    this._setPanMode = make_draggable( this.$canvas, undefined, this.$el, (e, data) => {
+      this.raiseTop();
+
+      if( data.state !== 'select' && data.state !== 'move' ){ return; }
+
+      // obtain cursor location
+      const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
+
+      // data is xy coord relative to $canvas
+      const depthX = data.x / canvasSize[0] * 256 - 128;
+      const depthY = data.y / canvasSize[1] * 256 - 128;
+
+      let sagittalDepth, coronalDepth, axialDepth;
+      switch ( this.type ) {
+        case 'coronal':
+          sagittalDepth = depthX;
+          axialDepth = -depthY;
+          coronalDepth = this.mainCanvas.get_state( 'coronal_depth' );
+          break;
+        case 'axial':
+          sagittalDepth = depthX;
+          coronalDepth = -depthY;
+          axialDepth = this.mainCanvas.get_state( 'axial_depth' );
+          break;
+        case 'sagittal':
+          coronalDepth = -depthX;
+          axialDepth = -depthY;
+          sagittalDepth = this.mainCanvas.get_state( 'sagittal_depth' );
+          break;
+        default:
+          throw 'SideCanvas: type must be coronal, sagittal, or axial';
+      }
+
+      console.log(`x: ${depthX}, y: ${depthY} of [${canvasSize[0]}, ${canvasSize[1]}]`);
+      console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
+
+      // update slice depths
+      const sliceInstance = this.mainCanvas.state_data.get( "activeSliceInstance" );
+      if( sliceInstance && sliceInstance.isDataCube ) {
+        sliceInstance.setCrosshair({
+          x : sagittalDepth,
+          y : coronalDepth,
+          z : axialDepth
+        });
+      }
+      // need to update main_camera
+      if( e.shiftKey ) {
+        const newMainCameraPosition = new three_module.Vector3()
+          .set( sagittalDepth, coronalDepth, axialDepth )
+          .normalize().multiplyScalar(500);
+        if( newMainCameraPosition.length() === 0 ) {
+          newMainCameraPosition.x = 500;
+        }
+
+        // make S up as much as possible, try to heads up
+        const newMainCameraUp = this.mainCanvas.main_camera.position.clone()
+          .cross( new three_module.Vector3(0, 0, 1) ).cross( newMainCameraPosition )
+          .normalize();
+
+        if( newMainCameraUp.z < 0 ) {
+          newMainCameraUp.multiplyScalar(-1);
+        }
+
+        this.mainCanvas.main_camera.position.copy( newMainCameraPosition );
+        this.mainCanvas.main_camera.up.copy( newMainCameraUp );
+      }
+    })
+    this._setPanMode( 'select' );
+
+    // Make $canvas scrollable, with changing slices
+    this.mainCanvas.bind( `${ this.type }_cvs_mousewheel`, 'mousewheel', (evt) => {
+      evt.preventDefault();
+      if( evt.altKey ){
+        const depthName = this.type + '_depth';
+        const currentDepth = this.get_state( depthName );
+        if( evt.deltaY > 0 ){
+          this.mainCanvas.set_state( depthName, 1 + currentDepth );
+        }else if( evt.deltaY < 0 ){
+          this.mainCanvas.set_state( depthName, -1 + currentDepth );
+        }
+      }
+      const sliceInstance = this.mainCanvas.state_data.get( "activeSliceInstance" );
+      if( sliceInstance && sliceInstance.isDataCube ) {
+        sliceInstance.setCrosshair({
+          x : this.mainCanvas.get_state( 'coronal_depth' ),
+          y : this.mainCanvas.get_state( 'axial_depth' ),
+          z : this.mainCanvas.get_state( 'sagittal_depth' )
+        });
+      }
+    }, this.$canvas );
+
+    // Make $el resizable, keep current width and height
+    make_resizable( this.$el, true );
+
+
+    // --------------- Register 3js objects -------------
+    // Add OrthographicCamera
+    this.camera = new three_module.OrthographicCamera( -128, 128, 128, -128, 1, 10000 );
+		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
+		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_SIDE_CAMERAS_4 */.t.LAYER_USER_ALL_SIDE_CAMERAS_4 );
+		this.camera.layers.enable( 5 );
+		this.camera.layers.enable( 6 );
+		this.camera.layers.enable( 7 );
+		this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 */.t.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+
+		// Side light is needed so that side views are visible.
+		this.directionalLight = new three_module.DirectionalLight( 0xefefef, 0.5 );
+
+		switch ( this.type ) {
+      case 'coronal':
+        this.camera.position.fromArray( [0, -500, 0] );
+        this.camera.up.set( 0, 0, 1 );
+        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+        this.directionalLight.position.fromArray([0, -500, 0]); // set direction from P to A
+        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+        break;
+      case 'axial':
+        this.camera.position.fromArray( [0, 0, 500] );
+        this.camera.up.set( 0, 1, 0 );
+        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+        this.directionalLight.position.fromArray([0, 0, 500]); // set direction from I to S
+        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+        break;
+      case 'sagittal':
+        this.camera.position.fromArray( [-500, 0, 0] );
+        this.camera.up.set( 0, 0, 1 );
+        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+        this.directionalLight.position.fromArray([-500, 0, 0]); // set direction from L to R
+        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+        break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
+    }
+    this.camera.lookAt( new three_module.Vector3(0,0,0) );
+    this.camera.aspect = 1;
+    this.camera.updateProjectionMatrix();
+    // this.camera.add( this.directionalLight );
+
+    // TODO: main canvas need to add cameras and element
+    this.mainCanvas.add_to_scene( this.camera, true );
+    this.mainCanvas.add_to_scene( this.directionalLight, true );
+    this.mainCanvas.wrapper_canvas.appendChild( this.$el );
+
+
+    let helper;
+    switch ( this.type ) {
+      case 'coronal':
+        helper = new THREE.DirectionalLightHelper( this.directionalLight, 5, 0xff0000 );
+        break;
+      case 'axial':
+        helper = new THREE.DirectionalLightHelper( this.directionalLight, 5, 0x00ff00 );
+        break;
+      case 'sagittal':
+        helper = new THREE.DirectionalLightHelper( this.directionalLight, 5, 0x0000ff );
+        break;
+    }
+    this.mainCanvas.add_to_scene( helper, true );
+
+
+    /*
+      this.sideCanvasList[ nm ] = {
+        'container' : div,
+        'canvas'    : cvs,
+        'context'   : cvs.getContext('2d'),
+        'camera'    : camera,
+        'reset'     : reset,
+        'get_zoom_level' : () => { return( zoom_level ) },
+        'set_zoom_level' : set_zoom_level
+      };
+    */
+
+  }
+
+}
+
+
+
 ;// CONCATENATED MODULE: ./src/js/libs/stats.min.js
 /**
  * @author mrdoob / http://mrdoob.com/
@@ -74814,243 +75554,6 @@ class CanvasEvent {
 
 
 
-;// CONCATENATED MODULE: ./src/js/libs/draggable.js
-
-function get_size(el){
-  const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
-  const height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
-  return([width, height]);
-}
-
-function make_draggable(
-  elmnt, elmnt_header,
-  // top range and left range
-  parent_el = undefined,
-  mousedown_callback = (e, state)=>{}) {
-  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  var range = [-Infinity, Infinity, -Infinity, Infinity];
-  var state = 'pan', state_old;
-  var el_x, el_y;
-
-  if ( elmnt_header ) {
-    /* if present, the header is where you move the DIV from:*/
-    elmnt_header.onmousedown = dragMouseDown;
-    elmnt_header.oncontextmenu = right_clicked;
-  } else {
-    /* otherwise, move the DIV from anywhere inside the DIV:*/
-    elmnt.onmousedown = dragMouseDown;
-    elmnt.oncontextmenu = right_clicked;
-  }
-
-
-  function right_clicked ( e ){
-    const state_old = state;
-    state = 'pan';
-    dragMouseDown(e);
-    state = state_old;
-    return(false);
-  }
-
-
-  function dragMouseDown(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // get the mouse cursor position at startup:
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-
-    if( state === 'pan' ){
-      if( parent_el ){
-        // calculate range
-        // parent size
-        const parent_size = get_size(parent_el);
-        const el_size = get_size(elmnt);
-        if( parent_size[0] > el_size[0] ){
-          range[1] = parent_size[0] - el_size[0];
-          range[0] = 0;
-        }else{
-          range[0] = parent_size[0] - el_size[0];
-          range[1] = 0;
-        }
-
-        if( parent_size[1] > el_size[1] ){
-          range[3] = parent_size[1] - el_size[1];
-          range[2] = 0;
-        }else{
-          range[2] = parent_size[1] - el_size[1];
-          range[3] = 0;
-        }
-      }
-
-
-
-
-      // call a function whenever the cursor moves:
-      document.onmousemove = elementDrag;
-
-      mousedown_callback(e, {
-        state: 'pan'
-      });
-    }else{
-      // get xy location and return
-      el_x = elmnt.getBoundingClientRect().left;
-      el_y = elmnt.getBoundingClientRect().top;
-
-      document.onmousemove = mouseMove;
-
-      mousedown_callback(e, {
-        state : 'select',
-        x     : pos3 - el_x,
-        y     : pos4 - el_y
-      });
-    }
-
-    document.onmouseup = closeDragElement;
-
-  }
-
-  function mouseMove(e) {
-    if( state === 'select' && e.shiftKey ){
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      el_x = elmnt.getBoundingClientRect().left;
-      el_y = elmnt.getBoundingClientRect().top;
-
-      mousedown_callback(e, {
-        state : 'select',
-        x     : pos3 - el_x,
-        y     : pos4 - el_y
-      });
-    }
-  }
-
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // calculate the new cursor position:
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    // set the element's new position:
-    let eltop = elmnt.offsetTop - pos2,
-        elleft = elmnt.offsetLeft - pos1;
-
-    if( eltop < range[0] ){ eltop = range[0]; }
-    if( eltop > range[1] ){ eltop = range[1]; }
-    if( elleft < range[2] ){ elleft = range[2]; }
-    if( elleft > range[3] ){ elleft = range[3]; }
-
-    elmnt.style.top = eltop + "px";
-    elmnt.style.left = elleft + "px";
-  }
-
-  function closeDragElement() {
-    /* stop moving when mouse button is released:*/
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
-
-  return((s) => {
-    state = s;
-  });
-}
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/libs/resizable.js
-/*Make resizable div by Hung Nguyen*/
-function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_stop = (w, h) => {}) {
-  const element = elem; // elem.querySelector('.resizable');
-  const resizers = elem.querySelectorAll('.resizable .resizer');
-  const minimum_size = 20;
-  let original_width = 0,
-      original_height = 0,
-      ratio = -1;
-  let original_x = 0,
-      original_y = 0,
-      original_mouse_x = 0,
-      original_mouse_y = 0;
-  let width = 0,
-      height = 0;
-  for (let i = 0; i < resizers.length; i++) {
-    let currentResizer = resizers[i];
-
-    let resize = (e) => {
-      width = original_width + (e.pageX - original_mouse_x);
-      height = original_height + (e.pageY - original_mouse_y);
-
-      if( force_ratio ){
-        if( original_width > original_height ){
-          width = height / ratio;
-        }else{
-          height = width * ratio;
-        }
-      }
-
-      width = width > minimum_size ? width : minimum_size;
-      if( force_ratio ){
-        height = height > (minimum_size * ratio)? height : (minimum_size*ratio);
-      }else{
-        height = height > minimum_size? height : minimum_size;
-      }
-
-
-
-      element.style.width = width + 'px';
-      element.style.height = height + 'px';
-      if (currentResizer.classList.contains('bottom-right')) {
-        // do nothing
-      }
-      else if (currentResizer.classList.contains('bottom-left')) {
-        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
-      }
-      else if (currentResizer.classList.contains('top-right')) {
-        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
-      }
-      else {
-        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
-        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
-      }
-
-      on_resize(width, height);
-    };
-
-    let stopResize = () => {
-      window.removeEventListener('mousemove', resize);
-      on_stop(width, height);
-    };
-
-
-    currentResizer.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      original_width = parseFloat(getComputedStyle(element, null).getPropertyValue('width').replace('px', ''));
-      original_height = parseFloat(getComputedStyle(element, null).getPropertyValue('height').replace('px', ''));
-      width = original_width;
-      height = original_height;
-      if( ratio <= 0 ){
-        ratio = original_height / original_width;
-      }
-
-      original_x = element.getBoundingClientRect().left;
-      original_y = element.getBoundingClientRect().top;
-      original_mouse_x = e.pageX;
-      original_mouse_y = e.pageY;
-      window.addEventListener('mousemove', resize);
-      window.addEventListener('mouseup', stopResize);
-    });
-
-  }
-}
-
-// makeResizableDiv('.resizable')
-
-
-
-
-// EXTERNAL MODULE: ./src/js/constants.js
-var constants = __webpack_require__(975);
 ;// CONCATENATED MODULE: ./src/js/Math/animations.js
 
 
@@ -75102,6 +75605,67 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 var sphere = __webpack_require__(960);
 // EXTERNAL MODULE: ./src/js/geometry/abstract.js
 var geometry_abstract = __webpack_require__(470);
+;// CONCATENATED MODULE: ./src/js/shaders/SliceShader.js
+
+
+
+const SliceShader = {
+  uniforms : {
+
+    // volume data
+    map : { value : null },
+
+    // volume dimension
+    mapShape : { value : new three_module.Vector3().set( 256, 256, 256 ) },
+
+    // transform matrix from world to volume IJK
+    world2IJK : { value : new three_module.Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1) },
+
+    // values below this threshold should be discarded
+    threshold : { value : 0.0 }
+
+  },
+
+  vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
+precision highp float;
+in vec3 position;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+out vec4 worldPosition;
+
+void main() {
+  // obtain the world position for vertex
+  worldPosition = modelMatrix * vec4( position, 1.0 );
+
+  gl_Position = projectionMatrix * viewMatrix * worldPosition;
+}`),
+  fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
+precision highp float;
+precision mediump sampler3D;
+in vec4 worldPosition;
+uniform float threshold;
+uniform sampler3D map;
+uniform vec3 mapShape;
+uniform mat4 world2IJK;
+out vec4 color;
+void main() {
+// calculate IJK, then sampler position
+
+  vec3 samplerPosition = (world2IJK * worldPosition).xyz / mapShape;
+  color.rgb = texture(map, samplerPosition).rrr;
+  if( color.r <= threshold ) {
+    gl_FragDepth = gl_DepthRange.far;
+    color.a = 0.0;
+  } else {
+    gl_FragDepth = gl_FragCoord.z;
+    color.a = 1.0;
+  }
+}`)
+}
+
+
+
 ;// CONCATENATED MODULE: ./src/js/shaders/Volume2DShader.js
 
 
@@ -75269,6 +75833,7 @@ const Volume2dArrayShader_yz = {
 
 
 
+
 /* WebGL doesn't take transparency into consideration when calculating depth
 https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
 
@@ -75290,209 +75855,219 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.type = 'DataCube';
     this.isDataCube = true;
 
-    let mesh, group_name;
-
-    let line_material = new three_module.LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-        line_geometry = new three_module.BufferGeometry();
-    line_material.depthTest = false;
-
-
-    // Cube values Must be from 0 to 1, float
-    const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-          cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
-          cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-          cube_center = g.position,
-          volume = {
-            'xLength' : cube_half_size[0]*2,
-            'yLength' : cube_half_size[1]*2,
-            'zLength' : cube_half_size[2]*2
-          };
-
-    // Generate texture
-    let texture = new three_module.DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-    texture.format = three_module.RedFormat;
-  	texture.type = three_module.UnsignedByteType;
-  	texture.needsUpdate = true;
-  	this._texture = texture;
-
-
-    // Shader - XY plane
-  	const shader_xy = Volume2dArrayShader_xy;
-  	let material_xy = new three_module.ShaderMaterial({
-  	  uniforms : {
-    		diffuse: { value: texture },
-    		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-    		size: { value: new three_module.Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
-    		threshold: { value : 0.0 },
-    		renderDepth: { value : 1.0 }
-    	},
-    	vertexShader: shader_xy.vertexShader,
-  		fragmentShader: shader_xy.fragmentShader,
-  		side: three_module.DoubleSide,
-  		transparent: true
-  	});
-  	let geometry_xy = new three_module.PlaneBufferGeometry( volume.xLength, volume.yLength );
-
-
-  	let mesh_xy = new three_module.Mesh( geometry_xy, material_xy );
-  	// let mesh_xy2 = new Mesh( geometry_xy, material_xy );
-  	mesh_xy.renderOrder = -1;
-  	mesh_xy.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
-  	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
-
-
-  	// Shader - XZ plane
-  	const shader_xz = Volume2dArrayShader_xz;
-  	let material_xz = new three_module.ShaderMaterial({
-  	  uniforms : {
-    		diffuse: { value: texture },
-    		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-    		size: { value: new three_module.Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
-    		threshold: { value : 0.0 },
-    		renderDepth: { value : 1.0 }
-    	},
-    	vertexShader: shader_xz.vertexShader,
-  		fragmentShader: shader_xz.fragmentShader,
-  		side: three_module.DoubleSide,
-  		transparent: true
-  	});
-  	let geometry_xz = new three_module.PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-  	let mesh_xz = new three_module.Mesh( geometry_xz, material_xz );
-  	mesh_xz.rotateX( Math.PI / 2 );
-  	mesh_xz.renderOrder = -1;
-  	mesh_xz.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
-  	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
-
-
-  	// Shader - YZ plane
-  	const shader_yz = Volume2dArrayShader_yz;
-  	let material_yz = new three_module.ShaderMaterial({
-  	  uniforms : {
-    		diffuse: { value: texture },
-    		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-    		size: { value: new three_module.Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
-    		threshold: { value : 0.0 },
-    		renderDepth: { value : 1.0 }
-    	},
-    	vertexShader: shader_yz.vertexShader,
-  		fragmentShader: shader_yz.fragmentShader,
-  		side: three_module.DoubleSide,
-  		transparent: true
-  	});
-  	let geometry_yz = new three_module.PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-  	let mesh_yz = new three_module.Mesh( geometry_yz, material_yz );
-  	mesh_yz.rotateY( Math.PI / 2);
-  	mesh_yz.rotateZ( Math.PI / 2); // Back side
-  	mesh_yz.renderOrder = -1;
-  	mesh_yz.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
-  	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
-
-    // coronal (xz), axial (xy), sagittal (yz)
-  	mesh = [ mesh_xz, mesh_xy, mesh_yz ];
-
-  	// generate diagonal line
-  	const _mhw = Math.max( ...cube_half_size );
-
-    const line_vert = [];
-  	line_vert.push(
-    	new three_module.Vector3( -_mhw, -_mhw, 0 ),
-    	new three_module.Vector3( _mhw, _mhw, 0 )
+    // get cube (volume) data
+    this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
+    this.cubeShape = new three_module.Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
+    this.dataTexture = new three_module.DataTexture3D(
+      this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
     );
-    line_geometry.setFromPoints( line_vert );
+    this.dataTexture.minFilter = three_module.LinearFilter;
+    this.dataTexture.magFilter = three_module.LinearFilter;
+    this.dataTexture.format = three_module.RedFormat;
+    this.dataTexture.type = three_module.UnsignedByteType;
+    this.dataTexture.unpackAlignment = 1;
+    this.dataTexture.needsUpdate = true;
 
-    let line_mesh_xz = new three_module.Line( line_geometry, line_material ),
-        line_mesh_xy = new three_module.Line( line_geometry, line_material ),
-        line_mesh_yz = new three_module.Line( line_geometry, line_material );
-    line_mesh_xz.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    line_mesh_xy.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    line_mesh_yz.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    line_mesh_xz.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-    line_mesh_xz.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-    line_mesh_xy.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-    line_mesh_xy.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-    line_mesh_yz.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-    line_mesh_yz.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-    mesh_xz.add( line_mesh_xz );
-    mesh_xy.add( line_mesh_xy );
-    mesh_yz.add( line_mesh_yz );
+    // Generate shader
+    this._uniforms = three_module.UniformsUtils.clone( SliceShader.uniforms );
+    this._uniforms.map.value = this.dataTexture;
+    this._uniforms.mapShape.value.copy( this.cubeShape );
+    // TODO: set this._uniforms.world2IJK
+    const subjectData = this._canvas.shared_data.get( this.subject_code );
+    if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
+      this._uniforms.world2IJK.value.copy( subjectData.matrices.Torig ).invert();
+    }
+    this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
 
 
-    mesh_xy.userData.dispose = () => {
-  	  material_xy.dispose();
-  	  geometry_xy.dispose();
-      line_material.dispose();
-      line_geometry.dispose();
-      texture.dispose();
+    const sliceMaterial = new three_module.RawShaderMaterial( {
+      uniforms: this._uniforms,
+      vertexShader: SliceShader.vertexShader,
+      fragmentShader: SliceShader.fragmentShader,
+      side: three_module.DoubleSide,
+      transparent : false,
+      depthWrite: true
+    } );
+    this.sliceMaterial = sliceMaterial;
+    const sliceGeometryXY = new three_module.PlaneBufferGeometry( 256, 256 );
+    const sliceMeshXY = new three_module.Mesh( sliceGeometryXY, sliceMaterial );
+    sliceMeshXY.renderOrder = -1;
+    sliceMeshXY.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
+    sliceMeshXY.name = 'mesh_datacube__axial_' + g.name;
+
+    const sliceGeometryXZ = new three_module.PlaneBufferGeometry( 256, 256 );
+    const sliceMeshXZ = new three_module.Mesh( sliceGeometryXZ, sliceMaterial );
+    sliceMeshXZ.rotateX( Math.PI / 2 );
+    sliceMeshXZ.renderOrder = -1;
+    sliceMeshXZ.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
+    sliceMeshXZ.name = 'mesh_datacube__coronal_' + g.name;
+
+    const sliceGeometryYZ = new three_module.PlaneBufferGeometry( 256, 256 );
+    const sliceMeshYZ = new three_module.Mesh( sliceGeometryYZ, sliceMaterial );
+    sliceMeshYZ.rotateY( Math.PI / 2 ).rotateZ( Math.PI / 2 );
+    sliceMeshYZ.renderOrder = -1;
+    sliceMeshYZ.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
+    sliceMeshYZ.name = 'mesh_datacube__sagittal_' + g.name;
+
+  	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
+
+  	// generate diagonal line of the plane which will appear as crosshair
+    const crosshairGeometry = new three_module.BufferGeometry();
+    const crosshairMaterial = new three_module.LineBasicMaterial({ color: 0x00ff00, transparent: true });
+    crosshairGeometry.depthTest = false;
+    crosshairGeometry.setFromPoints( [ new three_module.Vector3( -128, -128, 0 ), new three_module.Vector3( 128, 128, 0 ) ] );
+    this.crosshairGeometry = crosshairGeometry;
+    this.crosshairMaterial = crosshairMaterial;
+
+    const crosshairXZ = new three_module.Line( crosshairGeometry, crosshairMaterial ),
+          crosshairXY = new three_module.Line( crosshairGeometry, crosshairMaterial ),
+          crosshairYZ = new three_module.Line( crosshairGeometry, crosshairMaterial );
+    crosshairXZ.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    crosshairXY.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    crosshairYZ.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    crosshairXZ.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    crosshairXZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+    crosshairXY.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    crosshairXY.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+    crosshairYZ.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    crosshairYZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    sliceMeshXZ.add( crosshairXZ );
+    sliceMeshXY.add( crosshairXY );
+    sliceMeshYZ.add( crosshairYZ );
+
+    sliceMeshXY.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryXY.dispose();
+      crosshairGeometry.dispose();
+      crosshairMaterial.dispose();
+      this.dataTexture.dispose();
     };
-    mesh_xy.userData.instance = this;
-    this._line_material = line_material;
-    this._line_geometry = line_geometry;
-    this._texture = texture;
+    sliceMeshXY.userData.instance = this;
+    this.sliceXY = sliceMeshXY;
 
-    this._mesh_xy = mesh_xy;
-    this._material_xy = material_xy;
-    this._geometry_xy = geometry_xy;
-
-    mesh_xz.userData.dispose = () => {
-  	  material_xz.dispose();
-  	  geometry_xz.dispose();
-      line_material.dispose();
-      line_geometry.dispose();
-      texture.dispose();
+    sliceMeshXZ.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryXZ.dispose();
+      crosshairGeometry.dispose();
+      crosshairMaterial.dispose();
+      this.dataTexture.dispose();
     };
-    mesh_xz.userData.instance = this;
-    this._mesh_xz = mesh_xz;
-    this._material_xz = material_xz;
-    this._geometry_xz = geometry_xz;
+    sliceMeshXZ.userData.instance = this;
+    this.sliceXZ = sliceMeshXZ;
 
-    mesh_yz.userData.dispose = () => {
-  	  material_yz.dispose();
-  	  geometry_yz.dispose();
-      line_material.dispose();
-      line_geometry.dispose();
-      texture.dispose();
+    sliceMeshYZ.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryYZ.dispose();
+      crosshairGeometry.dispose();
+      crosshairMaterial.dispose();
+      this.dataTexture.dispose();
     };
-    mesh_yz.userData.instance = this;
-    this._mesh_yz = mesh_yz;
-    this._geometry_yz = geometry_yz;
-    this._material_yz = material_yz;
-
-    this.object = mesh;
+    sliceMeshYZ.userData.instance = this;
+    this.sliceYZ = sliceMeshYZ;
   }
 
   dispose(){
-    this._line_material.dispose();
-    this._line_geometry.dispose();
-    this._material_xy.dispose();
-    this._geometry_xy.dispose();
-    this._material_yz.dispose();
-  	this._geometry_yz.dispose();
-  	this._material_yz.dispose();
-  	this._geometry_yz.dispose();
-    this._texture.dispose();
+    this.crosshairMaterial.dispose();
+    this.crosshairGeometry.dispose();
+    this.sliceMaterial.dispose();
+    this.sliceGeometryXY.dispose();
+    this.sliceGeometryXZ.dispose();
+  	this.sliceGeometryYZ.dispose();
+    this.dataTexture.dispose();
   }
 
   get_track_data( track_name, reset_material ){}
 
   pre_render( results ){}
 
+  setCrosshair({ x, y, z } = {}) {
+    let changed = false;
+    if( x !== undefined ) {
+      // set sagittal
+      if( x > 128 ) { x = 128; }
+      if( x < -128 ) { x = -128; }
+      this.sliceYZ.position.x = x;
+      this._canvas.set_state( 'sagittal_depth', x );
+      this._canvas.set_state( 'sagittal_posy', x );
+      changed = true;
+    }
+    if( y !== undefined ) {
+      // set coronal
+      if( y > 128 ) { y = 128; }
+      if( y < -128 ) { y = -128; }
+      this.sliceXZ.position.y = y;
+      this._canvas.set_state( 'coronal_depth', y );
+      this._canvas.set_state( 'coronal_posy', y );
+      changed = true;
+    }
+    if( z !== undefined ) {
+      // set axial
+      if( z > 128 ) { z = 128; }
+      if( z < -128 ) { z = -128; }
+      this.sliceXY.position.z = z;
+      this._canvas.set_state( 'axial_depth', z );
+      this._canvas.set_state( 'axial_posy', z );
+      changed = true;
+    }
+    if( changed ) {
+      this._canvas.trim_electrodes();
+      // Animate on next refresh
+      this._canvas.start_animation( 0 );
+    }
+  }
+
+  showPlane( which ) {
+    const planType = (0,utils/* to_array */.AA)( which );
+    if( planType.length === 0 ) { return; }
+    if( planType.includes( 'coronal' ) ) {
+      this.sliceXZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'coronal_overlay', true );
+    }
+    if( planType.includes( 'sagittal' ) ) {
+      this.sliceYZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'sagittal_overlay', true );
+    }
+    if( planType.includes( 'axial' ) ) {
+      this.sliceXY.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'axial_overlay', true );
+    }
+    this._canvas.start_animation( 0 );
+  }
+
+  hidePlane( which ) {
+    const planType = (0,utils/* to_array */.AA)( which );
+    if( planType.length === 0 ) { return; }
+    if( planType.includes( 'coronal' ) ) {
+      this.sliceXZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'coronal_overlay', false );
+    }
+    if( planType.includes( 'sagittal' ) ) {
+      this.sliceYZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'sagittal_overlay', false );
+    }
+    if( planType.includes( 'axial' ) ) {
+      this.sliceXY.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'axial_overlay', false );
+    }
+    this._canvas.start_animation( 0 );
+  }
+
   finish_init(){
     // Special, as m is a array of three planes
-    // this.object = mesh = [ mesh_xz, mesh_xy, mesh_yz ];
+    // this.object = mesh = [ mesh_xz, sliceMeshXY, mesh_yz ];
 
-    this._canvas.mesh.set( '_coronal_' + this.name, this._mesh_xz );
-    this._canvas.mesh.set( '_axial_' + this.name, this._mesh_xy );
-    this._canvas.mesh.set( '_sagittal_' + this.name, this._mesh_yz );
+    this._canvas.mesh.set( '_coronal_' + this.name, this.sliceXZ );
+    this._canvas.mesh.set( '_axial_' + this.name, this.sliceXY );
+    this._canvas.mesh.set( '_sagittal_' + this.name, this.sliceYZ );
 
     if( this.clickable ){
-      this._canvas.add_clickable( '_coronal_' + this.name, this._mesh_xz );
-      this._canvas.add_clickable( '_axial_' + this.name, this._mesh_xy );
-      this._canvas.add_clickable( '_sagittal_' + this.name, this._mesh_yz );
+      this._canvas.add_clickable( '_coronal_' + this.name, this.sliceXZ );
+      this._canvas.add_clickable( '_axial_' + this.name, this.sliceXY );
+      this._canvas.add_clickable( '_sagittal_' + this.name, this.sliceYZ );
     }
 
-    // data cube must have groups
+    // data cube must have groups. The group is directly added to scene,
+    // regardlessly
     let gp = this.get_group_object();
     // Move gp to global scene as its center is always 0,0,0
     this._canvas.origin.remove( gp );
@@ -75508,17 +76083,30 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
       plane.updateMatrixWorld();
     });
 
-    this.register_object( ['volumes'] );
+    this.register_object( ['slices'] );
 
-    // flaw there, if volume has no subject, then subject_code is '',
-    // if two volumes with '' exists, we lose track of the first volume
-    // and switch_volume will fail in setting this cube invisible
-    // TODO: force subject_code for all volumes or use random string as subject_code
-    // or parse subject_code from volume name
-    if( !this._canvas._has_datacube_registered ){
-      this._canvas._register_datacube( this.object );
-      this._canvas._has_datacube_registered = true;
-    }
+    // Add handlers to set plane location when an electrode is clicked
+    this._canvas.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.isMesh && obj.userData.construct_params ){
+          const pos = obj.getWorldPosition( gp.position.clone() );
+          this.setCrosshair( pos );
+        }
+      },
+      'side_viewer_depth'
+    );
+
+
+    // reset side camera positions
+    // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
+    // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
 
   }
 
@@ -75538,7 +76126,6 @@ function gen_datacube(g, canvas){
 const VolumeRenderShader1 = {
     uniforms: {
       cmap: { value: null },
-      mask: { value: null },
       alpha : { value: -1.0 },
       colorChannels : { value: 4 },
       // steps: { value: 300 },
@@ -75553,9 +76140,7 @@ const VolumeRenderShader1 = {
     vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
 precision highp float;
 in vec3 position;
-in vec3 normal;
 uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 cameraPosition;
@@ -75566,7 +76151,7 @@ uniform float bounding;
 
 out mat4 pmv;
 out vec3 vOrigin;
-out vec3 vDirection;
+// out vec3 vDirection;
 out vec3 vPosition;
 // out vec3 vSamplerBias;
 
@@ -75592,7 +76177,7 @@ void main() {
   vOriginProjected.z = -vOriginProjected.w;
   vOrigin = (inverse(pmv) * vOriginProjected).xyz;
   // vOrigin = gl_Position.xyw;
-  vDirection = normalize(position - vOrigin);
+  // vDirection = normalize(position - vOrigin);
 
 }
 `),
@@ -75601,7 +76186,7 @@ precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vPosition;
-in vec3 vDirection;
+// in vec3 vDirection;
 // in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
@@ -79350,6 +79935,7 @@ var download_default = /*#__PURE__*/__webpack_require__.n(download);
 
 
 
+
 /* Geometry generator */
 const GEOMETRY_FACTORY = {
   'sphere'    : sphere/* gen_sphere */.Lk,
@@ -79453,7 +80039,7 @@ class THREEBRAIN_CANVAS {
     // Stores all electrodes
     this.subject_codes = [];
     this.electrodes = new Map();
-    this.volumes = new Map();
+    this.slices = new Map();
     this.ct_scan = new Map();
     this.atlases = new Map();
     this.singletons = new Map();
@@ -79594,29 +80180,6 @@ class THREEBRAIN_CANVAS {
   	this.main_renderer.setClearColor( this.background_color );
 
 
-  	// sidebar renderer (multiple cameras.)
-  	if( this.has_webgl2 ){
-      // We need to use webgl2 for VolumeRenderShader1 to work
-      let side_canvas_el = document.createElement('canvas'),
-          side_context = side_canvas_el.getContext( 'webgl2' );
-    	this.side_renderer = new three_module.WebGLRenderer({
-    	  antialias: false, alpha: true,
-    	  canvas: side_canvas_el, context: side_context,
-    	  depths: false
-    	});
-    }else{
-    	this.side_renderer = new three_module.WebGLRenderer( { antialias: false, alpha: true } );
-    }
-
-  	this.side_renderer.setPixelRatio( this.pixel_ratio[1] );
-  	this.side_renderer.autoClear = false; // Manual update so that it can render two scenes
-  	let _render_height = Math.floor( Math.max( width / 3, height ) / this.pixel_ratio[1] / 2 );
-  	if( _render_height < 256 ){ _render_height = 256; }
-  	if( _render_height > 512 ){ _render_height = 512; }
-  	this.side_renderer._render_height = _render_height;
-    this.side_renderer.setSize( _render_height * 3 , _render_height );
-  	// this.side_renderer.setSize( width, height ); This step is set dynamically when sidebar cameras are inserted
-
     // register mouse events to save time from fetching from DOM elements
     this.register_main_canvas_events();
 
@@ -79629,309 +80192,15 @@ class THREEBRAIN_CANVAS {
     this.wrapper_canvas.style.display = 'flex';
     this.wrapper_canvas.style.flexWrap = 'wrap';
     this.wrapper_canvas.style.width = '100%';
-    this.has_side_cameras = false;
-    this.side_canvas = {};
+    this.sideCanvasEnabled = false;
+    this.sideCanvasList = {};
 
     // Generate inner canvas DOM element
     // coronal (FB), axial (IS), sagittal (LR)
     // 3 planes are draggable, resizable with open-close toggles 250x250px initial
-
-    ['coronal', 'axial', 'sagittal'].forEach((nm, idx) => {
-
-      const div = document.createElement('div');
-      div.id = this.container_id + '__' + nm;
-      div.style.display = 'none';
-      div.className = 'THREEBRAIN-SIDE resizable';
-      div.style.zIndex = idx;
-      div.style.top = ( idx * this.side_width ) + 'px';
-
-      // Make header
-      const div_header = document.createElement('div');
-      div_header.innerText = nm.toUpperCase();
-      div_header.className = 'THREEBRAIN-SIDE-HEADER';
-      div_header.id = div.id + 'header';
-      div.appendChild( div_header );
-
-      // Add canvas
-      const cvs = document.createElement('canvas');
-      cvs.width = this.side_renderer._render_height * this.pixel_ratio[1];
-      cvs.height = this.side_renderer._render_height * this.pixel_ratio[1];
-      cvs.style.width = '100%';
-			cvs.style.height = '100%';
-			cvs.style.position = 'absolute';
-			div.appendChild( cvs );
-
-			// Add zoom tools
-			let zoom_level = 1;
-			const set_zoom_level = (level) => {
-			  if( level ){
-			    zoom_level = level;
-			  }else{
-			    level = zoom_level;
-			  }
-			  cvs.style.width = parseInt(level * 100) + '%';
-			  cvs.style.height = parseInt(level * 100) + '%';
-			  const cvs_size = (0,utils/* get_element_size */.nq)( cvs );
-			  const div_size = (0,utils/* get_element_size */.nq)( div );
-			  const depths = [
-          this.get_state( 'sagittal_depth' ),
-          this.get_state( 'coronal_depth' ),
-          this.get_state( 'axial_depth' )
-        ];
-			  //  this._sagittal_depth || 0, this._coronal_depth || 0, this._axial_depth || 0];
-
-			  let _left = 0,
-			      _top = 0;
-			  if( nm === 'coronal' ){
-			    _left = Math.max( Math.min( div_size[0] / 2 - (128 + depths[0]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
-			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[2]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
-			  }else if( nm === 'axial' ){
-			    _left = Math.max( Math.min( div_size[0] / 2 - (128 + depths[0]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
-			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[1]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
-			  }else if( nm === 'sagittal' ){
-			    _left = Math.max( Math.min( div_size[0] / 2 - (128 - depths[1]) / 256 * cvs_size[0], 0 ), div_size[0] - cvs_size[0]);
-			    _top = Math.max( Math.min( div_size[1] / 2 - (128 - depths[2]) / 256 * cvs_size[1], 0 ), div_size[1] - cvs_size[1]);
-			  }
-
-			  cvs.style.left = _left + 'px';
-			  cvs.style.top = _top + 'px';
-
-			};
-			const zoom_in = document.createElement('div');
-			zoom_in.className = 'zoom-tool';
-			zoom_in.style.top = '23px';
-			zoom_in.innerText = '+';
-			div.appendChild( zoom_in );
-
-			this.bind( `${nm}_zoomin_click`, 'click', (e) => {
-			  zoom_level = zoom_level * 1.2;
-			  zoom_level = zoom_level > 10 ? 10 : zoom_level;
-			  set_zoom_level();
-			}, zoom_in);
-
-			const zoom_out = document.createElement('div');
-			zoom_out.className = 'zoom-tool';
-			zoom_out.style.top = '50px';
-			zoom_out.innerText = '-';
-			div.appendChild( zoom_out );
-			this.bind( `${nm}_zoomout_click`, 'click', (e) => {
-			  zoom_level = zoom_level / 1.2;
-			  zoom_level = zoom_level < 1.1 ? 1 : zoom_level;
-			  set_zoom_level();
-			}, zoom_out);
-
-			const toggle_pan = document.createElement('div');
-			toggle_pan.className = 'zoom-tool';
-			toggle_pan.style.top = '77px';
-			toggle_pan.innerText = 'P';
-			div.appendChild( toggle_pan );
-			this.bind( `${nm}_toggle_pan_click`, 'click', (e) => {
-			  toggle_pan.classList.toggle('pan-active');
-			  toggle_pan_canvas( toggle_pan.classList.contains('pan-active') ? 'pan' : 'select' );
-			}, toggle_pan);
-
-			const zoom_reset = document.createElement('div');
-			zoom_reset.className = 'zoom-tool';
-			zoom_reset.style.top = '104px';
-			zoom_reset.innerText = '0';
-			div.appendChild( zoom_reset );
-			this.bind( `${nm}_zoom_reset_click`, 'click', (e) => {
-			  cvs.style.top = '0';
-        cvs.style.left = '0';
-			  set_zoom_level( 1 );
-			}, zoom_reset);
-
-
-			// Add cameras
-			const camera = new three_module.OrthographicCamera( 300 / - 2, 300 / 2, 300 / 2, 300 / - 2, 1, 10000 );
-			// Side light is needed so that side views are visible.
-			const side_light = new three_module.DirectionalLight( 0xefefef, 0.5 );
-
-			if( idx === 0 ){
-			  // coronal (FB)
-			  camera.position.fromArray( [0, -500, 0] );
-			  camera.up.set( 0, 0, 1 );
-			  camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-			  side_light.position.fromArray([0, 1, 0]);
-			  side_light.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-			}else if( idx === 1 ){
-			  // axial (IS)
-			  camera.position.fromArray( [0, 0, 500] );
-			  camera.up.set( 0, 1, 0 );
-			  camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-			  side_light.position.fromArray([0, 0, -1]);
-			  side_light.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-			}else{
-			  // sagittal (LR)
-			  camera.position.fromArray( [-500, 0, 0] );
-			  camera.up.set( 0, 0, 1 );
-			  camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-			  side_light.position.fromArray([1, 0, 0]);
-			  side_light.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-			}
-
-			camera.lookAt( new three_module.Vector3(0,0,0) );
-			camera.aspect = 1;
-			camera.updateProjectionMatrix();
-			[1, 4, 5, 6, 7, 13].forEach((ly) => {
-        camera.layers.enable(ly);
-      });
-
-      // light is always following cameras
-      camera.add( side_light );
-      this.add_to_scene( camera, true );
-
-      // Add resizables
-      let tmp = [
-        document.createElement('div'),
-        document.createElement('div')
-      ];
-      tmp[0].className = 'resizers';
-      tmp[1].className = 'resizer bottom-right';
-      tmp[0].appendChild( tmp[1] );
-      div.appendChild( tmp[0] );
-      // Add div to wrapper
-      this.wrapper_canvas.appendChild( div );
-
-      // Make it draggable
-      const raise_top = (e, data) => {
-        if( this.has_side_cameras ){
-          // reset z-index
-          let z_ind = [
-            [parseInt(this.side_canvas.coronal.container.style.zIndex), 'coronal'],
-            [parseInt(this.side_canvas.axial.container.style.zIndex), 'axial'],
-            [parseInt(this.side_canvas.sagittal.container.style.zIndex), 'sagittal']
-          ];
-          z_ind.sort((v1,v2) => {return(v1[0] - v2[0])});
-          z_ind.forEach((v, ii) => {
-            this.side_canvas[ v[ 1 ] ].container.style.zIndex = ii;
-          });
-          this.side_canvas[ nm ].container.style.zIndex = 4;
-        }
-      };
-      make_draggable( div, div_header, undefined, raise_top);
-
-
-      const toggle_pan_canvas = make_draggable( cvs, undefined, div, (e, data) => {
-        raise_top(e, data);
-
-        if( data.state === 'select' || data.state === 'move' ){
-          const _size = (0,utils/* get_element_size */.nq)( cvs ),
-                _x = data.x / _size[0] * 256 - 128,
-                _y = data.y / _size[1] * 256 - 128;
-
-          console.log(`x: ${_x}, y: ${_x} of [${_size[0]}, ${_size[1]}]`);
-          if( nm === 'coronal' ){
-            this.set_state( 'sagittal_depth', _x );
-            this.set_state( 'axial_depth', -_y );
-            // this._sagittal_depth = _x;
-            // this._axial_depth = -_y;
-          }else if( nm === 'axial' ){
-            this.set_state( 'sagittal_depth', _x );
-            this.set_state( 'coronal_depth', -_y );
-            // this._sagittal_depth = _x;
-            // this._coronal_depth = -_y;
-          }else if( nm === 'sagittal' ){
-            this.set_state( 'coronal_depth', -_x );
-            this.set_state( 'axial_depth', -_y );
-            // this._coronal_depth = -_x;
-            // this._axial_depth = -_y;
-          }
-          // Also set main_camera
-          const _d = new three_module.Vector3(
-            // this._sagittal_depth || 0,
-            this.get_state( 'sagittal_depth' ),
-
-            // this._coronal_depth || 0,
-            this.get_state( 'coronal_depth' ),
-
-            // this._axial_depth || 0
-            this.get_state( 'axial_depth' )
-          ).normalize().multiplyScalar(500);
-          if( _d.length() === 0 ){
-            _d.x = 500;
-          }
-
-          if( e.shiftKey ){
-            const heads_up = new three_module.Vector3(0, 0, 1);
-            // calculate camera up
-            let _cp = this.main_camera.position.clone().cross( heads_up ).cross( _d ).normalize();
-            if( _cp.length() < 0.5 ){
-              _cp.y = 1;
-            }
-
-            // Always try to heads up
-            if( _cp.dot( heads_up ) < 0 ){
-              _cp.multiplyScalar(-1);
-            }
-
-            this.main_camera.position.copy( _d );
-            this.main_camera.up.copy( _cp );
-          }
-
-          this.set_side_depth(
-            this.get_state( 'coronal_depth' ),
-            this.get_state( 'axial_depth' ),
-            this.get_state( 'sagittal_depth' )
-          );
-
-        }
-      } );
-      toggle_pan_canvas( 'select' );
-
-      // Make cvs scrollable, but change slices
-      this.bind( `${nm}_cvs_mousewheel`, 'mousewheel', (evt) => {
-        evt.preventDefault();
-        if( evt.altKey ){
-          if( evt.deltaY > 0 ){
-            this.set_state( nm + '_depth', 1 + this.get_state(nm + '_depth') );
-            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) + 1;
-          }else if( evt.deltaY < 0 ){
-            this.set_state( nm + '_depth', -1 + this.get_state(nm + '_depth') );
-            // this[ '_' + nm + '_depth' ] = (this[ '_' + nm + '_depth' ] || 0) - 1;
-          }
-        }
-        // this.set_side_depth( this._coronal_depth, this._axial_depth, this._sagittal_depth );
-        this.set_side_depth(
-          this.get_state( 'coronal_depth' ),
-          this.get_state( 'axial_depth' ),
-          this.get_state( 'sagittal_depth' )
-        );
-      }, cvs);
-
-      // Make resizable, keep current width and height
-      make_resizable( div, true );
-
-      // add double click handler
-      const reset = ( _zoom_level ) => {
-        div.style.top = ( idx * this.side_width ) + 'px';
-        div.style.left = '0';
-        div.style.width = this.side_width + 'px';
-        div.style.height = this.side_width + 'px';
-        if( _zoom_level !== undefined ){
-          set_zoom_level( _zoom_level || 1 );
-        }
-
-      };
-      this.bind( `${nm}_div_header_dblclick`, 'dblclick', (evt) => {
-        reset();
-        // Resize side canvas
-        // this.handle_resize( undefined, undefined );
-      }, div_header);
-
-
-      this.side_canvas[ nm ] = {
-        'container' : div,
-        'canvas'    : cvs,
-        'context'   : cvs.getContext('2d'),
-        'camera'    : camera,
-        'reset'     : reset,
-        'get_zoom_level' : () => { return( zoom_level ) },
-        'set_zoom_level' : set_zoom_level
-      };
-
-
-    });
+    this.sideCanvasList.coronal = new SideCanvas( this, "coronal" );
+    this.sideCanvasList.axial = new SideCanvas( this, "axial" );
+    this.sideCanvasList.sagittal = new SideCanvas( this, "sagittal" );
 
     // Add video
     this.video_canvas = document.createElement('video');
@@ -79948,7 +80217,6 @@ class THREEBRAIN_CANVAS {
 
 
     // Add main canvas to wrapper element
-    // this.wrapper_canvas.appendChild( this.side_canvas );
     this.wrapper_canvas.appendChild( this.main_canvas );
     this.el.appendChild( this.wrapper_canvas );
 
@@ -80355,128 +80623,6 @@ class THREEBRAIN_CANVAS {
     this.clickable_array.push( obj );
   }
 
-  // Ugly functions to add volumes
-  _register_datacube( m ){
-
-    const g = m[0].userData.construct_params,
-          gp = m[0].parent;
-
-    // Register depth functions
-
-    const cube_dimension = this.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
-          // XYZ slice counts
-
-          cube_half_size = this.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-          // XYZ pixel heights (* 0.5)
-
-          cube_center = g.position;
-
-    // Add handlers to set plane location when an electrode is clicked
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.isMesh && obj.userData.construct_params ){
-          const pos = obj.getWorldPosition( gp.position.clone() );
-          // calculate depth
-          this.set_side_depth(
-            (pos.y) * 128 / cube_half_size[1] - 0.5,
-            (pos.z) * 128 / cube_half_size[2] - 0.5,
-            (pos.x) * 128 / cube_half_size[0] - 0.5
-          );
-
-        }
-      },
-      'side_viewer_depth'
-    );
-
-
-    this._set_coronal_depth = ( depth ) => {
-      let idx_mid = cube_dimension[1] / 2;
-      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-
-      m[0].position.y = (depth + 0.5) / 128 * cube_half_size[1];
-      // cube_anchor.position.y = m[0].position.y;
-      m[0].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-      m[0].material.needsUpdate = true;
-      // this._coronal_depth = depth;
-      this.set_state( 'coronal_depth', depth );
-      this.set_state( 'coronal_posy', m[0].position.y );
-      this.trim_electrodes();
-      // Animate on next refresh
-      this.start_animation( 0 );
-    };
-    this._set_axial_depth = ( depth ) => {
-      let idx_mid = cube_dimension[2] / 2;
-      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-      m[1].position.z = (depth + 0.5) / 128 * cube_half_size[2];
-      // cube_anchor.position.z = m[1].position.z;
-      m[1].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-      m[1].material.needsUpdate = true;
-      // this._axial_depth = depth;
-      this.set_state( 'axial_depth', depth );
-      this.set_state( 'axial_posz', m[1].position.z );
-      this.trim_electrodes();
-      // Animate on next refresh
-      this.start_animation( 0 );
-    };
-    this._set_sagittal_depth = ( depth ) => {
-      let idx_mid = cube_dimension[0] / 2;
-      if( depth > 128 ){ depth = 128; }else if( depth < -127 ){ depth = -127; }
-      m[2].position.x = (depth + 0.5) / 128 * cube_half_size[0];
-      // cube_anchor.position.x = m[2].position.x;
-      m[2].material.uniforms.depth.value = idx_mid + depth / 128 * idx_mid;
-      m[2].material.needsUpdate = true;
-      // this._sagittal_depth = depth;
-      this.set_state( 'sagittal_depth', depth );
-      this.set_state( 'sagittal_posx', m[2].position.x );
-      this.trim_electrodes();
-      // Animate on next refresh
-      this.start_animation( 0 );
-    };
-    this._side_plane_sendback = ( sendback ) => {
-      m.forEach( (p) => {
-        p.material.uniforms.renderDepth.value = sendback ? 0.0 : 1.0;
-        p.material.needsUpdate = true;
-      });
-    };
-
-    this.set_side_visibility = ( which, visible ) => {
-      let fn = visible ? 'enable' : 'disable';
-      if( which === 'coronal' ){
-        m[0].layers[fn](8);
-        this.set_state( 'coronal_overlay', visible );
-      }else if( which === 'axial' ){
-        m[1].layers[fn](8);
-        this.set_state( 'axial_overlay', visible );
-      }else if( which === 'sagittal' ){
-        m[2].layers[fn](8);
-        this.set_state( 'sagittal_overlay', visible );
-      }else{
-        // reset, using cached
-        fn = this.get_state( 'coronal_overlay', false ) ? 'enable' : 'disable';
-        m[0].layers[fn](8);
-        fn = this.get_state( 'axial_overlay', false ) ? 'enable' : 'disable';
-        m[1].layers[fn](8);
-        fn = this.get_state( 'sagittal_overlay', false ) ? 'enable' : 'disable';
-        m[2].layers[fn](8);
-      }
-
-      this.start_animation( 0 );
-    };
-
-    // reset side camera positions
-    this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
-    this.reset_side_cameras( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
-
-  }
-
-
   // Add geom groups
   add_group(g, cache_folder = 'threebrain_data', onProgress = null){
     var gp = new three_module.Object3D();
@@ -80690,7 +80836,9 @@ class THREEBRAIN_CANVAS {
     this.domContext = null;
     this.domContextWrapper = null;
     this.main_renderer.dispose();
-    this.side_renderer.dispose();
+    this.sideCanvasList.coronal.dispose();
+    this.sideCanvasList.axial.dispose();
+    this.sideCanvasList.sagittal.dispose();
 
   }
 
@@ -80703,7 +80851,7 @@ class THREEBRAIN_CANVAS {
 
     this.subject_codes.length = 0;
     this.electrodes.clear();
-    this.volumes.clear();
+    this.slices.clear();
     this.ct_scan.clear();
     this.surfaces.clear();
     this.atlases.clear();
@@ -80805,19 +80953,6 @@ class THREEBRAIN_CANVAS {
   	  this.main_camera.bottom = (this.main_camera.bottom * _ratio) || (-main_height / main_width * 150);
 	  }
     this.main_camera.updateProjectionMatrix();
-
-
-    // Check if side_camera exists
-    if(!this.has_side_cameras){
-      // this.side_canvas.style.display = 'none';
-    }else{
-      /*
-      let side_width = Math.max( main_width / 3, main_height );
-      side_width = Math.floor( side_width );
-      this.side_renderer._render_height = side_width;
-      this.side_renderer.setSize( side_width * 3 , side_width );
-      */
-    }
 
     this.main_canvas.style.width = main_width + 'px';
     this.main_canvas.style.height = main_height + 'px';
@@ -80989,9 +81124,7 @@ class THREEBRAIN_CANVAS {
     console.debug('Set side visibility not implemented');
   }
   side_plane_sendback( is_back ){
-    if( typeof this._side_plane_sendback === 'function' ){
-      this._side_plane_sendback( is_back );
-    }
+    console.warn("canvas.side_plane_sendback is called; FIXME");
   }
 
 
@@ -81012,81 +81145,69 @@ class THREEBRAIN_CANVAS {
     }
     this.main_camera.updateProjectionMatrix();
   }
-  reset_side_canvas( zoom_level, side_width, side_position ){
-    let _sw = side_width;
-    if( !_sw ){
-      _sw = this._side_width;
+
+  resetSideCanvas({
+    width, zoomLevel = true, position = false,
+    coronal = true, axial = true, sagittal = true
+  } = {}) {
+    if( typeof width !== 'number' ) {
+      width = this._side_width;
     }
-    if( _sw * 3 > this.client_height ){
-      _sw = Math.floor( this.client_height / 3 );
+    if( width * 3 > this.client_height ){
+      width = Math.floor( this.client_height / 3 );
     }
-    this.side_width = _sw;
+    this.side_width = width;
+
     // Resize side canvas, make sure this.side_width is proper
-    this.side_canvas.coronal.reset( zoom_level );
-    this.side_canvas.axial.reset( zoom_level );
-    this.side_canvas.sagittal.reset( zoom_level );
-
-    side_position = (0,utils/* to_array */.AA)( side_position );
-    if( side_position.length == 2 ){
-      const el_pos = this.el.getBoundingClientRect();
-      side_position[0] = Math.max( side_position[0], -el_pos.x );
-      side_position[1] = Math.max( side_position[1], -el_pos.y );
-
-      this.side_canvas.coronal.container.style.top = side_position[1] + 'px';
-      this.side_canvas.axial.container.style.top = (side_position[1] + _sw) + 'px';
-      this.side_canvas.sagittal.container.style.top = (side_position[1] + _sw * 2) + 'px';
-
-      this.side_canvas.coronal.container.style.left = side_position[0] + 'px';
-      this.side_canvas.axial.container.style.left = side_position[0] + 'px';
-      this.side_canvas.sagittal.container.style.left = side_position[0] + 'px';
+    let pos = (0,utils/* to_array */.AA)( position );
+    if( pos.length == 2 ) {
+      const bounding = this.el.getBoundingClientRect();
+      const offsetX = Math.max( -bounding.x, pos[0] );
+      let offsetY = Math.max( -bounding.y, pos[1] );
+      if( coronal ) {
+        this.sideCanvasList.coronal.reset({
+          zoomLevel : zoomLevel,
+          position : [ offsetX, offsetY ]
+        });
+      }
+      offsetY += width;
+      if( axial ) {
+        this.sideCanvasList.axial.reset({
+          zoomLevel : zoomLevel,
+          position : [ offsetX, offsetY ]
+        });
+      }
+      offsetY += width;
+      if( sagittal ) {
+        this.sideCanvasList.sagittal.reset({
+          zoomLevel : zoomLevel,
+          position : [ offsetX, offsetY ]
+        });
+      }
+      offsetY += width;
+    } else {
+      if( coronal ) {
+        this.sideCanvasList.coronal.reset({
+          zoomLevel : zoomLevel,
+          position : position
+        });
+      }
+      if( axial ) {
+        this.sideCanvasList.axial.reset({
+          zoomLevel : zoomLevel,
+          position : position
+        });
+      }
+      if( sagittal ) {
+        this.sideCanvasList.sagittal.reset({
+          zoomLevel : zoomLevel,
+          position : position
+        });
+      }
     }
 
-    this.handle_resize( undefined, undefined );
-
   }
-  reset_side_cameras( pos, scale = 300, distance = 500 ){
 
-    if( pos ){
-      this._side_canvas_position = pos;
-    }else{
-      pos = this._side_canvas_position || constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN;
-    }
-
-    this.side_canvas.coronal.camera.position.x = pos.x;
-    this.side_canvas.coronal.camera.position.z = pos.z;
-    this.side_canvas.coronal.camera.position.y = -distance;
-    this.side_canvas.coronal.camera.lookAt( pos.x, pos.y, pos.z );
-
-    this.side_canvas.coronal.camera.top = scale / 2;
-    this.side_canvas.coronal.camera.bottom = -scale / 2;
-    this.side_canvas.coronal.camera.right = scale / 2;
-    this.side_canvas.coronal.camera.left = -scale / 2;
-
-    this.side_canvas.axial.camera.position.x = pos.x;
-    this.side_canvas.axial.camera.position.y = pos.y;
-    this.side_canvas.axial.camera.position.z = distance;
-    this.side_canvas.axial.camera.lookAt( pos.x, pos.y, pos.z );
-    this.side_canvas.axial.camera.top = scale / 2;
-    this.side_canvas.axial.camera.bottom = -scale / 2;
-    this.side_canvas.axial.camera.right = scale / 2;
-    this.side_canvas.axial.camera.left = -scale / 2;
-
-    this.side_canvas.sagittal.camera.position.y = pos.y;
-    this.side_canvas.sagittal.camera.position.z = pos.z;
-    this.side_canvas.sagittal.camera.position.x = -distance;
-    this.side_canvas.sagittal.camera.lookAt( pos.x, pos.y, pos.z );
-    this.side_canvas.sagittal.camera.top = scale / 2;
-    this.side_canvas.sagittal.camera.bottom = -scale / 2;
-    this.side_canvas.sagittal.camera.right = scale / 2;
-    this.side_canvas.sagittal.camera.left = -scale / 2;
-
-
-    this.side_canvas.coronal.camera.updateProjectionMatrix();
-    this.side_canvas.axial.camera.updateProjectionMatrix();
-    this.side_canvas.sagittal.camera.updateProjectionMatrix();
-
-    this.start_animation( 0 );
-  }
   reset_controls(){
 	  // reset will erase target, manually reset target
 	  // let target = this.controls.target.toArray();
@@ -81115,21 +81236,18 @@ class THREEBRAIN_CANVAS {
     this.start_animation(0);
 	}
 
-  enable_side_cameras(){
+  enableSideCanvas(){
 	  // Add side renderers to the element
-	  this.has_side_cameras = true;
-	  for( let k in this.side_canvas ){
-	    this.side_canvas[ k ].container.style.display = 'block';
-	  }
-	  this.handle_resize();
+	  this.sideCanvasEnabled = true;
+	  this.sideCanvasList.coronal.enabled = true;
+	  this.sideCanvasList.axial.enabled = true;
+	  this.sideCanvasList.sagittal.enabled = true;
 	}
-	disable_side_cameras(force = false){
-	  //this.side_canvas.style.display = 'none';
-	  for( let k in this.side_canvas ){
-	    this.side_canvas[ k ].container.style.display = 'none';
-	  }
-	  this.has_side_cameras = false;
-	  this.handle_resize();
+	disableSideCanvas(force = false){
+	  this.sideCanvasEnabled = false;
+	  this.sideCanvasList.coronal.enabled = false;
+	  this.sideCanvasList.axial.enabled = false;
+	  this.sideCanvasList.sagittal.enabled = false;
 	}
   /*---- Choose & highlight objects -----------------------------------------*/
   set_raycaster(){
@@ -81837,27 +81955,6 @@ class THREEBRAIN_CANVAS {
     // copy the main_renderer context
     this.domContext.drawImage( this.main_renderer.domElement, 0, 0, _width, _height);
 
-    // side cameras
-    if( this.has_side_cameras ){
-      const _rh = this.side_renderer._render_height * this.pixel_ratio[1];
-
-      /* Use integer pixels here to avoid sub-pixel antialiasing problem */
-      this.side_canvas.coronal.context.fillStyle = this.background_color;
-      this.side_canvas.coronal.context.fillRect(0, 0, _rh, _rh);
-      this.side_canvas.coronal.context.drawImage( this.side_renderer.domElement, 0, 0, _rh, _rh, 0, 0, _rh, _rh);
-
-
-      this.side_canvas.axial.context.fillStyle = this.background_color;
-      this.side_canvas.axial.context.fillRect(0, 0, _rh, _rh);
-      this.side_canvas.axial.context.drawImage( this.side_renderer.domElement, _rh, 0, _rh, _rh, 0, 0, _rh, _rh);
-
-
-      this.side_canvas.sagittal.context.fillStyle = this.background_color;
-      this.side_canvas.sagittal.context.fillRect(0, 0, _rh, _rh);
-      this.side_canvas.sagittal.context.drawImage( this.side_renderer.domElement, _rh * 2, 0, _rh, _rh, 0, 0, _rh, _rh);
-    }
-
-
   }
 
   // Main render function, automatically scheduled
@@ -81909,37 +82006,23 @@ class THREEBRAIN_CANVAS {
 
     this.main_renderer.render( this.scene, this.main_camera );
 
-    if(this.has_side_cameras){
+    if(this.sideCanvasEnabled){
 
-      // Disable side plane
-      this.side_plane_sendback( true );
+      // temporarily disable slice depthWrite property so electrodes can
+      // display properly
+      const sliceInstance = this.state_data.get( "activeSliceInstance" );
+      const renderSlices = sliceInstance && sliceInstance.isDataCube;
+      if( renderSlices ) {
+        sliceInstance.sliceMaterial.depthWrite = false;
+      }
 
-      const _rh = this.side_renderer._render_height;
-      // Cut side views
-      // Threejs's origin is at bottom-left, but html is at topleft
-      // Need to adjust for each view
-      // coronal
-      this.side_renderer.setViewport( 0, 0, _rh, _rh );
-      this.side_renderer.setScissor( 0, 0, _rh, _rh );
-      this.side_renderer.setScissorTest( true );
-      this.side_renderer.clear();
-      this.side_renderer.render( this.scene, this.side_canvas.coronal.camera );
+      this.sideCanvasList.coronal.render();
+      this.sideCanvasList.axial.render();
+      this.sideCanvasList.sagittal.render();
 
-      // axial
-      this.side_renderer.setViewport( _rh, 0, _rh, _rh );
-      this.side_renderer.setScissor( _rh, 0, _rh, _rh );
-      this.side_renderer.setScissorTest( true );
-      this.side_renderer.clear();
-      this.side_renderer.render( this.scene, this.side_canvas.axial.camera );
-
-      // sagittal
-      this.side_renderer.setViewport( _rh * 2, 0, _rh, _rh );
-      this.side_renderer.setScissor( _rh * 2, 0, _rh, _rh );
-      this.side_renderer.setScissorTest( true );
-      this.side_renderer.clear();
-      this.side_renderer.render( this.scene, this.side_canvas.sagittal.camera );
-
-      this.side_plane_sendback( false );
+      if( renderSlices ) {
+        sliceInstance.sliceMaterial.depthWrite = true;
+      }
     }
 
   }
@@ -82293,7 +82376,7 @@ class THREEBRAIN_CANVAS {
     context_wrapper.set_font( this._fontSize_normal, this._fontType );
 
     let text_left;
-    if( this.has_side_cameras && !force_left ){
+    if( this.sideCanvasEnabled && !force_left ){
       text_left = w - Math.ceil( 50 * this._fontSize_normal * 0.42 );
     } else {
       text_left = Math.ceil( this._fontSize_normal * 0.42 * 2 );
@@ -82537,13 +82620,13 @@ class THREEBRAIN_CANVAS {
 	}
 
 
-  /*---- Subjects, electrodes, surfaces, volumes ----------------------------*/
+  /*---- Subjects, electrodes, surfaces, slices ----------------------------*/
   init_subject( subject_code ){
     if( !subject_code ){ return; }
     if( ! this.subject_codes.includes( subject_code ) ){
       this.subject_codes.push( subject_code );
       this.electrodes.set( subject_code, {});
-      this.volumes.set( subject_code, {} );
+      this.slices.set( subject_code, {} );
       this.ct_scan.set( subject_code, {} );
       this.surfaces.set(subject_code, {} );
       this.atlases.set( subject_code, {} );
@@ -82583,23 +82666,6 @@ class THREEBRAIN_CANVAS {
 
 
     return( (0,utils/* to_array */.AA)( re ) );
-  }
-
-  // not used
-  get_volume_types(){
-    const re = {};
-
-    this.volumes.forEach( (vol, s) => {
-      let volume_names = Object.keys( vol ),
-          //  T1 (YAB)
-          res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
-          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
-
-      if( res && res.length === 2 ){
-        re[ res[1] ] = 1;
-      }
-    });
-    return( Object.keys( re ) );
   }
 
   get_ct_types(){
@@ -82655,7 +82721,7 @@ class THREEBRAIN_CANVAS {
     let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
     let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
     let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
-    let volume_type = args.volume_type || state.get( 'volume_type' ) || 'T1';
+    let slice_type = args.slice_type || state.get( 'slice_type' ) || 'T1';
     let ct_type = args.ct_type || state.get( 'ct_type' ) || 'ct.aligned.t1';
     let ct_threshold = args.ct_threshold || state.get( 'ct_threshold' ) || 0.8;
 
@@ -82680,7 +82746,7 @@ class THREEBRAIN_CANVAS {
     anterior_commissure.set(0,0,0);
     anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
 
-    this.switch_volume( target_subject, volume_type );
+    this.switch_slices( target_subject, slice_type );
     this.switch_ct( target_subject, ct_type, ct_threshold );
     this.switch_atlas( target_subject, atlas_type );
     this.switch_surface( target_subject, surface_type,
@@ -82700,7 +82766,7 @@ class THREEBRAIN_CANVAS {
     state.set( 'atlas_type', atlas_type );
     state.set( 'material_type_left', material_type_left );
     state.set( 'material_type_right', material_type_right );
-    state.set( 'volume_type', volume_type );
+    state.set( 'slice_type', slice_type );
     state.set( 'ct_type', ct_type );
     state.set( 'ct_threshold', ct_threshold );
     state.set( 'map_template', map_template );
@@ -82787,15 +82853,16 @@ class THREEBRAIN_CANVAS {
     this.start_animation( 0 );
   }
 
-  switch_volume( target_subject, volume_type = 'T1' ){
+  switch_slices( target_subject, slice_type = 'T1' ){
 
-    this.volumes.forEach( (vol, subject_code) => {
+    this.state_data.delete( "activeSliceInstance" );
+    //this.ssss
+    this.slices.forEach( (vol, subject_code) => {
       for( let volume_name in vol ){
         const m = vol[ volume_name ];
-        if( subject_code === target_subject && volume_name === `${volume_type} (${subject_code})`){
-          //m[0].parent.visible = true;
+        if( subject_code === target_subject && volume_name === `${slice_type} (${subject_code})`){
           (0,utils/* set_visibility */.K3)( m[0].parent, true );
-          this._register_datacube( m );
+          this.state_data.set( "activeSliceInstance", m[0].userData.instance );
         }else{
           // m[0].parent.visible = false;
           (0,utils/* set_visibility */.K3)( m[0].parent, false );
@@ -83780,7 +83847,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var _js_core_gui_wrapper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2814);
 /* harmony import */ var _js_core_data_controls_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6303);
 /* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(8173);
-/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(3525);
+/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(2652);
 /* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(5664);
 /* harmony import */ var _js_constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(975);
 /* harmony import */ var _js_utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(3658);
@@ -83926,7 +83993,9 @@ class BrainCanvas{
     }
     if( this._reset_flag ){
       this._reset_flag = false;
-      this.canvas.reset_side_canvas();
+      this.canvas.sideCanvasList.coronal.reset({ zoomLevel: true, position: true, size : true });
+      this.canvas.sideCanvasList.axial.reset({ zoomLevel: true, position: true, size : true });
+      this.canvas.sideCanvasList.sagittal.reset({ zoomLevel: true, position: true, size : true });
     }
     this.canvas.start_animation(0);
   }
@@ -84182,24 +84251,16 @@ class BrainCanvas{
     if(this.settings.side_camera || false){
 
       // Set canvas zoom-in level
-      this.canvas.side_canvas.coronal.set_zoom_level( this.settings.side_canvas_zoom || 1 );
-      this.canvas.side_canvas.axial.set_zoom_level( this.settings.side_canvas_zoom || 1 );
-      this.canvas.side_canvas.sagittal.set_zoom_level( this.settings.side_canvas_zoom || 1 );
-
-      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.coronal.camera );
-      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.axial.camera );
-      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.sagittal.camera );
-
       if( this.settings.side_display || false ){
-        this.canvas.enable_side_cameras();
+        this.canvas.enableSideCanvas();
         // reset so that the size is displayed correctly
         this._reset_flag = true;
       }else{
-        this.canvas.disable_side_cameras();
+        this.canvas.disableSideCanvas();
       }
 
     }else{
-      this.canvas.disable_side_cameras();
+      this.canvas.disableSideCanvas();
     }
 
     // Force render canvas

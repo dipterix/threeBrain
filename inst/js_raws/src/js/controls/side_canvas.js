@@ -16,18 +16,18 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const show_side = this.gui.add_item('Show Panels', _v, {folder_name: folder_name})
       .onChange((v) => {
         if( v ){
-          this.canvas.enable_side_cameras();
+          this.canvas.enableSideCanvas();
         }else{
-          this.canvas.disable_side_cameras();
+          this.canvas.disableSideCanvas();
         }
         this.fire_change({ 'side_display' : v });
       });
 
 
     if( _v ){
-      this.canvas.enable_side_cameras();
+      this.canvas.enableSideCanvas();
     }else{
-      this.canvas.disable_side_cameras();
+      this.canvas.disableSideCanvas();
     }
     this.fire_change({ 'side_display' : _v });
 
@@ -39,12 +39,12 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
           side_width = this.settings.side_canvas_width,
           side_shift = this.settings.side_canvas_shift;
     this.gui.add_item('Reset Position', () => {
-      this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
+      this.canvas.resetSideCanvas( zoom_level, side_width, side_shift );
     }, {folder_name: folder_name});
 
     // reset first
     this.canvas._side_width = side_width;
-    this.canvas.reset_side_canvas( zoom_level, side_width, side_shift );
+    this.canvas.resetSideCanvas( zoom_level, side_width, side_shift );
   }
 
   THREEBRAIN_PRESETS.prototype.c_side_depth = function(){

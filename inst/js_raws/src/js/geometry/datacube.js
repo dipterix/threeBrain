@@ -1,9 +1,10 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { CONSTANTS } from '../constants.js';
 import { to_array, get_or_default } from '../utils.js';
-import { LineBasicMaterial, BufferGeometry, DataTexture2DArray, RedFormat,
-         UnsignedByteType, ShaderMaterial, Vector3, DoubleSide,
+import { LineBasicMaterial, BufferGeometry, DataTexture3D, RedFormat, LinearFilter,
+         UnsignedByteType, RawShaderMaterial, Vector3, DoubleSide, UniformsUtils,
          PlaneBufferGeometry, Mesh, Line } from '../../build/three.module.js';
+import { SliceShader } from '../shaders/SliceShader.js';
 import { Volume2dArrayShader_xy, Volume2dArrayShader_xz,
          Volume2dArrayShader_yz } from '../shaders/Volume2DShader.js';
 
@@ -28,209 +29,219 @@ class DataCube extends AbstractThreeBrainObject {
     this.type = 'DataCube';
     this.isDataCube = true;
 
-    let mesh, group_name;
-
-    let line_material = new LineBasicMaterial({ color: 0x00ff00, transparent: true }),
-        line_geometry = new BufferGeometry();
-    line_material.depthTest = false;
-
-
-    // Cube values Must be from 0 to 1, float
-    const cube_values = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name),
-          cube_dimension = canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name),
-          cube_half_size = canvas.get_data('datacube_half_size_'+g.name, g.name, g.group.group_name),
-          cube_center = g.position,
-          volume = {
-            'xLength' : cube_half_size[0]*2,
-            'yLength' : cube_half_size[1]*2,
-            'zLength' : cube_half_size[2]*2
-          };
-
-    // Generate texture
-    let texture = new DataTexture2DArray( new Uint8Array(cube_values), cube_dimension[0], cube_dimension[1], cube_dimension[2] );
-    texture.format = RedFormat;
-  	texture.type = UnsignedByteType;
-  	texture.needsUpdate = true;
-  	this._texture = texture;
-
-
-    // Shader - XY plane
-  	const shader_xy = Volume2dArrayShader_xy;
-  	let material_xy = new ShaderMaterial({
-  	  uniforms : {
-    		diffuse: { value: texture },
-    		depth: { value: cube_half_size[2] },  // initial in the center of data cube
-    		size: { value: new Vector3( volume.xLength, volume.yLength, cube_dimension[2] ) },
-    		threshold: { value : 0.0 },
-    		renderDepth: { value : 1.0 }
-    	},
-    	vertexShader: shader_xy.vertexShader,
-  		fragmentShader: shader_xy.fragmentShader,
-  		side: DoubleSide,
-  		transparent: true
-  	});
-  	let geometry_xy = new PlaneBufferGeometry( volume.xLength, volume.yLength );
-
-
-  	let mesh_xy = new Mesh( geometry_xy, material_xy );
-  	// let mesh_xy2 = new Mesh( geometry_xy, material_xy );
-  	mesh_xy.renderOrder = -1;
-  	mesh_xy.position.copy( CONSTANTS.VEC_ORIGIN );
-  	mesh_xy.name = 'mesh_datacube__axial_' + g.name;
-
-
-  	// Shader - XZ plane
-  	const shader_xz = Volume2dArrayShader_xz;
-  	let material_xz = new ShaderMaterial({
-  	  uniforms : {
-    		diffuse: { value: texture },
-    		depth: { value: cube_half_size[1] },  // initial in the center of data cube
-    		size: { value: new Vector3( volume.xLength, cube_dimension[1], volume.zLength ) },
-    		threshold: { value : 0.0 },
-    		renderDepth: { value : 1.0 }
-    	},
-    	vertexShader: shader_xz.vertexShader,
-  		fragmentShader: shader_xz.fragmentShader,
-  		side: DoubleSide,
-  		transparent: true
-  	});
-  	let geometry_xz = new PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-  	let mesh_xz = new Mesh( geometry_xz, material_xz );
-  	mesh_xz.rotateX( Math.PI / 2 );
-  	mesh_xz.renderOrder = -1;
-  	mesh_xz.position.copy( CONSTANTS.VEC_ORIGIN );
-  	mesh_xz.name = 'mesh_datacube__coronal_' + g.name;
-
-
-  	// Shader - YZ plane
-  	const shader_yz = Volume2dArrayShader_yz;
-  	let material_yz = new ShaderMaterial({
-  	  uniforms : {
-    		diffuse: { value: texture },
-    		depth: { value: cube_half_size[0] },  // initial in the center of data cube
-    		size: { value: new Vector3( cube_dimension[0], volume.yLength, volume.zLength ) },
-    		threshold: { value : 0.0 },
-    		renderDepth: { value : 1.0 }
-    	},
-    	vertexShader: shader_yz.vertexShader,
-  		fragmentShader: shader_yz.fragmentShader,
-  		side: DoubleSide,
-  		transparent: true
-  	});
-  	let geometry_yz = new PlaneBufferGeometry( volume.xLength, volume.zLength );
-
-  	let mesh_yz = new Mesh( geometry_yz, material_yz );
-  	mesh_yz.rotateY( Math.PI / 2);
-  	mesh_yz.rotateZ( Math.PI / 2); // Back side
-  	mesh_yz.renderOrder = -1;
-  	mesh_yz.position.copy( CONSTANTS.VEC_ORIGIN );
-  	mesh_yz.name = 'mesh_datacube__sagittal_' + g.name;
-
-    // coronal (xz), axial (xy), sagittal (yz)
-  	mesh = [ mesh_xz, mesh_xy, mesh_yz ];
-
-  	// generate diagonal line
-  	const _mhw = Math.max( ...cube_half_size );
-
-    const line_vert = [];
-  	line_vert.push(
-    	new Vector3( -_mhw, -_mhw, 0 ),
-    	new Vector3( _mhw, _mhw, 0 )
+    // get cube (volume) data
+    this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
+    this.cubeShape = new Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
+    this.dataTexture = new DataTexture3D(
+      this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
     );
-    line_geometry.setFromPoints( line_vert );
+    this.dataTexture.minFilter = LinearFilter;
+    this.dataTexture.magFilter = LinearFilter;
+    this.dataTexture.format = RedFormat;
+    this.dataTexture.type = UnsignedByteType;
+    this.dataTexture.unpackAlignment = 1;
+    this.dataTexture.needsUpdate = true;
 
-    let line_mesh_xz = new Line( line_geometry, line_material ),
-        line_mesh_xy = new Line( line_geometry, line_material ),
-        line_mesh_yz = new Line( line_geometry, line_material );
-    line_mesh_xz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
-    line_mesh_xy.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
-    line_mesh_yz.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
-    line_mesh_xz.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
-    line_mesh_xz.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-    line_mesh_xy.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
-    line_mesh_xy.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-    line_mesh_yz.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
-    line_mesh_yz.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
-    mesh_xz.add( line_mesh_xz );
-    mesh_xy.add( line_mesh_xy );
-    mesh_yz.add( line_mesh_yz );
+    // Generate shader
+    this._uniforms = UniformsUtils.clone( SliceShader.uniforms );
+    this._uniforms.map.value = this.dataTexture;
+    this._uniforms.mapShape.value.copy( this.cubeShape );
+    // TODO: set this._uniforms.world2IJK
+    const subjectData = this._canvas.shared_data.get( this.subject_code );
+    if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
+      this._uniforms.world2IJK.value.copy( subjectData.matrices.Torig ).invert();
+    }
+    this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
 
 
-    mesh_xy.userData.dispose = () => {
-  	  material_xy.dispose();
-  	  geometry_xy.dispose();
-      line_material.dispose();
-      line_geometry.dispose();
-      texture.dispose();
+    const sliceMaterial = new RawShaderMaterial( {
+      uniforms: this._uniforms,
+      vertexShader: SliceShader.vertexShader,
+      fragmentShader: SliceShader.fragmentShader,
+      side: DoubleSide,
+      transparent : false,
+      depthWrite: true
+    } );
+    this.sliceMaterial = sliceMaterial;
+    const sliceGeometryXY = new PlaneBufferGeometry( 256, 256 );
+    const sliceMeshXY = new Mesh( sliceGeometryXY, sliceMaterial );
+    sliceMeshXY.renderOrder = -1;
+    sliceMeshXY.position.copy( CONSTANTS.VEC_ORIGIN );
+    sliceMeshXY.name = 'mesh_datacube__axial_' + g.name;
+
+    const sliceGeometryXZ = new PlaneBufferGeometry( 256, 256 );
+    const sliceMeshXZ = new Mesh( sliceGeometryXZ, sliceMaterial );
+    sliceMeshXZ.rotateX( Math.PI / 2 );
+    sliceMeshXZ.renderOrder = -1;
+    sliceMeshXZ.position.copy( CONSTANTS.VEC_ORIGIN );
+    sliceMeshXZ.name = 'mesh_datacube__coronal_' + g.name;
+
+    const sliceGeometryYZ = new PlaneBufferGeometry( 256, 256 );
+    const sliceMeshYZ = new Mesh( sliceGeometryYZ, sliceMaterial );
+    sliceMeshYZ.rotateY( Math.PI / 2 ).rotateZ( Math.PI / 2 );
+    sliceMeshYZ.renderOrder = -1;
+    sliceMeshYZ.position.copy( CONSTANTS.VEC_ORIGIN );
+    sliceMeshYZ.name = 'mesh_datacube__sagittal_' + g.name;
+
+  	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
+
+  	// generate diagonal line of the plane which will appear as crosshair
+    const crosshairGeometry = new BufferGeometry();
+    const crosshairMaterial = new LineBasicMaterial({ color: 0x00ff00, transparent: true });
+    crosshairGeometry.depthTest = false;
+    crosshairGeometry.setFromPoints( [ new Vector3( -128, -128, 0 ), new Vector3( 128, 128, 0 ) ] );
+    this.crosshairGeometry = crosshairGeometry;
+    this.crosshairMaterial = crosshairMaterial;
+
+    const crosshairXZ = new Line( crosshairGeometry, crosshairMaterial ),
+          crosshairXY = new Line( crosshairGeometry, crosshairMaterial ),
+          crosshairYZ = new Line( crosshairGeometry, crosshairMaterial );
+    crosshairXZ.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    crosshairXY.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    crosshairYZ.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    crosshairXZ.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
+    crosshairXZ.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+    crosshairXY.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
+    crosshairXY.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+    crosshairYZ.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
+    crosshairYZ.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
+    sliceMeshXZ.add( crosshairXZ );
+    sliceMeshXY.add( crosshairXY );
+    sliceMeshYZ.add( crosshairYZ );
+
+    sliceMeshXY.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryXY.dispose();
+      crosshairGeometry.dispose();
+      crosshairMaterial.dispose();
+      this.dataTexture.dispose();
     };
-    mesh_xy.userData.instance = this;
-    this._line_material = line_material;
-    this._line_geometry = line_geometry;
-    this._texture = texture;
+    sliceMeshXY.userData.instance = this;
+    this.sliceXY = sliceMeshXY;
 
-    this._mesh_xy = mesh_xy;
-    this._material_xy = material_xy;
-    this._geometry_xy = geometry_xy;
-
-    mesh_xz.userData.dispose = () => {
-  	  material_xz.dispose();
-  	  geometry_xz.dispose();
-      line_material.dispose();
-      line_geometry.dispose();
-      texture.dispose();
+    sliceMeshXZ.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryXZ.dispose();
+      crosshairGeometry.dispose();
+      crosshairMaterial.dispose();
+      this.dataTexture.dispose();
     };
-    mesh_xz.userData.instance = this;
-    this._mesh_xz = mesh_xz;
-    this._material_xz = material_xz;
-    this._geometry_xz = geometry_xz;
+    sliceMeshXZ.userData.instance = this;
+    this.sliceXZ = sliceMeshXZ;
 
-    mesh_yz.userData.dispose = () => {
-  	  material_yz.dispose();
-  	  geometry_yz.dispose();
-      line_material.dispose();
-      line_geometry.dispose();
-      texture.dispose();
+    sliceMeshYZ.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryYZ.dispose();
+      crosshairGeometry.dispose();
+      crosshairMaterial.dispose();
+      this.dataTexture.dispose();
     };
-    mesh_yz.userData.instance = this;
-    this._mesh_yz = mesh_yz;
-    this._geometry_yz = geometry_yz;
-    this._material_yz = material_yz;
-
-    this.object = mesh;
+    sliceMeshYZ.userData.instance = this;
+    this.sliceYZ = sliceMeshYZ;
   }
 
   dispose(){
-    this._line_material.dispose();
-    this._line_geometry.dispose();
-    this._material_xy.dispose();
-    this._geometry_xy.dispose();
-    this._material_yz.dispose();
-  	this._geometry_yz.dispose();
-  	this._material_yz.dispose();
-  	this._geometry_yz.dispose();
-    this._texture.dispose();
+    this.crosshairMaterial.dispose();
+    this.crosshairGeometry.dispose();
+    this.sliceMaterial.dispose();
+    this.sliceGeometryXY.dispose();
+    this.sliceGeometryXZ.dispose();
+  	this.sliceGeometryYZ.dispose();
+    this.dataTexture.dispose();
   }
 
   get_track_data( track_name, reset_material ){}
 
   pre_render( results ){}
 
+  setCrosshair({ x, y, z } = {}) {
+    let changed = false;
+    if( x !== undefined ) {
+      // set sagittal
+      if( x > 128 ) { x = 128; }
+      if( x < -128 ) { x = -128; }
+      this.sliceYZ.position.x = x;
+      this._canvas.set_state( 'sagittal_depth', x );
+      this._canvas.set_state( 'sagittal_posy', x );
+      changed = true;
+    }
+    if( y !== undefined ) {
+      // set coronal
+      if( y > 128 ) { y = 128; }
+      if( y < -128 ) { y = -128; }
+      this.sliceXZ.position.y = y;
+      this._canvas.set_state( 'coronal_depth', y );
+      this._canvas.set_state( 'coronal_posy', y );
+      changed = true;
+    }
+    if( z !== undefined ) {
+      // set axial
+      if( z > 128 ) { z = 128; }
+      if( z < -128 ) { z = -128; }
+      this.sliceXY.position.z = z;
+      this._canvas.set_state( 'axial_depth', z );
+      this._canvas.set_state( 'axial_posy', z );
+      changed = true;
+    }
+    if( changed ) {
+      this._canvas.trim_electrodes();
+      // Animate on next refresh
+      this._canvas.start_animation( 0 );
+    }
+  }
+
+  showPlane( which ) {
+    const planType = to_array( which );
+    if( planType.length === 0 ) { return; }
+    if( planType.includes( 'coronal' ) ) {
+      this.sliceXZ.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'coronal_overlay', true );
+    }
+    if( planType.includes( 'sagittal' ) ) {
+      this.sliceYZ.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'sagittal_overlay', true );
+    }
+    if( planType.includes( 'axial' ) ) {
+      this.sliceXY.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'axial_overlay', true );
+    }
+    this._canvas.start_animation( 0 );
+  }
+
+  hidePlane( which ) {
+    const planType = to_array( which );
+    if( planType.length === 0 ) { return; }
+    if( planType.includes( 'coronal' ) ) {
+      this.sliceXZ.layers.disable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'coronal_overlay', false );
+    }
+    if( planType.includes( 'sagittal' ) ) {
+      this.sliceYZ.layers.disable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'sagittal_overlay', false );
+    }
+    if( planType.includes( 'axial' ) ) {
+      this.sliceXY.layers.disable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'axial_overlay', false );
+    }
+    this._canvas.start_animation( 0 );
+  }
+
   finish_init(){
     // Special, as m is a array of three planes
-    // this.object = mesh = [ mesh_xz, mesh_xy, mesh_yz ];
+    // this.object = mesh = [ mesh_xz, sliceMeshXY, mesh_yz ];
 
-    this._canvas.mesh.set( '_coronal_' + this.name, this._mesh_xz );
-    this._canvas.mesh.set( '_axial_' + this.name, this._mesh_xy );
-    this._canvas.mesh.set( '_sagittal_' + this.name, this._mesh_yz );
+    this._canvas.mesh.set( '_coronal_' + this.name, this.sliceXZ );
+    this._canvas.mesh.set( '_axial_' + this.name, this.sliceXY );
+    this._canvas.mesh.set( '_sagittal_' + this.name, this.sliceYZ );
 
     if( this.clickable ){
-      this._canvas.add_clickable( '_coronal_' + this.name, this._mesh_xz );
-      this._canvas.add_clickable( '_axial_' + this.name, this._mesh_xy );
-      this._canvas.add_clickable( '_sagittal_' + this.name, this._mesh_yz );
+      this._canvas.add_clickable( '_coronal_' + this.name, this.sliceXZ );
+      this._canvas.add_clickable( '_axial_' + this.name, this.sliceXY );
+      this._canvas.add_clickable( '_sagittal_' + this.name, this.sliceYZ );
     }
 
-    // data cube must have groups
+    // data cube must have groups. The group is directly added to scene,
+    // regardlessly
     let gp = this.get_group_object();
     // Move gp to global scene as its center is always 0,0,0
     this._canvas.origin.remove( gp );
@@ -246,17 +257,30 @@ class DataCube extends AbstractThreeBrainObject {
       plane.updateMatrixWorld();
     });
 
-    this.register_object( ['volumes'] );
+    this.register_object( ['slices'] );
 
-    // flaw there, if volume has no subject, then subject_code is '',
-    // if two volumes with '' exists, we lose track of the first volume
-    // and switch_volume will fail in setting this cube invisible
-    // TODO: force subject_code for all volumes or use random string as subject_code
-    // or parse subject_code from volume name
-    if( !this._canvas._has_datacube_registered ){
-      this._canvas._register_datacube( this.object );
-      this._canvas._has_datacube_registered = true;
-    }
+    // Add handlers to set plane location when an electrode is clicked
+    this._canvas.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.isMesh && obj.userData.construct_params ){
+          const pos = obj.getWorldPosition( gp.position.clone() );
+          this.setCrosshair( pos );
+        }
+      },
+      'side_viewer_depth'
+    );
+
+
+    // reset side camera positions
+    // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
+    // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
 
   }
 

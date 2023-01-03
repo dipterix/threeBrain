@@ -20,17 +20,20 @@ function register_controls_background( THREEBRAIN_PRESETS ){
 
         // Set renderer background to be v
         this.canvas.main_renderer.setClearColor(v);
-        this.canvas.side_renderer.setClearColor(v);
-
-        // this.el_text.style.color=inversedColor;
-        // this.el_text2.style.color=inversedColor;
-        // this.el.style.backgroundColor = v;
         this.canvas.el.style.backgroundColor = v;
 
         this.fire_change({ 'background' : v });
 
         // force re-render
         this._update_canvas(0);
+
+        this.canvas.sideCanvasList.coronal.setBackground(v);
+        this.canvas.sideCanvasList.axial.setBackground(v);
+        this.canvas.sideCanvasList.sagittal.setBackground(v);
+
+        // this.el_text.style.color=inversedColor;
+        // this.el_text2.style.color=inversedColor;
+        // this.el.style.backgroundColor = v;
       })
       .setValue( initial_bgcolor );
 

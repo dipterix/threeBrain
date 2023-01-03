@@ -137,7 +137,9 @@ class BrainCanvas{
     }
     if( this._reset_flag ){
       this._reset_flag = false;
-      this.canvas.reset_side_canvas();
+      this.canvas.sideCanvasList.coronal.reset({ zoomLevel: true, position: true, size : true });
+      this.canvas.sideCanvasList.axial.reset({ zoomLevel: true, position: true, size : true });
+      this.canvas.sideCanvasList.sagittal.reset({ zoomLevel: true, position: true, size : true });
     }
     this.canvas.start_animation(0);
   }
@@ -393,24 +395,16 @@ class BrainCanvas{
     if(this.settings.side_camera || false){
 
       // Set canvas zoom-in level
-      this.canvas.side_canvas.coronal.set_zoom_level( this.settings.side_canvas_zoom || 1 );
-      this.canvas.side_canvas.axial.set_zoom_level( this.settings.side_canvas_zoom || 1 );
-      this.canvas.side_canvas.sagittal.set_zoom_level( this.settings.side_canvas_zoom || 1 );
-
-      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.coronal.camera );
-      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.axial.camera );
-      this.canvas.side_renderer.compile( this.canvas.scene, this.canvas.side_canvas.sagittal.camera );
-
       if( this.settings.side_display || false ){
-        this.canvas.enable_side_cameras();
+        this.canvas.enableSideCanvas();
         // reset so that the size is displayed correctly
         this._reset_flag = true;
       }else{
-        this.canvas.disable_side_cameras();
+        this.canvas.disableSideCanvas();
       }
 
     }else{
-      this.canvas.disable_side_cameras();
+      this.canvas.disableSideCanvas();
     }
 
     // Force render canvas

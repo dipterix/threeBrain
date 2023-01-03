@@ -528,7 +528,7 @@ class LocElectrode {
 
 function electrode_from_slice( scode, canvas ){
   if( !canvas._has_datacube_registered ){ return; }
-  const l = canvas.volumes.get(scode);
+  const l = canvas.slices.get(scode);
   const k = Object.keys(l);
   if( !k.length ) { return; }
   const planes = l[k[0]];

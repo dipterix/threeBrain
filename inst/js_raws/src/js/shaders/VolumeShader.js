@@ -4,7 +4,6 @@ import { remove_comments } from '../utils.js';
 const VolumeRenderShader1 = {
     uniforms: {
       cmap: { value: null },
-      mask: { value: null },
       alpha : { value: -1.0 },
       colorChannels : { value: 4 },
       // steps: { value: 300 },
@@ -19,9 +18,7 @@ const VolumeRenderShader1 = {
     vertexShader: remove_comments(`#version 300 es
 precision highp float;
 in vec3 position;
-in vec3 normal;
 uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 cameraPosition;
@@ -32,7 +29,7 @@ uniform float bounding;
 
 out mat4 pmv;
 out vec3 vOrigin;
-out vec3 vDirection;
+// out vec3 vDirection;
 out vec3 vPosition;
 // out vec3 vSamplerBias;
 
@@ -58,7 +55,7 @@ void main() {
   vOriginProjected.z = -vOriginProjected.w;
   vOrigin = (inverse(pmv) * vOriginProjected).xyz;
   // vOrigin = gl_Position.xyw;
-  vDirection = normalize(position - vOrigin);
+  // vDirection = normalize(position - vOrigin);
 
 }
 `),
@@ -67,7 +64,7 @@ precision highp float;
 precision mediump sampler3D;
 in vec3 vOrigin;
 in vec3 vPosition;
-in vec3 vDirection;
+// in vec3 vDirection;
 // in vec3 vSamplerBias;
 in mat4 pmv;
 out vec4 color;
