@@ -153,6 +153,21 @@ class SideCanvas {
 
   }
 
+  _calculateCrosshair( event ) {
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
+    const canvasSize = get_element_size( this.$canvas );
+
+    const right = event.clientX - canvasPosition.left - canvasSize[0]/2;
+    const up = canvasSize[1]/2 + canvasPosition.top - event.clientY;
+
+    this.raiseTop();
+    this.pan({
+      right : right, up : up, unit : "css",
+      updateMainCamera : event.shiftKey
+    });
+  }
 
 
   render() {
@@ -394,41 +409,19 @@ class SideCanvas {
     this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
       evt.preventDefault();
       this._focused = true;
-      const mouseX = evt.clientX;
-      const mouseY = evt.clientY;
-      const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
-      const canvasSize = get_element_size( this.$canvas );
-
-      const right = evt.clientX - canvasPosition.left - canvasSize[0]/2;
-      const up = canvasSize[1]/2 + canvasPosition.top - evt.clientY;
-
-      this.raiseTop();
-      this.pan({
-        right : right, up : up, unit : "css",
-        updateMainCamera : evt.shiftKey
-      });
+      this._calculateCrosshair( evt );
     }, this.$canvas );
+    this.$canvas.oncontextmenu = function (evt) {
+      evt.preventDefault();
+    };
     this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
+      evt.preventDefault();
       this._focused = false;
     }, this.$canvas );
     this.mainCanvas.bind( `${ this.type }_cvs_setCrosshair`, 'mousemove', (evt) => {
       evt.preventDefault();
       if( !this._focused ) { return; }
-
-      const mouseX = evt.clientX;
-      const mouseY = evt.clientY;
-      const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
-      const canvasSize = get_element_size( this.$canvas );
-
-      const right = evt.clientX - canvasPosition.left - canvasSize[0]/2;
-      const up = canvasSize[1]/2 + canvasPosition.top - evt.clientY;
-
-      this.raiseTop();
-      this.pan({
-        right : right, up : up, unit : "css",
-        updateMainCamera : evt.shiftKey
-      });
-
+      this._calculateCrosshair( evt );
     }, this.$canvas );
 
     // Make $canvas scrollable, with changing slices
