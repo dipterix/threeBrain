@@ -78168,14 +78168,16 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this.modelShape = new three_module.Vector3().fromArray( niftiData.shape );
 
       // Make sure to register the initial transform matrix (from IJK to RAS)
+
+      // original g.trans_mat should be nifti RAS to tkrRAS
+      const m = new three_module.Matrix4();
       if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
-        const m = new three_module.Matrix4().set(...g.trans_mat)
-                    .multiply( niftiData.model2RAS );
-        g.trans_mat = m.toArray();
-      } else {
-        g.trans_mat = niftiData.model2RAS.toArray();
+        m.set(...g.trans_mat);
       }
+      // Matrix4 toArray is column-major fatten
+      g.trans_mat = m.multiply( niftiData.model2RAS ).transpose().toArray();
     } else {
+      // g.trans_mat is from model to tkrRAS
       this.voxelData = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
       // width, height, depth of the model (not in world)
       this.modelShape = new three_module.Vector3().fromArray(

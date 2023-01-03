@@ -176,6 +176,8 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
 #' @rdname voxel_cube
 #' @export
 add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGBAFormat", "AlphaFormat")) {
+  # trans_mat is from nifti RAS to tkrRAS
+
   color_format <- match.arg(color_format)
   if ("multi-rave-brain" %in% class(brain)) {
     brain <- brain$template_object
@@ -189,7 +191,7 @@ add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGB
     trans_mat <- diag(rep(1, 4))
   }
   # need to add MRI RAS to tkrRAS to trans_mat
-  trans_mat <- brain$Torig %*% solve(brain$Norig) %*% trans_mat
+  # trans_mat <- brain$Torig %*% solve(brain$Norig) %*% trans_mat
 
   # FIXME: change `Atlas` to Volume and make sure we are backward-compatible
   nm <- sprintf("Atlas - %s (%s)", name, subject)

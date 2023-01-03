@@ -1,5 +1,5 @@
 require(dipsaus)
-brain <- raveio::rave_brain('devel/PAV010')
+brain <- raveio::rave_brain('devel/PAV006')
 # brain$localize
 # brain$volumes$T1$group$group_data$`datacube_value_T1 (PAV010)` <- list(
 #   path = "/Users/dipterix/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/fs/mri/T1.nii",
@@ -10,15 +10,24 @@ brain <- raveio::rave_brain('devel/PAV010')
 #
 #
 # threeBrain::add_voxel_cube
+brain$localize(
+  ct_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/CT_RAW.nii",
+  mri_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/MRI_RAW.nii",
+  transform_matrix = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/ct2t1.mat",
+  transform_space = "fsl"
+)
 
 control_presets <- 'localization'
 controllers <- list()
 controllers[["Highlight Box"]] <- FALSE
 
-ct_path <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/CT_RAW.nii"
-ct_transmat <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/CT_RAS_to_MR_RAS.txt"
+# ct_path <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/CT_RAW.nii"
+# ct_transmat <- as.matrix(read.table("~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/CT_RAS_to_MR_RAS.txt"))
 
-threeBrain:::add_nifti(brain, "CT", path = ct_path, color_format = "AlphaFormat", trans_mat = as.matrix(read.table(ct_transmat)))
+ct_path <- "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/coregistration/ct_in_t1.nii"
+ct_transmat <- brain$Torig %*% solve(brain$Norig)
+
+threeBrain:::add_nifti(brain, "CT", path = ct_path, color_format = "AlphaFormat", trans_mat = ct_transmat)
 
 key <- seq(0, 5000)
 cmap <- threeBrain:::create_colormap(
