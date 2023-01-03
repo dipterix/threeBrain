@@ -71071,7 +71071,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
     reset_fs_index = false,
     enabled_only = true
   } = {}) {
-    const localization_instance = this.object.userData.localization_instance;
+    let localization_instance = this.object.userData.localization_instance;
 
     let enabled = this._enabled !== false;
     if(
@@ -73110,6 +73110,12 @@ class THREE_BRAIN_SHINY {
     // 3. Canvas state
     this.canvas.bind( "report_canvas_state", "canvas.state.onChange", (evt) => {
       const data = Object.fromEntries( this.canvas.state_data );
+      for(let k in data) {
+        const v = data[k];
+        if( v && typeof v === "object" && v.isThreeBrainObject ) {
+          delete data[k];
+        }
+      }
       this.to_shiny2('canvas_state', data);
     }, this.canvas.main_canvas );
 
@@ -73295,10 +73301,7 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
-    const activeSlice = this.canvas.get_state("activeSliceInstance");
-    if( activeSlice && activeSlice.isDataCube ) {
-      activeSlice.setCrosshair( args );
-    }
+    this.canvas.dispatch_event( 'canvas.controllers.drive.slice', args );
   }
 
   // FIXME: this handler is Broken
@@ -74937,6 +74940,7 @@ class SideCanvas {
   render() {
     if( !this._enabled ) { return; }
     this.renderer.clear();
+
     this.renderer.render( this.mainCanvas.scene, this.camera );
   }
 
@@ -75170,7 +75174,21 @@ class SideCanvas {
 
     // Make side canvas clickable
     this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
+      evt.preventDefault();
       this._focused = true;
+      const mouseX = evt.clientX;
+      const mouseY = evt.clientY;
+      const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
+      const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
+
+      const right = evt.clientX - canvasPosition.left - canvasSize[0]/2;
+      const up = canvasSize[1]/2 + canvasPosition.top - evt.clientY;
+
+      this.raiseTop();
+      this.pan({
+        right : right, up : up, unit : "css",
+        updateMainCamera : evt.shiftKey
+      });
     }, this.$canvas );
     this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
       this._focused = false;
@@ -76159,24 +76177,6 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     });
 
     this.register_object( ['slices'] );
-
-    // Add handlers to set plane location when an electrode is clicked
-    this._canvas.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.isMesh && obj.userData.construct_params ){
-          const pos = obj.getWorldPosition( gp.position.clone() );
-          this.setCrosshair( pos );
-        }
-      },
-      'side_viewer_depth'
-    );
 
 
     this.setCrosshair();
@@ -80542,6 +80542,25 @@ class THREEBRAIN_CANVAS {
       'raycaster'
     );
 
+    // Add handlers to set plane location when an electrode is clicked
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.isMesh && obj.userData.construct_params ){
+          const pos = new three_module.Vector3();
+          obj.getWorldPosition( pos );
+          this.dispatch_event( 'canvas.controllers.drive.slice', pos );
+        }
+      },
+      'side_viewer_depth'
+    );
+
     // zoom-in, zoom-out
     this.add_keyboard_callabck( constants/* CONSTANTS.KEY_ZOOM */.t.KEY_ZOOM, (evt) => {
       if( evt.event.shiftKey ){
@@ -80937,7 +80956,7 @@ class THREEBRAIN_CANVAS {
     this.state_data.clear();
     this.shared_data.clear();
     this.color_maps.clear();
-    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+    // this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
     console.log('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
@@ -82090,6 +82109,7 @@ class THREEBRAIN_CANVAS {
       if( renderSlices ) {
         sliceInstance.sliceMaterial.depthWrite = true;
       }
+
     }
 
   }

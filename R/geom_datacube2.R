@@ -54,7 +54,6 @@ DataCubeGeom2 <- R6::R6Class(
   )
 )
 
-#' @export
 NiftiGeom2 <- R6::R6Class(
   classname = "NiftiGeom2",
   inherit = AbstractGeom,

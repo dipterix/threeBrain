@@ -372,7 +372,7 @@ class Sphere extends AbstractThreeBrainObject {
     reset_fs_index = false,
     enabled_only = true
   } = {}) {
-    const localization_instance = this.object.userData.localization_instance;
+    let localization_instance = this.object.userData.localization_instance;
 
     let enabled = this._enabled !== false;
     if(

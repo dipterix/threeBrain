@@ -158,6 +158,7 @@ class SideCanvas {
   render() {
     if( !this._enabled ) { return; }
     this.renderer.clear();
+
     this.renderer.render( this.mainCanvas.scene, this.camera );
   }
 
@@ -391,7 +392,21 @@ class SideCanvas {
 
     // Make side canvas clickable
     this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
+      evt.preventDefault();
       this._focused = true;
+      const mouseX = evt.clientX;
+      const mouseY = evt.clientY;
+      const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
+      const canvasSize = get_element_size( this.$canvas );
+
+      const right = evt.clientX - canvasPosition.left - canvasSize[0]/2;
+      const up = canvasSize[1]/2 + canvasPosition.top - evt.clientY;
+
+      this.raiseTop();
+      this.pan({
+        right : right, up : up, unit : "css",
+        updateMainCamera : evt.shiftKey
+      });
     }, this.$canvas );
     this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
       this._focused = false;

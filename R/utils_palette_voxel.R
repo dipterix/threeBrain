@@ -11,6 +11,8 @@
 #' @param cmap color map object
 #' @param con a file path to write results to or to read from. The
 #' file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.
+#' @param auto_rescale automatically scale the color according to image values;
+#' only valid for continuous color maps
 #' @param ... used by continuous color maps, passed to
 #' \code{\link[grDevices]{colorRampPalette}}
 #'

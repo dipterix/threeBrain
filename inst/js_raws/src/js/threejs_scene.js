@@ -562,6 +562,25 @@ class THREEBRAIN_CANVAS {
       'raycaster'
     );
 
+    // Add handlers to set plane location when an electrode is clicked
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.isMesh && obj.userData.construct_params ){
+          const pos = new Vector3();
+          obj.getWorldPosition( pos );
+          this.dispatch_event( 'canvas.controllers.drive.slice', pos );
+        }
+      },
+      'side_viewer_depth'
+    );
+
     // zoom-in, zoom-out
     this.add_keyboard_callabck( CONSTANTS.KEY_ZOOM, (evt) => {
       if( evt.event.shiftKey ){
@@ -957,7 +976,7 @@ class THREEBRAIN_CANVAS {
     this.state_data.clear();
     this.shared_data.clear();
     this.color_maps.clear();
-    this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+    // this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
     console.log('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
@@ -2110,6 +2129,7 @@ class THREEBRAIN_CANVAS {
       if( renderSlices ) {
         sliceInstance.sliceMaterial.depthWrite = true;
       }
+
     }
 
   }

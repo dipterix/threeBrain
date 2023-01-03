@@ -157,6 +157,12 @@ class THREE_BRAIN_SHINY {
     // 3. Canvas state
     this.canvas.bind( "report_canvas_state", "canvas.state.onChange", (evt) => {
       const data = Object.fromEntries( this.canvas.state_data );
+      for(let k in data) {
+        const v = data[k];
+        if( v && typeof v === "object" && v.isThreeBrainObject ) {
+          delete data[k];
+        }
+      }
       this.to_shiny2('canvas_state', data);
     }, this.canvas.main_canvas );
 
@@ -342,10 +348,7 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
-    const activeSlice = this.canvas.get_state("activeSliceInstance");
-    if( activeSlice && activeSlice.isDataCube ) {
-      activeSlice.setCrosshair( args );
-    }
+    this.canvas.dispatch_event( 'canvas.controllers.drive.slice', args );
   }
 
   // FIXME: this handler is Broken

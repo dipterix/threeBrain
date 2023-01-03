@@ -302,24 +302,6 @@ class DataCube extends AbstractThreeBrainObject {
 
     this.register_object( ['slices'] );
 
-    // Add handlers to set plane location when an electrode is clicked
-    this._canvas.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.isMesh && obj.userData.construct_params ){
-          const pos = obj.getWorldPosition( gp.position.clone() );
-          this.setCrosshair( pos );
-        }
-      },
-      'side_viewer_depth'
-    );
-
 
     this.setCrosshair();
     // reset side camera positions

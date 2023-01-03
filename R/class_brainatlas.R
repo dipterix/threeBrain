@@ -87,7 +87,8 @@ BrainAtlas <- R6::R6Class(
 #' @param name the name of voxel cube, only letters, digits and \code{'_'} are allowed; other characters will be replaced by \code{'_'}
 #' @param cube a 3-mode array; see the following example
 #' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size
-#' @param trans_mat the transform matrix of the volume
+#' @param path 'Nifti' data path
+#' @param trans_mat the transform matrix of the volume. For \code{add_voxel_cube}, this matrix should be from data cube geometry model center to world (\code{'tkrRAS'}) transform. For \code{add_nifti}, this matrix is the 'Nifti' \code{'RAS'} to world (\code{'tkrRAS'}) transform.
 #' @param color_format color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'AlphaFormat'}
 #'
 #' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
