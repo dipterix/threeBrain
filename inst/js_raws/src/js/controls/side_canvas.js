@@ -136,6 +136,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
         if( typeof evt.detail.z === "number" ) {
           _controller_axial.setValue( evt.detail.z );
         }
+        if( evt.detail.centerCrosshair ) {
+          this.canvas.sideCanvasList.coronal.zoom();
+          this.canvas.sideCanvasList.sagittal.zoom();
+          this.canvas.sideCanvasList.axial.zoom();
+        }
       });
 
     const overlay_coronal = this.gui.add_item('Overlay Coronal', false,
@@ -241,11 +246,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     this.gui.add_item('Dist. Threshold', 2, { folder_name: folder_name })
       .min(0).max(64).step(0.1)
       .onChange((v) => {
-        this.canvas.trim_electrodes( v );
+        this.canvas.updateElectrodeVisibilityOnSideCanvas( v );
         this._update_canvas();
         this.fire_change();
       });
-    this.canvas.trim_electrodes( 2 );
+    this.canvas.updateElectrodeVisibilityOnSideCanvas( 2 );
   }
 
   return( THREEBRAIN_PRESETS );

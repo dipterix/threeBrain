@@ -64548,6 +64548,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
         if( typeof evt.detail.z === "number" ) {
           _controller_axial.setValue( evt.detail.z );
         }
+        if( evt.detail.centerCrosshair ) {
+          this.canvas.sideCanvasList.coronal.zoom();
+          this.canvas.sideCanvasList.sagittal.zoom();
+          this.canvas.sideCanvasList.axial.zoom();
+        }
       });
 
     const overlay_coronal = this.gui.add_item('Overlay Coronal', false,
@@ -64653,11 +64658,11 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     this.gui.add_item('Dist. Threshold', 2, { folder_name: folder_name })
       .min(0).max(64).step(0.1)
       .onChange((v) => {
-        this.canvas.trim_electrodes( v );
+        this.canvas.updateElectrodeVisibilityOnSideCanvas( v );
         this._update_canvas();
         this.fire_change();
       });
-    this.canvas.trim_electrodes( 2 );
+    this.canvas.updateElectrodeVisibilityOnSideCanvas( 2 );
   }
 
   return( THREEBRAIN_PRESETS );
@@ -73300,7 +73305,7 @@ class THREE_BRAIN_SHINY {
 
   }
 
-  handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
+  handle_set_plane( args = {x: undefined, y: undefined, z: undefined, centerCrosshair: false} ) {
     this.canvas.dispatch_event( 'canvas.controllers.drive.slice', args );
   }
 
@@ -76068,7 +76073,6 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.sliceYZ.position.x = x;
     this.crosshairGroup.position.x = x;
     this._canvas.set_state( 'sagittal_depth', x );
-    this._canvas.set_state( 'sagittal_posy', x );
 
     if( y === undefined ) {
       y = this._canvas.get_state( 'coronal_depth', 0 );
@@ -76079,7 +76083,6 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.sliceXZ.position.y = y;
     this.crosshairGroup.position.y = y;
     this._canvas.set_state( 'coronal_depth', y );
-    this._canvas.set_state( 'coronal_posy', y );
 
     if( z === undefined ) {
       z = this._canvas.get_state( 'axial_depth', 0 );
@@ -76090,9 +76093,8 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.sliceXY.position.z = z;
     this.crosshairGroup.position.z = z;
     this._canvas.set_state( 'axial_depth', z );
-    this._canvas.set_state( 'axial_posy', z );
 
-    this._canvas.trim_electrodes();
+    this._canvas.updateElectrodeVisibilityOnSideCanvas();
     // Animate on next refresh
     this._canvas.start_animation( 0 );
   }
@@ -80345,29 +80347,31 @@ class THREEBRAIN_CANVAS {
 
     // Mouse helpers
     const mouse_pointer = new three_module.Vector2(),
-        mouse_raycaster = new three_module.Raycaster(),
-        mouse_helper = new three_module.ArrowHelper(new three_module.Vector3( 0, 0, 1 ), new three_module.Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-        mouse_helper_root = new three_module.Mesh(
-          new three_module.BoxBufferGeometry( 4,4,4 ),
-          new three_module.MeshBasicMaterial({ color : 0xff0000 })
-        );
+        mouse_raycaster = new three_module.Raycaster();
+    // const mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
+    //     mouse_helper_root = new Mesh(
+    //       new BoxBufferGeometry( 4,4,4 ),
+    //       new MeshBasicMaterial({ color : 0xff0000 })
+    //     );
 
     // root is a green cube that's only visible in side cameras
-    mouse_helper_root.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 */.t.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    mouse_helper.children.forEach( el => { el.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 */.t.LAYER_SYS_ALL_SIDE_CAMERAS_13 ); } );
+    // mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+    // mouse_helper.children.forEach( el => {
+    //   el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+    // } );
 
     // In side cameras, always render mouse_helper_root on top
-    mouse_helper_root.renderOrder = constants/* CONSTANTS.MAX_RENDER_ORDER */.t.MAX_RENDER_ORDER;
-    mouse_helper_root.material.depthTest = false;
+    // mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
+    // mouse_helper_root.material.depthTest = false;
     // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
-    mouse_helper.add( mouse_helper_root );
+    // mouse_helper.add( mouse_helper_root );
 
-    this.mouse_helper = mouse_helper;
+    // this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
 
-    this.add_to_scene(mouse_helper, true);
+    // this.add_to_scene(mouse_helper, true);
 
     this.focus_box = new three_module.BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
@@ -80529,12 +80533,12 @@ class THREEBRAIN_CANVAS {
             direction.applyMatrix3(new three_module.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
           }
 
-          this.mouse_helper.position.fromArray( (0,utils/* to_array */.AA)(from) );
-          this.mouse_helper.setDirection(direction);
-          this.mouse_helper.visible = true;
+          // this.mouse_helper.position.fromArray( to_array(from) );
+          // this.mouse_helper.setDirection(direction);
+          // this.mouse_helper.visible = true;
 
         }else{
-          this.mouse_helper.visible = false;
+          // this.mouse_helper.visible = false;
         }
 
         this.start_animation(0);
@@ -80555,7 +80559,12 @@ class THREEBRAIN_CANVAS {
         if( obj && obj.isMesh && obj.userData.construct_params ){
           const pos = new three_module.Vector3();
           obj.getWorldPosition( pos );
-          this.dispatch_event( 'canvas.controllers.drive.slice', pos );
+          this.dispatch_event( 'canvas.controllers.drive.slice', {
+            x : pos.x,
+            y : pos.y,
+            z : pos.z,
+            centerCrosshair : true
+          } );
         }
       },
       'side_viewer_depth'
@@ -81384,10 +81393,10 @@ class THREEBRAIN_CANVAS {
       this.highlight( this.object_chosen, false );
       console.debug('object selected ' + m.name);
 
-      if( helper ){
-        m.getWorldPosition( this.mouse_helper.position );
-        this.mouse_helper.visible = true;
-      }
+      // if( helper ){
+      //   m.getWorldPosition( this.mouse_helper.position );
+      //   this.mouse_helper.visible = true;
+      // }
 
 
     }else{
@@ -81396,7 +81405,7 @@ class THREEBRAIN_CANVAS {
           this.highlight( this.object_chosen, true );
           this.object_chosen = undefined;
         }
-        this.mouse_helper.visible = false;
+        // this.mouse_helper.visible = false;
       }
     }
   }
@@ -83245,15 +83254,15 @@ mapped = false,
   }
 
   // Only show electrodes near 3 planes
-  trim_electrodes( distance ){
+  updateElectrodeVisibilityOnSideCanvas( distance ){
     if( typeof distance !== 'number' ){
       distance = this.get_state( 'threshold_electrode_plane', Infinity);
     }else{
       this.set_state( 'threshold_electrode_plane', distance );
     }
-    const _x = this.get_state( 'sagittal_posx', 0);
-    const _y = this.get_state( 'coronal_posy', 0);
-    const _z = this.get_state( 'axial_posz', 0);
+    const _x = this.get_state( 'sagittal_depth', 0);
+    const _y = this.get_state( 'coronal_depth', 0);
+    const _z = this.get_state( 'axial_depth', 0);
     const plane_pos = new three_module.Vector3().set( _x, _y, _z );
     const diff = new three_module.Vector3();
 

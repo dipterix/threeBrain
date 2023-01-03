@@ -365,29 +365,31 @@ class THREEBRAIN_CANVAS {
 
     // Mouse helpers
     const mouse_pointer = new Vector2(),
-        mouse_raycaster = new Raycaster(),
-        mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-        mouse_helper_root = new Mesh(
-          new BoxBufferGeometry( 4,4,4 ),
-          new MeshBasicMaterial({ color : 0xff0000 })
-        );
+        mouse_raycaster = new Raycaster();
+    // const mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
+    //     mouse_helper_root = new Mesh(
+    //       new BoxBufferGeometry( 4,4,4 ),
+    //       new MeshBasicMaterial({ color : 0xff0000 })
+    //     );
 
     // root is a green cube that's only visible in side cameras
-    mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    mouse_helper.children.forEach( el => { el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 ); } );
+    // mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+    // mouse_helper.children.forEach( el => {
+    //   el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+    // } );
 
     // In side cameras, always render mouse_helper_root on top
-    mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
-    mouse_helper_root.material.depthTest = false;
+    // mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
+    // mouse_helper_root.material.depthTest = false;
     // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
 
-    mouse_helper.add( mouse_helper_root );
+    // mouse_helper.add( mouse_helper_root );
 
-    this.mouse_helper = mouse_helper;
+    // this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
 
-    this.add_to_scene(mouse_helper, true);
+    // this.add_to_scene(mouse_helper, true);
 
     this.focus_box = new BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
@@ -549,12 +551,12 @@ class THREEBRAIN_CANVAS {
             direction.applyMatrix3(new Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
           }
 
-          this.mouse_helper.position.fromArray( to_array(from) );
-          this.mouse_helper.setDirection(direction);
-          this.mouse_helper.visible = true;
+          // this.mouse_helper.position.fromArray( to_array(from) );
+          // this.mouse_helper.setDirection(direction);
+          // this.mouse_helper.visible = true;
 
         }else{
-          this.mouse_helper.visible = false;
+          // this.mouse_helper.visible = false;
         }
 
         this.start_animation(0);
@@ -575,7 +577,12 @@ class THREEBRAIN_CANVAS {
         if( obj && obj.isMesh && obj.userData.construct_params ){
           const pos = new Vector3();
           obj.getWorldPosition( pos );
-          this.dispatch_event( 'canvas.controllers.drive.slice', pos );
+          this.dispatch_event( 'canvas.controllers.drive.slice', {
+            x : pos.x,
+            y : pos.y,
+            z : pos.z,
+            centerCrosshair : true
+          } );
         }
       },
       'side_viewer_depth'
@@ -1404,10 +1411,10 @@ class THREEBRAIN_CANVAS {
       this.highlight( this.object_chosen, false );
       console.debug('object selected ' + m.name);
 
-      if( helper ){
-        m.getWorldPosition( this.mouse_helper.position );
-        this.mouse_helper.visible = true;
-      }
+      // if( helper ){
+      //   m.getWorldPosition( this.mouse_helper.position );
+      //   this.mouse_helper.visible = true;
+      // }
 
 
     }else{
@@ -1416,7 +1423,7 @@ class THREEBRAIN_CANVAS {
           this.highlight( this.object_chosen, true );
           this.object_chosen = undefined;
         }
-        this.mouse_helper.visible = false;
+        // this.mouse_helper.visible = false;
       }
     }
   }
@@ -3265,15 +3272,15 @@ mapped = false,
   }
 
   // Only show electrodes near 3 planes
-  trim_electrodes( distance ){
+  updateElectrodeVisibilityOnSideCanvas( distance ){
     if( typeof distance !== 'number' ){
       distance = this.get_state( 'threshold_electrode_plane', Infinity);
     }else{
       this.set_state( 'threshold_electrode_plane', distance );
     }
-    const _x = this.get_state( 'sagittal_posx', 0);
-    const _y = this.get_state( 'coronal_posy', 0);
-    const _z = this.get_state( 'axial_posz', 0);
+    const _x = this.get_state( 'sagittal_depth', 0);
+    const _y = this.get_state( 'coronal_depth', 0);
+    const _z = this.get_state( 'axial_depth', 0);
     const plane_pos = new Vector3().set( _x, _y, _z );
     const diff = new Vector3();
 

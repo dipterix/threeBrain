@@ -192,7 +192,6 @@ class DataCube extends AbstractThreeBrainObject {
     this.sliceYZ.position.x = x;
     this.crosshairGroup.position.x = x;
     this._canvas.set_state( 'sagittal_depth', x );
-    this._canvas.set_state( 'sagittal_posy', x );
 
     if( y === undefined ) {
       y = this._canvas.get_state( 'coronal_depth', 0 );
@@ -203,7 +202,6 @@ class DataCube extends AbstractThreeBrainObject {
     this.sliceXZ.position.y = y;
     this.crosshairGroup.position.y = y;
     this._canvas.set_state( 'coronal_depth', y );
-    this._canvas.set_state( 'coronal_posy', y );
 
     if( z === undefined ) {
       z = this._canvas.get_state( 'axial_depth', 0 );
@@ -214,9 +212,8 @@ class DataCube extends AbstractThreeBrainObject {
     this.sliceXY.position.z = z;
     this.crosshairGroup.position.z = z;
     this._canvas.set_state( 'axial_depth', z );
-    this._canvas.set_state( 'axial_posy', z );
 
-    this._canvas.trim_electrodes();
+    this._canvas.updateElectrodeVisibilityOnSideCanvas();
     // Animate on next refresh
     this._canvas.start_animation( 0 );
   }

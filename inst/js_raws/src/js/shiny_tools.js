@@ -347,7 +347,7 @@ class THREE_BRAIN_SHINY {
 
   }
 
-  handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
+  handle_set_plane( args = {x: undefined, y: undefined, z: undefined, centerCrosshair: false} ) {
     this.canvas.dispatch_event( 'canvas.controllers.drive.slice', args );
   }
 
