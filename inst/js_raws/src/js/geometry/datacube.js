@@ -1,9 +1,9 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { CONSTANTS } from '../constants.js';
 import { to_array, get_or_default } from '../utils.js';
-import { LineBasicMaterial, BufferGeometry, DataTexture3D, RedFormat, LinearFilter,
+import { Object3D, LineBasicMaterial, BufferGeometry, DataTexture3D, RedFormat, LinearFilter,
          UnsignedByteType, RawShaderMaterial, Vector3, DoubleSide, UniformsUtils,
-         PlaneBufferGeometry, Mesh, Line } from '../../build/three.module.js';
+         PlaneBufferGeometry, Mesh, LineSegments } from '../../build/three.module.js';
 import { SliceShader } from '../shaders/SliceShader.js';
 import { Volume2dArrayShader_xy, Volume2dArrayShader_xz,
          Volume2dArrayShader_yz } from '../shaders/Volume2DShader.js';
@@ -28,6 +28,7 @@ class DataCube extends AbstractThreeBrainObject {
 
     this.type = 'DataCube';
     this.isDataCube = true;
+    this.mainCanvasActive = false;
 
     // get cube (volume) data
     this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
@@ -85,36 +86,57 @@ class DataCube extends AbstractThreeBrainObject {
 
   	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
 
-  	// generate diagonal line of the plane which will appear as crosshair
-    const crosshairGeometry = new BufferGeometry();
-    const crosshairMaterial = new LineBasicMaterial({ color: 0x00ff00, transparent: true });
-    crosshairGeometry.depthTest = false;
-    crosshairGeometry.setFromPoints( [ new Vector3( -128, -128, 0 ), new Vector3( 128, 128, 0 ) ] );
-    this.crosshairGeometry = crosshairGeometry;
-    this.crosshairMaterial = crosshairMaterial;
+  	// generate crosshair
+  	this.crosshairGroup = new Object3D();
+  	const crosshairGeometryLR = new BufferGeometry()
+  	  .setFromPoints([
+  	    new Vector3( -256, 0, 0 ), new Vector3( -4, 0, 0 ),
+  	    new Vector3( 4, 0, 0 ), new Vector3( 256, 0, 0 )
+  	  ]);
+  	const crosshairMaterialLR = new LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairLR = new LineSegments( crosshairGeometryLR, crosshairMaterialLR );
+    this.crosshairLR.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    this.crosshairLR.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
+    this.crosshairLR.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
+    this.crosshairGroup.add( this.crosshairLR );
 
-    const crosshairXZ = new Line( crosshairGeometry, crosshairMaterial ),
-          crosshairXY = new Line( crosshairGeometry, crosshairMaterial ),
-          crosshairYZ = new Line( crosshairGeometry, crosshairMaterial );
-    crosshairXZ.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
-    crosshairXY.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
-    crosshairYZ.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
-    crosshairXZ.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
-    crosshairXZ.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-    crosshairXY.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
-    crosshairXY.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
-    crosshairYZ.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
-    crosshairYZ.layers.enable( CONSTANTS.LAYER_SYS_AXIAL_10 );
-    sliceMeshXZ.add( crosshairXZ );
-    sliceMeshXY.add( crosshairXY );
-    sliceMeshYZ.add( crosshairYZ );
+    const crosshairGeometryPA = new BufferGeometry()
+  	  .setFromPoints([
+  	    new Vector3( 0, -256, 0 ), new Vector3( 0, -4, 0 ),
+  	    new Vector3( 0, 4, 0 ), new Vector3( 0, 256, 0 )
+  	  ]);
+  	const crosshairMaterialPA = new LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairPA = new LineSegments( crosshairGeometryPA, crosshairMaterialPA );
+    this.crosshairPA.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    this.crosshairPA.layers.set( CONSTANTS.LAYER_SYS_AXIAL_10 );
+    this.crosshairPA.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+    this.crosshairGroup.add( this.crosshairPA );
+
+    const crosshairGeometryIS = new BufferGeometry()
+  	  .setFromPoints([
+  	    new Vector3( 0, 0, -256 ), new Vector3( 0, 0, -4 ),
+  	    new Vector3( 0, 0, 4 ), new Vector3( 0, 0, 256 )
+  	  ]);
+  	const crosshairMaterialIS = new LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairIS = new LineSegments( crosshairGeometryIS, crosshairMaterialIS );
+    this.crosshairIS.renderOrder = CONSTANTS.RENDER_ORDER.DataCube;
+    this.crosshairIS.layers.set( CONSTANTS.LAYER_SYS_CORONAL_9 );
+    this.crosshairIS.layers.enable( CONSTANTS.LAYER_SYS_SAGITTAL_11 );
+    this.crosshairGroup.add( this.crosshairIS );
+
 
     sliceMeshXY.userData.dispose = () => {
   	  sliceMaterial.dispose();
   	  sliceGeometryXY.dispose();
-      crosshairGeometry.dispose();
-      crosshairMaterial.dispose();
       this.dataTexture.dispose();
+      this.crosshairIS.geometry.dispose();
+      this.crosshairIS.material.dispose();
     };
     sliceMeshXY.userData.instance = this;
     this.sliceXY = sliceMeshXY;
@@ -122,9 +144,9 @@ class DataCube extends AbstractThreeBrainObject {
     sliceMeshXZ.userData.dispose = () => {
   	  sliceMaterial.dispose();
   	  sliceGeometryXZ.dispose();
-      crosshairGeometry.dispose();
-      crosshairMaterial.dispose();
       this.dataTexture.dispose();
+      this.crosshairPA.geometry.dispose();
+      this.crosshairPA.material.dispose();
     };
     sliceMeshXZ.userData.instance = this;
     this.sliceXZ = sliceMeshXZ;
@@ -132,17 +154,21 @@ class DataCube extends AbstractThreeBrainObject {
     sliceMeshYZ.userData.dispose = () => {
   	  sliceMaterial.dispose();
   	  sliceGeometryYZ.dispose();
-      crosshairGeometry.dispose();
-      crosshairMaterial.dispose();
       this.dataTexture.dispose();
+      this.crosshairLR.geometry.dispose();
+      this.crosshairLR.material.dispose();
     };
     sliceMeshYZ.userData.instance = this;
     this.sliceYZ = sliceMeshYZ;
   }
 
   dispose(){
-    this.crosshairMaterial.dispose();
-    this.crosshairGeometry.dispose();
+    this.crosshairLR.geometry.dispose();
+    this.crosshairLR.material.dispose();
+    this.crosshairPA.geometry.dispose();
+    this.crosshairPA.material.dispose();
+    this.crosshairIS.geometry.dispose();
+    this.crosshairIS.material.dispose();
     this.sliceMaterial.dispose();
     this.sliceGeometryXY.dispose();
     this.sliceGeometryXZ.dispose();
@@ -155,73 +181,84 @@ class DataCube extends AbstractThreeBrainObject {
   pre_render( results ){}
 
   setCrosshair({ x, y, z } = {}) {
-    let changed = false;
-    if( x !== undefined ) {
-      // set sagittal
-      if( x > 128 ) { x = 128; }
-      if( x < -128 ) { x = -128; }
-      this.sliceYZ.position.x = x;
-      this._canvas.set_state( 'sagittal_depth', x );
-      this._canvas.set_state( 'sagittal_posy', x );
-      changed = true;
+    if( x === undefined ) {
+      x = this._canvas.get_state( 'sagittal_depth', 0 );
     }
-    if( y !== undefined ) {
-      // set coronal
-      if( y > 128 ) { y = 128; }
-      if( y < -128 ) { y = -128; }
-      this.sliceXZ.position.y = y;
-      this._canvas.set_state( 'coronal_depth', y );
-      this._canvas.set_state( 'coronal_posy', y );
-      changed = true;
+    // set sagittal
+    if( x > 128 ) { x = 128; }
+    if( x < -128 ) { x = -128; }
+    this.sliceYZ.position.x = x;
+    this.crosshairGroup.position.x = x;
+    this._canvas.set_state( 'sagittal_depth', x );
+    this._canvas.set_state( 'sagittal_posy', x );
+
+    if( y === undefined ) {
+      y = this._canvas.get_state( 'coronal_depth', 0 );
     }
-    if( z !== undefined ) {
-      // set axial
-      if( z > 128 ) { z = 128; }
-      if( z < -128 ) { z = -128; }
-      this.sliceXY.position.z = z;
-      this._canvas.set_state( 'axial_depth', z );
-      this._canvas.set_state( 'axial_posy', z );
-      changed = true;
+    // set coronal
+    if( y > 128 ) { y = 128; }
+    if( y < -128 ) { y = -128; }
+    this.sliceXZ.position.y = y;
+    this.crosshairGroup.position.y = y;
+    this._canvas.set_state( 'coronal_depth', y );
+    this._canvas.set_state( 'coronal_posy', y );
+
+    if( z === undefined ) {
+      z = this._canvas.get_state( 'axial_depth', 0 );
     }
-    if( changed ) {
-      this._canvas.trim_electrodes();
-      // Animate on next refresh
-      this._canvas.start_animation( 0 );
-    }
+    // set axial
+    if( z > 128 ) { z = 128; }
+    if( z < -128 ) { z = -128; }
+    this.sliceXY.position.z = z;
+    this.crosshairGroup.position.z = z;
+    this._canvas.set_state( 'axial_depth', z );
+    this._canvas.set_state( 'axial_posy', z );
+
+    this._canvas.trim_electrodes();
+    // Animate on next refresh
+    this._canvas.start_animation( 0 );
   }
 
-  showPlane( which ) {
+  showSlices( which ) {
     const planType = to_array( which );
     if( planType.length === 0 ) { return; }
     if( planType.includes( 'coronal' ) ) {
       this.sliceXZ.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'coronal_overlay', true );
+      this.coronalActive = true;
     }
     if( planType.includes( 'sagittal' ) ) {
       this.sliceYZ.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'sagittal_overlay', true );
+      this.sagittalActive = true;
     }
     if( planType.includes( 'axial' ) ) {
       this.sliceXY.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'axial_overlay', true );
+      this.axialActive = true;
     }
-    this._canvas.start_animation( 0 );
+    // update crosshair to latest version
+    this.setCrosshair();
+    // this._canvas.start_animation( 0 );
   }
 
-  hidePlane( which ) {
+  hideSlices( which ) {
     const planType = to_array( which );
     if( planType.length === 0 ) { return; }
     if( planType.includes( 'coronal' ) ) {
       this.sliceXZ.layers.disable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'coronal_overlay', false );
+      this.coronalActive = false;
     }
     if( planType.includes( 'sagittal' ) ) {
       this.sliceYZ.layers.disable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'sagittal_overlay', false );
+      this.sagittalActive = false;
     }
     if( planType.includes( 'axial' ) ) {
       this.sliceXY.layers.disable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'axial_overlay', false );
+      this.axialActive = false;
     }
     this._canvas.start_animation( 0 );
   }
@@ -245,6 +282,7 @@ class DataCube extends AbstractThreeBrainObject {
     let gp = this.get_group_object();
     // Move gp to global scene as its center is always 0,0,0
     this._canvas.origin.remove( gp );
+    gp.add( this.crosshairGroup );
     this._canvas.scene.add( gp );
 
     // set layer, add tp group
@@ -278,6 +316,7 @@ class DataCube extends AbstractThreeBrainObject {
     );
 
 
+    this.setCrosshair();
     // reset side camera positions
     // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
     // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );

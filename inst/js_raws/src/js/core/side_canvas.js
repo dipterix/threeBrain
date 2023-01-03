@@ -192,12 +192,15 @@ class SideCanvas {
     switch (type) {
       case 'coronal':
         this.order = 0;
+        this._headerText = "CORONAL (R=R)"
         break;
       case 'axial':
         this.order = 1;
+        this._headerText = "AXIAL (R=R)"
         break;
       case 'sagittal':
         this.order = 2;
+        this._headerText = "SAGITTAL";
         break;
       default:
         throw 'SideCanvas: type must be coronal, sagittal, or axial';
@@ -225,7 +228,7 @@ class SideCanvas {
 
     // Make header
     this.$header = document.createElement('div');
-    this.$header.innerText = type.toUpperCase();
+    this.$header.innerText = this._headerText; //type.toUpperCase();
     this.$header.className = 'THREEBRAIN-SIDE-HEADER';
     this.$header.id = this._container_id + '__' + type + 'header';
     this.$el.appendChild( this.$header );

@@ -130,7 +130,13 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const overlay_coronal = this.gui.add_item('Overlay Coronal', false,
       {folder_name: folder_name})
       .onChange((v) => {
-        this.canvas.set_side_visibility('coronal', v);
+        const sliceInstance = this.canvas.state_data.get( "activeSliceInstance" );
+        if( !sliceInstance || !sliceInstance.isDataCube ) { return; }
+        if( v ) {
+          sliceInstance.showSlices([ 'coronal' ]);
+        } else {
+          sliceInstance.hideSlices([ 'coronal' ]);
+        }
         this.fire_change({ 'coronal_visibility' : v });
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL, 'Overlay Coronal', folder_name);
@@ -138,7 +144,13 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const overlay_axial = this.gui.add_item('Overlay Axial', false,
       {folder_name: folder_name})
       .onChange((v) => {
-        this.canvas.set_side_visibility('axial', v);
+        const sliceInstance = this.canvas.state_data.get( "activeSliceInstance" );
+        if( !sliceInstance || !sliceInstance.isDataCube ) { return; }
+        if( v ) {
+          sliceInstance.showSlices([ 'axial' ]);
+        } else {
+          sliceInstance.hideSlices([ 'axial' ]);
+        }
         this.fire_change({ 'axial_visibility' : v });
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL, 'Overlay Axial', folder_name);
@@ -146,7 +158,13 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const overlay_sagittal = this.gui.add_item('Overlay Sagittal', false,
       {folder_name: folder_name})
       .onChange((v) => {
-        this.canvas.set_side_visibility('sagittal', v);
+        const sliceInstance = this.canvas.state_data.get( "activeSliceInstance" );
+        if( !sliceInstance || !sliceInstance.isDataCube ) { return; }
+        if( v ) {
+          sliceInstance.showSlices([ 'sagittal' ]);
+        } else {
+          sliceInstance.hideSlices([ 'sagittal' ]);
+        }
         this.fire_change({ 'sagittal_visibility' : v });
       });
     this.gui.add_tooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL, 'Overlay Sagittal', folder_name);

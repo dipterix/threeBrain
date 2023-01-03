@@ -64542,7 +64542,13 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const overlay_coronal = this.gui.add_item('Overlay Coronal', false,
       {folder_name: folder_name})
       .onChange((v) => {
-        this.canvas.set_side_visibility('coronal', v);
+        const sliceInstance = this.canvas.state_data.get( "activeSliceInstance" );
+        if( !sliceInstance || !sliceInstance.isDataCube ) { return; }
+        if( v ) {
+          sliceInstance.showSlices([ 'coronal' ]);
+        } else {
+          sliceInstance.hideSlices([ 'coronal' ]);
+        }
         this.fire_change({ 'coronal_visibility' : v });
       });
     this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL */.t.TOOLTIPS.KEY_OVERLAY_CORONAL, 'Overlay Coronal', folder_name);
@@ -64550,7 +64556,13 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const overlay_axial = this.gui.add_item('Overlay Axial', false,
       {folder_name: folder_name})
       .onChange((v) => {
-        this.canvas.set_side_visibility('axial', v);
+        const sliceInstance = this.canvas.state_data.get( "activeSliceInstance" );
+        if( !sliceInstance || !sliceInstance.isDataCube ) { return; }
+        if( v ) {
+          sliceInstance.showSlices([ 'axial' ]);
+        } else {
+          sliceInstance.hideSlices([ 'axial' ]);
+        }
         this.fire_change({ 'axial_visibility' : v });
       });
     this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL */.t.TOOLTIPS.KEY_OVERLAY_AXIAL, 'Overlay Axial', folder_name);
@@ -64558,7 +64570,13 @@ function register_controls_side_canvas( THREEBRAIN_PRESETS ){
     const overlay_sagittal = this.gui.add_item('Overlay Sagittal', false,
       {folder_name: folder_name})
       .onChange((v) => {
-        this.canvas.set_side_visibility('sagittal', v);
+        const sliceInstance = this.canvas.state_data.get( "activeSliceInstance" );
+        if( !sliceInstance || !sliceInstance.isDataCube ) { return; }
+        if( v ) {
+          sliceInstance.showSlices([ 'sagittal' ]);
+        } else {
+          sliceInstance.hideSlices([ 'sagittal' ]);
+        }
         this.fire_change({ 'sagittal_visibility' : v });
       });
     this.gui.add_tooltip( constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL */.t.TOOLTIPS.KEY_OVERLAY_SAGITTAL, 'Overlay Sagittal', folder_name);
@@ -74947,12 +74965,15 @@ class SideCanvas {
     switch (type) {
       case 'coronal':
         this.order = 0;
+        this._headerText = "CORONAL (R=R)"
         break;
       case 'axial':
         this.order = 1;
+        this._headerText = "AXIAL (R=R)"
         break;
       case 'sagittal':
         this.order = 2;
+        this._headerText = "SAGITTAL";
         break;
       default:
         throw 'SideCanvas: type must be coronal, sagittal, or axial';
@@ -74980,7 +75001,7 @@ class SideCanvas {
 
     // Make header
     this.$header = document.createElement('div');
-    this.$header.innerText = type.toUpperCase();
+    this.$header.innerText = this._headerText; //type.toUpperCase();
     this.$header.className = 'THREEBRAIN-SIDE-HEADER';
     this.$header.id = this._container_id + '__' + type + 'header';
     this.$el.appendChild( this.$header );
@@ -75108,8 +75129,8 @@ class SideCanvas {
           throw 'SideCanvas: type must be coronal, sagittal, or axial';
       }
 
-      console.log(`x: ${depthX}, y: ${depthY} of [${canvasSize[0]}, ${canvasSize[1]}]`);
-      console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
+      //console.log(`x: ${depthX}, y: ${depthY} of [${canvasSize[0]}, ${canvasSize[1]}]`);
+      //console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
 
       // update slice depths
       const sliceInstance = this.mainCanvas.state_data.get( "activeSliceInstance" );
@@ -75217,22 +75238,6 @@ class SideCanvas {
     this.mainCanvas.add_to_scene( this.camera, true );
     this.mainCanvas.add_to_scene( this.directionalLight, true );
     this.mainCanvas.wrapper_canvas.appendChild( this.$el );
-
-
-    let helper;
-    switch ( this.type ) {
-      case 'coronal':
-        helper = new THREE.DirectionalLightHelper( this.directionalLight, 5, 0xff0000 );
-        break;
-      case 'axial':
-        helper = new THREE.DirectionalLightHelper( this.directionalLight, 5, 0x00ff00 );
-        break;
-      case 'sagittal':
-        helper = new THREE.DirectionalLightHelper( this.directionalLight, 5, 0x0000ff );
-        break;
-    }
-    this.mainCanvas.add_to_scene( helper, true );
-
 
     /*
       this.sideCanvasList[ nm ] = {
@@ -75854,6 +75859,7 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     this.type = 'DataCube';
     this.isDataCube = true;
+    this.mainCanvasActive = false;
 
     // get cube (volume) data
     this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
@@ -75911,36 +75917,57 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
   	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
 
-  	// generate diagonal line of the plane which will appear as crosshair
-    const crosshairGeometry = new three_module.BufferGeometry();
-    const crosshairMaterial = new three_module.LineBasicMaterial({ color: 0x00ff00, transparent: true });
-    crosshairGeometry.depthTest = false;
-    crosshairGeometry.setFromPoints( [ new three_module.Vector3( -128, -128, 0 ), new three_module.Vector3( 128, 128, 0 ) ] );
-    this.crosshairGeometry = crosshairGeometry;
-    this.crosshairMaterial = crosshairMaterial;
+  	// generate crosshair
+  	this.crosshairGroup = new three_module.Object3D();
+  	const crosshairGeometryLR = new three_module.BufferGeometry()
+  	  .setFromPoints([
+  	    new three_module.Vector3( -256, 0, 0 ), new three_module.Vector3( -4, 0, 0 ),
+  	    new three_module.Vector3( 4, 0, 0 ), new three_module.Vector3( 256, 0, 0 )
+  	  ]);
+  	const crosshairMaterialLR = new three_module.LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairLR = new three_module.LineSegments( crosshairGeometryLR, crosshairMaterialLR );
+    this.crosshairLR.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    this.crosshairLR.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    this.crosshairLR.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    this.crosshairGroup.add( this.crosshairLR );
 
-    const crosshairXZ = new three_module.Line( crosshairGeometry, crosshairMaterial ),
-          crosshairXY = new three_module.Line( crosshairGeometry, crosshairMaterial ),
-          crosshairYZ = new three_module.Line( crosshairGeometry, crosshairMaterial );
-    crosshairXZ.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    crosshairXY.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    crosshairYZ.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    crosshairXZ.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-    crosshairXZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-    crosshairXY.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-    crosshairXY.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-    crosshairYZ.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-    crosshairYZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-    sliceMeshXZ.add( crosshairXZ );
-    sliceMeshXY.add( crosshairXY );
-    sliceMeshYZ.add( crosshairYZ );
+    const crosshairGeometryPA = new three_module.BufferGeometry()
+  	  .setFromPoints([
+  	    new three_module.Vector3( 0, -256, 0 ), new three_module.Vector3( 0, -4, 0 ),
+  	    new three_module.Vector3( 0, 4, 0 ), new three_module.Vector3( 0, 256, 0 )
+  	  ]);
+  	const crosshairMaterialPA = new three_module.LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairPA = new three_module.LineSegments( crosshairGeometryPA, crosshairMaterialPA );
+    this.crosshairPA.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    this.crosshairPA.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    this.crosshairPA.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+    this.crosshairGroup.add( this.crosshairPA );
+
+    const crosshairGeometryIS = new three_module.BufferGeometry()
+  	  .setFromPoints([
+  	    new three_module.Vector3( 0, 0, -256 ), new three_module.Vector3( 0, 0, -4 ),
+  	    new three_module.Vector3( 0, 0, 4 ), new three_module.Vector3( 0, 0, 256 )
+  	  ]);
+  	const crosshairMaterialIS = new three_module.LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairIS = new three_module.LineSegments( crosshairGeometryIS, crosshairMaterialIS );
+    this.crosshairIS.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    this.crosshairIS.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    this.crosshairIS.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+    this.crosshairGroup.add( this.crosshairIS );
+
 
     sliceMeshXY.userData.dispose = () => {
   	  sliceMaterial.dispose();
   	  sliceGeometryXY.dispose();
-      crosshairGeometry.dispose();
-      crosshairMaterial.dispose();
       this.dataTexture.dispose();
+      this.crosshairIS.geometry.dispose();
+      this.crosshairIS.material.dispose();
     };
     sliceMeshXY.userData.instance = this;
     this.sliceXY = sliceMeshXY;
@@ -75948,9 +75975,9 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     sliceMeshXZ.userData.dispose = () => {
   	  sliceMaterial.dispose();
   	  sliceGeometryXZ.dispose();
-      crosshairGeometry.dispose();
-      crosshairMaterial.dispose();
       this.dataTexture.dispose();
+      this.crosshairPA.geometry.dispose();
+      this.crosshairPA.material.dispose();
     };
     sliceMeshXZ.userData.instance = this;
     this.sliceXZ = sliceMeshXZ;
@@ -75958,17 +75985,21 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     sliceMeshYZ.userData.dispose = () => {
   	  sliceMaterial.dispose();
   	  sliceGeometryYZ.dispose();
-      crosshairGeometry.dispose();
-      crosshairMaterial.dispose();
       this.dataTexture.dispose();
+      this.crosshairLR.geometry.dispose();
+      this.crosshairLR.material.dispose();
     };
     sliceMeshYZ.userData.instance = this;
     this.sliceYZ = sliceMeshYZ;
   }
 
   dispose(){
-    this.crosshairMaterial.dispose();
-    this.crosshairGeometry.dispose();
+    this.crosshairLR.geometry.dispose();
+    this.crosshairLR.material.dispose();
+    this.crosshairPA.geometry.dispose();
+    this.crosshairPA.material.dispose();
+    this.crosshairIS.geometry.dispose();
+    this.crosshairIS.material.dispose();
     this.sliceMaterial.dispose();
     this.sliceGeometryXY.dispose();
     this.sliceGeometryXZ.dispose();
@@ -75981,73 +76012,84 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
   pre_render( results ){}
 
   setCrosshair({ x, y, z } = {}) {
-    let changed = false;
-    if( x !== undefined ) {
-      // set sagittal
-      if( x > 128 ) { x = 128; }
-      if( x < -128 ) { x = -128; }
-      this.sliceYZ.position.x = x;
-      this._canvas.set_state( 'sagittal_depth', x );
-      this._canvas.set_state( 'sagittal_posy', x );
-      changed = true;
+    if( x === undefined ) {
+      x = this._canvas.get_state( 'sagittal_depth', 0 );
     }
-    if( y !== undefined ) {
-      // set coronal
-      if( y > 128 ) { y = 128; }
-      if( y < -128 ) { y = -128; }
-      this.sliceXZ.position.y = y;
-      this._canvas.set_state( 'coronal_depth', y );
-      this._canvas.set_state( 'coronal_posy', y );
-      changed = true;
+    // set sagittal
+    if( x > 128 ) { x = 128; }
+    if( x < -128 ) { x = -128; }
+    this.sliceYZ.position.x = x;
+    this.crosshairGroup.position.x = x;
+    this._canvas.set_state( 'sagittal_depth', x );
+    this._canvas.set_state( 'sagittal_posy', x );
+
+    if( y === undefined ) {
+      y = this._canvas.get_state( 'coronal_depth', 0 );
     }
-    if( z !== undefined ) {
-      // set axial
-      if( z > 128 ) { z = 128; }
-      if( z < -128 ) { z = -128; }
-      this.sliceXY.position.z = z;
-      this._canvas.set_state( 'axial_depth', z );
-      this._canvas.set_state( 'axial_posy', z );
-      changed = true;
+    // set coronal
+    if( y > 128 ) { y = 128; }
+    if( y < -128 ) { y = -128; }
+    this.sliceXZ.position.y = y;
+    this.crosshairGroup.position.y = y;
+    this._canvas.set_state( 'coronal_depth', y );
+    this._canvas.set_state( 'coronal_posy', y );
+
+    if( z === undefined ) {
+      z = this._canvas.get_state( 'axial_depth', 0 );
     }
-    if( changed ) {
-      this._canvas.trim_electrodes();
-      // Animate on next refresh
-      this._canvas.start_animation( 0 );
-    }
+    // set axial
+    if( z > 128 ) { z = 128; }
+    if( z < -128 ) { z = -128; }
+    this.sliceXY.position.z = z;
+    this.crosshairGroup.position.z = z;
+    this._canvas.set_state( 'axial_depth', z );
+    this._canvas.set_state( 'axial_posy', z );
+
+    this._canvas.trim_electrodes();
+    // Animate on next refresh
+    this._canvas.start_animation( 0 );
   }
 
-  showPlane( which ) {
+  showSlices( which ) {
     const planType = (0,utils/* to_array */.AA)( which );
     if( planType.length === 0 ) { return; }
     if( planType.includes( 'coronal' ) ) {
       this.sliceXZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'coronal_overlay', true );
+      this.coronalActive = true;
     }
     if( planType.includes( 'sagittal' ) ) {
       this.sliceYZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'sagittal_overlay', true );
+      this.sagittalActive = true;
     }
     if( planType.includes( 'axial' ) ) {
       this.sliceXY.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'axial_overlay', true );
+      this.axialActive = true;
     }
-    this._canvas.start_animation( 0 );
+    // update crosshair to latest version
+    this.setCrosshair();
+    // this._canvas.start_animation( 0 );
   }
 
-  hidePlane( which ) {
+  hideSlices( which ) {
     const planType = (0,utils/* to_array */.AA)( which );
     if( planType.length === 0 ) { return; }
     if( planType.includes( 'coronal' ) ) {
       this.sliceXZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'coronal_overlay', false );
+      this.coronalActive = false;
     }
     if( planType.includes( 'sagittal' ) ) {
       this.sliceYZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'sagittal_overlay', false );
+      this.sagittalActive = false;
     }
     if( planType.includes( 'axial' ) ) {
       this.sliceXY.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
       this._canvas.set_state( 'axial_overlay', false );
+      this.axialActive = false;
     }
     this._canvas.start_animation( 0 );
   }
@@ -76071,6 +76113,7 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     let gp = this.get_group_object();
     // Move gp to global scene as its center is always 0,0,0
     this._canvas.origin.remove( gp );
+    gp.add( this.crosshairGroup );
     this._canvas.scene.add( gp );
 
     // set layer, add tp group
@@ -76104,6 +76147,7 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     );
 
 
+    this.setCrosshair();
     // reset side camera positions
     // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
     // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
