@@ -13,7 +13,7 @@ add_voxel_cube(
   cube,
   size = c(256, 256, 256),
   trans_mat = NULL,
-  color_format = c("RGBAFormat", "AlphaFormat")
+  color_format = c("RGBAFormat", "RedFormat")
 )
 
 add_nifti(
@@ -21,7 +21,7 @@ add_nifti(
   name,
   path,
   trans_mat = NULL,
-  color_format = c("RGBAFormat", "AlphaFormat")
+  color_format = c("RGBAFormat", "RedFormat")
 )
 
 create_voxel_cube(
@@ -43,7 +43,7 @@ create_voxel_cube(
 
 \item{trans_mat}{the transform matrix of the volume. For \code{add_voxel_cube}, this matrix should be from data cube geometry model center to world (\code{'tkrRAS'}) transform. For \code{add_nifti}, this matrix is the 'Nifti' \code{'RAS'} to world (\code{'tkrRAS'}) transform.}
 
-\item{color_format}{color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'AlphaFormat'}}
+\item{color_format}{color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'RedFormat'}, which saves volume data with single red-channel to save space}
 
 \item{path}{'Nifti' data path}
 

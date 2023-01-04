@@ -18,7 +18,7 @@ DataCubeGeom2 <- R6::R6Class(
                           half_size = c(128,128,128),
                           group = GeomGroup$new(name = 'default'),
                           position = c( 0, 0, 0),
-                          color_format = c("RGBAFormat", "AlphaFormat"),
+                          color_format = c("RGBAFormat", "RedFormat"),
                           cache_file = NULL,
                           layer = 8, digest = TRUE, ...){
       # Make sure value is from 0 to 255
@@ -65,7 +65,7 @@ NiftiGeom2 <- R6::R6Class(
     color_map = NULL,
     initialize = function(
       name, path, group = GeomGroup$new(name = 'default'), layer = 8,
-      color_format = c("RGBAFormat", "AlphaFormat"), ...){
+      color_format = c("RGBAFormat", "RedFormat"), ...){
 
       color_format <- match.arg(color_format)
       abspath <- normalizePath(path, mustWork = TRUE)
@@ -90,13 +90,13 @@ NiftiGeom2 <- R6::R6Class(
       re$threshold <- self$threshold
       re$color_format <- self$color_format
       re$isDataCube2 <- self$is_datacube2
-      re$isNiftiCube <- self$is_nifticube
+      re$isNiftiCube2 <- self$is_nifticube2
       re$color_map <- self$color_map
       re
     }
   ),
   active = list(
     is_datacube2 = function(){ TRUE },
-    is_nifticube = function(){ TRUE }
+    is_nifticube2 = function(){ TRUE }
   )
 )

@@ -486,7 +486,7 @@ Brain2 <- R6::R6Class(
         )
 
         add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
-                       trans_mat = trans_mat, color_format = "AlphaFormat")
+                       trans_mat = trans_mat, color_format = "RedFormat")
       } else {
 
         # CT is not loaded, ct_path is a nifti file
@@ -544,9 +544,9 @@ Brain2 <- R6::R6Class(
         )
 
         # add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
-        #                trans_mat = trans_mat, color_format = "AlphaFormat")
+        #                trans_mat = trans_mat, color_format = "RedFormat")
         add_nifti(self, "CT", path = ct_path,
-                  color_format = "AlphaFormat", trans_mat = trans_mat)
+                  color_format = "RedFormat", trans_mat = trans_mat)
       }
 
       key <- seq(0, 5000)
@@ -554,7 +554,7 @@ Brain2 <- R6::R6Class(
         gtype = 'volume', dtype = 'continuous',
         key = key, value = key,
 
-        # using AlphaFormat so color map is the color intensity in gray
+        # using RedFormat so color map is the color intensity in gray
         color = c("black", "white"),
 
         # automatically re-scale the color map

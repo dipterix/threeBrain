@@ -106,11 +106,14 @@ float getDepth( vec3 p ){
 vec4 sample2( vec3 p ) {
   vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
   if( colorChannels == 1 ) {
-    re.rgb = color1WhenSingleChannel * re.a + color2WhenSingleChannel * (1.0 - re.a);
+    // using red channel as the color intensity
+    re.a = re.r;
+    re.rgb = color1WhenSingleChannel * re.r + color2WhenSingleChannel * (1.0 - re.r);
   }
   return re;
 }
 
+// Only used when channel number is >= 3
 vec3 getNormal( vec3 p ) {
   vec4 ne;
   vec3 zero3 = vec3(0.0, 0.0, 0.0);

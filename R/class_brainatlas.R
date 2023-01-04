@@ -89,7 +89,7 @@ BrainAtlas <- R6::R6Class(
 #' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size
 #' @param path 'Nifti' data path
 #' @param trans_mat the transform matrix of the volume. For \code{add_voxel_cube}, this matrix should be from data cube geometry model center to world (\code{'tkrRAS'}) transform. For \code{add_nifti}, this matrix is the 'Nifti' \code{'RAS'} to world (\code{'tkrRAS'}) transform.
-#' @param color_format color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'AlphaFormat'}
+#' @param color_format color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'RedFormat'}, which saves volume data with single red-channel to save space
 #'
 #' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
 #' \code{add_voxel_cube} returns the \code{brain} object
@@ -138,7 +138,7 @@ NULL
 #' @rdname voxel_cube
 #' @export
 add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
-                           trans_mat = NULL, color_format = c("RGBAFormat", "AlphaFormat")){
+                           trans_mat = NULL, color_format = c("RGBAFormat", "RedFormat")){
   stopifnot2(length(size) == 3 && all(size > 0), msg = "add_voxel_cube: `size` must be length of 3 and all positive")
   stopifnot2(is.null(trans_mat) || (
     length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4
@@ -176,7 +176,7 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
 
 #' @rdname voxel_cube
 #' @export
-add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGBAFormat", "AlphaFormat")) {
+add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGBAFormat", "RedFormat")) {
   # trans_mat is from nifti RAS to tkrRAS
 
   color_format <- match.arg(color_format)

@@ -61,6 +61,8 @@ freesurfer_brain2 <- function(
           isTRUE(cache_version <= common$cache_version) ||
           isTRUE(THREEBRAIN_DATA_VER <= common$THREEBRAIN_DATA_VER)
         ) ){
+      digests <- list.files(rave_dir, pattern = "digest$", full.names = TRUE, recursive = FALSE, include.dirs = FALSE)
+      lapply(digests, unlink)
       has_cache <- FALSE
     }
   }
@@ -83,7 +85,7 @@ freesurfer_brain2 <- function(
   # Get T1 volume data
   fname_t1 <- NULL
   has_t1 <- FALSE
-  if(any(c('t1', 'T1') %in% volume_types)){
+  if(any(c('t1', 'mri') %in% tolower(volume_types))){
     vol_json <- sprintf('%s_t1.json', subject_name)
     vol_digest <- rave_cached(paste0(vol_json, '.digest'))
     if(vol_json %in% common$fs_volume_files){

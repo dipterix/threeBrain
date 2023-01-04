@@ -1,6 +1,6 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { Vector3, Matrix4, DataTexture3D, NearestFilter, FloatType,
-         RGBAFormat, AlphaFormat, UnsignedByteType, LinearFilter, UniformsUtils,
+         RGBAFormat, RedFormat, UnsignedByteType, LinearFilter, UniformsUtils,
          RawShaderMaterial, BackSide, SphereBufferGeometry, Mesh,
          BoxBufferGeometry } from '../../build/three.module.js';
 import { CONSTANTS } from '../constants.js';
@@ -37,7 +37,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     const mapAlpha = this.lut.mapAlpha;
     const voxelData = this.voxelData;
     const lutMap = this.lutMap;
-    const singleChannel = this.colorFormat === AlphaFormat;
+    const singleChannel = this.colorFormat === RedFormat;
     const voxelColor = this.voxelColor;
 
     const voxelIndexOffset = this._timeSlice * this.nVoxels;
@@ -181,7 +181,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     const mapAlpha = this.lut.mapAlpha;
     const voxelData = this.voxelData;
     const lutMap = this.lutMap;
-    const singleChannel = this.colorFormat === AlphaFormat;
+    const singleChannel = this.colorFormat === RedFormat;
     const voxelColor = this.voxelColor;
 
     const voxelIndexOffset = this._timeSlice * this.nVoxels;
@@ -346,7 +346,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     let mesh;
 
     // Need to check if this is nifticube
-    if( g.isNiftiCube ) {
+    if( g.isNiftiCube2 ) {
       const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
       this.voxelData = niftiData.image;
       // width, height, depth of the model (not in world)
@@ -381,8 +381,8 @@ class DataCube2 extends AbstractThreeBrainObject {
     this.__dataUB = this.lutMaxColorID;
 
     // Generate 3D texture, to do so, we need to customize shaders
-    if( g.color_format === "AlphaFormat" ) {
-      this.colorFormat = AlphaFormat;
+    if( g.color_format === "RedFormat" ) {
+      this.colorFormat = RedFormat;
       this.nColorChannels = 1;
       this.voxelColor = new Uint8Array( this.nVoxels );
     } else {

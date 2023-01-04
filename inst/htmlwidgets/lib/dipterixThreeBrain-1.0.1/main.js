@@ -76299,11 +76299,14 @@ float getDepth( vec3 p ){
 vec4 sample2( vec3 p ) {
   vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
   if( colorChannels == 1 ) {
-    re.rgb = color1WhenSingleChannel * re.a + color2WhenSingleChannel * (1.0 - re.a);
+    // using red channel as the color intensity
+    re.a = re.r;
+    re.rgb = color1WhenSingleChannel * re.r + color2WhenSingleChannel * (1.0 - re.r);
   }
   return re;
 }
 
+// Only used when channel number is >= 3
 vec3 getNormal( vec3 p ) {
   vec4 ne;
   vec3 zero3 = vec3(0.0, 0.0, 0.0);
@@ -77847,7 +77850,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     const mapAlpha = this.lut.mapAlpha;
     const voxelData = this.voxelData;
     const lutMap = this.lutMap;
-    const singleChannel = this.colorFormat === three_module.AlphaFormat;
+    const singleChannel = this.colorFormat === three_module.RedFormat;
     const voxelColor = this.voxelColor;
 
     const voxelIndexOffset = this._timeSlice * this.nVoxels;
@@ -77991,7 +77994,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     const mapAlpha = this.lut.mapAlpha;
     const voxelData = this.voxelData;
     const lutMap = this.lutMap;
-    const singleChannel = this.colorFormat === three_module.AlphaFormat;
+    const singleChannel = this.colorFormat === three_module.RedFormat;
     const voxelColor = this.voxelColor;
 
     const voxelIndexOffset = this._timeSlice * this.nVoxels;
@@ -78156,7 +78159,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     let mesh;
 
     // Need to check if this is nifticube
-    if( g.isNiftiCube ) {
+    if( g.isNiftiCube2 ) {
       const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
       this.voxelData = niftiData.image;
       // width, height, depth of the model (not in world)
@@ -78191,8 +78194,8 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.__dataUB = this.lutMaxColorID;
 
     // Generate 3D texture, to do so, we need to customize shaders
-    if( g.color_format === "AlphaFormat" ) {
-      this.colorFormat = three_module.AlphaFormat;
+    if( g.color_format === "RedFormat" ) {
+      this.colorFormat = three_module.RedFormat;
       this.nColorChannels = 1;
       this.voxelColor = new Uint8Array( this.nVoxels );
     } else {
