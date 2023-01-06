@@ -29,10 +29,46 @@ class DataCube extends AbstractThreeBrainObject {
     this.type = 'DataCube';
     this.isDataCube = true;
     this.mainCanvasActive = false;
+    this._uniforms = UniformsUtils.clone( SliceShader.uniforms );
+
+    const subjectData = this._canvas.shared_data.get( this.subject_code );
+
+    // Shader will take care of it
+    g.disable_trans_mat = true;
 
     // get cube (volume) data
-    this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
-    this.cubeShape = new Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
+    if( g.isNiftiCube ) {
+      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
+      let imageMin = Infinity, imageMax = -Infinity;
+      niftiData.image.forEach(( v ) => {
+        if( imageMin > v ){ imageMin = v; }
+        if( imageMax < v ){ imageMax = v; }
+      })
+      this.cubeData = new Uint8Array( niftiData.image.length );
+      const slope = 255 / (imageMax - imageMin),
+            intercept = 255 - imageMax * slope,
+            threshold = g.threshold || 0;
+      niftiData.image.forEach(( v, ii ) => {
+        const d = v * slope + intercept;
+        if( d > threshold ) {
+          this.cubeData[ ii ] = d;
+        } else {
+          this.cubeData[ ii ] = 0;
+        }
+      })
+      this.cubeShape = new Vector3().fromArray( niftiData.shape );
+      const affine = niftiData.affine.clone();
+      if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
+        affine.copy( subjectData.matrices.Torig )
+          .multiply( subjectData.matrices.Norig.clone().invert() )
+          .multiply( niftiData.affine );
+      }
+      this._uniforms.world2IJK.value.copy( affine ).invert();
+    } else {
+      this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
+      this.cubeShape = new Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
+      this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
+    }
     this.dataTexture = new DataTexture3D(
       this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
     );
@@ -44,16 +80,8 @@ class DataCube extends AbstractThreeBrainObject {
     this.dataTexture.needsUpdate = true;
 
     // Generate shader
-    this._uniforms = UniformsUtils.clone( SliceShader.uniforms );
     this._uniforms.map.value = this.dataTexture;
     this._uniforms.mapShape.value.copy( this.cubeShape );
-    // TODO: set this._uniforms.world2IJK
-    const subjectData = this._canvas.shared_data.get( this.subject_code );
-    if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
-      this._uniforms.world2IJK.value.copy( subjectData.matrices.Torig ).invert();
-    }
-    this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
-
 
     const sliceMaterial = new RawShaderMaterial( {
       uniforms: this._uniforms,
