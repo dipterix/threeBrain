@@ -302,7 +302,20 @@
   animation: threejs-brain-loader-spin 2s linear infinite;
 }
 
-@keyframes threejs-brain-loader-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.threejs-brain-canvas .threejs-control .threejs-control-progress {
+  position: relative;
+  padding: 0 0 10px 0;
 }
+
+.threejs-brain-canvas .threejs-control .threejs-control-progress > span {
+  display: block;
+  height: 2px;
+  background-color: rgba(24, 116, 205, 0.8);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  font-size: x-small;
+  white-space: nowrap;
+  transition: width 2s;
+}
+

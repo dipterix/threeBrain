@@ -66617,12 +66617,10 @@ class LocElectrode {
 }
 
 function electrode_from_slice( scode, canvas ){
-  if( !canvas._has_datacube_registered ){ return; }
-  const l = canvas.slices.get(scode);
-  const k = Object.keys(l);
-  if( !k.length ) { return; }
-  const planes = l[k[0]];
-  if(!Array.isArray(planes) || planes.length != 3){ return; }
+  const sliceInstance = canvas.get_state( "activeSliceInstance" );
+  if( !sliceInstance || typeof(sliceInstance) !== "object" ||
+    !sliceInstance.isDataCube ) { return; }
+  const planes = sliceInstance.object;
 
   canvas.set_raycaster();
   canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
@@ -75701,13 +75699,18 @@ void main() {
 // calculate IJK, then sampler position
 
   vec3 samplerPosition = ((world2IJK * worldPosition).xyz - vec3(1.0, 0.0, 1.0)) / (mapShape - 1.0);
-  color.rgb = texture(map, samplerPosition).rrr;
-  if( color.r <= threshold ) {
+  if( any(greaterThan( samplerPosition, vec3(1.0) )) || any( lessThan(samplerPosition, vec3(0.0)) ) ) {
     gl_FragDepth = gl_DepthRange.far;
     color.a = 0.0;
   } else {
-    gl_FragDepth = gl_FragCoord.z;
-    color.a = 1.0;
+    color.rgb = texture(map, samplerPosition).rrr;
+    if( color.r <= threshold ) {
+      gl_FragDepth = gl_DepthRange.far;
+      color.a = 0.0;
+    } else {
+      gl_FragDepth = gl_FragCoord.z;
+      color.a = 1.0;
+    }
   }
 }`)
 }
@@ -75903,10 +75906,46 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.type = 'DataCube';
     this.isDataCube = true;
     this.mainCanvasActive = false;
+    this._uniforms = three_module.UniformsUtils.clone( SliceShader.uniforms );
+
+    const subjectData = this._canvas.shared_data.get( this.subject_code );
+
+    // Shader will take care of it
+    g.disable_trans_mat = true;
 
     // get cube (volume) data
-    this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
-    this.cubeShape = new three_module.Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
+    if( g.isNiftiCube ) {
+      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
+      let imageMin = Infinity, imageMax = -Infinity;
+      niftiData.image.forEach(( v ) => {
+        if( imageMin > v ){ imageMin = v; }
+        if( imageMax < v ){ imageMax = v; }
+      })
+      this.cubeData = new Uint8Array( niftiData.image.length );
+      const slope = 255 / (imageMax - imageMin),
+            intercept = 255 - imageMax * slope,
+            threshold = g.threshold || 0;
+      niftiData.image.forEach(( v, ii ) => {
+        const d = v * slope + intercept;
+        if( d > threshold ) {
+          this.cubeData[ ii ] = d;
+        } else {
+          this.cubeData[ ii ] = 0;
+        }
+      })
+      this.cubeShape = new three_module.Vector3().fromArray( niftiData.shape );
+      const affine = niftiData.affine.clone();
+      if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
+        affine.copy( subjectData.matrices.Torig )
+          .multiply( subjectData.matrices.Norig.clone().invert() )
+          .multiply( niftiData.affine );
+      }
+      this._uniforms.world2IJK.value.copy( affine ).invert();
+    } else {
+      this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
+      this.cubeShape = new three_module.Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
+      this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
+    }
     this.dataTexture = new three_module.DataTexture3D(
       this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
     );
@@ -75918,16 +75957,8 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this.dataTexture.needsUpdate = true;
 
     // Generate shader
-    this._uniforms = three_module.UniformsUtils.clone( SliceShader.uniforms );
     this._uniforms.map.value = this.dataTexture;
     this._uniforms.mapShape.value.copy( this.cubeShape );
-    // TODO: set this._uniforms.world2IJK
-    const subjectData = this._canvas.shared_data.get( this.subject_code );
-    if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
-      this._uniforms.world2IJK.value.copy( subjectData.matrices.Torig ).invert();
-    }
-    this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
-
 
     const sliceMaterial = new three_module.RawShaderMaterial( {
       uniforms: this._uniforms,
@@ -78155,6 +78186,15 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
     this._display_mode = "hidden";
     this._selectedDataValues = [];
     this._timeSlice = 0;
+    // transform before applying trans_mat specified by `g`
+    // only useful for NiftiCube2
+    this._transform = new three_module.Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+
+    if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
+      this._transform.set(...g.trans_mat);
+    } else {
+      this._transform.set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+    }
 
     let mesh;
 
@@ -78166,14 +78206,10 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
       this.modelShape = new three_module.Vector3().fromArray( niftiData.shape );
 
       // Make sure to register the initial transform matrix (from IJK to RAS)
-
-      // original g.trans_mat should be nifti RAS to tkrRAS
-      const m = new three_module.Matrix4();
-      if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
-        m.set(...g.trans_mat);
-      }
-      // Matrix4 toArray is column-major fatten
-      g.trans_mat = m.multiply( niftiData.model2RAS ).transpose().toArray();
+      // original g.trans_mat is nifti RAS to tkrRAS
+      // this._transform = g.trans_mat * niftiData.model2RAS
+      //   -> new transform from model center to tkrRAS
+      this._transform.multiply( niftiData.model2RAS );
     } else {
       // g.trans_mat is from model to tkrRAS
       this.voxelData = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
@@ -78308,8 +78344,24 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
   finish_init(){
     // this.object
 
+    const transformDisabled = this._params.disable_trans_mat;
+
+    // temporarily disable transform matrix
+    this._params.disable_trans_mat = true;
+
     // Finalize setups
     super.finish_init();
+
+    // override transform
+    this._params.disable_trans_mat = transformDisabled;
+    this.object.userData.trans_mat = this._transform;
+
+    if( !transformDisabled ) {
+
+      this.object.applyMatrix4( this._transform );
+      this.object.updateMatrixWorld();
+
+    }
 
     // data cube 2 must have groups and group parent is scene
     // let gp = this.get_group_object();
@@ -80725,7 +80777,9 @@ class THREEBRAIN_CANVAS {
     this.clickable_array.push( obj );
   }
 
-  // Add geom groups
+  // Add geom groups. This function can be async if the group contains
+  // cached data. However, if there is no external data needed, then this
+  // function is synchronous
   add_group(g, cache_folder = 'threebrain_data', onProgress = null){
     var gp = new three_module.Object3D();
 
@@ -80756,14 +80810,20 @@ class THREEBRAIN_CANVAS {
     this.group.set( g.name, gp );
     this.add_to_scene(gp);
 
-    // This is now a tricky part, we are going to load from dependencies!
-    // This is experimental and might disable standalone widget!
+    // Async loading group cached data
 
     const cached_items = (0,utils/* to_array */.AA)( g.cached_items );
 
     const promises = cached_items.map(async (nm) => {
       const cache_info = g.group_data[nm];
-      if(!cache_info || typeof(cache_info) !== "object") { return; }
+
+      // cache_info should be object of paths for the first time. However
+      // if loaded before, the cache_info might be substituted by
+      // the cache values, which do not contain the file information anymore
+      if(
+        !cache_info || typeof(cache_info) !== "object" ||
+        typeof cache_info.file_name !== "string"
+      ) { return; }
 
       const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
       console.debug(path);
@@ -80773,70 +80833,75 @@ class THREEBRAIN_CANVAS {
           g.group_data[key] = v[key];
         }
       }
-
-      // special case, if group name is "__global_data", then set group variable
-      if( g.name === '__global_data' && g.group_data ){
-        for( let _n in g.group_data ){
-          this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
-        }
-
-        // check if ".subject_codes" is in the name
-        const subject_codes = (0,utils/* to_array */.AA)( this.shared_data.get(".subject_codes") );
-        if( subject_codes.length > 0 ){
-
-          // generate transform matrices
-          subject_codes.forEach((scode) => {
-
-            let subject_data = this.shared_data.get(scode);
-            if( !subject_data ){
-              subject_data = {};
-              this.shared_data.set(scode, subject_data);
-            }
-
-            const Norig = (0,utils/* as_Matrix4 */.xl)( subject_data.Norig );
-            const Torig = (0,utils/* as_Matrix4 */.xl)( subject_data.Torig );
-            const xfm = (0,utils/* as_Matrix4 */.xl)( subject_data.xfm );
-            const tkrRAS_MNI305 = (0,utils/* as_Matrix4 */.xl)( subject_data.vox2vox_MNI305 );
-            const MNI305_tkrRAS = new three_module.Matrix4()
-              .copy(tkrRAS_MNI305).invert();
-            const tkrRAS_Scanner = new three_module.Matrix4()
-              .copy(Norig)
-              .multiply(
-                new three_module.Matrix4()
-                  .copy(Torig)
-                  .invert()
-              );
-            subject_data.matrices = {
-              Norig : Norig,
-              Torig : Torig,
-              xfm : xfm,
-              tkrRAS_MNI305 : tkrRAS_MNI305,
-              MNI305_tkrRAS : MNI305_tkrRAS,
-              tkrRAS_Scanner: tkrRAS_Scanner
-            };
-
-          });
-
-        }
-
-        const media_content = this.shared_data.get(".media_content");
-        if( media_content ){
-          for(let video_name in media_content){
-            const content = media_content[video_name];
-            if( !content.is_url ){
-              content.url = cache_folder + g.cache_name + '/' + content.url;
-              content.is_url = true;
-              const blob = await fetch(content.url).then(r => r.blob());
-              content.url = URL.createObjectURL(blob);
-            }
-          }
-        }
-
-      }
-
     });
 
-    return Promise.all(promises);
+    return new Promise(resolve => {
+      Promise.all(promises).then(async () => {
+
+        // special case, if group name is "__global_data", then set group variable
+        if( g.name === '__global_data' && g.group_data ){
+          for( let _n in g.group_data ){
+            this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
+          }
+
+          // check if ".subject_codes" is in the name
+          const subject_codes = (0,utils/* to_array */.AA)( this.shared_data.get(".subject_codes") );
+          if( subject_codes.length > 0 ){
+
+            // generate transform matrices
+            subject_codes.forEach((scode) => {
+
+              let subject_data = this.shared_data.get(scode);
+              if( !subject_data ){
+                subject_data = {};
+                this.shared_data.set(scode, subject_data);
+              }
+
+              const Norig = (0,utils/* as_Matrix4 */.xl)( subject_data.Norig );
+              const Torig = (0,utils/* as_Matrix4 */.xl)( subject_data.Torig );
+              const xfm = (0,utils/* as_Matrix4 */.xl)( subject_data.xfm );
+              const tkrRAS_MNI305 = (0,utils/* as_Matrix4 */.xl)( subject_data.vox2vox_MNI305 );
+              const MNI305_tkrRAS = new three_module.Matrix4()
+                .copy(tkrRAS_MNI305).invert();
+              const tkrRAS_Scanner = new three_module.Matrix4()
+                .copy(Norig)
+                .multiply(
+                  new three_module.Matrix4()
+                    .copy(Torig)
+                    .invert()
+                );
+              subject_data.matrices = {
+                Norig : Norig,
+                Torig : Torig,
+                xfm : xfm,
+                tkrRAS_MNI305 : tkrRAS_MNI305,
+                MNI305_tkrRAS : MNI305_tkrRAS,
+                tkrRAS_Scanner: tkrRAS_Scanner
+              };
+
+            });
+
+          }
+
+          const media_content = this.shared_data.get(".media_content");
+          if( media_content ){
+            for(let video_name in media_content){
+              const content = media_content[video_name];
+              if( !content.is_url ){
+                content.url = cache_folder + g.cache_name + '/' + content.url;
+                content.is_url = true;
+                const blob = await fetch(content.url).then(r => r.blob());
+                content.url = URL.createObjectURL(blob);
+              }
+            }
+          }
+
+        }
+
+        resolve( g.name );
+
+      });
+    });
   }
 
   // Debug stats (framerate)
@@ -84055,14 +84120,26 @@ class BrainCanvas{
     // this.el_legend.style.padding = '10px';
     // this.el_legend.style.backgroundColor = 'rgba(255,255,255,0.2)';
 
-    this.el_text = document.createElement('div');
-    this.el_text.style.width = '100%';
-    this.el_text.style.padding = '10px 0';
+    this.$sideInfo = document.createElement('div');
+    this.$sideInfo.style.width = '100%';
+    this.$sideInfo.style.padding = '10px 0';
+
+    this.$progressWrapper = document.createElement('div');
+    this.$progressWrapper.classList.add( "threejs-control-progress" );
+    this.$progress = document.createElement('span');
+    this.$progress.style.width = '0';
+    this.$progressWrapper.appendChild( this.$progress );
+    this.$sideInfo.appendChild( this.$progressWrapper );
+
+
+    this.$sideText = document.createElement('div');
+    this.$sideText.style.width = '100%';
+    this.$sideInfo.appendChild( this.$sideText );
 
     //this.el_text2 = document.createElement('svg');
     //this.el_text2.style.width = '200px';
     //this.el_text2.style.padding = '10px';
-    this.el_side.appendChild( this.el_text );
+    this.el_side.appendChild( this.$sideInfo );
 
     // 3. initialize threejs scene
     this.canvas = new _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_5__/* .THREEBRAIN_CANVAS */ .S(
@@ -84297,38 +84374,78 @@ class BrainCanvas{
 
 
     // load group data
-    this.el_text.style.display = 'block';
+    this.$sideInfo.style.display = 'block';
+
+    let count = 0, nGroups = this.groups.length, loadingGroupNames = {};
+    let progress = 20;
+    const groupPromises = this.groups.map(async (g, ii) => {
+      loadingGroupNames[g.name] = true;
+      this.$sideText.innerHTML = `<p><small>Loading group: ${g.name}</small></p>`;
+
+      progress = Math.floor( 20 + ((ii + 1) / nGroups * 30) );
+      this.$progress.style.width = `${progress}%`;
+
+      await this.canvas.add_group(g, this.settings.cache_folder);
+      count++;
+
+      progress = Math.floor( 50 + (count / nGroups * 45) );
+      this.$progress.style.width = `${progress}%`;
+
+      delete loadingGroupNames[g.name];
+
+      const stillLoading = Object.keys( loadingGroupNames );
+      if( stillLoading.length ) {
+        this.$sideText.innerHTML = `<p><small>Loaded ${count} (out of ${ nGroups }): ${g.name} (still loading ${stillLoading[0]})</small></p>`;
+      } else {
+        this.$sideText.innerHTML = `<p><small>Loaded ${count} (out of ${ nGroups }): ${g.name}</small></p>`;
+      }
+    })
+    /*
     for(let ii in this.groups) {
       const g = this.groups[ii];
-      this.el_text.innerHTML = `<p><small>Loading group ${parseInt(ii)+1} (out of ${this.groups.length}): ${g.name}</small></p>`;
+      this.$sideText.innerHTML = `<p><small>Loading group ${parseInt(ii)+1} (out of ${this.groups.length}): ${g.name}</small></p>`;
       await this.canvas.add_group(g, this.settings.cache_folder);
     }
+    */
 
-    this.el_text.innerHTML = `<p><small>Group data loaded. Generating geometries...</small></p>`;
-
-    // creating objects
-    console.debug(this.outputId + ' - Finished loading. Adding object');
+    // in the meanwhile, sort geoms
     this.geoms.sort((a, b) => {
       return( a.render_order - b.render_order );
     });
 
-    this.geoms.forEach((g) => {
-      this.el_text.innerHTML = `<p><small>Adding object ${g.name}</small></p>`;
-      if( this.DEBUG ){
-        this.canvas.add_object( g );
-      }else{
-        try {
-          this.canvas.add_object( g );
-        } catch (e) {
+    await Promise.all( groupPromises );
+    this.$sideText.innerHTML = `<p><small>Group data loaded. Generating geometries...</small></p>`;
+    this.$progress.style.width = `95%`;
+    // creating objects
+    console.debug(this.outputId + ' - Finished loading. Adding object');
+
+    const nGroms = this.geoms.length;
+    count = 0;
+    const geomPromises = this.geoms.map((g) => {
+      return new Promise(async (r) => {
+        await this.canvas.add_object( g );
+        r();
+      }).then(() => {
+        count++;
+        progress = Math.floor( 95 + (count / nGroms * 5) );
+        this.$progress.style.width = `${progress}%`;
+        this.$sideText.innerHTML = `<p><small>Added object ${g.name}</small></p>`;
+      }).catch((e) => {
+        if( this.DEBUG ){
+          throw e;
+        }else{
           console.warn(e);
         }
-      }
+      });
     });
 
+    await Promise.all( geomPromises ).then(() => {
+      this.$progress.style.width = `100%`;
+      this.$sideText.innerHTML = `<p><small>Finalizing...</small></p>`;
+      this.finalize_render( callback );
+      this.$sideInfo.style.display = 'none';
+    });
 
-    this.el_text.innerHTML = `<p><small>Finalizing...</small></p>`;
-    this.finalize_render( callback );
-    this.el_text.style.display = 'none';
   }
 
 
@@ -84556,8 +84673,9 @@ class BrainWidgetWrapper {
     // read
     const path = v.settings.cache_folder + v.data_filename;
 
-    this.handler.el_text.style.display = 'block';
-    this.handler.el_text.innerHTML = `<p><small>Loading configuration files...</small></p>`;
+    this.handler.$sideText.innerHTML = `<p><small>Loading configuration files...</small></p>`;
+    this.handler.$progress.style.width = '0';
+    this.handler.$sideInfo.style.display = 'block';
     console.debug( 'Reading configuration file from: ' + path );
 
     const fileReader = new FileReader();
@@ -84565,6 +84683,9 @@ class BrainWidgetWrapper {
     fileReader.onload = async (evt) => {
       const x = JSON.parse(evt.target.result);
       x.settings = v.settings;
+
+      this.handler.$progress.style.width = '20%';
+
       this.handler.render_value( x, reset, () => {
         if(typeof (callback) === "function"){
           callback();

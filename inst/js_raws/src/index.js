@@ -83,14 +83,26 @@ class BrainCanvas{
     // this.el_legend.style.padding = '10px';
     // this.el_legend.style.backgroundColor = 'rgba(255,255,255,0.2)';
 
-    this.el_text = document.createElement('div');
-    this.el_text.style.width = '100%';
-    this.el_text.style.padding = '10px 0';
+    this.$sideInfo = document.createElement('div');
+    this.$sideInfo.style.width = '100%';
+    this.$sideInfo.style.padding = '10px 0';
+
+    this.$progressWrapper = document.createElement('div');
+    this.$progressWrapper.classList.add( "threejs-control-progress" );
+    this.$progress = document.createElement('span');
+    this.$progress.style.width = '0';
+    this.$progressWrapper.appendChild( this.$progress );
+    this.$sideInfo.appendChild( this.$progressWrapper );
+
+
+    this.$sideText = document.createElement('div');
+    this.$sideText.style.width = '100%';
+    this.$sideInfo.appendChild( this.$sideText );
 
     //this.el_text2 = document.createElement('svg');
     //this.el_text2.style.width = '200px';
     //this.el_text2.style.padding = '10px';
-    this.el_side.appendChild( this.el_text );
+    this.el_side.appendChild( this.$sideInfo );
 
     // 3. initialize threejs scene
     this.canvas = new THREEBRAIN_CANVAS(
@@ -325,38 +337,78 @@ class BrainCanvas{
 
 
     // load group data
-    this.el_text.style.display = 'block';
+    this.$sideInfo.style.display = 'block';
+
+    let count = 0, nGroups = this.groups.length, loadingGroupNames = {};
+    let progress = 20;
+    const groupPromises = this.groups.map(async (g, ii) => {
+      loadingGroupNames[g.name] = true;
+      this.$sideText.innerHTML = `<p><small>Loading group: ${g.name}</small></p>`;
+
+      progress = Math.floor( 20 + ((ii + 1) / nGroups * 30) );
+      this.$progress.style.width = `${progress}%`;
+
+      await this.canvas.add_group(g, this.settings.cache_folder);
+      count++;
+
+      progress = Math.floor( 50 + (count / nGroups * 45) );
+      this.$progress.style.width = `${progress}%`;
+
+      delete loadingGroupNames[g.name];
+
+      const stillLoading = Object.keys( loadingGroupNames );
+      if( stillLoading.length ) {
+        this.$sideText.innerHTML = `<p><small>Loaded ${count} (out of ${ nGroups }): ${g.name} (still loading ${stillLoading[0]})</small></p>`;
+      } else {
+        this.$sideText.innerHTML = `<p><small>Loaded ${count} (out of ${ nGroups }): ${g.name}</small></p>`;
+      }
+    })
+    /*
     for(let ii in this.groups) {
       const g = this.groups[ii];
-      this.el_text.innerHTML = `<p><small>Loading group ${parseInt(ii)+1} (out of ${this.groups.length}): ${g.name}</small></p>`;
+      this.$sideText.innerHTML = `<p><small>Loading group ${parseInt(ii)+1} (out of ${this.groups.length}): ${g.name}</small></p>`;
       await this.canvas.add_group(g, this.settings.cache_folder);
     }
+    */
 
-    this.el_text.innerHTML = `<p><small>Group data loaded. Generating geometries...</small></p>`;
-
-    // creating objects
-    console.debug(this.outputId + ' - Finished loading. Adding object');
+    // in the meanwhile, sort geoms
     this.geoms.sort((a, b) => {
       return( a.render_order - b.render_order );
     });
 
-    this.geoms.forEach((g) => {
-      this.el_text.innerHTML = `<p><small>Adding object ${g.name}</small></p>`;
-      if( this.DEBUG ){
-        this.canvas.add_object( g );
-      }else{
-        try {
-          this.canvas.add_object( g );
-        } catch (e) {
+    await Promise.all( groupPromises );
+    this.$sideText.innerHTML = `<p><small>Group data loaded. Generating geometries...</small></p>`;
+    this.$progress.style.width = `95%`;
+    // creating objects
+    console.debug(this.outputId + ' - Finished loading. Adding object');
+
+    const nGroms = this.geoms.length;
+    count = 0;
+    const geomPromises = this.geoms.map((g) => {
+      return new Promise(async (r) => {
+        await this.canvas.add_object( g );
+        r();
+      }).then(() => {
+        count++;
+        progress = Math.floor( 95 + (count / nGroms * 5) );
+        this.$progress.style.width = `${progress}%`;
+        this.$sideText.innerHTML = `<p><small>Added object ${g.name}</small></p>`;
+      }).catch((e) => {
+        if( this.DEBUG ){
+          throw e;
+        }else{
           console.warn(e);
         }
-      }
+      });
     });
 
+    await Promise.all( geomPromises ).then(() => {
+      this.$progress.style.width = `100%`;
+      this.$sideText.innerHTML = `<p><small>Finalizing...</small></p>`;
+      this.finalize_render( callback );
+      this.$sideInfo.style.display = 'none';
+    });
 
-    this.el_text.innerHTML = `<p><small>Finalizing...</small></p>`;
-    this.finalize_render( callback );
-    this.el_text.style.display = 'none';
   }
 
 
@@ -584,8 +636,9 @@ class BrainWidgetWrapper {
     // read
     const path = v.settings.cache_folder + v.data_filename;
 
-    this.handler.el_text.style.display = 'block';
-    this.handler.el_text.innerHTML = `<p><small>Loading configuration files...</small></p>`;
+    this.handler.$sideText.innerHTML = `<p><small>Loading configuration files...</small></p>`;
+    this.handler.$progress.style.width = '0';
+    this.handler.$sideInfo.style.display = 'block';
     console.debug( 'Reading configuration file from: ' + path );
 
     const fileReader = new FileReader();
@@ -593,6 +646,9 @@ class BrainWidgetWrapper {
     fileReader.onload = async (evt) => {
       const x = JSON.parse(evt.target.result);
       x.settings = v.settings;
+
+      this.handler.$progress.style.width = '20%';
+
       this.handler.render_value( x, reset, () => {
         if(typeof (callback) === "function"){
           callback();
