@@ -302,7 +302,11 @@ threejs_brain <- function(
       dir_create(file.path(tmp_dir, g$cache_name()))
       for(f in g$cached_items){
         re <- g$group_data[[f]]
-        file.copy(re$absolute_path, to = file.path(tmp_dir, g$cache_name(), re$file_name))
+        file.copy(
+          from = re$absolute_path,
+          to = file.path(tmp_dir, g$cache_name(), re$file_name),
+          overwrite = TRUE
+        )
       }
     }
   })
