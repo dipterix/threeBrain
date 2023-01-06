@@ -527,12 +527,10 @@ class LocElectrode {
 }
 
 function electrode_from_slice( scode, canvas ){
-  if( !canvas._has_datacube_registered ){ return; }
-  const l = canvas.slices.get(scode);
-  const k = Object.keys(l);
-  if( !k.length ) { return; }
-  const planes = l[k[0]];
-  if(!Array.isArray(planes) || planes.length != 3){ return; }
+  const sliceInstance = canvas.get_state( "activeSliceInstance" );
+  if( !sliceInstance || typeof(sliceInstance) !== "object" ||
+    !sliceInstance.isDataCube ) { return; }
+  const planes = sliceInstance.object;
 
   canvas.set_raycaster();
   canvas.mouse_raycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );

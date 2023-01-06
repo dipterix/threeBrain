@@ -342,6 +342,15 @@ class DataCube2 extends AbstractThreeBrainObject {
     this._display_mode = "hidden";
     this._selectedDataValues = [];
     this._timeSlice = 0;
+    // transform before applying trans_mat specified by `g`
+    // only useful for NiftiCube2
+    this._transform = new Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+
+    if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
+      this._transform.set(...g.trans_mat);
+    } else {
+      this._transform.set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+    }
 
     let mesh;
 
@@ -353,14 +362,10 @@ class DataCube2 extends AbstractThreeBrainObject {
       this.modelShape = new Vector3().fromArray( niftiData.shape );
 
       // Make sure to register the initial transform matrix (from IJK to RAS)
-
-      // original g.trans_mat should be nifti RAS to tkrRAS
-      const m = new Matrix4();
-      if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
-        m.set(...g.trans_mat);
-      }
-      // Matrix4 toArray is column-major fatten
-      g.trans_mat = m.multiply( niftiData.model2RAS ).transpose().toArray();
+      // original g.trans_mat is nifti RAS to tkrRAS
+      // this._transform = g.trans_mat * niftiData.model2RAS
+      //   -> new transform from model center to tkrRAS
+      this._transform.multiply( niftiData.model2RAS );
     } else {
       // g.trans_mat is from model to tkrRAS
       this.voxelData = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
@@ -495,8 +500,24 @@ class DataCube2 extends AbstractThreeBrainObject {
   finish_init(){
     // this.object
 
+    const transformDisabled = this._params.disable_trans_mat;
+
+    // temporarily disable transform matrix
+    this._params.disable_trans_mat = true;
+
     // Finalize setups
     super.finish_init();
+
+    // override transform
+    this._params.disable_trans_mat = transformDisabled;
+    this.object.userData.trans_mat = this._transform;
+
+    if( !transformDisabled ) {
+
+      this.object.applyMatrix4( this._transform );
+      this.object.updateMatrixWorld();
+
+    }
 
     // data cube 2 must have groups and group parent is scene
     // let gp = this.get_group_object();

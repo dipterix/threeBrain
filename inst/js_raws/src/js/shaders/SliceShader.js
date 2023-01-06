@@ -45,13 +45,18 @@ void main() {
 // calculate IJK, then sampler position
 
   vec3 samplerPosition = ((world2IJK * worldPosition).xyz - vec3(1.0, 0.0, 1.0)) / (mapShape - 1.0);
-  color.rgb = texture(map, samplerPosition).rrr;
-  if( color.r <= threshold ) {
+  if( any(greaterThan( samplerPosition, vec3(1.0) )) || any( lessThan(samplerPosition, vec3(0.0)) ) ) {
     gl_FragDepth = gl_DepthRange.far;
     color.a = 0.0;
   } else {
-    gl_FragDepth = gl_FragCoord.z;
-    color.a = 1.0;
+    color.rgb = texture(map, samplerPosition).rrr;
+    if( color.r <= threshold ) {
+      gl_FragDepth = gl_DepthRange.far;
+      color.a = 0.0;
+    } else {
+      gl_FragDepth = gl_FragCoord.z;
+      color.a = 1.0;
+    }
   }
 }`)
 }
