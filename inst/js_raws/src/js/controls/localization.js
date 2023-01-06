@@ -584,7 +584,6 @@ function interpolate_electrode_from_ct( inst, canvas, electrodes, size ){
     }
   }
 
-  console.log(re.length);
   return({
     positions : re,
     direction : step

@@ -277,7 +277,21 @@ class BrainCanvas{
 
   }
 
-  async render_value( x, reset = false, callback = undefined ){
+  async renderValues({
+    x,
+    dataIsValid,
+    reset = false
+  }){
+
+    const _isValid = (msg) => {
+      if( typeof dataIsValid === 'function' ) {
+        try {
+          return( dataIsValid(msg) );
+        } catch (e) {}
+      }
+      return true;
+    }
+
     this.geoms = x.geoms;
     this.settings = x.settings;
     this.default_controllers = x.settings.default_controllers || {},
@@ -318,6 +332,8 @@ class BrainCanvas{
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();
 
+    if( !_isValid("Adding color maps") ) { return; }
+
     to_array( this.settings.color_maps ).forEach((v) => {
       // calculate cmap, add time range so that the last value is always displayed
       // let tr = v.time_range;
@@ -335,6 +351,8 @@ class BrainCanvas{
       );
     });
 
+
+    if( !_isValid("Loading group data") ) { return; }
 
     // load group data
     this.$sideInfo.style.display = 'block';
@@ -363,13 +381,6 @@ class BrainCanvas{
         this.$sideText.innerHTML = `<p><small>Loaded ${count} (out of ${ nGroups }): ${g.name}</small></p>`;
       }
     })
-    /*
-    for(let ii in this.groups) {
-      const g = this.groups[ii];
-      this.$sideText.innerHTML = `<p><small>Loading group ${parseInt(ii)+1} (out of ${this.groups.length}): ${g.name}</small></p>`;
-      await this.canvas.add_group(g, this.settings.cache_folder);
-    }
-    */
 
     // in the meanwhile, sort geoms
     this.geoms.sort((a, b) => {
@@ -381,6 +392,8 @@ class BrainCanvas{
     this.$progress.style.width = `95%`;
     // creating objects
     console.debug(this.outputId + ' - Finished loading. Adding object');
+
+    if( !_isValid("Adding geometries") ) { return; }
 
     const nGroms = this.geoms.length;
     count = 0;
@@ -402,12 +415,12 @@ class BrainCanvas{
       });
     });
 
-    await Promise.all( geomPromises ).then(() => {
-      this.$progress.style.width = `100%`;
-      this.$sideText.innerHTML = `<p><small>Finalizing...</small></p>`;
-      this.finalize_render( callback );
-      this.$sideInfo.style.display = 'none';
-    });
+    await Promise.all( geomPromises );
+    if( !_isValid() ) { return; }
+    this.$progress.style.width = `100%`;
+    this.$sideText.innerHTML = `<p><small>Finalizing...</small></p>`;
+
+    return;
 
   }
 
@@ -526,6 +539,8 @@ class BrainCanvas{
           this.canvas, this.gui, this.presets, this.shiny, utils_toolbox );
 
     }
+
+    this.$sideInfo.style.display = 'none';
   }
 }
 
@@ -559,7 +574,7 @@ class BrainWidgetWrapper {
     }
 
     if( this.handler ){
-      console.log('Found previous handler, re-use it.');
+      console.debug('Found previous handler, re-use it.');
 
       this._container = this.handler.el;
 
@@ -642,21 +657,45 @@ class BrainWidgetWrapper {
     console.debug( 'Reading configuration file from: ' + path );
 
     const fileReader = new FileReader();
+    this.__fileReader = fileReader;
 
     fileReader.onload = async (evt) => {
+
+      // Do not double-load or load obsolete viewers
+      if( this.__fileReader !== fileReader ) { return; }
+      fileReader.onload = undefined;
+
+      console.debug("Configurations loaded.")
       const x = JSON.parse(evt.target.result);
       x.settings = v.settings;
 
       this.handler.$progress.style.width = '20%';
 
-      this.handler.render_value( x, reset, () => {
-        if(typeof (callback) === "function"){
-          callback();
+      this.handler.renderValues({
+        x : x,
+        reset: reset,
+        dataIsValid : ( msg ) => {
+          const isValid = this.__fileReader === fileReader;
+          if( msg ) {
+            console.debug(`${msg} (fileReader is ${isValid})`);
+          }
+          return isValid;
         }
-        const modal = this.el.getElementsByClassName("threejs-brain-modal");
-        if( modal.length ){
-          modal[0].classList.add("hidden");
+      }).then(() => {
+        if( this.__fileReader === fileReader ) {
+          this.__fileReader = undefined;
+
+          this.handler.finalize_render( () => {
+            if(typeof (callback) === "function"){
+              callback();
+            }
+            const modal = this.el.getElementsByClassName("threejs-brain-modal");
+            if( modal.length ){
+              modal[0].classList.add("hidden");
+            }
+          });
         }
+
       });
     }
 

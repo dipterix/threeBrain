@@ -550,7 +550,7 @@ class Sphere extends AbstractThreeBrainObject {
               g.vertex_number = node_idx;
               g.hemisphere = side;
             }
-            console.log(`Electrode ${this.object.name}: ${node_idx}, ${side}`);
+            // console.log(`Electrode ${this.object.name}: ${node_idx}, ${side}`);
           }
         }
 
