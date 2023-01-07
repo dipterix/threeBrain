@@ -10,6 +10,8 @@ const VolumeRenderShader1 = {
       scale_inv: { value: new Vector3() },
       bounding: { value : 0.5 },
 
+      stepSize: { value : 1.0 },
+
       // only works when number of color channels is 1
       color1WhenSingleChannel: { value: new Color().setHex(0x006400) },
       color2WhenSingleChannel: { value: new Color().setHex(0x999999) },
@@ -73,7 +75,7 @@ uniform int colorChannels;
 uniform vec3 color1WhenSingleChannel;
 uniform vec3 color2WhenSingleChannel;
 uniform float alpha;
-// uniform float steps;
+uniform float stepSize;
 uniform vec3 scale_inv;
 uniform float bounding;
 vec4 fcolor;
@@ -199,7 +201,7 @@ void main(){
   // bounds.x is the length of ray
   vec3 p = fOrigin + bounds.x * rayDir;
   vec3 inc = 1.0 / abs( rayDir );
-  float delta = min( inc.x, min( inc.y, inc.z ) );
+  float delta = min( inc.x, min( inc.y, inc.z ) ) * max( abs( stepSize ), 0.1 );
   // float delta = 0.5 / max( abs(rayDir.x), max( abs(rayDir.y), abs(rayDir.z) ) );
 
   int nn = 0;

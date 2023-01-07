@@ -1,11 +1,11 @@
 require(dipsaus)
 brain <- raveio::rave_brain('devel/PAV006')
 brain$localize(
-  ct_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/ct_in_t1.nii",
+  ct_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/CT_RAW.nii",
   mri_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/MRI_reference.nii",
   transform_matrix = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/CT_IJK_to_MR_RAS.txt",
-  # transform_space = "ijk2ras",
-  debug = T
+  transform_space = "ijk2ras",
+  debug = F
 )
 
 # control_presets <- 'localization'
