@@ -1,6 +1,6 @@
 import { has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
-import { Vector3 } from '../../build/three.module.js';
+import { Vector3 } from 'three';
 
 // 6. toggle side panel
 // 7. reset side panel position

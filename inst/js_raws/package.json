@@ -7,7 +7,8 @@
     "downloadjs": "^1.4.7",
     "json-2-csv": "^3.14.1",
     "jspdf": "^2.3.1",
-    "nifti-reader-js": "^0.5.4"
+    "nifti-reader-js": "^0.5.4",
+    "three": "^0.148.0"
   },
   "devDependencies": {
     "terser-webpack-plugin": "^5.3.6",

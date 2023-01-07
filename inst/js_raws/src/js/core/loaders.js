@@ -1,5 +1,5 @@
 import nifti from 'nifti-reader-js';
-import { Matrix4 } from '../../build/three.module.js';
+import { Matrix4 } from 'three';
 
 class NiftiImage {
   constructor ( data ) {

@@ -1,4 +1,4 @@
-import { Vector3, Matrix4 } from '../../build/three.module.js';
+import { Vector3, Matrix4 } from 'three';
 import { remove_comments } from '../utils.js';
 
 const SliceShader = {

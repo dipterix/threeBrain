@@ -1,9 +1,9 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { CONSTANTS } from '../constants.js';
 import { to_array, get_or_default } from '../utils.js';
-import { Object3D, LineBasicMaterial, BufferGeometry, DataTexture3D, RedFormat, LinearFilter,
+import { Object3D, LineBasicMaterial, BufferGeometry, Data3DTexture, RedFormat, LinearFilter,
          UnsignedByteType, RawShaderMaterial, Vector3, DoubleSide, UniformsUtils,
-         PlaneBufferGeometry, Mesh, LineSegments } from '../../build/three.module.js';
+         PlaneGeometry, Mesh, LineSegments } from 'three';
 import { SliceShader } from '../shaders/SliceShader.js';
 import { Volume2dArrayShader_xy, Volume2dArrayShader_xz,
          Volume2dArrayShader_yz } from '../shaders/Volume2DShader.js';
@@ -69,7 +69,7 @@ class DataCube extends AbstractThreeBrainObject {
       this.cubeShape = new Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
       this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
     }
-    this.dataTexture = new DataTexture3D(
+    this.dataTexture = new Data3DTexture(
       this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
     );
     this.dataTexture.minFilter = LinearFilter;
@@ -92,21 +92,21 @@ class DataCube extends AbstractThreeBrainObject {
       depthWrite: true
     } );
     this.sliceMaterial = sliceMaterial;
-    const sliceGeometryXY = new PlaneBufferGeometry( 256, 256 );
+    const sliceGeometryXY = new PlaneGeometry( 256, 256 );
     const sliceMeshXY = new Mesh( sliceGeometryXY, sliceMaterial );
     sliceMeshXY.renderOrder = -1;
     sliceMeshXY.position.copy( CONSTANTS.VEC_ORIGIN );
     sliceMeshXY.name = 'mesh_datacube__axial_' + g.name;
 
 
-    const sliceGeometryXZ = new PlaneBufferGeometry( 256, 256 );
+    const sliceGeometryXZ = new PlaneGeometry( 256, 256 );
     const sliceMeshXZ = new Mesh( sliceGeometryXZ, sliceMaterial );
     sliceMeshXZ.rotateX( Math.PI / 2 );
     sliceMeshXZ.renderOrder = -1;
     sliceMeshXZ.position.copy( CONSTANTS.VEC_ORIGIN );
     sliceMeshXZ.name = 'mesh_datacube__coronal_' + g.name;
 
-    const sliceGeometryYZ = new PlaneBufferGeometry( 256, 256 );
+    const sliceGeometryYZ = new PlaneGeometry( 256, 256 );
     const sliceMeshYZ = new Mesh( sliceGeometryYZ, sliceMaterial );
     sliceMeshYZ.rotateY( Math.PI / 2 ).rotateZ( Math.PI / 2 );
     sliceMeshYZ.renderOrder = -1;

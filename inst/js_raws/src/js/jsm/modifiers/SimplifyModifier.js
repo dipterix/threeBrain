@@ -2,8 +2,8 @@ import {
 	BufferGeometry,
 	Float32BufferAttribute,
 	Vector3
-} from '../../../build/three.module.js';
-import { BufferGeometryUtils } from '../utils/BufferGeometryUtils.js';
+} from 'three';
+import * as BufferGeometryUtils from '../utils/BufferGeometryUtils.js';
 
 /**
  *	Simplification Geometry Modifier
@@ -17,24 +17,7 @@ const _cb = new Vector3(), _ab = new Vector3();
 
 class SimplifyModifier {
 
-	constructor() {
-
-		if ( BufferGeometryUtils === undefined ) {
-
-			throw 'THREE.SimplifyModifier relies on BufferGeometryUtils';
-
-		}
-
-	}
-
 	modify( geometry, count ) {
-
-		if ( geometry.isGeometry === true ) {
-
-			console.error( 'THREE.SimplifyModifier no longer supports Geometry. Use BufferGeometry instead.' );
-			return;
-
-		}
 
 		geometry = geometry.clone();
 		const attributes = geometry.attributes;
@@ -174,7 +157,7 @@ function pushIfUnique( array, object ) {
 
 function removeFromArray( array, object ) {
 
-	var k = array.indexOf( object );
+	const k = array.indexOf( object );
 	if ( k > - 1 ) array.splice( k, 1 );
 
 }
@@ -359,7 +342,7 @@ function collapse( vertices, faces, u, v ) { // u and v are pointers to vertices
 	// delete triangles on edge uv:
 	for ( let i = u.faces.length - 1; i >= 0; i -- ) {
 
-		if ( u.faces[ i ].hasVertex( v ) ) {
+		if ( u.faces[ i ] && u.faces[ i ].hasVertex( v ) ) {
 
 			removeFace( u.faces[ i ], faces );
 
@@ -500,8 +483,8 @@ class Vertex {
 	constructor( v ) {
 
 		this.position = v;
-			
-		this.id = -1; // external use position in vertices list (for e.g. face generation)
+
+		this.id = - 1; // external use position in vertices list (for e.g. face generation)
 
 		this.faces = []; // faces vertex is connected
 		this.neighbors = []; // neighbouring vertices aka "adjacentVertices"

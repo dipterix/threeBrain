@@ -1,4 +1,4 @@
-import { Vector2, Vector3, Color } from '../../build/three.module.js';
+import { Vector2, Vector3, Color, UniformsLib, UniformsUtils } from 'three';
 import { remove_comments } from '../utils.js';
 
 const VolumeRenderShader1 = {
@@ -11,6 +11,8 @@ const VolumeRenderShader1 = {
       bounding: { value : 0.5 },
 
       stepSize: { value : 1.0 },
+
+      // lightDirection : { value : new Vector3() },
 
       // only works when number of color channels is 1
       color1WhenSingleChannel: { value: new Color().setHex(0x006400) },
@@ -77,9 +79,11 @@ uniform vec3 color2WhenSingleChannel;
 uniform float alpha;
 uniform float stepSize;
 uniform vec3 scale_inv;
+// uniform vec3 lightDirection;
 uniform float bounding;
 vec4 fcolor;
 vec3 fOrigin;
+
 vec2 hitBox( vec3 orig, vec3 dir ) {
   vec3 box_min = vec3( - bounding ) / scale_inv;
   vec3 box_max = vec3( bounding ) / scale_inv;
@@ -238,6 +242,7 @@ void main(){
             nmal = getNormal( p );
             if(nmal != vec3(0.0, 0.0, 0.0)) {
 
+              // color.rgb *= pow(max( abs(dot(lightDirection, normalize(nmal))) , 1.0), 0.3);
               color.rgb *= pow(max( abs(dot(rayDir, normalize(nmal - rayDir) )) , 0.25), 0.3);
             }
           }

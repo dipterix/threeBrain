@@ -1,4 +1,4 @@
-import { EventDispatcher, Vector2, Vector3, Quaternion } from '../../build/three.module.js';
+import { EventDispatcher, Vector2, Vector3, Quaternion } from 'three';
 
 const OrthographicTrackballControls = function ( object, domElement ) {
 

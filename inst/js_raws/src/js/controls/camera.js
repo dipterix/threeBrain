@@ -1,5 +1,5 @@
+import { Vector3 } from 'three';
 import { CONSTANTS } from '../constants.js';
-import { Vector3 } from '../../build/three.module.js';
 
 // 3. Reset Camera
 // 4. Camera Position

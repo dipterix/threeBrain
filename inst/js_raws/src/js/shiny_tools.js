@@ -4,7 +4,7 @@ This file defines shiny callback functions (js to shiny)
 */
 
 import { debounce, to_array, get_or_default, set_visibility } from './utils.js';
-import { Math, Vector3, Color } from '../build/three.module.js';
+import { MathUtils, Vector3, Color } from 'three';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
 import { CONSTANTS } from './constants.js';
 
@@ -45,7 +45,7 @@ class THREE_BRAIN_SHINY {
     this.shiny_mode = shiny_mode;
     this.shinyId = this.outputId + '__shiny';
     this.canvas = this.widget.handler.canvas;
-    this.uuid = Math.generateUUID();
+    this.uuid = MathUtils.generateUUID();
 
     this.stack = [];
 

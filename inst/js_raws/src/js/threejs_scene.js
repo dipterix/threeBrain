@@ -5,8 +5,8 @@ import {
   Raycaster, ArrowHelper, BoxHelper,
   LoadingManager, FileLoader, FontLoader,
   AnimationClip, AnimationMixer, Clock,
-  BoxBufferGeometry, Mesh, MeshBasicMaterial
-} from '../build/three.module.js';
+  Mesh, MeshBasicMaterial
+} from 'three';
 import { to_array, get_element_size, get_or_default,
   has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4,
   set_visibility, set_display_mode
@@ -249,6 +249,7 @@ class THREEBRAIN_CANVAS {
     main_light.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
     main_light.name = 'main light - directional';
     this.main_camera.add( main_light );
+    this.mainDirectionalLight = main_light;
 
     // Add main camera to scene
     this.add_to_scene( this.main_camera, true );
@@ -368,7 +369,7 @@ class THREEBRAIN_CANVAS {
         mouse_raycaster = new Raycaster();
     // const mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
     //     mouse_helper_root = new Mesh(
-    //       new BoxBufferGeometry( 4,4,4 ),
+    //       new BoxGeometry( 4,4,4 ),
     //       new MeshBasicMaterial({ color : 0xff0000 })
     //     );
 

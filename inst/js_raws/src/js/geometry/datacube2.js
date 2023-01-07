@@ -1,8 +1,8 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { Vector3, Matrix4, DataTexture3D, NearestFilter, FloatType,
+import { Vector3, Matrix4, Data3DTexture, NearestFilter, FloatType,
          RGBAFormat, RedFormat, UnsignedByteType, LinearFilter, UniformsUtils,
-         RawShaderMaterial, BackSide, SphereBufferGeometry, Mesh,
-         BoxBufferGeometry } from '../../build/three.module.js';
+         RawShaderMaterial, BackSide, Mesh,
+         BoxGeometry } from 'three';
 import { CONSTANTS } from '../constants.js';
 import { get_or_default } from '../utils.js';
 import { VolumeRenderShader1 } from '../shaders/VolumeShader.js';
@@ -428,7 +428,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     }
 
     // Color texture - used to render colors
-    this.colorTexture = new DataTexture3D(
+    this.colorTexture = new Data3DTexture(
       this.voxelColor, this.modelShape.x, this.modelShape.y, this.modelShape.z
     );
 
@@ -461,7 +461,7 @@ class DataCube2 extends AbstractThreeBrainObject {
       transparent : true
     } );
 
-    const geometry = new BoxBufferGeometry(
+    const geometry = new BoxGeometry(
       this.modelShape.x,
       this.modelShape.y,
       this.modelShape.z

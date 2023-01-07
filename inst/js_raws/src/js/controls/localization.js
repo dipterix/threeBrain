@@ -1,4 +1,4 @@
-import { Vector3, SpriteMaterial, DoubleSide } from '../../build/three.module.js';
+import { Vector3, SpriteMaterial, DoubleSide } from 'three';
 import { vec3_to_string, has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 import { is_electrode } from '../geometry/sphere.js';

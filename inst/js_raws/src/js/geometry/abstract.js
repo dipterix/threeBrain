@@ -1,6 +1,6 @@
 import { to_array, get_element_size, get_or_default } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
-import { Vector3, Matrix4 } from '../../build/three.module.js';
+import { Vector3, Matrix4 } from 'three';
 
 class AbstractThreeBrainObject {
   constructor(g, canvas){

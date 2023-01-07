@@ -1,6 +1,6 @@
 import { CONSTANTS } from '../constants.js';
 import { AbstractThreeBrainObject } from './abstract.js';
-import { Vector3, Color, Mesh, DoubleSide, VertexColors, InstancedBufferAttribute } from '../../build/three.module.js';
+import { Vector3, Color, Mesh, DoubleSide, VertexColors, InstancedBufferAttribute } from 'three';
 import { LineSegments2 } from '../jsm/lines/LineSegments2.js';
 import { LineMaterial } from '../jsm/lines/LineMaterial.js';
 import { LineSegmentsGeometry } from '../jsm/lines/LineSegmentsGeometry.js';

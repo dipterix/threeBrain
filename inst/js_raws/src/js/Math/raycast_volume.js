@@ -1,4 +1,4 @@
-import { Vector3, Matrix4, Matrix3, ArrowHelper } from '../../build/three.module.js';
+import { Vector3, Matrix4, Matrix3, ArrowHelper } from 'three';
 
 function raycast_volume_geneator(){
 

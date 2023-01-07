@@ -1,7 +1,7 @@
 /* mesh objects that always stays at the corner of canvas */
 
 import { CONSTANTS } from '../constants.js';
-import { Group, CylinderGeometry, Color, Mesh, MeshBasicMaterial, DoubleSide } from '../../build/three.module.js';
+import { Group, CylinderGeometry, Color, Mesh, MeshBasicMaterial, DoubleSide } from 'three';
 import { TextSprite } from '../ext/text_sprite.js';
 
 

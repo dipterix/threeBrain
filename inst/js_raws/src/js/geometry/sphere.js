@@ -1,7 +1,7 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { MeshBasicMaterial, MeshLambertMaterial, SpriteMaterial,
-         SphereBufferGeometry, Mesh, Vector3,
-         Matrix4 } from '../../build/three.module.js';
+         SphereGeometry, Mesh, Vector3,
+         Matrix4 } from 'three';
 import { Sprite2, TextTexture } from '../ext/text_sprite.js';
 import { to_array, get_or_default } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
@@ -21,7 +21,7 @@ class Sphere extends AbstractThreeBrainObject {
       'MeshLambertMaterial': new MeshLambertMaterial( MATERIAL_PARAMS )
     };
 
-    const gb = new SphereBufferGeometry( g.radius, g.width_segments, g.height_segments ),
+    const gb = new SphereGeometry( g.radius, g.width_segments, g.height_segments ),
           values = g.keyframes,
           n_keyframes = to_array( g.keyframes ).length;
     this._geometry = gb;

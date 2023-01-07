@@ -1,5 +1,5 @@
 import ClipboardJS from 'clipboard';
-import { Matrix4 } from '../build/three.module.js';
+import { Matrix4 } from 'three';
 // import download from 'downloadjs';
 
 const invertColor = function(hex) {

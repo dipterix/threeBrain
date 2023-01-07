@@ -16,21 +16,17 @@
 
 class DRACOExporter {
 
-	parse( object, options = {
-		decodeSpeed: 5,
-		encodeSpeed: 5,
-		encoderMethod: DRACOExporter.MESH_EDGEBREAKER_ENCODING,
-		quantization: [ 16, 8, 8, 8, 8 ],
-		exportUvs: true,
-		exportNormals: true,
-		exportColor: false,
-	} ) {
+	parse( object, options = {} ) {
 
-		if ( object.isBufferGeometry === true ) {
-
-			throw new Error( 'DRACOExporter: The first parameter of parse() is now an instance of Mesh or Points.' );
-
-		}
+		options = Object.assign( {
+			decodeSpeed: 5,
+			encodeSpeed: 5,
+			encoderMethod: DRACOExporter.MESH_EDGEBREAKER_ENCODING,
+			quantization: [ 16, 8, 8, 8, 8 ],
+			exportUvs: true,
+			exportNormals: true,
+			exportColor: false,
+		}, options );
 
 		if ( DracoEncoderModule === undefined ) {
 
@@ -44,13 +40,6 @@ class DRACOExporter {
 		const encoder = new dracoEncoder.Encoder();
 		let builder;
 		let dracoObject;
-
-
-		if ( geometry.isBufferGeometry !== true ) {
-
-			throw new Error( 'THREE.DRACOExporter.parse(geometry, options): geometry is not a THREE.BufferGeometry instance.' );
-
-		}
 
 		if ( object.isMesh === true ) {
 

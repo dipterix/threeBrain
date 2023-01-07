@@ -1,4 +1,4 @@
-import { Vector3, Sprite, Texture, SpriteMaterial, LinearFilter } from '../../build/three.module.js';
+import { Vector3, Sprite, Texture, SpriteMaterial, LinearFilter } from 'three';
 
 
 class TextSprite extends Sprite {

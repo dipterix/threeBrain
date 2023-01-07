@@ -1,17 +1,17 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { DoubleSide, VertexColors, BufferAttribute, DataTexture, NearestFilter,
-         LinearFilter, RGBFormat, RGBAFormat, UnsignedByteType, Vector3,
+import { TwoPassDoubleSide, BufferAttribute, DataTexture, NearestFilter,
+         LinearFilter, RGBAFormat, UnsignedByteType, Vector3,
          MeshPhongMaterial, MeshLambertMaterial, BufferGeometry, Mesh,
-         DataTexture3D } from '../../build/three.module.js';
+         Data3DTexture } from 'three';
 import { CONSTANTS } from '../constants.js';
 import { to_array, min2, sub2 } from '../utils.js';
 import { compile_free_material } from '../shaders/SurfaceShader.js';
 
 const MATERIAL_PARAMS = {
   'transparent' : true,
-  'side': DoubleSide,
+  'side': TwoPassDoubleSide,
   'wireframeLinewidth' : 0.1,
-  'vertexColors' : VertexColors
+  'vertexColors' : true
 };
 
 // freemesh
@@ -183,7 +183,7 @@ class FreeMesh extends AbstractThreeBrainObject {
 
       this._material_type = material_type;
       this._mesh.material = _m;
-      this._mesh.material.vertexColors = VertexColors;
+      this._mesh.material.vertexColors = true;
       this._mesh.material.opacity = _o;
       this._mesh.material.needsUpdate = true;
       if( update_canvas ){
@@ -205,23 +205,23 @@ class FreeMesh extends AbstractThreeBrainObject {
       // this._linked_electrodes to shaders
       const elec_size = this._linked_electrodes.length;
       if( elec_size == 0 ){ return; }
-      const elec_locs = new Uint8Array( elec_size * 3 );
+      const elec_locs = new Uint8Array( elec_size * 4 );
       const locs_texture = new DataTexture( elec_locs, elec_size, 1 );
 
       locs_texture.minFilter = NearestFilter;
       locs_texture.magFilter = NearestFilter;
-      locs_texture.format = RGBFormat;
+      locs_texture.format = RGBAFormat;
       locs_texture.type = UnsignedByteType;
       locs_texture.unpackAlignment = 1;
       locs_texture.needsUpdate = true;
       this._material_options.elec_locs.value = locs_texture;
 
-      const elec_cols = new Uint8Array( elec_size * 3 );
+      const elec_cols = new Uint8Array( elec_size * 4 );
       const cols_texture = new DataTexture( elec_cols, elec_size, 1 );
 
       cols_texture.minFilter = NearestFilter;
       cols_texture.magFilter = NearestFilter;
-      cols_texture.format = RGBFormat;
+      cols_texture.format = RGBAFormat;
       cols_texture.type = UnsignedByteType;
       cols_texture.unpackAlignment = 1;
       cols_texture.needsUpdate = true;
@@ -243,12 +243,12 @@ class FreeMesh extends AbstractThreeBrainObject {
       if( el.material.isMeshBasicMaterial ){
         el.getWorldPosition( p );
         p.addScalar( 128 );
-        e_locs[ ii * 3 ] = Math.round( p.x );
-        e_locs[ ii * 3 + 1 ] = Math.round( p.y );
-        e_locs[ ii * 3 + 2 ] = Math.round( p.z );
-        e_cols[ ii * 3 ] = Math.floor( el.material.color.r * 255 );
-        e_cols[ ii * 3 + 1 ] = Math.floor( el.material.color.g * 255 );
-        e_cols[ ii * 3 + 2 ] = Math.floor( el.material.color.b * 255 );
+        e_locs[ ii * 4 ] = Math.round( p.x );
+        e_locs[ ii * 4 + 1 ] = Math.round( p.y );
+        e_locs[ ii * 4 + 2 ] = Math.round( p.z );
+        e_cols[ ii * 4 ] = Math.floor( el.material.color.r * 255 );
+        e_cols[ ii * 4 + 1 ] = Math.floor( el.material.color.g * 255 );
+        e_cols[ ii * 4 + 2 ] = Math.floor( el.material.color.b * 255 );
         ii++;
       }
     });
@@ -421,7 +421,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this._volume_margin_size = 128;
     this._volume_array = new Uint8Array( 32 );
     // fake texture, will update later
-    this._volume_texture = new DataTexture3D(
+    this._volume_texture = new Data3DTexture(
       this._volume_array, 2, 2, 2
     );
     this._volume_texture.minFilter = NearestFilter;

@@ -1,5 +1,5 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { Curve, Vector3, MeshLambertMaterial, Mesh } from '../../build/three.module.js';
+import { Curve, Vector3, MeshLambertMaterial, Mesh } from 'three';
 import { to_array, min2, sub2 } from '../utils.js';
 import { TubeBufferGeometry2 } from '../ext/geometries/TubeBufferGeometry2.js';
 

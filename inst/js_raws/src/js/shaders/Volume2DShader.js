@@ -1,4 +1,4 @@
-import { Vector3 } from '../../build/three.module.js';
+import { Vector3 } from 'three';
 
 const Volume2dArrayShader_xy = {
   uniforms: {

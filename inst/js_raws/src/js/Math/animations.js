@@ -1,4 +1,4 @@
-import { ColorKeyframeTrack, InterpolateDiscrete } from '../../build/three.module.js';
+import { ColorKeyframeTrack, InterpolateDiscrete } from 'three';
 import { to_array } from '../utils.js';
 
 function generate_animation_default(m, track_data, cmap, animation_clips, mixer) {

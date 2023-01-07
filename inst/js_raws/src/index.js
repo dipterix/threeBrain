@@ -4,7 +4,7 @@
  */
 import { download } from './js/download.js';
 import { WEBGL } from './js/WebGL.js';
-import * as THREE from './build/three.module.js';
+import * as THREE from 'three';
 import { THREEBRAIN_CONTROL } from './js/core/gui_wrapper.js';
 import { THREEBRAIN_PRESETS } from './js/core/data_controls.js';
 import { CanvasEvent } from './js/core/events.js';
