@@ -22,7 +22,13 @@ function register_controls_subject( THREEBRAIN_PRESETS ){
       this.canvas.switch_subject();
     }else{
       // controller center
-      this.canvas.set_control_center( this.settings.control_center );
+      const controlCenter = this.settings.control_center;
+      this.canvas.trackball.lookAt({
+        x : controlCenter[0],
+        y : controlCenter[1],
+        z : controlCenter[2],
+        remember : true
+      });
     }
 
   }

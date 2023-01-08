@@ -237,12 +237,6 @@ class BrainCanvas{
     presets.c_reset_camera();
     presets.c_main_camera_position();
     presets.c_toggle_anchor();
-    /*
-    this.gui.add_item('Free Controls', () => {
-      _camera_pos.setValue( '[free rotate]' );
-      this.canvas.controls.enabled = true;
-    }, {folder_name: 'Main Canvas'});
-    */
 
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
@@ -441,8 +435,7 @@ class BrainCanvas{
     *
     * this is the line that causes the problem
     */
-    // this.canvas.reset_main_camera( this.settings.camera_pos , this.settings.start_zoom );
-    this.canvas.reset_main_camera( undefined , this.settings.start_zoom );
+    this.canvas.mainCamera.setZoom( this.settings.start_zoom );
     this.canvas.set_font_size( this.settings.font_magnification || 1 );
 
     // Add/remove axis anchor
@@ -454,7 +447,7 @@ class BrainCanvas{
     }
 
     // Compile everything
-    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.main_camera );
+    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
 
     // Set side camera
     if(this.settings.side_camera || false){

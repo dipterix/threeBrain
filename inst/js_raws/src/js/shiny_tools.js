@@ -65,7 +65,7 @@ class THREE_BRAIN_SHINY {
 
     // Add canvas listeners
     // 1. controls
-    this.canvas.bind( 'report_main_camera', 'canvas.main_camera.onEnd', (evt) => {
+    this.canvas.bind( 'report_main_camera', 'canvas.mainCamera.onEnd', (evt) => {
       const args = evt.detail;
       this.to_shiny2('main_camera', {
         position  : args.position,
@@ -255,8 +255,9 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_zoom_level( zoom ){
-    this.canvas.main_camera.zoom = zoom;
-    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.mainCamera.setZoom({
+      zoom : zoom
+    });
     this.canvas.start_animation( 0 );
   }
 
@@ -264,12 +265,12 @@ class THREE_BRAIN_SHINY {
     const pos = to_array( args.position ),
           up = to_array( args.up );
     if( pos.length === 3 ){
-      this.canvas.main_camera.position.set(pos[0] , pos[1] , pos[2]);
+      this.canvas.mainCamera.position.set(pos[0] , pos[1] , pos[2]);
     }
     if( up.length === 3 ){
-      this.canvas.main_camera.up.set(up[0] , up[1] , up[2]);
+      this.canvas.mainCamera.up.set(up[0] , up[1] , up[2]);
     }
-    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.mainCamera.updateProjectionMatrix();
     this.canvas.start_animation( 0 );
   }
 

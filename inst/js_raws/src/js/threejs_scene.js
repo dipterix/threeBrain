@@ -1,6 +1,7 @@
 import {
   Vector2, Vector3, Color, Scene, Object3D, Matrix3, Matrix4,
-  OrthographicCamera, PerspectiveCamera, WebGLRenderer,
+  // OrthographicCamera,
+  WebGLRenderer,
   DirectionalLight, AmbientLight,
   Raycaster, ArrowHelper, BoxHelper,
   LoadingManager, FileLoader, FontLoader,
@@ -11,7 +12,9 @@ import { to_array, get_element_size, get_or_default,
   has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4,
   set_visibility, set_display_mode
 } from './utils.js';
-import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
+// import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
+import { HauntedArcballControls } from './core/HauntedArcballControls.js';
+import { HauntedOrthographicCamera } from './core/HauntedOrthographicCamera.js'
 import { CanvasContext2D } from './core/context.js';
 import { CanvasFileLoader } from './core/loaders.js';
 import { SideCanvas } from './core/side_canvas.js';
@@ -228,31 +231,10 @@ class THREEBRAIN_CANVAS {
           center/lookat: origin (0,0,0)
           up: 0,1,0 ( heads up )
     */
-    this.main_camera = new OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
-    // this.main_camera = new PerspectiveCamera( 20, width / height, 0.1, 10000 );
-
-		this.main_camera.position.x = 500;
-		this.main_camera.userData.pos = [500,0,0];
-		this.main_camera.up.set(0,0,1);
-		this.main_camera.layers.set( CONSTANTS.LAYER_USER_MAIN_CAMERA_0 );
-		this.main_camera.layers.enable( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
-		this.main_camera.layers.enable( 2 );
-		this.main_camera.layers.enable( 3 );
-		this.main_camera.layers.enable( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
-		this.main_camera.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
-		this.main_camera.lookAt( CONSTANTS.VEC_ORIGIN ); // Force camera
-
-		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
-		// Maybe we should get rid of directional light as it will cause reflactions?
-    const main_light = new DirectionalLight( CONSTANTS.COLOR_MAIN_LIGHT , 0.5 );
-    main_light.position.copy( CONSTANTS.VEC_ANAT_I );
-    main_light.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
-    main_light.name = 'main light - directional';
-    this.main_camera.add( main_light );
-    this.mainDirectionalLight = main_light;
+    this.mainCamera = new HauntedOrthographicCamera( this, width, height );
 
     // Add main camera to scene
-    this.add_to_scene( this.main_camera, true );
+    this.add_to_scene( this.mainCamera, true );
 
     // Add ambient light to make scene soft
     const ambient_light = new AmbientLight( CONSTANTS.COLOR_AMBIENT_LIGHT, 1.0 );
@@ -324,40 +306,10 @@ class THREEBRAIN_CANVAS {
 
 
     // Controls
-    // First, it should be a OrthographicTrackballControls to ignore distance information
-    // Second, it need main canvas, hence main canvas Must be added to dom element
-    this.controls = new OrthographicTrackballControls( this.main_camera, this.main_canvas );
-  	this.controls.zoomSpeed = 0.02;
-  	// You cannot use pan in perspective camera. So if you are using PerspectiveCamera, this needs to be true
-  	this.controls.noPan = false;
-  	// Initial radius is 500
-  	// orthographic.radius = 400;
-  	this.controls.dynamicDampingFactor=0.5;
-    this.control_center = [0, 0, 0];
-
-    // set control listeners
-    this.bind( 'controls_start', 'start', (v) => {
-
-      if(this.render_flag < 0 ){
-        // adjust controls
-        this.handle_resize(undefined, undefined, true);
-      }
-
-      // normal controls, can be interrupted
-      this.start_animation(1);
-    }, this.controls );
-
-    this.bind( 'controls_end', 'end', (v) => {
-      // normal pause, can be overridden
-      this.pause_animation(1);
-      this.dispatch_event(
-        "canvas.main_camera.onEnd",
-        this.main_camera
-      )
-    }, this.controls );
+    this.trackball = new HauntedArcballControls( this );
 
     // Follower that fixed at bottom-left
-    this.compass = new Compass( this.main_camera, this.controls );
+    this.compass = new Compass( this.mainCamera, this.trackball );
     // Hide the anchor first
     this.compass.set_visibility( false );
     this.add_to_scene(this.compass.container, true);
@@ -589,16 +541,7 @@ class THREEBRAIN_CANVAS {
       'side_viewer_depth'
     );
 
-    // zoom-in, zoom-out
-    this.add_keyboard_callabck( CONSTANTS.KEY_ZOOM, (evt) => {
-      if( evt.event.shiftKey ){
-        this.main_camera.zoom = this.main_camera.zoom * 1.2; // zoom in
-      }else{
-        this.main_camera.zoom = this.main_camera.zoom / 1.2; // zoom out
-      }
-      this.main_camera.updateProjectionMatrix();
-      this.start_animation( 0 );
-    }, 'zoom');
+
 
     this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
       let m = this.object_chosen || this._last_object_chosen,
@@ -951,6 +894,8 @@ class THREEBRAIN_CANVAS {
 
     // Remove custom listeners
     this.dispose_eventlisters();
+    this.trackball.enabled = false;
+    this.trackball.dispose();
 
     // Remove customized objects
     this.clear_all();
@@ -1068,7 +1013,7 @@ class THREEBRAIN_CANVAS {
     // console.debug('width: ' + width + '; height: ' + height);
 
     if(lazy){
-      this.controls.handleResize();
+      this.trackball.handleResize();
 
       this.start_animation(0);
 
@@ -1081,16 +1026,10 @@ class THREEBRAIN_CANVAS {
     // Because when panning controls, we actually set views, hence need to calculate this smartly
     // Update: might not need change
 	  if( center_camera ){
-      this.main_camera.left = -150;
-  	  this.main_camera.right = 150;
-  	  this.main_camera.top = main_height / main_width * 150;
-  	  this.main_camera.bottom = -main_height / main_width * 150;
+      this.mainCamera.reset({ fov : true, position : false, zoom : false });
 	  }else{
-  	  let _ratio = main_height / main_width * ( this.main_camera.right - this.main_camera.left ) / ( this.main_camera.top - this.main_camera.bottom );
-  	  this.main_camera.top = (this.main_camera.top * _ratio) || (main_height / main_width * 150);
-  	  this.main_camera.bottom = (this.main_camera.bottom * _ratio) || (-main_height / main_width * 150);
+	    this.mainCamera.handleResize();
 	  }
-    this.main_camera.updateProjectionMatrix();
 
     this.main_canvas.style.width = main_width + 'px';
     this.main_canvas.style.height = main_height + 'px';
@@ -1111,7 +1050,7 @@ class THREEBRAIN_CANVAS {
 
     this.video_canvas.height = main_height / 4;
 
-    this.controls.handleResize();
+    this.trackball.handleResize();
 
     this.start_animation(0);
 
@@ -1192,19 +1131,6 @@ class THREEBRAIN_CANVAS {
     this.set_state("font_magnification", magnification);
   }
 
-  // Get camera position & up
-  get_main_camera_params(){
-    return({
-      'target' : this.main_camera.localToWorld(new Vector3(
-        -this.main_camera.userData.pos[0],
-        -this.main_camera.userData.pos[1],
-        -this.main_camera.userData.pos[2]
-      )), //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
-      'up' : this.main_camera.up, // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
-      'position': this.main_camera.position //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
-    });
-  }
-
   // Get mouse position (normalized)
   get_mouse(){
     if(this.mouse_event !== undefined && !this.mouse_event.dispose){
@@ -1250,23 +1176,6 @@ class THREEBRAIN_CANVAS {
   }
 
   // -------- Camera, control trackballs ........
-  // Set trackball center target
-  set_control_center( v ){
-    v = to_array(v);
-    this.controls.target.fromArray( v );
-    this.control_center = to_array( v );
-  }
-  reset_main_camera( pos, zoom = 1 ){
-    if( Array.isArray(pos) && pos.length === 3 ){
-      this.main_camera.userData.pos = pos;
-      this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
-    }
-    if( zoom !== undefined ){
-      this.main_camera.zoom = zoom;
-    }
-    this.main_camera.updateProjectionMatrix();
-  }
-
   resetSideCanvas({
     width, zoomLevel = true, position = false,
     coronal = true, axial = true, sagittal = true
@@ -1335,34 +1244,6 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  reset_controls(){
-	  // reset will erase target, manually reset target
-	  // let target = this.controls.target.toArray();
-		this.controls.reset();
-		this.controls.target.fromArray( this.control_center );
-
-		//this.main_camera.position.set(0 , 0 , 500);
-		//this.main_camera.up.set(0 , 1 , 0);
-		//this.main_camera.zoom = 1;
-		//this.main_camera.updateProjectionMatrix();
-    const pos = this.main_camera.userData.pos;
-    this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
-
-    if( pos[2] === 0 ){
-      this.main_camera.up.set(0, 0, 1);
-    }else{
-      this.main_camera.up.set(0, 1, 0);
-    }
-
-
-    this.main_camera.zoom = 1;
-    this.main_camera.updateProjectionMatrix();
-
-
-		// immediately render once
-    this.start_animation(0);
-	}
-
   enableSideCanvas(){
 	  // Add side renderers to the element
 	  this.sideCanvasEnabled = true;
@@ -1378,7 +1259,7 @@ class THREEBRAIN_CANVAS {
 	}
   /*---- Choose & highlight objects -----------------------------------------*/
   set_raycaster(){
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.mainCamera );
   }
 
   _fast_raycast( request_type ){
@@ -2036,7 +1917,7 @@ class THREEBRAIN_CANVAS {
   update(){
 
     this.get_mouse();
-    this.controls.update();
+    this.trackball.update();
     this.compass.update();
 
     try {
@@ -2131,7 +2012,7 @@ class THREEBRAIN_CANVAS {
 
     });
 
-    this.main_renderer.render( this.scene, this.main_camera );
+    this.main_renderer.render( this.scene, this.mainCamera );
 
     if(this.sideCanvasEnabled){
 
@@ -2994,10 +2875,12 @@ class THREEBRAIN_CANVAS {
           this.bounding_box.setFromObject( m.parent );
           this.bounding_box.geometry.computeBoundingBox();
           const _b = this.bounding_box.geometry.boundingBox;
-          this.controls.target.copy( _b.min.clone() )
+          const newControlCenter = _b.min.clone()
             .add( _b.max ).multiplyScalar( 0.5 );
-          this.control_center = this.controls.target.toArray();
-          this.controls.update();
+
+          newControlCenter.remember = true;
+          this.trackball.lookAt( newControlCenter );
+          this.trackball.update();
 
         }
       }

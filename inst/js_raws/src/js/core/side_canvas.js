@@ -254,7 +254,7 @@ class SideCanvas {
       y : coronalDepth,
       z : axialDepth
     });
-    // need to update main_camera
+    // need to update mainCamera
     if( updateMainCamera ) {
       const newMainCameraPosition = new Vector3()
         .set( sagittalDepth, coronalDepth, axialDepth )
@@ -264,7 +264,7 @@ class SideCanvas {
       }
 
       // make S up as much as possible, try to heads up
-      const newMainCameraUp = this.mainCanvas.main_camera.position.clone()
+      const newMainCameraUp = this.mainCanvas.mainCamera.position.clone()
         .cross( new Vector3(0, 0, 1) ).cross( newMainCameraPosition )
         .normalize();
 
@@ -272,8 +272,8 @@ class SideCanvas {
         newMainCameraUp.multiplyScalar(-1);
       }
 
-      this.mainCanvas.main_camera.position.copy( newMainCameraPosition );
-      this.mainCanvas.main_camera.up.copy( newMainCameraUp );
+      this.mainCanvas.mainCamera.position.copy( newMainCameraPosition );
+      this.mainCanvas.mainCamera.up.copy( newMainCameraUp );
     }
   }
 

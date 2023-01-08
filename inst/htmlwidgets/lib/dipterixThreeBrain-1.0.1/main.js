@@ -64953,8 +64953,10 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
     this.gui.add_item('Reset', () => {
       // Center camera first.
       this.canvas.handle_resize( undefined, undefined, false, true );
-      this.canvas.reset_controls();
-      this.canvas.controls.enabled = true;
+  		this.canvas.trackball.reset();
+  		this.canvas.mainCamera.reset();
+      this.canvas.trackball.enabled = true;
+      this.canvas.start_animation(0);
     }, {folder_name: folder_name});
   };
 
@@ -64965,39 +64967,16 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
       folder_name : folder_name
     }).onChange((v) => {
 
+      if( v === '[free rotate]' ) {
+        this.canvas.trackball.enabled = true;
+        return;
+      }
       if( v === '[lock]' ){
-        this.canvas.controls.enabled = false;
-        return( null );
+        this.canvas.trackball.enabled = false;
+        return;
       }
-      this.canvas.controls.enabled = true;
-
-      switch (v) {
-        case 'right':
-          this.canvas.main_camera.position.set( 500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'left':
-          this.canvas.main_camera.position.set( -500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'anterior':
-          this.canvas.main_camera.position.set( 0, 500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'posterior':
-          this.canvas.main_camera.position.set( 0, -500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'superior':
-          this.canvas.main_camera.position.set( 0, 0, 500 );
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-          break;
-        case 'inferior':
-          this.canvas.main_camera.position.set( 0, 0, -500 );
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-          break;
-      }
-
+      this.canvas.trackball.enabled = true;
+      this.canvas.mainCamera.setPosition2( v );
       camera_pos.__select.value = '[free rotate]';
 
       this._update_canvas();
@@ -65012,18 +64991,8 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
       const inital_camera_pos = new three_module.Vector3().fromArray(
         this.settings.camera_pos
       );
-      if (inital_camera_pos.length() > 0){
-        this.canvas.main_camera.position.set(
-          inital_camera_pos.x,
-          inital_camera_pos.y,
-          inital_camera_pos.z
-        ).normalize().multiplyScalar(500);
-        if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-        } else {
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-        }
-      }
+      inital_camera_pos.forceZUp = true;
+      this.canvas.mainCamera.setPosition( inital_camera_pos );
     }
 
     this._update_canvas();
@@ -65344,7 +65313,13 @@ function register_controls_subject( THREEBRAIN_PRESETS ){
       this.canvas.switch_subject();
     }else{
       // controller center
-      this.canvas.set_control_center( this.settings.control_center );
+      const controlCenter = this.settings.control_center;
+      this.canvas.trackball.lookAt({
+        x : controlCenter[0],
+        y : controlCenter[1],
+        z : controlCenter[2],
+        remember : true
+      });
     }
 
   }
@@ -67286,7 +67261,7 @@ function interpolate_electrode_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new three_module.Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
@@ -67332,7 +67307,7 @@ function extend_electrode_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new three_module.Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
@@ -67378,7 +67353,7 @@ function interpolate_electrode_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
 
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new three_module.Vector3();
 
   canvas.set_raycaster();
@@ -67413,7 +67388,7 @@ function extend_electrode_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
 
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new three_module.Vector3();
 
   canvas.set_raycaster();
@@ -73730,7 +73705,7 @@ class THREE_BRAIN_SHINY {
 
     // Add canvas listeners
     // 1. controls
-    this.canvas.bind( 'report_main_camera', 'canvas.main_camera.onEnd', (evt) => {
+    this.canvas.bind( 'report_main_camera', 'canvas.mainCamera.onEnd', (evt) => {
       const args = evt.detail;
       this.to_shiny2('main_camera', {
         position  : args.position,
@@ -73920,8 +73895,9 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_zoom_level( zoom ){
-    this.canvas.main_camera.zoom = zoom;
-    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.mainCamera.setZoom({
+      zoom : zoom
+    });
     this.canvas.start_animation( 0 );
   }
 
@@ -73929,12 +73905,12 @@ class THREE_BRAIN_SHINY {
     const pos = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( args.position ),
           up = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( args.up );
     if( pos.length === 3 ){
-      this.canvas.main_camera.position.set(pos[0] , pos[1] , pos[2]);
+      this.canvas.mainCamera.position.set(pos[0] , pos[1] , pos[2]);
     }
     if( up.length === 3 ){
-      this.canvas.main_camera.up.set(up[0] , up[1] , up[2]);
+      this.canvas.mainCamera.up.set(up[0] , up[1] , up[2]);
     }
-    this.canvas.main_camera.updateProjectionMatrix();
+    this.canvas.mainCamera.updateProjectionMatrix();
     this.canvas.start_animation( 0 );
   }
 
@@ -74344,7 +74320,7 @@ class THREEBRAIN_STORAGE {
 
 /***/ }),
 
-/***/ 2652:
+/***/ 7689:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -74358,86 +74334,150 @@ __webpack_require__.d(__webpack_exports__, {
 var three_module = __webpack_require__(2212);
 // EXTERNAL MODULE: ./src/js/utils.js
 var utils = __webpack_require__(3658);
-;// CONCATENATED MODULE: ./src/js/core/OrthographicTrackballControls.js
+;// CONCATENATED MODULE: ./src/js/core/HauntedArcballControls.js
 
 
-const OrthographicTrackballControls = function ( object, domElement ) {
+const STATE = {
+  NONE: - 1,
+  ROTATE: 0,
+  ZOOM: 1,
+  PAN: 2,
+  TOUCH_ROTATE: 3,
+  TOUCH_ZOOM_PAN: 4
+};
+const EPS = 0.000001;
 
-	var _this = this;
-	var STATE = { NONE: - 1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
+// events
+const _changeEvent = { type: 'change' };
+const _startEvent = { type: 'start' };
+const _endEvent = { type: 'end' };
 
-	this.object = object;
-	this.domElement = ( domElement !== undefined ) ? domElement : document;
+class HauntedArcballControls extends three_module.EventDispatcher {
+  constructor( canvas ) {
+    super();
 
-	// API
+    this._canvas = canvas;
+    this.object = this._canvas.mainCamera;
+  	this.domElement = this._canvas.main_canvas;
 
-	this.enabled = true;
+  	// API
 
-	this.screen = { left: 0, top: 0, width: 0, height: 0 };
+  	this.enabled = true;
 
-	this.radius = 0;
+  	this.screen = { left: 0, top: 0, width: 0, height: 0 };
 
-	this.rotateSpeed = 1.0;
-	this.zoomSpeed = 1.2;
+  	this.radius = 0;
 
-	this.noRotate = false;
-	this.noZoom = false;
-	this.noPan = false;
-	this.noRoll = false;
+  	this.rotateSpeed = 1.0;
+  	this.zoomSpeed = 1.2;
 
-	this.staticMoving = false;
-	this.dynamicDampingFactor = 0.2;
+  	this.noRotate = false;
+  	this.noZoom = false;
+  	this.noPan = false;
+  	this.noRoll = false;
 
-	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
+  	this.staticMoving = false;
+  	this.dynamicDampingFactor = 0.2;
 
-	// internals
+  	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
 
-	this.target = new three_module.Vector3();
+  	// internals
+	  this.target = new three_module.Vector3();
+    this._changed = true;
+    this._state = STATE.NONE;
+		this._prevState = STATE.NONE;
 
-	var EPS = 0.000001;
+		this._eye = new three_module.Vector3();
 
-	var _changed = true;
+		this._rotateStart = new three_module.Vector3();
+		this._rotateEnd = new three_module.Vector3();
 
-	var _state = STATE.NONE,
-		_prevState = STATE.NONE,
+		this._zoomStart = new three_module.Vector2();
+		this._zoomEnd = new three_module.Vector2();
 
-		_eye = new three_module.Vector3(),
+		this._touchZoomDistanceStart = 0;
+		this._touchZoomDistanceEnd = 0;
 
-		_rotateStart = new three_module.Vector3(),
-		_rotateEnd = new three_module.Vector3(),
+		this._panStart = new three_module.Vector2();
+		this._panEnd = new three_module.Vector2();
+		this._mouseOnScreen = new three_module.Vector2();
 
-		_zoomStart = new three_module.Vector2(),
-		_zoomEnd = new three_module.Vector2(),
+		// project mouse to trackball
+		this._projectedOnBall = new three_module.Vector3();
+		this._objectUp = new three_module.Vector3();
+		this._mouseOnBall = new three_module.Vector3();
 
-		_touchZoomDistanceStart = 0,
-		_touchZoomDistanceEnd = 0,
+		// rotation
+		this._rotateAxis = new three_module.Vector3();
+		this._rotateQuaternion = new three_module.Quaternion();
+		this._isRotating = false;
 
-		_panStart = new three_module.Vector2(),
-		_panEnd = new three_module.Vector2();
+		// zoom
+		this._isZooming = false;
 
-	// for reset
+		// pan
+		this._panMouseChange = new three_module.Vector2(),
+		this._panDirection = new three_module.Vector3(),
+		this._isPanning = false;
 
-	this.target0 = this.target.clone();
-	this.position0 = this.object.position.clone();
-	this.up0 = this.object.up.clone();
+		// for reset
 
-	this.left0 = this.object.left;
-	this.right0 = this.object.right;
-	this.top0 = this.object.top;
-	this.bottom0 = this.object.bottom;
+  	this.target0 = this.target.clone();
+  	this.position0 = this.object.position.clone();
+  	this.up0 = this.object.up.clone();
 
-	// events
+  	this.left0 = this.object.left;
+  	this.right0 = this.object.right;
+  	this.top0 = this.object.top;
+  	this.bottom0 = this.object.bottom;
 
-	var changeEvent = { type: 'change' };
-	var startEvent = { type: 'start' };
-	var endEvent = { type: 'end' };
+  	// Specialized for threeBrain
+  	this.zoomSpeed = 0.02;
+  	this.noPan = false;
+  	// Initial radius is 500
+  	// orthographic.radius = 400;
+  	this.dynamicDampingFactor=0.5;
 
+    // finalize
+    this.domElement.addEventListener( 'contextmenu', this.onContextmenu, false );
+  	this.domElement.addEventListener( 'mousedown', this.onMousedown, false );
+  	this.domElement.addEventListener( 'wheel', this.onMousewheel, false );
 
-	// methods
+  	this.domElement.addEventListener( 'touchstart', this.onTouchstart, false );
+  	this.domElement.addEventListener( 'touchend', this.onTouchend, false );
+  	this.domElement.addEventListener( 'touchmove', this.onTouchmove, false );
 
-	this.handleResize = function () {
+  	window.addEventListener( 'keydown', this.onKeydown, false );
+  	window.addEventListener( 'keyup', this.onKeyup, false );
 
-		if ( this.domElement === document ) {
+  	this.handleResize();
+
+  	// force an update at start
+  	this.update();
+
+  }
+
+  dispatchEvent( event ) {
+    if ( this.enabled === false || typeof event !== "object" ) return;
+
+    if( event.type == "start" || event.type == "change" ) {
+      /*
+      if( this._canvas.render_flag < 0 ) {
+        this._canvas.handle_resize(undefined, undefined, true);
+      }
+      */
+      this._canvas.start_animation( 0 );
+    } else if ( event.type == "end" ) {
+      this._canvas.pause_animation( 1 );
+      this._canvas.dispatch_event( "canvas.mainCamera.onEnd", this.object.getState() );
+    }
+
+    super.dispatchEvent( event );
+  }
+
+  handleResize = () => {
+
+    if ( this.domElement === document ) {
 
 			this.screen.left = 0;
 			this.screen.top = 0;
@@ -74446,9 +74486,9 @@ const OrthographicTrackballControls = function ( object, domElement ) {
 
 		} else {
 
-			var box = this.domElement.getBoundingClientRect();
+			const box = this.domElement.getBoundingClientRect();
 			// adjustments come from similar code in the jquery offset() function
-			var d = this.domElement.ownerDocument.documentElement;
+			const d = this.domElement.ownerDocument.documentElement;
 			this.screen.left = box.left + window.pageXOffset - d.clientLeft;
 			this.screen.top = box.top + window.pageYOffset - d.clientTop;
 			this.screen.width = box.width;
@@ -74463,484 +74503,421 @@ const OrthographicTrackballControls = function ( object, domElement ) {
 		this.top0 = this.object.top;
 		this.bottom0 = this.object.bottom;
 
-	};
+  }
 
-	var getMouseOnScreen = ( function () {
+  getMouseOnScreen = ( pageX, pageY ) => {
+    this._mouseOnScreen.set(
+      ( pageX - this.screen.left ) / this.screen.width,
+			( pageY - this.screen.top ) / this.screen.height
+    );
+    return this._mouseOnScreen;
+  }
 
-		var vector = new three_module.Vector2();
+  getMouseProjectionOnBall = ( pageX, pageY, fix_axis = 0 ) => {
+		this._mouseOnBall.set(
+			( pageX - this.screen.width * 0.5 - this.screen.left ) / this.radius,
+			( this.screen.height * 0.5 + this.screen.top - pageY ) / this.radius,
+			0.0
+		);
+		let length = this._mouseOnBall.length();
+		if( fix_axis === 1 ){
+		  // Fix x
+		  this._mouseOnBall.x = 0;
+		  length = Math.abs( this._mouseOnBall.y );
+		}else if ( fix_axis === 2 ){
+		  this._mouseOnBall.y = 0;
+		  length = Math.abs( this._mouseOnBall.x );
+		}else if ( fix_axis === 3 ){
+		  this._mouseOnBall.normalize();
+		  length = 1;
+		}
 
-		return function getMouseOnScreen( pageX, pageY ) {
-
-			vector.set(
-				( pageX - _this.screen.left ) / _this.screen.width,
-				( pageY - _this.screen.top ) / _this.screen.height
-			);
-
-			return vector;
-
-		};
-
-	}() );
-
-	var getMouseProjectionOnBall = ( function () {
-
-		var vector = new three_module.Vector3();
-		var objectUp = new three_module.Vector3();
-		var mouseOnBall = new three_module.Vector3();
-
-		return function getMouseProjectionOnBall( pageX, pageY, fix_axis = 0 ) {
-
-			mouseOnBall.set(
-				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / _this.radius,
-				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / _this.radius,
-				0.0
-			);
-
-			var length = mouseOnBall.length();
-
-			if( fix_axis === 1 ){
-			  // Fix x
-			  mouseOnBall.x = 0;
-			  length = Math.abs( mouseOnBall.y );
-			}else if ( fix_axis === 2 ){
-			  mouseOnBall.y = 0;
-			  length = Math.abs( mouseOnBall.x );
-			}else if ( fix_axis === 3 ){
-			  mouseOnBall.normalize();
-			  length = 1;
-			}
-
-
-
-			if ( _this.noRoll ) {
-				if ( length < Math.SQRT1_2 ) {
-					mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-				} else {
-					mouseOnBall.z = 0.5 / length;
-				}
-			} else if ( length > 1.0 ) {
-				mouseOnBall.normalize();
+		if ( this.noRoll ) {
+			if ( length < Math.SQRT1_2 ) {
+				this._mouseOnBall.z = Math.sqrt( 1.0 - length * length );
 			} else {
-				mouseOnBall.z = Math.sqrt( 1.0 - length * length );
+				this._mouseOnBall.z = 0.5 / length;
+			}
+		} else if ( length > 1.0 ) {
+			this._mouseOnBall.normalize();
+		} else {
+			this._mouseOnBall.z = Math.sqrt( 1.0 - length * length );
+		}
+		this._eye.copy( this.object.position ).sub( this.target );
+
+		this._projectedOnBall.copy( this.object.up ).setLength( this._mouseOnBall.y );
+		this._projectedOnBall.add( this._objectUp.copy( this.object.up ).cross( this._eye ).setLength( this._mouseOnBall.x ) );
+		this._projectedOnBall.add( this._eye.setLength( this._mouseOnBall.z ) );
+		return this._projectedOnBall;
+
+  }
+
+  rotateCamera = () => {
+
+		let angle = Math.acos( this._rotateStart.dot( this._rotateEnd ) / this._rotateStart.length() / this._rotateEnd.length() );
+
+		if( angle ) {
+	    // start event
+		  this._isRotating = true;
+		  this.dispatchEvent( _startEvent );
+
+			this._rotateAxis.crossVectors( this._rotateStart, this._rotateEnd ).normalize();
+
+			angle *= this.rotateSpeed;
+
+			this._rotateQuaternion.setFromAxisAngle( this._rotateAxis, - angle );
+
+			this._eye.applyQuaternion( this._rotateQuaternion );
+
+			this.object.up.applyQuaternion( this._rotateQuaternion );
+
+			this._rotateEnd.applyQuaternion( this._rotateQuaternion );
+
+			if ( this.staticMoving ) {
+
+				this._rotateStart.copy( this._rotateEnd );
+
+			} else {
+
+				this._rotateQuaternion.setFromAxisAngle( this._rotateAxis, angle * ( this.dynamicDampingFactor - 1.0 ) );
+				this._rotateStart.applyQuaternion( this._rotateQuaternion );
+
 			}
 
-			_eye.copy( _this.object.position ).sub( _this.target );
+			this._isRotating = true;
 
-			vector.copy( _this.object.up ).setLength( mouseOnBall.y );
-			vector.add( objectUp.copy( _this.object.up ).cross( _eye ).setLength( mouseOnBall.x ) );
-			vector.add( _eye.setLength( mouseOnBall.z ) );
+		}else if ( this._isRotating ){
+		  this._isRotating = false;
+		  this.dispatchEvent( _endEvent );
+		}
+  }
 
-			return vector;
+  zoomCamera = () => {
 
-		};
+    if ( this._state === STATE.TOUCH_ZOOM_PAN ) {
 
-	}() );
+			let factor = this._touchZoomDistanceEnd / this._touchZoomDistanceStart;
+			this._touchZoomDistanceStart = this._touchZoomDistanceEnd;
 
-	this.rotateCamera = ( function () {
+      if( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ){
 
-		var axis = new three_module.Vector3(),
-			quaternion = new three_module.Quaternion(),
-			running = false;
+        // start event
+			  this._isZooming = true;
+			  this.dispatchEvent( _startEvent );
 
 
-		return function rotateCamera() {
+        this.object.zoom *= factor;
+        this._changed = true;
+      }else if( this._isZooming ){
+			  // stop event
+			  this._isZooming = false;
+			  this.dispatchEvent( _endEvent );
+			}
 
-			var angle = Math.acos( _rotateStart.dot( _rotateEnd ) / _rotateStart.length() / _rotateEnd.length() );
+		} else {
 
-			if ( angle ) {
+			let factor = 1.0 + ( this._zoomEnd.y - this._zoomStart.y ) * this.zoomSpeed;
+
+			if ( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ) {
+
 			  // start event
-			  running = true;
-			  _this.dispatchEvent( startEvent );
+			  this._isZooming = true;
+			  this.dispatchEvent( _startEvent );
 
-				axis.crossVectors( _rotateStart, _rotateEnd ).normalize();
+				this.object.zoom /= factor;
 
-				angle *= _this.rotateSpeed;
+				if ( this.staticMoving ) {
 
-				quaternion.setFromAxisAngle( axis, - angle );
-
-				_eye.applyQuaternion( quaternion );
-
-				_this.object.up.applyQuaternion( quaternion );
-
-				_rotateEnd.applyQuaternion( quaternion );
-
-				if ( _this.staticMoving ) {
-
-					_rotateStart.copy( _rotateEnd );
+					this._zoomStart.copy( this._zoomEnd );
 
 				} else {
 
-					quaternion.setFromAxisAngle( axis, angle * ( _this.dynamicDampingFactor - 1.0 ) );
-					_rotateStart.applyQuaternion( quaternion );
+					this._zoomStart.y += ( this._zoomEnd.y - this._zoomStart.y ) * this.dynamicDampingFactor;
 
 				}
 
-				_changed = true;
+				this._changed = true;
 
-			}else if (running){
-			  running = false;
-			  _this.dispatchEvent( endEvent );
+			}else if( this._isZooming ){
+			  // stop event
+			  this._isZooming = false;
+			  this.dispatchEvent( _endEvent );
 			}
 
-		};
+		}
+  }
 
-	}() );
+  panCamera = () => {
+    // this._panMouseChange = new Vector2(),
+		// this._panDirection = new Vector3(),
+		// this._isPanning = false;
+		// this._objectUp
+		this._panMouseChange.copy( this._panEnd ).sub( this._panStart );
 
-	this.zoomCamera = (function(){
-	  var running = false;
+		if ( this._panMouseChange.lengthSq() > 0.00001 ) {
+		  // start event
+		  this._isPanning = true;
+		  this.dispatchEvent( _startEvent );
 
-	  return function zoomCamera(){
-	    if ( _state === STATE.TOUCH_ZOOM_PAN ) {
+			// Scale movement to keep clicked/dragged position under cursor
+			let scale_x = ( this.object.right - this.object.left ) / this.object.zoom;
+			let scale_y = ( this.object.top - this.object.bottom ) / this.object.zoom;
+			this._panMouseChange.x *= scale_x;
+			this._panMouseChange.y *= scale_y;
 
-  			var factor = _touchZoomDistanceEnd / _touchZoomDistanceStart;
-  			_touchZoomDistanceStart = _touchZoomDistanceEnd;
+			this._panDirection.copy( this._eye )
+			  .cross( this.object.up ).setLength( this._panMouseChange.x );
+			this._panDirection.add( this._objectUp.copy( this.object.up ).setLength( this._panMouseChange.y ) );
 
-        if( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ){
+			this.object.right = this.object.right - this._panMouseChange.x / 2;
+			this.object.left = this.object.left - this._panMouseChange.x / 2;
+			this.object.top = this.object.top + this._panMouseChange.y / 2;
+			this.object.bottom = this.object.bottom + this._panMouseChange.y / 2;
 
-          // start event
-  			  running = true;
-  			  _this.dispatchEvent( startEvent );
+			this.left0 = this.object.left;
+  		this.right0 = this.object.right;
+  		this.top0 = this.object.top;
+  		this.bottom0 = this.object.bottom;
 
+			if ( this.staticMoving ) {
 
-          _this.object.zoom *= factor;
-          _changed = true;
-        }else if(running){
-  			  // stop event
-  			  running = false;
-  			  _this.dispatchEvent( endEvent );
-  			}
+				this._panStart.copy( this._panEnd );
 
-  		} else {
+			} else {
 
-  			var factor = 1.0 + ( _zoomEnd.y - _zoomStart.y ) * _this.zoomSpeed;
+				this._panStart.add( this._panMouseChange.subVectors( this._panEnd, this._panStart ).multiplyScalar( this.dynamicDampingFactor ) );
 
-  			if ( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ) {
-
-  			  // start event
-  			  running = true;
-  			  _this.dispatchEvent( startEvent );
-
-  				_this.object.zoom /= factor;
-
-  				if ( _this.staticMoving ) {
-
-  					_zoomStart.copy( _zoomEnd );
-
-  				} else {
-
-  					_zoomStart.y += ( _zoomEnd.y - _zoomStart.y ) * this.dynamicDampingFactor;
-
-  				}
-
-  				_changed = true;
-
-  			}else if(running){
-  			  // stop event
-  			  running = false;
-  			  _this.dispatchEvent( endEvent );
-  			}
-
-  		}
-	  };
-	}() );
-
-	this.panCamera = ( function () {
-
-		var mouseChange = new three_module.Vector2(),
-			objectUp = new three_module.Vector3(),
-			pan = new three_module.Vector3(),
-			running = false;
-
-		return function panCamera() {
-
-			mouseChange.copy( _panEnd ).sub( _panStart );
-
-			if ( mouseChange.lengthSq() > 0.00001 ) {
-			  // start event
-			  running = true;
-			  _this.dispatchEvent( startEvent );
-
-				// Scale movement to keep clicked/dragged position under cursor
-				var scale_x = ( _this.object.right - _this.object.left ) / _this.object.zoom;
-				var scale_y = ( _this.object.top - _this.object.bottom ) / _this.object.zoom;
-				mouseChange.x *= scale_x;
-				mouseChange.y *= scale_y;
-
-				pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
-				pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
-
-				/*_this.object.position.add( pan );
-				_this.target.add( pan );*/
-
-				_this.object.right = _this.object.right - mouseChange.x / 2;
-				_this.object.left = _this.object.left - mouseChange.x / 2;
-				_this.object.top = _this.object.top + mouseChange.y / 2;
-				_this.object.bottom = _this.object.bottom + mouseChange.y / 2;
-
-				_this.left0 = _this.object.left;
-    		_this.right0 = _this.object.right;
-    		_this.top0 = _this.object.top;
-    		_this.bottom0 = _this.object.bottom;
-
-				if ( _this.staticMoving ) {
-
-					_panStart.copy( _panEnd );
-
-				} else {
-
-					_panStart.add( mouseChange.subVectors( _panEnd, _panStart ).multiplyScalar( _this.dynamicDampingFactor ) );
-
-				}
-
-
-				_changed = true;
-
-			}else if (running){
-  		  running = false;
-  		  _this.dispatchEvent( endEvent );
 			}
 
-		};
+			this._changed = true;
 
-	}() );
+		}else if (this._isPanning){
+		  this._isPanning = false;
+		  this.dispatchEvent( _endEvent );
+		}
 
-	this.update = function () {
+  }
 
-		_eye.subVectors( _this.object.position, _this.target );
+  update = () => {
+    this._eye.subVectors( this.object.position, this.target );
 
-		if ( ! _this.noRotate ) {
+		if ( ! this.noRotate ) {
 
-			_this.rotateCamera();
+			this.rotateCamera();
 
 		}
 
-		if ( ! _this.noZoom ) {
+		if ( ! this.noZoom ) {
 
-			_this.zoomCamera();
+			this.zoomCamera();
 
-			if ( _changed ) {
+			if ( this._changed ) {
 
-				_this.object.updateProjectionMatrix();
+				this.object.updateProjectionMatrix();
 
 			}
 
 		}
 
-		if ( ! _this.noPan ) {
+		if ( ! this.noPan ) {
 
-			_this.panCamera();
+			this.panCamera();
 
-			if ( _changed ) {
+			if ( this._changed ) {
 
-				_this.object.updateProjectionMatrix();
+				this.object.updateProjectionMatrix();
 
 			}
 
 		}
 
-		_this.object.position.addVectors( _this.target, _eye );
+		this.object.position.addVectors( this.target, this._eye );
 
-		_this.object.lookAt( _this.target );
+		this.object.lookAt( this.target );
 
-		if ( _changed ) {
+		if ( this._changed ) {
 
-			_this.dispatchEvent( changeEvent );
+			this.dispatchEvent( _changeEvent );
 
-			_changed = false;
+			this._changed = false;
 
 		}
+  }
 
-	};
+  lookAt = ({ x , y , z , remember = false } = {}) => {
+    if( typeof x === "number" ) { this.target.x = x; }
+    if( typeof y === "number" ) { this.target.y = y; }
+    if( typeof z === "number" ) { this.target.z = z; }
+    if( remember ) {
+      this.target0.copy( this.target );
+    }
+  }
 
-	this.reset = function () {
+  reset = () => {
+    this._state = STATE.NONE;
+		this._prevState = STATE.NONE;
 
-		_state = STATE.NONE;
-		_prevState = STATE.NONE;
+		this.target.copy( this.target0 );
+		this.object.position.copy( this.position0 );
+		this.object.up.copy( this.up0 );
 
-		_this.target.copy( _this.target0 );
-		_this.object.position.copy( _this.position0 );
-		_this.object.up.copy( _this.up0 );
+		this._eye.subVectors( this.object.position, this.target );
 
-		_eye.subVectors( _this.object.position, _this.target );
+		this.object.left = this.left0;
+		this.object.right = this.right0;
+		this.object.top = this.top0;
+		this.object.bottom = this.bottom0;
 
-		_this.object.left = _this.left0;
-		_this.object.right = _this.right0;
-		_this.object.top = _this.top0;
-		_this.object.bottom = _this.bottom0;
+		this.object.lookAt( this.target );
 
-		_this.object.lookAt( _this.target );
+		this.dispatchEvent( _changeEvent );
 
-		_this.dispatchEvent( changeEvent );
+		this._changed = false;
+  }
 
-		_changed = false;
+  // listeners
+  onKeydown = ( event ) => {
+    if ( this.enabled === false ) return;
+    window.removeEventListener( 'keydown', this.onKeydown );
+    this._prevState = this._state;
 
-	};
-
-	// listeners
-
-	function keydown( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		window.removeEventListener( 'keydown', keydown );
-
-		_prevState = _state;
-
-		if ( _state !== STATE.NONE ) {
-
+		if ( this._state !== STATE.NONE ) {
 			return;
+		} else if ( event.keyCode === this.keys[ STATE.ROTATE ] && ! this.noRotate ) {
 
-		} else if ( event.keyCode === _this.keys[ STATE.ROTATE ] && ! _this.noRotate ) {
+			this._state = STATE.ROTATE;
 
-			_state = STATE.ROTATE;
+		} else if ( event.keyCode === this.keys[ STATE.ZOOM ] && ! this.noZoom ) {
 
-		} else if ( event.keyCode === _this.keys[ STATE.ZOOM ] && ! _this.noZoom ) {
+			this._state = STATE.ZOOM;
 
-			_state = STATE.ZOOM;
+		} else if ( event.keyCode === this.keys[ STATE.PAN ] && ! this.noPan ) {
 
-		} else if ( event.keyCode === _this.keys[ STATE.PAN ] && ! _this.noPan ) {
-
-			_state = STATE.PAN;
+			this._state = STATE.PAN;
 
 		}
+  }
 
-	}
+  onKeyup = ( event ) => {
+    if ( this.enabled === false ) return;
 
-	function keyup( event ) {
+    this._state = this._prevState;
 
-		if ( _this.enabled === false ) return;
+		window.addEventListener( 'keydown', this.onKeydown, false );
+  }
 
-		_state = _prevState;
-
-		window.addEventListener( 'keydown', keydown, false );
-
-	}
-
-	function mousedown( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		event.preventDefault();
+  onMousedown = ( event ) => {
+    if ( this.enabled === false ) return;
+    event.preventDefault();
 		event.stopPropagation();
 
-		if ( _state === STATE.NONE ) {
-
-			_state = event.button;
-
+		if ( this._state === STATE.NONE ) {
+			this._state = event.button;
 		}
-
-		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
-
+		if ( this._state === STATE.ROTATE && ! this.noRotate ) {
 		  // fix axis? altKey -> 3, ctrl -> 2, shift -> 1
 
-			_rotateStart.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
-			_rotateEnd.copy( _rotateStart );
+			this._rotateStart.copy( this.getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
+			this._rotateEnd.copy( this._rotateStart );
+		} else if ( this._state === STATE.ZOOM && ! this.noZoom ) {
+		  this._zoomStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+			this._zoomEnd.copy( this._zoomStart );
+		} else if ( this._state === STATE.PAN && ! this.noPan ) {
 
-		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
-
-			_zoomStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-			_zoomEnd.copy( _zoomStart );
-
-		} else if ( _state === STATE.PAN && ! _this.noPan ) {
-
-			_panStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
-			_panEnd.copy( _panStart );
+			this._panStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+			this._panEnd.copy( this._panStart );
 
 		}
 
-		document.addEventListener( 'mousemove', mousemove, false );
-		document.addEventListener( 'mouseup', mouseup, false );
+		document.addEventListener( 'mousemove', this.onMousemove, false );
+		document.addEventListener( 'mouseup', this.onMouseup, false );
+    this.dispatchEvent( _startEvent );
+  }
 
-		_this.dispatchEvent( startEvent );
-
-	}
-
-	function mousemove( event ) {
-
-		if ( _this.enabled === false ) return;
+  onMousemove = ( event ) => {
+    if ( this.enabled === false ) return;
 
 		event.preventDefault();
 		event.stopPropagation();
 
-		if ( _state === STATE.ROTATE && ! _this.noRotate ) {
+		if ( this._state === STATE.ROTATE && ! this.noRotate ) {
 
-			_rotateEnd.copy( getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
+			this._rotateEnd.copy( this.getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
 
-		} else if ( _state === STATE.ZOOM && ! _this.noZoom ) {
+		} else if ( this._state === STATE.ZOOM && ! this.noZoom ) {
 
-			_zoomEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
+			this._zoomEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
 
-		} else if ( _state === STATE.PAN && ! _this.noPan ) {
+		} else if ( this._state === STATE.PAN && ! this.noPan ) {
 
-			_panEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
+			this._panEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
 
 		}
+  }
 
-	}
+  onMouseup = ( event ) => {
 
-	function mouseup( event ) {
-
-		if ( _this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		_state = STATE.NONE;
-
-		document.removeEventListener( 'mousemove', mousemove );
-		document.removeEventListener( 'mouseup', mouseup );
-		_this.dispatchEvent( endEvent );
-
-	}
-
-	function mousewheel( event ) {
-
-		if ( _this.enabled === false ) return;
+		if ( this.enabled === false ) return;
 
 		event.preventDefault();
 		event.stopPropagation();
 
-		_zoomStart.y += event.deltaY * 0.01;
-		_this.dispatchEvent( startEvent );
-		_this.dispatchEvent( endEvent );
+		this._state = STATE.NONE;
+
+		document.removeEventListener( 'mousemove', this.onMousemove );
+		document.removeEventListener( 'mouseup', this.onMouseup );
+		this.dispatchEvent( _endEvent );
 
 	}
 
-	function touchstart( event ) {
+	onMousewheel = ( event ) => {
 
-		if ( _this.enabled === false ) return;
+		if ( this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		this._zoomStart.y += event.deltaY * 0.01;
+		this.dispatchEvent( _startEvent );
+		this.dispatchEvent( _endEvent );
+
+	}
+
+	onTouchstart = ( event ) => {
+
+		if ( this.enabled === false ) return;
 
 		switch ( event.touches.length ) {
 
 			case 1:
-				_state = STATE.TOUCH_ROTATE;
-				_rotateStart.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				_rotateEnd.copy( _rotateStart );
+				this._state = STATE.TOUCH_ROTATE;
+				this._rotateStart.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				this._rotateEnd.copy( this._rotateStart );
 				break;
 
 			case 2:
-				_state = STATE.TOUCH_ZOOM_PAN;
+				this._state = STATE.TOUCH_ZOOM_PAN;
 				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
 				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-				_touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
+				this._touchZoomDistanceEnd = this._touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
 
 				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
 				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				_panStart.copy( getMouseOnScreen( x, y ) );
-				_panEnd.copy( _panStart );
+				this._panStart.copy( this.getMouseOnScreen( x, y ) );
+				this._panEnd.copy( this._panStart );
 				break;
 
 			default:
-				_state = STATE.NONE;
+				this._state = STATE.NONE;
 
 		}
-		_this.dispatchEvent( startEvent );
+		this.dispatchEvent( _startEvent );
 
 	}
 
-	function touchmove( event ) {
+	onTouchmove = ( event ) => {
 
-		if ( _this.enabled === false ) return;
+		if ( this.enabled === false ) return;
 
 		event.preventDefault();
 		event.stopPropagation();
@@ -74948,98 +74925,252 @@ const OrthographicTrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				this._rotateEnd.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
 				break;
 
 			case 2:
 				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
 				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-				_touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
+				this._touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
 
 				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
 				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				_panEnd.copy( getMouseOnScreen( x, y ) );
+				this._panEnd.copy( this.getMouseOnScreen( x, y ) );
 				break;
 
 			default:
-				_state = STATE.NONE;
+				this._state = STATE.NONE;
 
 		}
 
 	}
 
-	function touchend( event ) {
+	onTouchend = ( event ) => {
 
-		if ( _this.enabled === false ) return;
+		if ( this.enabled === false ) return;
 
 		switch ( event.touches.length ) {
 
 			case 1:
-				_rotateEnd.copy( getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				_rotateStart.copy( _rotateEnd );
+				this._rotateEnd.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				this._rotateStart.copy( this._rotateEnd );
 				break;
 
 			case 2:
-				_touchZoomDistanceStart = _touchZoomDistanceEnd = 0;
+				this._touchZoomDistanceStart = this._touchZoomDistanceEnd = 0;
 
 				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
 				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				_panEnd.copy( getMouseOnScreen( x, y ) );
-				_panStart.copy( _panEnd );
+				this._panEnd.copy( this.getMouseOnScreen( x, y ) );
+				this._panStart.copy( this._panEnd );
 				break;
 
 		}
 
-		_state = STATE.NONE;
-		_this.dispatchEvent( endEvent );
+		this._state = STATE.NONE;
+		this.dispatchEvent( _endEvent );
 
 	}
 
-	function contextmenu( event ) {
+	onContextmenu = ( event ) => {
 
 		event.preventDefault();
 
 	}
 
-	this.dispose = function () {
+  dispose = () => {
+    this.domElement.removeEventListener( 'contextmenu', this.onContextmenu, false );
+		this.domElement.removeEventListener( 'mousedown', this.onMousedown, false );
+		this.domElement.removeEventListener( 'wheel', this.onMousewheel, false );
 
-		this.domElement.removeEventListener( 'contextmenu', contextmenu, false );
-		this.domElement.removeEventListener( 'mousedown', mousedown, false );
-		this.domElement.removeEventListener( 'wheel', mousewheel, false );
+		this.domElement.removeEventListener( 'touchstart', this.onTouchstart, false );
+		this.domElement.removeEventListener( 'touchend', this.onTouchend, false );
+		this.domElement.removeEventListener( 'touchmove', this.onTouchmove, false );
 
-		this.domElement.removeEventListener( 'touchstart', touchstart, false );
-		this.domElement.removeEventListener( 'touchend', touchend, false );
-		this.domElement.removeEventListener( 'touchmove', touchmove, false );
+		document.removeEventListener( 'mousemove', this.onMousemove, false );
+		document.removeEventListener( 'mouseup', this.onMouseup, false );
 
-		document.removeEventListener( 'mousemove', mousemove, false );
-		document.removeEventListener( 'mouseup', mouseup, false );
+		window.removeEventListener( 'keydown', this.onKeydown, false );
+		window.removeEventListener( 'keyup', this.onKeyup, false );
+  }
+}
 
-		window.removeEventListener( 'keydown', keydown, false );
-		window.removeEventListener( 'keyup', keyup, false );
 
-	};
 
-	this.domElement.addEventListener( 'contextmenu', contextmenu, false );
-	this.domElement.addEventListener( 'mousedown', mousedown, false );
-	this.domElement.addEventListener( 'wheel', mousewheel, false );
+// EXTERNAL MODULE: ./src/js/constants.js
+var constants = __webpack_require__(975);
+;// CONCATENATED MODULE: ./src/js/core/HauntedOrthographicCamera.js
 
-	this.domElement.addEventListener( 'touchstart', touchstart, false );
-	this.domElement.addEventListener( 'touchend', touchend, false );
-	this.domElement.addEventListener( 'touchmove', touchmove, false );
 
-	window.addEventListener( 'keydown', keydown, false );
-	window.addEventListener( 'keyup', keyup, false );
 
-	this.handleResize();
+const DEFAULT_CAMERA_LEFT = 150;
 
-	// force an update at start
-	this.update();
+class HauntedOrthographicCamera extends three_module.OrthographicCamera {
+  constructor ( canvas, width, height, near = 1, far = 10000 ) {
+    super(
+      -DEFAULT_CAMERA_LEFT, DEFAULT_CAMERA_LEFT,
+      height / width * DEFAULT_CAMERA_LEFT,
+      -height / width * DEFAULT_CAMERA_LEFT, near, far );
 
-};
+    this._canvas = canvas;
 
-OrthographicTrackballControls.prototype = Object.create( three_module.EventDispatcher.prototype );
-OrthographicTrackballControls.prototype.constructor = OrthographicTrackballControls;
+    this._originalPosition = new three_module.Vector3( 500, 0, 0 );
 
+    // getState()
+    this._stateTarget = new three_module.Vector3( 500, 0, 0 );
+    this._stateUp = new three_module.Vector3( 500, 0, 0 );
+    this._statePosition = new three_module.Vector3( 500, 0, 0 );
+
+    this.position.copy( this._originalPosition );
+		this.up.set(0,0,1);
+		this.layers.set( constants/* CONSTANTS.LAYER_USER_MAIN_CAMERA_0 */.t.LAYER_USER_MAIN_CAMERA_0 );
+		this.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
+		this.layers.enable( 2 );
+		this.layers.enable( 3 );
+		this.layers.enable( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
+		this.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+		this.lookAt( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN ); // Force camera
+
+		// Main camera light, casting from behind the mainCamera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
+		this.backLight = new three_module.DirectionalLight( constants/* CONSTANTS.COLOR_MAIN_LIGHT */.t.COLOR_MAIN_LIGHT , 0.5 );
+    this.backLight.position.copy( constants/* CONSTANTS.VEC_ANAT_I */.t.VEC_ANAT_I );
+    this.backLight.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+    this.backLight.name = 'main light - directional';
+    this.add( this.backLight );
+
+
+    // listeners
+    // zoom-in, zoom-out
+    this._canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_ZOOM */.t.KEY_ZOOM, this.onKeyboardZoom, 'zoom');
+
+  }
+
+  onKeyboardZoom = ( event ) => {
+    if( event.event.shiftKey ){
+      this.zoom = this.zoom * 1.2; // zoom in
+    }else{
+      this.zoom = this.zoom / 1.2; // zoom out
+    }
+    this.updateProjectionMatrix();
+    this._canvas.start_animation( 0 );
+  }
+
+  handleResize() {
+    const _ratio1 = this._canvas.client_height / this._canvas.client_width
+    const _ratio2 = ( this.right - this.left ) / ( this.top - this.bottom );
+	  this.top = _ratio1 * ( this.top * _ratio2 ||  DEFAULT_CAMERA_LEFT );
+	  this.bottom = _ratio1 * ( this.bottom * _ratio2 || -DEFAULT_CAMERA_LEFT );
+    this.updateProjectionMatrix();
+  }
+
+  setPosition({ x, y, z, forceZUp = false, remember = false, updateProjection = true } = {}) {
+    if( typeof x === "number" ) { this.position.x = x; }
+    if( typeof y === "number" ) { this.position.y = y; }
+    if( typeof z === "number" ) { this.position.z = z; }
+
+    if( this.position.length() < 0.00001 ) {
+      this.position.set(0, 0, 500);
+    }
+    this.position.normalize().multiplyScalar( 500 );
+
+    if( forceZUp ) {
+      if( this.position.x !== 0 || this.position.y !== 0 ) {
+        this.up.set( 0, 0, 1 );
+      } else {
+        this.up.set( 0, 1, 0 );
+      }
+    }
+
+    if( remember ) {
+      this._originalPosition.copy( this.position );
+    }
+    if( updateProjection ) {
+      this.updateProjectionMatrix();
+    }
+  }
+
+  setPosition2( str ) {
+    // str can be left, right, anterior, posterior, superior, inferior
+    const str2 = str.toLowerCase()[0];
+    switch (str2) {
+      case 'r':
+        this.position.set( 500, 0, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 'l':
+        this.position.set( -500, 0, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 'a':
+        this.position.set( 0, 500, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 'p':
+        this.position.set( 0, -500, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 's':
+        this.position.set( 0, 0, 500 );
+        this.up.set( 0, 1, 0 );
+        break;
+      case 'i':
+        this.position.set( 0, 0, -500 );
+        this.up.set( 0, 1, 0 );
+        break;
+    }
+  }
+
+  setZoom({ zoom, updateProjection = true } = {}) {
+    if( zoom !== undefined ){
+      this.zoom = zoom;
+      if( updateProjection ) {
+        this.updateProjectionMatrix();
+      }
+    }
+  }
+
+  reset({ fov = true, position = true, zoom = true } = {}) {
+
+    if( fov ) {
+      const _ratio = this._canvas.client_height / this._canvas.client_width;
+      this.left = -DEFAULT_CAMERA_LEFT;
+      this.right = DEFAULT_CAMERA_LEFT;
+      this.top = _ratio * DEFAULT_CAMERA_LEFT;
+      this.bottom = - _ratio * DEFAULT_CAMERA_LEFT;
+    }
+
+    if( position ) {
+      this.setPosition( { updateProjection : false } );
+
+      if( this.position.x !== 0 || this.position.y !== 0 ) {
+        this.up.set( 0, 0, 1 );
+      } else {
+        this.up.set( 0, 1, 0 );
+      }
+    }
+    if( zoom ) {
+      this.setZoom( { zoom: 1, updateProjection : false } );
+    }
+    this.updateProjectionMatrix();
+
+  }
+
+  getState() {
+
+    return({
+      //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
+      'target' : this.localToWorld( this._stateTarget.set(0, 0, 0) ),
+
+      // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
+      'up' : this._stateUp.copy( this.up ),
+
+      //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
+      'position': this._statePosition.copy( this.position ),
+
+      'zoom' : this.zoom
+    });
+  }
+}
 
 
 
@@ -75254,8 +75385,6 @@ class CanvasFileLoader {
 
 
 
-// EXTERNAL MODULE: ./src/js/constants.js
-var constants = __webpack_require__(975);
 ;// CONCATENATED MODULE: ./src/js/libs/draggable.js
 
 function get_size(el){
@@ -75748,7 +75877,7 @@ class SideCanvas {
       y : coronalDepth,
       z : axialDepth
     });
-    // need to update main_camera
+    // need to update mainCamera
     if( updateMainCamera ) {
       const newMainCameraPosition = new three_module.Vector3()
         .set( sagittalDepth, coronalDepth, axialDepth )
@@ -75758,7 +75887,7 @@ class SideCanvas {
       }
 
       // make S up as much as possible, try to heads up
-      const newMainCameraUp = this.mainCanvas.main_camera.position.clone()
+      const newMainCameraUp = this.mainCanvas.mainCamera.position.clone()
         .cross( new three_module.Vector3(0, 0, 1) ).cross( newMainCameraPosition )
         .normalize();
 
@@ -75766,8 +75895,8 @@ class SideCanvas {
         newMainCameraUp.multiplyScalar(-1);
       }
 
-      this.mainCanvas.main_camera.position.copy( newMainCameraPosition );
-      this.mainCanvas.main_camera.up.copy( newMainCameraUp );
+      this.mainCanvas.mainCamera.position.copy( newMainCameraPosition );
+      this.mainCanvas.mainCamera.up.copy( newMainCameraUp );
     }
   }
 
@@ -79071,7 +79200,7 @@ class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
 /*
   pre_render( results ) {
     if(!this.object) { return; }
-    const camera = this._canvas.main_camera;
+    const camera = this._canvas.mainCamera;
     this._uniforms.camera_center.value.set(
       (camera.right + camera.left) / (camera.left - camera.right),
       (camera.top + camera.bottom) / (camera.bottom - camera.top)
@@ -80736,6 +80865,8 @@ var download_default = /*#__PURE__*/__webpack_require__.n(download);
 ;// CONCATENATED MODULE: ./src/js/threejs_scene.js
 
 
+// import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
+
 
 
 
@@ -80953,31 +81084,10 @@ class THREEBRAIN_CANVAS {
           center/lookat: origin (0,0,0)
           up: 0,1,0 ( heads up )
     */
-    this.main_camera = new three_module.OrthographicCamera( -150, 150, height / width * 150, -height / width * 150, 1, 10000 );
-    // this.main_camera = new PerspectiveCamera( 20, width / height, 0.1, 10000 );
-
-		this.main_camera.position.x = 500;
-		this.main_camera.userData.pos = [500,0,0];
-		this.main_camera.up.set(0,0,1);
-		this.main_camera.layers.set( constants/* CONSTANTS.LAYER_USER_MAIN_CAMERA_0 */.t.LAYER_USER_MAIN_CAMERA_0 );
-		this.main_camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
-		this.main_camera.layers.enable( 2 );
-		this.main_camera.layers.enable( 3 );
-		this.main_camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
-		this.main_camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-		this.main_camera.lookAt( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN ); // Force camera
-
-		// Main camera light, casting from behind the main_camera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
-		// Maybe we should get rid of directional light as it will cause reflactions?
-    const main_light = new three_module.DirectionalLight( constants/* CONSTANTS.COLOR_MAIN_LIGHT */.t.COLOR_MAIN_LIGHT , 0.5 );
-    main_light.position.copy( constants/* CONSTANTS.VEC_ANAT_I */.t.VEC_ANAT_I );
-    main_light.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-    main_light.name = 'main light - directional';
-    this.main_camera.add( main_light );
-    this.mainDirectionalLight = main_light;
+    this.mainCamera = new HauntedOrthographicCamera( this, width, height );
 
     // Add main camera to scene
-    this.add_to_scene( this.main_camera, true );
+    this.add_to_scene( this.mainCamera, true );
 
     // Add ambient light to make scene soft
     const ambient_light = new three_module.AmbientLight( constants/* CONSTANTS.COLOR_AMBIENT_LIGHT */.t.COLOR_AMBIENT_LIGHT, 1.0 );
@@ -81049,40 +81159,10 @@ class THREEBRAIN_CANVAS {
 
 
     // Controls
-    // First, it should be a OrthographicTrackballControls to ignore distance information
-    // Second, it need main canvas, hence main canvas Must be added to dom element
-    this.controls = new OrthographicTrackballControls( this.main_camera, this.main_canvas );
-  	this.controls.zoomSpeed = 0.02;
-  	// You cannot use pan in perspective camera. So if you are using PerspectiveCamera, this needs to be true
-  	this.controls.noPan = false;
-  	// Initial radius is 500
-  	// orthographic.radius = 400;
-  	this.controls.dynamicDampingFactor=0.5;
-    this.control_center = [0, 0, 0];
-
-    // set control listeners
-    this.bind( 'controls_start', 'start', (v) => {
-
-      if(this.render_flag < 0 ){
-        // adjust controls
-        this.handle_resize(undefined, undefined, true);
-      }
-
-      // normal controls, can be interrupted
-      this.start_animation(1);
-    }, this.controls );
-
-    this.bind( 'controls_end', 'end', (v) => {
-      // normal pause, can be overridden
-      this.pause_animation(1);
-      this.dispatch_event(
-        "canvas.main_camera.onEnd",
-        this.main_camera
-      )
-    }, this.controls );
+    this.trackball = new HauntedArcballControls( this );
 
     // Follower that fixed at bottom-left
-    this.compass = new Compass( this.main_camera, this.controls );
+    this.compass = new Compass( this.mainCamera, this.trackball );
     // Hide the anchor first
     this.compass.set_visibility( false );
     this.add_to_scene(this.compass.container, true);
@@ -81314,16 +81394,7 @@ class THREEBRAIN_CANVAS {
       'side_viewer_depth'
     );
 
-    // zoom-in, zoom-out
-    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_ZOOM */.t.KEY_ZOOM, (evt) => {
-      if( evt.event.shiftKey ){
-        this.main_camera.zoom = this.main_camera.zoom * 1.2; // zoom in
-      }else{
-        this.main_camera.zoom = this.main_camera.zoom / 1.2; // zoom out
-      }
-      this.main_camera.updateProjectionMatrix();
-      this.start_animation( 0 );
-    }, 'zoom');
+
 
     this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT */.t.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
       let m = this.object_chosen || this._last_object_chosen,
@@ -81676,6 +81747,8 @@ class THREEBRAIN_CANVAS {
 
     // Remove custom listeners
     this.dispose_eventlisters();
+    this.trackball.enabled = false;
+    this.trackball.dispose();
 
     // Remove customized objects
     this.clear_all();
@@ -81793,7 +81866,7 @@ class THREEBRAIN_CANVAS {
     // console.debug('width: ' + width + '; height: ' + height);
 
     if(lazy){
-      this.controls.handleResize();
+      this.trackball.handleResize();
 
       this.start_animation(0);
 
@@ -81806,16 +81879,10 @@ class THREEBRAIN_CANVAS {
     // Because when panning controls, we actually set views, hence need to calculate this smartly
     // Update: might not need change
 	  if( center_camera ){
-      this.main_camera.left = -150;
-  	  this.main_camera.right = 150;
-  	  this.main_camera.top = main_height / main_width * 150;
-  	  this.main_camera.bottom = -main_height / main_width * 150;
+      this.mainCamera.reset({ fov : true, position : false, zoom : false });
 	  }else{
-  	  let _ratio = main_height / main_width * ( this.main_camera.right - this.main_camera.left ) / ( this.main_camera.top - this.main_camera.bottom );
-  	  this.main_camera.top = (this.main_camera.top * _ratio) || (main_height / main_width * 150);
-  	  this.main_camera.bottom = (this.main_camera.bottom * _ratio) || (-main_height / main_width * 150);
+	    this.mainCamera.handleResize();
 	  }
-    this.main_camera.updateProjectionMatrix();
 
     this.main_canvas.style.width = main_width + 'px';
     this.main_canvas.style.height = main_height + 'px';
@@ -81836,7 +81903,7 @@ class THREEBRAIN_CANVAS {
 
     this.video_canvas.height = main_height / 4;
 
-    this.controls.handleResize();
+    this.trackball.handleResize();
 
     this.start_animation(0);
 
@@ -81917,19 +81984,6 @@ class THREEBRAIN_CANVAS {
     this.set_state("font_magnification", magnification);
   }
 
-  // Get camera position & up
-  get_main_camera_params(){
-    return({
-      'target' : this.main_camera.localToWorld(new three_module.Vector3(
-        -this.main_camera.userData.pos[0],
-        -this.main_camera.userData.pos[1],
-        -this.main_camera.userData.pos[2]
-      )), //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
-      'up' : this.main_camera.up, // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
-      'position': this.main_camera.position //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
-    });
-  }
-
   // Get mouse position (normalized)
   get_mouse(){
     if(this.mouse_event !== undefined && !this.mouse_event.dispose){
@@ -81975,23 +82029,6 @@ class THREEBRAIN_CANVAS {
   }
 
   // -------- Camera, control trackballs ........
-  // Set trackball center target
-  set_control_center( v ){
-    v = (0,utils/* to_array */.AA)(v);
-    this.controls.target.fromArray( v );
-    this.control_center = (0,utils/* to_array */.AA)( v );
-  }
-  reset_main_camera( pos, zoom = 1 ){
-    if( Array.isArray(pos) && pos.length === 3 ){
-      this.main_camera.userData.pos = pos;
-      this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
-    }
-    if( zoom !== undefined ){
-      this.main_camera.zoom = zoom;
-    }
-    this.main_camera.updateProjectionMatrix();
-  }
-
   resetSideCanvas({
     width, zoomLevel = true, position = false,
     coronal = true, axial = true, sagittal = true
@@ -82060,34 +82097,6 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  reset_controls(){
-	  // reset will erase target, manually reset target
-	  // let target = this.controls.target.toArray();
-		this.controls.reset();
-		this.controls.target.fromArray( this.control_center );
-
-		//this.main_camera.position.set(0 , 0 , 500);
-		//this.main_camera.up.set(0 , 1 , 0);
-		//this.main_camera.zoom = 1;
-		//this.main_camera.updateProjectionMatrix();
-    const pos = this.main_camera.userData.pos;
-    this.main_camera.position.set(pos[0] , pos[1] , pos[2]);
-
-    if( pos[2] === 0 ){
-      this.main_camera.up.set(0, 0, 1);
-    }else{
-      this.main_camera.up.set(0, 1, 0);
-    }
-
-
-    this.main_camera.zoom = 1;
-    this.main_camera.updateProjectionMatrix();
-
-
-		// immediately render once
-    this.start_animation(0);
-	}
-
   enableSideCanvas(){
 	  // Add side renderers to the element
 	  this.sideCanvasEnabled = true;
@@ -82103,7 +82112,7 @@ class THREEBRAIN_CANVAS {
 	}
   /*---- Choose & highlight objects -----------------------------------------*/
   set_raycaster(){
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.main_camera );
+    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.mainCamera );
   }
 
   _fast_raycast( request_type ){
@@ -82761,7 +82770,7 @@ class THREEBRAIN_CANVAS {
   update(){
 
     this.get_mouse();
-    this.controls.update();
+    this.trackball.update();
     this.compass.update();
 
     try {
@@ -82856,7 +82865,7 @@ class THREEBRAIN_CANVAS {
 
     });
 
-    this.main_renderer.render( this.scene, this.main_camera );
+    this.main_renderer.render( this.scene, this.mainCamera );
 
     if(this.sideCanvasEnabled){
 
@@ -83719,10 +83728,12 @@ class THREEBRAIN_CANVAS {
           this.bounding_box.setFromObject( m.parent );
           this.bounding_box.geometry.computeBoundingBox();
           const _b = this.bounding_box.geometry.boundingBox;
-          this.controls.target.copy( _b.min.clone() )
+          const newControlCenter = _b.min.clone()
             .add( _b.max ).multiplyScalar( 0.5 );
-          this.control_center = this.controls.target.toArray();
-          this.controls.update();
+
+          newControlCenter.remember = true;
+          this.trackball.lookAt( newControlCenter );
+          this.trackball.update();
 
         }
       }
@@ -84724,7 +84735,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var _js_core_gui_wrapper_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2814);
 /* harmony import */ var _js_core_data_controls_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6303);
 /* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8173);
-/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(2652);
+/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(7689);
 /* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(5664);
 /* harmony import */ var _js_constants_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(975);
 /* harmony import */ var _js_utils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(3658);
@@ -84970,12 +84981,6 @@ class BrainCanvas{
     presets.c_reset_camera();
     presets.c_main_camera_position();
     presets.c_toggle_anchor();
-    /*
-    this.gui.add_item('Free Controls', () => {
-      _camera_pos.setValue( '[free rotate]' );
-      this.canvas.controls.enabled = true;
-    }, {folder_name: 'Main Canvas'});
-    */
 
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
@@ -85174,8 +85179,7 @@ class BrainCanvas{
     *
     * this is the line that causes the problem
     */
-    // this.canvas.reset_main_camera( this.settings.camera_pos , this.settings.start_zoom );
-    this.canvas.reset_main_camera( undefined , this.settings.start_zoom );
+    this.canvas.mainCamera.setZoom( this.settings.start_zoom );
     this.canvas.set_font_size( this.settings.font_magnification || 1 );
 
     // Add/remove axis anchor
@@ -85187,7 +85191,7 @@ class BrainCanvas{
     }
 
     // Compile everything
-    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.main_camera );
+    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
 
     // Set side camera
     if(this.settings.side_camera || false){

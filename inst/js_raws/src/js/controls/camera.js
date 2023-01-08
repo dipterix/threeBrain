@@ -11,8 +11,10 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
     this.gui.add_item('Reset', () => {
       // Center camera first.
       this.canvas.handle_resize( undefined, undefined, false, true );
-      this.canvas.reset_controls();
-      this.canvas.controls.enabled = true;
+  		this.canvas.trackball.reset();
+  		this.canvas.mainCamera.reset();
+      this.canvas.trackball.enabled = true;
+      this.canvas.start_animation(0);
     }, {folder_name: folder_name});
   };
 
@@ -23,39 +25,16 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
       folder_name : folder_name
     }).onChange((v) => {
 
+      if( v === '[free rotate]' ) {
+        this.canvas.trackball.enabled = true;
+        return;
+      }
       if( v === '[lock]' ){
-        this.canvas.controls.enabled = false;
-        return( null );
+        this.canvas.trackball.enabled = false;
+        return;
       }
-      this.canvas.controls.enabled = true;
-
-      switch (v) {
-        case 'right':
-          this.canvas.main_camera.position.set( 500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'left':
-          this.canvas.main_camera.position.set( -500, 0, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'anterior':
-          this.canvas.main_camera.position.set( 0, 500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'posterior':
-          this.canvas.main_camera.position.set( 0, -500, 0 );
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-          break;
-        case 'superior':
-          this.canvas.main_camera.position.set( 0, 0, 500 );
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-          break;
-        case 'inferior':
-          this.canvas.main_camera.position.set( 0, 0, -500 );
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-          break;
-      }
-
+      this.canvas.trackball.enabled = true;
+      this.canvas.mainCamera.setPosition2( v );
       camera_pos.__select.value = '[free rotate]';
 
       this._update_canvas();
@@ -70,18 +49,8 @@ function register_controls_camera( THREEBRAIN_PRESETS ){
       const inital_camera_pos = new Vector3().fromArray(
         this.settings.camera_pos
       );
-      if (inital_camera_pos.length() > 0){
-        this.canvas.main_camera.position.set(
-          inital_camera_pos.x,
-          inital_camera_pos.y,
-          inital_camera_pos.z
-        ).normalize().multiplyScalar(500);
-        if( inital_camera_pos.x !== 0 || inital_camera_pos.y !== 0 ){
-          this.canvas.main_camera.up.set( 0, 0, 1 );
-        } else {
-          this.canvas.main_camera.up.set( 0, 1, 0 );
-        }
-      }
+      inital_camera_pos.forceZUp = true;
+      this.canvas.mainCamera.setPosition( inital_camera_pos );
     }
 
     this._update_canvas();

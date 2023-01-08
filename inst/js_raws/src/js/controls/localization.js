@@ -548,7 +548,7 @@ function interpolate_electrode_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
@@ -594,7 +594,7 @@ function extend_electrode_from_ct( inst, canvas, electrodes, size ){
   if( !inst ){ return; }
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new Vector3();
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
@@ -640,7 +640,7 @@ function interpolate_electrode_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
 
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new Vector3();
 
   canvas.set_raycaster();
@@ -675,7 +675,7 @@ function extend_electrode_from_slice( canvas, electrodes, size ){
   if( electrodes.length < 2 ){ return; }
   if( size <= 2 ){ return; }
 
-  const src = canvas.main_camera.position;
+  const src = canvas.mainCamera.position;
   const dst = new Vector3();
 
   canvas.set_raycaster();
