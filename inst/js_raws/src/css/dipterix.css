@@ -98,11 +98,12 @@
 .threejs-control *{
   /* pointer-events: auto; */
 }
-
+.lil‑gui {
+  ‑‑name‑width: 100%;
+}
 
 .threejs-control .lil‑gui {
   /* opacity: 0.4; */
-  ‑‑name‑width: 100%;
   padding-bottom: 20px;
 }
 
@@ -246,14 +247,14 @@
 
 
 /* Tooltip text */
-.threejs-control .dg .cr[viewer-tooltip] {
+.threejs-control .lil-gui .controller[viewer-tooltip] {
   position: relative;
 }
-.threejs-control .dg .cr[viewer-tooltip]:before {
+.threejs-control .lil-gui .controller[viewer-tooltip]:before {
   content: attr(viewer-tooltip);
   background-color: #f9f9f9;
   color: #000000;
-  top: 1em;
+  top: 0.5em;
   position: absolute;
   white-space: nowrap;
   transform: translate(-4px, -4px);

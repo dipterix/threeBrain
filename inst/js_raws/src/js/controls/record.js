@@ -4,9 +4,9 @@ import { PDFContext } from '../core/context.js';
 
 // 2. Record Videos
 
-function register_controls_record( THREEBRAIN_PRESETS ){
+function register_controls_record( ViewerControlCenter ){
 
-  THREEBRAIN_PRESETS.prototype.c_recorder = function(){
+  ViewerControlCenter.prototype.c_recorder = function(){
     const folder_name = CONSTANTS.FOLDERS[ 'video-recorder' ];
     this.gui.add_item('Record (Chrome-only)', false, {folder_name: folder_name })
       .onChange((v) =>{
@@ -85,7 +85,7 @@ function register_controls_record( THREEBRAIN_PRESETS ){
 
   };
 
-  return( THREEBRAIN_PRESETS );
+  return( ViewerControlCenter );
 
 }
 

@@ -3,9 +3,9 @@ import { set_visibility } from '../utils.js';
 
 // Experimental (probably not gonna be used)
 
-function register_controls_experimental( THREEBRAIN_PRESETS ){
+function register_controls_experimental( ViewerControlCenter ){
 
-  THREEBRAIN_PRESETS.prototype.c_electrode_localization = function(
+  ViewerControlCenter.prototype.c_electrode_localization = function(
     folder_name = 'Electrode Localization (Beta)'){
 
     this.canvas.electrodes.set( '__localization__', [] );
@@ -373,14 +373,14 @@ function register_controls_experimental( THREEBRAIN_PRESETS ){
 
   };
 
-  THREEBRAIN_PRESETS.prototype.c_export_electrodes = function(
+  ViewerControlCenter.prototype.c_export_electrodes = function(
     folder_name = 'Default'){
     this.gui.add_item('Download Electrodes', () => {
       this.canvas.download_electrodes('csv');
     });
   };
 
-  THREEBRAIN_PRESETS.prototype.c_ct_visibility = function(){
+  ViewerControlCenter.prototype.c_ct_visibility = function(){
     const folder_name = 'CT Overlay';
     this.gui.add_item('Align CT to T1', false, { folder_name: folder_name })
       .onChange((v) => {
@@ -419,7 +419,7 @@ function register_controls_experimental( THREEBRAIN_PRESETS ){
 
   };
 
-  return( THREEBRAIN_PRESETS );
+  return( ViewerControlCenter );
 
 }
 

@@ -54,16 +54,15 @@ class AbstractThreeBrainObject {
     console.warn(this._name + ' ' + s);
   }
 
-  get_world_position( results ){
-    if( results && this._last_rendered === results.elapsed_time ) {
+  get_world_position(){
+    const animParameters = this._canvas.animParameters;
+    if( this._last_rendered === animParameters.trackPosition ) {
       return( this.world_position );
     }
     if( this.object ){
       this.object.getWorldPosition( this.world_position );
     }
-    if( results ){
-      this._last_rendered = results.elapsed_time;
-    }
+    this._last_rendered = animParameters.trackPosition;
     return( this.world_position );
   }
 
@@ -75,8 +74,8 @@ class AbstractThreeBrainObject {
     this.warn('method get_track_data(track_name, reset_material) not implemented...');
   }
 
-  pre_render( results ){
-    this.get_world_position( results );
+  pre_render(){
+    this.get_world_position();
     if( this.object && this.object.isMesh ){
       if( this._visible && this._display_mode !== "hidden" ) {
         this.object.visible = true;
@@ -84,8 +83,6 @@ class AbstractThreeBrainObject {
         this.object.visible = false;
       }
     }
-
-    this._last_rendered = results.elapsed_time;
   }
 
   add_track_data( track_name, data_type, value, time_stamp = 0 ){
@@ -121,7 +118,7 @@ class AbstractThreeBrainObject {
 
       if( this.object.isObject3D ){
         this.object.userData.instance = this;
-        this.object.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+        this.object.userData.pre_render = () => { return( this.pre_render() ); };
         this.object.userData.dispose = () => { this.dispose(); };
         this.object.renderOrder = CONSTANTS.RENDER_ORDER[ this.type ] || 0;
       }

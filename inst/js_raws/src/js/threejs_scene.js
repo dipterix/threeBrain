@@ -10,11 +10,12 @@ import {
 } from 'three';
 import { to_array, get_element_size, get_or_default,
   has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4,
-  set_visibility, set_display_mode
+  set_visibility, set_display_mode, invertColor
 } from './utils.js';
 // import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
 import { HauntedArcballControls } from './core/HauntedArcballControls.js';
-import { HauntedOrthographicCamera } from './core/HauntedOrthographicCamera.js'
+import { HauntedOrthographicCamera } from './core/HauntedOrthographicCamera.js';
+import { AnimationParameters } from './core/AnimationParameters.js';
 import { CanvasContext2D } from './core/context.js';
 import { CanvasFileLoader } from './core/loaders.js';
 import { SideCanvas } from './core/side_canvas.js';
@@ -123,7 +124,7 @@ class THREEBRAIN_CANVAS {
 
     // Side panel initial size in pt
     this.side_width = side_width;
-    this._side_width = side_width;
+    this._sideCanvasCSSWidth = side_width;
 
     // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
     this.shiny_mode = shiny_mode;
@@ -188,17 +189,13 @@ class THREEBRAIN_CANVAS {
     // Disable raycasting, soft deprecated
     this.disable_raycast = true;
 
-    // A indicator of whether to render legends, will be true if input meshes have animations
-    this.render_legend = false;
     // If legend is drawn, should be continuous or discrete.
     this.color_type = 'continuous';
 
     // If there exists animations, this will control the flow;
-    this.animation_controls = {};
     this.animation_clips = new Map();
     this.color_maps = new Map();
-    // Important, this keeps animation clock aligned with real-time PC clock.
-    this.clock = new Clock();
+    this.animParameters = new AnimationParameters();
 
     // Set pixel ratio, separate settings for main and side renderers
     this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
@@ -530,7 +527,7 @@ class THREEBRAIN_CANVAS {
         if( obj && obj.isMesh && obj.userData.construct_params ){
           const pos = new Vector3();
           obj.getWorldPosition( pos );
-          this.dispatch_event( 'canvas.controllers.drive.slice', {
+          this.dispatch_event( 'canvas.drive.setSliceCrosshair', {
             x : pos.x,
             y : pos.y,
             z : pos.z,
@@ -887,7 +884,7 @@ class THREEBRAIN_CANVAS {
     // Remove all objects, listeners, and dispose all
     this._disposed = true;
     this.ready = false;
-    this.clock.stop();
+    this.animParameters.dispose();
 
     // update functions
     this._custom_updates.clear();
@@ -925,7 +922,7 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  // Function to clear all meshes
+  // Function to clear all meshes, but still keep canvas valid
   clear_all(){
     // Stop showing information of any selected objects
     this.object_chosen=undefined;
@@ -944,7 +941,7 @@ class THREEBRAIN_CANVAS {
     this.color_maps.clear();
     // this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
-    console.log('TODO: Need to dispose animation clips');
+    console.debug('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
 
     this.group.forEach((g) => {
@@ -1110,6 +1107,7 @@ class THREEBRAIN_CANVAS {
   // Canvas state
   set_state( key, val ) {
     this.state_data.set(key, val);
+    console.debug(`Canvas state set [${key}]`);
     this.dispatch_event( "canvas.state.onChange", {
       key: key,
       value: val
@@ -1149,16 +1147,6 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  // Show/hide bottom-left compass
-  set_compass_visibility( visible ){
-    if( this.compass ){
-      this.compass.set_visibility( visible, () => {
-        this.start_animation( 0 );
-      });
-    }
-  }
-
-
   // To be implemented (abstract methods)
   set_coronal_depth( depth ){
     if( typeof this._set_coronal_depth === 'function' ){
@@ -1181,7 +1169,7 @@ class THREEBRAIN_CANVAS {
     coronal = true, axial = true, sagittal = true
   } = {}) {
     if( typeof width !== 'number' ) {
-      width = this._side_width;
+      width = this._sideCanvasCSSWidth;
     }
     if( width * 3 > this.client_height ){
       width = Math.floor( this.client_height / 3 );
@@ -1522,8 +1510,8 @@ class THREEBRAIN_CANVAS {
 
     this.update_time_range();
     if( cmap ){
-      cmap.time_range[0] = this.__min_t;
-      cmap.time_range[1] = this.__max_t;
+      cmap.time_range[0] = this.animParameters.min;
+      cmap.time_range[1] = this.animParameters.max;
     }
     return( cmap );
   }
@@ -1778,107 +1766,57 @@ class THREEBRAIN_CANVAS {
 
   }
 
-  // Animation-related: time-increment
-  inc_time(){
-    // this.animation_controls = {};
-    // this.clock = new Clock();
+  // Animation-related:
+  incrementTime(){
 
-    const clock_time_delta = this.clock.getDelta();
-    const results = this._time_info;
-    const sel_obj = results.selected_object;
-    results.current_time_delta = 0;
-    results.last_time = 0;
-    results.current_time = 0;
-    results.speed = 1;
-    results.elapsed_time = (this.clock.oldTime - this.clock.startTime) / 1000;
+    this.animParameters.incrementTime();
+    const objectInfo = this.animParameters.userData.objectFocused;
 
-    results.time_range_min = this.__min_t;
+    // set chosen object to show mesh info
+    if(this.object_chosen !== undefined && this.object_chosen.userData ){
 
-    // show mesh value info
-    if(this.object_chosen !== undefined &&
-        this.object_chosen.userData ){
+      objectInfo.enabled = true;
 
-        results.has_object = true;
+      const objectUserData = this.object_chosen.userData;
+      const objectConstructParams = objectUserData.construct_params;
+      this.object_chosen.getWorldPosition( objectInfo.position );
 
-        sel_obj.name = this.object_chosen.userData.construct_params.name;
-        this.object_chosen.getWorldPosition( sel_obj.position );
-        sel_obj.custom_info = this.object_chosen.userData.construct_params.custom_info;
-        sel_obj.is_electrode = this.object_chosen.userData.construct_params.is_electrode || false;
-        sel_obj.MNI305_position = this.object_chosen.userData.MNI305_position;
+      objectInfo.name = objectConstructParams.name;
+      objectInfo.customInfo = objectConstructParams.custom_info;
+      objectInfo.isElectrode = objectConstructParams.is_electrode || false;
+      objectInfo.MNI305Position = objectUserData.MNI305_position;
 
-        if( !sel_obj.template_mapping ){
-          sel_obj.template_mapping = {};
-        }
-        sel_obj.template_mapping.mapped = this.object_chosen.userData._template_mapped || false;
-        sel_obj.template_mapping.shift = this.object_chosen.userData._template_shift || 0;
-        sel_obj.template_mapping.space = this.object_chosen.userData._template_space || 'original';
-        sel_obj.template_mapping.surface = this.object_chosen.userData._template_surface || 'NA';
-        sel_obj.template_mapping.hemisphere = this.object_chosen.userData._template_hemisphere || 'NA';
-        sel_obj.template_mapping.mni305 = this.object_chosen.userData._template_mni305;
-
-      } else {
-      results.has_object = false;
-    }
+      objectInfo.templateMapping.mapped = objectUserData._template_mapped || false;
+      objectInfo.templateMapping.shift = objectUserData._template_shift || 0;
+      objectInfo.templateMapping.space = objectUserData._template_space || 'original';
+      objectInfo.templateMapping.surface = objectUserData._template_surface || 'NA';
+      objectInfo.templateMapping.hemisphere = objectUserData._template_hemisphere || 'NA';
+      objectInfo.templateMapping.mni305 = objectUserData._template_mni305;
 
 
-    if( typeof( this.animation_controls.get_params ) === 'function' ){
+      // show mesh value info
+      objectInfo.currentDataValue = undefined;
+      if( this.object_chosen.userData.ani_exists ){
 
-      // animation is enabled
+        const track_type = this.get_state("color_map");
+        const track_data = objectUserData.get_track_data( track_type );
 
-      const params = this.animation_controls.get_params();
-
-      // next_time =
-      //  1. if not is_playing, last_time
-      //  2. if is_playing, last_time + time_delta * speed
-      results.has_animation = params.exists;
-      results.current_time = params.play ? (params.time + clock_time_delta * params.speed) : params.time;
-      results.speed = params.speed;
-      results.is_playing = params.play;
-      results.last_time = params.time;
-
-      if( results.current_time > params.max ){
-        results.current_time = params.min;
-        results.last_time = params.min;
-      }
-
-      // Change animation
-      results.current_time_delta = results.current_time - results.time_range_min;
-      /*
-      this.animation_mixers.forEach( (mixer) => {
-        mixer.update( current_time - time_range_min - mixer.time );
-      });
-      */
-
-      // set timer
-      if( params.play ){
-        this.animation_controls.set_time( results.current_time );
-      }
-
-
-    }
-
-    // show mesh value info
-    if( results.has_object && this.object_chosen.userData.ani_exists ){
-
-      const track_type = this.get_state("color_map");
-
-      const track_data = this.object_chosen.userData.get_track_data( track_type );
-
-      if( track_data ){
-        const time_stamp = to_array( track_data.time );
-        const values = to_array( track_data.value );
-        let _tmp = - Infinity;
-        for( let ii in time_stamp ){
-          if(time_stamp[ ii ] <= results.current_time && time_stamp[ ii ] > _tmp){
-            results.current_value = values[ ii ];
-            _tmp = time_stamp[ ii ];
+        if( track_data ){
+          const time_stamp = to_array( track_data.time );
+          const values = to_array( track_data.value );
+          const currentTime = this.animParameters.time;
+          let _tmp = - Infinity;
+          for( let ii in time_stamp ){
+            if(time_stamp[ ii ] <= currentTime && time_stamp[ ii ] > _tmp){
+              objectInfo.currentDataValue = values[ ii ];
+              _tmp = time_stamp[ ii ];
+            }
           }
         }
       }
+    } else {
+      objectInfo.enabled = false;
     }
-
-    return(results);
-
   }
 
   // set renderer's flag (persist):
@@ -1896,7 +1834,7 @@ class THREEBRAIN_CANVAS {
       // if _flag >= 2, then clock was running, then there is no need to start clock
       // persist >= 2 is a flag for animation to run
       // animation clips need a clock
-      this.clock.start();
+      this.animParameters._clock.start();
     }
   }
 
@@ -1908,7 +1846,7 @@ class THREEBRAIN_CANVAS {
 
       // When animation is stopped, we need to check if clock is running, if so, stop it
       if( _flag >= 2 ){
-        this.clock.stop();
+        this.animParameters._clock.stop();
       }
     }
   }
@@ -1966,14 +1904,7 @@ class THREEBRAIN_CANVAS {
   }
 
   // Main render function, automatically scheduled
-  render( results ){
-
-    if( !results ){
-      results = this._time_info;
-      results.current_time = 0;
-      results.current_time_delta = 0;
-      results.elapsed_time = (this.clock.oldTime - this.clock.startTime) / 1000;
-    }
+  render(){
 
     // double-buffer to make sure depth renderings
     //this.main_renderer.setClearColor( renderer_colors[0] );
@@ -1982,13 +1913,11 @@ class THREEBRAIN_CANVAS {
     // Pre render all meshes
     this.mesh.forEach((m) => {
       if( typeof m.userData.pre_render === 'function' ){
-        //m.userData.pre_render( results );
         try {
-          m.userData.pre_render( results );
+          m.userData.pre_render();
         } catch (e) {
           if( !this.__render_error ) {
             console.warn(e);
-            console.log( results );
             this.__render_error = true;
           }
         }
@@ -2000,11 +1929,10 @@ class THREEBRAIN_CANVAS {
 
       if( s && typeof(s) === "object" && typeof s.pre_render === 'function' ) {
         try {
-          s.pre_render( results );
+          s.pre_render();
         } catch (e) {
           if( !this.__render_error ) {
             console.warn(e);
-            console.log( results );
             this.__render_error = true;
           }
         }
@@ -2049,12 +1977,14 @@ class THREEBRAIN_CANVAS {
     if( max_t0 !== undefined ){
       max_t = Math.max( max_t, max_t0 );
     }
-    this.__min_t = min_t;
-    this.__max_t = max_t;
+    this.animParameters.min = min_t;
+    this.animParameters.max = max_t;
   }
 
 
-  _draw_title( results, x = 10, y = 10, w = 100, h = 100 ){
+  renderTitle( x = 10, y = 10, w = 100, h = 100 ){
+
+    if( typeof this.title !== "string" ) { return; }
 
     this._fontType = 'Courier New, monospace';
     this._lineHeight_title = this._lineHeight_title || Math.round( 25 * this.pixel_ratio[0] );
@@ -2066,34 +1996,32 @@ class THREEBRAIN_CANVAS {
 
     // Add title
     let ii = 0, ss = [];
-    ( this.title || results.title || '' )
+    ( this.title || '' )
       .split('\\n')
       .forEach( (ss, ii) => {
         this.domContext.fillText( ss , x, y + this._lineHeight_title * (ii + 1) );
       });
   }
 
-  _draw_ani_old( results, x = 10, y = 10, w = 100, h = 100  ){
+  _draw_ani_old( x = 10, y = 10, w = 100, h = 100  ){
 
     this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
     this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
 
     // Add current time to bottom right corner
-    if( this.render_timestamp !== false && typeof(results.current_time) === 'number' ){
+    if( this.animParameters.renderTimestamp ) {
       this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
       this.domContext.fillText(
-
         // Current clock time
-        `${results.current_time.toFixed(3)} s`,
-
+        `${ this.animParameters.time.toFixed(3) } s`,
         // offset
         w - this._fontSize_normal * 8, h - this._lineHeight_normal * 1);
     }
   }
 
-  _draw_ani( results, x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
+  renderTimestamp( x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
 
-    if( !results.has_animation ) { return; }
+    if( !this.animParameters.exists ) { return; }
 
     if( !context_wrapper ){
       context_wrapper = this.domContextWrapper;
@@ -2106,37 +2034,37 @@ class THREEBRAIN_CANVAS {
     context_wrapper._fontSize_normal = this._fontSize_normal;
 
     // Add current time to bottom right corner
-    if( this.render_timestamp !== false && typeof(results.current_time) === 'number' ){
+    if( this.animParameters.renderTimestamp ) {
       context_wrapper.set_font( this._fontSize_normal, this._fontType );
       context_wrapper.fill_text(
         // Current clock time
-        `${results.current_time.toFixed(3)} s`,
+        `${ this.animParameters.time.toFixed(3) } s`,
 
         // offset
         w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
     }
   }
 
-  _draw_legend( results, x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined ){
+  renderLegend( x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined ){
 
     const cmap = this.switch_colormap();
 
-    // Added: if info text is disabled, then legend should not display
-    // correspoding value
-    const info_disabled = this.get_state( 'info_text_disabled');
-
     // whether to draw legend
-    const has_color_map = this.render_legend && cmap && (cmap.lut.n !== undefined);
-
-    // If no legend is needed, discard
-    if( !has_color_map ){
-      return( null );
-    }
+    if( !this.animParameters.renderLegend ) { return; }
+    if( !(cmap && (cmap.lut.n !== undefined)) ) { return; }
 
     if( !context_wrapper ){
       context_wrapper = this.domContextWrapper;
     }
 
+    // Added: if info text is disabled, then legend should not display
+    // correspoding value
+    let info_disabled = true;
+    let currentValue;
+    if( this.animParameters.userData.objectFocused.enabled && !this.get_state( 'info_text_disabled') ) {
+      info_disabled = false;
+      currentValue = this.animParameters.userData.objectFocused.currentDataValue;
+    }
     const lut = cmap.lut,
           color_type = cmap.value_type,
           color_names = cmap.value_names,
@@ -2154,8 +2082,8 @@ class THREEBRAIN_CANVAS {
         );
 
     // Get color map from lut
-    const continuous_cmap = has_color_map && color_type === 'continuous' && lut.n > 1;
-    const discrete_cmap = has_color_map && color_type === 'discrete' && lut.n > 0 && Array.isArray(color_names);
+    const continuous_cmap = color_type === 'continuous' && lut.n > 1;
+    const discrete_cmap = color_type === 'discrete' && lut.n > 0 && Array.isArray(color_names);
 
     let legend_height = 0.50,                  // Legend takes 60% of the total heights
         legend_start = 0.30;                  // Legend starts at 20% of the height
@@ -2214,9 +2142,9 @@ class THREEBRAIN_CANVAS {
       // ticks
       let draw_zero = lut.minV < 0 && lut.maxV > 0;
 
-      if( !info_disabled && typeof( results.current_value ) === 'number' ){
+      if( typeof( currentValue ) === 'number' ){
         // There is a colored object rendered, display it
-        let value_height = ( legend_start + (lut.maxV - results.current_value) * legend_height / (lut.maxV - lut.minV)) * h;
+        let value_height = ( legend_start + (lut.maxV - currentValue) * legend_height / (lut.maxV - lut.minV)) * h;
 
         // Decide whether to draw 0 and current object value
         // When max and min is too close, hide 0, otherwise it'll be jittered
@@ -2237,7 +2165,7 @@ class THREEBRAIN_CANVAS {
         }
 
         legent_ticks.push([
-          results.current_value.toPrecision(4), value_height, 1 ]);
+          currentValue.toPrecision(4), value_height, 1 ]);
       } else {
         legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
         legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
@@ -2344,7 +2272,7 @@ class THREEBRAIN_CANVAS {
         */
         context_wrapper.set_font_color( this.foreground_color );
 
-        if( !info_disabled && results.current_value === color_names[ii]){
+        if( !info_disabled && currentValue === color_names[ii]){
           context_wrapper.set_font( this._fontSize_legend, this._fontType, true );
           context_wrapper.fill_text(color_names[ii],
             text_start, square_center + text_halfheight, w - text_start - 1
@@ -2362,13 +2290,16 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  _draw_focused_info( results,
-                      x = 10, y = 10, w = 100, h = 100,
-                      context_wrapper = undefined, force_left = false ){
+  renderSelectedObjectInfo(
+    x = 10, y = 10, w = 100, h = 100,
+    context_wrapper = undefined, force_left = false ){
+
+    const objectInfo = this.animParameters.userData.objectFocused;
+
     // Add selected object information, or if not showing is set
-    if( !results.has_object || this.get_state( 'info_text_disabled') ){
+    if( !objectInfo.enabled || this.get_state( 'info_text_disabled') ){
       // no object selected, discard
-      return( null );
+      return;
     }
 
     if( !context_wrapper ){
@@ -2390,15 +2321,19 @@ class THREEBRAIN_CANVAS {
     } else {
       text_left = Math.ceil( this._fontSize_normal * 0.42 * 2 );
     }
-    let text_position = [
+    if( !this.__textPosition ) {
+      this.__textPosition = new Vector2();
+    }
+    const textPosition = this.__textPosition;
+    textPosition.set(
       text_left,
 
       // Make sure it's not hidden by control panel
       this._lineHeight_normal + this._lineHeight_small + this.pixel_ratio[0] * 10
-    ];
+    );
 
     // Line 1: object name
-    context_wrapper.fill_text( results.selected_object.name, text_position[ 0 ], text_position[ 1 ] );
+    context_wrapper.fill_text( objectInfo.name, textPosition.x, textPosition.y );
 
     // Smaller
     context_wrapper.set_font( this._fontSize_small, this._fontType );
@@ -2406,47 +2341,40 @@ class THREEBRAIN_CANVAS {
     // Line 2: Global position
 
     let pos;
-    if( results.selected_object.is_electrode ){
-      pos = results.selected_object.MNI305_position;
+    if( objectInfo.isElectrode ){
+      pos = objectInfo.MNI305Position;
       if( pos && (pos.x !== 0 || pos.y !== 0 || pos.z !== 0) ){
-        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
-        context_wrapper.fill_text(
-          `MNI305: `,
-          text_position[ 0 ], text_position[ 1 ]
-        );
+        textPosition.y += this._lineHeight_small
+        context_wrapper.fill_text( `MNI305: `, textPosition.x , textPosition.y );
         context_wrapper.set_font( this._fontSize_small, this._fontType, true );
         context_wrapper.fill_text(
           `${pos.x.toFixed(0)},${pos.y.toFixed(0)},${pos.z.toFixed(0)}`,
-          text_position[ 0 ] + this._fontSize_small * 5, text_position[ 1 ]
+          textPosition.x + this._fontSize_small * 5, textPosition.y
         );
         context_wrapper.set_font( this._fontSize_small, this._fontType, false );
       }
     } else {
-      pos = results.selected_object.position;
-      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+      pos = objectInfo.position;
+      textPosition.y += this._lineHeight_small;
       context_wrapper.fill_text(
-        `Global position: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-        text_position[ 0 ], text_position[ 1 ]
+        `tkrRAS: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+        textPosition.x, textPosition.y
       );
     }
 
-
-    // More information:
-
     // For electrodes
+    if( objectInfo.isElectrode ){
+      const mappingInfo = objectInfo.templateMapping;
+      const displayInfo = this.object_chosen.userData.display_info;
 
-
-    if( results.selected_object.is_electrode ){
-      const _m = results.selected_object.template_mapping;
-
-      const _tn = this.object_chosen.userData.display_info.threshold_name || '[None]';
-      let _tv = this.object_chosen.userData.display_info.threshold_value;
+      const _tn = displayInfo.threshold_name || '[None]';
+      let _tv = displayInfo.threshold_value;
       if( typeof _tv === 'number' ){
         _tv = _tv.toPrecision(4);
       }
 
-      const _dn = this.object_chosen.userData.display_info.display_name;
-      let _dv = results.current_value;
+      const _dn = displayInfo.display_name;
+      let _dv = objectInfo.currentDataValue;
 
       if( typeof _dv === 'number' ){
         _dv = _dv.toPrecision(4);
@@ -2464,22 +2392,22 @@ class THREEBRAIN_CANVAS {
 
       // Line 4:
       if( _dv !== undefined ){
-        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+        textPosition.y += this._lineHeight_small;
 
         context_wrapper.fill_text(
           `Display:   ${ _dn } (${ _dv })`,
-          text_position[ 0 ], text_position[ 1 ]
+          textPosition.x, textPosition.y
         );
       }
 
 
       // Line 5:
       if( _tv !== undefined ){
-        text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+        textPosition.y += this._lineHeight_small;
 
         context_wrapper.fill_text(
           `Threshold: ${ _tn } (${ _tv })`,
-          text_position[ 0 ], text_position[ 1 ]
+          textPosition.x, textPosition.y
         );
       }
 
@@ -2487,11 +2415,11 @@ class THREEBRAIN_CANVAS {
     }
 
     // Line last: customized message
-    text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+    textPosition.y += this._lineHeight_small;
 
     context_wrapper.fill_text(
-      results.selected_object.custom_info || '',
-      text_position[ 0 ], text_position[ 1 ]
+      objectInfo.customInfo || '',
+      textPosition.x, textPosition.y
     );
 
   }
@@ -2558,38 +2486,13 @@ class THREEBRAIN_CANVAS {
 
     this.update();
 
-    const results = this.inc_time();
-
-
+    // needs to incrementTime after update so chosen object information can be up to date
+    this.incrementTime();
 
     if(this.render_flag >= 0){
 
-      if(this.has_stats){
-        this.stats.update();
-      }
-
-  		this.render( results );
-
-      /*
-  		// show mesh value info
-      if( results.selected_object && this.object_chosen.userData.ani_exists ){
-
-        const track_type = this.get_state("color_map");
-
-        const track_data = this.object_chosen.userData.get_track_data( track_type );
-
-        if( track_data ){
-          const time_stamp = to_array( track_data.time );
-          const values = to_array( track_data.value );
-          let _tmp = - Infinity;
-          for( let ii in time_stamp ){
-            if(time_stamp[ ii ] <= results.current_time && time_stamp[ ii ] > _tmp){
-              results.current_value = values[ ii ];
-              _tmp = time_stamp[ ii ];
-            }
-          }
-        }
-      } */
+      if(this.has_stats){ this.stats.update(); }
+  		this.render();
 
   		// draw main and side rendered images to this.domElement (2d context)
   		this.mapToCanvas();
@@ -2602,16 +2505,16 @@ class THREEBRAIN_CANVAS {
       this.domContext.fillStyle = this.foreground_color;
 
       // Draw title on the top left corner
-      this._draw_title( results, 0, 0, _width, _height );
+      this.renderTitle( 0, 0, _width, _height );
 
       // Draw timestamp on the bottom right corner
-      this._draw_ani( results, 0, 0, _width, _height );
+      this.renderTimestamp( 0, 0, _width, _height );
 
       // Draw legend on the right side
-      this._draw_legend( results, 0, 0, _width, _height );
+      this.renderLegend( 0, 0, _width, _height );
 
       // Draw focused target information on the top right corner
-      this._draw_focused_info( results, 0, 0, _width, _height );
+      this.renderSelectedObjectInfo( 0, 0, _width, _height );
 
       // check if capturer is working
       if( this.capturer_recording && this.capturer ){
@@ -2619,7 +2522,7 @@ class THREEBRAIN_CANVAS {
       }
     }
 
-    this._draw_video( results, _width, _height );
+    // this._draw_video( results, _width, _height );
 
     if(this.render_flag === 0){
       this.render_flag = -1;
@@ -2642,7 +2545,7 @@ class THREEBRAIN_CANVAS {
     }
   }
 
-  get_surface_types(){
+  getAllSurfaceTypes(){
     const re = { 'pial' : 1 }; // always put pials to the first one
 
     this.group.forEach( (gp, g) => {
@@ -2897,7 +2800,7 @@ class THREEBRAIN_CANVAS {
         const m = vol[ volume_name ];
         if( subject_code === target_subject && volume_name === `${slice_type} (${subject_code})`){
           set_visibility( m[0].parent, true );
-          this.state_data.set( "activeSliceInstance", m[0].userData.instance );
+          this.set_state( "activeSliceInstance", m[0].userData.instance );
         }else{
           // m[0].parent.visible = false;
           set_visibility( m[0].parent, false );
@@ -2922,6 +2825,7 @@ class THREEBRAIN_CANVAS {
         if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
           // m.visible = true;
           set_visibility( m, true );
+          this.set_state( "activeDataCube2Instance", m.userData.instance );
         }else{
           // m.visible = false;
           set_visibility( m, false );
@@ -3208,6 +3112,63 @@ mapped = false,
     });
 
   }
+
+
+
+  // ------------------------------ Drivers -----------------------------------
+  setBackground({ color } = {}) {
+    if( typeof color !== "number" && typeof color !== "string" ) {
+      return;
+    }
+    // calculate inversed color for text
+    const inversedColor = invertColor( color );
+
+    this.background_color = color;
+    this.foreground_color = inversedColor;
+
+    // Set renderer background to be v
+    this.main_renderer.setClearColor( this.background_color );
+    this.el.style.backgroundColor = this.background_color;
+
+    const event = {
+      data: {
+        'background' : this.background_color,
+        'foreground' : this.foreground_color
+      },
+      priority: "deferred"
+    }
+    this.dispatch_event( "canvas.background.onChange", event.data );
+    // for shiny
+    this.dispatch_event( "canvas.controllers.onChange", event );
+
+    try {
+      this.sideCanvasList.coronal.setBackground( this.background_color );
+      this.sideCanvasList.axial.setBackground( this.background_color );
+      this.sideCanvasList.sagittal.setBackground( this.background_color );
+    } catch (e) {}
+
+    // force re-render
+    this.start_animation(0);
+
+    return event;
+  }
+  resetCanvas() {
+    // Center camera first.
+    this.handle_resize( undefined, undefined, false, true );
+		this.trackball.reset();
+		this.mainCamera.reset();
+    this.trackball.enabled = true;
+    this.start_animation(0);
+  }
+  getSideCanvasCrosshairMNI305( m ) {
+    // MNI 305 position of the intersection
+    const ints_z = this.get_state( 'axial_depth' ) || 0,
+          ints_y = this.get_state( 'coronal_depth' ) || 0,
+          ints_x = this.get_state( 'sagittal_depth' ) || 0;
+    m.set( ints_x , ints_y , ints_z );
+    return this.calculate_mni305( m );
+  }
+
 }
 
 

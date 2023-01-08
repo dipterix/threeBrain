@@ -208,7 +208,7 @@ class DataCube extends AbstractThreeBrainObject {
 
   get_track_data( track_name, reset_material ){}
 
-  pre_render( results ){}
+  pre_render(){}
 
   setCrosshair({ x, y, z } = {}) {
     if( x === undefined ) {
@@ -242,6 +242,11 @@ class DataCube extends AbstractThreeBrainObject {
     this._canvas.set_state( 'axial_depth', z );
 
     this._canvas.updateElectrodeVisibilityOnSideCanvas();
+
+    this._canvas.dispatch_event( "canvas.sliceCrosshair.onChange", {
+      position : this.crosshairGroup.position,
+      space: "tkrRAS"
+    });
     // Animate on next refresh
     this._canvas.start_animation( 0 );
   }

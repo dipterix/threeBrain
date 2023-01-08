@@ -473,7 +473,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     mesh.position.fromArray( g.position );
     // TODO: need to check how threejs handle texture 3D to know why the s
 
-    mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+    mesh.userData.pre_render = () => { return( this.pre_render() ); };
     mesh.userData.dispose = () => { this.dispose(); };
 
     this._mesh = mesh;
@@ -529,18 +529,9 @@ class DataCube2 extends AbstractThreeBrainObject {
 
   }
 
-/*
-  pre_render( results ) {
-    if(!this.object) { return; }
-    const camera = this._canvas.mainCamera;
-    this._uniforms.camera_center.value.set(
-      (camera.right + camera.left) / (camera.left - camera.right),
-      (camera.top + camera.bottom) / (camera.bottom - camera.top)
-    );
-    this._mesh.material.uniformsNeedUpdate = true;
+  pre_render() {
+    super.pre_render();
   }
-  */
-
 
 }
 

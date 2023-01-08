@@ -32,7 +32,7 @@ class FreeMesh extends AbstractThreeBrainObject {
 
   _link_userData(){
     // register for compatibility
-    this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+    this._mesh.userData.pre_render = () => { return( this.pre_render() ); };
     this._mesh.userData.dispose = () => { this.dispose(); };
   }
 
@@ -293,9 +293,9 @@ class FreeMesh extends AbstractThreeBrainObject {
     } catch (e) {}
   }
 
-  pre_render( results ){
+  pre_render(){
     // check material
-    super.pre_render( results );
+    super.pre_render();
     this._check_material( false );
 
     if( !this.object.visible ) { return; }
@@ -327,8 +327,10 @@ class FreeMesh extends AbstractThreeBrainObject {
         if( this.time_stamp.length ){
           let skip_frame = 0;
 
+          const currentTime = this._canvas.animParameters.time;
+
           this.time_stamp.forEach((v, ii) => {
-            if( v <= results.current_time ){
+            if( v <= currentTime ){
               skip_frame = ii - 1;
             }
           });

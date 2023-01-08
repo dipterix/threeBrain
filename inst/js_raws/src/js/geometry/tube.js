@@ -116,12 +116,12 @@ class TubeMesh extends AbstractThreeBrainObject {
   }
 
 
-  pre_render( results ){
+  pre_render(){
 
     if( this.object ){
       this._targets.forEach( (v, ii) => {
         if( v._last_rendered !== results.elapsed_time ){
-          v.get_world_position( results );
+          v.get_world_position();
         }
       } );
 

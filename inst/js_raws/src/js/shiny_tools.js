@@ -189,7 +189,8 @@ class THREE_BRAIN_SHINY {
     this.presets = presets;
 
     this.canvas.bind( "report_controller", "canvas.controllers.onChange", (evt) => {
-      this.to_shiny2('controllers', this.gui.params, "deferred");
+      throw 'FIX ME!!!';
+      this.to_shiny2('controllers', this.gui.object, "deferred");
       const args = evt.detail;
       if( typeof args.data === 'object' ){
         for(let k in args.data){
@@ -296,23 +297,23 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_set_localization_electrode( args ){
-    this.presets.localization_set_electrode(
+    this.presets.localizeSetElectrode(
       args.which, args.params, args.update_shiny
     );
   }
 
   handle_clear_localization(update_shiny = true) {
-    this.presets.localization_clear(update_shiny);
+    this.presets.clearLocalization(update_shiny);
   }
 
   handle_add_localization_electrode( args ){
-    const el = this.presets.localization_add_electrode(
+    const el = this.presets.localizeAddElectrode(
        args.Coord_x, args.Coord_y, args.Coord_z,
        args.mode || "CT/volume", false
     );
     if( el ){
       const locorder = el.localization_order;
-      this.presets.localization_set_electrode(
+      this.presets.localizeSetElectrode(
         locorder, args, args.update_shiny
       );
     }
@@ -349,7 +350,7 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_set_plane( args = {x: undefined, y: undefined, z: undefined, centerCrosshair: false} ) {
-    this.canvas.dispatch_event( 'canvas.controllers.drive.slice', args );
+    this.canvas.dispatch_event( 'canvas.drive.setSliceCrosshair', args );
   }
 
   // FIXME: this handler is Broken

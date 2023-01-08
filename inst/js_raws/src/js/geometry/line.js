@@ -163,7 +163,8 @@ class LineSegmentsSingleton {
 
   }
 
-  pre_render( results ) {
+  pre_render() {
+    super.pre_render();
     if( this.disposed ) { return; }
     this.material.resolution.set(
     	this._canvas.client_width || window.innerWidth,
@@ -418,7 +419,7 @@ class LineSegmentMesh extends AbstractThreeBrainObject {
   }
 
 
-  pre_render( results ){}
+  pre_render(){}
 
 
 }

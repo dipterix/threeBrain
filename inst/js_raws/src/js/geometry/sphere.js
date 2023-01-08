@@ -98,12 +98,8 @@ class Sphere extends AbstractThreeBrainObject {
     this._mesh.userData.get_track_data = ( track_name, reset_material ) => {
       return( this.get_track_data( track_name, reset_material ) );
     };
-    this._mesh.userData.pre_render = ( results ) => { return( this.pre_render( results ) ); };
+    this._mesh.userData.pre_render = () => { return( this.pre_render() ); };
     this._mesh.userData.dispose = () => { this.dispose(); };
-  }
-
-  _get_animation_params(){
-    return( this._canvas.animation_controls.get_params() );
   }
 
   get label() {
@@ -148,9 +144,9 @@ class Sphere extends AbstractThreeBrainObject {
     this._mesh.geometry.dispose();
   }
 
-  pre_render( results ){
+  pre_render(){
 
-    super.pre_render( results );
+    super.pre_render();
 
     const canvas = this._canvas,
           mesh = this._mesh;
@@ -178,7 +174,7 @@ class Sphere extends AbstractThreeBrainObject {
         // obtain current threshold value
         if( Array.isArray(track.time) && track.time.length > 1 && Array.isArray(track.value) ){
           // need to get the value at current time
-          const ani_params = this._get_animation_params();
+          const ani_params = this._canvas.animParameters;
 
           for(let idx in track.time){
             if(track.time[idx] >= ani_params.time){
@@ -291,7 +287,9 @@ class Sphere extends AbstractThreeBrainObject {
     }
     // 5. check if mixer exists, update
     if( mesh.userData.ani_mixer ){
-      mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+      // mesh.userData.ani_mixer.update( results.current_time_delta - mesh.userData.ani_mixer.time );
+      mesh.userData.ani_mixer.update( this._canvas.animParameters.trackPosition - mesh.userData.ani_mixer.time );
+
     }
 
     // 6. if the object is chosen, display information

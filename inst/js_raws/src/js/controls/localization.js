@@ -11,7 +11,7 @@ import { LineSegmentsGeometry } from '../jsm/lines/LineSegmentsGeometry.js';
 
 // Electrode localization
 const pos = new Vector3();
-const folder_name = CONSTANTS.FOLDERS['localization'] || 'Electrode Localization';
+const folderName = CONSTANTS.FOLDERS['localization'] || 'Electrode Localization';
 
 const COL_SELECTED = 0xff0000,
       COL_ENABLED = 0xfa9349,
@@ -707,9 +707,9 @@ function extend_electrode_from_slice( canvas, electrodes, size ){
   });
 }
 
-function register_controls_localization( THREEBRAIN_PRESETS ){
+function register_controls_localization( ViewerControlCenter ){
 
-  THREEBRAIN_PRESETS.prototype.localization_clear = function(update_shiny = true){
+  ViewerControlCenter.prototype.clearLocalization = function(update_shiny = true){
     const electrodes = this.__localize_electrode_list;
     const scode = this.canvas.get_state("target_subject");
     const collection = this.canvas.electrodes.get(scode) || {};
@@ -724,16 +724,16 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     }
   };
 
-  THREEBRAIN_PRESETS.prototype.localization_add_electrode = function(
+  ViewerControlCenter.prototype.localizeAddElectrode = function(
     x, y, z, mode, update_shiny = true
   ){
     const electrodes = this.__localize_electrode_list;
     const scode = this.canvas.get_state("target_subject");
     let edit_mode = mode;
     if(!edit_mode){
-      const edit_mode = this.gui.get_controller('Edit Mode', folder_name).getValue();
+      const edit_mode = this.gui.getController( 'Edit Mode', folderName ).getValue();
     }
-    let electrode_size = this.gui.get_controller('Electrode Scale', folder_name).getValue() || 1.0;
+    let electrode_size = this.gui.getController('Electrode Scale', folderName).getValue() || 1.0;
     if(edit_mode === "disabled" ||
        edit_mode === "refine"){ return; }
 
@@ -751,7 +751,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     return( el );
   };
 
-  THREEBRAIN_PRESETS.prototype.localization_set_electrode = function(
+  ViewerControlCenter.prototype.localizeSetElectrode = function(
     which, params, update_shiny = true
   ){
     const electrodes = this.__localize_electrode_list;
@@ -774,47 +774,51 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
     }
   };
 
-  THREEBRAIN_PRESETS.prototype.c_localization = function(){
+  ViewerControlCenter.prototype.addPreset_localization = function(){
 
     const electrodes = this.__localize_electrode_list;
     let refine_electrode;
 
-    const edit_mode = this.gui.add_item( 'Edit Mode', "disabled", {
-      folder_name: folder_name,
-      args: ['disabled', 'CT/volume', 'MRI slice', 'refine']
-    }).onChange((v) => {
+    const edit_mode = this.gui
+      .addController(
+        'Edit Mode', "disabled", {
+          folderName: folderName,
+          args: ['disabled', 'CT/volume', 'MRI slice', 'refine']
+        })
+      .onChange((v) => {
 
-      if( !v ){ return; }
-      if( refine_electrode && refine_electrode.isLocElectrode ){
-        // reset color
-        refine_electrode.update_color();
-        refine_electrode = null;
-      }
-      this.gui.hide_item([
-        ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
-        'Interpolate from Recently Added', 'Extend from Recently Added',
-        'Reset Highlighted',
-        'Auto-Adjust Highlighted', 'Auto-Adjust All'
-      ], folder_name);
-      if( v === 'disabled' ){ return; }
-      if( v === 'refine' ) {
-        this.gui.show_item([
-          ' - tkrRAS', ' - MNI305', ' - T1 RAS',
-          'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
-        ], folder_name);
-      } else {
-        this.gui.show_item([
-          ' - tkrRAS', ' - MNI305', ' - T1 RAS',
-          'Interpolate Size', 'Interpolate from Recently Added',
-          'Extend from Recently Added'
-        ], folder_name);
-      }
+        if( !v ){ return; }
+        if( refine_electrode && refine_electrode.isLocElectrode ){
+          // reset color
+          refine_electrode.update_color();
+          refine_electrode = null;
+        }
+        this.gui.hideControllers([
+          '- tkrRAS', '- MNI305', '- T1 RAS', 'Interpolate Size',
+          'Interpolate from Recently Added', 'Extend from Recently Added',
+          'Reset Highlighted',
+          'Auto-Adjust Highlighted', 'Auto-Adjust All'
+        ], folderName);
+        if( v === 'disabled' ){ return; }
+        if( v === 'refine' ) {
+          this.gui.showControllers([
+            '- tkrRAS', '- MNI305', '- T1 RAS',
+            'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
+          ], folderName);
+        } else {
+          this.gui.showControllers([
+            '- tkrRAS', '- MNI305', '- T1 RAS',
+            'Interpolate Size', 'Interpolate from Recently Added',
+            'Extend from Recently Added'
+          ], folderName);
+        }
 
-      this._update_canvas();
+        this._update_canvas();
 
-    });
+      });
 
-    const elec_size = this.gui.add_item( 'Electrode Scale', 1.0, { folder_name: folder_name })
+    const elec_size = this.gui
+      .addController( 'Electrode Scale', 1.0, { folderName: folderName })
       .min(0.5).max(2).step(0.1)
       .onChange((v) => {
 
@@ -827,7 +831,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       });
 
     // remove electrode
-    this.gui.add_item( 'Enable/Disable Electrode', () => {
+    this.gui.addController( 'Enable/Disable Electrode', () => {
       if( refine_electrode &&
           refine_electrode.isLocElectrode ){
         if( refine_electrode.enabled() ){
@@ -844,9 +848,9 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         this._update_canvas();
       }
-    },  { folder_name: folder_name });
+    },  { folderName: folderName });
 
-    this.gui.add_item( 'Auto-Adjust Highlighted', () => {
+    this.gui.addController( 'Auto-Adjust Highlighted', () => {
       if( refine_electrode &&
           refine_electrode.isLocElectrode ){
         refine_electrode.adjust();
@@ -857,9 +861,9 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         this._update_canvas();
       }
-    },  { folder_name: folder_name });
+    },  { folderName: folderName });
 
-    this.gui.add_item( 'Reset Highlighted', () => {
+    this.gui.addController( 'Reset Highlighted', () => {
       if( refine_electrode &&
           refine_electrode.isLocElectrode ){
 
@@ -871,9 +875,9 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
         this._update_canvas();
       }
-    },  { folder_name: folder_name });
+    },  { folderName: folderName });
 
-    this.gui.add_item( 'Auto-Adjust All', () => {
+    this.gui.addController( 'Auto-Adjust All', () => {
       electrodes.forEach((el) => {
         el.adjust();
       });
@@ -883,27 +887,27 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       }
 
       this._update_canvas();
-    },  { folder_name: folder_name });
+    },  { folderName: folderName });
 
 
 
     // Calculate RAS
-    const tkr_loc = this.gui.add_item( ' - tkrRAS', "", {
-      folder_name: folder_name
+    const tkr_loc = this.gui.addController( '- tkrRAS', "", {
+      folderName: folderName
     });
-    const mni_loc = this.gui.add_item( ' - MNI305', "", {
-      folder_name: folder_name
+    const mni_loc = this.gui.addController( '- MNI305', "", {
+      folderName: folderName
     });
-    const t1_loc = this.gui.add_item( ' - T1 RAS', "", {
-      folder_name: folder_name
+    const t1_loc = this.gui.addController( '- T1 RAS', "", {
+      folderName: folderName
     });
 
     // interpolate
-    const interpolate_size = this.gui.add_item( 'Interpolate Size', 1, {
-      folder_name: folder_name
+    const interpolate_size = this.gui.addController( 'Interpolate Size', 1, {
+      folderName: folderName
     }).min(1).step(1);
 
-    this.gui.add_item(
+    this.gui.addController(
       'Interpolate from Recently Added',
       () => {
         let v = Math.round( interpolate_size.getValue() );
@@ -923,7 +927,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         let res;
 
         if( mode == "CT/volume" ){
-          const inst = this.current_voxel_type();
+          const inst = this.getActiveDataCube2();
           res = interpolate_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
         } else {
           res = interpolate_electrode_from_slice( this.canvas, electrodes, v + 2 );
@@ -958,10 +962,10 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         }
 
       },
-      { folder_name: folder_name }
+      { folderName: folderName }
     );
 
-    this.gui.add_item(
+    this.gui.addController(
       'Extend from Recently Added',
       () => {
         let v = Math.round( interpolate_size.getValue() );
@@ -981,7 +985,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         let res;
 
         if( mode == "CT/volume" ){
-          const inst = this.current_voxel_type();
+          const inst = this.getActiveDataCube2();
           res = extend_electrode_from_ct( inst, this.canvas, electrodes, v + 2 );
         } else {
           res = extend_electrode_from_slice( this.canvas, electrodes, v + 2, true );
@@ -1005,15 +1009,15 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
         }
 
       },
-      { folder_name: folder_name }
+      { folderName: folderName }
     );
 
 
     // Download as CSV
-    this.gui.add_item( 'Download Current as CSV', () => {
+    this.gui.addController( 'Download Current as CSV', () => {
       this.canvas.download_electrodes("csv");
     }, {
-      folder_name: folder_name
+      folderName: folderName
     });
 
     // will get tkrRAS
@@ -1024,7 +1028,7 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
       let pos_alt;
       switch(mode){
         case "CT/volume":
-          const inst = this.current_voxel_type();
+          const inst = this.getActiveDataCube2();
           pos_alt = electrode_from_ct( inst, this.canvas );
           break;
         case "MRI slice":
@@ -1163,16 +1167,16 @@ function register_controls_localization( THREEBRAIN_PRESETS ){
 
 
     // open folder
-    this.gui.open_folder( folder_name );
+    this.gui.openFolder( folderName );
 
-    this.gui.hide_item([
-      ' - tkrRAS', ' - MNI305', ' - T1 RAS', 'Interpolate Size',
+    this.gui.hideControllers([
+      '- tkrRAS', '- MNI305', '- T1 RAS', 'Interpolate Size',
       'Interpolate from Recently Added', 'Extend from Recently Added',
       'Auto-Adjust Highlighted', 'Auto-Adjust All', 'Reset Highlighted'
-    ], folder_name);
+    ], folderName);
   };
 
-  return( THREEBRAIN_PRESETS );
+  return( ViewerControlCenter );
 
 }
 

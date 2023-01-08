@@ -5,8 +5,8 @@
 import { download } from './js/download.js';
 import { WEBGL } from './js/WebGL.js';
 import * as THREE from 'three';
-import { THREEBRAIN_CONTROL } from './js/core/gui_wrapper.js';
-import { THREEBRAIN_PRESETS } from './js/core/data_controls.js';
+import { EnhancedGUI } from './js/core/EnhancedGUI.js';
+import { ViewerControlCenter } from './js/core/ViewerControlCenter.js';
 import { CanvasEvent } from './js/core/events.js';
 import { THREE_BRAIN_SHINY } from './js/shiny_tools.js';
 import { THREEBRAIN_CANVAS } from './js/threejs_scene.js';
@@ -19,6 +19,7 @@ import { padZero, to_array, get_element_size, get_or_default } from './js/utils.
 // import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 import { json2csv } from 'json-2-csv';
 import { Lut, ColorMapKeywords } from './js/jsm/math/Lut2.js';
+import css from './css/dipterix.css';
 
 window.THREEBRAIN = {
   Lut : Lut,
@@ -53,6 +54,8 @@ class BrainCanvas{
 
     this.has_webgl = false;
 
+    this.controllerIsHidden = false;
+
     // ---------------------------- Utils ----------------------------
     // 0. Check WebGL
     this.check_webgl();
@@ -69,11 +72,11 @@ class BrainCanvas{
     // 1. data gui - auto
     // 2. text info - auto
     // 3. legend info - auto
-    this.el_control = document.createElement('div');
-    this.gui_placeholder = document.createElement('div');
-    this.el_control.style.width = '100%';
-    this.el_control.appendChild( this.gui_placeholder );
-    this.el_side.appendChild( this.el_control );
+    this.$controllerGUIWrapper = document.createElement('div');
+    this.$controllerGUI = document.createElement('div');
+    this.$controllerGUIWrapper.style.width = '100%';
+    this.$controllerGUIWrapper.appendChild( this.$controllerGUI );
+    this.el_side.appendChild( this.$controllerGUIWrapper );
 
     // this.el_legend = document.createElement('div');
     // this.el_legend_img = document.createElement('img');
@@ -142,9 +145,9 @@ class BrainCanvas{
     }
     // console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
     this.el_side.style.maxHeight = height + 'px';
-    if( this.hide_controls || !this.control_display ){
+    if( this.controllerIsHidden ) {
       this.canvas.handle_resize(width, height);
-    }else{
+    } else {
       this.canvas.handle_resize(width - 300, height);
     }
     if( this._reset_flag ){
@@ -186,89 +189,93 @@ class BrainCanvas{
 
   }
 
-  _register_gui_control(){
-
-    if( this.gui ){ try { this.gui.dispose(); } catch (e) {} }
-
-    const gui = new THREEBRAIN_CONTROL({
-      autoPlace: false,
-    }, this.DEBUG);
-    if(this.DEBUG){
-      window.gui = gui;
+  renderControllers(){
+    if( this.controllerGUI ) {
+      try { this.controllerGUI.dispose(); } catch (e) {}
     }
-    this.gui = gui;
+    this.controllerGUI = new EnhancedGUI({
+      autoPlace: false,
+      title : "Control 3D Viewer",
+      width: 300
+    });
+    if(this.DEBUG){
+      window.controllerGUI = this.controllerGUI;
+    }
     // --------------- Register GUI controller ---------------
     // Set default on close handler
-    this.gui.set_closeHandler( (evt) => {
-      this.control_display = !this.gui.closed;
+    this.controllerGUI.addEventListener( "open", ( event ) => {
+      if( event.folderPath !== "" ) { return; }
+      this.controllerIsHidden = false;
+      this.resize_widget( this.el.clientWidth, this.el.clientHeight );
+    });
+    this.controllerGUI.addEventListener( "close", () => {
+      if( event.folderPath !== "" ) { return; }
+      this.controllerIsHidden = true;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     });
 
     // Set side bar
-    if(this.settings.hide_controls || false){
-      this.hide_controls = true;
-      this.gui.close();
-      // gui.domElement.style.display = 'none';
-    }else{
-      // gui.domElement.style.display = 'block';
-      const placeholder = this.el_control.firstChild;
-      this.el_control.replaceChild( this.gui.domElement, placeholder );
-      this.hide_controls = false;
+    if( this.settings.hide_controls ) {
+      this.controllerIsHidden = true;
+    } else {
+      this.$controllerGUIWrapper.replaceChild( this.controllerGUI.domElement, this.$controllerGUI );
+      this.$controllerGUI = this.controllerGUI.domElement;
+
+      if( this.settings.control_display ) {
+        this.controllerIsHidden = false;
+      } else {
+        this.controllerIsHidden = true;
+      }
+    }
+    if( this.controllerIsHidden ) {
+      this.controllerGUI.close();
+    } else {
+      this.controllerGUI.open();
     }
 
     // Add listeners
-    const control_presets = this.settings.control_presets;
-    const presets = new THREEBRAIN_PRESETS( this.canvas, this.gui, this.settings, this.shiny );
-    this.presets = presets;
-    if(this.DEBUG){
-      window.presets = presets;
-    }else{
-      window.__presets = presets;
-    }
-
-
+    const enabledPresets = this.settings.control_presets;
+    this.controlCenter = new ViewerControlCenter(
+      this.canvas, this.controllerGUI, this.settings, this.shiny
+    );
+    window.controlCenter = this.controlCenter;
 
     // ---------------------------- Defaults
-    presets.c_background();
+    this.controlCenter.addPreset_background();
 
     // ---------------------------- Main, side canvas settings is on top
-    // this.gui.add_folder('Main Canvas').open();
-    presets.c_recorder();
-    presets.c_reset_camera();
-    presets.c_main_camera_position();
-    presets.c_toggle_anchor();
+    // this.controlCenter.addPreset_recorder();
+    this.controlCenter.addPreset_resetCamera();
+    this.controlCenter.addPreset_setCameraPosition2();
+    this.controlCenter.addPreset_compass();
 
     // ---------------------------- Side cameras
     if( this.settings.side_camera ){
-      // this.gui.add_folder('Side Canvas').open();
-      presets.c_toggle_side_panel();
-      presets.c_reset_side_panel();
-      presets.c_side_depth();
-      presets.c_side_electrode_dist();
+    //   // this.gui.add_folder('Side Canvas').open();
+      this.controlCenter.addPreset_enableSidePanel();
+      this.controlCenter.addPreset_resetSidePanel();
+      this.controlCenter.addPreset_sideSlices();
+      this.controlCenter.addPreset_sideViewElectrodeThreshold();
     }
 
     // ---------------------------- Presets
-    let _ani_control_registered = false;
-    to_array( control_presets ).forEach((control_preset) => {
+    let animationControllerRegistered = false;
+    to_array( enabledPresets ).forEach(( presetName ) => {
 
       try {
-        presets['c_' + control_preset]();
-        if( control_preset === 'animation' ){
-          _ani_control_registered = true;
+        if( presetName === 'animation' ){
+          animationControllerRegistered = true;
         }
+        this.controlCenter['addPreset_' + presetName]();
       } catch (e) {
         if(this.DEBUG){
           console.warn(e);
         }
       }
     });
-    if( !_ani_control_registered ){
-      presets.c_animation();
+    if( !animationControllerRegistered ){
+      this.controlCenter.addPreset_animation();
     }
-
-
-    return(gui);
-
   }
 
   async renderValues({
@@ -288,13 +295,13 @@ class BrainCanvas{
 
     this.geoms = x.geoms;
     this.settings = x.settings;
-    this.default_controllers = x.settings.default_controllers || {},
+    this.defaultControllerValues = x.settings.default_controllers || {},
     this.groups = x.groups,
     this.has_animation = x.settings.has_animation,
     this.DEBUG = x.settings.debug || false;
 
     this.canvas.DEBUG = this.DEBUG;
-    this.canvas.__reset_flag = reset === true;
+    this.canvas.mainCamera.needsReset = reset === true;
     this.shiny.set_token( this.settings.token );
 
     if(this.DEBUG){
@@ -325,6 +332,10 @@ class BrainCanvas{
 
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();
+    if( this.controllerGUI ) {
+      try { this.controllerGUI.dispose(); } catch (e) {}
+      this.controllerGUI = undefined;
+    }
 
     if( !_isValid("Adding color maps") ) { return; }
 
@@ -423,10 +434,10 @@ class BrainCanvas{
 
     this.canvas.finish_init();
 
-    let display_controllers = this.control_display;
+    this.renderControllers();
 
-    this._register_gui_control();
-    this.shiny.register_gui( this.gui, this.presets );
+    // FIXME
+    // this.shiny.register_gui( this.gui, this.presets );
 
 
 
@@ -465,13 +476,7 @@ class BrainCanvas{
       this.canvas.disableSideCanvas();
     }
 
-    // Force render canvas
-    // Resize widget in case control panel is hidden
-
-    if( !this.shiny_mode || display_controllers === undefined ){
-      display_controllers = this.settings.control_display;
-    }
-
+    /* FIXME
     if( !this.hide_controls ){
       // controller is displayed
       if( display_controllers ){
@@ -480,20 +485,15 @@ class BrainCanvas{
         this.gui.close();
       }
     }
-
-    /*
-    this.hide_controls = this.settings.hide_controls || false;
-    if( !this.hide_controls && !this.settings.control_display ){
-      this.gui.close();
-    }
     */
+
     this.resize_widget( this.el.clientWidth, this.el.clientHeight );
 
     // remember last settings
-    if( this.gui ){
-      this.presets.update_self();
-      this.gui.remember( this.default_controllers );
-    }
+    try {
+      this.controlCenter.update();
+      this.controllerGUI.setFromDictionary( this.defaultControllerValues );
+    } catch (e) {}
 
     this.canvas.render();
 
@@ -529,7 +529,8 @@ class BrainCanvas{
       };
 
       _f( this.groups, this.geoms, this.settings, this.scene,
-          this.canvas, this.gui, this.presets, this.shiny, utils_toolbox );
+          this.canvas, this.controllerGUI, this.controlCenter,
+          this.presets, this.shiny, utils_toolbox );
 
     }
 

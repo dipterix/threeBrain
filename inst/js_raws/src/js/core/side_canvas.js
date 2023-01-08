@@ -189,7 +189,7 @@ class SideCanvas {
 
   setCrosshair({x, y, z, immediate = true} = {}) {
     // instead of setting slice instances, set data gui
-    /* const sliceInstance = this.mainCanvas.state_data.get( "activeSliceInstance" );
+    /* const sliceInstance = this.mainCanvas.get_state( "activeSliceInstance" );
     if( sliceInstance && sliceInstance.isDataCube ) {
       sliceInstance.setCrosshair({
         x : sagittalDepth,
@@ -199,7 +199,7 @@ class SideCanvas {
     }
     */
     this.mainCanvas.dispatch_event(
-      'canvas.controllers.drive.slice',
+      'canvas.drive.setSliceCrosshair',
       {
         x : x, y : y, z : z
       },
