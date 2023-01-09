@@ -23,7 +23,6 @@ threejs_brain(
   camera_center = c(0, 0, 0),
   camera_pos = c(500, 0, 0),
   start_zoom = 1,
-  coords = NULL,
   symmetric = 0,
   default_colormap = "Value",
   palettes = NULL,
@@ -44,7 +43,8 @@ threejs_brain(
   global_data = list(),
   global_files = list(),
   custom_javascript = NULL,
-  show_modal = "auto"
+  show_modal = "auto",
+  coords = NULL
 )
 }
 \arguments{
@@ -80,8 +80,6 @@ By default width=`100\%`, and height varies.}
 \item{camera_pos}{XYZ position of camera itself, default (0, 0, 500)}
 
 \item{start_zoom}{numerical, positive number indicating camera zoom level}
-
-\item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
 
 \item{symmetric}{numerical, default 0, color center will be mapped to this value}
 
@@ -128,6 +126,8 @@ only use it when you have multiple widgets in one website}
 }}
 
 \item{show_modal}{logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications}
+
+\item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
 }
 \description{
 Create a Threejs Brain and View it in Browsers

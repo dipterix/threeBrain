@@ -141,11 +141,11 @@ CONSTANTS.FOLDERS = {
   'subject-selector'      : 'Surface Settings',
   'surface-selector'      : 'Surface Settings',
   'hemisphere-material'   : 'Surface Settings',
-  'electrode-style'       : 'Electrodes',
-  'electrode-mapping'     : 'Electrodes',
+  'electrode-style'       : 'Electrode Settings',
+  'electrode-mapping'     : 'Electrode Settings',
   'animation'             : 'Data Visualization',
   'highlight-selection'   : 'Data Visualization',
-  'localization'          : 'Electrode Localization'
+  'localization'          : 'Electrode Settings > Localization'
 };
 
 CONSTANTS.THRESHOLD_OPERATORS = [

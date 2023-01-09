@@ -74,7 +74,6 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
     }
 
     this._onDataCube2TypeChanged = (v) => {
-      console.log(v);
       this.canvas.switch_subject( '/', {
         'atlas_type': v
       });
@@ -147,7 +146,7 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
     // Controls the opacity of the voxels
     this.gui
       .addController('Voxel Opacity', 0.0, { folderName : folderName })
-      .min(0).max(1).step(0.01)
+      .min(0).max(1).decimals(2)
       .onChange((v) => {
         const inst = this.getActiveDataCube2(),
               opa = v < 0.001 ? -1 : v;
@@ -166,14 +165,14 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
 
     const ctrlContinuousThresholdLB = this.gui
       .addController('Voxel Min', -100000, { folderName : folderName })
-      .min(-100000).max(100000)
+      .min(-100000).max(100000).step( 0.1 )
       .onChange(( v ) => {
         voxelLB = v;
         applyContinuousSelection();
       });
     const ctrlContinuousThresholdUB = this.gui
       .addController('Voxel Max', 100000, { folderName : folderName })
-      .min(-100000).max(100000)
+      .min(-100000).max(100000).step( 0.1 )
       .onChange(( v ) => {
         voxelUB = v;
         applyContinuousSelection();

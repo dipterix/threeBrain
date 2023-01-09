@@ -131,7 +131,7 @@ class EnhancedGUI extends GUI {
   addFolder( title ){
     const subTitles = title.split(">")
       .map(v => { return v.trim(); });
-    const folderName = subTitles[0];
+    const folderName = subTitles.splice(0, 1)[0];
 
     // try to find from existing folders
     const existingFolders = this.folders.filter( folder => {
@@ -146,10 +146,10 @@ class EnhancedGUI extends GUI {
       });
     }
 
-    if( subTitles.length == 1 ) {
+    if( subTitles.length === 0 ) {
       return currentFolder;
     }
-    return currentFolder.addFolder( subTitles.splice(0, 1).join(">") );
+    return currentFolder.addFolder( subTitles.join(">") );
   }
   openFolder( title, animated = true, open = true ){
     const subTitles = title.split(">")
@@ -213,15 +213,19 @@ class EnhancedGUI extends GUI {
     }
     const controllerObject = options.object ?? folder.object;
     controllerObject[ name ] = value;
+    let controller;
     if( isColor ) {
-      return folder.addColor( controllerObject, controllerName );
+      controller = folder.addColor( controllerObject, controllerName );
     } else {
       if( controllerArgs ) {
-        return folder.add( controllerObject, controllerName, controllerArgs );
+        controller = folder.add( controllerObject, controllerName, controllerArgs );
       } else {
-        return folder.add( controllerObject, controllerName );
+        controller = folder.add( controllerObject, controllerName );
       }
     }
+    // make sure the controller slider does not activate accidentally
+    controller._sliderWheelEnabled = false;
+    return controller;
   }
   getController( name, folderName, explicit = false ) {
     if( Array.isArray( folderName ) ) { folderName = folderName.join(">"); }

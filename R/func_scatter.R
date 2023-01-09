@@ -41,7 +41,7 @@
 #' @export
 three_scatter <- function(
   x, y, z, size = 1, col = 1, label = NULL, group = 1, timestamp = NULL, pal = NULL,
-  scale = 1, axis = TRUE, control_panel = TRUE, control_presets = NULL, camera_pos, ...
+  scale = 1, control_panel = TRUE, control_presets = NULL, camera_pos, ...
 ){
   maxl <- max(length(x),length(y),length(z))
   rec <- function(d, max_len = maxl){
@@ -124,12 +124,6 @@ three_scatter <- function(
   span <- c(max(x), max(y), max(z))
   span <- sqrt(max(sum(span^2), sum((span - camera_center)^2)))
 
-  if(isTRUE(axis)){
-    coords <- c(span, span, span)
-  }else{
-    coords <- NULL
-  }
-
 
   if(missing(camera_pos)){
     camera_pos <- camera_center + c(0,0,2*span)
@@ -139,7 +133,7 @@ three_scatter <- function(
                 control_panel = control_panel, control_presets = control_presets,
                 palettes = list('Value' = pal),
                 camera_center = camera_center,
-                coords = coords, camera_pos = camera_pos* scale,
+                camera_pos = camera_pos* scale,
                 ...)
 
 }

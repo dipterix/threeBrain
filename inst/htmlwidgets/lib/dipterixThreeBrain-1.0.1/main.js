@@ -972,7 +972,7 @@ module.exports.TinyEmitter = E;
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, ".threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: scroll;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n.lil‑gui {\n  ‑‑name‑width: 100%;\n}\n\n.threejs-control .lil‑gui {\n  /* opacity: 0.4; */\n  padding-bottom: 20px;\n}\n\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  top: 0.5em;\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-4px, -4px);\n  right: 0;\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n  padding: 0 0 10px 0;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n", "",{"version":3,"sources":["webpack://./src/css/dipterix.css"],"names":[],"mappings":"AAAA;EACE,wJAAwJ;EACxJ,eAAe;EACf,gBAAgB;EAChB,gBAAgB;EAChB,cAAc;AAChB;;AAEA;;IAEI,oBAAoB;AACxB;;AAEA;;;;;IAKI,SAAS;IACT,oBAAoB;IACpB,kBAAkB;IAClB,oBAAoB;AACxB;;AAEA;EACE,uBAAuB;AACzB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;;;;;;EAME,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,kBAAkB;EAClB,UAAU;EACV,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,YAAY;EACZ,UAAU;EACV,SAAS;AACX;;;AAGA;EACE,kBAAkB;EAClB,YAAY;EACZ,gBAAgB;EAChB,oBAAoB;EACpB,YAAY;EACZ,kBAAkB;EAClB,kBAAkB;EAClB,WAAW;EACX,0BAA0B;AAC5B;;AAEA;EACE,qBAAqB;AACvB;AACA;EACE,iDAAiD;EACjD,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;AACb;AACA;EACE,eAAe;AACjB;;AAEA;IACI,mBAAmB;IACnB,kBAAkB;IAClB,kBAAkB;IAClB,wBAAwB;IACxB,mBAAmB;IACnB,mBAAmB;IACnB,oBAAoB;IACpB,oBAAoB;AACxB;;AAEA;EACE,0BAA0B;AAC5B;AACA;EACE,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;EAClB,oBAAoB;AACtB;;;AAGA;EACE,oBAAoB;AACtB;;;AAGA;;;;EAIE,uBAAuB;AACzB;;AAEA;IACI,UAAU;AACd;;;AAGA;EACE,UAAU;EACV,uBAAuB;EACvB,kBAAkB;AACpB;;AAEA;EACE,YAAY;AACd;;;AAGA;EACE,kBAAkB;EAClB,aAAa;EACb,YAAY;EACZ,SAAS;EACT,UAAU;EACV,iBAAiB;EACjB,gBAAgB;EAChB,0BAA0B;EAC1B,iBAAiB;AACnB;AACA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,eAAe;EACf,gBAAgB;EAChB,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,YAAY;AACd;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,UAAU;EACV,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,eAAe;EACf,iBAAiB;EACjB,kBAAkB;EAClB,eAAe;AACjB;;AAEA;EACE,kCAAkC;EAClC,uCAAuC;AACzC;;;;;AAKA;;;;;;;;;;;CAWC;;;AAGD;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,sBAAsB;AACxB;;AAEA;EACE,QAAQ;EACR,SAAS;EACT,yDAAyD;EACzD,uBAAuB;EACvB,8BAA8B;EAC9B,kBAAkB;EAClB,kCAAkC;EAClC,qCAAqC;EACrC,+BAA+B;AACjC;;AAEA;EACE,OAAO;EACP,SAAS;EACT,mBAAmB,EAAE,iBAAiB;EACtC,0BAA0B;AAC5B;AACA;EACE,QAAQ;EACR,SAAS;EACT,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,OAAO;EACP,YAAY;EACZ,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,QAAQ;EACR,YAAY;EACZ,mBAAmB;EACnB,wBAAwB;AAC1B;;;AAGA,iBAAiB;AACjB;EACE,kBAAkB;AACpB;AACA;EACE,6BAA6B;EAC7B,yBAAyB;EACzB,cAAc;EACd,UAAU;EACV,kBAAkB;EAClB,mBAAmB;EACnB,gCAAgC;EAChC,QAAQ;EACR,YAAY;EACZ,oBAAoB;EACpB,iBAAiB;EACjB,iBAAiB;EACjB,cAAc;EACd,4BAA4B;EAC5B,oBAAoB;EACpB,UAAU;EACV,iBAAiB;EACjB,iBAAiB;AACnB;;AAEA;EACE,sBAAsB;EACtB,eAAe;EACf,iCAAiC;AACnC;AACA;EACE,sBAAsB;AACxB;AACA;EACE,aAAa;EACb,kBAAkB;EAClB,QAAQ;EACR,gCAAgC;EAChC,SAAS;EACT,cAAc;EACd,sBAAsB;AACxB;;AAEA;EACE,WAAW;AACb;;;AAGA;EACE,0BAA0B,EAAE,eAAe;EAC3C,8BAA8B,EAAE,SAAS;EACzC,kBAAkB;EAClB,YAAY;EACZ,aAAa;EACb,uDAAuD;AACzD;;AAEA;EACE,kBAAkB;EAClB,mBAAmB;AACrB;;AAEA;EACE,cAAc;EACd,WAAW;EACX,yCAAyC;EACzC,kBAAkB;EAClB,gBAAgB;EAChB,kBAAkB;EAClB,kBAAkB;EAClB,mBAAmB;EACnB,oBAAoB;AACtB","sourcesContent":[".threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: scroll;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n.lil‑gui {\n  ‑‑name‑width: 100%;\n}\n\n.threejs-control .lil‑gui {\n  /* opacity: 0.4; */\n  padding-bottom: 20px;\n}\n\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  top: 0.5em;\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-4px, -4px);\n  right: 0;\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n  padding: 0 0 10px 0;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n"],"sourceRoot":""}]);
+___CSS_LOADER_EXPORT___.push([module.id, ".lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n}\n\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n.lil‑gui {\n  ‑‑name‑width: 100%;\n}\n\n.threejs-control .lil‑gui {\n  /* opacity: 0.4; */\n  padding-bottom: 20px;\n}\n\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: var(--folder-indent);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  top: 0.5em;\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-4px, -4px);\n  right: 0;\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n  padding: 0 0 10px 0;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n", "",{"version":3,"sources":["webpack://./src/css/dipterix.css"],"names":[],"mappings":"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","sourcesContent":[".lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n}\n\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n.lil‑gui {\n  ‑‑name‑width: 100%;\n}\n\n.threejs-control .lil‑gui {\n  /* opacity: 0.4; */\n  padding-bottom: 20px;\n}\n\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: var(--folder-indent);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  top: 0.5em;\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-4px, -4px);\n  right: 0;\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n  padding: 0 0 10px 0;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -62600,11 +62600,11 @@ CONSTANTS.FOLDERS = {
   'subject-selector'      : 'Surface Settings',
   'surface-selector'      : 'Surface Settings',
   'hemisphere-material'   : 'Surface Settings',
-  'electrode-style'       : 'Electrodes',
-  'electrode-mapping'     : 'Electrodes',
+  'electrode-style'       : 'Electrode Settings',
+  'electrode-mapping'     : 'Electrode Settings',
   'animation'             : 'Data Visualization',
   'highlight-selection'   : 'Data Visualization',
-  'localization'          : 'Electrode Localization'
+  'localization'          : 'Electrode Settings > Localization'
 };
 
 CONSTANTS.THRESHOLD_OPERATORS = [
@@ -65870,6 +65870,8 @@ class lil_gui_esm_NumberController extends lil_gui_esm_Controller {
 
 		this._initInput();
 
+		this._sliderWheelEnabled = true;
+
 		this.min( min );
 		this.max( max );
 
@@ -66223,6 +66225,9 @@ class lil_gui_esm_NumberController extends lil_gui_esm_Controller {
 		let wheelFinishChangeTimeout;
 
 		const onWheel = e => {
+			
+			// ignore wheels if user disables it
+			if( !this._sliderWheelEnabled ) return;
 
 			// ignore vertical wheels if there's a scrollbar
 			const isVertical = Math.abs( e.deltaX ) < Math.abs( e.deltaY );
@@ -67633,7 +67638,7 @@ class EnhancedGUI extends lil_gui_esm {
   addFolder( title ){
     const subTitles = title.split(">")
       .map(v => { return v.trim(); });
-    const folderName = subTitles[0];
+    const folderName = subTitles.splice(0, 1)[0];
 
     // try to find from existing folders
     const existingFolders = this.folders.filter( folder => {
@@ -67648,10 +67653,10 @@ class EnhancedGUI extends lil_gui_esm {
       });
     }
 
-    if( subTitles.length == 1 ) {
+    if( subTitles.length === 0 ) {
       return currentFolder;
     }
-    return currentFolder.addFolder( subTitles.splice(0, 1).join(">") );
+    return currentFolder.addFolder( subTitles.join(">") );
   }
   openFolder( title, animated = true, open = true ){
     const subTitles = title.split(">")
@@ -67715,15 +67720,19 @@ class EnhancedGUI extends lil_gui_esm {
     }
     const controllerObject = options.object ?? folder.object;
     controllerObject[ name ] = value;
+    let controller;
     if( isColor ) {
-      return folder.addColor( controllerObject, controllerName );
+      controller = folder.addColor( controllerObject, controllerName );
     } else {
       if( controllerArgs ) {
-        return folder.add( controllerObject, controllerName, controllerArgs );
+        controller = folder.add( controllerObject, controllerName, controllerArgs );
       } else {
-        return folder.add( controllerObject, controllerName );
+        controller = folder.add( controllerObject, controllerName );
       }
     }
+    // make sure the controller slider does not activate accidentally
+    controller._sliderWheelEnabled = false;
+    return controller;
   }
   getController( name, folderName, explicit = false ) {
     if( Array.isArray( folderName ) ) { folderName = folderName.join(">"); }
@@ -68220,7 +68229,7 @@ function registerPresetCoordinateCompass( ViewerControlCenter ){
 
   ViewerControlCenter.prototype.addPreset_compass = function(){
     const folderName = constants/* CONSTANTS.FOLDERS.toggle-helpper */.t.FOLDERS["toggle-helpper"];
-    this.gui.addController('Display Coordinates', false, { folderName : folderName })
+    this.gui.addController('Display Coordinates', true, { folderName : folderName })
       .onChange((v) => {
 
         if( this.canvas.compass ) {
@@ -68929,7 +68938,7 @@ function registerPresetElectrodes( ViewerControlCenter ){
     this.canvas.set_state('electrode_label', { scale : 2, visible : false });
     this.gui
       .addController('Text Scale', 1.5, { folderName : folderName })
-      .min( 1 ).max( 6 ).step( 0.1 ).decimals( 1 )
+      .min( 1 ).max( 6 ).decimals( 1 )
       .onChange((v) => {
         this.updateElectrodeText({ scale : v });
       });
@@ -69514,7 +69523,6 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
     }
 
     this._onDataCube2TypeChanged = (v) => {
-      console.log(v);
       this.canvas.switch_subject( '/', {
         'atlas_type': v
       });
@@ -69587,7 +69595,7 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
     // Controls the opacity of the voxels
     this.gui
       .addController('Voxel Opacity', 0.0, { folderName : folderName })
-      .min(0).max(1).step(0.01)
+      .min(0).max(1).decimals(2)
       .onChange((v) => {
         const inst = this.getActiveDataCube2(),
               opa = v < 0.001 ? -1 : v;
@@ -69606,14 +69614,14 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
 
     const ctrlContinuousThresholdLB = this.gui
       .addController('Voxel Min', -100000, { folderName : folderName })
-      .min(-100000).max(100000)
+      .min(-100000).max(100000).step( 0.1 )
       .onChange(( v ) => {
         voxelLB = v;
         applyContinuousSelection();
       });
     const ctrlContinuousThresholdUB = this.gui
       .addController('Voxel Max', 100000, { folderName : folderName })
-      .min(-100000).max(100000)
+      .min(-100000).max(100000).step( 0.1 )
       .onChange(( v ) => {
         voxelUB = v;
         applyContinuousSelection();
@@ -70700,7 +70708,7 @@ function register_controls_localization( ViewerControlCenter ){
 
     const elec_size = this.gui
       .addController( 'Electrode Scale', 1.0, { folderName: folderName })
-      .min(0.5).max(2).step(0.1)
+      .min(0.5).max(2).decimals(1)
       .onChange((v) => {
 
         electrodes.forEach((el) => {
@@ -73997,7 +74005,9 @@ class TextTexture extends three__WEBPACK_IMPORTED_MODULE_0__.Texture {
 
     this._canvas.width = Math.ceil( this._text.length * this._size * 0.6 );
     this._canvas.height = this._size;
-    this._context.clearRect( 0 , 0 , this._canvas.width , this._canvas.height );
+    // this._context.clearRect( 0 , 0 , this._canvas.width , this._canvas.height );
+    this._context.fillStyle = 'rgba( 0, 0, 0, 0 )';
+    this._context.fillRect( 0 , 0 , this._canvas.width , this._canvas.height );
     this._context.font = `${this._size}px ${this._font}`;
     this._context.fillStyle = this._color;
     this._context.shadowBlur = this._shadow_blur || 0;
@@ -77314,6 +77324,9 @@ class HauntedArcballControls extends three_module.EventDispatcher {
   	// Specialized for threeBrain
   	this.zoomSpeed = 0.02;
   	this.noPan = false;
+  	this.zoomMax = 10;
+  	this.zoomMin = 0.5;
+
   	// Initial radius is 500
   	// orthographic.radius = 400;
   	this.dynamicDampingFactor=0.5;
@@ -77487,6 +77500,12 @@ class HauntedArcballControls extends three_module.EventDispatcher {
 
 
         this.object.zoom *= factor;
+        if( this.object.zoom > this.zoomMax ) {
+          this.object.zoom = this.zoomMax;
+        } else if ( this.object.zoom < this.zoomMin ) {
+          this.object.zoom = this.zoomMin;
+        }
+
         this._changed = true;
       }else if( this._isZooming ){
 			  // stop event
@@ -77506,7 +77525,17 @@ class HauntedArcballControls extends three_module.EventDispatcher {
 
 				this.object.zoom /= factor;
 
-				if ( this.staticMoving ) {
+				if( this.object.zoom > this.zoomMax ) {
+
+          this.object.zoom = this.zoomMax;
+          this._zoomStart.copy( this._zoomEnd );
+
+        } else if ( this.object.zoom < this.zoomMin ) {
+
+          this.object.zoom = this.zoomMin;
+          this._zoomStart.copy( this._zoomEnd );
+
+        } else if ( this.staticMoving ) {
 
 					this._zoomStart.copy( this._zoomEnd );
 
@@ -77628,6 +77657,7 @@ class HauntedArcballControls extends three_module.EventDispatcher {
     if( typeof x === "number" ) { this.target.x = x; }
     if( typeof y === "number" ) { this.target.y = y; }
     if( typeof z === "number" ) { this.target.z = z; }
+
     if( remember ) {
       this.target0.copy( this.target );
     }
@@ -83790,42 +83820,61 @@ class Compass {
     this._control = control;
     this._text = text;
 
-    this.container = new three_module.Group();
+    this.container = new three_module.Object3D();
+    this.container.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+
+    this._left = new three_module.Vector3();
+    this._down = new three_module.Vector3();
+
+    const color = new three_module.Color();
+    const direction = new three_module.Vector3();
+    const origin = new three_module.Vector3( 0 , 0 , 0 );
+    const rotation = ['rotateZ', null, 'rotateX'];
 
     for( let ii in text ){
-      let geom = new three_module.CylinderGeometry( 0.5, 0.5, 3, 8 );
-      let _c = [0,0,0];
+      // const geom = new CylinderGeometry( 0.5, 0.5, 3, 8 );
+      const _c = [0,0,0];
       _c[ ii ] = 1;
-      let color = new three_module.Color().fromArray( _c );
-      let line = new three_module.Mesh( geom, new three_module.MeshBasicMaterial({ color: color, side: three_module.DoubleSide }) );
-      line.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-
-      let _tmp = ['rotateZ', null, 'rotateX'][ii];
-      if( _tmp ){
-        line[ _tmp ]( Math.PI / 2 );
-      }
-
-      this.container.add( line );
-
+      color.fromArray( _c );
+      direction.fromArray( _c );
       _c[ ii ] = 255;
-      let sprite = new text_sprite/* TextSprite */.VW(text[ ii ], 3, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
-      _c[ ii ] = 5;
-      sprite.position.fromArray( _c );
-      sprite.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+
+      // const line = new Mesh( geom, new MeshBasicMaterial({ color: color, side: DoubleSide }) );
+      // if( rotation[ii] ) { line[ rotation[ii] ]( Math.PI / 2 ); }
+
+      const axis = new three_module.ArrowHelper( direction, origin, 6, color.getHex(), 5.9 );
+      const sprite = new text_sprite/* TextSprite */.VW(text[ ii ], 6, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
+      sprite.position.copy( direction ).multiplyScalar( 9 );
+
+      this.container.add( axis );
       this.container.add( sprite );
+
     }
 
   }
 
   update(){
     if( this.container.visible ) {
-      this.container.position.copy( this._camera.up )
-        .cross( this._camera.position )
-        .normalize()
-        .multiplyScalar( this._camera.left + 10 )
-        .add( this._camera.up.clone().multiplyScalar( this._camera.bottom + 10 ) )
-        .multiplyScalar( 1 / this._camera.zoom )
-        .add( this._control.target );
+
+      const aspRatio = (this._camera.top - this._camera.bottom) / (this._camera.right - this._camera.left);
+      const zoom = 1 / this._camera.zoom;
+
+      this._down.copy( this._camera.position ).sub( this._control.target ).normalize();
+
+      this.container.position.copy( this._camera.position )
+        .sub( this._down.multiplyScalar( 40 ) );
+
+      // calculate shift-left
+      this._left.copy( this._camera.up ).cross( this._down ).normalize()
+        .multiplyScalar( ( this._camera.left + this._camera.right ) / 2 );
+        // .multiplyScalar( ( this._camera.left + 10 * zoom + ( -150 * ( zoom - 1 ) ) ) );
+
+      this._down.copy( this._camera.up ).normalize()
+        .multiplyScalar( ( this._camera.bottom + 10 * zoom + ( -150 * ( zoom - 1 ) ) * aspRatio ) );
+
+      this.container.position.add( this._left ).add( this._down );
+      this.container.scale.set( zoom, zoom, zoom );
+
     }
   }
 
@@ -84148,9 +84197,7 @@ class THREEBRAIN_CANVAS {
     // Follower that fixed at bottom-left
     this.compass = new Compass( this.mainCamera, this.trackball );
     // Hide the anchor first
-    this.compass.set_visibility( false );
-    this.add_to_scene(this.compass.container, true);
-
+    this.add_to_scene( this.compass.container, true );
 
 
     // Mouse helpers
@@ -85184,54 +85231,6 @@ class THREEBRAIN_CANVAS {
     }
 
   }
-
-  /*---- MISC ---------------------------------------------------------------*/
-
-
-  // Add Axis coordinates to the side-cameras
-  draw_axis( x , y , z ){
-    if( !this._coordinates ){
-      this._coordinates = {};
-      const origin = new three_module.Vector3( 0, 0, 0 );
-      // x
-      this._coordinates.x = new three_module.ArrowHelper( new three_module.Vector3( 1, 0, 0 ),
-              origin, x === 0 ? 1: x, 0xff0000 );
-
-      this._coordinates.y = new three_module.ArrowHelper( new three_module.Vector3( 0, 1, 0 ),
-              origin, y === 0 ? 1: y, 0x00ff00 );
-
-      this._coordinates.z = new three_module.ArrowHelper( new three_module.Vector3( 0, 0, 1 ),
-              origin, z === 0 ? 1: z, 0x0000ff );
-      this._coordinates.x.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
-      this._coordinates.y.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
-      this._coordinates.z.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
-      this.add_to_scene( this._coordinates.x );
-      this.add_to_scene( this._coordinates.y );
-      this.add_to_scene( this._coordinates.z );
-    }
-    // If ? === 0, then hide this axis
-    if( x === 0 ){
-      this._coordinates.x.visible = false;
-    }else{
-      this._coordinates.x.visible = true;
-    }
-
-    if( y === 0 ){
-      this._coordinates.y.visible = false;
-    }else{
-      this._coordinates.y.visible = true;
-    }
-
-    if( z === 0 ){
-      this._coordinates.z.visible = false;
-    }else{
-      this._coordinates.z.visible = true;
-    }
-
-
-  }
-
-
 
   /*---- Colors, animations, media ------------------------------------------*/
   add_colormap( name, alias, value_type, value_names, value_range, time_range,
@@ -87889,7 +87888,7 @@ class BrainCanvas{
     this.controllerGUI = new _js_core_EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_1__/* .EnhancedGUI */ .H({
       autoPlace: false,
       title : "Control 3D Viewer",
-      width: 300
+      // width: 300
     });
     if(this.DEBUG){
       window.controllerGUI = this.controllerGUI;
@@ -87901,7 +87900,7 @@ class BrainCanvas{
       this.controllerIsHidden = false;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     });
-    this.controllerGUI.addEventListener( "close", () => {
+    this.controllerGUI.addEventListener( "close", ( event ) => {
       if( event.folderPath !== "" ) { return; }
       this.controllerIsHidden = true;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
@@ -87962,7 +87961,7 @@ class BrainCanvas{
         this.controlCenter['addPreset_' + presetName]();
       } catch (e) {
         if(this.DEBUG){
-          console.warn(e);
+          console.warn(`Cannot add preset ${ presetName }`);
         }
       }
     });
@@ -88139,16 +88138,8 @@ class BrainCanvas{
     *
     * this is the line that causes the problem
     */
-    this.canvas.mainCamera.setZoom( this.settings.start_zoom );
+    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
     this.canvas.set_font_size( this.settings.font_magnification || 1 );
-
-    // Add/remove axis anchor
-    let coords = (0,_js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .to_array */ .AA)(this.settings.coords);
-    if(coords.length === 3){
-      this.canvas.draw_axis( coords[0], coords[1], coords[2] );
-    }else{
-      this.canvas.draw_axis( 0, 0, 0 );
-    }
 
     // Compile everything
     this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );

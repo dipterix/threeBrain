@@ -6,7 +6,7 @@ function registerPresetCoordinateCompass( ViewerControlCenter ){
 
   ViewerControlCenter.prototype.addPreset_compass = function(){
     const folderName = CONSTANTS.FOLDERS[ 'toggle-helpper' ];
-    this.gui.addController('Display Coordinates', false, { folderName : folderName })
+    this.gui.addController('Display Coordinates', true, { folderName : folderName })
       .onChange((v) => {
 
         if( this.canvas.compass ) {

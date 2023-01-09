@@ -167,7 +167,9 @@ class TextTexture extends Texture {
 
     this._canvas.width = Math.ceil( this._text.length * this._size * 0.6 );
     this._canvas.height = this._size;
-    this._context.clearRect( 0 , 0 , this._canvas.width , this._canvas.height );
+    // this._context.clearRect( 0 , 0 , this._canvas.width , this._canvas.height );
+    this._context.fillStyle = 'rgba( 0, 0, 0, 0 )';
+    this._context.fillRect( 0 , 0 , this._canvas.width , this._canvas.height );
     this._context.font = `${this._size}px ${this._font}`;
     this._context.fillStyle = this._color;
     this._context.shadowBlur = this._shadow_blur || 0;

@@ -819,7 +819,7 @@ function register_controls_localization( ViewerControlCenter ){
 
     const elec_size = this.gui
       .addController( 'Electrode Scale', 1.0, { folderName: folderName })
-      .min(0.5).max(2).step(0.1)
+      .min(0.5).max(2).decimals(1)
       .onChange((v) => {
 
         electrodes.forEach((el) => {

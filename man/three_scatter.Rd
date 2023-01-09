@@ -15,7 +15,6 @@ three_scatter(
   timestamp = NULL,
   pal = NULL,
   scale = 1,
-  axis = TRUE,
   control_panel = TRUE,
   control_presets = NULL,
   camera_pos,
@@ -41,8 +40,6 @@ Its length (vector) or nrow (matrix) must be either \code{n} or 1.}
 \item{scale}{'auto', \code{NULL}, or numeric, rescale the final coordinates.
 Default 1, no re-scale.}
 
-\item{axis}{logical, draw axis.}
-
 \item{control_panel}{logical, show sidebar (control panel).}
 
 \item{control_presets}{if control_panel is true, which widgets to show.}
@@ -50,6 +47,8 @@ Default 1, no re-scale.}
 \item{camera_pos}{initial camera position, auto assign if missing.}
 
 \item{...}{other arguments passing to \code{threejs_brain}.}
+
+\item{axis}{logical, draw axis.}
 }
 \description{
 3D Scatter Plot

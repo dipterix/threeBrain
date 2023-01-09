@@ -1,12 +1,36 @@
 require(dipsaus)
 brain <- raveio::rave_brain('devel/PAV006')
+formalArgs(threeBrain::threejs_brain)
 brain$localize(
   ct_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/CT_RAW.nii",
   mri_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/MRI_RAW.nii",
   transform_matrix = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/ct2t1.mat",
   transform_space = "fsl",
-  debug = TRUE
+  # start_zoom = 10,
+  # background = "#ccff99",
+  # cex = 2,
+  # side_canvas = FALSE,
+  # width,height"  TODO
+  # timestamp = FALSE,
+  # side_width = 400,
+  side_shift = c(50,50),
+  # side_display = FALSE,
+  side_zoom = 2,
+  # show_modal = TRUE,
+  # custom_javascript = "console.log('yoooooo')",
+  # control_panel = FALSE,
+  # control_display = FALSE,
+  # camera_pos = c( 0,0, 1),
+  coords = c(0,0,-30),
+  symmetric = FALSE,
+  debug = FALSE
 )
+
+[21] "default_colormap"         "palettes"
+[23] "value_ranges"             "value_alias"
+[25] "show_inactive_electrodes" "surface_colormap"
+"videos"
+[33] "controllers"
 
 # control_presets <- 'localization'
 # controllers <- list()

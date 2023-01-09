@@ -308,9 +308,7 @@ class THREEBRAIN_CANVAS {
     // Follower that fixed at bottom-left
     this.compass = new Compass( this.mainCamera, this.trackball );
     // Hide the anchor first
-    this.compass.set_visibility( false );
-    this.add_to_scene(this.compass.container, true);
-
+    this.add_to_scene( this.compass.container, true );
 
 
     // Mouse helpers
@@ -1344,54 +1342,6 @@ class THREEBRAIN_CANVAS {
     }
 
   }
-
-  /*---- MISC ---------------------------------------------------------------*/
-
-
-  // Add Axis coordinates to the side-cameras
-  draw_axis( x , y , z ){
-    if( !this._coordinates ){
-      this._coordinates = {};
-      const origin = new Vector3( 0, 0, 0 );
-      // x
-      this._coordinates.x = new ArrowHelper( new Vector3( 1, 0, 0 ),
-              origin, x === 0 ? 1: x, 0xff0000 );
-
-      this._coordinates.y = new ArrowHelper( new Vector3( 0, 1, 0 ),
-              origin, y === 0 ? 1: y, 0x00ff00 );
-
-      this._coordinates.z = new ArrowHelper( new Vector3( 0, 0, 1 ),
-              origin, z === 0 ? 1: z, 0x0000ff );
-      this._coordinates.x.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
-      this._coordinates.y.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
-      this._coordinates.z.layers.set( CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 );
-      this.add_to_scene( this._coordinates.x );
-      this.add_to_scene( this._coordinates.y );
-      this.add_to_scene( this._coordinates.z );
-    }
-    // If ? === 0, then hide this axis
-    if( x === 0 ){
-      this._coordinates.x.visible = false;
-    }else{
-      this._coordinates.x.visible = true;
-    }
-
-    if( y === 0 ){
-      this._coordinates.y.visible = false;
-    }else{
-      this._coordinates.y.visible = true;
-    }
-
-    if( z === 0 ){
-      this._coordinates.z.visible = false;
-    }else{
-      this._coordinates.z.visible = true;
-    }
-
-
-  }
-
-
 
   /*---- Colors, animations, media ------------------------------------------*/
   add_colormap( name, alias, value_type, value_names, value_range, time_range,

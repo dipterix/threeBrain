@@ -125,7 +125,7 @@ function registerPresetElectrodes( ViewerControlCenter ){
     this.canvas.set_state('electrode_label', { scale : 2, visible : false });
     this.gui
       .addController('Text Scale', 1.5, { folderName : folderName })
-      .min( 1 ).max( 6 ).step( 0.1 ).decimals( 1 )
+      .min( 1 ).max( 6 ).decimals( 1 )
       .onChange((v) => {
         this.updateElectrodeText({ scale : v });
       });

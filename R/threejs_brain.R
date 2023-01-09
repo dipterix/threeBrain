@@ -87,7 +87,7 @@ threejs_brain <- function(
   control_panel = TRUE, control_presets = NULL, control_display = TRUE,
 
   # Main camera and scene center
-  camera_center = c(0,0,0), camera_pos = c(500,0,0), start_zoom = 1, coords = NULL,
+  camera_center = c(0,0,0), camera_pos = c(500,0,0), start_zoom = 1,
 
   # For colors and animation
   symmetric = 0, default_colormap = 'Value', palettes = NULL,
@@ -108,7 +108,9 @@ threejs_brain <- function(
 
   # customized js code
   custom_javascript = NULL,
-  show_modal = "auto"
+  show_modal = "auto",
+
+  coords = NULL
 ){
   if(isTRUE(show_modal == 'auto')){
     if( is.null(shiny::getDefaultReactiveDomain()) ){
@@ -360,7 +362,6 @@ threejs_brain <- function(
     background = background,
     # has_animation = v_count > 1,
     token = token,
-    coords = coords,
     show_inactive_electrodes = isTRUE(show_inactive_electrodes),
     side_display = side_display,
     control_display = control_display,

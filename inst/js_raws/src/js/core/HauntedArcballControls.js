@@ -97,6 +97,9 @@ class HauntedArcballControls extends EventDispatcher {
   	// Specialized for threeBrain
   	this.zoomSpeed = 0.02;
   	this.noPan = false;
+  	this.zoomMax = 10;
+  	this.zoomMin = 0.5;
+
   	// Initial radius is 500
   	// orthographic.radius = 400;
   	this.dynamicDampingFactor=0.5;
@@ -270,6 +273,12 @@ class HauntedArcballControls extends EventDispatcher {
 
 
         this.object.zoom *= factor;
+        if( this.object.zoom > this.zoomMax ) {
+          this.object.zoom = this.zoomMax;
+        } else if ( this.object.zoom < this.zoomMin ) {
+          this.object.zoom = this.zoomMin;
+        }
+
         this._changed = true;
       }else if( this._isZooming ){
 			  // stop event
@@ -289,7 +298,17 @@ class HauntedArcballControls extends EventDispatcher {
 
 				this.object.zoom /= factor;
 
-				if ( this.staticMoving ) {
+				if( this.object.zoom > this.zoomMax ) {
+
+          this.object.zoom = this.zoomMax;
+          this._zoomStart.copy( this._zoomEnd );
+
+        } else if ( this.object.zoom < this.zoomMin ) {
+
+          this.object.zoom = this.zoomMin;
+          this._zoomStart.copy( this._zoomEnd );
+
+        } else if ( this.staticMoving ) {
 
 					this._zoomStart.copy( this._zoomEnd );
 
@@ -411,6 +430,7 @@ class HauntedArcballControls extends EventDispatcher {
     if( typeof x === "number" ) { this.target.x = x; }
     if( typeof y === "number" ) { this.target.y = y; }
     if( typeof z === "number" ) { this.target.z = z; }
+
     if( remember ) {
       this.target0.copy( this.target );
     }

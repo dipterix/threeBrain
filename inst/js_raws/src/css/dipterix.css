@@ -1,3 +1,8 @@
+.lil-gui {
+	--font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", monospace;
+	--width: 100%;
+}
+
 .threejs-brain-container {
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
   font-size: 1rem;
@@ -59,7 +64,7 @@
   max-width: 300px;
   margin-bottom: -100%;
   width: 300px;
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
   z-index: 10;
   /* pointer-events: none; */
@@ -110,6 +115,15 @@
 
 .threejs-control div.close-button{
   width:100%!important;
+}
+
+.threejs-control .lil-gui .lil-gui > .children {
+  border: none;
+    border-left-color: currentcolor;
+    border-left-style: none;
+    border-left-width: medium;
+  margin-left: var(--folder-indent);
+  border-left: 2px solid var(--widget-color);
 }
 
 

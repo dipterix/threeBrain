@@ -196,7 +196,7 @@ class BrainCanvas{
     this.controllerGUI = new EnhancedGUI({
       autoPlace: false,
       title : "Control 3D Viewer",
-      width: 300
+      // width: 300
     });
     if(this.DEBUG){
       window.controllerGUI = this.controllerGUI;
@@ -208,7 +208,7 @@ class BrainCanvas{
       this.controllerIsHidden = false;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
     });
-    this.controllerGUI.addEventListener( "close", () => {
+    this.controllerGUI.addEventListener( "close", ( event ) => {
       if( event.folderPath !== "" ) { return; }
       this.controllerIsHidden = true;
       this.resize_widget( this.el.clientWidth, this.el.clientHeight );
@@ -269,7 +269,7 @@ class BrainCanvas{
         this.controlCenter['addPreset_' + presetName]();
       } catch (e) {
         if(this.DEBUG){
-          console.warn(e);
+          console.warn(`Cannot add preset ${ presetName }`);
         }
       }
     });
@@ -446,16 +446,8 @@ class BrainCanvas{
     *
     * this is the line that causes the problem
     */
-    this.canvas.mainCamera.setZoom( this.settings.start_zoom );
+    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
     this.canvas.set_font_size( this.settings.font_magnification || 1 );
-
-    // Add/remove axis anchor
-    let coords = to_array(this.settings.coords);
-    if(coords.length === 3){
-      this.canvas.draw_axis( coords[0], coords[1], coords[2] );
-    }else{
-      this.canvas.draw_axis( 0, 0, 0 );
-    }
 
     // Compile everything
     this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
