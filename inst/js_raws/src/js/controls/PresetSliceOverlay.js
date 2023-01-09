@@ -45,7 +45,7 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       this.canvas.resetSideCanvas( sideCameraZoom, sidePanelWidth, sidePanelOffset );
     };
     const resetController = this.gui.addController(
-      'Reset Position', resetSidePanels, { folderName: folderName });
+      'Reset Slice Canvas', resetSidePanels, { folderName: folderName });
 
     this.canvas.bind(
       "canvasDriveResetSideCanvas",

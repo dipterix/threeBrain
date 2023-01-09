@@ -68294,7 +68294,7 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       this.canvas.resetSideCanvas( sideCameraZoom, sidePanelWidth, sidePanelOffset );
     };
     const resetController = this.gui.addController(
-      'Reset Position', resetSidePanels, { folderName: folderName });
+      'Reset Slice Canvas', resetSidePanels, { folderName: folderName });
 
     this.canvas.bind(
       "canvasDriveResetSideCanvas",
@@ -68645,7 +68645,7 @@ function registerPresetSurface( ViewerControlCenter ){
 
     const ctrlLHOpacity = this.gui
       .addController('Left Opacity', 1.0, { folderName : folderName })
-      .min( 0.1 ).max( 1 ).step( 0.1 ).decimals( 1 )
+      .min( 0.1 ).max( 1 ).decimals( 1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
         this.fire_change();
@@ -68654,7 +68654,7 @@ function registerPresetSurface( ViewerControlCenter ){
 
     const ctrlRHOpacity = this.gui
       .addController('Right Opacity', 1.0, { folderName : folderName })
-      .min( 0.1 ).max( 1 ).step( 0.1 ).decimals( 1 )
+      .min( 0.1 ).max( 1 ).decimals( 1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
         this.fire_change();
@@ -84815,6 +84815,7 @@ class THREEBRAIN_CANVAS {
     this.object_chosen=undefined;
     this.clickable.clear();
     this.clickable_array.length = 0;
+    this.title = undefined;
 
     this.subject_codes.length = 0;
     this.electrodes.clear();
@@ -85125,12 +85126,14 @@ class THREEBRAIN_CANVAS {
 	  this.sideCanvasList.coronal.enabled = true;
 	  this.sideCanvasList.axial.enabled = true;
 	  this.sideCanvasList.sagittal.enabled = true;
+	  this.start_animation( 0 );
 	}
 	disableSideCanvas(force = false){
 	  this.sideCanvasEnabled = false;
 	  this.sideCanvasList.coronal.enabled = false;
 	  this.sideCanvasList.axial.enabled = false;
 	  this.sideCanvasList.sagittal.enabled = false;
+	  this.start_animation( 0 );
 	}
   /*---- Choose & highlight objects -----------------------------------------*/
   set_raycaster(){
@@ -85825,20 +85828,28 @@ class THREEBRAIN_CANVAS {
 
     if( typeof this.title !== "string" ) { return; }
 
+    const pixelRatio = this.pixel_ratio[0];
+
     this._fontType = 'Courier New, monospace';
-    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * this.pixel_ratio[0] );
-    this._fontSize_title = this._fontSize_title || Math.round( 20 * this.pixel_ratio[0] );
+    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * pixelRatio );
+    this._fontSize_title = this._fontSize_title || Math.round( 20 * pixelRatio );
 
 
     this.domContext.fillStyle = this.foreground_color;
     this.domContext.font = `${ this._fontSize_title }px ${ this._fontType }`;
+
+    if( this.sideCanvasEnabled ) {
+      x += this.side_width;
+    }
+    x += 10; // padding left
+    x *= pixelRatio;
 
     // Add title
     let ii = 0, ss = [];
     ( this.title || '' )
       .split('\\n')
       .forEach( (ss, ii) => {
-        this.domContext.fillText( ss , x, y + this._lineHeight_title * (ii + 1) );
+        this.domContext.fillText( ss , x , y + this._lineHeight_title * (ii + 1) );
       });
   }
 
@@ -86338,8 +86349,8 @@ class THREEBRAIN_CANVAS {
 
 
   		// Add additional information
-      const _pixelRatio = this.pixel_ratio[0];
-      const _fontType = 'Courier New, monospace';
+      // const _pixelRatio = this.pixel_ratio[0];
+      // const _fontType = 'Courier New, monospace';
 
       this.domContext.fillStyle = this.foreground_color;
 
@@ -87070,13 +87081,13 @@ const invertColor = function(hex) {
     return '#' + padZero(r) + padZero(g) + padZero(b);
 };
 
-const padZero = function(str, len) {
+function padZero(str, len) {
     len = len || 2;
     var zeros = new Array(len).join('0');
     return (zeros + str).slice(-len);
 };
 
-const to_dict = function(x, keys){
+function to_dict(x, keys){
 
   if(typeof(x) !== 'object'){
     x = [x];
@@ -87097,7 +87108,7 @@ const to_dict = function(x, keys){
   return(x);
 };
 
-const to_array = function(x){
+function to_array(x){
   if( x === undefined || x === null ){
     return([]);
   }
@@ -88024,6 +88035,9 @@ class BrainCanvas{
 
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();
+
+    this.canvas.title = this.settings.title;
+
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
       this.controllerGUI = undefined;
@@ -88080,6 +88094,9 @@ class BrainCanvas{
     })
 
     // in the meanwhile, sort geoms
+    if( !Array.isArray( this.geoms ) ) {
+      this.geoms = (0,_js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .to_array */ .AA)( this.geoms );
+    }
     this.geoms.sort((a, b) => {
       return( a.render_order - b.render_order );
     });

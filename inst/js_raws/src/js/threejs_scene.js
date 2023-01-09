@@ -926,6 +926,7 @@ class THREEBRAIN_CANVAS {
     this.object_chosen=undefined;
     this.clickable.clear();
     this.clickable_array.length = 0;
+    this.title = undefined;
 
     this.subject_codes.length = 0;
     this.electrodes.clear();
@@ -1236,12 +1237,14 @@ class THREEBRAIN_CANVAS {
 	  this.sideCanvasList.coronal.enabled = true;
 	  this.sideCanvasList.axial.enabled = true;
 	  this.sideCanvasList.sagittal.enabled = true;
+	  this.start_animation( 0 );
 	}
 	disableSideCanvas(force = false){
 	  this.sideCanvasEnabled = false;
 	  this.sideCanvasList.coronal.enabled = false;
 	  this.sideCanvasList.axial.enabled = false;
 	  this.sideCanvasList.sagittal.enabled = false;
+	  this.start_animation( 0 );
 	}
   /*---- Choose & highlight objects -----------------------------------------*/
   set_raycaster(){
@@ -1936,20 +1939,28 @@ class THREEBRAIN_CANVAS {
 
     if( typeof this.title !== "string" ) { return; }
 
+    const pixelRatio = this.pixel_ratio[0];
+
     this._fontType = 'Courier New, monospace';
-    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * this.pixel_ratio[0] );
-    this._fontSize_title = this._fontSize_title || Math.round( 20 * this.pixel_ratio[0] );
+    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * pixelRatio );
+    this._fontSize_title = this._fontSize_title || Math.round( 20 * pixelRatio );
 
 
     this.domContext.fillStyle = this.foreground_color;
     this.domContext.font = `${ this._fontSize_title }px ${ this._fontType }`;
+
+    if( this.sideCanvasEnabled ) {
+      x += this.side_width;
+    }
+    x += 10; // padding left
+    x *= pixelRatio;
 
     // Add title
     let ii = 0, ss = [];
     ( this.title || '' )
       .split('\\n')
       .forEach( (ss, ii) => {
-        this.domContext.fillText( ss , x, y + this._lineHeight_title * (ii + 1) );
+        this.domContext.fillText( ss , x , y + this._lineHeight_title * (ii + 1) );
       });
   }
 
@@ -2449,8 +2460,8 @@ class THREEBRAIN_CANVAS {
 
 
   		// Add additional information
-      const _pixelRatio = this.pixel_ratio[0];
-      const _fontType = 'Courier New, monospace';
+      // const _pixelRatio = this.pixel_ratio[0];
+      // const _fontType = 'Courier New, monospace';
 
       this.domContext.fillStyle = this.foreground_color;
 

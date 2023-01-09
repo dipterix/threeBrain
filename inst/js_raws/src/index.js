@@ -332,6 +332,9 @@ class BrainCanvas{
 
     this.canvas.pause_animation(9999);
     this.canvas.clear_all();
+
+    this.canvas.title = this.settings.title;
+
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
       this.controllerGUI = undefined;
@@ -388,6 +391,9 @@ class BrainCanvas{
     })
 
     // in the meanwhile, sort geoms
+    if( !Array.isArray( this.geoms ) ) {
+      this.geoms = to_array( this.geoms );
+    }
     this.geoms.sort((a, b) => {
       return( a.render_order - b.render_order );
     });

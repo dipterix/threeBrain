@@ -6,6 +6,7 @@ brain$localize(
   mri_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/MRI_RAW.nii",
   transform_matrix = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/ct2t1.mat",
   transform_space = "fsl",
+# brain$plot(
   # start_zoom = 10,
   # background = "#ccff99",
   # cex = 2,
@@ -21,9 +22,9 @@ brain$localize(
   # control_panel = FALSE,
   # control_display = FALSE,
   # camera_pos = c( 0,0, 1),
-  coords = c(0,0,-30),
   symmetric = FALSE,
-  debug = FALSE
+  debug = FALSE,
+  title = 'adadasddasdas asda'
 )
 
 [21] "default_colormap"         "palettes"

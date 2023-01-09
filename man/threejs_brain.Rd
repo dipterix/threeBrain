@@ -12,6 +12,7 @@ threejs_brain(
   background = "#FFFFFF",
   cex = 1,
   timestamp = TRUE,
+  title = "",
   side_canvas = FALSE,
   side_zoom = 1,
   side_width = 250,
@@ -43,8 +44,7 @@ threejs_brain(
   global_data = list(),
   global_files = list(),
   custom_javascript = NULL,
-  show_modal = "auto",
-  coords = NULL
+  show_modal = "auto"
 )
 }
 \arguments{
@@ -126,8 +126,6 @@ only use it when you have multiple widgets in one website}
 }}
 
 \item{show_modal}{logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications}
-
-\item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
 }
 \description{
 Create a Threejs Brain and View it in Browsers

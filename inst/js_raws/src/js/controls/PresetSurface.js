@@ -94,7 +94,7 @@ function registerPresetSurface( ViewerControlCenter ){
 
     const ctrlLHOpacity = this.gui
       .addController('Left Opacity', 1.0, { folderName : folderName })
-      .min( 0.1 ).max( 1 ).step( 0.1 ).decimals( 1 )
+      .min( 0.1 ).max( 1 ).decimals( 1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
         this.fire_change();
@@ -103,7 +103,7 @@ function registerPresetSurface( ViewerControlCenter ){
 
     const ctrlRHOpacity = this.gui
       .addController('Right Opacity', 1.0, { folderName : folderName })
-      .min( 0.1 ).max( 1 ).step( 0.1 ).decimals( 1 )
+      .min( 0.1 ).max( 1 ).decimals( 1 )
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
         this.fire_change();

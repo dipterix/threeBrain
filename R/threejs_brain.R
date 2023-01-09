@@ -25,7 +25,6 @@
 #' @param camera_center numerical, length of three, XYZ position where camera should focus at
 #' @param camera_pos XYZ position of camera itself, default (0, 0, 500)
 #' @param start_zoom numerical, positive number indicating camera zoom level
-#' @param coords \code{NULL} to hide coordinates or numeric vector of three.
 #' @param symmetric numerical, default 0, color center will be mapped to this value
 #' @param tmp_dirname character path, internally used, where to store temporary files
 #' @param token unique character, internally used to identify widgets in JS localStorage
@@ -77,7 +76,7 @@
 #' @export
 threejs_brain <- function(
   ..., .list = list(), width = NULL, height = NULL, background = "#FFFFFF",
-  cex = 1, timestamp = TRUE,
+  cex = 1, timestamp = TRUE, title = "",
 
   # Args for the side panels
   side_canvas = FALSE, side_zoom = 1, side_width = 250, side_shift = c(0, 0),
@@ -108,9 +107,8 @@ threejs_brain <- function(
 
   # customized js code
   custom_javascript = NULL,
-  show_modal = "auto",
+  show_modal = "auto"
 
-  coords = NULL
 ){
   if(isTRUE(show_modal == 'auto')){
     if( is.null(shiny::getDefaultReactiveDomain()) ){
@@ -128,7 +126,6 @@ threejs_brain <- function(
   }
 
   stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
-  stopifnot2(length(coords) == 0 || (length(coords) == 3 && is.numeric(coords)), msg = 'corrds must be NULL or a vector length of 3')
   stopifnot2(length(camera_pos) == 3 && is.numeric(camera_pos) && sum(abs(camera_pos)) > 0, msg = 'camera_pos must be a vector length of 3 and cannot be origin')
 
   # Inject global data
@@ -231,8 +228,8 @@ threejs_brain <- function(
   # Create element list
   geoms <- unlist(c(global_container, list(...), .list))
   # Remove illegal geoms
-  is_geom <- vapply(geoms, function(x){ R6::is.R6(x) && ('AbstractGeom' %in% class(x)) }, FUN.VALUE = FALSE)
-  geoms <- geoms[is_geom]
+  is_geom <- vapply(geoms, function(x){ R6::is.R6(x) && inherits(x, 'AbstractGeom') }, FUN.VALUE = FALSE)
+  geoms <- unlist(geoms[is_geom])
 
   groups <- unique(lapply(geoms, '[[', 'group'))
   groups <- groups[!vapply(groups, is.null, FUN.VALUE = FALSE)]
@@ -341,6 +338,7 @@ threejs_brain <- function(
 
   # Generate settings
   settings <- list(
+    title = paste(format(title), collapse = "\n"),
     side_camera = side_canvas,
     side_canvas_zoom = side_zoom,
     side_canvas_width = side_width,

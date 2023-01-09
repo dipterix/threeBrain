@@ -21,13 +21,13 @@ const invertColor = function(hex) {
     return '#' + padZero(r) + padZero(g) + padZero(b);
 };
 
-const padZero = function(str, len) {
+function padZero(str, len) {
     len = len || 2;
     var zeros = new Array(len).join('0');
     return (zeros + str).slice(-len);
 };
 
-const to_dict = function(x, keys){
+function to_dict(x, keys){
 
   if(typeof(x) !== 'object'){
     x = [x];
@@ -48,7 +48,7 @@ const to_dict = function(x, keys){
   return(x);
 };
 
-const to_array = function(x){
+function to_array(x){
   if( x === undefined || x === null ){
     return([]);
   }
