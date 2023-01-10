@@ -27,11 +27,11 @@ brain$localize(
   title = 'adadasddasdas asda'
 )
 
-[21] "default_colormap"         "palettes"
-[23] "value_ranges"             "value_alias"
-[25] "show_inactive_electrodes" "surface_colormap"
-"videos"
-[33] "controllers"
+# [21] "default_colormap"         "palettes"
+# [23] "value_ranges"             "value_alias"
+# [25] "show_inactive_electrodes" "surface_colormap"
+# "videos"
+# [33] "controllers"
 
 # control_presets <- 'localization'
 # controllers <- list()

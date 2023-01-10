@@ -1,7 +1,3 @@
-.lil-gui {
-	--font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", monospace;
-	--width: 100%;
-}
 
 .threejs-brain-container {
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
@@ -103,26 +99,37 @@
 .threejs-control *{
   /* pointer-events: auto; */
 }
-.lil‑gui {
-  ‑‑name‑width: 100%;
-}
-
-.threejs-control .lil‑gui {
-  /* opacity: 0.4; */
-  padding-bottom: 20px;
-}
-
 
 .threejs-control div.close-button{
   width:100%!important;
 }
 
-.threejs-control .lil-gui .lil-gui > .children {
+.threejs-control .lil-gui {
+	--font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", monospace;
+	--width: 100%;
+
+  --background-color: #f6f6f6;
+	--text-color: #3d3d3d;
+	--title-background-color: #efefef;
+	--title-text-color: #3d3d3d;
+	--widget-color: #eaeaea;
+	--hover-color: #f0f0f0;
+	--focus-color: #fafafa;
+	--number-color: #07aacf;
+	--string-color: #8da300;
+}
+
+.threejs-control .lil-gui.root > .title {
+  text-align: center;
+}
+
+
+.threejs-control .lil-gui.root > .children > .lil-gui > .children {
   border: none;
     border-left-color: currentcolor;
     border-left-style: none;
     border-left-width: medium;
-  margin-left: var(--folder-indent);
+  margin-left: calc(var(--folder-indent) + 2em);
   border-left: 2px solid var(--widget-color);
 }
 
@@ -268,11 +275,12 @@
   content: attr(viewer-tooltip);
   background-color: #f9f9f9;
   color: #000000;
-  top: 0.5em;
+  background-color: var(--text-color);
+  color: var(--background-color);
   position: absolute;
   white-space: nowrap;
-  transform: translate(-4px, -4px);
-  right: 0;
+  transform: translate(-100%, 0);
+  left: calc( var(--folder-indent) / -2.0 );
   opacity: 0.7;
   font-family: inherit;
   font-weight: bold;
@@ -283,6 +291,8 @@
   z-index: 1;
   line-height: 17px;
   font-size: 0.85em;
+  text-align: center;
+  width: 2em;
 }
 
 .threejs-brain-blank-container {
@@ -319,7 +329,6 @@
 
 .threejs-brain-canvas .threejs-control .threejs-control-progress {
   position: relative;
-  padding: 0 0 10px 0;
 }
 
 .threejs-brain-canvas .threejs-control .threejs-control-progress > span {

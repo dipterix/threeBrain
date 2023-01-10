@@ -48,6 +48,30 @@ function to_dict(x, keys){
   return(x);
 };
 
+function storageAvailable(type) {
+  try {
+    const storage = window[type],
+        x = '__storage_test__';
+    storage.setItem(x, x);
+    storage.removeItem(x);
+    return true;
+  }
+  catch(e) {
+    return e instanceof DOMException && (
+        // everything except Firefox
+        e.code === 22 ||
+        // Firefox
+        e.code === 1014 ||
+        // test name field too, because code might not be present
+        // everything except Firefox
+        e.name === 'QuotaExceededError' ||
+        // Firefox
+        e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+        // acknowledge QuotaExceededError only if there's something already stored
+        storage.length !== 0;
+  }
+}
+
 function to_array(x){
   if( x === undefined || x === null ){
     return([]);
@@ -343,7 +367,8 @@ export { invertColor, padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
   sub2, float_to_int32, vec3_to_string,
   has_meta_keys, write_clipboard, as_Matrix4,
-  set_visibility, set_display_mode, remove_comments };
+  set_visibility, set_display_mode, remove_comments,
+  storageAvailable };
 
 
 

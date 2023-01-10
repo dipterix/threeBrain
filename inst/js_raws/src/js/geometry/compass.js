@@ -12,7 +12,6 @@ class Compass {
     this._text = text;
 
     this.container = new Object3D();
-    this.container.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
 
     this._left = new Vector3();
     this._down = new Vector3();
@@ -37,6 +36,8 @@ class Compass {
       const sprite = new TextSprite(text[ ii ], 6, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
       sprite.position.copy( direction ).multiplyScalar( 9 );
 
+      axis.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+      sprite.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
       this.container.add( axis );
       this.container.add( sprite );
 

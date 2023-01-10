@@ -20,7 +20,7 @@ import { CanvasContext2D } from './core/context.js';
 import { CanvasFileLoader } from './core/loaders.js';
 import { SideCanvas } from './core/side_canvas.js';
 import { Stats } from './libs/stats.min.js';
-import { THREEBRAIN_STORAGE } from './threebrain_cache.js';
+import { StorageCache } from './core/StorageCache.js';
 import { CanvasEvent } from './core/events.js';
 import { make_draggable } from './libs/draggable.js';
 import { make_resizable } from './libs/resizable.js';
@@ -49,8 +49,26 @@ const GEOMETRY_FACTORY = {
   'blank'     : (g, canvas) => { return(null) }
 };
 
+/**
+ * entering use | operator, leaving use & operator
+ * for example, entering canvas from off canvas (000) will be 001 | 000 = 001
+ * then, entering control panel will be 001 | 101 = 101.
+ * Leaving controller first, then to side panel will be
+ *   (101 & 011) | 011 = 011
+ * Or, entering side panel then leave controllers
+ *   (101 | 011) & 011 = 011
+ * hence the order of operation doesn't matter
+*/
+const MOUSE = {
+  ON_CANVAS       : 0b001,
+  ON_SIDE_CANVAS  : 0b011,
+  ON_CONTROLLER   : 0b101,
+  OFF_CONTROLLER  : 0b011,
+  OFF_SIDE_CANVAS : 0b101,
+  OFF_VIEWER      : 0b000
+}
+
 window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
-window.nifti = nifti;
 /* ------------------------------------ Layer setups ------------------------------------
   Defines for each camera which layers are visible.
   Protocols are
@@ -70,7 +88,7 @@ window.nifti = nifti;
 */
 
 // A storage to cache large objects such as mesh data
-const cached_storage = new THREEBRAIN_STORAGE();
+const cached_storage = new StorageCache();
 
 // Make sure window.requestAnimationFrame exists
 // Override methods so that we have multiple support across platforms
@@ -109,8 +127,8 @@ class THREEBRAIN_CANVAS {
     }
 
     // DOM container information
-    this.el = el;
-    this.container_id = this.el.getAttribute( 'data-target' );
+    this.$el = el;
+    this.container_id = this.$el.getAttribute( 'data-target' );
     this.ready = false;
     this._time_info = {
       selected_object : {
@@ -296,7 +314,7 @@ class THREEBRAIN_CANVAS {
 
     // Add main canvas to wrapper element
     this.wrapper_canvas.appendChild( this.main_canvas );
-    this.el.appendChild( this.wrapper_canvas );
+    this.$el.appendChild( this.wrapper_canvas );
 
 
     this.has_stats = false;
@@ -336,6 +354,7 @@ class THREEBRAIN_CANVAS {
     // this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
+    this.mouseState = MOUSE.OFF_VIEWER;
 
     // this.add_to_scene(mouse_helper, true);
 
@@ -358,8 +377,29 @@ class THREEBRAIN_CANVAS {
   /*---- Finalize init ------------------------------------------------------*/
   register_main_canvas_events(){
 
-    // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    // this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    // this.$el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    // this.$el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    /*
+    this.bind( "mouseEnteredViewer", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_CANVAS;
+    }, this.$el );
+    this.bind( "mouseLeftViewer", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_CANVAS;
+    }, this.$el );
+    this.bind( "mouseEnteredSidePanels", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_SIDE_CANVAS;
+    }, this.sideCanvasList.coronal.$el );
+    this.bind( "mouseLeftSidePanels", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_SIDE_CANVAS;
+    }, this.$el );
+    this.bind( "mouseEnteredControlPanel", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_CONTROLLER;
+    }, this.$el );
+    this.bind( "mouseLeftViewer", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_CONTROLLER;
+    }, this.$el );
+    */
+
     this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
 			  this.listen_keyboard = true;
 			}, this.main_canvas);
@@ -824,7 +864,7 @@ class THREEBRAIN_CANVAS {
       this.stats.domElement.style.position = 'absolute';
       this.stats.domElement.style.top = '0';
       this.stats.domElement.style.left = '0';
-      this.el.appendChild( this.stats.domElement );
+      this.$el.appendChild( this.stats.domElement );
     }
   }
 
@@ -908,7 +948,7 @@ class THREEBRAIN_CANVAS {
     this.scene = null;
 
     // Remove el
-    this.el.innerHTML = '';
+    this.$el.innerHTML = '';
 
     // How to dispose renderers? Not sure
     this.domContext = null;
@@ -1178,7 +1218,7 @@ class THREEBRAIN_CANVAS {
     // Resize side canvas, make sure this.side_width is proper
     let pos = to_array( position );
     if( pos.length == 2 ) {
-      const bounding = this.el.getBoundingClientRect();
+      const bounding = this.$el.getBoundingClientRect();
       const offsetX = Math.max( -bounding.x, pos[0] );
       let offsetY = Math.max( -bounding.y, pos[1] );
       if( coronal ) {
@@ -2433,8 +2473,8 @@ class THREEBRAIN_CANVAS {
 
     requestAnimationFrame( this.animate.bind(this) );
 
-    // If this.el is hidden, do not render
-    if( !this.ready || this.el.clientHeight <= 0 ){
+    // If this.$el is hidden, do not render
+    if( !this.ready || this.$el.clientHeight <= 0 ){
       return;
     }
 
@@ -3089,7 +3129,7 @@ mapped = false,
 
     // Set renderer background to be v
     this.main_renderer.setClearColor( this.background_color );
-    this.el.style.backgroundColor = this.background_color;
+    this.$el.style.backgroundColor = this.background_color;
 
     const event = {
       data: {

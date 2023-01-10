@@ -972,7 +972,7 @@ module.exports.TinyEmitter = E;
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, ".lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n}\n\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n.lil‑gui {\n  ‑‑name‑width: 100%;\n}\n\n.threejs-control .lil‑gui {\n  /* opacity: 0.4; */\n  padding-bottom: 20px;\n}\n\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: var(--folder-indent);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  top: 0.5em;\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-4px, -4px);\n  right: 0;\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n  padding: 0 0 10px 0;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n", "",{"version":3,"sources":["webpack://./src/css/dipterix.css"],"names":[],"mappings":"AAAA;CACC,oEAAoE;CACpE,aAAa;AACd;;AAEA;EACE,wJAAwJ;EACxJ,eAAe;EACf,gBAAgB;EAChB,gBAAgB;EAChB,cAAc;AAChB;;AAEA;;IAEI,oBAAoB;AACxB;;AAEA;;;;;IAKI,SAAS;IACT,oBAAoB;IACpB,kBAAkB;IAClB,oBAAoB;AACxB;;AAEA;EACE,uBAAuB;AACzB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;;;;;;EAME,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,kBAAkB;EAClB,UAAU;EACV,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,YAAY;EACZ,UAAU;EACV,SAAS;AACX;;;AAGA;EACE,kBAAkB;EAClB,YAAY;EACZ,gBAAgB;EAChB,oBAAoB;EACpB,YAAY;EACZ,gBAAgB;EAChB,kBAAkB;EAClB,WAAW;EACX,0BAA0B;AAC5B;;AAEA;EACE,qBAAqB;AACvB;AACA;EACE,iDAAiD;EACjD,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;AACb;AACA;EACE,eAAe;AACjB;;AAEA;IACI,mBAAmB;IACnB,kBAAkB;IAClB,kBAAkB;IAClB,wBAAwB;IACxB,mBAAmB;IACnB,mBAAmB;IACnB,oBAAoB;IACpB,oBAAoB;AACxB;;AAEA;EACE,0BAA0B;AAC5B;AACA;EACE,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;EAClB,oBAAoB;AACtB;;;AAGA;EACE,oBAAoB;AACtB;;AAEA;EACE,YAAY;IACV,+BAA+B;IAC/B,uBAAuB;IACvB,yBAAyB;EAC3B,iCAAiC;EACjC,0CAA0C;AAC5C;;;AAGA;;;;EAIE,uBAAuB;AACzB;;AAEA;IACI,UAAU;AACd;;;AAGA;EACE,UAAU;EACV,uBAAuB;EACvB,kBAAkB;AACpB;;AAEA;EACE,YAAY;AACd;;;AAGA;EACE,kBAAkB;EAClB,aAAa;EACb,YAAY;EACZ,SAAS;EACT,UAAU;EACV,iBAAiB;EACjB,gBAAgB;EAChB,0BAA0B;EAC1B,iBAAiB;AACnB;AACA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,eAAe;EACf,gBAAgB;EAChB,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,YAAY;AACd;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,UAAU;EACV,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,eAAe;EACf,iBAAiB;EACjB,kBAAkB;EAClB,eAAe;AACjB;;AAEA;EACE,kCAAkC;EAClC,uCAAuC;AACzC;;;;;AAKA;;;;;;;;;;;CAWC;;;AAGD;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,sBAAsB;AACxB;;AAEA;EACE,QAAQ;EACR,SAAS;EACT,yDAAyD;EACzD,uBAAuB;EACvB,8BAA8B;EAC9B,kBAAkB;EAClB,kCAAkC;EAClC,qCAAqC;EACrC,+BAA+B;AACjC;;AAEA;EACE,OAAO;EACP,SAAS;EACT,mBAAmB,EAAE,iBAAiB;EACtC,0BAA0B;AAC5B;AACA;EACE,QAAQ;EACR,SAAS;EACT,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,OAAO;EACP,YAAY;EACZ,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,QAAQ;EACR,YAAY;EACZ,mBAAmB;EACnB,wBAAwB;AAC1B;;;AAGA,iBAAiB;AACjB;EACE,kBAAkB;AACpB;AACA;EACE,6BAA6B;EAC7B,yBAAyB;EACzB,cAAc;EACd,UAAU;EACV,kBAAkB;EAClB,mBAAmB;EACnB,gCAAgC;EAChC,QAAQ;EACR,YAAY;EACZ,oBAAoB;EACpB,iBAAiB;EACjB,iBAAiB;EACjB,cAAc;EACd,4BAA4B;EAC5B,oBAAoB;EACpB,UAAU;EACV,iBAAiB;EACjB,iBAAiB;AACnB;;AAEA;EACE,sBAAsB;EACtB,eAAe;EACf,iCAAiC;AACnC;AACA;EACE,sBAAsB;AACxB;AACA;EACE,aAAa;EACb,kBAAkB;EAClB,QAAQ;EACR,gCAAgC;EAChC,SAAS;EACT,cAAc;EACd,sBAAsB;AACxB;;AAEA;EACE,WAAW;AACb;;;AAGA;EACE,0BAA0B,EAAE,eAAe;EAC3C,8BAA8B,EAAE,SAAS;EACzC,kBAAkB;EAClB,YAAY;EACZ,aAAa;EACb,uDAAuD;AACzD;;AAEA;EACE,kBAAkB;EAClB,mBAAmB;AACrB;;AAEA;EACE,cAAc;EACd,WAAW;EACX,yCAAyC;EACzC,kBAAkB;EAClB,gBAAgB;EAChB,kBAAkB;EAClB,kBAAkB;EAClB,mBAAmB;EACnB,oBAAoB;AACtB","sourcesContent":[".lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n}\n\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n.lil‑gui {\n  ‑‑name‑width: 100%;\n}\n\n.threejs-control .lil‑gui {\n  /* opacity: 0.4; */\n  padding-bottom: 20px;\n}\n\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: var(--folder-indent);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  top: 0.5em;\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-4px, -4px);\n  right: 0;\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n  padding: 0 0 10px 0;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n"],"sourceRoot":""}]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n\n  --background-color: #f6f6f6;\n\t--text-color: #3d3d3d;\n\t--title-background-color: #efefef;\n\t--title-text-color: #3d3d3d;\n\t--widget-color: #eaeaea;\n\t--hover-color: #f0f0f0;\n\t--focus-color: #fafafa;\n\t--number-color: #07aacf;\n\t--string-color: #8da300;\n}\n\n.threejs-control .lil-gui.root > .title {\n  text-align: center;\n}\n\n\n.threejs-control .lil-gui.root > .children > .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: calc(var(--folder-indent) + 2em);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  background-color: var(--text-color);\n  color: var(--background-color);\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-100%, 0);\n  left: calc( var(--folder-indent) / -2.0 );\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n  text-align: center;\n  width: 2em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n", "",{"version":3,"sources":["webpack://./src/css/dipterix.css"],"names":[],"mappings":";AACA;EACE,wJAAwJ;EACxJ,eAAe;EACf,gBAAgB;EAChB,gBAAgB;EAChB,cAAc;AAChB;;AAEA;;IAEI,oBAAoB;AACxB;;AAEA;;;;;IAKI,SAAS;IACT,oBAAoB;IACpB,kBAAkB;IAClB,oBAAoB;AACxB;;AAEA;EACE,uBAAuB;AACzB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;;;;;;EAME,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,kBAAkB;EAClB,UAAU;EACV,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,YAAY;EACZ,UAAU;EACV,SAAS;AACX;;;AAGA;EACE,kBAAkB;EAClB,YAAY;EACZ,gBAAgB;EAChB,oBAAoB;EACpB,YAAY;EACZ,gBAAgB;EAChB,kBAAkB;EAClB,WAAW;EACX,0BAA0B;AAC5B;;AAEA;EACE,qBAAqB;AACvB;AACA;EACE,iDAAiD;EACjD,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;AACb;AACA;EACE,eAAe;AACjB;;AAEA;IACI,mBAAmB;IACnB,kBAAkB;IAClB,kBAAkB;IAClB,wBAAwB;IACxB,mBAAmB;IACnB,mBAAmB;IACnB,oBAAoB;IACpB,oBAAoB;AACxB;;AAEA;EACE,0BAA0B;AAC5B;;AAEA;EACE,oBAAoB;AACtB;;AAEA;CACC,oEAAoE;CACpE,aAAa;;EAEZ,2BAA2B;CAC5B,qBAAqB;CACrB,iCAAiC;CACjC,2BAA2B;CAC3B,uBAAuB;CACvB,sBAAsB;CACtB,sBAAsB;CACtB,uBAAuB;CACvB,uBAAuB;AACxB;;AAEA;EACE,kBAAkB;AACpB;;;AAGA;EACE,YAAY;IACV,+BAA+B;IAC/B,uBAAuB;IACvB,yBAAyB;EAC3B,6CAA6C;EAC7C,0CAA0C;AAC5C;;;AAGA;;;;EAIE,uBAAuB;AACzB;;AAEA;IACI,UAAU;AACd;;;AAGA;EACE,UAAU;EACV,uBAAuB;EACvB,kBAAkB;AACpB;;AAEA;EACE,YAAY;AACd;;;AAGA;EACE,kBAAkB;EAClB,aAAa;EACb,YAAY;EACZ,SAAS;EACT,UAAU;EACV,iBAAiB;EACjB,gBAAgB;EAChB,0BAA0B;EAC1B,iBAAiB;AACnB;AACA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,eAAe;EACf,gBAAgB;EAChB,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,YAAY;AACd;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,UAAU;EACV,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,eAAe;EACf,iBAAiB;EACjB,kBAAkB;EAClB,eAAe;AACjB;;AAEA;EACE,kCAAkC;EAClC,uCAAuC;AACzC;;;;;AAKA;;;;;;;;;;;CAWC;;;AAGD;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,sBAAsB;AACxB;;AAEA;EACE,QAAQ;EACR,SAAS;EACT,yDAAyD;EACzD,uBAAuB;EACvB,8BAA8B;EAC9B,kBAAkB;EAClB,kCAAkC;EAClC,qCAAqC;EACrC,+BAA+B;AACjC;;AAEA;EACE,OAAO;EACP,SAAS;EACT,mBAAmB,EAAE,iBAAiB;EACtC,0BAA0B;AAC5B;AACA;EACE,QAAQ;EACR,SAAS;EACT,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,OAAO;EACP,YAAY;EACZ,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,QAAQ;EACR,YAAY;EACZ,mBAAmB;EACnB,wBAAwB;AAC1B;;;AAGA,iBAAiB;AACjB;EACE,kBAAkB;AACpB;AACA;EACE,6BAA6B;EAC7B,yBAAyB;EACzB,cAAc;EACd,mCAAmC;EACnC,8BAA8B;EAC9B,kBAAkB;EAClB,mBAAmB;EACnB,8BAA8B;EAC9B,yCAAyC;EACzC,YAAY;EACZ,oBAAoB;EACpB,iBAAiB;EACjB,iBAAiB;EACjB,cAAc;EACd,4BAA4B;EAC5B,oBAAoB;EACpB,UAAU;EACV,iBAAiB;EACjB,iBAAiB;EACjB,kBAAkB;EAClB,UAAU;AACZ;;AAEA;EACE,sBAAsB;EACtB,eAAe;EACf,iCAAiC;AACnC;AACA;EACE,sBAAsB;AACxB;AACA;EACE,aAAa;EACb,kBAAkB;EAClB,QAAQ;EACR,gCAAgC;EAChC,SAAS;EACT,cAAc;EACd,sBAAsB;AACxB;;AAEA;EACE,WAAW;AACb;;;AAGA;EACE,0BAA0B,EAAE,eAAe;EAC3C,8BAA8B,EAAE,SAAS;EACzC,kBAAkB;EAClB,YAAY;EACZ,aAAa;EACb,uDAAuD;AACzD;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,cAAc;EACd,WAAW;EACX,yCAAyC;EACzC,kBAAkB;EAClB,gBAAgB;EAChB,kBAAkB;EAClB,kBAAkB;EAClB,mBAAmB;EACnB,oBAAoB;AACtB","sourcesContent":["\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n\n  --background-color: #f6f6f6;\n\t--text-color: #3d3d3d;\n\t--title-background-color: #efefef;\n\t--title-text-color: #3d3d3d;\n\t--widget-color: #eaeaea;\n\t--hover-color: #f0f0f0;\n\t--focus-color: #fafafa;\n\t--number-color: #07aacf;\n\t--string-color: #8da300;\n}\n\n.threejs-control .lil-gui.root > .title {\n  text-align: center;\n}\n\n\n.threejs-control .lil-gui.root > .children > .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: calc(var(--folder-indent) + 2em);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  background-color: var(--text-color);\n  color: var(--background-color);\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-100%, 0);\n  left: calc( var(--folder-indent) / -2.0 );\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n  text-align: center;\n  width: 2em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -11359,54 +11359,6 @@ function ZStream() {
 }
 
 module.exports = ZStream;
-
-
-/***/ }),
-
-/***/ 2013:
-/***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
-
-"use strict";
-/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3379);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7795);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(569);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3565);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9216);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(4589);
-/* harmony import */ var _node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var _node_modules_css_loader_dist_cjs_js_dipterix_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(794);
-
-      
-      
-      
-      
-      
-      
-      
-      
-      
-
-var options = {};
-
-options.styleTagTransform = (_node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default());
-options.setAttributes = (_node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default());
-
-      options.insert = _node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default().bind(null, "head");
-    
-options.domAPI = (_node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default());
-options.insertStyleElement = (_node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default());
-
-var update = _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_node_modules_css_loader_dist_cjs_js_dipterix_css__WEBPACK_IMPORTED_MODULE_6__/* .default */ .Z, options);
-
-
-
-
-       /* unused harmony default export */ var __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_css_loader_dist_cjs_js_dipterix_css__WEBPACK_IMPORTED_MODULE_6__/* .default */ .Z && _node_modules_css_loader_dist_cjs_js_dipterix_css__WEBPACK_IMPORTED_MODULE_6__/* .default.locals */ .Z.locals ? _node_modules_css_loader_dist_cjs_js_dipterix_css__WEBPACK_IMPORTED_MODULE_6__/* .default.locals */ .Z.locals : undefined);
 
 
 /***/ }),
@@ -62341,114 +62293,6 @@ if ( typeof window !== 'undefined' ) {
 
 /***/ }),
 
-/***/ 5278:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "$": () => (/* binding */ WEBGL)
-/* harmony export */ });
-/**
- * @author alteredq / http://alteredqualia.com/
- * @author mr.doob / http://mrdoob.com/
- */
-
-const WEBGL = {
-
-	isWebGLAvailable: function () {
-
-		try {
-
-			var canvas = document.createElement( 'canvas' );
-			return !! ( window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ) );
-
-		} catch ( e ) {
-
-			return false;
-
-		}
-
-	},
-
-	isWebGL2Available: function () {
-
-		try {
-
-			var canvas = document.createElement( 'canvas' );
-			return !! ( window.WebGL2RenderingContext && canvas.getContext( 'webgl2' ) );
-
-		} catch ( e ) {
-
-			return false;
-
-		}
-
-	},
-
-	getWebGLErrorMessage: function () {
-
-		return this.getErrorMessage( 1 );
-
-	},
-
-	getWebGL2ErrorMessage: function () {
-
-		return this.getErrorMessage( 2 );
-
-	},
-
-	getErrorMessage: function ( version ) {
-
-		var names = {
-			1: 'WebGL',
-			2: 'WebGL 2'
-		};
-
-		var contexts = {
-			1: window.WebGLRenderingContext,
-			2: window.WebGL2RenderingContext
-		};
-
-		var message = 'Your $0 does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">$1</a>';
-
-		var element = document.createElement( 'div' );
-		element.id = 'webglmessage';
-		element.style.fontFamily = 'monospace';
-		element.style.fontSize = '13px';
-		element.style.fontWeight = 'normal';
-		element.style.textAlign = 'center';
-		element.style.background = '#fff';
-		element.style.color = '#000';
-		element.style.padding = '1.5em';
-		element.style.width = '400px';
-		element.style.margin = '5em auto 0';
-
-		if ( contexts[ version ] ) {
-
-			message = message.replace( '$0', 'graphics card' );
-
-		} else {
-
-			message = message.replace( '$0', 'browser' );
-
-		}
-
-		message = message.replace( '$1', names[ version ] );
-
-		element.innerHTML = message;
-
-		return element;
-
-	}
-
-};
-
-
-
-
-
-/***/ }),
-
 /***/ 975:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -67836,6 +67680,824 @@ class EnhancedGUI extends lil_gui_esm {
 
 }
 
+
+
+
+
+/***/ }),
+
+/***/ 7123:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "B": () => (/* binding */ StorageCache)
+/* harmony export */ });
+
+
+
+class StorageCache {
+  constructor(){
+    this._d = new Map();
+  }
+
+  check_item( path ){
+    return( this._d.has( path ) || this._d.get( path ) !== undefined );
+  }
+
+  get_item( path , ifnotfound = '' ){
+    const re = this._d.get( path );
+    if( re !== undefined ){
+      return( re );
+    }else{
+      return( ifnotfound );
+    }
+  }
+
+  set_item( path, obj ){
+    this._d.set( path , obj );
+  }
+
+  get_hash( path ){
+    var hash = 0;
+    var s = this.get_item( path );
+    var i, chr;
+    if (s.length === 0) return hash;
+    for (i = 0; i < s.length; i++) {
+      chr   = s.charCodeAt(i);
+      hash  = ((hash << 5) - hash) + chr;
+      hash |= 0;
+    }
+    return hash;
+  }
+
+  clear_items( paths ){
+    if( paths === undefined ){
+      // Remove all
+      this._d.clear();
+    }else{
+      paths.forEach((p) => {
+        this._d.delete( p );
+      });
+    }
+  }
+
+}
+
+
+
+
+/***/ }),
+
+/***/ 5857:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "v": () => (/* binding */ ThrottledEventDispatcher)
+/* harmony export */ });
+
+
+class ThrottledEventDispatcher {
+  constructor( $el, containerID, debug = false ) {
+    // el must be a DOM element, no check here
+    if( $el ) {
+      if(! $el instanceof window.HTMLElement ) {
+        throw Error("new ThrottledEventDispatcher($el): `$el` must be an HTMLElement.")
+      }
+      this.$el = $el;
+    } else {
+      this.$el = document.createElement("div");
+    }
+
+    this._listeners = new Map();
+    this._eventBuffers = new Map();
+    this.containerID = containerID || this.$el.getAttribute( 'data-target' );
+
+    this.throttle = true;
+    this.timeout = 100;
+    this.debug = debug;
+  }
+
+  bind( type, callback, { name, options = false, executePrevious = false } = {}) {
+
+    let _callbackId = name;
+
+    if( typeof _callbackId !== "string" ) {
+      _callbackId = type;
+    }
+
+    if( this._listeners.has( _callbackId ) ) {
+      const existingCallback = this._listeners.get( _callbackId );
+      if( this.debug ) {
+        console.debug( `Executing previous listener - ${ _callbackId }` );
+      }
+      this._listeners.delete( _callbackId );
+      if( executePrevious && typeof existingCallback === 'function' ) {
+        try { existingCallback(); } catch (e) {}
+      }
+      this._listeners.set( _callbackId , () => {
+        if( this.debug ) {
+          console.debug( `Re-registering listener - ${ _callbackId }` );
+        }
+        try {
+          this.$el.removeEventListener( type, existingCallback );
+        } catch (e) {
+          console.warn('Unable to dispose listener: ' + _callbackId);
+        }
+        this.$el.addEventListener( type , callback , options );
+      })
+
+    }
+
+  }
+
+  unbind( name, { executePrevious = false } = {} ) {
+    if( !this._listeners.has( name ) ) { return; }
+    const previousCallback = this._listeners.get( name );
+    this._listeners.delete( name );
+
+    if( typeof previousCallback !== 'function' ) { return; }
+    if( executePrevious ) {
+      try { previousCallback(); } catch (e) {}
+    }
+
+    try {
+      this.$el.removeEventListener( name , previousCallback );
+    } catch (e) {}
+
+  }
+
+  dispose() {
+    this._listeners.forEach( ( _ , name ) => {
+      this.unbind( name );
+    });
+    this._listeners.clear();
+  }
+
+  dispatch( type, data, immediate = false ){
+
+    if( typeof(type) !== "string" || type.length === 0 ) {
+      throw TypeError( 'ThrottledEventDispatcher.dispatch: Can only dispatch event of none-empty type' );
+    }
+
+    let buffer;
+    if( !this._eventBuffers.has( type ) ) {
+      buffer = {
+        type: type,
+
+        // make sure doDispatch only called once
+        throttlePause: false,
+        data: data,
+        dispatched: false
+      }
+      this._eventBuffers.set( type , buffer );
+    } else {
+      buffer = this._eventBuffers.get( type );
+      buffer.data = data;
+      buffer.dispatched = false;
+    }
+
+    // whether to fire event right now
+    const immediate_ = !this.throttle || immediate;
+
+    if( !immediate_ && buffer.throttlePause ) {
+      // update data, but hold it
+      return;
+    }
+
+    buffer.throttlePause = true;
+
+    const doDispatch = () => {
+
+      const data = buffer.data;
+
+      buffer.throttlePause = false;
+      if( buffer.dispatched ) { return; }
+      buffer.dispatched = true;
+
+      // fire event with the newest data
+      const event = new CustomEvent(
+        buffer.type,
+        {
+          containerID : this.containerID,
+          container_id: this.containerID,  // compatible
+          detail: data
+        }
+      );
+
+      // Dispatch the event.
+      console.debug(`Dispatching event: ${ buffer.type }`);
+      this.$el.dispatchEvent(event);
+
+    };
+
+    if( immediate_ ) {
+      doDispatch();
+    } else {
+      setTimeout(() => { doDispatch(); }, this.timeout );
+    }
+
+  }
+
+  availableEventNames() {
+    return [ ...this._listeners.keys() ];
+  }
+}
+
+
+
+
+/***/ }),
+
+/***/ 7849:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "o": () => (/* binding */ ViewerApp)
+/* harmony export */ });
+/* harmony import */ var _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(5857);
+/* harmony import */ var _utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9898);
+/* harmony import */ var _EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6546);
+/* harmony import */ var _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1141);
+/* harmony import */ var _threejs_scene_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6911);
+
+
+
+
+
+
+class ViewerApp {
+
+  constructor({
+
+    // Element to store 3D viewer
+    $wrapper,
+
+    // in case $wrapper has 0 width or height
+    width, height,
+
+    // use cache? true, false, or the cache object
+    cache = false,
+
+    // debug mode?
+    debug = false
+
+  }) {
+
+    // Flags
+    this.DEBUG = debug;
+    this.isViewerApp = true;
+    this.controllerClosed = false;
+    // this.outputId = this.$wrapper.getAttribute( 'data-target' );
+
+    // events
+    this._eventDispatcher = new _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_3__/* .ThrottledEventDispatcher */ .v( this.$wrapper );
+    this.bind = this._eventDispatcher.bind;
+    this.unbind = this._eventDispatcher.unbind;
+    this.dispatch = this._eventDispatcher.dispatch;
+
+    // data
+    this.geoms = [];
+    this.settings = {};
+
+
+
+
+    // ---- initialize : DOM elements ------------------------------------------
+    /** The layout is:
+     * $wrapper:
+     *   - A: 1. Settings panel
+     *        - 2. Controller wrapper
+     *          - 3. Controller placeholder ( this one will be replaced )
+     *        - 4. Information container
+     *          - 5. Progress wrapper
+     *            - Progress bar ( for css reasons, this requires a wrapper )
+     *          - 6. Information text
+     *   - B. Canvas container
+     *      - Coronal panel
+     *      - Axial panel
+     *      - Sagital panel
+     *      - Main canvas
+     */
+    this.$wrapper = $wrapper;
+    // --- A ---
+    // 1. Control panel
+    this.$settingsPanel = document.createElement('div');
+    this.$settingsPanel.style.maxHeight = `${ height ?? this.$wrapper.clientHeight }px`;
+    this.$settingsPanel.classList.add( 'threejs-control' )
+
+    // 2. Controller wrapper
+    this.$controllerContainer = document.createElement('div');
+    this.$controllerContainer.style.width = '100%';
+
+    // 3. Controller placeholder
+    // initialized as placeholder, will be replaced by lil-gui
+    this.$controllerGUI = document.createElement('div');
+
+    // 4. Information container
+    this.$informationContainer = document.createElement('div');
+    this.$informationContainer.style.width = '100%';
+    this.$informationContainer.style.padding = '0 0 10px 0'; // avoid ugly text layout
+
+    // 5. Progress
+    this.$progressWrapper = document.createElement('div');
+    this.$progressWrapper.classList.add( "threejs-control-progress" );
+    this.$progress = document.createElement('span');
+    this.$progress.style.width = '0';
+
+    // 6. Information text
+    this.$informationText = document.createElement('div');
+    this.$informationText.style.width = '100%';
+
+    // Assemble A.1-6
+    /*    1. Settings panel
+     *        - 2. Controller wrapper
+     *          - 3. Controller placeholder ( this one will be replaced )
+     *        - 4. Information container
+     *          - 5. Progress wrapper
+     *            - Progress bar ( for css reasons, this requires a wrapper )
+     *          - 6. Information text
+     */
+    // add 3 to 2
+    this.$controllerContainer.appendChild( this.$controllerGUI );
+    // add 2 to 1
+    this.$settingsPanel.appendChild( this.$controllerContainer );
+    // add $progress to 5
+    this.$progressWrapper.appendChild( this.$progress );
+    // add 5 to 4
+    this.$informationContainer.appendChild( this.$progressWrapper );
+    // add 6 to 4
+    this.$informationContainer.appendChild( this.$informationText );
+    // add 4 to 1
+    this.$settingsPanel.appendChild( this.$informationContainer );
+    // add 1 to $wrapper
+    this.$wrapper.appendChild( this.$settingsPanel );
+
+    // --- B Canvas container ------------------------------------------------
+    this.canvas = new _threejs_scene_js__WEBPACK_IMPORTED_MODULE_2__/* .THREEBRAIN_CANVAS */ .S(
+      this.$wrapper,
+      width ?? this.$wrapper.clientWidth,
+      height ?? this.$wrapper.clientHeight,
+      250, false, cache, this.DEBUG, true );
+
+    this.canvas.animate();
+
+  }
+
+  dispose() {
+    this._eventDispatcher.dispose();
+    if( this.controllerGUI ) {
+      try { this.controllerGUI.dispose(); } catch (e) {}
+    }
+  }
+
+  setProgressBar({
+    // 0 - 100
+    progress, message, autoHide = true } = {}) {
+
+    if( progress < 0 ) { return; }
+    if( progress >= 100 ) { progress = 100; }
+    this.__progress = progress;
+    this.$progress.style.width = `${ progress }%`;
+
+    if( message ) {
+      if( this.DEBUG ) {
+        console.debug(`THREEBRAIN (viewer app progress): ${ message }`);
+      }
+      this.$informationText.innerHTML = `<small>${ message }</small>`;
+    } else {
+      this.$informationText.innerHTML = "";
+    }
+
+    if( autoHide && progress >= 99.99999 ) {
+      this.$informationContainer.style.display = 'none';
+    } else {
+      this.$informationContainer.style.display = 'block';
+    }
+  }
+
+  resize( width, height ) {
+    const _width = width ?? this.$wrapper.clientWidth;
+    const _height = height ?? this.$wrapper.clientHeight;
+    if( _width <= 0 || _height <= 0 ){ // Do nothing! as the canvas is usually invisible
+      return ;
+    }
+    this.$settingsPanel.style.maxHeight = _height + 'px';
+    if( this.controllerClosed ) {
+      this.canvas.handle_resize( _width, _height );
+    } else {
+      this.canvas.handle_resize( _width - 300, _height );
+    }
+    /* FIXME : move to canvas, not here!!!
+    if( this._reset_flag ){
+      this._reset_flag = false;
+      this.canvas.sideCanvasList.coronal.reset({ zoomLevel: true, position: true, size : true });
+      this.canvas.sideCanvasList.axial.reset({ zoomLevel: true, position: true, size : true });
+      this.canvas.sideCanvasList.sagittal.reset({ zoomLevel: true, position: true, size : true });
+    }
+    this.canvas.start_animation(0);
+    */
+  }
+
+  bootstrap( { bootstrapData, reset = false } ) {
+    this.DEBUG = this.DEBUG || bootstrapData.debug;
+
+    // read configurations
+    const path = bootstrapData.settings.cache_folder + bootstrapData.data_filename;
+
+    this.setProgressBar({
+      progress  : 0,
+      message   : "Loading configuration files..."
+    });
+
+    const fileReader = new FileReader();
+    this.__fileReader = fileReader;
+
+    /**
+     * The render process is async and may take time
+     * If new data come in and this.render is called,
+     * then this.__fileReader will be altered, and this reader
+     * is obsolete. In such case, abandon the rendering process
+     * as there is a new process rendering up-to-date data
+     */
+    const readerIsObsolete = () => {
+      const re = this.__fileReader !== fileReader;
+      if( re && this.DEBUG ) {
+        console.debug( "THREEBRAIN (viewer.render): configuration is obsolete, abandon current process to yield." );
+      }
+      return ( re );
+    };
+
+    fileReader.onload = (evt) => {
+
+      fileReader.onload = undefined;
+      if( readerIsObsolete() ) { return; }
+
+      this.setProgressBar({
+        progress  : 10,
+        message   : "Parsing configurations..."
+      });
+
+      const viewerData = JSON.parse(evt.target.result);
+      viewerData.settings = bootstrapData.settings;
+
+      this.setProgressBar({
+        progress  : 20,
+        message   : "Updating viewer data..."
+      });
+
+      this.updateData({
+        data : viewerData,
+        reset : reset,
+        isObsolete : readerIsObsolete
+      })
+
+      /*
+      this.viewer.renderValues({
+        x : viewerData,
+        reset: reset,
+        dataIsValid : ( msg ) => {
+          const isValid = this.__fileReader === fileReader;
+          if( msg ) {
+            console.debug(`${msg} (fileReader is ${isValid})`);
+          }
+          return isValid;
+        }
+      }).then(() => {
+        if( this.__fileReader === fileReader ) {
+          this.__fileReader = undefined;
+          this.viewer.finalize_render();
+          this.resize();
+        }
+      });
+    */
+    }
+
+    window.fetch( path ).then( r => r.blob() ).then( blob => {
+      fileReader.readAsText( blob );
+    });
+  }
+
+
+  enableDebugger() {
+    window.__ctrller = this;
+    window.groups = this.groups;
+    window.geoms = this.geoms;
+    window.settings = this.settings;
+    window.canvas = this.canvas;
+    window.controllerGUI = this.controllerGUI;
+  }
+
+  async updateData({ data, reset = false, isObsolete = false }) {
+
+    const _isObsolete = ( args ) => {
+      if( typeof isObsolete !== 'function' ) { return isObsolete; }
+      try { return isObsolete( args ); } catch (e) { return false; }
+    }
+    if( _isObsolete( "Updating viewer data" ) ) { return; }
+
+    this.DEBUG = data.settings.debug || false;
+
+    // clear canvas
+    this.canvas.pause_animation(9999);
+    this.canvas.clear_all();
+    if( this.controllerGUI ) {
+      try { this.controllerGUI.dispose(); } catch (e) {}
+      this.controllerGUI = undefined;
+    }
+
+    this.groups = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( data.groups );
+    this.geoms = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( data.geoms );
+    this.settings = data.settings;
+    this.initialControllerValues = data.settings.default_controllers || {};
+    this.hasAnimation = data.settings.has_animation;
+    this.colorMaps = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( data.settings.color_maps );
+
+    // canvas flags
+    this.canvas.DEBUG = this.DEBUG;
+    this.canvas.mainCamera.needsReset = reset === true;
+    // this.shiny.set_token( this.settings.token );
+
+    if( this.DEBUG ) {
+      this.enableDebugger();
+    }
+
+
+    this.canvas.title = this.settings.title;
+
+    if( _isObsolete("Adding color maps") ) { return; }
+
+    this.colorMaps.forEach( params => {
+      // calculate cmap, add time range so that the last value is always displayed
+      // let tr = v.time_range;
+      this.canvas.add_colormap(
+        params.name, params.alias,
+        params.value_type, params.value_names, params.value_range, params.time_range,
+        params.color_keys, params.color_vals, params.color_levels, params.hard_range
+      );
+    });
+
+    if( _isObsolete("Loading group data") ) { return; }
+
+    this.setProgressBar({
+      progress  : 20,
+      message   : "Loading group data..."
+    });
+
+    const nGroups = this.groups.length;
+    let count = 0, progressIncrement = 0.5 / nGroups * 75;
+
+    const groupPromises = this.groups.map(async (g, ii) => {
+      this.setProgressBar({
+        progress : this.__progress + progressIncrement,
+        message : `Loading group: ${g.name}`
+      });
+
+      await this.canvas.add_group(g, this.settings.cache_folder);
+      count++;
+
+      this.setProgressBar({
+        progress : this.__progress + progressIncrement,
+        message : `Loaded ${count} (out of ${ nGroups }): ${g.name}`
+      });
+    })
+
+    // in the meanwhile, sort geoms
+    this.geoms.sort((a, b) => {
+      return( a.render_order - b.render_order );
+    });
+
+    // wait for all groups to get loaded
+    await Promise.all( groupPromises );
+
+    this.setProgressBar({
+      progress : 95,
+      message : "Group data loaded. Generating geometries..."
+    });
+
+    if( _isObsolete("Adding geometries") ) { return; }
+
+    const nGeoms = this.geoms.length;
+    progressIncrement = 5 / nGeoms;
+    const geomPromises = this.geoms.map( async(g) => {
+      try {
+
+        await this.canvas.add_object( g );
+        this.setProgressBar({
+          progress : this.__progress + progressIncrement,
+          message : `Added object ${g.name}`
+        });
+
+      } catch (e) {
+
+        console.warn(e);
+
+      }
+    });
+
+    await Promise.all( geomPromises );
+    if( _isObsolete() ) { return; }
+
+    this.canvas.finish_init();
+
+    this.setProgressBar({
+      progress : 100,
+      message : "Finalizing..."
+    });
+
+    // ---- Finalizing: add controllers ----------------------------------------
+    this.updateControllers();
+
+    // FIXME: Add driver, which contains shiny support
+    // this.shiny.register_gui( this.gui, this.presets );
+
+
+
+    // The following stuff need to run *after* controller set up
+    // TODO: consider moving these to the canvas class
+    /* Update camera zoom. If we set camera position, then shiny will behave weird and we have to
+    * reset camera every time. To solve this problem, we only reset zoom level
+    *
+    * this is the line that causes the problem
+    */
+    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
+    this.canvas.set_font_size( this.settings.font_magnification || 1 );
+
+    // Compile everything
+    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
+
+    // Set side camera
+    if( this.settings.side_camera || false ){
+
+      // Set canvas zoom-in level
+      if( this.settings.side_display || false ){
+        this.canvas.enableSideCanvas();
+        // reset so that the size is displayed correctly
+        this._reset_flag = true;
+      }else{
+        this.canvas.disableSideCanvas();
+      }
+
+    }else{
+      this.canvas.disableSideCanvas();
+    }
+
+    /* FIXME
+    if( !this.hide_controls ){
+      // controller is displayed
+      if( display_controllers ){
+        this.gui.open();
+      } else {
+        this.gui.close();
+      }
+    }
+    */
+
+    this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
+
+    // remember last settings
+    try {
+      this.controlCenter.update();
+      this.controllerGUI.setFromDictionary( this.defaultControllerValues );
+    } catch (e) {}
+
+    // Force starting rendering
+    this.canvas.render();
+    this.canvas.start_animation(0);
+
+    if( typeof( callback ) === 'function' ){
+      try {
+        callback();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    // canvas is ready. set flag
+    this.canvas.ready = true;
+
+    // run customized js code
+    if( this.settings.custom_javascript &&
+        this.settings.custom_javascript !== ''){
+
+      if( this.canvas.DEBUG ){
+        console.debug("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
+      }
+
+      const _f = (groups, geoms, settings, scene,
+        canvas, gui, presets, shiny, tools
+      ) => {
+        try {
+          eval( this.settings.custom_javascript );
+        } catch (e) {
+          console.warn(e);
+        }
+      };
+
+      _f( this.groups, this.geoms, this.settings, this.scene,
+          this.canvas, this.controllerGUI, this.controlCenter,
+          this.presets, this.shiny, utils_toolbox );
+
+    }
+
+    // Make sure it's hidden though progress will hide it
+    this.$informationContainer.style.display = 'none';
+
+  }
+
+  updateControllers() {
+    if( this.controllerGUI ) {
+      try { this.controllerGUI.dispose(); } catch (e) {}
+    }
+    this.controllerGUI = new _EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_0__/* .EnhancedGUI */ .H({
+      autoPlace: false,
+      title : "3D Viewer Control Panel"
+    });
+    // --------------- Register GUI controller ---------------
+    // Set default on close handler
+    this.controllerGUI.addEventListener( "open", ( event ) => {
+      if( event.folderPath !== "" ) { return; }
+      this.controllerClosed = false;
+      this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
+    });
+    this.controllerGUI.addEventListener( "close", ( event ) => {
+      if( event.folderPath !== "" ) { return; }
+      this.controllerClosed = true;
+      this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
+    });
+
+    // Set side bar
+    if( this.settings.hide_controls ) {
+
+      // Do not show controller GUI at all.
+      this.controllerClosed = true;
+      const $placeholder = document.createElement("div");
+      this.$controllerContainer.replaceChild( $placeholder, this.$controllerGUI );
+      this.$controllerGUI = $placeholder;
+    } else {
+
+      // set GUI
+      this.$controllerContainer.replaceChild( this.controllerGUI.domElement, this.$controllerGUI );
+      this.$controllerGUI = this.controllerGUI.domElement;
+
+      if( this.settings.control_display ) {
+        this.controllerClosed = false;
+      } else {
+        // fold the controller GUI
+        this.controllerClosed = true;
+      }
+    }
+    if( this.controllerClosed ) {
+      this.controllerGUI.close();
+    } else {
+      this.controllerGUI.open();
+    }
+
+    // Add listeners
+    const enabledPresets = this.settings.control_presets;
+    this.controlCenter = new _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__/* .ViewerControlCenter */ .Y(
+      this.canvas, this.controllerGUI, this.settings, this.shiny
+    );
+    // ---------------------------- Defaults
+    this.controlCenter.addPreset_background();
+
+    // ---------------------------- Main, side canvas settings is on top
+    // this.controlCenter.addPreset_recorder();
+    this.controlCenter.addPreset_resetCamera();
+    this.controlCenter.addPreset_setCameraPosition2();
+    this.controlCenter.addPreset_compass();
+
+    // ---------------------------- Side cameras
+    if( this.settings.side_camera ){
+    //   // this.gui.add_folder('Side Canvas').open();
+      this.controlCenter.addPreset_enableSidePanel();
+      this.controlCenter.addPreset_resetSidePanel();
+      this.controlCenter.addPreset_sideSlices();
+      this.controlCenter.addPreset_sideViewElectrodeThreshold();
+    }
+
+    // ---- Add Presets --------------------------------------------------------
+    let animationControllerRegistered = false;
+    (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( enabledPresets ).forEach(( presetName ) => {
+
+      try {
+        if( presetName === 'animation' ){
+          animationControllerRegistered = true;
+        }
+        this.controlCenter['addPreset_' + presetName]();
+      } catch (e) {
+        if(this.DEBUG){
+          console.warn(`Cannot add preset ${ presetName }`);
+        }
+      }
+    });
+    if( !animationControllerRegistered ){
+      this.controlCenter.addPreset_animation();
+    }
+  }
+}
 
 
 
@@ -74206,10 +74868,9 @@ class AbstractThreeBrainObject {
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Lk": () => (/* binding */ gen_sphere),
-/* harmony export */   "C6": () => (/* binding */ add_electrode),
 /* harmony export */   "OK": () => (/* binding */ is_electrode)
 /* harmony export */ });
-/* unused harmony export add_electrode2 */
+/* unused harmony exports add_electrode, add_electrode2 */
 /* harmony import */ var _abstract_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(470);
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(2212);
 /* harmony import */ var _ext_text_sprite_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(1086);
@@ -74845,8 +75506,8 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
     const scode = canvas.get_state("target_subject");
     const search_group = canvas.group.get( `Surface - ${surface_type} (${scode})` );
 
-    const gp_position = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(),
-          _mpos = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3();
+    const gp_position = new Vector3(),
+          _mpos = new Vector3();
     _mpos.fromArray( position );
 
     // Search 141 nodes
@@ -74865,7 +75526,7 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       const mesh_center = search_group.getWorldPosition( gp_position );
       if( lh_vertices && rh_vertices ){
         // calculate
-        let _tmp = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3(),
+        let _tmp = new Vector3(),
             node_idx = -1,
             min_dist = Infinity,
             side = '',
@@ -74902,9 +75563,9 @@ function add_electrode (canvas, number, name, position, surface_type = 'NA',
       }
     }
     // calculate MNI305 coordinate
-    const mat1 = new three__WEBPACK_IMPORTED_MODULE_3__.Matrix4(),
-          pos_targ = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3();
-    const v2v_orig = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__/* .get_or_default */ .jM)( canvas.shared_data, scode, {} ).vox2vox_MNI305;
+    const mat1 = new Matrix4(),
+          pos_targ = new Vector3();
+    const v2v_orig = get_or_default( canvas.shared_data, scode, {} ).vox2vox_MNI305;
 
     if( v2v_orig ){
       mat1.set( v2v_orig[0][0], v2v_orig[0][1], v2v_orig[0][2], v2v_orig[0][3],
@@ -76292,925 +76953,7 @@ class LineSegmentsGeometry extends three__WEBPACK_IMPORTED_MODULE_0__.InstancedB
 
 /***/ }),
 
-/***/ 5858:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "AV": () => (/* binding */ Lut),
-/* harmony export */   "cZ": () => (/* binding */ ColorMapKeywords),
-/* harmony export */   "ki": () => (/* binding */ addToColorMapKeywords)
-/* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2212);
-
-
-class Lut {
-
- 	constructor( colormap, count = 32 ) {
-
-		this.lut = [];
-		this.map = [];
-		this.n = 0;
-		this.minV = 0;
-		this.maxV = 1;
-
-		this.setColorMap( colormap, count );
-
-	}
-
-	set( value ) {
-
-		if ( value.isLut === true ) {
-
-			this.copy( value );
-
-		}
-
-		return this;
-
-	}
-
-	setMin( min ) {
-
-		this.minV = min;
-
-		return this;
-
-	}
-
-	setMax( max ) {
-
-		this.maxV = max;
-
-		return this;
-
-	}
-
-	setColorMap( colormap, count = 32 ) {
-
-		this.map = ColorMapKeywords[ colormap ] || ColorMapKeywords.rainbow;
-		this.n = count;
-
-		const step = 1.0 / this.n;
-
-		this.lut.length = 0;
-
-		for ( let i = 0; i <= 1; i += step ) {
-
-			for ( let j = 0; j < this.map.length - 1; j ++ ) {
-
-				if ( i >= this.map[ j ][ 0 ] && i < this.map[ j + 1 ][ 0 ] ) {
-
-					const min = this.map[ j ][ 0 ];
-					const max = this.map[ j + 1 ][ 0 ];
-
-					const minColor = new three__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j ][ 1 ] );
-					const maxColor = new three__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j + 1 ][ 1 ] );
-
-					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
-
-					this.lut.push( color );
-
-				}
-
-			}
-
-		}
-
-		return this;
-
-	}
-
-	copy( lut ) {
-
-		this.lut = lut.lut;
-		this.map = lut.map;
-		this.n = lut.n;
-		this.minV = lut.minV;
-		this.maxV = lut.maxV;
-
-		return this;
-
-	}
-
-	getColor( alpha ) {
-
-		if ( alpha <= this.minV ) {
-
-			alpha = this.minV;
-
-		} else if ( alpha >= this.maxV ) {
-
-			alpha = this.maxV;
-
-		}
-
-		alpha = ( alpha - this.minV ) / ( this.maxV - this.minV );
-
-		let colorPosition = Math.round( alpha * this.n );
-		colorPosition == this.n ? colorPosition -= 1 : colorPosition;
-
-		return this.lut[ colorPosition ];
-
-	}
-
-	addColorMap( name, arrayOfColors ) {
-
-		ColorMapKeywords[ name ] = arrayOfColors;
-
-		return this;
-
-	}
-
-	createCanvas() {
-
-		const canvas = document.createElement( 'canvas' );
-		canvas.width = 1;
-		canvas.height = this.n;
-
-		this.updateCanvas( canvas );
-
-		return canvas;
-
-	}
-
-	updateCanvas( canvas ) {
-
-		const ctx = canvas.getContext( '2d', { alpha: false } );
-
-		const imageData = ctx.getImageData( 0, 0, 1, this.n );
-
-		const data = imageData.data;
-
-		let k = 0;
-
-		const step = 1.0 / this.n;
-
-		for ( let i = 1; i >= 0; i -= step ) {
-
-			for ( let j = this.map.length - 1; j >= 0; j -- ) {
-
-				if ( i < this.map[ j ][ 0 ] && i >= this.map[ j - 1 ][ 0 ] ) {
-
-					const min = this.map[ j - 1 ][ 0 ];
-					const max = this.map[ j ][ 0 ];
-
-					const minColor = new three__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j - 1 ][ 1 ] );
-					const maxColor = new three__WEBPACK_IMPORTED_MODULE_0__.Color( this.map[ j ][ 1 ] );
-
-					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
-
-					data[ k * 4 ] = Math.round( color.r * 255 );
-					data[ k * 4 + 1 ] = Math.round( color.g * 255 );
-					data[ k * 4 + 2 ] = Math.round( color.b * 255 );
-					data[ k * 4 + 3 ] = 255;
-
-					k += 1;
-
-				}
-
-			}
-
-		}
-
-		ctx.putImageData( imageData, 0, 0 );
-
-		return canvas;
-
-	}
-
-}
-
-Lut.prototype.isLut = true;
-
-const ColorMapKeywords = {
-
-	'rainbow': [[ 0.0, 0x0000FF ], [ 0.2, 0x00FFFF ], [ 0.5, 0x00FF00 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFF0000 ]],
-	'cooltowarm': [[ 0.0, 0x3C4EC2 ], [ 0.2, 0x9BBCFF ], [ 0.5, 0xDCDCDC ], [ 0.8, 0xF6A385 ], [ 1.0, 0xB40426 ]],
-	'blackbody': [[ 0.0, 0x000000 ], [ 0.2, 0x780000 ], [ 0.5, 0xE63200 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFFFFFF ]],
-	'grayscale': [[ 0.0, 0x000000 ], [ 0.2, 0x404040 ], [ 0.5, 0x7F7F80 ], [ 0.8, 0xBFBFBF ], [ 1.0, 0xFFFFFF ]]
-
-};
-
-function addToColorMapKeywords( color_name, cmap_keys ) {
-  if(ColorMapKeywords[color_name] === undefined){
-    ColorMapKeywords[color_name] = [];
-  }else{
-    ColorMapKeywords[color_name].length = 0;
-  }
-  const arr = ColorMapKeywords[color_name];
-  if(Array.isArray(cmap_keys)){
-    cmap_keys.forEach((el) => {
-      const e = el;
-      if( typeof e[1] === 'string' ){
-        e[1] = e[1].replace("0x", "#");
-      }
-      arr.push( e );
-    });
-  }
-}
-
-
-
-
-
-/***/ }),
-
-/***/ 8173:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "P": () => (/* binding */ THREE_BRAIN_SHINY)
-/* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3658);
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(2212);
-/* harmony import */ var _geometry_sphere_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(960);
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(975);
-/* JS to shiny callbacks
-
-This file defines shiny callback functions (js to shiny)
-*/
-
-
-
-
-
-
-function storageAvailable(type) {
-  try {
-    var storage = window[type],
-        x = '__storage_test__';
-    storage.setItem(x, x);
-    storage.removeItem(x);
-    return true;
-  }
-  catch(e) {
-    return e instanceof DOMException && (
-        // everything except Firefox
-        e.code === 22 ||
-        // Firefox
-        e.code === 1014 ||
-        // test name field too, because code might not be present
-        // everything except Firefox
-        e.name === 'QuotaExceededError' ||
-        // Firefox
-        e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
-        // acknowledge QuotaExceededError only if there's something already stored
-        storage.length !== 0;
-  }
-}
-
-/**
- * Though the name is "shiny", it works more like adapter to communicate:
- * R-Shiny, gui, canvas
- *
- */
-class THREE_BRAIN_SHINY {
-  constructor(widget, shiny_mode = true) {
-    this.widget = widget;
-
-    this.outputId = widget.element_id;
-    this.shiny_mode = shiny_mode;
-    this.shinyId = this.outputId + '__shiny';
-    this.canvas = this.widget.handler.canvas;
-    this.uuid = three__WEBPACK_IMPORTED_MODULE_3__.MathUtils.generateUUID();
-
-    this.stack = [];
-
-    this._do_send = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .debounce */ .Ds)(() => {
-      if( this.shiny_mode && this.stack.length > 0 ){
-        const re = this.stack.pop();
-        Shiny.onInputChange(re['.__callback_id__.'], re);
-      }
-      this.stack.length = 0;
-      // console.log(`Send to shiny, ${this.stack.length}`);
-    }, 200, false);
-
-    // Register shiny handlers
-    if( this.shiny_mode ){
-      this.register_shiny();
-    }
-
-    // Add canvas listeners
-    // 1. controls
-    this.canvas.bind( 'report_main_camera', 'canvas.mainCamera.onEnd', (evt) => {
-      const args = evt.detail;
-      this.to_shiny2('main_camera', {
-        position  : args.position,
-        zoom      : args.zoom || 1,
-        up        : args.up
-      });
-    }, this.canvas.main_canvas );
-
-    // 2. click callback
-    // finalize registering
-    const pos = new three__WEBPACK_IMPORTED_MODULE_3__.Vector3();
-    this.canvas.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : (evt.action === 'click' || evt.action === 'dblclick'),
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.userData ){
-          const g = obj.userData.construct_params;
-          obj.getWorldPosition( pos );
-
-          // Get information and show them on screen
-          const group_name = g.group ? g.group.group_name : null;
-          const shiny_data = {
-            object      : g,
-            name        : g.name,
-            geom_type   : g.type,
-            group       : group_name,
-            position    : pos.toArray(),
-            action      : evt.action,
-            meta        : evt,
-            edit_mode   : this.canvas.edit_mode,
-            is_electrode: false,
-            current_time: 0,
-            time_range  : [0, 0]
-          };
-
-          if( this.canvas.state_data.has( 'color_map' ) ){
-            const cmap_name = this.canvas.get_state( 'color_map' );
-            shiny_data.color_map = this.canvas.color_maps.get( cmap_name );
-          }
-
-          if( this.gui ){
-            // clip name
-            let _c = this.gui.get_controller('Display Data', _constants_js__WEBPACK_IMPORTED_MODULE_2__/* .CONSTANTS.FOLDERS.animation */ .t.FOLDERS.animation);
-            if( _c && _c.getValue ){
-              shiny_data.current_clip = _c.getValue();
-            }
-
-            _c = this.gui.get_controller('Time', _constants_js__WEBPACK_IMPORTED_MODULE_2__/* .CONSTANTS.FOLDERS.animation */ .t.FOLDERS.animation);
-            if( _c && _c.getValue ){
-              shiny_data.current_time = _c.getValue();
-              shiny_data.time_range = [_c.__min, _c.__max];
-            }
-          }
-
-          if( g.is_electrode ){
-
-            const m = _constants_js__WEBPACK_IMPORTED_MODULE_2__/* .CONSTANTS.REGEXP_ELECTRODE.exec */ .t.REGEXP_ELECTRODE.exec( g.name );
-            if( m.length === 4 ){
-
-              shiny_data.subject = m[1];
-              shiny_data.electrode_number = parseInt( m[2] );
-              shiny_data.is_electrode = true;
-            }
-
-          }
-
-          if( evt.action === 'click' ){
-
-            // this.to_shiny(shiny_data, 'mouse_clicked');
-
-            // use better version to_shiny2
-            this.to_shiny2('mouse_clicked', shiny_data, 'event');
-          }else{
-            // this.to_shiny(shiny_data, 'mouse_dblclicked');
-            this.to_shiny2('mouse_dblclicked', shiny_data, 'event');
-          }
-
-
-        }
-      },
-      'click-electrodes-callbacks'
-    );
-
-    // 3. Canvas state
-    this.canvas.bind( "report_canvas_state", "canvas.state.onChange", (evt) => {
-      const data = Object.fromEntries( this.canvas.state_data );
-      for(let k in data) {
-        const v = data[k];
-        if( v && typeof v === "object" && v.isThreeBrainObject ) {
-          delete data[k];
-        }
-      }
-      this.to_shiny2('canvas_state', data);
-    }, this.canvas.main_canvas );
-
-
-    // 4. subject information
-    this.canvas.bind( "report_subject", "switch_subject", (evt) => {
-      const subject_code = evt.detail.target_subject;
-      const subject_info = this.canvas.shared_data.get( subject_code );
-      if(typeof(subject_info) !== "object") {
-        return;
-      }
-
-      this.to_shiny2('current_subject', {
-        subject_code: subject_code,
-        Norig: subject_info.Norig,
-        Torig: subject_info.Torig,
-        xfm: subject_info.xfm,
-      });
-    }, this.canvas.main_canvas );
-  }
-
-  register_gui( gui, presets ){
-    this.gui = gui;
-    this.presets = presets;
-
-    this.canvas.bind( "report_controller", "canvas.controllers.onChange", (evt) => {
-      throw 'FIX ME!!!';
-      this.to_shiny2('controllers', this.gui.object, "deferred");
-      const args = evt.detail;
-      if( typeof args.data === 'object' ){
-        for(let k in args.data){
-          this.to_shiny2(k, args.data[k], args.priority);
-        }
-      }
-    }, this.canvas.main_canvas);
-
-    if( this.shiny_mode ){
-      // register shiny customized message
-      Shiny.addCustomMessageHandler(`threeBrain-RtoJS-${this.outputId}`, (data) => {
-
-        if( typeof data.name !== "string" || data.name.length === 0 ) { return; }
-
-        // dispatch event with immediate signal
-        this.canvas.dispatch_event(
-          "canvas.handle." + data.name,
-          data.value, true
-        );
-
-        /*
-        const message_type = data.name,
-              message_content = data.value,
-              method_name = 'handle_' + message_type;
-        if( typeof this[method_name] === 'function' ){
-          this[method_name]( message_content );
-        }
-        */
-      });
-    }
-
-    // register handlers
-    Object.getOwnPropertyNames(Object.getPrototypeOf(presets.shiny))
-      .filter((v) => { return(v.startsWith("handle_")); })
-      .map((v) => { return(v.replace("handle_", "")); })
-    const handler_names = [
-      "background", "zoom_level", "camera", "display_data", "font_magnification",
-      "set_localization_electrode", "clear_localization", "add_localization_electrode",
-      "controllers", "focused_electrode", "set_plane",
-
-      // broken
-      "add_clip"
-    ];
-    handler_names.forEach((nm) => {
-      this.canvas.bind( "handle_set_" + nm, "canvas.handle." + nm, (evt) => {
-        this["handle_" + nm]( evt.detail );
-      }, this.canvas.main_canvas);
-    });
-
-
-  }
-
-  set_token( token ){
-    if(storageAvailable('localStorage') && typeof(token) === 'string'){
-      this.token = token;
-    }
-  }
-
-
-  handle_background( bgcolor ){
-    const _c = this.gui.get_controller('Background Color', _constants_js__WEBPACK_IMPORTED_MODULE_2__/* .CONSTANTS.FOLDERS["background-color"] */ .t.FOLDERS["background-color"]);
-    _c.setValue( bgcolor );
-  }
-
-  handle_zoom_level( zoom ){
-    this.canvas.mainCamera.setZoom({
-      zoom : zoom
-    });
-    this.canvas.start_animation( 0 );
-  }
-
-  handle_camera( args = { position: [500, 0, 0] , up : [0, 0, 1]} ){
-    const pos = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( args.position ),
-          up = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( args.up );
-    if( pos.length === 3 ){
-      this.canvas.mainCamera.position.set(pos[0] , pos[1] , pos[2]);
-    }
-    if( up.length === 3 ){
-      this.canvas.mainCamera.up.set(up[0] , up[1] , up[2]);
-    }
-    this.canvas.mainCamera.updateProjectionMatrix();
-    this.canvas.start_animation( 0 );
-  }
-
-  handle_display_data( args = { variable : '', range : [] } ){
-    const variable = args.variable,
-          range = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( args.range );
-    if( typeof variable === 'string' && variable !== '' ){
-      this.gui
-        .get_controller( 'Display Data', _constants_js__WEBPACK_IMPORTED_MODULE_2__/* .CONSTANTS.FOLDERS.animation */ .t.FOLDERS.animation)
-        .setValue( variable );
-    }
-    if( range.length === 2 ){
-      this.gui
-        .get_controller( 'Display Range', _constants_js__WEBPACK_IMPORTED_MODULE_2__/* .CONSTANTS.FOLDERS.animation */ .t.FOLDERS.animation)
-        .setValue(`${range[0].toPrecision(5)},${range[1].toPrecision(5)}`);
-    }
-    this.canvas.start_animation( 0 );
-  }
-
-  handle_font_magnification( cex = 1 ){
-    this.canvas.set_font_size( cex );
-    this.canvas.start_animation( 0 );
-  }
-
-  handle_set_localization_electrode( args ){
-    this.presets.localizeSetElectrode(
-      args.which, args.params, args.update_shiny
-    );
-  }
-
-  handle_clear_localization(update_shiny = true) {
-    this.presets.clearLocalization(update_shiny);
-  }
-
-  handle_add_localization_electrode( args ){
-    const el = this.presets.localizeAddElectrode(
-       args.Coord_x, args.Coord_y, args.Coord_z,
-       args.mode || "CT/volume", false
-    );
-    if( el ){
-      const locorder = el.localization_order;
-      this.presets.localizeSetElectrode(
-        locorder, args, args.update_shiny
-      );
-    }
-  }
-
-  handle_controllers( args ){
-    for(let k in args){
-      this.gui
-        .get_controller( k )
-        .setValue( args[k] );
-    }
-  }
-
-  handle_focused_electrode( args ){
-    let subject_code = args.subject_code || '';
-    subject_code = subject_code.trim();
-    // this.canvas.electrodes.get("YAB")["YAB, 14 - G14"]
-    const electrode = parseInt( args.electrode || 0 ),
-          fmt = `${subject_code}, ${electrode} `;
-    let elec_name = Object.keys( this.canvas.electrodes.get(subject_code) || {} )
-      .filter((nm) => {
-        return(nm.startsWith(fmt));
-      });
-    if( elec_name.length > 0 ){
-      // use the first electrode
-      elec_name = elec_name[0];
-      let m = this.canvas.electrodes.get(subject_code)[elec_name];
-      if( (0,_geometry_sphere_js__WEBPACK_IMPORTED_MODULE_1__/* .is_electrode */ .OK)(m) ){
-        this.canvas.focus_object(m);
-        this.canvas.start_animation(0);
-      }
-    }
-
-  }
-
-  handle_set_plane( args = {x: undefined, y: undefined, z: undefined, centerCrosshair: false} ) {
-    this.canvas.dispatch_event( 'canvas.drive.setSliceCrosshair', args );
-  }
-
-  // FIXME: this handler is Broken
-  handle_add_clip( args ){
-    // window.aaa = args;
-    const clip_name = args.clip_name,
-          mesh_name = args.target,
-          data_type = args.data_type,
-          value = args.value,
-          time = args.time || 0,
-          value_names = args.value_names || [''],
-          value_range = args.value_range || [0,1],
-          time_range = args.time_range || [0,0],
-          color_keys = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( args.color_keys ),
-          color_vals = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( args.color_vals ),
-          n_levels = args.n_levels,
-          focusui = args.focus || false,
-          alias = args.alias;
-
-    if(typeof mesh_name !== 'string'){ return; }
-
-    // Add to object
-    const mesh = this.canvas.mesh.get(mesh_name);
-    if( !mesh || ( typeof mesh.userData.add_track_data !== 'function' ) ){ return; }
-
-    mesh.userData.add_track_data( clip_name, data_type, value, time );
-
-    // calculate cmap, add time range so that the last value is always displayed
-    if( time_range.length == 2 ){
-      time_range[1] += 1.0;
-    }
-    this.canvas.add_colormap( clip_name, alias, data_type, value_names, value_range, time_range,
-                color_keys, color_vals, n_levels );
-
-    // Add to gui
-    this.presets.add_clip( clip_name, focusui );
-
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-  collect_electrode_info( group_name = "__localization__" ){
-    const els = this.canvas.electrodes.get( group_name ),
-          results = [];
-    let current_subject = group_name;
-    if( els === undefined ){ return( null ); }
-    if( group_name === "__localization__" ){
-      // we use target_subject instead
-      current_subject = this.canvas.get_state("target_subject");
-      if( !current_subject ){
-        // To enter this statement, either we don't even have a subject
-        // or canvas.switch_subject is not ran (highly impossible)
-        // do further checks
-        if( this.canvas.subject_codes.length === 0 ){ return( null ); }
-        current_subject = this.canvas.subject_codes[0];
-      }
-    }
-
-    // Calculate MNI mapping, and add visible electrodes only
-    (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( els ).forEach((el, ii) => {
-      if( !el.isMesh || !el.visible ){ return(null); }
-      const g = el.userData.construct_params;
-      let pos = g.MNI305_position;
-      if( !Array.isArray(pos) || pos.length !== 3 ){
-        pos = [0,0,0];
-      }
-
-      results.push({
-        Electrode: ii + 1,
-        Label : g.custom_info || 'NA', Valid : true,
-        Coord_x : g.position[0], Coord_y : g.position[1], Coord_z : g.position[2],
-        TemplateSubject: current_subject,
-        SurfaceElectrode: g.is_surface_electrode === true,
-        SurfaceType: g.surface_type || 'NA',
-        Radius : g.radius,
-        VertexNumber : g.vertex_number || -1,
-        Hemisphere : g.hemisphere || 'NA',
-        DistanceToSurface : g._distance_to_surf,
-        MNI305_x : pos[0], MNI305_y : pos[1], MNI305_z : pos[2]
-      });
-    });
-
-    return( results );
-
-  }
-
-  loc_electrode_info( debounce = false ){
-
-    const re = this.collect_electrode_info( '__localization__' );
-    this.to_shiny({ table: re }, 'localization', !debounce );
-
-    return(re);
-  }
-  loc_set_electrode(el_number, label = '', valid = true, position = undefined){
-    const el = this.canvas.electrodes.get("__localization__")[`__localization__, ${el_number} - `];
-    if( !el || !el.userData.construct_params.is_electrode ){
-      return(null);
-    }
-    if( label && typeof label === 'string' && label !== '' && label!=='NA'){
-      el.userData.construct_params.custom_info = label;
-    }
-
-
-    if( !valid ){
-      // el.position.set(0,0,0);
-      // el.visible = false;
-      (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .set_visibility */ .K3)( el, false );
-    }else{
-      // el.visible = true;
-      (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .set_visibility */ .K3)( el, true );
-    }
-    if( position ){
-      position = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( position );
-      if( position.length === 3 ){
-        el.position.fromArray( position );
-        el.userData.construct_params.position = position;
-      }
-    }
-    this.canvas.start_animation( 0 );
-  }
-
-  loc_add_electrode(el_number, label, position, is_surface_electrode = false,
-                    surface_type = 'pial', color = [1,0,0] ){
-    (0,_geometry_sphere_js__WEBPACK_IMPORTED_MODULE_1__/* .add_electrode */ .C6)(this.canvas, el_number, `__localization__, ${el_number} - ` ,
-                  position, surface_type, label, is_surface_electrode, 1, color);
-  }
-
-  clear_electrode_group( group_name = '__localization__' ){
-    const group = this.canvas.electrodes.get( group_name );
-    if( group === undefined ){ return(false); }
-    for( let ename in group ){
-      group[ ename ].parent.remove( group[ ename ] );
-    }
-    this.canvas.electrodes.set( group_name, {} );
-    return( true );
-  }
-
-  register_shiny(){
-    Shiny.addCustomMessageHandler(this.shinyId, (data) => {
-      if( !data || typeof data.command !== 'string' || !this.canvas ){ return ( null ); }
-
-      switch (data.command) {
-
-        // 1. get electrode info
-        case 'loc_electrode_info':
-          this.loc_electrode_info();
-          break;
-
-        // 2. set electrode_info (localization)
-        case 'loc_set_electrode':
-          this.loc_set_electrode( data.electrode, data.label, data.is_valid );
-          this.loc_electrode_info();
-          break;
-
-        case 'loc_set_electrodes':
-          (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( data.data ).forEach((d) => {
-            this.loc_set_electrode( d.electrode, d.label, d.is_valid, d.position );
-          });
-          this.loc_electrode_info();
-          break;
-        case 'loc_add_electrodes':
-          if( data.reset === true ){
-            this.clear_electrode_group( '__localization__' );
-          }
-          const _es = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__/* .to_array */ .AA)( data.data );
-          const _col = new three__WEBPACK_IMPORTED_MODULE_3__.Color();
-          _es.forEach((d) => {
-            _col.setStyle( d.color || '#FF0000' );
-            this.loc_add_electrode( d.electrode, d.label, d.position,
-                                    d.is_surface || false, d.surface_type || 'pial',
-                                    _col.toArray() );
-          });
-          if( this.gui ){
-            this.gui.get_controller('Number').setValue( _es.length + 1 );
-          }
-          this.loc_electrode_info();
-          break;
-
-        default:
-          // code
-      }
-    });
-    // dispatch_event
-  }
-
-
-
-  to_shiny(data, method = 'callback', immediate = false){
-    // method won't be checked, assuming string
-    // Callback ID will be outputId_callbackname
-
-    // generate message:
-    const time_stamp = new Date();
-    const callback_id = this.outputId + '_' + method;
-    const re = {...data, '.__timestamp__.': time_stamp, '.__callback_id__.': callback_id};
-
-    // print
-    // console.debug(JSON.stringify( re ));
-
-    if( immediate && this.shiny_mode ){
-      Shiny.onInputChange(re['.__callback_id__.'], re);
-      this.stack.length = 0;
-    }else{
-      this.stack.push( re );
-      this._do_send();
-    }
-
-
-
-
-
-    /*
-    // Add RAVE support (might be removed in the future)
-    if(typeof(this.token) === 'string'){
-      // Get item and set back
-      // let rave_msg = window.localStorage.getItem('rave-messages');
-      let msg = {
-        'token' : this.token,           // Used by RAVE to tell differences
-        'item_id' : this.outputId,      // UI output ID
-        'message_type' : 'threeBrain',               // potentially used by session to communicate (not yet supported)
-        'method' : method,
-        'callback_id' : callback_id,
-        'time_stamp' : Date.now(),      //
-        'content' : re                  // Actuall data
-      };
-
-      window.localStorage.setItem('rave-messages', JSON.stringify(msg));
-    }
-    */
-
-
-  }
-
-  // previous one should be soft-deprecated in the future
-  // use setInputValue instead of onInputChange as later one is never officially supported
-  to_shiny2(name, value, priority = "deferred"){
-
-    // make sure shiny is running
-    if( !this.shiny_mode ){ return; }
-
-
-    const inputId = this.outputId + '_' + name;
-    // console.debug(inputId + ' is set to ', JSON.stringify(value));
-
-    if( Shiny.shinyapp.$socket ) {
-      Shiny.setInputValue(inputId, value, { priority : priority });
-    }
-
-  }
-
-}
-
-
-// window.THREE_BRAIN_SHINY = THREE_BRAIN_SHINY;
-
-
-/***/ }),
-
-/***/ 5664:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "E": () => (/* binding */ THREEBRAIN_STORAGE)
-/* harmony export */ });
-
-
-
-class THREEBRAIN_STORAGE {
-  constructor(){
-    this._d = new Map();
-  }
-
-  check_item( path ){
-    return( this._d.has( path ) || this._d.get( path ) !== undefined );
-  }
-
-  get_item( path , ifnotfound = '' ){
-    const re = this._d.get( path );
-    if( re !== undefined ){
-      return( re );
-    }else{
-      return( ifnotfound );
-    }
-  }
-
-  set_item( path, obj ){
-    this._d.set( path , obj );
-  }
-
-  get_hash( path ){
-    var hash = 0;
-    var s = this.get_item( path );
-    var i, chr;
-    if (s.length === 0) return hash;
-    for (i = 0; i < s.length; i++) {
-      chr   = s.charCodeAt(i);
-      hash  = ((hash << 5) - hash) + chr;
-      hash |= 0;
-    }
-    return hash;
-  }
-
-  clear_items( paths ){
-    if( paths === undefined ){
-      // Remove all
-      this._d.clear();
-    }else{
-      paths.forEach((p) => {
-        this._d.delete( p );
-      });
-    }
-  }
-
-}
-
-
-
-
-/***/ }),
-
-/***/ 1514:
+/***/ 6911:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -79328,8 +79071,8 @@ Stats.Panel = function ( name, fg, bg ) {
 
 
 
-// EXTERNAL MODULE: ./src/js/threebrain_cache.js
-var threebrain_cache = __webpack_require__(5664);
+// EXTERNAL MODULE: ./src/js/core/StorageCache.js
+var StorageCache = __webpack_require__(7123);
 ;// CONCATENATED MODULE: ./src/js/core/events.js
 
 
@@ -83891,8 +83634,218 @@ class Compass {
 
 
 
-// EXTERNAL MODULE: ./src/js/jsm/math/Lut2.js
-var Lut2 = __webpack_require__(5858);
+;// CONCATENATED MODULE: ./src/js/jsm/math/Lut2.js
+
+
+class Lut {
+
+ 	constructor( colormap, count = 32 ) {
+
+		this.lut = [];
+		this.map = [];
+		this.n = 0;
+		this.minV = 0;
+		this.maxV = 1;
+
+		this.setColorMap( colormap, count );
+
+	}
+
+	set( value ) {
+
+		if ( value.isLut === true ) {
+
+			this.copy( value );
+
+		}
+
+		return this;
+
+	}
+
+	setMin( min ) {
+
+		this.minV = min;
+
+		return this;
+
+	}
+
+	setMax( max ) {
+
+		this.maxV = max;
+
+		return this;
+
+	}
+
+	setColorMap( colormap, count = 32 ) {
+
+		this.map = ColorMapKeywords[ colormap ] || ColorMapKeywords.rainbow;
+		this.n = count;
+
+		const step = 1.0 / this.n;
+
+		this.lut.length = 0;
+
+		for ( let i = 0; i <= 1; i += step ) {
+
+			for ( let j = 0; j < this.map.length - 1; j ++ ) {
+
+				if ( i >= this.map[ j ][ 0 ] && i < this.map[ j + 1 ][ 0 ] ) {
+
+					const min = this.map[ j ][ 0 ];
+					const max = this.map[ j + 1 ][ 0 ];
+
+					const minColor = new three_module.Color( this.map[ j ][ 1 ] );
+					const maxColor = new three_module.Color( this.map[ j + 1 ][ 1 ] );
+
+					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+
+					this.lut.push( color );
+
+				}
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+	copy( lut ) {
+
+		this.lut = lut.lut;
+		this.map = lut.map;
+		this.n = lut.n;
+		this.minV = lut.minV;
+		this.maxV = lut.maxV;
+
+		return this;
+
+	}
+
+	getColor( alpha ) {
+
+		if ( alpha <= this.minV ) {
+
+			alpha = this.minV;
+
+		} else if ( alpha >= this.maxV ) {
+
+			alpha = this.maxV;
+
+		}
+
+		alpha = ( alpha - this.minV ) / ( this.maxV - this.minV );
+
+		let colorPosition = Math.round( alpha * this.n );
+		colorPosition == this.n ? colorPosition -= 1 : colorPosition;
+
+		return this.lut[ colorPosition ];
+
+	}
+
+	addColorMap( name, arrayOfColors ) {
+
+		ColorMapKeywords[ name ] = arrayOfColors;
+
+		return this;
+
+	}
+
+	createCanvas() {
+
+		const canvas = document.createElement( 'canvas' );
+		canvas.width = 1;
+		canvas.height = this.n;
+
+		this.updateCanvas( canvas );
+
+		return canvas;
+
+	}
+
+	updateCanvas( canvas ) {
+
+		const ctx = canvas.getContext( '2d', { alpha: false } );
+
+		const imageData = ctx.getImageData( 0, 0, 1, this.n );
+
+		const data = imageData.data;
+
+		let k = 0;
+
+		const step = 1.0 / this.n;
+
+		for ( let i = 1; i >= 0; i -= step ) {
+
+			for ( let j = this.map.length - 1; j >= 0; j -- ) {
+
+				if ( i < this.map[ j ][ 0 ] && i >= this.map[ j - 1 ][ 0 ] ) {
+
+					const min = this.map[ j - 1 ][ 0 ];
+					const max = this.map[ j ][ 0 ];
+
+					const minColor = new three_module.Color( this.map[ j - 1 ][ 1 ] );
+					const maxColor = new three_module.Color( this.map[ j ][ 1 ] );
+
+					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+
+					data[ k * 4 ] = Math.round( color.r * 255 );
+					data[ k * 4 + 1 ] = Math.round( color.g * 255 );
+					data[ k * 4 + 2 ] = Math.round( color.b * 255 );
+					data[ k * 4 + 3 ] = 255;
+
+					k += 1;
+
+				}
+
+			}
+
+		}
+
+		ctx.putImageData( imageData, 0, 0 );
+
+		return canvas;
+
+	}
+
+}
+
+Lut.prototype.isLut = true;
+
+const ColorMapKeywords = {
+
+	'rainbow': [[ 0.0, 0x0000FF ], [ 0.2, 0x00FFFF ], [ 0.5, 0x00FF00 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFF0000 ]],
+	'cooltowarm': [[ 0.0, 0x3C4EC2 ], [ 0.2, 0x9BBCFF ], [ 0.5, 0xDCDCDC ], [ 0.8, 0xF6A385 ], [ 1.0, 0xB40426 ]],
+	'blackbody': [[ 0.0, 0x000000 ], [ 0.2, 0x780000 ], [ 0.5, 0xE63200 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFFFFFF ]],
+	'grayscale': [[ 0.0, 0x000000 ], [ 0.2, 0x404040 ], [ 0.5, 0x7F7F80 ], [ 0.8, 0xBFBFBF ], [ 1.0, 0xFFFFFF ]]
+
+};
+
+function addToColorMapKeywords( color_name, cmap_keys ) {
+  if(ColorMapKeywords[color_name] === undefined){
+    ColorMapKeywords[color_name] = [];
+  }else{
+    ColorMapKeywords[color_name].length = 0;
+  }
+  const arr = ColorMapKeywords[color_name];
+  if(Array.isArray(cmap_keys)){
+    cmap_keys.forEach((el) => {
+      const e = el;
+      if( typeof e[1] === 'string' ){
+        e[1] = e[1].replace("0x", "#");
+      }
+      arr.push( e );
+    });
+  }
+}
+
+
+
+
 // EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
 var converter = __webpack_require__(7542);
 // EXTERNAL MODULE: ./node_modules/downloadjs/download.js
@@ -83938,8 +83891,26 @@ const GEOMETRY_FACTORY = {
   'blank'     : (g, canvas) => { return(null) }
 };
 
+/**
+ * entering use | operator, leaving use & operator
+ * for example, entering canvas from off canvas (000) will be 001 | 000 = 001
+ * then, entering control panel will be 001 | 101 = 101.
+ * Leaving controller first, then to side panel will be
+ *   (101 & 011) | 011 = 011
+ * Or, entering side panel then leave controllers
+ *   (101 | 011) & 011 = 011
+ * hence the order of operation doesn't matter
+*/
+const MOUSE = {
+  ON_CANVAS       : 0b001,
+  ON_SIDE_CANVAS  : 0b011,
+  ON_CONTROLLER   : 0b101,
+  OFF_CONTROLLER  : 0b011,
+  OFF_SIDE_CANVAS : 0b101,
+  OFF_VIEWER      : 0b000
+}
+
 window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
-window.nifti = (nifti_default());
 /* ------------------------------------ Layer setups ------------------------------------
   Defines for each camera which layers are visible.
   Protocols are
@@ -83959,7 +83930,7 @@ window.nifti = (nifti_default());
 */
 
 // A storage to cache large objects such as mesh data
-const cached_storage = new threebrain_cache/* THREEBRAIN_STORAGE */.E();
+const cached_storage = new StorageCache/* StorageCache */.B();
 
 // Make sure window.requestAnimationFrame exists
 // Override methods so that we have multiple support across platforms
@@ -83998,8 +83969,8 @@ class THREEBRAIN_CANVAS {
     }
 
     // DOM container information
-    this.el = el;
-    this.container_id = this.el.getAttribute( 'data-target' );
+    this.$el = el;
+    this.container_id = this.$el.getAttribute( 'data-target' );
     this.ready = false;
     this._time_info = {
       selected_object : {
@@ -84185,7 +84156,7 @@ class THREEBRAIN_CANVAS {
 
     // Add main canvas to wrapper element
     this.wrapper_canvas.appendChild( this.main_canvas );
-    this.el.appendChild( this.wrapper_canvas );
+    this.$el.appendChild( this.wrapper_canvas );
 
 
     this.has_stats = false;
@@ -84225,6 +84196,7 @@ class THREEBRAIN_CANVAS {
     // this.mouse_helper = mouse_helper;
     this.mouse_raycaster = mouse_raycaster;
     this.mouse_pointer = mouse_pointer;
+    this.mouseState = MOUSE.OFF_VIEWER;
 
     // this.add_to_scene(mouse_helper, true);
 
@@ -84247,8 +84219,29 @@ class THREEBRAIN_CANVAS {
   /*---- Finalize init ------------------------------------------------------*/
   register_main_canvas_events(){
 
-    // this.el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    // this.el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    // this.$el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    // this.$el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    /*
+    this.bind( "mouseEnteredViewer", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_CANVAS;
+    }, this.$el );
+    this.bind( "mouseLeftViewer", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_CANVAS;
+    }, this.$el );
+    this.bind( "mouseEnteredSidePanels", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_SIDE_CANVAS;
+    }, this.sideCanvasList.coronal.$el );
+    this.bind( "mouseLeftSidePanels", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_SIDE_CANVAS;
+    }, this.$el );
+    this.bind( "mouseEnteredControlPanel", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_CONTROLLER;
+    }, this.$el );
+    this.bind( "mouseLeftViewer", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_CONTROLLER;
+    }, this.$el );
+    */
+
     this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
 			  this.listen_keyboard = true;
 			}, this.main_canvas);
@@ -84713,7 +84706,7 @@ class THREEBRAIN_CANVAS {
       this.stats.domElement.style.position = 'absolute';
       this.stats.domElement.style.top = '0';
       this.stats.domElement.style.left = '0';
-      this.el.appendChild( this.stats.domElement );
+      this.$el.appendChild( this.stats.domElement );
     }
   }
 
@@ -84797,7 +84790,7 @@ class THREEBRAIN_CANVAS {
     this.scene = null;
 
     // Remove el
-    this.el.innerHTML = '';
+    this.$el.innerHTML = '';
 
     // How to dispose renderers? Not sure
     this.domContext = null;
@@ -85067,7 +85060,7 @@ class THREEBRAIN_CANVAS {
     // Resize side canvas, make sure this.side_width is proper
     let pos = (0,utils/* to_array */.AA)( position );
     if( pos.length == 2 ) {
-      const bounding = this.el.getBoundingClientRect();
+      const bounding = this.$el.getBoundingClientRect();
       const offsetX = Math.max( -bounding.x, pos[0] );
       let offsetY = Math.max( -bounding.y, pos[1] );
       if( coronal ) {
@@ -85252,12 +85245,12 @@ class THREEBRAIN_CANVAS {
       cmap_keys.push([ ii / (n_color-1) , color_vals[ii] ]);
     }
 
-    (0,Lut2/* addToColorMapKeywords */.ki)(
+    addToColorMapKeywords(
       color_name,
       cmap_keys
     );
 
-    const lut = new Lut2/* Lut */.AV( color_name , n_color );
+    const lut = new Lut( color_name , n_color );
 
     // min and max cannot be the same, otherwise colors will not be rendered
     if( value_type === 'continuous' ){
@@ -86322,8 +86315,8 @@ class THREEBRAIN_CANVAS {
 
     requestAnimationFrame( this.animate.bind(this) );
 
-    // If this.el is hidden, do not render
-    if( !this.ready || this.el.clientHeight <= 0 ){
+    // If this.$el is hidden, do not render
+    if( !this.ready || this.$el.clientHeight <= 0 ){
       return;
     }
 
@@ -86978,7 +86971,7 @@ mapped = false,
 
     // Set renderer background to be v
     this.main_renderer.setClearColor( this.background_color );
-    this.el.style.backgroundColor = this.background_color;
+    this.$el.style.backgroundColor = this.background_color;
 
     const event = {
       data: {
@@ -87032,6 +87025,44 @@ mapped = false,
 
 /***/ }),
 
+/***/ 9898:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "_": () => (/* binding */ asArray)
+/* harmony export */ });
+function asArray(x){
+  if( x === undefined || x === null ){
+    return([]);
+  }
+
+  if( Array.isArray(x) ){
+    return( x );
+  }
+
+  if(typeof(x) !== 'object'){
+    return( [x] );
+  }
+
+
+  if( x instanceof Map ){
+    return( [...x.values()] );
+  }
+
+  if( Object.prototype.toString.call(x) === "[object Map Iterator]" ) {
+    return( [...x] );
+  }
+
+  return( Object.values(x) );
+};
+
+
+
+
+
+/***/ }),
+
 /***/ 3658:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -87043,7 +87074,6 @@ mapped = false,
 /* harmony export */   "AA": () => (/* binding */ to_array),
 /* harmony export */   "nq": () => (/* binding */ get_element_size),
 /* harmony export */   "jM": () => (/* binding */ get_or_default),
-/* harmony export */   "Ds": () => (/* binding */ debounce),
 /* harmony export */   "ht": () => (/* binding */ min2),
 /* harmony export */   "Q0": () => (/* binding */ sub2),
 /* harmony export */   "Wk": () => (/* binding */ vec3_to_string),
@@ -87054,7 +87084,7 @@ mapped = false,
 /* harmony export */   "J1": () => (/* binding */ set_display_mode),
 /* harmony export */   "yi": () => (/* binding */ remove_comments)
 /* harmony export */ });
-/* unused harmony export float_to_int32 */
+/* unused harmony exports debounce, float_to_int32, storageAvailable */
 /* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2152);
 /* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(clipboard__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2212);
@@ -87107,6 +87137,30 @@ function to_dict(x, keys){
 
   return(x);
 };
+
+function storageAvailable(type) {
+  try {
+    const storage = window[type],
+        x = '__storage_test__';
+    storage.setItem(x, x);
+    storage.removeItem(x);
+    return true;
+  }
+  catch(e) {
+    return e instanceof DOMException && (
+        // everything except Firefox
+        e.code === 22 ||
+        // Firefox
+        e.code === 1014 ||
+        // test name field too, because code might not be present
+        // everything except Firefox
+        e.name === 'QuotaExceededError' ||
+        // Firefox
+        e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+        // acknowledge QuotaExceededError only if there's something already stored
+        storage.length !== 0;
+  }
+}
 
 function to_array(x){
   if( x === undefined || x === null ){
@@ -87686,26 +87740,172 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-/* unused harmony export BrainCanvas */
-/* harmony import */ var _js_download_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(3121);
-/* harmony import */ var _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5278);
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(2212);
-/* harmony import */ var _js_core_EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(6546);
-/* harmony import */ var _js_core_ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(1141);
-/* harmony import */ var _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8173);
-/* harmony import */ var _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(1514);
-/* harmony import */ var _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(5664);
-/* harmony import */ var _js_constants_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(975);
-/* harmony import */ var _js_utils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(3658);
-/* harmony import */ var json_2_csv__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(7542);
-/* harmony import */ var json_2_csv__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(json_2_csv__WEBPACK_IMPORTED_MODULE_7__);
-/* harmony import */ var _js_jsm_math_Lut2_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(5858);
-/* harmony import */ var _css_dipterix_css__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(2013);
+
+// UNUSED EXPORTS: ThreeBrainLib
+
+// EXTERNAL MODULE: ./node_modules/three/build/three.module.js
+var three_module = __webpack_require__(2212);
+// EXTERNAL MODULE: ./src/js/download.js
+var download = __webpack_require__(3121);
+// EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
+var converter = __webpack_require__(7542);
+// EXTERNAL MODULE: ./src/js/constants.js
+var constants = __webpack_require__(975);
+// EXTERNAL MODULE: ./src/js/utils.js
+var utils = __webpack_require__(3658);
+;// CONCATENATED MODULE: ./src/js/jsm/capabilities/WebGL.js
+class WebGL {
+
+	static isWebGLAvailable() {
+
+		try {
+
+			const canvas = document.createElement( 'canvas' );
+			return !! ( window.WebGLRenderingContext && ( canvas.getContext( 'webgl' ) || canvas.getContext( 'experimental-webgl' ) ) );
+
+		} catch ( e ) {
+
+			return false;
+
+		}
+
+	}
+
+	static isWebGL2Available() {
+
+		try {
+
+			const canvas = document.createElement( 'canvas' );
+			return !! ( window.WebGL2RenderingContext && canvas.getContext( 'webgl2' ) );
+
+		} catch ( e ) {
+
+			return false;
+
+		}
+
+	}
+
+	static getWebGLErrorMessage() {
+
+		return this.getErrorMessage( 1 );
+
+	}
+
+	static getWebGL2ErrorMessage() {
+
+		return this.getErrorMessage( 2 );
+
+	}
+
+	static getErrorMessage( version ) {
+
+		const names = {
+			1: 'WebGL',
+			2: 'WebGL 2'
+		};
+
+		const contexts = {
+			1: window.WebGLRenderingContext,
+			2: window.WebGL2RenderingContext
+		};
+
+		let message = 'Your $0 does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">$1</a>';
+
+		const element = document.createElement( 'div' );
+		element.id = 'webglmessage';
+		element.style.fontFamily = 'monospace';
+		element.style.fontSize = '13px';
+		element.style.fontWeight = 'normal';
+		element.style.textAlign = 'center';
+		element.style.background = '#fff';
+		element.style.color = '#000';
+		element.style.padding = '1.5em';
+		element.style.width = '400px';
+		element.style.margin = '5em auto 0';
+
+		if ( contexts[ version ] ) {
+
+			message = message.replace( '$0', 'graphics card' );
+
+		} else {
+
+			message = message.replace( '$0', 'browser' );
+
+		}
+
+		message = message.replace( '$1', names[ version ] );
+
+		element.innerHTML = message;
+
+		return element;
+
+	}
+
+}
+
+/* harmony default export */ const capabilities_WebGL = (WebGL);
+
+// EXTERNAL MODULE: ./src/js/core/StorageCache.js
+var StorageCache = __webpack_require__(7123);
+// EXTERNAL MODULE: ./src/js/core/ViewerApp.js
+var ViewerApp = __webpack_require__(7849);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js
+var injectStylesIntoStyleTag = __webpack_require__(3379);
+var injectStylesIntoStyleTag_default = /*#__PURE__*/__webpack_require__.n(injectStylesIntoStyleTag);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/styleDomAPI.js
+var styleDomAPI = __webpack_require__(7795);
+var styleDomAPI_default = /*#__PURE__*/__webpack_require__.n(styleDomAPI);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/insertBySelector.js
+var insertBySelector = __webpack_require__(569);
+var insertBySelector_default = /*#__PURE__*/__webpack_require__.n(insertBySelector);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js
+var setAttributesWithoutAttributes = __webpack_require__(3565);
+var setAttributesWithoutAttributes_default = /*#__PURE__*/__webpack_require__.n(setAttributesWithoutAttributes);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/insertStyleElement.js
+var insertStyleElement = __webpack_require__(9216);
+var insertStyleElement_default = /*#__PURE__*/__webpack_require__.n(insertStyleElement);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/styleTagTransform.js
+var styleTagTransform = __webpack_require__(4589);
+var styleTagTransform_default = /*#__PURE__*/__webpack_require__.n(styleTagTransform);
+// EXTERNAL MODULE: ./node_modules/css-loader/dist/cjs.js!./src/css/dipterix.css
+var dipterix = __webpack_require__(794);
+;// CONCATENATED MODULE: ./src/css/dipterix.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var options = {};
+
+options.styleTagTransform = (styleTagTransform_default());
+options.setAttributes = (setAttributesWithoutAttributes_default());
+
+      options.insert = insertBySelector_default().bind(null, "head");
+    
+options.domAPI = (styleDomAPI_default());
+options.insertStyleElement = (insertStyleElement_default());
+
+var update = injectStylesIntoStyleTag_default()(dipterix/* default */.Z, options);
+
+
+
+
+       /* harmony default export */ const css_dipterix = (dipterix/* default */.Z && dipterix/* default.locals */.Z.locals ? dipterix/* default.locals */.Z.locals : undefined);
+
+;// CONCATENATED MODULE: ./src/index.js
 /**
  * @Author: Zhengjia Wang
  * Adapter of model (threejs_scene) and viewer (htmlwidgets)
  */
 
+// External libraries
 
 
 
@@ -87715,723 +87915,282 @@ var __webpack_exports__ = {};
 
 
 
-// import { invertColor, padZero, to_array } from './js/utils.js';
-
-// import { D3Canvas } from './js/Math/sparkles.js';
-// import { CCWebMEncoder } from './js/capture/CCWebMEncoder.js';
-// import { CCanvasRecorder } from './js/capture/CCanvasRecorder.js';
 
 
 
 
-window.THREEBRAIN = {
-  Lut : _js_jsm_math_Lut2_js__WEBPACK_IMPORTED_MODULE_8__/* .Lut */ .AV,
-  ColorMapKeywords : _js_jsm_math_Lut2_js__WEBPACK_IMPORTED_MODULE_8__/* .ColorMapKeywords */ .cZ
-};
-
-const utils_toolbox = {
-  'padZero' : _js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .padZero */ .Bd,
-  'to_array' : _js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .to_array */ .AA,
-  'get_element_size' : _js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .get_element_size */ .nq,
-  'get_or_default' : _js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .get_or_default */ .jM,
-  'json2csv' : json_2_csv__WEBPACK_IMPORTED_MODULE_7__.json2csv,
-  'download' : _js_download_js__WEBPACK_IMPORTED_MODULE_10__/* .download */ .L,
-  'CONSTANTS' : _js_constants_js__WEBPACK_IMPORTED_MODULE_5__/* .CONSTANTS */ .t
-};
-
-class BrainCanvas{
-  constructor(el, width, height, shiny_mode = false, viewer_mode = false,
-    cache = false, DEBUG = true){
-    // Make sure to resize widget in the viewer model because its parent element is absolute in position and setting height, width to 100% won't work.
-    this.el = el;
-    if(viewer_mode){
-      this.el.style.height = '100vh';
-      this.el.style.width = '100vw';
-    }
-
-    // --------------------- Assign class attribute ----------------------
-    this.shiny_mode = shiny_mode;
-    this.DEBUG = DEBUG;
-    this.outputId = this.el.getAttribute( 'data-target' );
-    // this.outputId = this.el.getAttribute('id');
-
-    this.has_webgl = false;
-
-    this.controllerIsHidden = false;
-
-    // ---------------------------- Utils ----------------------------
-    // 0. Check WebGL
-    this.check_webgl();
-
-    // 1. HTML layout:
-    // Create control panel
-    this.el_side = document.createElement('div');
-    this.el_side.style.maxHeight = height + 'px';
-    // this.el_side.style.height = height + 'px';
-    this.el_side.setAttribute('class', 'threejs-control');
-    this.el.appendChild( this.el_side );
-
-    // Control panel has three parts:
-    // 1. data gui - auto
-    // 2. text info - auto
-    // 3. legend info - auto
-    this.$controllerGUIWrapper = document.createElement('div');
-    this.$controllerGUI = document.createElement('div');
-    this.$controllerGUIWrapper.style.width = '100%';
-    this.$controllerGUIWrapper.appendChild( this.$controllerGUI );
-    this.el_side.appendChild( this.$controllerGUIWrapper );
-
-    // this.el_legend = document.createElement('div');
-    // this.el_legend_img = document.createElement('img');
-    // this.el_legend.style.width = '100px';
-    // this.el_legend.style.display = 'none';
-    // this.el_legend.style.pointerEvents = 'none';
-    // this.el_legend.style.padding = '10px';
-    // this.el_legend.style.backgroundColor = 'rgba(255,255,255,0.2)';
-
-    this.$sideInfo = document.createElement('div');
-    this.$sideInfo.style.width = '100%';
-    this.$sideInfo.style.padding = '10px 0';
-
-    this.$progressWrapper = document.createElement('div');
-    this.$progressWrapper.classList.add( "threejs-control-progress" );
-    this.$progress = document.createElement('span');
-    this.$progress.style.width = '0';
-    this.$progressWrapper.appendChild( this.$progress );
-    this.$sideInfo.appendChild( this.$progressWrapper );
 
 
-    this.$sideText = document.createElement('div');
-    this.$sideText.style.width = '100%';
-    this.$sideInfo.appendChild( this.$sideText );
+class ViewerWrapper {
 
-    //this.el_text2 = document.createElement('svg');
-    //this.el_text2.style.width = '200px';
-    //this.el_text2.style.padding = '10px';
-    this.el_side.appendChild( this.$sideInfo );
+  /**
+   * The whole point of class ViewerWrapper is to separate actual viewer
+   * from the enclosing HTML element. This is becuase we want to reuse the
+   * viewer in shiny applications.
+   */
 
-    // 3. initialize threejs scene
-    this.canvas = new _js_threejs_scene_js__WEBPACK_IMPORTED_MODULE_4__/* .THREEBRAIN_CANVAS */ .S(
-      this.el, width, height, 250,
-      this.shiny_mode, cache, this.DEBUG, this.has_webgl2);
-
-    // this.shiny = new THREE_BRAIN_SHINY( this.outputId, this.canvas, this.shiny_mode );
-
-
-    // 4. Animation, but do not render;
-    this.canvas.animate();
-
+  get containerID () {
+    // previously this.element_id
+    this.$container.getAttribute('id');
+  }
+  get cacheID () {
+    return `__THREEBRAIN_CONTAINER_${ this.containerID }__`;
+  }
+  get shinyID () {
+    return `${ this.containerID }__shiny`;
+  }
+  get viewerCanvas () {
+    if( !this.viewer ) { return; }
+    return this.viewer.canvas;
   }
 
-
-  check_webgl(){
-    this.has_webgl = false;
-    this.has_webgl2 = false;
-
-    if ( _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__/* .WEBGL.isWebGLAvailable */ .$.isWebGLAvailable() === false ) {
-			this.el.appendChild( _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__/* .WEBGL.getWebGLErrorMessage */ .$.getWebGLErrorMessage() );
-		}else{
-		  this.has_webgl = true;
-		  // Check webgl2
-		  if ( _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__/* .WEBGL.isWebGL2Available */ .$.isWebGL2Available() === false ) {
-  			console.warn('WebGL2 is disabled in this browser, some features might be affected. Force using WebGL instead.');
-  		}else{
-  		  this.has_webgl2 = true;
-  		}
-		}
+  getCachedViewer() {
+    if( !this.cache ) { return; }
+    return this.cache.get_item( this.cacheID , undefined );
+  }
+  cacheViewer () {
+    if( !this.cache ){ return; }
+    if( !this.viewer || !this.viewer.isViewerApp ) { return; }
+    this.cache.set_item( this.cacheID , this.viewer );
   }
 
-  __resize_widget(width, height){
-    if( width <= 0 || height <= 0 ){
-      // Do nothing! as the canvas is usually invisible
-      return(null);
-    }
-    // console.debug( this.outputId + ' - Resize to ' + width + ' x ' + height );
-    this.el_side.style.maxHeight = height + 'px';
-    if( this.controllerIsHidden ) {
-      this.canvas.handle_resize(width, height);
-    } else {
-      this.canvas.handle_resize(width - 300, height);
-    }
-    if( this._reset_flag ){
-      this._reset_flag = false;
-      this.canvas.sideCanvasList.coronal.reset({ zoomLevel: true, position: true, size : true });
-      this.canvas.sideCanvasList.axial.reset({ zoomLevel: true, position: true, size : true });
-      this.canvas.sideCanvasList.sagittal.reset({ zoomLevel: true, position: true, size : true });
-    }
-    this.canvas.start_animation(0);
-  }
-
-  resize_widget(width, height){
-
-    // delay resizing if the widget size is too small
-
-    if(!width || width <= 0) {
-      this.__width = 0;
-    } else {
-      this.__width = width;
-    }
-
-    if(!height || height <= 0) {
-      this.__height = 0;
-    } else {
-      this.__height = height;
-    }
-
-    const _f = () => {
-      const _w = this.__width || this.el.clientWidth;
-      const _h = this.__height || this.el.clientHeight;
-      if(_w <= 10 || _h <= 10) {
-        setTimeout(_f, 1000);
-      } else {
-        this.__resize_widget(_w, _h);
-      }
-    }
-
-    _f();
-
-  }
-
-  renderControllers(){
-    if( this.controllerGUI ) {
-      try { this.controllerGUI.dispose(); } catch (e) {}
-    }
-    this.controllerGUI = new _js_core_EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_1__/* .EnhancedGUI */ .H({
-      autoPlace: false,
-      title : "Control 3D Viewer",
-      // width: 300
-    });
-    if(this.DEBUG){
-      window.controllerGUI = this.controllerGUI;
-    }
-    // --------------- Register GUI controller ---------------
-    // Set default on close handler
-    this.controllerGUI.addEventListener( "open", ( event ) => {
-      if( event.folderPath !== "" ) { return; }
-      this.controllerIsHidden = false;
-      this.resize_widget( this.el.clientWidth, this.el.clientHeight );
-    });
-    this.controllerGUI.addEventListener( "close", ( event ) => {
-      if( event.folderPath !== "" ) { return; }
-      this.controllerIsHidden = true;
-      this.resize_widget( this.el.clientWidth, this.el.clientHeight );
-    });
-
-    // Set side bar
-    if( this.settings.hide_controls ) {
-      this.controllerIsHidden = true;
-    } else {
-      this.$controllerGUIWrapper.replaceChild( this.controllerGUI.domElement, this.$controllerGUI );
-      this.$controllerGUI = this.controllerGUI.domElement;
-
-      if( this.settings.control_display ) {
-        this.controllerIsHidden = false;
-      } else {
-        this.controllerIsHidden = true;
-      }
-    }
-    if( this.controllerIsHidden ) {
-      this.controllerGUI.close();
-    } else {
-      this.controllerGUI.open();
-    }
-
-    // Add listeners
-    const enabledPresets = this.settings.control_presets;
-    this.controlCenter = new _js_core_ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_2__/* .ViewerControlCenter */ .Y(
-      this.canvas, this.controllerGUI, this.settings, this.shiny
-    );
-    window.controlCenter = this.controlCenter;
-
-    // ---------------------------- Defaults
-    this.controlCenter.addPreset_background();
-
-    // ---------------------------- Main, side canvas settings is on top
-    // this.controlCenter.addPreset_recorder();
-    this.controlCenter.addPreset_resetCamera();
-    this.controlCenter.addPreset_setCameraPosition2();
-    this.controlCenter.addPreset_compass();
-
-    // ---------------------------- Side cameras
-    if( this.settings.side_camera ){
-    //   // this.gui.add_folder('Side Canvas').open();
-      this.controlCenter.addPreset_enableSidePanel();
-      this.controlCenter.addPreset_resetSidePanel();
-      this.controlCenter.addPreset_sideSlices();
-      this.controlCenter.addPreset_sideViewElectrodeThreshold();
-    }
-
-    // ---------------------------- Presets
-    let animationControllerRegistered = false;
-    (0,_js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .to_array */ .AA)( enabledPresets ).forEach(( presetName ) => {
-
-      try {
-        if( presetName === 'animation' ){
-          animationControllerRegistered = true;
-        }
-        this.controlCenter['addPreset_' + presetName]();
-      } catch (e) {
-        if(this.DEBUG){
-          console.warn(`Cannot add preset ${ presetName }`);
-        }
-      }
-    });
-    if( !animationControllerRegistered ){
-      this.controlCenter.addPreset_animation();
-    }
-  }
-
-  async renderValues({
-    x,
-    dataIsValid,
-    reset = false
-  }){
-
-    const _isValid = (msg) => {
-      if( typeof dataIsValid === 'function' ) {
-        try {
-          return( dataIsValid(msg) );
-        } catch (e) {}
-      }
-      return true;
-    }
-
-    this.geoms = x.geoms;
-    this.settings = x.settings;
-    this.defaultControllerValues = x.settings.default_controllers || {},
-    this.groups = x.groups,
-    this.has_animation = x.settings.has_animation,
-    this.DEBUG = x.settings.debug || false;
-
-    this.canvas.DEBUG = this.DEBUG;
-    this.canvas.mainCamera.needsReset = reset === true;
-    this.shiny.set_token( this.settings.token );
-
-    if(this.DEBUG){
-      window.__ctrller = this;
-      window.groups = this.groups;
-      window.geoms = this.geoms;
-      window.settings = this.settings;
-      window.canvas = this.canvas;
-      window.scene = this.canvas.scene; // chrome debugger seems to need this
-      this.canvas._add_stats();
-    }else{
-      window.__ctrller = this;
-      window.__groups = this.groups;
-      window.__geoms = this.geoms;
-      window.__settings = this.settings;
-      window.__canvas = this.canvas;
-    }
-
-    // Generate legend first
-
-    const make_sequence = function(arr, len, contain_zero = true){
-      let re = Array(len).fill(0).map((v, i) => { return arr[0] + i * (arr[1] - arr[0]) / (len - 1) });
-      if ( contain_zero && !(0 in re) ){
-        re.push(0);
-      }
-      return(re);
-    };
-
-    this.canvas.pause_animation(9999);
-    this.canvas.clear_all();
-
-    this.canvas.title = this.settings.title;
-
-    if( this.controllerGUI ) {
-      try { this.controllerGUI.dispose(); } catch (e) {}
-      this.controllerGUI = undefined;
-    }
-
-    if( !_isValid("Adding color maps") ) { return; }
-
-    (0,_js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .to_array */ .AA)( this.settings.color_maps ).forEach((v) => {
-      // calculate cmap, add time range so that the last value is always displayed
-      // let tr = v.time_range;
-      this.canvas.add_colormap(
-        v.name,
-        v.alias,
-        v.value_type,
-        v.value_names,
-        v.value_range,
-        v.time_range,
-        v.color_keys,
-        v.color_vals,
-        v.color_levels,
-        v.hard_range
-      );
-    });
-
-
-    if( !_isValid("Loading group data") ) { return; }
-
-    // load group data
-    this.$sideInfo.style.display = 'block';
-
-    let count = 0, nGroups = this.groups.length, loadingGroupNames = {};
-    let progress = 20;
-    const groupPromises = this.groups.map(async (g, ii) => {
-      loadingGroupNames[g.name] = true;
-      this.$sideText.innerHTML = `<p><small>Loading group: ${g.name}</small></p>`;
-
-      progress = Math.floor( 20 + ((ii + 1) / nGroups * 30) );
-      this.$progress.style.width = `${progress}%`;
-
-      await this.canvas.add_group(g, this.settings.cache_folder);
-      count++;
-
-      progress = Math.floor( 50 + (count / nGroups * 45) );
-      this.$progress.style.width = `${progress}%`;
-
-      delete loadingGroupNames[g.name];
-
-      const stillLoading = Object.keys( loadingGroupNames );
-      if( stillLoading.length ) {
-        this.$sideText.innerHTML = `<p><small>Loaded ${count} (out of ${ nGroups }): ${g.name} (still loading ${stillLoading[0]})</small></p>`;
-      } else {
-        this.$sideText.innerHTML = `<p><small>Loaded ${count} (out of ${ nGroups }): ${g.name}</small></p>`;
-      }
-    })
-
-    // in the meanwhile, sort geoms
-    if( !Array.isArray( this.geoms ) ) {
-      this.geoms = (0,_js_utils_js__WEBPACK_IMPORTED_MODULE_6__/* .to_array */ .AA)( this.geoms );
-    }
-    this.geoms.sort((a, b) => {
-      return( a.render_order - b.render_order );
-    });
-
-    await Promise.all( groupPromises );
-    this.$sideText.innerHTML = `<p><small>Group data loaded. Generating geometries...</small></p>`;
-    this.$progress.style.width = `95%`;
-    // creating objects
-    console.debug(this.outputId + ' - Finished loading. Adding object');
-
-    if( !_isValid("Adding geometries") ) { return; }
-
-    const nGroms = this.geoms.length;
-    count = 0;
-    const geomPromises = this.geoms.map((g) => {
-      return new Promise(async (r) => {
-        await this.canvas.add_object( g );
-        r();
-      }).then(() => {
-        count++;
-        progress = Math.floor( 95 + (count / nGroms * 5) );
-        this.$progress.style.width = `${progress}%`;
-        this.$sideText.innerHTML = `<p><small>Added object ${g.name}</small></p>`;
-      }).catch((e) => {
-        if( this.DEBUG ){
-          throw e;
-        }else{
-          console.warn(e);
-        }
-      });
-    });
-
-    await Promise.all( geomPromises );
-    if( !_isValid() ) { return; }
-    this.$progress.style.width = `100%`;
-    this.$sideText.innerHTML = `<p><small>Finalizing...</small></p>`;
-
-    return;
-
-  }
-
-
-  finalize_render( callback ) {
-
-    this.canvas.finish_init();
-
-    this.renderControllers();
-
-    // FIXME
-    // this.shiny.register_gui( this.gui, this.presets );
-
-
-
-    /* Update camera. If we set camera position, then shiny will behave weird and we have to
-    * reset camera every time. To solve this problem, we only reset zoom level
-    *
-    * this is the line that causes the problem
-    */
-    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
-    this.canvas.set_font_size( this.settings.font_magnification || 1 );
-
-    // Compile everything
-    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
-
-    // Set side camera
-    if(this.settings.side_camera || false){
-
-      // Set canvas zoom-in level
-      if( this.settings.side_display || false ){
-        this.canvas.enableSideCanvas();
-        // reset so that the size is displayed correctly
-        this._reset_flag = true;
-      }else{
-        this.canvas.disableSideCanvas();
-      }
-
-    }else{
-      this.canvas.disableSideCanvas();
-    }
-
-    /* FIXME
-    if( !this.hide_controls ){
-      // controller is displayed
-      if( display_controllers ){
-        this.gui.open();
-      } else {
-        this.gui.close();
-      }
-    }
-    */
-
-    this.resize_widget( this.el.clientWidth, this.el.clientHeight );
-
-    // remember last settings
-    try {
-      this.controlCenter.update();
-      this.controllerGUI.setFromDictionary( this.defaultControllerValues );
-    } catch (e) {}
-
-    this.canvas.render();
-
-    this.canvas.start_animation(0);
-
-    if( typeof( callback ) === 'function' ){
-      try {
-        callback();
-      } catch (e) {
-        console.warn(e);
-      }
-    }
-
-    // canvas is ready. set flag
-    this.canvas.ready = true;
-
-    // run customized js code
-    if( this.settings.custom_javascript &&
-        this.settings.custom_javascript !== ''){
-
-      if( this.canvas.DEBUG ){
-        console.debug("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
-      }
-
-      const _f = (groups, geoms, settings, scene,
-        canvas, gui, presets, shiny, tools
-      ) => {
-        try {
-          eval( this.settings.custom_javascript );
-        } catch (e) {
-          console.warn(e);
-        }
-      };
-
-      _f( this.groups, this.geoms, this.settings, this.scene,
-          this.canvas, this.controllerGUI, this.controlCenter,
-          this.presets, this.shiny, utils_toolbox );
-
-    }
-
-    this.$sideInfo.style.display = 'none';
-  }
-}
-
-class BrainWidgetWrapper {
-
-  constructor(el, cache = false){
-
-    this._container = undefined;
+  constructor({
+    $container, width, height,
+
+    // HTMLWidgets.shinyMode, HTMLWidgets.viewerMode,
+    shinyMode = false, viewerMode = false, cache = false
+  } = {}){
+
+    /**
+     * ll the viewer data are cached here so we don't need to reload
+     * duplicated data. However, this global cache might
+     * 1. use lots of memories when lots of different subject are loaded
+     * 2. Unable to update data if file on disk is changed.
+     *
+     * I do not plan to solve these issue as I can loading 10 different
+     * subjects without too much pressure. Also this is in web browser,
+     * simply refresh the page and cache will go away. The speed performance
+     * is what matters for now.
+     */
     if( cache === true ){
-      this.cache = window.global_cache || new _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__/* .THREEBRAIN_STORAGE */ .E();
+      this.cache = window.global_cache ?? new StorageCache/* StorageCache */.B();
     } else {
       this.cache = cache;
     }
 
-    this.element_id = el.getAttribute('id');
-    this.cache_id = '__THREE_CANVAS_' + this.element_id;
+    // Flag
     this.initialized = false;
+    this.width = width;
+    this.height = height;
+    this.shinyMode = shinyMode;
+    this.viewerMode = viewerMode;
+    this.DEBUG = false;
+    this.uuid = three_module.MathUtils.generateUUID();
 
-    // Add class to el to make it display: flex
-    this.el = el;
-    this.el.classList.add('threejs-brain-container');
+    // DOM related
+    this.$container = $container;
+    this.$container.classList.add('threejs-brain-container');
 
-    this.handler = undefined;
+    this.$loaderIcon = document.createElement("div");
+    this.$loaderIcon.classList.add("threejs-brain-loader");
 
-  }
+    // Viewer & Data ( initial small settings containing path to configuration )
+    this.viewer = this.getCachedViewer();
+    this.viewerBootstrapData = undefined;
+    // this will be the root element of the viewer
+    this.$viewerWrapper = undefined;
 
-  initialize (width, height) {
 
-    if(this.cache){
-      this.handler = this.cache.get_item(this.cache_id, undefined);
-    }
+    if( this.viewer === undefined ) {
+      // ---- Initialize ---------------------------------------------------------
+      // Create wrapper for viewer, this will be the root element of the viewer
+      // This is the first time, hence consider adding modal to prevent rendering
+      this.addModal();
 
-    if( this.handler ){
-      console.debug('Found previous handler, re-use it.');
-
-      this._container = this.handler.el;
-
-      // remove inner html of el
-      this.el.onclick = undefined;
-      this.el.innerHTML = '';
-      this.el.classList.remove("threejs-brain-blank-container");
-
-      this.el.appendChild( this._container );
-
-      // Make sure the canvas is resized
-      this.handler.resize_widget(width, height);
-
-      this.initalized = true;
     } else {
 
-      this.initalized = false;
-      this._container = document.createElement('div');
-      this._container.classList.add( 'threejs-brain-canvas' );
-      this._container.setAttribute( 'data-target', this.element_id );
+      /**
+       * This happens in Shiny mode where the entire ViewerWrapper is removed
+       * by external code. The viewer app does not go away, we can get from
+       * cache
+       */
 
-      this.addModal();
-      this.el.onclick = () => {
-        const modal = this.el.getElementsByClassName("threejs-brain-modal");
-        if( modal.length ){
-          modal[0].innerText = "";
-          const loader = document.createElement("div");
-          loader.classList.add("threejs-brain-loader");
-          modal[0].appendChild( loader );
-          this.el.classList.remove("threejs-brain-blank-container");
-        }
-
-        this.el.onclick = undefined;
-        this.el.innerHTML = '';
-        this.el.classList.remove("threejs-brain-blank-container");
-        this.el.appendChild( this._container );
-
-        this.handler = new BrainCanvas(
-
-          // Element to store 3D viewer
-          this._container,
-
-          // dimension of the viewer
-          width, height,
-
-          // Different sizing policy, as well as callbacks
-          HTMLWidgets.shinyMode, HTMLWidgets.viewerMode,
-
-          // use cache? true, false, or the cache object
-          this.cache,
-
-          // DEBUG mode?
-          false
-        );
-        this.handler.shiny = new _js_shiny_tools_js__WEBPACK_IMPORTED_MODULE_3__/* .THREE_BRAIN_SHINY */ .P( this, HTMLWidgets.shinyMode );
-
-        if(this.cache){
-          this.cache.set_item(this.cache_id, this.handler);
-        }
-
-        this.initalized = true;
-        if( this.values !== undefined ){
-          this.render( this.values, true );
-        }
-        this.handler.resize_widget(width, height);
-      };
+      this.activateViewer();
 
     }
 
-
   }
 
-  render(v, reset = false, callback = undefined) {
-    // read
-    const path = v.settings.cache_folder + v.data_filename;
-
-    this.handler.$sideText.innerHTML = `<p><small>Loading configuration files...</small></p>`;
-    this.handler.$progress.style.width = '0';
-    this.handler.$sideInfo.style.display = 'block';
-    console.debug( 'Reading configuration file from: ' + path );
-
-    const fileReader = new FileReader();
-    this.__fileReader = fileReader;
-
-    fileReader.onload = async (evt) => {
-
-      // Do not double-load or load obsolete viewers
-      if( this.__fileReader !== fileReader ) { return; }
-      fileReader.onload = undefined;
-
-      console.debug("Configurations loaded.")
-      const x = JSON.parse(evt.target.result);
-      x.settings = v.settings;
-
-      this.handler.$progress.style.width = '20%';
-
-      this.handler.renderValues({
-        x : x,
-        reset: reset,
-        dataIsValid : ( msg ) => {
-          const isValid = this.__fileReader === fileReader;
-          if( msg ) {
-            console.debug(`${msg} (fileReader is ${isValid})`);
-          }
-          return isValid;
-        }
-      }).then(() => {
-        if( this.__fileReader === fileReader ) {
-          this.__fileReader = undefined;
-
-          this.handler.finalize_render( () => {
-            if(typeof (callback) === "function"){
-              callback();
-            }
-            const modal = this.el.getElementsByClassName("threejs-brain-modal");
-            if( modal.length ){
-              modal[0].classList.add("hidden");
-            }
-          });
-        }
-
-      });
-    }
-
-    fetch( path ).then( r => r.blob() ).then( blob => {
-      fileReader.readAsText( blob );
-    });
-  }
-
-  resize(width, height) {
-    if( this.handler ){
-      this.handler.resize_widget( width, height );
-    }
-  }
-
-  addModal(){
-    this.el.classList.add("threejs-brain-blank-container");
-    const modal = document.createElement("div");
-    modal.classList.add("threejs-brain-modal");
+  addModal = () => {
+    if( this.$modal ) { return; }
+    this.$container.classList.add("threejs-brain-blank-container");
+    this.$modal = document.createElement("div");
+    this.$modal.classList.add("threejs-brain-modal");
     // check webgl2 availability
-    modal.innerText = "Click me to load 3D viewer.";
-    if ( window._WEBGL ){
-      try {
-        if(!window._WEBGL.isWebGL2Available()){
-          modal.innerHTML = "It seems your browser does not support WebGL2. <br />Please use Chrome for full support. <br /><br /> Click me to load 3D viewer anyway.";
-        }
-      } catch (e) {}
+    this.$modal.innerText = "Click me to load 3D viewer.";
+
+    if( !capabilities_WebGL.isWebGL2Available() ) {
+      const $warning = capabilities_WebGL.getWebGLErrorMessage();
+      const $warningSubtext = document.createElement("small");
+      $warningSubtext.innerHTML = "Please use Chrome/Firefox/Safari for full support. You can force me to render viewer anyway by clicking me, but I might not work properly."
+      $warning.appendChild( $warningSubtext );
+      this.$modal.appendChild( $warning );
     }
 
-    this.el.innerHTML = "";
-    this.el.appendChild( modal );
+    this.$container.innerHTML = "";
+    this.$container.appendChild( modal );
+    this.$container.addEventListener( "click", this.activateViewer );
   }
 
+  activateViewer = () => {
+    this.$container.removeEventListener( "click", this.activateViewer );
+
+    if( this.$modal ) {
+      this.$modal.innerText = ""
+      this.$modal.appendChild( this.$loaderIcon )
+      this.$modal = undefined;
+    }
+
+    // check if viewer has been initialized
+    if( this.initialized ) {
+      this.useCachedViewer( true );
+    } else {
+      this.createViewer( true );
+    }
+
+    this.render();
+
+  }
+
+  createViewer( insertViewer = false ) {
+    if( this.initialized ) {
+      return this.useCachedViewer();
+    }
+    this.$viewerWrapper = document.createElement('div');
+    this.$viewerWrapper.classList.add( 'threejs-brain-canvas' );
+    this.$viewerWrapper.setAttribute( 'data-target', this.containerID );
+    if( this.viewerMode ) {
+      this.$viewerWrapper.style.height = '100vh';
+      this.$viewerWrapper.style.width = '100vw';
+    }
+    this.viewer = new ViewerApp/* ViewerApp */.o({
+      $wrapper : this.$viewerWrapper,
+      width : this.width, height : this.height,
+      cache : this.cache,
+      debug : this.DEBUG
+    });
+
+    this.cacheViewer();
+    this.initalized = true;
+
+    if( insertViewer ) {
+      // clear the container element
+      this.$container.innerHTML = '';
+      this.$container.classList.remove("threejs-brain-blank-container");
+      this.$container.appendChild( this.$viewerWrapper );
+
+      this.resize();
+    }
+    // otherwise no need to resize as the $viewerWrapper is just created, and
+    // there is no way the wrapper is added to DOM
+  }
+
+  useCachedViewer( insertViewer = false ) {
+    if( !this.initialized ) {
+      return this.createViewer();
+    }
+    if( !this.viewer ) {
+      this.viewer = this.getCachedViewer();
+      this.cacheViewer();
+    }
+    if( !this.viewer ) { throw 'THREEBRAIN: Trying to use a cached/existing viewer, but the viewer is nowhere to be found!'; }
+    console.debug('THREEBRAIN: Re-using an existing/cached viewer.');
+
+    this.$viewerWrapper = this.viewer.el;
+    if( this.viewerMode ) {
+      this.$viewerWrapper.style.height = '100vh';
+      this.$viewerWrapper.style.width = '100vw';
+    }
+
+    // make sure (can be overkill)
+    this.initalized = true;
+    if( insertViewer ) {
+      // clear the container element
+      this.$container.innerHTML = '';
+      this.$container.classList.remove("threejs-brain-blank-container");
+      this.$container.appendChild( this.$viewerWrapper );
+
+    }
+    this.resize();
+  }
+
+  receiveData({ data , reset = false } = {}) {
+    // data contains basic viewer settings, which contains path to viewer data file
+
+    /**
+     * The render is async, hence we can't use this.viewerBootstrapData here
+     * this is to backup the data in case we create viewer after receiving data:
+     *    When shiny renders the HTMLWidget, this object will receive the data,
+     *    store it in `this.viewerBootstrapData`. However, there is a chance
+     *    that the user hasn't clicked this.$modal to initialize the viewer yet.
+     *
+     * The solution is to store the data, when this.createViewer is called,
+     * it checks whether data has been received. If so, render it
+     */
+    this.viewerBootstrapData = {
+      bootstrapData : data,
+      reset : reset
+    };
+
+    if( !this.initalized ) {
+      if( data.force_render ) {
+        this.activateViewer();
+      }
+      return;
+    }
+
+    this.render( reset );
+
+
+  }
+
+  render() {
+    if( !this.viewer || !this.viewerBootstrapData ) {
+      // throw 'THREEBRAIN: Cannot render viewer without the viewer UI and data.'.
+      return;
+    }
+    this.viewer.bootstrap( this.viewerBootstrapData );
+  }
+
+  resize( width, height ) {
+    if( this.viewer ){
+      this.viewer.resize(
+        width ?? this.width,
+        height ?? this.height
+      );
+    }
+  }
 }
 
-
-window.BrainWidgetWrapper = BrainWidgetWrapper;
-window.BrainCanvas = BrainCanvas;
-window.THREE = three__WEBPACK_IMPORTED_MODULE_12__;
-window._WEBGL = _js_WebGL_js__WEBPACK_IMPORTED_MODULE_0__/* .WEBGL */ .$;
-window.download = _js_download_js__WEBPACK_IMPORTED_MODULE_10__/* .download */ .L;
-window.THREEBRAIN_STORAGE = _js_threebrain_cache_js__WEBPACK_IMPORTED_MODULE_11__/* .THREEBRAIN_STORAGE */ .E;
+const ThreeBrainLib = {
+  ViewerApp           : ViewerApp/* ViewerApp */.o,
+  ViewerWrapper       : ViewerWrapper,
+  StorageCache        : StorageCache/* StorageCache */.B,
+  constants           : constants/* CONSTANTS */.t,
+  utils : {
+    CONSTANTS         : constants/* CONSTANTS */.t,
+    THREE             : three_module,
+    WebGL             : capabilities_WebGL,
+    MathUtils         : three_module.MathUtils,
+    padZero           : utils/* padZero */.Bd,
+    to_array          : utils/* to_array */.AA,
+    get_element_size  : utils/* get_element_size */.nq,
+    get_or_default    : utils/* get_or_default */.jM,
+    json2csv          : converter.json2csv,
+    download          : download/* download */.L,
+  }
+}
+window.ThreeBrainLib = ThreeBrainLib;
 
 
 })();

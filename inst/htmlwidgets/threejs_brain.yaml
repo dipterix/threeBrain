@@ -1,16 +1,8 @@
 dependencies:
-  - name: threejs
-    version: 0.101.1
-    src: htmlwidgets/lib/threejs-0.101.1
-    all_files: yes
-    style:
-      - css/dat.gui.css
   - name: dipterixThreeBrain
     version: 1.0.1
     src: htmlwidgets/lib/dipterixThreeBrain-1.0.1
     all_files: yes
-    style:
-      - dipterix.css
     script:
       - main.js
 

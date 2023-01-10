@@ -1,7 +1,7 @@
 
 
 
-class THREEBRAIN_STORAGE {
+class StorageCache {
   constructor(){
     this._d = new Map();
   }
@@ -49,4 +49,4 @@ class THREEBRAIN_STORAGE {
 
 }
 
-export { THREEBRAIN_STORAGE };
+export { StorageCache };
