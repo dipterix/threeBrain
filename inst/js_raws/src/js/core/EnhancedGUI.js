@@ -31,6 +31,10 @@ class EnhancedGUI extends GUI {
 
   }
 
+  get isFocused() {
+    return this.controllersRecursive().some(c => { return c._isFocused2; } );
+  }
+
   _dispatchEvent ( event ) {
     event.folderPath = this._fullPaths.join(">");
     this.__eventDispather.dispatchEvent( event );
@@ -225,6 +229,13 @@ class EnhancedGUI extends GUI {
     }
     // make sure the controller slider does not activate accidentally
     controller._sliderWheelEnabled = false;
+
+    // add event to set focus flags
+    if( controller.$disable ) {
+      controller.$disable.onfocus = () => { controller._isFocused2 = true; }
+      controller.$disable.onblur = () => { controller._isFocused2 = false; }
+    }
+
     return controller;
   }
   getController( name, folderName, explicit = false ) {

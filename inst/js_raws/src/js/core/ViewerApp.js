@@ -2,9 +2,11 @@ import { ThrottledEventDispatcher } from './ThrottledEventDispatcher.js';
 import { asArray } from '../utility/asArray.js';
 import { EnhancedGUI } from './EnhancedGUI.js';
 import { ViewerControlCenter } from './ViewerControlCenter.js';
-import { THREEBRAIN_CANVAS } from '../threejs_scene.js';
+import { ViewerCanvas } from './ViewerCanvas.js';
+import { MouseKeyboard } from './MouseKeyboard.js';
+import { CONSTANTS } from '../constants.js';
 
-class ViewerApp {
+class ViewerApp extends ThrottledEventDispatcher {
 
   constructor({
 
@@ -22,24 +24,18 @@ class ViewerApp {
 
   }) {
 
+    super( $wrapper );
+
     // Flags
     this.DEBUG = debug;
     this.isViewerApp = true;
     this.controllerClosed = false;
-    // this.outputId = this.$wrapper.getAttribute( 'data-target' );
 
-    // events
-    this._eventDispatcher = new ThrottledEventDispatcher( this.$wrapper );
-    this.bind = this._eventDispatcher.bind;
-    this.unbind = this._eventDispatcher.unbind;
-    this.dispatch = this._eventDispatcher.dispatch;
+    // this.outputId = this.$wrapper.getAttribute( 'data-target' );
 
     // data
     this.geoms = [];
     this.settings = {};
-
-
-
 
     // ---- initialize : DOM elements ------------------------------------------
     /** The layout is:
@@ -112,7 +108,7 @@ class ViewerApp {
     this.$wrapper.appendChild( this.$settingsPanel );
 
     // --- B Canvas container ------------------------------------------------
-    this.canvas = new THREEBRAIN_CANVAS(
+    this.canvas = new ViewerCanvas(
       this.$wrapper,
       width ?? this.$wrapper.clientWidth,
       height ?? this.$wrapper.clientHeight,
@@ -120,10 +116,17 @@ class ViewerApp {
 
     this.canvas.animate();
 
+    // Add listeners for mouse
+    this.mouseKeyboard = new MouseKeyboard( this );
+
+
   }
 
+  get mouseLocation () { return this.mouseKeyboard.mouseLocation; }
+
   dispose() {
-    this._eventDispatcher.dispose();
+    super.dispose();
+    this.mouseKeyboard.dispose();
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
     }
@@ -258,15 +261,18 @@ class ViewerApp {
 
 
   enableDebugger() {
-    window.__ctrller = this;
+    window.app = this;
     window.groups = this.groups;
     window.geoms = this.geoms;
     window.settings = this.settings;
     window.canvas = this.canvas;
     window.controllerGUI = this.controllerGUI;
+    this.canvas.addNerdStats();
   }
 
   async updateData({ data, reset = false, isObsolete = false }) {
+
+    this.dispatch( "viewerApp.updateData.start", {}, true );
 
     const _isObsolete = ( args ) => {
       if( typeof isObsolete !== 'function' ) { return isObsolete; }
@@ -376,7 +382,7 @@ class ViewerApp {
     await Promise.all( geomPromises );
     if( _isObsolete() ) { return; }
 
-    this.canvas.finish_init();
+    // this.canvas.finish_init();
 
     this.setProgressBar({
       progress : 100,
@@ -420,17 +426,6 @@ class ViewerApp {
       this.canvas.disableSideCanvas();
     }
 
-    /* FIXME
-    if( !this.hide_controls ){
-      // controller is displayed
-      if( display_controllers ){
-        this.gui.open();
-      } else {
-        this.gui.close();
-      }
-    }
-    */
-
     this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
 
     // remember last settings
@@ -461,25 +456,19 @@ class ViewerApp {
       if( this.canvas.DEBUG ){
         console.debug("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
       }
-
-      const _f = (groups, geoms, settings, scene,
-        canvas, gui, presets, shiny, tools
-      ) => {
+      (( viewerApp ) => {
         try {
           eval( this.settings.custom_javascript );
         } catch (e) {
           console.warn(e);
         }
-      };
-
-      _f( this.groups, this.geoms, this.settings, this.scene,
-          this.canvas, this.controllerGUI, this.controlCenter,
-          this.presets, this.shiny, utils_toolbox );
-
+      })( this );
     }
 
     // Make sure it's hidden though progress will hide it
     this.$informationContainer.style.display = 'none';
+
+    this.dispatch( "viewerApp.updateData.end", {}, true );
 
   }
 

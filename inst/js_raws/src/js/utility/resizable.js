@@ -1,5 +1,5 @@
 /*Make resizable div by Hung Nguyen*/
-function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_stop = (w, h) => {}) {
+function makeResizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_stop = (w, h) => {}) {
   const element = elem; // elem.querySelector('.resizable');
   const resizers = elem.querySelectorAll('.resizable .resizer');
   const minimum_size = 20;
@@ -85,4 +85,4 @@ function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_
 // makeResizableDiv('.resizable')
 
 
-export { make_resizable };
+export { makeResizable };

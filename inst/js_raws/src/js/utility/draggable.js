@@ -5,7 +5,7 @@ function get_size(el){
   return([width, height]);
 }
 
-function make_draggable(
+function makeDraggable(
   elmnt, elmnt_header,
   // top range and left range
   parent_el = undefined,
@@ -140,4 +140,4 @@ function make_draggable(
 }
 
 
-export { make_draggable };
+export { makeDraggable };

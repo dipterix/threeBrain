@@ -1,20 +1,20 @@
 
 
 class ThrottledEventDispatcher {
-  constructor( $el, containerID, debug = false ) {
+  constructor( $wrapper, containerID, debug = false ) {
     // el must be a DOM element, no check here
-    if( $el ) {
-      if(! $el instanceof window.HTMLElement ) {
-        throw Error("new ThrottledEventDispatcher($el): `$el` must be an HTMLElement.")
+    if( $wrapper ) {
+      if(! $wrapper instanceof window.HTMLElement ) {
+        throw Error("new ThrottledEventDispatcher($wrapper): `$wrapper` must be an HTMLElement.")
       }
-      this.$el = $el;
+      this.$wrapper = $wrapper;
     } else {
-      this.$el = document.createElement("div");
+      this.$wrapper = document.createElement("div");
     }
 
     this._listeners = new Map();
     this._eventBuffers = new Map();
-    this.containerID = containerID || this.$el.getAttribute( 'data-target' );
+    this.containerID = containerID || this.$wrapper.getAttribute( 'data-target' ) || this.$wrapper.id || "UnknownContainerID";
 
     this.throttle = true;
     this.timeout = 100;
@@ -43,11 +43,11 @@ class ThrottledEventDispatcher {
           console.debug( `Re-registering listener - ${ _callbackId }` );
         }
         try {
-          this.$el.removeEventListener( type, existingCallback );
+          this.$wrapper.removeEventListener( type, existingCallback );
         } catch (e) {
           console.warn('Unable to dispose listener: ' + _callbackId);
         }
-        this.$el.addEventListener( type , callback , options );
+        this.$wrapper.addEventListener( type , callback , options );
       })
 
     }
@@ -65,7 +65,7 @@ class ThrottledEventDispatcher {
     }
 
     try {
-      this.$el.removeEventListener( name , previousCallback );
+      this.$wrapper.removeEventListener( name , previousCallback );
     } catch (e) {}
 
   }
@@ -83,7 +83,10 @@ class ThrottledEventDispatcher {
       throw TypeError( 'ThrottledEventDispatcher.dispatch: Can only dispatch event of none-empty type' );
     }
 
-    let buffer;
+    // whether to fire event right now
+    const immediate_ = !this.throttle || immediate;
+
+    let buffer, exists = false;
     if( !this._eventBuffers.has( type ) ) {
       buffer = {
         type: type,
@@ -93,17 +96,44 @@ class ThrottledEventDispatcher {
         data: data,
         dispatched: false
       }
-      this._eventBuffers.set( type , buffer );
+      if( !immediate_ ) {
+        this._eventBuffers.set( type , buffer );
+      }
     } else {
       buffer = this._eventBuffers.get( type );
       buffer.data = data;
       buffer.dispatched = false;
+      exists = true;
     }
 
-    // whether to fire event right now
-    const immediate_ = !this.throttle || immediate;
+    if( immediate_ ) {
+      buffer.dispatched = true;
+      buffer.throttlePause = false;
 
-    if( !immediate_ && buffer.throttlePause ) {
+      if( exists ) {
+        try {
+          this._eventBuffers.delete( type );
+        } catch (e) {}
+      }
+
+      const event = new CustomEvent(
+        buffer.type,
+        {
+          containerID : this.containerID,
+          container_id: this.containerID,  // compatible
+          detail: buffer.data
+        }
+      );
+
+      // Dispatch the event.
+      console.debug(`Dispatching immediate event: ${ buffer.type }`);
+      this.$wrapper.dispatchEvent(event);
+
+      return;
+    }
+
+    // the followings are for throttled
+    if( buffer.throttlePause ) {
       // update data, but hold it
       return;
     }
@@ -113,6 +143,13 @@ class ThrottledEventDispatcher {
     const doDispatch = () => {
 
       const data = buffer.data;
+
+      // remove buffer. It's ok if this operation fails
+      // buffer.dispatched=true will prevent buffer from being fired again
+      // this operation is to release memory
+      try {
+        this._eventBuffers.delete( type );
+      } catch (e) {}
 
       buffer.throttlePause = false;
       if( buffer.dispatched ) { return; }
@@ -129,16 +166,12 @@ class ThrottledEventDispatcher {
       );
 
       // Dispatch the event.
-      console.debug(`Dispatching event: ${ buffer.type }`);
-      this.$el.dispatchEvent(event);
+      console.debug(`Dispatching throttled event: ${ buffer.type }`);
+      this.$wrapper.dispatchEvent(event);
 
     };
 
-    if( immediate_ ) {
-      doDispatch();
-    } else {
-      setTimeout(() => { doDispatch(); }, this.timeout );
-    }
+    setTimeout(() => { doDispatch(); }, this.timeout );
 
   }
 

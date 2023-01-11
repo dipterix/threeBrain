@@ -8,32 +8,31 @@ import {
   AnimationClip, AnimationMixer, Clock,
   Mesh, MeshBasicMaterial
 } from 'three';
-import { to_array, get_element_size, get_or_default,
+import { asArray } from '../utility/asArray.js';
+import { get_element_size, get_or_default,
   has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4,
   set_visibility, set_display_mode, invertColor
-} from './utils.js';
-// import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
-import { HauntedArcballControls } from './core/HauntedArcballControls.js';
-import { HauntedOrthographicCamera } from './core/HauntedOrthographicCamera.js';
-import { AnimationParameters } from './core/AnimationParameters.js';
-import { CanvasContext2D } from './core/context.js';
-import { CanvasFileLoader } from './core/loaders.js';
-import { SideCanvas } from './core/side_canvas.js';
-import { Stats } from './libs/stats.min.js';
-import { StorageCache } from './core/StorageCache.js';
-import { CanvasEvent } from './core/events.js';
-import { make_draggable } from './libs/draggable.js';
-import { make_resizable } from './libs/resizable.js';
-import { CONSTANTS } from './constants.js';
-import { generate_animation_default } from './Math/animations.js';
-import { gen_sphere, is_electrode } from './geometry/sphere.js';
-import { gen_datacube } from './geometry/datacube.js';
-import { gen_datacube2 } from './geometry/datacube2.js';
-import { gen_tube } from './geometry/tube.js';
-import { gen_free } from './geometry/free.js';
-import { gen_linesements } from './geometry/line.js';
-import { Compass } from './geometry/compass.js';
-import { Lut, addToColorMapKeywords } from './jsm/math/Lut2.js';
+} from '../utils.js';
+// import { OrthographicTrackballControls } from './OrthographicTrackballControls.js';
+import { HauntedArcballControls } from './HauntedArcballControls.js';
+import { HauntedOrthographicCamera } from './HauntedOrthographicCamera.js';
+import { AnimationParameters } from './AnimationParameters.js';
+import { CanvasContext2D } from './context.js';
+import { CanvasFileLoader } from './loaders.js';
+import { SideCanvas } from './SideCanvas.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { StorageCache } from './StorageCache.js';
+import { CanvasEvent } from './events.js';
+import { CONSTANTS } from '../constants.js';
+import { generate_animation_default } from '../Math/animations.js';
+import { gen_sphere, is_electrode } from '../geometry/sphere.js';
+import { gen_datacube } from '../geometry/datacube.js';
+import { gen_datacube2 } from '../geometry/datacube2.js';
+import { gen_tube } from '../geometry/tube.js';
+import { gen_free } from '../geometry/free.js';
+import { gen_linesements } from '../geometry/line.js';
+import { Compass } from '../geometry/compass.js';
+import { Lut, addToColorMapKeywords } from '../jsm/math/Lut2.js';
 import { json2csv } from 'json-2-csv';
 import download from 'downloadjs';
 import nifti from 'nifti-reader-js';
@@ -104,11 +103,11 @@ window.requestAnimationFrame =
 
 
 
-class THREEBRAIN_CANVAS {
+class ViewerCanvas {
   constructor(
     el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
   ) {
-
+    this.isViewerCanvas = true;
     if(DEBUG){
       console.debug('Debug Mode: ON.');
       this.DEBUG = true;
@@ -135,7 +134,6 @@ class THREEBRAIN_CANVAS {
         position: new Vector3()
       }
     };
-
     // Is system supporting WebGL2? some customized shaders might need this feature
     // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
     this.has_webgl2 = has_webgl2;
@@ -151,6 +149,7 @@ class THREEBRAIN_CANVAS {
     this.main_canvas = document.createElement('div');
     this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
     this.main_canvas.style.width = width + 'px';
+    this.mainCanvas = this.main_canvas
 
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
@@ -315,10 +314,6 @@ class THREEBRAIN_CANVAS {
     // Add main canvas to wrapper element
     this.wrapper_canvas.appendChild( this.main_canvas );
     this.$el.appendChild( this.wrapper_canvas );
-
-
-    this.has_stats = false;
-
 
     // Controls
     this.trackball = new HauntedArcballControls( this );
@@ -539,7 +534,7 @@ class THREEBRAIN_CANVAS {
             direction.applyMatrix3(new Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
           }
 
-          // this.mouse_helper.position.fromArray( to_array(from) );
+          // this.mouse_helper.position.fromArray( asArray(from) );
           // this.mouse_helper.setDirection(direction);
           // this.mouse_helper.visible = true;
 
@@ -733,7 +728,7 @@ class THREEBRAIN_CANVAS {
     var gp = new Object3D();
 
     gp.name = 'group_' + g.name;
-    to_array(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
+    asArray(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
     gp.position.fromArray( g.position );
 
     if(g.trans_mat !== null){
@@ -761,7 +756,7 @@ class THREEBRAIN_CANVAS {
 
     // Async loading group cached data
 
-    const cached_items = to_array( g.cached_items );
+    const cached_items = asArray( g.cached_items );
 
     const promises = cached_items.map(async (nm) => {
       const cache_info = g.group_data[nm];
@@ -794,7 +789,7 @@ class THREEBRAIN_CANVAS {
           }
 
           // check if ".subject_codes" is in the name
-          const subject_codes = to_array( this.shared_data.get(".subject_codes") );
+          const subject_codes = asArray( this.shared_data.get(".subject_codes") );
           if( subject_codes.length > 0 ){
 
             // generate transform matrices
@@ -854,18 +849,16 @@ class THREEBRAIN_CANVAS {
   }
 
   // Debug stats (framerate)
-  _add_stats(){
+  addNerdStats(){
     // if DEBUG, add stats information
-    // Stats
-    if(!this.has_stats){
-      this.has_stats = true;
-      this.stats = new Stats();
-      this.stats.domElement.style.display = 'block';
-      this.stats.domElement.style.position = 'absolute';
-      this.stats.domElement.style.top = '0';
-      this.stats.domElement.style.left = '0';
-      this.$el.appendChild( this.stats.domElement );
-    }
+    if( this.__nerdStatsEnabled ) { return; }
+    this.nerdStats = new Stats();
+    this.nerdStats.dom.style.display = 'block';
+    this.nerdStats.dom.style.position = 'absolute';
+    this.nerdStats.dom.style.top = '0';
+    this.nerdStats.dom.style.left = '0';
+    this.$el.appendChild( this.nerdStats.dom );
+    this.__nerdStatsEnabled = true;
   }
 
   /*---- Remove, dispose objects --------------------------------------------*/
@@ -1216,7 +1209,7 @@ class THREEBRAIN_CANVAS {
     this.side_width = width;
 
     // Resize side canvas, make sure this.side_width is proper
-    let pos = to_array( position );
+    let pos = asArray( position );
     if( pos.length == 2 ) {
       const bounding = this.$el.getBoundingClientRect();
       const offsetX = Math.max( -bounding.x, pos[0] );
@@ -1306,14 +1299,14 @@ class THREEBRAIN_CANVAS {
 
       // Only raycast with visible
       items = this.mouse_raycaster.intersectObjects(
-        // to_array( this.clickable )
+        // asArray( this.clickable )
         this.clickable_array.filter((e) => { return(e.visible === true) })
       );
       // items = this.mouse_raycaster.intersectObjects( this.scene.children );
     }else if( request_type.isObject3D || Array.isArray( request_type ) ){
       // set raycaster to be layer 8 (main camera)
       this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
-      items = this.mouse_raycaster.intersectObjects( to_array( request_type ), true );
+      items = this.mouse_raycaster.intersectObjects( asArray( request_type ), true );
     }
 
     if(this.DEBUG){
@@ -1396,7 +1389,7 @@ class THREEBRAIN_CANVAS {
     const cmap_keys = [];
 
     // n_color is number of colors in Lut, not the true levels of colors
-    const n_color = Math.max( 2 , to_array( color_keys ).length );
+    const n_color = Math.max( 2 , asArray( color_keys ).length );
 
     // Step 2:
     for( let ii=0; ii < n_color; ii++ ){
@@ -1440,7 +1433,7 @@ class THREEBRAIN_CANVAS {
       name              : name,
       alias             : alt_name,
       value_type        : value_type,
-      value_names       : to_array( value_names ),
+      value_names       : asArray( value_names ),
       time_range        : time_range,
       n_levels          : n_levels,
       // Used for back-up
@@ -1795,8 +1788,8 @@ class THREEBRAIN_CANVAS {
         const track_data = objectUserData.get_track_data( track_type );
 
         if( track_data ){
-          const time_stamp = to_array( track_data.time );
-          const values = to_array( track_data.value );
+          const time_stamp = asArray( track_data.time );
+          const values = asArray( track_data.value );
           const currentTime = this.animParameters.time;
           let _tmp = - Infinity;
           for( let ii in time_stamp ){
@@ -2070,7 +2063,7 @@ class THREEBRAIN_CANVAS {
           color_type = cmap.value_type,
           color_names = cmap.value_names,
           legend_title = cmap.alias || '',
-          actual_range = to_array( cmap.value_range );
+          actual_range = asArray( cmap.value_range );
 
     this._lineHeight_legend = this._lineHeight_legend || Math.round( 15 * this.pixel_ratio[0] );
     this._fontSize_legend = this._fontSize_legend || Math.round( 10 * this.pixel_ratio[0] );
@@ -2492,7 +2485,7 @@ class THREEBRAIN_CANVAS {
 
     if(this.render_flag >= 0){
 
-      if(this.has_stats){ this.stats.update(); }
+  		if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
   		this.render();
 
   		// draw main and side rendered images to this.domElement (2d context)
@@ -2578,7 +2571,7 @@ class THREEBRAIN_CANVAS {
     })
 
 
-    return( to_array( re ) );
+    return( asArray( re ) );
   }
 
   get_ct_types(){
@@ -2815,7 +2808,7 @@ class THREEBRAIN_CANVAS {
   // used to switch atlas, but can also switch other datacube2
   switch_atlas( target_subject, atlas_type ){
     /*if( subject_changed ) {
-      let atlas_types = to_array( this.atlases.get(target_subject) );
+      let atlas_types = asArray( this.atlases.get(target_subject) );
 
     }*/
     console.debug(`Setting volume data cube: ${atlas_type} (${target_subject})`);
@@ -3174,8 +3167,7 @@ mapped = false,
 
 
 
-export { THREEBRAIN_CANVAS };
-// window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;
+export { ViewerCanvas };
 
 
 

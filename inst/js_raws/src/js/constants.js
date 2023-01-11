@@ -167,6 +167,7 @@ CONSTANTS.RENDER_ORDER = {
   'DataCube'  : CONSTANTS.MAX_RENDER_ORDER - 1
 };
 
+
 CONSTANTS.SINGLETONS = {
   "line-segments" : "line_segments_singleton"
 };

@@ -62470,6 +62470,7 @@ CONSTANTS.RENDER_ORDER = {
   'DataCube'  : CONSTANTS.MAX_RENDER_ORDER - 1
 };
 
+
 CONSTANTS.SINGLETONS = {
   "line-segments" : "line_segments_singleton"
 };
@@ -67382,6 +67383,10 @@ class EnhancedGUI extends lil_gui_esm {
 
   }
 
+  get isFocused() {
+    return this.controllersRecursive().some(c => { return c._isFocused2; } );
+  }
+
   _dispatchEvent ( event ) {
     event.folderPath = this._fullPaths.join(">");
     this.__eventDispather.dispatchEvent( event );
@@ -67576,6 +67581,13 @@ class EnhancedGUI extends lil_gui_esm {
     }
     // make sure the controller slider does not activate accidentally
     controller._sliderWheelEnabled = false;
+
+    // add event to set focus flags
+    if( controller.$disable ) {
+      controller.$disable.onfocus = () => { controller._isFocused2 = true; }
+      controller.$disable.onblur = () => { controller._isFocused2 = false; }
+    }
+
     return controller;
   }
   getController( name, folderName, explicit = false ) {
@@ -67686,6 +67698,218 @@ class EnhancedGUI extends lil_gui_esm {
 
 /***/ }),
 
+/***/ 6153:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "q": () => (/* binding */ MouseKeyboard)
+/* harmony export */ });
+/* harmony import */ var _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(5857);
+/* harmony import */ var _ViewerApp_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7849);
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(975);
+
+
+
+
+class MouseKeyboard extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_2__/* .ThrottledEventDispatcher */ .v {
+
+  // private
+  #app;
+
+  // static
+  static OFF_VIEWER     = 0b00000;
+  static ON_VIEWER      = 0b00001;
+  static ON_CORONAL     = 0b00010;
+  static ON_SAGITTAL    = 0b00100;
+  static ON_AXIAL       = 0b01000;
+  static ON_CONTROLLER  = 0b10000;
+
+  /**
+   * mouse down: (immediate)
+   *    if left-button, activate trackball to rotate
+   *    if right-button, activate trackball to pan
+   *    in the meanwhile, remember state
+   * mouse up: (immediate)
+   *    deactivate trackball
+   *    de-remember state
+   * mouse click: (delayed)
+   *    focus object
+   *    if double-clicked, then do nothing
+   *    if mouse is still down, do nothing
+   *    otherwise:
+   *      if left-click, focus object
+   *      if right-click, focus object and set crosshair
+   * mouse double-click:
+   *    send to shiny
+   *
+   *
+   * 1. click fires after both the mousedown and mouseup events have fired,
+   * in that order.
+   *
+   * 2. The MouseEvent object passed into the event handler for click has its
+   * detail property set to the number of times the target was clicked. In
+   * other words, detail will be 2 for a double-click, 3 for triple-click,
+   * and so forth. Therefore, we should use one listener for both single click
+   * and double-click events.
+   * */
+
+  constructor ( app ) {
+    super( app.$wrapper );
+
+    this.#app = app;
+    this.mouseLocation = MouseKeyboard.OFF_VIEWER;
+    this._mouseDownHold = false;
+    this.timeout = 300;
+
+
+    this.#app.$wrapper.addEventListener(
+      "mouseenter", this.#onViewerFocused );
+    this.#app.$wrapper.addEventListener(
+      "mouseleave", this.#onViewerBlurred );
+    this.#app.$controllerContainer.addEventListener(
+      "mouseenter", this.#onControllerFocused );
+    this.#app.$controllerContainer.addEventListener(
+      "mouseleave", this.#onControllerBlurred );
+
+    this.#app.canvas.sideCanvasList.coronal.$el.addEventListener(
+      "mouseenter", this.#onCoronalViewFocused );
+    this.#app.canvas.sideCanvasList.coronal.$el.addEventListener(
+      "mouseleave", this.#onCoronalViewBlurred );
+    this.#app.canvas.sideCanvasList.axial.$el.addEventListener(
+      "mouseenter", this.#onAxialViewFocused );
+    this.#app.canvas.sideCanvasList.axial.$el.addEventListener(
+      "mouseleave", this.#onAxialViewBlurred );
+    this.#app.canvas.sideCanvasList.sagittal.$el.addEventListener(
+      "mouseenter", this.#onSagittalViewFocused );
+    this.#app.canvas.sideCanvasList.sagittal.$el.addEventListener(
+      "mouseleave", this.#onSagittalViewBlurred );
+
+    this.#app.canvas.mainCanvas.addEventListener(
+      "contextmenu", this.#onMainCanvasContextMenu );
+    this.#app.canvas.mainCanvas.addEventListener(
+      "mousedown", this.#onMainCanvasMouseDown );
+    this.#app.canvas.mainCanvas.addEventListener(
+      "mouseup", this.#onMainCanvasMouseUp );
+    this.#app.canvas.mainCanvas.addEventListener(
+      "click", this.#onMainCanvasClicked );
+
+    document.addEventListener( 'keydown', this.#onKeydown );
+
+
+
+    /*
+
+
+    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
+      if (event.isComposing || event.keyCode === 229) { return; }
+      if( this.listen_keyboard ){
+        // event.preventDefault();
+        this.keyboard_event = {
+          'action' : 'keydown',
+          'event' : event,
+          'dispose' : false,
+          'level' : 0
+        };
+      }
+
+    }, document );
+    */
+  }
+
+  dispose() {
+    super.dispose();
+    this.#app.$wrapper.removeEventListener( "mouseenter", this.#onViewerFocused );
+    this.#app.$wrapper.removeEventListener( "mouseleave", this.#onViewerBlurred );
+    this.#app.$controllerContainer.removeEventListener( "mouseenter", this.#onControllerFocused );
+    this.#app.$controllerContainer.removeEventListener( "mouseleave", this.#onControllerBlurred );
+
+    this.#app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseenter", this.#onCoronalViewFocused );
+    this.#app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseleave", this.#onCoronalViewBlurred );
+    this.#app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseenter", this.#onAxialViewFocused );
+    this.#app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseleave", this.#onAxialViewBlurred );
+    this.#app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseenter", this.#onSagittalViewFocused );
+    this.#app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseleave", this.#onSagittalViewBlurred );
+
+    this.#app.canvas.mainCanvas.removeEventListener( "contextmenu", this.#onMainCanvasContextMenu );
+    this.#app.canvas.mainCanvas.removeEventListener( "mousedown", this.#onMainCanvasMouseDown );
+    this.#app.canvas.mainCanvas.removeEventListener( "mouseup", this.#onMainCanvasMouseUp );
+    this.#app.canvas.mainCanvas.removeEventListener( "click", this.#onMainCanvasClicked );
+
+    document.removeEventListener( 'keydown', this.#onKeydown );
+
+    this.mouseLocation = MouseKeyboard.OFF_VIEWER;
+  }
+
+
+  #onViewerFocused = () => {
+    this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_VIEWER;
+  }
+  #onViewerBlurred = () => {
+    this.mouseLocation = this.mouseLocation & MouseKeyboard.OFF_VIEWER;
+  }
+  #onControllerFocused = () => {
+    this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CONTROLLER;
+  }
+  #onControllerBlurred = () => {
+    this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_CONTROLLER;
+  }
+  #onCoronalViewFocused = () => {
+    this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CORONAL;
+  }
+  #onCoronalViewBlurred = () => {
+    this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_CORONAL;
+  }
+  #onAxialViewFocused = () => {
+    this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_AXIAL;
+  }
+  #onAxialViewBlurred = () => {
+    this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_AXIAL;
+  }
+  #onSagittalViewFocused = () => {
+    this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_SAGITTAL;
+  }
+  #onSagittalViewBlurred = () => {
+    this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_SAGITTAL;
+  }
+  #onMainCanvasContextMenu = () => {
+    // this should fire immediately
+    this.dispatch( "viewerApp.mouseKeyboard.contextmenu", null, true );
+  }
+  #onMainCanvasMouseDown = () => {
+    // this should fire immediately
+    this._mouseDownHold = true;
+    this.dispatch( "viewerApp.mouseKeyboard.mousedown", null, true );
+  }
+  #onMainCanvasMouseUp = () => {
+    // this should fire immediately
+    this._mouseDownHold = false;
+    this.dispatch( "viewerApp.mouseKeyboard.mouseup", null, true );
+  }
+  #onMainCanvasClicked = ( event ) => {
+    // this should be fired delayed
+    this.dispatch( "viewerApp.mouseKeyboard.click", event.detail, false );
+  }
+  #onKeydown = ( event ) => {
+    if( event.isComposing || this.mouseLocation === MouseKeyboard.OFF_VIEWER ) { return; }
+    if( this.mouseLocation & MouseKeyboard.ON_CONTROLLER ) {
+      if( this.#app.controllerGUI.isFocused ) { return; }
+    }
+    event.preventDefault();
+    console.log( event.key );
+    this.dispatch( "viewerApp.mouseKeyboard.keydown", event, true );
+  }
+
+
+
+}
+
+
+
+
+
+/***/ }),
+
 /***/ 7123:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -67759,20 +67983,20 @@ class StorageCache {
 
 
 class ThrottledEventDispatcher {
-  constructor( $el, containerID, debug = false ) {
+  constructor( $wrapper, containerID, debug = false ) {
     // el must be a DOM element, no check here
-    if( $el ) {
-      if(! $el instanceof window.HTMLElement ) {
-        throw Error("new ThrottledEventDispatcher($el): `$el` must be an HTMLElement.")
+    if( $wrapper ) {
+      if(! $wrapper instanceof window.HTMLElement ) {
+        throw Error("new ThrottledEventDispatcher($wrapper): `$wrapper` must be an HTMLElement.")
       }
-      this.$el = $el;
+      this.$wrapper = $wrapper;
     } else {
-      this.$el = document.createElement("div");
+      this.$wrapper = document.createElement("div");
     }
 
     this._listeners = new Map();
     this._eventBuffers = new Map();
-    this.containerID = containerID || this.$el.getAttribute( 'data-target' );
+    this.containerID = containerID || this.$wrapper.getAttribute( 'data-target' ) || this.$wrapper.id || "UnknownContainerID";
 
     this.throttle = true;
     this.timeout = 100;
@@ -67801,11 +68025,11 @@ class ThrottledEventDispatcher {
           console.debug( `Re-registering listener - ${ _callbackId }` );
         }
         try {
-          this.$el.removeEventListener( type, existingCallback );
+          this.$wrapper.removeEventListener( type, existingCallback );
         } catch (e) {
           console.warn('Unable to dispose listener: ' + _callbackId);
         }
-        this.$el.addEventListener( type , callback , options );
+        this.$wrapper.addEventListener( type , callback , options );
       })
 
     }
@@ -67823,7 +68047,7 @@ class ThrottledEventDispatcher {
     }
 
     try {
-      this.$el.removeEventListener( name , previousCallback );
+      this.$wrapper.removeEventListener( name , previousCallback );
     } catch (e) {}
 
   }
@@ -67841,7 +68065,10 @@ class ThrottledEventDispatcher {
       throw TypeError( 'ThrottledEventDispatcher.dispatch: Can only dispatch event of none-empty type' );
     }
 
-    let buffer;
+    // whether to fire event right now
+    const immediate_ = !this.throttle || immediate;
+
+    let buffer, exists = false;
     if( !this._eventBuffers.has( type ) ) {
       buffer = {
         type: type,
@@ -67851,17 +68078,44 @@ class ThrottledEventDispatcher {
         data: data,
         dispatched: false
       }
-      this._eventBuffers.set( type , buffer );
+      if( !immediate_ ) {
+        this._eventBuffers.set( type , buffer );
+      }
     } else {
       buffer = this._eventBuffers.get( type );
       buffer.data = data;
       buffer.dispatched = false;
+      exists = true;
     }
 
-    // whether to fire event right now
-    const immediate_ = !this.throttle || immediate;
+    if( immediate_ ) {
+      buffer.dispatched = true;
+      buffer.throttlePause = false;
 
-    if( !immediate_ && buffer.throttlePause ) {
+      if( exists ) {
+        try {
+          this._eventBuffers.delete( type );
+        } catch (e) {}
+      }
+
+      const event = new CustomEvent(
+        buffer.type,
+        {
+          containerID : this.containerID,
+          container_id: this.containerID,  // compatible
+          detail: buffer.data
+        }
+      );
+
+      // Dispatch the event.
+      console.debug(`Dispatching immediate event: ${ buffer.type }`);
+      this.$wrapper.dispatchEvent(event);
+
+      return;
+    }
+
+    // the followings are for throttled
+    if( buffer.throttlePause ) {
       // update data, but hold it
       return;
     }
@@ -67871,6 +68125,13 @@ class ThrottledEventDispatcher {
     const doDispatch = () => {
 
       const data = buffer.data;
+
+      // remove buffer. It's ok if this operation fails
+      // buffer.dispatched=true will prevent buffer from being fired again
+      // this operation is to release memory
+      try {
+        this._eventBuffers.delete( type );
+      } catch (e) {}
 
       buffer.throttlePause = false;
       if( buffer.dispatched ) { return; }
@@ -67887,16 +68148,12 @@ class ThrottledEventDispatcher {
       );
 
       // Dispatch the event.
-      console.debug(`Dispatching event: ${ buffer.type }`);
-      this.$el.dispatchEvent(event);
+      console.debug(`Dispatching throttled event: ${ buffer.type }`);
+      this.$wrapper.dispatchEvent(event);
 
     };
 
-    if( immediate_ ) {
-      doDispatch();
-    } else {
-      setTimeout(() => { doDispatch(); }, this.timeout );
-    }
+    setTimeout(() => { doDispatch(); }, this.timeout );
 
   }
 
@@ -67917,18 +68174,22 @@ class ThrottledEventDispatcher {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "o": () => (/* binding */ ViewerApp)
 /* harmony export */ });
-/* harmony import */ var _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(5857);
-/* harmony import */ var _utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9898);
+/* harmony import */ var _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5857);
+/* harmony import */ var _utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(9898);
 /* harmony import */ var _EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6546);
 /* harmony import */ var _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1141);
-/* harmony import */ var _threejs_scene_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6911);
+/* harmony import */ var _ViewerCanvas_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(8683);
+/* harmony import */ var _MouseKeyboard_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6153);
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(975);
 
 
 
 
 
 
-class ViewerApp {
+
+
+class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5__/* .ThrottledEventDispatcher */ .v {
 
   constructor({
 
@@ -67946,24 +68207,18 @@ class ViewerApp {
 
   }) {
 
+    super( $wrapper );
+
     // Flags
     this.DEBUG = debug;
     this.isViewerApp = true;
     this.controllerClosed = false;
-    // this.outputId = this.$wrapper.getAttribute( 'data-target' );
 
-    // events
-    this._eventDispatcher = new _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_3__/* .ThrottledEventDispatcher */ .v( this.$wrapper );
-    this.bind = this._eventDispatcher.bind;
-    this.unbind = this._eventDispatcher.unbind;
-    this.dispatch = this._eventDispatcher.dispatch;
+    // this.outputId = this.$wrapper.getAttribute( 'data-target' );
 
     // data
     this.geoms = [];
     this.settings = {};
-
-
-
 
     // ---- initialize : DOM elements ------------------------------------------
     /** The layout is:
@@ -68036,7 +68291,7 @@ class ViewerApp {
     this.$wrapper.appendChild( this.$settingsPanel );
 
     // --- B Canvas container ------------------------------------------------
-    this.canvas = new _threejs_scene_js__WEBPACK_IMPORTED_MODULE_2__/* .THREEBRAIN_CANVAS */ .S(
+    this.canvas = new _ViewerCanvas_js__WEBPACK_IMPORTED_MODULE_2__/* .ViewerCanvas */ .W(
       this.$wrapper,
       width ?? this.$wrapper.clientWidth,
       height ?? this.$wrapper.clientHeight,
@@ -68044,10 +68299,17 @@ class ViewerApp {
 
     this.canvas.animate();
 
+    // Add listeners for mouse
+    this.mouseKeyboard = new _MouseKeyboard_js__WEBPACK_IMPORTED_MODULE_3__/* .MouseKeyboard */ .q( this );
+
+
   }
 
+  get mouseLocation () { return this.mouseKeyboard.mouseLocation; }
+
   dispose() {
-    this._eventDispatcher.dispose();
+    super.dispose();
+    this.mouseKeyboard.dispose();
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
     }
@@ -68182,15 +68444,18 @@ class ViewerApp {
 
 
   enableDebugger() {
-    window.__ctrller = this;
+    window.app = this;
     window.groups = this.groups;
     window.geoms = this.geoms;
     window.settings = this.settings;
     window.canvas = this.canvas;
     window.controllerGUI = this.controllerGUI;
+    this.canvas.addNerdStats();
   }
 
   async updateData({ data, reset = false, isObsolete = false }) {
+
+    this.dispatch( "viewerApp.updateData.start", {}, true );
 
     const _isObsolete = ( args ) => {
       if( typeof isObsolete !== 'function' ) { return isObsolete; }
@@ -68208,12 +68473,12 @@ class ViewerApp {
       this.controllerGUI = undefined;
     }
 
-    this.groups = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( data.groups );
-    this.geoms = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( data.geoms );
+    this.groups = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( data.groups );
+    this.geoms = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( data.geoms );
     this.settings = data.settings;
     this.initialControllerValues = data.settings.default_controllers || {};
     this.hasAnimation = data.settings.has_animation;
-    this.colorMaps = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( data.settings.color_maps );
+    this.colorMaps = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( data.settings.color_maps );
 
     // canvas flags
     this.canvas.DEBUG = this.DEBUG;
@@ -68300,7 +68565,7 @@ class ViewerApp {
     await Promise.all( geomPromises );
     if( _isObsolete() ) { return; }
 
-    this.canvas.finish_init();
+    // this.canvas.finish_init();
 
     this.setProgressBar({
       progress : 100,
@@ -68344,17 +68609,6 @@ class ViewerApp {
       this.canvas.disableSideCanvas();
     }
 
-    /* FIXME
-    if( !this.hide_controls ){
-      // controller is displayed
-      if( display_controllers ){
-        this.gui.open();
-      } else {
-        this.gui.close();
-      }
-    }
-    */
-
     this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
 
     // remember last settings
@@ -68385,25 +68639,19 @@ class ViewerApp {
       if( this.canvas.DEBUG ){
         console.debug("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
       }
-
-      const _f = (groups, geoms, settings, scene,
-        canvas, gui, presets, shiny, tools
-      ) => {
+      (( viewerApp ) => {
         try {
           eval( this.settings.custom_javascript );
         } catch (e) {
           console.warn(e);
         }
-      };
-
-      _f( this.groups, this.geoms, this.settings, this.scene,
-          this.canvas, this.controllerGUI, this.controlCenter,
-          this.presets, this.shiny, utils_toolbox );
-
+      })( this );
     }
 
     // Make sure it's hidden though progress will hide it
     this.$informationContainer.style.display = 'none';
+
+    this.dispatch( "viewerApp.updateData.end", {}, true );
 
   }
 
@@ -68480,7 +68728,7 @@ class ViewerApp {
 
     // ---- Add Presets --------------------------------------------------------
     let animationControllerRegistered = false;
-    (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_4__/* .asArray */ ._)( enabledPresets ).forEach(( presetName ) => {
+    (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( enabledPresets ).forEach(( presetName ) => {
 
       try {
         if( presetName === 'animation' ){
@@ -68498,6 +68746,10068 @@ class ViewerApp {
     }
   }
 }
+
+
+
+
+/***/ }),
+
+/***/ 8683:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  "W": () => (/* binding */ ViewerCanvas)
+});
+
+// EXTERNAL MODULE: ./node_modules/three/build/three.module.js
+var three_module = __webpack_require__(2212);
+// EXTERNAL MODULE: ./src/js/utility/asArray.js
+var asArray = __webpack_require__(9898);
+// EXTERNAL MODULE: ./src/js/utils.js
+var utils = __webpack_require__(3658);
+;// CONCATENATED MODULE: ./src/js/core/HauntedArcballControls.js
+
+
+const STATE = {
+  NONE: - 1,
+  ROTATE: 0,
+  ZOOM: 1,
+  PAN: 2,
+  TOUCH_ROTATE: 3,
+  TOUCH_ZOOM_PAN: 4
+};
+const EPS = 0.000001;
+
+// events
+const _changeEvent = { type: 'change' };
+const _startEvent = { type: 'start' };
+const _endEvent = { type: 'end' };
+
+class HauntedArcballControls extends three_module.EventDispatcher {
+  constructor( canvas ) {
+    super();
+
+    this._canvas = canvas;
+    this.object = this._canvas.mainCamera;
+  	this.domElement = this._canvas.main_canvas;
+
+  	// API
+
+  	this.enabled = true;
+
+  	this.screen = { left: 0, top: 0, width: 0, height: 0 };
+
+  	this.radius = 0;
+
+  	this.rotateSpeed = 1.0;
+  	this.zoomSpeed = 1.2;
+
+  	this.noRotate = false;
+  	this.noZoom = false;
+  	this.noPan = false;
+  	this.noRoll = false;
+
+  	this.staticMoving = false;
+  	this.dynamicDampingFactor = 0.2;
+
+  	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
+
+  	// internals
+	  this.target = new three_module.Vector3();
+    this._changed = true;
+    this._state = STATE.NONE;
+		this._prevState = STATE.NONE;
+
+		this._eye = new three_module.Vector3();
+
+		this._rotateStart = new three_module.Vector3();
+		this._rotateEnd = new three_module.Vector3();
+
+		this._zoomStart = new three_module.Vector2();
+		this._zoomEnd = new three_module.Vector2();
+
+		this._touchZoomDistanceStart = 0;
+		this._touchZoomDistanceEnd = 0;
+
+		this._panStart = new three_module.Vector2();
+		this._panEnd = new three_module.Vector2();
+		this._mouseOnScreen = new three_module.Vector2();
+
+		// project mouse to trackball
+		this._projectedOnBall = new three_module.Vector3();
+		this._objectUp = new three_module.Vector3();
+		this._mouseOnBall = new three_module.Vector3();
+
+		// rotation
+		this._rotateAxis = new three_module.Vector3();
+		this._rotateQuaternion = new three_module.Quaternion();
+		this._isRotating = false;
+
+		// zoom
+		this._isZooming = false;
+
+		// pan
+		this._panMouseChange = new three_module.Vector2(),
+		this._panDirection = new three_module.Vector3(),
+		this._isPanning = false;
+
+		// for reset
+
+  	this.target0 = this.target.clone();
+  	this.position0 = this.object.position.clone();
+  	this.up0 = this.object.up.clone();
+
+  	this.left0 = this.object.left;
+  	this.right0 = this.object.right;
+  	this.top0 = this.object.top;
+  	this.bottom0 = this.object.bottom;
+
+  	// Specialized for threeBrain
+  	this.zoomSpeed = 0.02;
+  	this.noPan = false;
+  	this.zoomMax = 10;
+  	this.zoomMin = 0.5;
+
+  	// Initial radius is 500
+  	// orthographic.radius = 400;
+  	this.dynamicDampingFactor=0.5;
+
+    // finalize
+    this.domElement.addEventListener( 'contextmenu', this.onContextmenu, false );
+  	this.domElement.addEventListener( 'mousedown', this.onMousedown, false );
+  	this.domElement.addEventListener( 'wheel', this.onMousewheel, false );
+
+  	this.domElement.addEventListener( 'touchstart', this.onTouchstart, false );
+  	this.domElement.addEventListener( 'touchend', this.onTouchend, false );
+  	this.domElement.addEventListener( 'touchmove', this.onTouchmove, false );
+
+  	window.addEventListener( 'keydown', this.onKeydown, false );
+  	window.addEventListener( 'keyup', this.onKeyup, false );
+
+  	this.handleResize();
+
+  	// force an update at start
+  	this.update();
+
+  }
+
+  dispatchEvent( event ) {
+    if ( this.enabled === false || typeof event !== "object" ) return;
+
+    if( event.type == "start" || event.type == "change" ) {
+      /*
+      if( this._canvas.render_flag < 0 ) {
+        this._canvas.handle_resize(undefined, undefined, true);
+      }
+      */
+      this._canvas.start_animation( 0 );
+    } else if ( event.type == "end" ) {
+      this._canvas.pause_animation( 1 );
+      this._canvas.dispatch_event( "canvas.mainCamera.onEnd", this.object.getState() );
+    }
+
+    super.dispatchEvent( event );
+  }
+
+  handleResize = () => {
+
+    if ( this.domElement === document ) {
+
+			this.screen.left = 0;
+			this.screen.top = 0;
+			this.screen.width = window.innerWidth;
+			this.screen.height = window.innerHeight;
+
+		} else {
+
+			const box = this.domElement.getBoundingClientRect();
+			// adjustments come from similar code in the jquery offset() function
+			const d = this.domElement.ownerDocument.documentElement;
+			this.screen.left = box.left + window.pageXOffset - d.clientLeft;
+			this.screen.top = box.top + window.pageYOffset - d.clientTop;
+			this.screen.width = box.width;
+			this.screen.height = box.height;
+
+		}
+
+		this.radius = 0.5 * Math.min( this.screen.width, this.screen.height );
+
+		this.left0 = this.object.left;
+		this.right0 = this.object.right;
+		this.top0 = this.object.top;
+		this.bottom0 = this.object.bottom;
+
+  }
+
+  getMouseOnScreen = ( pageX, pageY ) => {
+    this._mouseOnScreen.set(
+      ( pageX - this.screen.left ) / this.screen.width,
+			( pageY - this.screen.top ) / this.screen.height
+    );
+    return this._mouseOnScreen;
+  }
+
+  getMouseProjectionOnBall = ( pageX, pageY, fix_axis = 0 ) => {
+		this._mouseOnBall.set(
+			( pageX - this.screen.width * 0.5 - this.screen.left ) / this.radius,
+			( this.screen.height * 0.5 + this.screen.top - pageY ) / this.radius,
+			0.0
+		);
+		let length = this._mouseOnBall.length();
+		if( fix_axis === 1 ){
+		  // Fix x
+		  this._mouseOnBall.x = 0;
+		  length = Math.abs( this._mouseOnBall.y );
+		}else if ( fix_axis === 2 ){
+		  this._mouseOnBall.y = 0;
+		  length = Math.abs( this._mouseOnBall.x );
+		}else if ( fix_axis === 3 ){
+		  this._mouseOnBall.normalize();
+		  length = 1;
+		}
+
+		if ( this.noRoll ) {
+			if ( length < Math.SQRT1_2 ) {
+				this._mouseOnBall.z = Math.sqrt( 1.0 - length * length );
+			} else {
+				this._mouseOnBall.z = 0.5 / length;
+			}
+		} else if ( length > 1.0 ) {
+			this._mouseOnBall.normalize();
+		} else {
+			this._mouseOnBall.z = Math.sqrt( 1.0 - length * length );
+		}
+		this._eye.copy( this.object.position ).sub( this.target );
+
+		this._projectedOnBall.copy( this.object.up ).setLength( this._mouseOnBall.y );
+		this._projectedOnBall.add( this._objectUp.copy( this.object.up ).cross( this._eye ).setLength( this._mouseOnBall.x ) );
+		this._projectedOnBall.add( this._eye.setLength( this._mouseOnBall.z ) );
+		return this._projectedOnBall;
+
+  }
+
+  rotateCamera = () => {
+
+		let angle = Math.acos( this._rotateStart.dot( this._rotateEnd ) / this._rotateStart.length() / this._rotateEnd.length() );
+
+		if( angle ) {
+	    // start event
+		  this._isRotating = true;
+		  this.dispatchEvent( _startEvent );
+
+			this._rotateAxis.crossVectors( this._rotateStart, this._rotateEnd ).normalize();
+
+			angle *= this.rotateSpeed;
+
+			this._rotateQuaternion.setFromAxisAngle( this._rotateAxis, - angle );
+
+			this._eye.applyQuaternion( this._rotateQuaternion );
+
+			this.object.up.applyQuaternion( this._rotateQuaternion );
+
+			this._rotateEnd.applyQuaternion( this._rotateQuaternion );
+
+			if ( this.staticMoving ) {
+
+				this._rotateStart.copy( this._rotateEnd );
+
+			} else {
+
+				this._rotateQuaternion.setFromAxisAngle( this._rotateAxis, angle * ( this.dynamicDampingFactor - 1.0 ) );
+				this._rotateStart.applyQuaternion( this._rotateQuaternion );
+
+			}
+
+			this._isRotating = true;
+
+		}else if ( this._isRotating ){
+		  this._isRotating = false;
+		  this.dispatchEvent( _endEvent );
+		}
+  }
+
+  zoomCamera = () => {
+
+    if ( this._state === STATE.TOUCH_ZOOM_PAN ) {
+
+			let factor = this._touchZoomDistanceEnd / this._touchZoomDistanceStart;
+			this._touchZoomDistanceStart = this._touchZoomDistanceEnd;
+
+      if( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ){
+
+        // start event
+			  this._isZooming = true;
+			  this.dispatchEvent( _startEvent );
+
+
+        this.object.zoom *= factor;
+        if( this.object.zoom > this.zoomMax ) {
+          this.object.zoom = this.zoomMax;
+        } else if ( this.object.zoom < this.zoomMin ) {
+          this.object.zoom = this.zoomMin;
+        }
+
+        this._changed = true;
+      }else if( this._isZooming ){
+			  // stop event
+			  this._isZooming = false;
+			  this.dispatchEvent( _endEvent );
+			}
+
+		} else {
+
+			let factor = 1.0 + ( this._zoomEnd.y - this._zoomStart.y ) * this.zoomSpeed;
+
+			if ( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ) {
+
+			  // start event
+			  this._isZooming = true;
+			  this.dispatchEvent( _startEvent );
+
+				this.object.zoom /= factor;
+
+				if( this.object.zoom > this.zoomMax ) {
+
+          this.object.zoom = this.zoomMax;
+          this._zoomStart.copy( this._zoomEnd );
+
+        } else if ( this.object.zoom < this.zoomMin ) {
+
+          this.object.zoom = this.zoomMin;
+          this._zoomStart.copy( this._zoomEnd );
+
+        } else if ( this.staticMoving ) {
+
+					this._zoomStart.copy( this._zoomEnd );
+
+				} else {
+
+					this._zoomStart.y += ( this._zoomEnd.y - this._zoomStart.y ) * this.dynamicDampingFactor;
+
+				}
+
+				this._changed = true;
+
+			}else if( this._isZooming ){
+			  // stop event
+			  this._isZooming = false;
+			  this.dispatchEvent( _endEvent );
+			}
+
+		}
+  }
+
+  panCamera = () => {
+    // this._panMouseChange = new Vector2(),
+		// this._panDirection = new Vector3(),
+		// this._isPanning = false;
+		// this._objectUp
+		this._panMouseChange.copy( this._panEnd ).sub( this._panStart );
+
+		if ( this._panMouseChange.lengthSq() > 0.00001 ) {
+		  // start event
+		  this._isPanning = true;
+		  this.dispatchEvent( _startEvent );
+
+			// Scale movement to keep clicked/dragged position under cursor
+			let scale_x = ( this.object.right - this.object.left ) / this.object.zoom;
+			let scale_y = ( this.object.top - this.object.bottom ) / this.object.zoom;
+			this._panMouseChange.x *= scale_x;
+			this._panMouseChange.y *= scale_y;
+
+			this._panDirection.copy( this._eye )
+			  .cross( this.object.up ).setLength( this._panMouseChange.x );
+			this._panDirection.add( this._objectUp.copy( this.object.up ).setLength( this._panMouseChange.y ) );
+
+			this.object.right = this.object.right - this._panMouseChange.x / 2;
+			this.object.left = this.object.left - this._panMouseChange.x / 2;
+			this.object.top = this.object.top + this._panMouseChange.y / 2;
+			this.object.bottom = this.object.bottom + this._panMouseChange.y / 2;
+
+			this.left0 = this.object.left;
+  		this.right0 = this.object.right;
+  		this.top0 = this.object.top;
+  		this.bottom0 = this.object.bottom;
+
+			if ( this.staticMoving ) {
+
+				this._panStart.copy( this._panEnd );
+
+			} else {
+
+				this._panStart.add( this._panMouseChange.subVectors( this._panEnd, this._panStart ).multiplyScalar( this.dynamicDampingFactor ) );
+
+			}
+
+			this._changed = true;
+
+		}else if (this._isPanning){
+		  this._isPanning = false;
+		  this.dispatchEvent( _endEvent );
+		}
+
+  }
+
+  update = () => {
+    this._eye.subVectors( this.object.position, this.target );
+
+		if ( ! this.noRotate ) {
+
+			this.rotateCamera();
+
+		}
+
+		if ( ! this.noZoom ) {
+
+			this.zoomCamera();
+
+			if ( this._changed ) {
+
+				this.object.updateProjectionMatrix();
+
+			}
+
+		}
+
+		if ( ! this.noPan ) {
+
+			this.panCamera();
+
+			if ( this._changed ) {
+
+				this.object.updateProjectionMatrix();
+
+			}
+
+		}
+
+		this.object.position.addVectors( this.target, this._eye );
+
+		this.object.lookAt( this.target );
+
+		if ( this._changed ) {
+
+			this.dispatchEvent( _changeEvent );
+
+			this._changed = false;
+
+		}
+  }
+
+  lookAt = ({ x , y , z , remember = false } = {}) => {
+    if( typeof x === "number" ) { this.target.x = x; }
+    if( typeof y === "number" ) { this.target.y = y; }
+    if( typeof z === "number" ) { this.target.z = z; }
+
+    if( remember ) {
+      this.target0.copy( this.target );
+    }
+  }
+
+  reset = () => {
+    this._state = STATE.NONE;
+		this._prevState = STATE.NONE;
+
+		this.target.copy( this.target0 );
+		this.object.position.copy( this.position0 );
+		this.object.up.copy( this.up0 );
+
+		this._eye.subVectors( this.object.position, this.target );
+
+		this.object.left = this.left0;
+		this.object.right = this.right0;
+		this.object.top = this.top0;
+		this.object.bottom = this.bottom0;
+
+		this.object.lookAt( this.target );
+
+		this.dispatchEvent( _changeEvent );
+
+		this._changed = false;
+  }
+
+  // listeners
+  onKeydown = ( event ) => {
+    if ( this.enabled === false ) return;
+    window.removeEventListener( 'keydown', this.onKeydown );
+    this._prevState = this._state;
+
+		if ( this._state !== STATE.NONE ) {
+			return;
+		} else if ( event.keyCode === this.keys[ STATE.ROTATE ] && ! this.noRotate ) {
+
+			this._state = STATE.ROTATE;
+
+		} else if ( event.keyCode === this.keys[ STATE.ZOOM ] && ! this.noZoom ) {
+
+			this._state = STATE.ZOOM;
+
+		} else if ( event.keyCode === this.keys[ STATE.PAN ] && ! this.noPan ) {
+
+			this._state = STATE.PAN;
+
+		}
+  }
+
+  onKeyup = ( event ) => {
+    if ( this.enabled === false ) return;
+
+    this._state = this._prevState;
+
+		window.addEventListener( 'keydown', this.onKeydown, false );
+  }
+
+  onMousedown = ( event ) => {
+    if ( this.enabled === false ) return;
+    event.preventDefault();
+		event.stopPropagation();
+
+		if ( this._state === STATE.NONE ) {
+			this._state = event.button;
+		}
+		if ( this._state === STATE.ROTATE && ! this.noRotate ) {
+		  // fix axis? altKey -> 3, ctrl -> 2, shift -> 1
+
+			this._rotateStart.copy( this.getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
+			this._rotateEnd.copy( this._rotateStart );
+		} else if ( this._state === STATE.ZOOM && ! this.noZoom ) {
+		  this._zoomStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+			this._zoomEnd.copy( this._zoomStart );
+		} else if ( this._state === STATE.PAN && ! this.noPan ) {
+
+			this._panStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+			this._panEnd.copy( this._panStart );
+
+		}
+
+		document.addEventListener( 'mousemove', this.onMousemove, false );
+		document.addEventListener( 'mouseup', this.onMouseup, false );
+    this.dispatchEvent( _startEvent );
+  }
+
+  onMousemove = ( event ) => {
+    if ( this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		if ( this._state === STATE.ROTATE && ! this.noRotate ) {
+
+			this._rotateEnd.copy( this.getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
+
+		} else if ( this._state === STATE.ZOOM && ! this.noZoom ) {
+
+			this._zoomEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+
+		} else if ( this._state === STATE.PAN && ! this.noPan ) {
+
+			this._panEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
+
+		}
+  }
+
+  onMouseup = ( event ) => {
+
+		if ( this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		this._state = STATE.NONE;
+
+		document.removeEventListener( 'mousemove', this.onMousemove );
+		document.removeEventListener( 'mouseup', this.onMouseup );
+		this.dispatchEvent( _endEvent );
+
+	}
+
+	onMousewheel = ( event ) => {
+
+		if ( this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		this._zoomStart.y += event.deltaY * 0.01;
+		this.dispatchEvent( _startEvent );
+		this.dispatchEvent( _endEvent );
+
+	}
+
+	onTouchstart = ( event ) => {
+
+		if ( this.enabled === false ) return;
+
+		switch ( event.touches.length ) {
+
+			case 1:
+				this._state = STATE.TOUCH_ROTATE;
+				this._rotateStart.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				this._rotateEnd.copy( this._rotateStart );
+				break;
+
+			case 2:
+				this._state = STATE.TOUCH_ZOOM_PAN;
+				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+				this._touchZoomDistanceEnd = this._touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
+
+				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				this._panStart.copy( this.getMouseOnScreen( x, y ) );
+				this._panEnd.copy( this._panStart );
+				break;
+
+			default:
+				this._state = STATE.NONE;
+
+		}
+		this.dispatchEvent( _startEvent );
+
+	}
+
+	onTouchmove = ( event ) => {
+
+		if ( this.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		switch ( event.touches.length ) {
+
+			case 1:
+				this._rotateEnd.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				break;
+
+			case 2:
+				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+				this._touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
+
+				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				this._panEnd.copy( this.getMouseOnScreen( x, y ) );
+				break;
+
+			default:
+				this._state = STATE.NONE;
+
+		}
+
+	}
+
+	onTouchend = ( event ) => {
+
+		if ( this.enabled === false ) return;
+
+		switch ( event.touches.length ) {
+
+			case 1:
+				this._rotateEnd.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				this._rotateStart.copy( this._rotateEnd );
+				break;
+
+			case 2:
+				this._touchZoomDistanceStart = this._touchZoomDistanceEnd = 0;
+
+				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				this._panEnd.copy( this.getMouseOnScreen( x, y ) );
+				this._panStart.copy( this._panEnd );
+				break;
+
+		}
+
+		this._state = STATE.NONE;
+		this.dispatchEvent( _endEvent );
+
+	}
+
+	onContextmenu = ( event ) => {
+
+		event.preventDefault();
+
+	}
+
+  dispose = () => {
+    this.domElement.removeEventListener( 'contextmenu', this.onContextmenu, false );
+		this.domElement.removeEventListener( 'mousedown', this.onMousedown, false );
+		this.domElement.removeEventListener( 'wheel', this.onMousewheel, false );
+
+		this.domElement.removeEventListener( 'touchstart', this.onTouchstart, false );
+		this.domElement.removeEventListener( 'touchend', this.onTouchend, false );
+		this.domElement.removeEventListener( 'touchmove', this.onTouchmove, false );
+
+		document.removeEventListener( 'mousemove', this.onMousemove, false );
+		document.removeEventListener( 'mouseup', this.onMouseup, false );
+
+		window.removeEventListener( 'keydown', this.onKeydown, false );
+		window.removeEventListener( 'keyup', this.onKeyup, false );
+  }
+}
+
+
+
+// EXTERNAL MODULE: ./src/js/constants.js
+var constants = __webpack_require__(975);
+;// CONCATENATED MODULE: ./src/js/core/HauntedOrthographicCamera.js
+
+
+
+const DEFAULT_CAMERA_LEFT = 150;
+
+class HauntedOrthographicCamera extends three_module.OrthographicCamera {
+  constructor ( canvas, width, height, near = 1, far = 10000 ) {
+    super(
+      -DEFAULT_CAMERA_LEFT, DEFAULT_CAMERA_LEFT,
+      height / width * DEFAULT_CAMERA_LEFT,
+      -height / width * DEFAULT_CAMERA_LEFT, near, far );
+
+    this._canvas = canvas;
+
+    this._originalPosition = new three_module.Vector3( 500, 0, 0 );
+
+    // getState()
+    this._stateTarget = new three_module.Vector3( 500, 0, 0 );
+    this._stateUp = new three_module.Vector3( 500, 0, 0 );
+    this._statePosition = new three_module.Vector3( 500, 0, 0 );
+
+    this.position.copy( this._originalPosition );
+		this.up.set(0,0,1);
+		this.layers.set( constants/* CONSTANTS.LAYER_USER_MAIN_CAMERA_0 */.t.LAYER_USER_MAIN_CAMERA_0 );
+		this.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
+		this.layers.enable( 2 );
+		this.layers.enable( 3 );
+		this.layers.enable( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
+		this.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+		this.lookAt( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN ); // Force camera
+
+		// Main camera light, casting from behind the mainCamera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
+		this.backLight = new three_module.DirectionalLight( constants/* CONSTANTS.COLOR_MAIN_LIGHT */.t.COLOR_MAIN_LIGHT , 0.5 );
+    this.backLight.position.copy( constants/* CONSTANTS.VEC_ANAT_I */.t.VEC_ANAT_I );
+    this.backLight.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+    this.backLight.name = 'main light - directional';
+    this.add( this.backLight );
+
+
+    // listeners
+    // zoom-in, zoom-out
+    this._canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_ZOOM */.t.KEY_ZOOM, this.onKeyboardZoom, 'zoom');
+
+  }
+
+  onKeyboardZoom = ( event ) => {
+    if( event.event.shiftKey ){
+      this.zoom = this.zoom * 1.2; // zoom in
+    }else{
+      this.zoom = this.zoom / 1.2; // zoom out
+    }
+    this.updateProjectionMatrix();
+    this._canvas.start_animation( 0 );
+  }
+
+  handleResize() {
+    const _ratio1 = this._canvas.client_height / this._canvas.client_width
+    const _ratio2 = ( this.right - this.left ) / ( this.top - this.bottom );
+	  this.top = _ratio1 * ( this.top * _ratio2 ||  DEFAULT_CAMERA_LEFT );
+	  this.bottom = _ratio1 * ( this.bottom * _ratio2 || -DEFAULT_CAMERA_LEFT );
+    this.updateProjectionMatrix();
+  }
+
+  setPosition({ x, y, z, forceZUp = false, remember = false, updateProjection = true } = {}) {
+    if( typeof x === "number" ) { this.position.x = x; }
+    if( typeof y === "number" ) { this.position.y = y; }
+    if( typeof z === "number" ) { this.position.z = z; }
+
+    if( this.position.length() < 0.00001 ) {
+      this.position.set(0, 0, 500);
+    }
+    this.position.normalize().multiplyScalar( 500 );
+
+    if( forceZUp ) {
+      if( this.position.x !== 0 || this.position.y !== 0 ) {
+        this.up.set( 0, 0, 1 );
+      } else {
+        this.up.set( 0, 1, 0 );
+      }
+    }
+
+    if( remember ) {
+      this._originalPosition.copy( this.position );
+    }
+    if( updateProjection ) {
+      this.updateProjectionMatrix();
+    }
+  }
+
+  setPosition2( str ) {
+    // str can be left, right, anterior, posterior, superior, inferior
+    const str2 = str.toLowerCase()[0];
+    switch (str2) {
+      case 'r':
+        this.position.set( 500, 0, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 'l':
+        this.position.set( -500, 0, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 'a':
+        this.position.set( 0, 500, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 'p':
+        this.position.set( 0, -500, 0 );
+        this.up.set( 0, 0, 1 );
+        break;
+      case 's':
+        this.position.set( 0, 0, 500 );
+        this.up.set( 0, 1, 0 );
+        break;
+      case 'i':
+        this.position.set( 0, 0, -500 );
+        this.up.set( 0, 1, 0 );
+        break;
+    }
+  }
+
+  setZoom({ zoom, updateProjection = true } = {}) {
+    if( zoom !== undefined ){
+      this.zoom = zoom;
+      if( updateProjection ) {
+        this.updateProjectionMatrix();
+      }
+    }
+  }
+
+  reset({ fov = true, position = true, zoom = true } = {}) {
+
+    if( fov ) {
+      const _ratio = this._canvas.client_height / this._canvas.client_width;
+      this.left = -DEFAULT_CAMERA_LEFT;
+      this.right = DEFAULT_CAMERA_LEFT;
+      this.top = _ratio * DEFAULT_CAMERA_LEFT;
+      this.bottom = - _ratio * DEFAULT_CAMERA_LEFT;
+    }
+
+    if( position ) {
+      this.setPosition( { updateProjection : false } );
+
+      if( this.position.x !== 0 || this.position.y !== 0 ) {
+        this.up.set( 0, 0, 1 );
+      } else {
+        this.up.set( 0, 1, 0 );
+      }
+    }
+    if( zoom ) {
+      this.setZoom( { zoom: 1, updateProjection : false } );
+    }
+    this.updateProjectionMatrix();
+
+  }
+
+  getState() {
+
+    return({
+      //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
+      'target' : this.localToWorld( this._stateTarget.set(0, 0, 0) ),
+
+      // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
+      'up' : this._stateUp.copy( this.up ),
+
+      //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
+      'position': this._statePosition.copy( this.position ),
+
+      'zoom' : this.zoom
+    });
+  }
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/core/AnimationParameters.js
+
+
+class AnimationParameters extends three_module.EventDispatcher {
+  constructor () {
+    super();
+    this._eventDispatcher = new three_module.EventDispatcher();
+    this.object = {
+      'Play/Pause' : false,
+      'Time' : 0,
+      'Speed' : 1
+    }
+    this.exists = false;
+    this.min = 0;
+    this.max = 0;
+    this.loop = true;
+    this.display = '[None]';
+    this.threshold = '[None]';
+
+    this._clock = new three_module.Clock();
+    this.oldTime = 0;
+    this.clockDelta = 0;
+
+    this.userData = {
+      objectFocused : {
+        enabled : false,
+        position : new three_module.Vector3(),
+        templateMapping : {}
+      }
+    };
+  }
+  get play() {
+    return this.object[ 'Play/Pause' ];
+  }
+  get time() {
+    return this.object[ 'Time' ];
+  }
+  get speed() {
+    return this.object[ 'Speed' ];
+  }
+  get renderLegend() {
+    return this.object[ 'Show Legend' ] ?? true;
+  }
+
+  get renderTimestamp () {
+    return this.object['Show Time'] ?? false;
+  }
+
+  set time ( v ) {
+    if( typeof v !== "number" ) {
+      v = this.min;
+    } else {
+      if( v < this.min ) {
+        v = this.min;
+      } else if( v > this.max ) {
+        v = v - this.max + this.min;
+        if( v > this.max ) {
+          v = this.min;
+        }
+      }
+    }
+    this.object[ 'Time' ] = v;
+    this._eventDispatcher.dispatchEvent({
+      type : "animation.time.onChange",
+      value : v
+    })
+  }
+
+  dispose() {
+    this._clock.stop();
+  }
+
+  get elapsedTime () {
+    return (this.time - this.oldTime) / 1000;
+  }
+
+  get trackPosition () {
+    return this.time - this.min;
+  }
+
+  incrementTime () {
+    // tok clock anyway
+
+    const clockDelta = this._clock.getDelta();
+    this.oldTime = this.time;
+
+    if( !this.exists ) {
+      this.clockDelta = 0;
+      this.currentTime = 0;
+      return false;
+    }
+
+    this.clockDelta = clockDelta;
+
+    // update time
+    if( this.play ) {
+      this.time = this.oldTime + this.clockDelta * this.speed;
+      return true;
+    }
+    return false;
+
+
+  }
+
+}
+
+
+
+// EXTERNAL MODULE: ./src/js/core/context.js + 2 modules
+var context = __webpack_require__(6326);
+// EXTERNAL MODULE: ./node_modules/nifti-reader-js/src/nifti.js
+var nifti = __webpack_require__(4075);
+var nifti_default = /*#__PURE__*/__webpack_require__.n(nifti);
+;// CONCATENATED MODULE: ./src/js/core/loaders.js
+
+
+
+class NiftiImage {
+  constructor ( data ) {
+    // parse nifti
+    if (nifti_default().isCompressed(data)) {
+        data = nifti_default().decompress(data);
+    }
+
+    this.header = nifti_default().readHeader(data);
+    const niftiImage = nifti_default().readImage(this.header, data);
+    if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_INT8) {
+      this.image = new Int8Array(niftiImage);
+      this.dataIsInt8 = true;
+    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_INT16) {
+      this.image = new Int16Array(niftiImage);
+      this.dataIsInt16 = true;
+    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_INT32) {
+      this.image = new Int32Array(niftiImage);
+      this.dataIsInt32 = true;
+    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_FLOAT32) {
+      this.image = new Float32Array(niftiImage);
+      this.dataIsFloat32 = true;
+    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_FLOAT64) {
+      this.image = new Float64Array(niftiImage);
+      this.dataIsFloat64 = true;
+    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_UINT8) {
+      this.image = new Uint8Array(niftiImage);
+      this.dataIsUInt8 = true;
+    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_UINT16) {
+      this.image = new Uint16Array(niftiImage);
+      this.dataIsUInt16 = true;
+    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_UINT32) {
+      this.image = new Uint32Array(niftiImage);
+      this.dataIsUInt32 = true;
+    } else {
+      console.warn("NiftiImage: Cannot load NIFTI image data: the data type code is unsupported.")
+      this.image = undefined;
+    }
+
+    this.isNiftiImage = true;
+
+    // IJK to RAS
+    this.affine = new three_module.Matrix4().set(
+      this.header.affine[0][0],
+      this.header.affine[0][1],
+      this.header.affine[0][2],
+      this.header.affine[0][3],
+      this.header.affine[1][0],
+      this.header.affine[1][1],
+      this.header.affine[1][2],
+      this.header.affine[1][3],
+      this.header.affine[2][0],
+      this.header.affine[2][1],
+      this.header.affine[2][2],
+      this.header.affine[2][3],
+      this.header.affine[3][0],
+      this.header.affine[3][1],
+      this.header.affine[3][2],
+      this.header.affine[3][3]
+    );
+    this.shape = [
+      this.header.dims[1],
+      this.header.dims[2],
+      this.header.dims[3]
+    ];
+
+    // threeBrain uses the volume center as origin, hence the transform
+    // is shifted
+    const shift = new three_module.Matrix4().set(
+      1, 0, 0, this.shape[0] / 2,
+      0, 1, 0, this.shape[1] / 2,
+      0, 0, 1, this.shape[2] / 2,
+      0, 0, 0, 1
+    );
+
+    // IJK to scanner RAS (of the image)
+    this.model2RAS = this.affine.clone().multiply( shift );
+
+  }
+
+}
+
+class CanvasFileLoader {
+
+  constructor( canvas ) {
+    this.canvas = canvas;
+    this.cache = this.canvas.cache;
+    this.use_cache = this.canvas.use_cache;
+    this.fileReader = new FileReader();
+    this._currentFile = "";
+    this._currentType = "json";
+    this._currentCallback = null;
+    this._idle = true;
+
+    this.fileReader.addEventListener("loadstart", e => {
+      this._idle = false;
+      this._onLoadStart(e);
+    });
+    this.fileReader.addEventListener("loadend", e => {
+      // this._idle = true;
+    });
+    this.fileReader.addEventListener("load", e => {
+      e.currentFile = this._currentFile;
+      e.currentType = this._currentType;
+      this._onLoad(e, this._currentCallback);
+      this._idle = true;
+    });
+
+  }
+
+  _ensureIdle( callback ) {
+    return new Promise((resolve) => {
+      const checkIdle = () => {
+        if( this._idle ) {
+          this._idle  = false;
+          resolve( callback() );
+        } else {
+          setTimeout(checkIdle, 10);
+        }
+      }
+      checkIdle();
+    });
+  }
+
+  read( url ) {
+    const urlLowerCase = url.toLowerCase();
+    if( urlLowerCase.endsWith("nii") || urlLowerCase.endsWith("gz") ) {
+      return this.readNIFTI( url );
+    } else {
+      return this.readJSON( url );
+    }
+  }
+
+  readNIFTI( url ) {
+    return new Promise((resolve) => {
+      if( this.cache.check_item( url ) ){
+        resolve( this.cache.get_item( url ) );
+      } else {
+        fetch(url).then( r => r.blob() ).then( blob => {
+          this._ensureIdle(() => {
+            this._currentFile = url;
+            this._currentType = "nii";
+            this._currentCallback = resolve;
+            this.fileReader.readAsArrayBuffer( blob );
+          });
+        });
+      }
+    });
+  }
+  readJSON( url ) {
+    return new Promise((resolve) => {
+      if( this.cache.check_item( url ) ){
+        resolve( this.cache.get_item( url ) );
+      } else {
+        fetch(url).then( r => r.blob() ).then( blob => {
+          this._ensureIdle(() => {
+            this._currentFile = url;
+            this._currentType = "json";
+            this._currentCallback = resolve;
+            this.fileReader.readAsText( blob );
+          })
+        });
+      }
+    });
+
+  }
+
+  _onLoadStart( evt ) {
+    console.debug( 'Loading start!');
+  }
+  _onLoad( evt, callback ) {
+    console.debug( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
+
+    let v;
+    switch (evt.currentType) {
+      case 'json':
+        v = JSON.parse( evt.target.result );
+        break;
+      case 'nii':
+        v = {
+          "nifti_data" : new NiftiImage( evt.target.result )
+        };
+        break;
+      default:
+        // code
+    }
+
+    if( v !== undefined && this.use_cache ) {
+      // store to cache
+      this.cache.set_item( evt.currentFile, v );
+    }
+
+    this.canvas.start_animation(0);
+    if( typeof callback === "function" ) {
+      callback(v);
+    }
+  }
+
+}
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/utility/draggable.js
+
+function get_size(el){
+  const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
+  const height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
+  return([width, height]);
+}
+
+function makeDraggable(
+  elmnt, elmnt_header,
+  // top range and left range
+  parent_el = undefined,
+  mousedown_callback = (e, state)=>{}) {
+  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  var range = [-Infinity, Infinity, -Infinity, Infinity];
+  var state = 'pan', state_old;
+  var el_x, el_y;
+
+  if ( elmnt_header ) {
+    /* if present, the header is where you move the DIV from:*/
+    elmnt_header.onmousedown = dragMouseDown;
+    elmnt_header.oncontextmenu = right_clicked;
+  } else {
+    /* otherwise, move the DIV from anywhere inside the DIV:*/
+    elmnt.onmousedown = dragMouseDown;
+    elmnt.oncontextmenu = right_clicked;
+  }
+
+
+  function right_clicked ( e ){
+    const state_old = state;
+    state = 'pan';
+    dragMouseDown(e);
+    state = state_old;
+    return(false);
+  }
+
+
+  function dragMouseDown(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // get the mouse cursor position at startup:
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+
+    if( state === 'pan' ){
+      if( parent_el ){
+        // calculate range
+        // parent size
+        const parent_size = get_size(parent_el);
+        const el_size = get_size(elmnt);
+        if( parent_size[0] > el_size[0] ){
+          range[1] = parent_size[0] - el_size[0];
+          range[0] = 0;
+        }else{
+          range[0] = parent_size[0] - el_size[0];
+          range[1] = 0;
+        }
+
+        if( parent_size[1] > el_size[1] ){
+          range[3] = parent_size[1] - el_size[1];
+          range[2] = 0;
+        }else{
+          range[2] = parent_size[1] - el_size[1];
+          range[3] = 0;
+        }
+      }
+
+
+
+
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+
+      mousedown_callback(e, {
+        state: 'pan'
+      });
+    }else{
+      // get xy location and return
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      document.onmousemove = mouseMove;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
+    }
+
+    document.onmouseup = closeDragElement;
+
+  }
+
+  function mouseMove(e) {
+    if( state === 'select' && e.shiftKey ){
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      el_x = elmnt.getBoundingClientRect().left;
+      el_y = elmnt.getBoundingClientRect().top;
+
+      mousedown_callback(e, {
+        state : 'select',
+        x     : pos3 - el_x,
+        y     : pos4 - el_y
+      });
+    }
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // calculate the new cursor position:
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    // set the element's new position:
+    let eltop = elmnt.offsetTop - pos2,
+        elleft = elmnt.offsetLeft - pos1;
+
+    if( eltop < range[0] ){ eltop = range[0]; }
+    if( eltop > range[1] ){ eltop = range[1]; }
+    if( elleft < range[2] ){ elleft = range[2]; }
+    if( elleft > range[3] ){ elleft = range[3]; }
+
+    elmnt.style.top = eltop + "px";
+    elmnt.style.left = elleft + "px";
+  }
+
+  function closeDragElement() {
+    /* stop moving when mouse button is released:*/
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
+
+  return((s) => {
+    state = s;
+  });
+}
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/utility/resizable.js
+/*Make resizable div by Hung Nguyen*/
+function makeResizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_stop = (w, h) => {}) {
+  const element = elem; // elem.querySelector('.resizable');
+  const resizers = elem.querySelectorAll('.resizable .resizer');
+  const minimum_size = 20;
+  let original_width = 0,
+      original_height = 0,
+      ratio = -1;
+  let original_x = 0,
+      original_y = 0,
+      original_mouse_x = 0,
+      original_mouse_y = 0;
+  let width = 0,
+      height = 0;
+  for (let i = 0; i < resizers.length; i++) {
+    let currentResizer = resizers[i];
+
+    let resize = (e) => {
+      width = original_width + (e.pageX - original_mouse_x);
+      height = original_height + (e.pageY - original_mouse_y);
+
+      if( force_ratio ){
+        if( original_width > original_height ){
+          width = height / ratio;
+        }else{
+          height = width * ratio;
+        }
+      }
+
+      width = width > minimum_size ? width : minimum_size;
+      if( force_ratio ){
+        height = height > (minimum_size * ratio)? height : (minimum_size*ratio);
+      }else{
+        height = height > minimum_size? height : minimum_size;
+      }
+
+
+
+      element.style.width = width + 'px';
+      element.style.height = height + 'px';
+      if (currentResizer.classList.contains('bottom-right')) {
+        // do nothing
+      }
+      else if (currentResizer.classList.contains('bottom-left')) {
+        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
+      }
+      else if (currentResizer.classList.contains('top-right')) {
+        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
+      }
+      else {
+        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
+        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
+      }
+
+      on_resize(width, height);
+    };
+
+    let stopResize = () => {
+      window.removeEventListener('mousemove', resize);
+      on_stop(width, height);
+    };
+
+
+    currentResizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      original_width = parseFloat(getComputedStyle(element, null).getPropertyValue('width').replace('px', ''));
+      original_height = parseFloat(getComputedStyle(element, null).getPropertyValue('height').replace('px', ''));
+      width = original_width;
+      height = original_height;
+      if( ratio <= 0 ){
+        ratio = original_height / original_width;
+      }
+
+      original_x = element.getBoundingClientRect().left;
+      original_y = element.getBoundingClientRect().top;
+      original_mouse_x = e.pageX;
+      original_mouse_y = e.pageY;
+      window.addEventListener('mousemove', resize);
+      window.addEventListener('mouseup', stopResize);
+    });
+
+  }
+}
+
+// makeResizableDiv('.resizable')
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/core/SideCanvas.js
+
+
+
+
+
+
+class SideCanvas {
+
+  get zIndex () {
+    const re = parseInt( this.$el.style.zIndex );
+    if( isNaN(re) ) { return( 0 ); }
+    return re
+  }
+  set zIndex (v) {
+    this.$el.style.zIndex = v;
+  }
+
+  set enabled( v ) {
+    if( v ) {
+      this._enabled = true;
+	    this.$el.style.display = 'block';
+    } else {
+      this._enabled = false;
+	    this.$el.style.display = 'none';
+    }
+  }
+
+  get enabled () {
+    return this._enabled;
+  }
+
+  zoom( level ) {
+    if( level ) {
+      this.zoomLevel = level;
+    }
+    if( this.zoomLevel > 10 ) { this.zoomLevel = 10; }
+    if( this.zoomLevel < 1 ) { this.zoomLevel = 1; }
+    const cameraMargin = 128 / this.zoomLevel;
+    const maxTranslate = 128 - cameraMargin;
+
+    // get depths
+    let translateX = this.mainCanvas.get_state( 'sagittal_depth' ) || 0,
+        translateY = this.mainCanvas.get_state( 'coronal_depth' ) || 0,
+        translateZ = this.mainCanvas.get_state( 'axial_depth' ) || 0;
+
+    if( translateX > maxTranslate ) { translateX = maxTranslate; }
+    if( translateX < -maxTranslate ) { translateX = -maxTranslate; }
+    if( translateY > maxTranslate ) { translateY = maxTranslate; }
+    if( translateY < -maxTranslate ) { translateY = -maxTranslate; }
+    if( translateZ > maxTranslate ) { translateZ = maxTranslate; }
+    if( translateZ < -maxTranslate ) { translateZ = -maxTranslate; }
+
+    this.camera.left = -cameraMargin;
+    this.camera.right = cameraMargin;
+    this.camera.bottom = -cameraMargin;
+    this.camera.top = cameraMargin;
+
+    switch ( this.type ) {
+      case 'coronal':
+        this.camera.position.fromArray( [translateX, -500, translateZ] );
+        break;
+      case 'axial':
+        this.camera.position.fromArray( [translateX, translateY, 500] );
+        break;
+      case 'sagittal':
+        this.camera.position.fromArray( [-500, translateY, translateZ] );
+        break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
+    }
+    this._lookAt.set( translateX, translateY, translateZ );
+    this.camera.lookAt( this._lookAt );
+    this.camera.updateProjectionMatrix();
+    this.mainCanvas.start_animation(0);
+  }
+
+  raiseTop() {
+    if( !this.mainCanvas.sideCanvasEnabled ) { return }
+
+    const sideCanvasCollection = this.mainCanvas.sideCanvasList;
+
+    let zIndex = [
+      [parseInt(sideCanvasCollection.coronal.zIndex), 'coronal'],
+      [parseInt(sideCanvasCollection.axial.zIndex), 'axial'],
+      [parseInt(sideCanvasCollection.sagittal.zIndex), 'sagittal']
+    ];
+    zIndex.sort((v1,v2) => {return(v1[0] - v2[0])});
+    zIndex.forEach((v, ii) => {
+      const type = v[ 1 ];
+      sideCanvasCollection[ type ].zIndex = ii;
+    });
+    this.zIndex = 4;
+  }
+
+  reset({
+    zoomLevel = false, position = true, size = true, crosshair = false
+  } = {}) {
+    let width, height, offsetX, offsetY;
+    if( position === true ) {
+      offsetX = 0;
+      offsetY = this.order * width;
+    } else if (Array.isArray(position) && position.length == 2) {
+      offsetX = position[0];
+      offsetY = position[1];
+    }
+    if( size === true ) {
+      const defaultWidth = Math.ceil( this.mainCanvas.side_width );
+      width = defaultWidth;
+      height = defaultWidth;
+    }
+    this.setDimension({
+      width   : width,
+      height  : height,
+      offsetX : offsetX,
+      offsetY : offsetY
+    });
+
+    if( zoomLevel === true ) {
+      this.zoom( 1 );
+    } else if( typeof zoomLevel === "number" ) {
+      if( zoomLevel > 10 ) { zoomLevel = 10; }
+      if( zoomLevel < 1 ) { zoomLevel = 1; }
+      this.zoom( zoomLevel );
+    }
+    if( crosshair ) {
+      this.setCrosshair({ x : 0, y : 0, z : 0, immediate : false });
+    }
+  }
+  setDimension({ width, height, offsetX, offsetY } = {}) {
+    // ignore height
+    let w = width ?? height;
+    if( w === undefined && offsetX === undefined && offsetY === undefined) {
+      return;
+    }
+    if( w === undefined ) {
+      w = Math.ceil( this.mainCanvas.side_width );
+    }
+    if( w <= 10 ) {
+      w = 10;
+    }
+    this.$el.style.width = `${w}px`;
+    this.$el.style.height = `${w}px`;
+    this.$canvas.style.width = '100%';
+		this.$canvas.style.height = '100%';
+
+    let _offsetX = Math.round( offsetX || 0 );
+    let _offsetY = Math.round( offsetY || (this.order * w) );
+    if( _offsetX === 0 ) { _offsetX = '0'; } else { _offsetX = `${_offsetX}px`; }
+    if( _offsetY === 0 ) { _offsetY = '0'; } else { _offsetY = `${_offsetY}px`; }
+
+    this.$el.style.left = _offsetX;
+    this.$el.style.top = _offsetY;
+
+  }
+
+  _calculateCrosshair( event ) {
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
+    const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
+
+    const right = event.clientX - canvasPosition.left - canvasSize[0]/2;
+    const up = canvasSize[1]/2 + canvasPosition.top - event.clientY;
+
+    this.raiseTop();
+    this.pan({
+      right : right, up : up, unit : "css",
+      updateMainCamera : event.shiftKey
+    });
+  }
+
+
+  render() {
+    if( !this._enabled ) { return; }
+    this.renderer.clear();
+
+    this.renderer.render( this.mainCanvas.scene, this.camera );
+  }
+
+  dispose() {
+    this.renderer.dispose();
+  }
+
+  setBackground( color ) {
+    this._backgroundColor = color;
+    this.renderer.setClearColor( color );
+    this.$el.style.backgroundColor = color;
+  }
+
+  setCrosshair({x, y, z, immediate = true} = {}) {
+    // instead of setting slice instances, set data gui
+    /* const sliceInstance = this.mainCanvas.get_state( "activeSliceInstance" );
+    if( sliceInstance && sliceInstance.isDataCube ) {
+      sliceInstance.setCrosshair({
+        x : sagittalDepth,
+        y : coronalDepth,
+        z : axialDepth
+      });
+    }
+    */
+    this.mainCanvas.dispatch_event(
+      'canvas.drive.setSliceCrosshair',
+      {
+        x : x, y : y, z : z
+      },
+      immediate
+    );
+  }
+
+
+
+  pan({ right = 0, up = 0, unit = "css", updateMainCamera = false } = {}) {
+    //  this.raiseTop();
+
+    // data is xy coord relative to $canvas
+    let depthX, depthY;
+    if( unit === "css" ) {
+      const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
+      const canvasRenderSize = 256 / this.zoomLevel;
+      depthX = right / canvasSize[0] * canvasRenderSize;
+      depthY = up / canvasSize[1] * canvasRenderSize;
+    } else {
+      depthX = right;
+      depthY = up;
+    }
+
+    let sagittalDepth, coronalDepth, axialDepth;
+    switch ( this.type ) {
+      case 'coronal':
+        sagittalDepth = depthX + this._lookAt.x;
+        coronalDepth = this.mainCanvas.get_state( 'coronal_depth' );
+        axialDepth = depthY + this._lookAt.z;
+        break;
+      case 'axial':
+        sagittalDepth = depthX + this._lookAt.x;
+        coronalDepth = depthY + this._lookAt.y;
+        axialDepth = this.mainCanvas.get_state( 'axial_depth' );
+        break;
+      case 'sagittal':
+        sagittalDepth = this.mainCanvas.get_state( 'sagittal_depth' );
+        coronalDepth = -depthX + this._lookAt.y;
+        axialDepth = depthY + this._lookAt.z;
+        break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
+    }
+
+    // console.log(`x: ${depthX}, y: ${depthY} of [${canvasSize[0]}, ${canvasSize[1]}]`);
+    // console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
+
+    // update slice depths
+    this.setCrosshair({
+      x : sagittalDepth,
+      y : coronalDepth,
+      z : axialDepth
+    });
+    // need to update mainCamera
+    if( updateMainCamera ) {
+      const newMainCameraPosition = new three_module.Vector3()
+        .set( sagittalDepth, coronalDepth, axialDepth )
+        .normalize().multiplyScalar(500);
+      if( newMainCameraPosition.length() === 0 ) {
+        newMainCameraPosition.x = 500;
+      }
+
+      // make S up as much as possible, try to heads up
+      const newMainCameraUp = this.mainCanvas.mainCamera.position.clone()
+        .cross( new three_module.Vector3(0, 0, 1) ).cross( newMainCameraPosition )
+        .normalize();
+
+      if( newMainCameraUp.z < 0 ) {
+        newMainCameraUp.multiplyScalar(-1);
+      }
+
+      this.mainCanvas.mainCamera.position.copy( newMainCameraPosition );
+      this.mainCanvas.mainCamera.up.copy( newMainCameraUp );
+    }
+  }
+
+  constructor ( mainCanvas, type = "coronal" ) {
+
+    this.type = type;
+    switch ( this.type ) {
+      case 'coronal':
+        this.order = 0;
+        this._headerText = "CORONAL (R=R)"
+        break;
+      case 'axial':
+        this.order = 1;
+        this._headerText = "AXIAL (R=R)"
+        break;
+      case 'sagittal':
+        this.order = 2;
+        this._headerText = "SAGITTAL";
+        break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
+    }
+
+    this.mainCanvas = mainCanvas;
+    this.zoomLevel = 1;
+    this.pixelRatio = this.mainCanvas.pixel_ratio[1];
+
+    this._enabled = true;
+    this._lookAt = new three_module.Vector3( 0, 0, 0 );
+    this._container_id = mainCanvas.container_id;
+    const _w = this.mainCanvas.client_width ?? 256;
+    const _h = this.mainCanvas.client_height ?? 256;
+    this._renderHeight = 256;
+    this._canvasHeight = this._renderHeight * this.mainCanvas.pixel_ratio[1];
+
+    this.$el = document.createElement('div');
+    this.$el.id = this._container_id + '__' + type;
+    this.$el.style.display = 'none';
+    this.$el.className = 'THREEBRAIN-SIDE resizable';
+    this.$el.style.zIndex = this.order;
+    this.$el.style.top = ( this.order * this.mainCanvas.side_width ) + 'px';
+
+    // Make header
+    this.$header = document.createElement('div');
+    this.$header.innerText = this._headerText; //type.toUpperCase();
+    this.$header.className = 'THREEBRAIN-SIDE-HEADER';
+    this.$header.id = this._container_id + '__' + type + 'header';
+    this.$el.appendChild( this.$header );
+    // double-click on header to reset position
+    this.mainCanvas.bind( `${ this.type }_div_header_dblclick`, 'dblclick', (evt) => {
+      this.reset({ zoomLevel : false, position : true, size : true })
+    }, this.$header );
+
+    // Add side canvas element
+    this.$canvas = document.createElement('canvas');
+    this.$canvas.width = this._canvasHeight;
+    this.$canvas.height = this._canvasHeight;
+    this.$canvas.style.width = '100%';
+		this.$canvas.style.height = '100%';
+		this.$canvas.style.position = 'absolute';
+		this.$el.appendChild( this.$canvas );
+		this.context = this.$canvas.getContext('webgl2');
+
+		this.renderer = new three_module.WebGLRenderer({
+    	  antialias: false, alpha: true,
+    	  canvas: this.$canvas, context: this.context,
+    	  depths: false
+    	});
+  	this.renderer.setPixelRatio( this.mainCanvas.pixel_ratio[1] );
+  	this.renderer.autoClear = false; // Manual update so that it can render two scenes
+  	this.renderer.setSize( this._renderHeight, this._renderHeight );
+
+		// Add widgets
+		// zoom in tool
+		this.$zoomIn = document.createElement('div');
+		this.$zoomIn.className = 'zoom-tool';
+		this.$zoomIn.style.top = '23px'; // for header
+		this.$zoomIn.innerText = '+';
+		this.$el.appendChild( this.$zoomIn );
+		this.mainCanvas.bind( `${ this.type }_zoomin_click`, 'click', (e) => {
+		  let newZoomLevel = this.zoomLevel * 1.2;
+		  if( newZoomLevel > 10 ) { newZoomLevel = 10; }
+		  this.zoom( newZoomLevel );
+		}, this.$zoomIn);
+
+		// zoom out tool
+    this.$zoomOut = document.createElement('div');
+		this.$zoomOut.className = 'zoom-tool';
+		this.$zoomOut.style.top = '50px'; // header + $zoomIn
+		this.$zoomOut.innerText = '-';
+		this.$el.appendChild( this.$zoomOut );
+		this.mainCanvas.bind( `${ this.type }_zoomout_click`, 'click', (e) => {
+		  let newZoomLevel = this.zoomLevel / 1.2;
+		  if( newZoomLevel < 1.1 ) { newZoomLevel = 1; }
+		  this.zoom( newZoomLevel );
+		}, this.$zoomOut);
+
+		// toggle pan (translate) tool
+		this.$recenter = document.createElement('div');
+		this.$recenter.className = 'zoom-tool';
+		this.$recenter.style.top = '77px'; // header + $zoomIn + $zoomOut
+		this.$recenter.innerText = 'C';
+		this.$el.appendChild( this.$recenter );
+		this.mainCanvas.bind( `${ this.type }_recenter_click`, 'click', (e) => {
+		  this.zoom();
+		}, this.$recenter);
+
+		this.$reset = document.createElement('div');
+		this.$reset.className = 'zoom-tool';
+		this.$reset.style.top = '104px'; // header + $zoomIn + $zoomOut + $recenter
+		this.$reset.innerText = '0';
+		this.$el.appendChild( this.$reset );
+		this.mainCanvas.bind( `${ this.type }_zoom_reset_click`, 'click', (e) => {
+		  this.$canvas.style.top = '0';
+      this.$canvas.style.left = '0';
+		  this.zoom( 1 );
+		}, this.$reset );
+
+		// Add resize anchors to bottom-right
+		this.$resizeWrapper = document.createElement('div');
+		this.$resizeWrapper.className = 'resizers';
+		const $resizeAnchor = document.createElement('div');
+		$resizeAnchor.className = 'resizer bottom-right';
+		this.$resizeWrapper.appendChild( $resizeAnchor );
+		this.$el.appendChild( this.$resizeWrapper );
+
+		// Make header draggable within viewer
+    makeDraggable( this.$el, this.$header, undefined, () => {
+      this.raiseTop();
+    });
+
+    // Make side canvas clickable
+    this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
+      evt.preventDefault();
+      this._focused = true;
+      this._calculateCrosshair( evt );
+    }, this.$canvas );
+    this.$canvas.oncontextmenu = function (evt) {
+      evt.preventDefault();
+    };
+    this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
+      evt.preventDefault();
+      this._focused = false;
+    }, this.$canvas );
+    this.mainCanvas.bind( `${ this.type }_cvs_setCrosshair`, 'mousemove', (evt) => {
+      evt.preventDefault();
+      if( !this._focused ) { return; }
+      this._calculateCrosshair( evt );
+    }, this.$canvas );
+
+    // Make $canvas scrollable, with changing slices
+    this.mainCanvas.bind( `${ this.type }_cvs_mousewheel`, 'mousewheel', (evt) => {
+      evt.preventDefault();
+      if( evt.altKey ){
+        const depthName = this.type + '_depth';
+        const currentDepth = this.mainCanvas.get_state( depthName );
+        if( evt.deltaY > 0 ){
+          this.mainCanvas.set_state( depthName, 1 + currentDepth );
+        }else if( evt.deltaY < 0 ){
+          this.mainCanvas.set_state( depthName, -1 + currentDepth );
+        }
+      }
+      this.setCrosshair({
+        x : sagittalDepth,
+        y : coronalDepth,
+        z : axialDepth
+      });
+    }, this.$canvas );
+
+    // Make $el resizable, keep current width and height
+    makeResizable( this.$el, true );
+
+
+    // --------------- Register 3js objects -------------
+    // Add OrthographicCamera
+    this.camera = new three_module.OrthographicCamera( -128, 128, 128, -128, 1, 10000 );
+		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
+		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_SIDE_CAMERAS_4 */.t.LAYER_USER_ALL_SIDE_CAMERAS_4 );
+		this.camera.layers.enable( 5 );
+		this.camera.layers.enable( 6 );
+		this.camera.layers.enable( 7 );
+		this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 */.t.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+
+		// Side light is needed so that side views are visible.
+		this.directionalLight = new three_module.DirectionalLight( 0xefefef, 0.5 );
+
+		switch ( this.type ) {
+      case 'coronal':
+        this.camera.position.fromArray( [0, -500, 0] );
+        this.camera.up.set( 0, 0, 1 );
+        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+        this.directionalLight.position.fromArray([0, -500, 0]); // set direction from P to A
+        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+        break;
+      case 'axial':
+        this.camera.position.fromArray( [0, 0, 500] );
+        this.camera.up.set( 0, 1, 0 );
+        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+        this.directionalLight.position.fromArray([0, 0, 500]); // set direction from I to S
+        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+        break;
+      case 'sagittal':
+        this.camera.position.fromArray( [-500, 0, 0] );
+        this.camera.up.set( 0, 0, 1 );
+        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+        this.directionalLight.position.fromArray([-500, 0, 0]); // set direction from L to R
+        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+        break;
+      default:
+        throw 'SideCanvas: type must be coronal, sagittal, or axial';
+    }
+    this.camera.lookAt( this._lookAt );
+    this.camera.aspect = 1;
+    this.camera.updateProjectionMatrix();
+    // this.camera.add( this.directionalLight );
+
+    // TODO: main canvas need to add cameras and element
+    this.mainCanvas.add_to_scene( this.camera, true );
+    this.mainCanvas.add_to_scene( this.directionalLight, true );
+    this.mainCanvas.wrapper_canvas.appendChild( this.$el );
+
+    /*
+      this.sideCanvasList[ nm ] = {
+        'container' : div,
+        'canvas'    : cvs,
+        'context'   : cvs.getContext('2d'),
+        'camera'    : camera,
+        'reset'     : reset,
+        'get_zoom_level' : () => { return( zoom_level ) },
+        'set_zoom_level' : set_zoom_level
+      };
+    */
+
+  }
+
+}
+
+
+
+;// CONCATENATED MODULE: ./node_modules/three/examples/jsm/libs/stats.module.js
+var Stats = function () {
+
+	var mode = 0;
+
+	var container = document.createElement( 'div' );
+	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
+	container.addEventListener( 'click', function ( event ) {
+
+		event.preventDefault();
+		showPanel( ++ mode % container.children.length );
+
+	}, false );
+
+	//
+
+	function addPanel( panel ) {
+
+		container.appendChild( panel.dom );
+		return panel;
+
+	}
+
+	function showPanel( id ) {
+
+		for ( var i = 0; i < container.children.length; i ++ ) {
+
+			container.children[ i ].style.display = i === id ? 'block' : 'none';
+
+		}
+
+		mode = id;
+
+	}
+
+	//
+
+	var beginTime = ( performance || Date ).now(), prevTime = beginTime, frames = 0;
+
+	var fpsPanel = addPanel( new Stats.Panel( 'FPS', '#0ff', '#002' ) );
+	var msPanel = addPanel( new Stats.Panel( 'MS', '#0f0', '#020' ) );
+
+	if ( self.performance && self.performance.memory ) {
+
+		var memPanel = addPanel( new Stats.Panel( 'MB', '#f08', '#201' ) );
+
+	}
+
+	showPanel( 0 );
+
+	return {
+
+		REVISION: 16,
+
+		dom: container,
+
+		addPanel: addPanel,
+		showPanel: showPanel,
+
+		begin: function () {
+
+			beginTime = ( performance || Date ).now();
+
+		},
+
+		end: function () {
+
+			frames ++;
+
+			var time = ( performance || Date ).now();
+
+			msPanel.update( time - beginTime, 200 );
+
+			if ( time >= prevTime + 1000 ) {
+
+				fpsPanel.update( ( frames * 1000 ) / ( time - prevTime ), 100 );
+
+				prevTime = time;
+				frames = 0;
+
+				if ( memPanel ) {
+
+					var memory = performance.memory;
+					memPanel.update( memory.usedJSHeapSize / 1048576, memory.jsHeapSizeLimit / 1048576 );
+
+				}
+
+			}
+
+			return time;
+
+		},
+
+		update: function () {
+
+			beginTime = this.end();
+
+		},
+
+		// Backwards Compatibility
+
+		domElement: container,
+		setMode: showPanel
+
+	};
+
+};
+
+Stats.Panel = function ( name, fg, bg ) {
+
+	var min = Infinity, max = 0, round = Math.round;
+	var PR = round( window.devicePixelRatio || 1 );
+
+	var WIDTH = 80 * PR, HEIGHT = 48 * PR,
+		TEXT_X = 3 * PR, TEXT_Y = 2 * PR,
+		GRAPH_X = 3 * PR, GRAPH_Y = 15 * PR,
+		GRAPH_WIDTH = 74 * PR, GRAPH_HEIGHT = 30 * PR;
+
+	var canvas = document.createElement( 'canvas' );
+	canvas.width = WIDTH;
+	canvas.height = HEIGHT;
+	canvas.style.cssText = 'width:80px;height:48px';
+
+	var context = canvas.getContext( '2d' );
+	context.font = 'bold ' + ( 9 * PR ) + 'px Helvetica,Arial,sans-serif';
+	context.textBaseline = 'top';
+
+	context.fillStyle = bg;
+	context.fillRect( 0, 0, WIDTH, HEIGHT );
+
+	context.fillStyle = fg;
+	context.fillText( name, TEXT_X, TEXT_Y );
+	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
+
+	context.fillStyle = bg;
+	context.globalAlpha = 0.9;
+	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
+
+	return {
+
+		dom: canvas,
+
+		update: function ( value, maxValue ) {
+
+			min = Math.min( min, value );
+			max = Math.max( max, value );
+
+			context.fillStyle = bg;
+			context.globalAlpha = 1;
+			context.fillRect( 0, 0, WIDTH, GRAPH_Y );
+			context.fillStyle = fg;
+			context.fillText( round( value ) + ' ' + name + ' (' + round( min ) + '-' + round( max ) + ')', TEXT_X, TEXT_Y );
+
+			context.drawImage( canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT );
+
+			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, GRAPH_HEIGHT );
+
+			context.fillStyle = bg;
+			context.globalAlpha = 0.9;
+			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, round( ( 1 - ( value / maxValue ) ) * GRAPH_HEIGHT ) );
+
+		}
+
+	};
+
+};
+
+/* harmony default export */ const stats_module = (Stats);
+
+// EXTERNAL MODULE: ./src/js/core/StorageCache.js
+var StorageCache = __webpack_require__(7123);
+;// CONCATENATED MODULE: ./src/js/core/events.js
+
+
+class CanvasEvent {
+  constructor(el, container_id) {
+    // el must be a DOM element, no check here
+    if( el ) {
+      if(! el instanceof window.HTMLElement ) {
+        throw Error("CanvasEvent(el): el must be an HTMLElement.")
+      }
+      this._el = el;
+    } else {
+      this._el = document.createElement("div");
+    }
+
+    this._dispose_functions = new Map();
+    this._event_buffer = new Map();
+    this._container_id = container_id || this._el.getAttribute( 'data-target' );
+
+    this.throttle = true;
+    this.timeout = 100;
+  }
+
+  bind( name, evtstr, fun, target, options = false ){
+    // this.bind( "event name", "click", (evt) => {...} );
+
+    const _target = target || this._el;
+
+    // Dispose existing function
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      try {
+        _f();
+      } catch (e) {}
+      this._dispose_functions.delete( name );
+    }
+    this._dispose_functions.set( name, () => {
+      console.debug('Calling dispose function ' + name);
+      try {
+        _target.removeEventListener( evtstr , fun );
+      } catch (e) {
+        console.warn('Unable to dispose ' + name);
+      }
+    });
+
+    console.debug(`Registering event ${evtstr} (${name})`);
+    _target.addEventListener( evtstr , fun, options );
+  }
+
+  unbind( name ) {
+    const _f = this._dispose_functions.get( name );
+    if( typeof _f === 'function' ){
+      try {
+        _f();
+      } catch (e) {}
+      this._dispose_functions.delete( name );
+    }
+  }
+
+  dispose() {
+    this._dispose_functions.forEach((_, _name) => {
+      this.unbind(_name);
+    });
+    this._dispose_functions.clear();
+  }
+
+  dispatch_event( type, data, immediate = false ){
+
+    if( typeof(type) !== "string" || type.length === 0 ) {
+      throw TypeError( 'CanvasEvent.dispatch_event: Can only dispatch event with type of none-empty string' );
+    }
+
+    if( !this._event_buffer.has(type) ) {
+      this._event_buffer.set(type, {
+        type: type,
+        throttlePause: false,
+        data: data,
+        dispatched: false
+      });
+    }
+    const evt_buffer = this._event_buffer.get(type);
+    evt_buffer.data = data;
+    evt_buffer.dispatched = false;
+
+    const immediate_ = this.throttle || immediate;
+    if( !immediate && evt_buffer.throttlePause ) {
+      // update data, but hold it
+      return;
+    }
+
+    evt_buffer.throttlePause = true;
+
+    const do_dispatch = () => {
+      evt_buffer.throttlePause = false;
+      if( evt_buffer.dispatched ) { return; }
+
+      // fire event with the newest data
+      const event = new CustomEvent(
+        evt_buffer.type,
+        {
+          container_id: this._container_id,
+          detail: evt_buffer.data
+        }
+      );
+
+      // Dispatch the event.
+      console.debug(`Dispatching event: ${evt_buffer.type} - ${evt_buffer.data}`);
+      this._el.dispatchEvent(event);
+      evt_buffer.dispatched = true;
+    };
+
+    if( immediate ) {
+      do_dispatch();
+    } else {
+      setTimeout(() => { do_dispatch(); }, this.timeout);
+    }
+
+  }
+
+  available_events() {
+    return [...this._dispose_functions.keys()];
+  }
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/Math/animations.js
+
+
+
+function generate_animation_default(m, track_data, cmap, animation_clips, mixer) {
+
+    // Generate keyframes
+    const _time_min = cmap.time_range[0],
+          _time_max = cmap.time_range[1];
+
+    // 1. timeStamps, TODO: get from settings the time range
+    const colors = [], time_stamp = [];
+    (0,utils/* to_array */.AA)( track_data.time ).forEach((v) => {
+      time_stamp.push( v - _time_min );
+    });
+    if( track_data.data_type === 'continuous' ){
+      (0,utils/* to_array */.AA)( track_data.value ).forEach((v) => {
+        let c = cmap.lut.getColor(v);
+        colors.push( c.r, c.g, c.b );
+      });
+    }else{
+      // discrete
+      const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
+      (0,utils/* to_array */.AA)( track_data.value ).forEach((v) => {
+        let c = cmap.lut.getColor(mapping.get( v ));
+        /*if( !c ) {
+          console.log( v );
+          console.log( mapping.get( v ) );
+        }*/
+        if( c ){
+          colors.push( c.r, c.g, c.b );
+        }else{
+          colors.push( 1,1,1 );
+        }
+
+      });
+    }
+    const keyframe = new three_module.ColorKeyframeTrack(
+      track_data.target || '.material.color',
+      time_stamp, colors, three_module.InterpolateDiscrete
+    );
+
+    return(keyframe);
+}
+
+
+
+// EXTERNAL MODULE: ./src/js/geometry/sphere.js
+var sphere = __webpack_require__(960);
+// EXTERNAL MODULE: ./src/js/geometry/abstract.js
+var geometry_abstract = __webpack_require__(470);
+;// CONCATENATED MODULE: ./src/js/shaders/SliceShader.js
+
+
+
+const SliceShader = {
+  uniforms : {
+
+    // volume data
+    map : { value : null },
+
+    // volume dimension
+    mapShape : { value : new three_module.Vector3().set( 256, 256, 256 ) },
+
+    // transform matrix from world to volume IJK
+    world2IJK : { value : new three_module.Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1) },
+
+    // values below this threshold should be discarded
+    threshold : { value : 0.0 }
+
+  },
+
+  vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
+precision highp float;
+in vec3 position;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+out vec4 worldPosition;
+
+void main() {
+  // obtain the world position for vertex
+  worldPosition = modelMatrix * vec4( position, 1.0 );
+
+  gl_Position = projectionMatrix * viewMatrix * worldPosition;
+}`),
+  fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
+precision highp float;
+precision mediump sampler3D;
+in vec4 worldPosition;
+uniform float threshold;
+uniform sampler3D map;
+uniform vec3 mapShape;
+uniform mat4 world2IJK;
+out vec4 color;
+void main() {
+// calculate IJK, then sampler position
+
+  vec3 samplerPosition = ((world2IJK * worldPosition).xyz - vec3(1.0, 0.0, 1.0)) / (mapShape - 1.0);
+  if( any(greaterThan( samplerPosition, vec3(1.0) )) || any( lessThan(samplerPosition, vec3(0.0)) ) ) {
+    gl_FragDepth = gl_DepthRange.far;
+    color.a = 0.0;
+  } else {
+    color.rgb = texture(map, samplerPosition).rrr;
+    if( color.r <= threshold ) {
+      gl_FragDepth = gl_DepthRange.far;
+      color.a = 0.0;
+    } else {
+      gl_FragDepth = gl_FragCoord.z;
+      color.a = 1.0;
+    }
+  }
+}`)
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/shaders/Volume2DShader.js
+
+
+const Volume2dArrayShader_xy = {
+  uniforms: {
+    diffuse: { value: null },
+		depth: { value: 0 },
+		size: { value: new three_module.Vector3( 256, 256, 256 ) },
+		threshold: { value : 0.0 },
+		renderDepth: { value : 1.0 }
+	},
+	vertexShader: [
+    // '#version 300 es',
+    'uniform vec3 size;',
+    'out vec2 vUv;',
+    'void main() {',
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+    // Convert position.xy to 1.0-0.0
+    'vUv.xy = position.xy / size.xy + 0.5;',
+    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+    '}'
+	].join( '\n' ),
+  fragmentShader: [
+    // '#version 300 es',
+
+    'precision highp float;',
+    'precision highp int;',
+    'precision highp sampler2DArray;',
+
+    'uniform sampler2DArray diffuse;',
+    'in vec2 vUv;',
+    'uniform int depth;',
+    'uniform float threshold;',
+    'uniform float renderDepth;',
+    // 'out vec4 out_FragColor;',
+
+    'void main() {',
+
+    'vec4 color = texture( diffuse, vec3( vUv, depth ) );',
+
+    'float is_opaque = float( color.r > threshold );',
+
+    // calculating z-depth, if transparent, make depth 1 (far)
+    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
+    // lighten a bit
+    'gl_FragColor = vec4( color.rrr, is_opaque );',
+
+    '}'
+  ].join( '\n' )
+};
+
+
+
+
+const Volume2dArrayShader_xz = {
+  uniforms: {
+    diffuse: { value: null },
+		depth: { value: 0 },
+		size: { value: new three_module.Vector3( 256, 256, 256 ) },
+		threshold: { value : 0.0 },
+		renderDepth: { value : 1.0 }
+	},
+	vertexShader: [
+    // '#version 300 es',
+    'uniform vec3 size;',
+    'out vec2 vUv;',
+    'void main() {',
+
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+    // Convert position.xz to 1.0-0.0
+    'vUv.xy = position.xy / size.xz + 0.5;',
+    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+    '}'
+	].join( '\n' ),
+  fragmentShader: [
+    // '#version 300 es',
+
+    'precision highp float;',
+    'precision highp int;',
+    'precision highp sampler2DArray;',
+
+    'uniform sampler2DArray diffuse;',
+    'uniform vec3 size;',
+    'in vec2 vUv;',
+    'uniform float depth;',
+    'uniform float threshold;',
+    'uniform float renderDepth;',
+    // 'out vec4 out_FragColor;',
+
+    'void main() {',
+
+    'vec4 color = texture( diffuse, vec3( vUv.x, depth / size.y, floor( vUv.y * size.z ) ) );',
+
+    'float is_opaque = float( color.r > threshold );',
+
+    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
+    // lighten a bit
+    'gl_FragColor = vec4( color.rrr, is_opaque );',
+
+    '}'
+  ].join( '\n' )
+};
+
+const Volume2dArrayShader_yz = {
+  uniforms: {
+    diffuse: { value: null },
+		depth: { value: 0 },
+		size: { value: new three_module.Vector3( 256, 256, 256 ) },
+		threshold: { value : 0.0 },
+		renderDepth: { value : 1.0 }
+	},
+	vertexShader: [
+    // '#version 300 es',
+    'uniform vec3 size;',
+    'out vec2 vUv;',
+    'void main() {',
+
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+    // Convert position.xz to 1.0-0.0
+    'vUv.xy = position.xy / size.yz + 0.5;',
+    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
+    '}'
+	].join( '\n' ),
+  fragmentShader: [
+    // '#version 300 es',
+
+    'precision highp float;',
+    'precision highp int;',
+    'precision highp sampler2DArray;',
+
+    'uniform sampler2DArray diffuse;',
+    'uniform vec3 size;',
+    'in vec2 vUv;',
+    'uniform float depth;',
+    'uniform float threshold;',
+    'uniform float renderDepth;',
+    // 'out vec4 out_FragColor;',
+
+    'void main() {',
+
+    'vec4 color = texture( diffuse, vec3( depth / size.x, vUv.x, floor( vUv.y * size.z ) ) );',
+
+    'float is_opaque = float( color.r > threshold );',
+
+    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
+
+    // lighten a bit
+    'gl_FragColor = vec4( color.rrr, is_opaque );',
+
+    '}'
+  ].join( '\n' )
+};
+
+
+
+;// CONCATENATED MODULE: ./src/js/geometry/datacube.js
+
+
+
+
+
+
+
+/* WebGL doesn't take transparency into consideration when calculating depth
+https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
+
+The hack is to rewrite shader, force transparent fragments to have depth of 1, which means transparent parts
+always hide behind other objects.
+
+However, is we set brain mesh to be transparent, the volume is still hidden behind the mesh and invisible.
+This is because when the renderer calculate depth first, and the mesh is in the front, then volume gets
+not rendered.
+What we need to do is to set render order to be -1, which means always render volume first, then the opaque
+parts will show.
+
+*/
+
+class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
+  constructor(g, canvas){
+    super(g, canvas);
+
+    this.type = 'DataCube';
+    this.isDataCube = true;
+    this.mainCanvasActive = false;
+    this._uniforms = three_module.UniformsUtils.clone( SliceShader.uniforms );
+
+    const subjectData = this._canvas.shared_data.get( this.subject_code );
+
+    // Shader will take care of it
+    g.disable_trans_mat = true;
+
+    // get cube (volume) data
+    if( g.isNiftiCube ) {
+      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
+      let imageMin = Infinity, imageMax = -Infinity;
+      niftiData.image.forEach(( v ) => {
+        if( imageMin > v ){ imageMin = v; }
+        if( imageMax < v ){ imageMax = v; }
+      })
+      this.cubeData = new Uint8Array( niftiData.image.length );
+      const slope = 255 / (imageMax - imageMin),
+            intercept = 255 - imageMax * slope,
+            threshold = g.threshold || 0;
+      niftiData.image.forEach(( v, ii ) => {
+        const d = v * slope + intercept;
+        if( d > threshold ) {
+          this.cubeData[ ii ] = d;
+        } else {
+          this.cubeData[ ii ] = 0;
+        }
+      })
+      this.cubeShape = new three_module.Vector3().fromArray( niftiData.shape );
+      const affine = niftiData.affine.clone();
+      if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
+        affine.copy( subjectData.matrices.Torig )
+          .multiply( subjectData.matrices.Norig.clone().invert() )
+          .multiply( niftiData.affine );
+      }
+      this._uniforms.world2IJK.value.copy( affine ).invert();
+    } else {
+      this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
+      this.cubeShape = new three_module.Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
+      this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
+    }
+    this.dataTexture = new three_module.Data3DTexture(
+      this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
+    );
+    this.dataTexture.minFilter = three_module.LinearFilter;
+    this.dataTexture.magFilter = three_module.LinearFilter;
+    this.dataTexture.format = three_module.RedFormat;
+    this.dataTexture.type = three_module.UnsignedByteType;
+    this.dataTexture.unpackAlignment = 1;
+    this.dataTexture.needsUpdate = true;
+
+    // Generate shader
+    this._uniforms.map.value = this.dataTexture;
+    this._uniforms.mapShape.value.copy( this.cubeShape );
+
+    const sliceMaterial = new three_module.RawShaderMaterial( {
+      uniforms: this._uniforms,
+      vertexShader: SliceShader.vertexShader,
+      fragmentShader: SliceShader.fragmentShader,
+      side: three_module.DoubleSide,
+      transparent : false,
+      depthWrite: true
+    } );
+    this.sliceMaterial = sliceMaterial;
+    const sliceGeometryXY = new three_module.PlaneGeometry( 256, 256 );
+    const sliceMeshXY = new three_module.Mesh( sliceGeometryXY, sliceMaterial );
+    sliceMeshXY.renderOrder = -1;
+    sliceMeshXY.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
+    sliceMeshXY.name = 'mesh_datacube__axial_' + g.name;
+
+
+    const sliceGeometryXZ = new three_module.PlaneGeometry( 256, 256 );
+    const sliceMeshXZ = new three_module.Mesh( sliceGeometryXZ, sliceMaterial );
+    sliceMeshXZ.rotateX( Math.PI / 2 );
+    sliceMeshXZ.renderOrder = -1;
+    sliceMeshXZ.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
+    sliceMeshXZ.name = 'mesh_datacube__coronal_' + g.name;
+
+    const sliceGeometryYZ = new three_module.PlaneGeometry( 256, 256 );
+    const sliceMeshYZ = new three_module.Mesh( sliceGeometryYZ, sliceMaterial );
+    sliceMeshYZ.rotateY( Math.PI / 2 ).rotateZ( Math.PI / 2 );
+    sliceMeshYZ.renderOrder = -1;
+    sliceMeshYZ.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
+    sliceMeshYZ.name = 'mesh_datacube__sagittal_' + g.name;
+
+
+  	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
+
+  	// generate crosshair
+  	this.crosshairGroup = new three_module.Object3D();
+  	const crosshairGeometryLR = new three_module.BufferGeometry()
+  	  .setFromPoints([
+  	    new three_module.Vector3( -256, 0, 0 ), new three_module.Vector3( -4, 0, 0 ),
+  	    new three_module.Vector3( 4, 0, 0 ), new three_module.Vector3( 256, 0, 0 )
+  	  ]);
+  	const crosshairMaterialLR = new three_module.LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairLR = new three_module.LineSegments( crosshairGeometryLR, crosshairMaterialLR );
+    this.crosshairLR.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    this.crosshairLR.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    this.crosshairLR.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    this.crosshairGroup.add( this.crosshairLR );
+
+    const crosshairGeometryPA = new three_module.BufferGeometry()
+  	  .setFromPoints([
+  	    new three_module.Vector3( 0, -256, 0 ), new three_module.Vector3( 0, -4, 0 ),
+  	    new three_module.Vector3( 0, 4, 0 ), new three_module.Vector3( 0, 256, 0 )
+  	  ]);
+  	const crosshairMaterialPA = new three_module.LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairPA = new three_module.LineSegments( crosshairGeometryPA, crosshairMaterialPA );
+    this.crosshairPA.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    this.crosshairPA.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    this.crosshairPA.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+    this.crosshairGroup.add( this.crosshairPA );
+
+    const crosshairGeometryIS = new three_module.BufferGeometry()
+  	  .setFromPoints([
+  	    new three_module.Vector3( 0, 0, -256 ), new three_module.Vector3( 0, 0, -4 ),
+  	    new three_module.Vector3( 0, 0, 4 ), new three_module.Vector3( 0, 0, 256 )
+  	  ]);
+  	const crosshairMaterialIS = new three_module.LineBasicMaterial({
+      color: 0x00ff00, transparent: false, depthTest : false
+    });
+    this.crosshairIS = new three_module.LineSegments( crosshairGeometryIS, crosshairMaterialIS );
+    this.crosshairIS.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
+    this.crosshairIS.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    this.crosshairIS.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+    this.crosshairGroup.add( this.crosshairIS );
+
+
+    sliceMeshXY.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryXY.dispose();
+      this.dataTexture.dispose();
+      this.crosshairIS.geometry.dispose();
+      this.crosshairIS.material.dispose();
+    };
+    sliceMeshXY.userData.instance = this;
+    this.sliceXY = sliceMeshXY;
+
+    sliceMeshXZ.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryXZ.dispose();
+      this.dataTexture.dispose();
+      this.crosshairPA.geometry.dispose();
+      this.crosshairPA.material.dispose();
+    };
+    sliceMeshXZ.userData.instance = this;
+    this.sliceXZ = sliceMeshXZ;
+
+    sliceMeshYZ.userData.dispose = () => {
+  	  sliceMaterial.dispose();
+  	  sliceGeometryYZ.dispose();
+      this.dataTexture.dispose();
+      this.crosshairLR.geometry.dispose();
+      this.crosshairLR.material.dispose();
+    };
+    sliceMeshYZ.userData.instance = this;
+    this.sliceYZ = sliceMeshYZ;
+  }
+
+  dispose(){
+    this.crosshairLR.geometry.dispose();
+    this.crosshairLR.material.dispose();
+    this.crosshairPA.geometry.dispose();
+    this.crosshairPA.material.dispose();
+    this.crosshairIS.geometry.dispose();
+    this.crosshairIS.material.dispose();
+    this.sliceMaterial.dispose();
+    this.sliceGeometryXY.dispose();
+    this.sliceGeometryXZ.dispose();
+  	this.sliceGeometryYZ.dispose();
+    this.dataTexture.dispose();
+  }
+
+  get_track_data( track_name, reset_material ){}
+
+  pre_render(){}
+
+  setCrosshair({ x, y, z } = {}) {
+    if( x === undefined ) {
+      x = this._canvas.get_state( 'sagittal_depth', 0 );
+    }
+    // set sagittal
+    if( x > 128 ) { x = 128; }
+    if( x < -128 ) { x = -128; }
+    this.sliceYZ.position.x = x;
+    this.crosshairGroup.position.x = x;
+    this._canvas.set_state( 'sagittal_depth', x );
+
+    if( y === undefined ) {
+      y = this._canvas.get_state( 'coronal_depth', 0 );
+    }
+    // set coronal
+    if( y > 128 ) { y = 128; }
+    if( y < -128 ) { y = -128; }
+    this.sliceXZ.position.y = y;
+    this.crosshairGroup.position.y = y;
+    this._canvas.set_state( 'coronal_depth', y );
+
+    if( z === undefined ) {
+      z = this._canvas.get_state( 'axial_depth', 0 );
+    }
+    // set axial
+    if( z > 128 ) { z = 128; }
+    if( z < -128 ) { z = -128; }
+    this.sliceXY.position.z = z;
+    this.crosshairGroup.position.z = z;
+    this._canvas.set_state( 'axial_depth', z );
+
+    this._canvas.updateElectrodeVisibilityOnSideCanvas();
+
+    this._canvas.dispatch_event( "canvas.sliceCrosshair.onChange", {
+      position : this.crosshairGroup.position,
+      space: "tkrRAS"
+    });
+    // Animate on next refresh
+    this._canvas.start_animation( 0 );
+  }
+
+  showSlices( which ) {
+    const planType = (0,utils/* to_array */.AA)( which );
+    if( planType.length === 0 ) { return; }
+    if( planType.includes( 'coronal' ) ) {
+      this.sliceXZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'coronal_overlay', true );
+      this.coronalActive = true;
+    }
+    if( planType.includes( 'sagittal' ) ) {
+      this.sliceYZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'sagittal_overlay', true );
+      this.sagittalActive = true;
+    }
+    if( planType.includes( 'axial' ) ) {
+      this.sliceXY.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'axial_overlay', true );
+      this.axialActive = true;
+    }
+    // update crosshair to latest version
+    this.setCrosshair();
+    // this._canvas.start_animation( 0 );
+  }
+
+  hideSlices( which ) {
+    const planType = (0,utils/* to_array */.AA)( which );
+    if( planType.length === 0 ) { return; }
+    if( planType.includes( 'coronal' ) ) {
+      this.sliceXZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'coronal_overlay', false );
+      this.coronalActive = false;
+    }
+    if( planType.includes( 'sagittal' ) ) {
+      this.sliceYZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'sagittal_overlay', false );
+      this.sagittalActive = false;
+    }
+    if( planType.includes( 'axial' ) ) {
+      this.sliceXY.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this._canvas.set_state( 'axial_overlay', false );
+      this.axialActive = false;
+    }
+    this._canvas.start_animation( 0 );
+  }
+
+  finish_init(){
+    // Special, as m is a array of three planes
+    // this.object = mesh = [ mesh_xz, sliceMeshXY, mesh_yz ];
+
+    this._canvas.mesh.set( '_coronal_' + this.name, this.sliceXZ );
+    this._canvas.mesh.set( '_axial_' + this.name, this.sliceXY );
+    this._canvas.mesh.set( '_sagittal_' + this.name, this.sliceYZ );
+
+    if( this.clickable ){
+      this._canvas.add_clickable( '_coronal_' + this.name, this.sliceXZ );
+      this._canvas.add_clickable( '_axial_' + this.name, this.sliceXY );
+      this._canvas.add_clickable( '_sagittal_' + this.name, this.sliceYZ );
+    }
+    this.sliceXY.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+    this.sliceXZ.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+    this.sliceYZ.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+
+    // data cube must have groups. The group is directly added to scene,
+    // regardlessly
+    let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    this._canvas.origin.remove( gp );
+    gp.add( this.crosshairGroup );
+    this._canvas.scene.add( gp );
+
+    // set layer, add tp group
+    this.object.forEach((plane) => {
+
+      this.set_layer( [], plane );
+
+      gp.add( plane );
+      plane.userData.construct_params = this._params;
+      plane.updateMatrixWorld();
+    });
+
+    this.register_object( ['slices'] );
+
+
+    this.setCrosshair();
+    // reset side camera positions
+    // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
+    // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
+
+  }
+
+}
+
+
+function gen_datacube(g, canvas){
+  return( new DataCube(g, canvas) );
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/shaders/VolumeShader.js
+
+
+
+const VolumeRenderShader1 = {
+    uniforms: {
+      cmap: { value: null },
+      alpha : { value: -1.0 },
+      colorChannels : { value: 4 },
+      // steps: { value: 300 },
+      scale_inv: { value: new three_module.Vector3() },
+      bounding: { value : 0.5 },
+
+      stepSize: { value : 1.0 },
+
+      // lightDirection : { value : new Vector3() },
+
+      // only works when number of color channels is 1
+      color1WhenSingleChannel: { value: new three_module.Color().setHex(0x006400) },
+      color2WhenSingleChannel: { value: new three_module.Color().setHex(0x999999) },
+      // camera_center: { value: new Vector2() },
+    },
+    vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
+precision highp float;
+in vec3 position;
+uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec3 cameraPosition;
+uniform vec3 scale_inv;
+// uniform float steps;
+uniform float bounding;
+// uniform vec2 camera_center;
+
+out mat4 pmv;
+out vec3 vOrigin;
+// out vec3 vDirection;
+out vec3 vPosition;
+// out vec3 vSamplerBias;
+
+
+void main() {
+  pmv = projectionMatrix * modelViewMatrix;
+
+  vPosition = position;
+
+  gl_Position = pmv * vec4( position, 1.0 );
+  // vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
+
+  // For perspective camera, vorigin is camera
+  // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
+  // vOrigin = - vorig.xyz * scale_inv;
+  // vDirection = position * scale_inv - vOrigin;
+
+  // Orthopgraphic camera, camera position in theory is at infinite,
+
+  // Ideally the following calculation should generate correct results
+  // vOrigin will be interpolated in fragmentShader, hence project and unproject
+  vec4 vOriginProjected = gl_Position;
+  vOriginProjected.z = -vOriginProjected.w;
+  vOrigin = (inverse(pmv) * vOriginProjected).xyz;
+  // vOrigin = gl_Position.xyw;
+  // vDirection = normalize(position - vOrigin);
+
+}
+`),
+    fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
+precision highp float;
+precision mediump sampler3D;
+in vec3 vOrigin;
+in vec3 vPosition;
+// in vec3 vDirection;
+// in vec3 vSamplerBias;
+in mat4 pmv;
+out vec4 color;
+uniform sampler3D cmap;
+uniform int colorChannels;
+uniform vec3 color1WhenSingleChannel;
+uniform vec3 color2WhenSingleChannel;
+uniform float alpha;
+uniform float stepSize;
+uniform vec3 scale_inv;
+// uniform vec3 lightDirection;
+uniform float bounding;
+vec4 fcolor;
+vec3 fOrigin;
+
+vec2 hitBox( vec3 orig, vec3 dir ) {
+  vec3 box_min = vec3( - bounding ) / scale_inv;
+  vec3 box_max = vec3( bounding ) / scale_inv;
+  vec3 inv_dir = 1.0 / dir;
+  vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
+  vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
+  vec3 tmin = min( tmin_tmp, tmax_tmp );
+  vec3 tmax = max( tmin_tmp, tmax_tmp );
+  float t0 = max( tmin.x, max( tmin.y, tmin.z ) );
+  float t1 = min( tmax.x, min( tmax.y, tmax.z ) );
+  return vec2( t0, t1 );
+}
+float getDepth( vec3 p ){
+  vec4 frag2 = pmv * vec4( p, 1.0 );
+
+  return(
+    (frag2.z / frag2.w * (gl_DepthRange.far - gl_DepthRange.near) +
+      gl_DepthRange.near + gl_DepthRange.far) * 0.5
+  );
+
+
+  // ndc.z = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) /
+  //      (gl_DepthRange.far - gl_DepthRange.near);
+  // return (frag2.z / frag2.w / 2.0 + 0.5);
+}
+vec4 sample2( vec3 p ) {
+  vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
+  if( colorChannels == 1 ) {
+    // using red channel as the color intensity
+    re.a = re.r;
+    re.rgb = color1WhenSingleChannel * re.r + color2WhenSingleChannel * (1.0 - re.r);
+  }
+  return re;
+}
+
+// Only used when channel number is >= 3
+vec3 getNormal( vec3 p ) {
+  vec4 ne;
+  vec3 zero3 = vec3(0.0, 0.0, 0.0);
+  vec3 normal = zero3;
+  vec3 pos0 = (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5;
+  vec3 pos = pos0;
+  vec4 re = texture( cmap, pos0 );
+
+  if( re.a == 0.0 || re.rgb == zero3 ) {
+    return normal;
+  }
+
+  float stp = max(max(abs(scale_inv.x), abs(scale_inv.y)), abs(scale_inv.z)) * 1.74;
+  vec2 dt = vec2(stp, stp);
+
+
+  // normal along xy
+  pos.xy = pos0.xy + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy += dt;
+  }
+
+  pos.xy = pos0.xy - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xy -= dt;
+  }
+
+  // normal along xz
+  pos.y = pos0.y;
+  pos.xz = pos0.xz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz += dt;
+  }
+
+  pos.xz = pos0.xz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.xz -= dt;
+  }
+
+  // normal along yz
+  pos.x = pos0.x;
+  pos.yz = pos0.yz + dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz += dt;
+  }
+
+  pos.yz = pos0.yz - dt;
+  ne = texture( cmap, pos );
+
+  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
+    normal.yz -= dt;
+  }
+
+
+  return normalize( normal );
+}
+
+void main(){
+
+  // vec4 vOriginProjected = pmv * vec4( vPosition, 1.0 );
+  // vOriginProjected.z = -vOriginProjected.w;
+  // fOrigin = (inverse(pmv) * vOriginProjected).xyz;
+  fOrigin = vOrigin;
+
+  // vec3 rayDir = normalize( vDirection );
+  vec3 rayDir = normalize( vPosition - vOrigin );
+
+  vec2 bounds = hitBox( fOrigin, rayDir );
+  if ( bounds.x > bounds.y ) discard;
+  bounds.x = max( bounds.x, 0.0 );
+  // 0-255 need to be 0.5-255.5
+
+  // bounds.x is the length of ray
+  vec3 p = fOrigin + bounds.x * rayDir;
+  vec3 inc = 1.0 / abs( rayDir );
+  float delta = min( inc.x, min( inc.y, inc.z ) ) * max( abs( stepSize ), 0.1 );
+  // float delta = 0.5 / max( abs(rayDir.x), max( abs(rayDir.y), abs(rayDir.z) ) );
+
+  int nn = 0;
+  int valid_voxel = 0;
+  float mix_factor = 1.0;
+  vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
+  vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
+  vec3 nmal;
+
+  for ( float t = bounds.x; t < bounds.y; t += delta ) {
+    fcolor = sample2( p );
+
+    // Hit voxel
+    if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
+
+      if( alpha > 0.0 ){
+        fcolor.a *= alpha;
+      } else {
+        fcolor.a = 1.0;
+      }
+
+
+      if( fcolor.rgb != last_color.rgb ){
+        // We are right on the surface
+
+        last_color = fcolor;
+
+        if( nn == 0 ){
+          gl_FragDepth = getDepth( p );
+          color = fcolor;
+
+
+          if( colorChannels > 1 ) {
+            nmal = getNormal( p );
+            if(nmal != vec3(0.0, 0.0, 0.0)) {
+
+              // color.rgb *= pow(max( abs(dot(lightDirection, normalize(nmal))) , 1.0), 0.3);
+              color.rgb *= pow(max( abs(dot(rayDir, normalize(nmal - rayDir) )) , 0.25), 0.3);
+            }
+          }
+
+          color.a = max( color.a, 0.2 );
+        } else {
+          // blend
+          color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
+          color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
+          color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
+        }
+
+        nn++;
+
+      } else {
+
+        color.a = min(color.a + 0.005, 1.0);
+
+      }
+
+      valid_voxel = 1;
+
+      if( nn >= 10 || color.a > 0.95 ){
+        break;
+      }
+
+    } else if ( valid_voxel > 0 ) {
+
+      // Leaving the structure reset states
+      last_color.rgb = zero_rgb;
+      valid_voxel = 0;
+    }
+    p += rayDir * delta;
+  }
+  if ( nn == 0 || color.a == 0.0 ) discard;
+
+  // calculate alpha at depth
+}
+`)};
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/jsm/math/ConvexHull.js
+
+
+/**
+ * Ported from: https://github.com/maurizzzio/quickhull3d/ by Mauricio Poppe (https://github.com/maurizzzio)
+ */
+
+const Visible = 0;
+const Deleted = 1;
+
+const _v1 = new three_module.Vector3();
+const _line3 = new three_module.Line3();
+const _plane = new three_module.Plane();
+const _closestPoint = new three_module.Vector3();
+const _triangle = new three_module.Triangle();
+
+class ConvexHull_ConvexHull {
+
+	constructor() {
+
+		this.tolerance = - 1;
+
+		this.faces = []; // the generated faces of the convex hull
+		this.newFaces = []; // this array holds the faces that are generated within a single iteration
+
+		// the vertex lists work as follows:
+		//
+		// let 'a' and 'b' be 'Face' instances
+		// let 'v' be points wrapped as instance of 'Vertex'
+		//
+		//     [v, v, ..., v, v, v, ...]
+		//      ^             ^
+		//      |             |
+		//  a.outside     b.outside
+		//
+		this.assigned = new VertexList();
+		this.unassigned = new VertexList();
+
+		this.vertices = []; 	// vertices of the hull (internal representation of given geometry data)
+
+	}
+
+	setFromPoints( points ) {
+
+		// The algorithm needs at least four points.
+
+		if ( points.length >= 4 ) {
+
+			this.makeEmpty();
+
+			for ( let i = 0, l = points.length; i < l; i ++ ) {
+
+				this.vertices.push( new VertexNode( points[ i ] ) );
+
+			}
+
+			this.compute();
+
+		}
+
+		return this;
+
+	}
+
+	setFromObject( object ) {
+
+		const points = [];
+
+		object.updateMatrixWorld( true );
+
+		object.traverse( function ( node ) {
+
+			const geometry = node.geometry;
+
+			if ( geometry !== undefined ) {
+
+				const attribute = geometry.attributes.position;
+
+				if ( attribute !== undefined ) {
+
+					for ( let i = 0, l = attribute.count; i < l; i ++ ) {
+
+						const point = new Vector3();
+
+						point.fromBufferAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
+
+						points.push( point );
+
+					}
+
+				}
+
+			}
+
+		} );
+
+		return this.setFromPoints( points );
+
+	}
+
+	containsPoint( point ) {
+
+		const faces = this.faces;
+
+		for ( let i = 0, l = faces.length; i < l; i ++ ) {
+
+			const face = faces[ i ];
+
+			// compute signed distance and check on what half space the point lies
+
+			if ( face.distanceToPoint( point ) > this.tolerance ) return false;
+
+		}
+
+		return true;
+
+	}
+
+	intersectRay( ray, target ) {
+
+		// based on "Fast Ray-Convex Polyhedron Intersection" by Eric Haines, GRAPHICS GEMS II
+
+		const faces = this.faces;
+
+		let tNear = - Infinity;
+		let tFar = Infinity;
+
+		for ( let i = 0, l = faces.length; i < l; i ++ ) {
+
+			const face = faces[ i ];
+
+			// interpret faces as planes for the further computation
+
+			const vN = face.distanceToPoint( ray.origin );
+			const vD = face.normal.dot( ray.direction );
+
+			// if the origin is on the positive side of a plane (so the plane can "see" the origin) and
+			// the ray is turned away or parallel to the plane, there is no intersection
+
+			if ( vN > 0 && vD >= 0 ) return null;
+
+			// compute the distance from the ray’s origin to the intersection with the plane
+
+			const t = ( vD !== 0 ) ? ( - vN / vD ) : 0;
+
+			// only proceed if the distance is positive. a negative distance means the intersection point
+			// lies "behind" the origin
+
+			if ( t <= 0 ) continue;
+
+			// now categorized plane as front-facing or back-facing
+
+			if ( vD > 0 ) {
+
+				// plane faces away from the ray, so this plane is a back-face
+
+				tFar = Math.min( t, tFar );
+
+			} else {
+
+				// front-face
+
+				tNear = Math.max( t, tNear );
+
+			}
+
+			if ( tNear > tFar ) {
+
+				// if tNear ever is greater than tFar, the ray must miss the convex hull
+
+				return null;
+
+			}
+
+		}
+
+		// evaluate intersection point
+
+		// always try tNear first since its the closer intersection point
+
+		if ( tNear !== - Infinity ) {
+
+			ray.at( tNear, target );
+
+		} else {
+
+			ray.at( tFar, target );
+
+		}
+
+		return target;
+
+	}
+
+	intersectsRay( ray ) {
+
+		return this.intersectRay( ray, _v1 ) !== null;
+
+	}
+
+	makeEmpty() {
+
+		this.faces = [];
+		this.vertices = [];
+
+		return this;
+
+	}
+
+	// Adds a vertex to the 'assigned' list of vertices and assigns it to the given face
+
+	addVertexToFace( vertex, face ) {
+
+		vertex.face = face;
+
+		if ( face.outside === null ) {
+
+			this.assigned.append( vertex );
+
+		} else {
+
+			this.assigned.insertBefore( face.outside, vertex );
+
+		}
+
+		face.outside = vertex;
+
+		return this;
+
+	}
+
+	// Removes a vertex from the 'assigned' list of vertices and from the given face
+
+	removeVertexFromFace( vertex, face ) {
+
+		if ( vertex === face.outside ) {
+
+			// fix face.outside link
+
+			if ( vertex.next !== null && vertex.next.face === face ) {
+
+				// face has at least 2 outside vertices, move the 'outside' reference
+
+				face.outside = vertex.next;
+
+			} else {
+
+				// vertex was the only outside vertex that face had
+
+				face.outside = null;
+
+			}
+
+		}
+
+		this.assigned.remove( vertex );
+
+		return this;
+
+	}
+
+	// Removes all the visible vertices that a given face is able to see which are stored in the 'assigned' vertex list
+
+	removeAllVerticesFromFace( face ) {
+
+		if ( face.outside !== null ) {
+
+			// reference to the first and last vertex of this face
+
+			const start = face.outside;
+			let end = face.outside;
+
+			while ( end.next !== null && end.next.face === face ) {
+
+				end = end.next;
+
+			}
+
+			this.assigned.removeSubList( start, end );
+
+			// fix references
+
+			start.prev = end.next = null;
+			face.outside = null;
+
+			return start;
+
+		}
+
+	}
+
+	// Removes all the visible vertices that 'face' is able to see
+
+	deleteFaceVertices( face, absorbingFace ) {
+
+		const faceVertices = this.removeAllVerticesFromFace( face );
+
+		if ( faceVertices !== undefined ) {
+
+			if ( absorbingFace === undefined ) {
+
+				// mark the vertices to be reassigned to some other face
+
+				this.unassigned.appendChain( faceVertices );
+
+
+			} else {
+
+				// if there's an absorbing face try to assign as many vertices as possible to it
+
+				let vertex = faceVertices;
+
+				do {
+
+					// we need to buffer the subsequent vertex at this point because the 'vertex.next' reference
+					// will be changed by upcoming method calls
+
+					const nextVertex = vertex.next;
+
+					const distance = absorbingFace.distanceToPoint( vertex.point );
+
+					// check if 'vertex' is able to see 'absorbingFace'
+
+					if ( distance > this.tolerance ) {
+
+						this.addVertexToFace( vertex, absorbingFace );
+
+					} else {
+
+						this.unassigned.append( vertex );
+
+					}
+
+					// now assign next vertex
+
+					vertex = nextVertex;
+
+				} while ( vertex !== null );
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+	// Reassigns as many vertices as possible from the unassigned list to the new faces
+
+	resolveUnassignedPoints( newFaces ) {
+
+		if ( this.unassigned.isEmpty() === false ) {
+
+			let vertex = this.unassigned.first();
+
+			do {
+
+				// buffer 'next' reference, see .deleteFaceVertices()
+
+				const nextVertex = vertex.next;
+
+				let maxDistance = this.tolerance;
+
+				let maxFace = null;
+
+				for ( let i = 0; i < newFaces.length; i ++ ) {
+
+					const face = newFaces[ i ];
+
+					if ( face.mark === Visible ) {
+
+						const distance = face.distanceToPoint( vertex.point );
+
+						if ( distance > maxDistance ) {
+
+							maxDistance = distance;
+							maxFace = face;
+
+						}
+
+						if ( maxDistance > 1000 * this.tolerance ) break;
+
+					}
+
+				}
+
+				// 'maxFace' can be null e.g. if there are identical vertices
+
+				if ( maxFace !== null ) {
+
+					this.addVertexToFace( vertex, maxFace );
+
+				}
+
+				vertex = nextVertex;
+
+			} while ( vertex !== null );
+
+		}
+
+		return this;
+
+	}
+
+	// Computes the extremes of a simplex which will be the initial hull
+
+	computeExtremes() {
+
+		const min = new Vector3();
+		const max = new Vector3();
+
+		const minVertices = [];
+		const maxVertices = [];
+
+		// initially assume that the first vertex is the min/max
+
+		for ( let i = 0; i < 3; i ++ ) {
+
+			minVertices[ i ] = maxVertices[ i ] = this.vertices[ 0 ];
+
+		}
+
+		min.copy( this.vertices[ 0 ].point );
+		max.copy( this.vertices[ 0 ].point );
+
+		// compute the min/max vertex on all six directions
+
+		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
+
+			const vertex = this.vertices[ i ];
+			const point = vertex.point;
+
+			// update the min coordinates
+
+			for ( let j = 0; j < 3; j ++ ) {
+
+				if ( point.getComponent( j ) < min.getComponent( j ) ) {
+
+					min.setComponent( j, point.getComponent( j ) );
+					minVertices[ j ] = vertex;
+
+				}
+
+			}
+
+			// update the max coordinates
+
+			for ( let j = 0; j < 3; j ++ ) {
+
+				if ( point.getComponent( j ) > max.getComponent( j ) ) {
+
+					max.setComponent( j, point.getComponent( j ) );
+					maxVertices[ j ] = vertex;
+
+				}
+
+			}
+
+		}
+
+		// use min/max vectors to compute an optimal epsilon
+
+		this.tolerance = 3 * Number.EPSILON * (
+			Math.max( Math.abs( min.x ), Math.abs( max.x ) ) +
+			Math.max( Math.abs( min.y ), Math.abs( max.y ) ) +
+			Math.max( Math.abs( min.z ), Math.abs( max.z ) )
+		);
+
+		return { min: minVertices, max: maxVertices };
+
+	}
+
+	// Computes the initial simplex assigning to its faces all the points
+	// that are candidates to form part of the hull
+
+	computeInitialHull() {
+
+		const vertices = this.vertices;
+		const extremes = this.computeExtremes();
+		const min = extremes.min;
+		const max = extremes.max;
+
+		// 1. Find the two vertices 'v0' and 'v1' with the greatest 1d separation
+		// (max.x - min.x)
+		// (max.y - min.y)
+		// (max.z - min.z)
+
+		let maxDistance = 0;
+		let index = 0;
+
+		for ( let i = 0; i < 3; i ++ ) {
+
+			const distance = max[ i ].point.getComponent( i ) - min[ i ].point.getComponent( i );
+
+			if ( distance > maxDistance ) {
+
+				maxDistance = distance;
+				index = i;
+
+			}
+
+		}
+
+		const v0 = min[ index ];
+		const v1 = max[ index ];
+		let v2;
+		let v3;
+
+		// 2. The next vertex 'v2' is the one farthest to the line formed by 'v0' and 'v1'
+
+		maxDistance = 0;
+		_line3.set( v0.point, v1.point );
+
+		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
+
+			const vertex = vertices[ i ];
+
+			if ( vertex !== v0 && vertex !== v1 ) {
+
+				_line3.closestPointToPoint( vertex.point, true, _closestPoint );
+
+				const distance = _closestPoint.distanceToSquared( vertex.point );
+
+				if ( distance > maxDistance ) {
+
+					maxDistance = distance;
+					v2 = vertex;
+
+				}
+
+			}
+
+		}
+
+		// 3. The next vertex 'v3' is the one farthest to the plane 'v0', 'v1', 'v2'
+
+		maxDistance = - 1;
+		_plane.setFromCoplanarPoints( v0.point, v1.point, v2.point );
+
+		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
+
+			const vertex = vertices[ i ];
+
+			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 ) {
+
+				const distance = Math.abs( _plane.distanceToPoint( vertex.point ) );
+
+				if ( distance > maxDistance ) {
+
+					maxDistance = distance;
+					v3 = vertex;
+
+				}
+
+			}
+
+		}
+
+		const faces = [];
+
+		if ( _plane.distanceToPoint( v3.point ) < 0 ) {
+
+			// the face is not able to see the point so 'plane.normal' is pointing outside the tetrahedron
+
+			faces.push(
+				Face.create( v0, v1, v2 ),
+				Face.create( v3, v1, v0 ),
+				Face.create( v3, v2, v1 ),
+				Face.create( v3, v0, v2 )
+			);
+
+			// set the twin edge
+
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const j = ( i + 1 ) % 3;
+
+				// join face[ i ] i > 0, with the first face
+
+				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( j ) );
+
+				// join face[ i ] with face[ i + 1 ], 1 <= i <= 3
+
+				faces[ i + 1 ].getEdge( 1 ).setTwin( faces[ j + 1 ].getEdge( 0 ) );
+
+			}
+
+		} else {
+
+			// the face is able to see the point so 'plane.normal' is pointing inside the tetrahedron
+
+			faces.push(
+				Face.create( v0, v2, v1 ),
+				Face.create( v3, v0, v1 ),
+				Face.create( v3, v1, v2 ),
+				Face.create( v3, v2, v0 )
+			);
+
+			// set the twin edge
+
+			for ( let i = 0; i < 3; i ++ ) {
+
+				const j = ( i + 1 ) % 3;
+
+				// join face[ i ] i > 0, with the first face
+
+				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( ( 3 - i ) % 3 ) );
+
+				// join face[ i ] with face[ i + 1 ]
+
+				faces[ i + 1 ].getEdge( 0 ).setTwin( faces[ j + 1 ].getEdge( 1 ) );
+
+			}
+
+		}
+
+		// the initial hull is the tetrahedron
+
+		for ( let i = 0; i < 4; i ++ ) {
+
+			this.faces.push( faces[ i ] );
+
+		}
+
+		// initial assignment of vertices to the faces of the tetrahedron
+
+		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
+
+			const vertex = vertices[ i ];
+
+			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 && vertex !== v3 ) {
+
+				maxDistance = this.tolerance;
+				let maxFace = null;
+
+				for ( let j = 0; j < 4; j ++ ) {
+
+					const distance = this.faces[ j ].distanceToPoint( vertex.point );
+
+					if ( distance > maxDistance ) {
+
+						maxDistance = distance;
+						maxFace = this.faces[ j ];
+
+					}
+
+				}
+
+				if ( maxFace !== null ) {
+
+					this.addVertexToFace( vertex, maxFace );
+
+				}
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+	// Removes inactive faces
+
+	reindexFaces() {
+
+		const activeFaces = [];
+
+		for ( let i = 0; i < this.faces.length; i ++ ) {
+
+			const face = this.faces[ i ];
+
+			if ( face.mark === Visible ) {
+
+				activeFaces.push( face );
+
+			}
+
+		}
+
+		this.faces = activeFaces;
+
+		return this;
+
+	}
+
+	// Finds the next vertex to create faces with the current hull
+
+	nextVertexToAdd() {
+
+		// if the 'assigned' list of vertices is empty, no vertices are left. return with 'undefined'
+
+		if ( this.assigned.isEmpty() === false ) {
+
+			let eyeVertex, maxDistance = 0;
+
+			// grap the first available face and start with the first visible vertex of that face
+
+			const eyeFace = this.assigned.first().face;
+			let vertex = eyeFace.outside;
+
+			// now calculate the farthest vertex that face can see
+
+			do {
+
+				const distance = eyeFace.distanceToPoint( vertex.point );
+
+				if ( distance > maxDistance ) {
+
+					maxDistance = distance;
+					eyeVertex = vertex;
+
+				}
+
+				vertex = vertex.next;
+
+			} while ( vertex !== null && vertex.face === eyeFace );
+
+			return eyeVertex;
+
+		}
+
+	}
+
+	// Computes a chain of half edges in CCW order called the 'horizon'.
+	// For an edge to be part of the horizon it must join a face that can see
+	// 'eyePoint' and a face that cannot see 'eyePoint'.
+
+	computeHorizon( eyePoint, crossEdge, face, horizon ) {
+
+		// moves face's vertices to the 'unassigned' vertex list
+
+		this.deleteFaceVertices( face );
+
+		face.mark = Deleted;
+
+		let edge;
+
+		if ( crossEdge === null ) {
+
+			edge = crossEdge = face.getEdge( 0 );
+
+		} else {
+
+			// start from the next edge since 'crossEdge' was already analyzed
+			// (actually 'crossEdge.twin' was the edge who called this method recursively)
+
+			edge = crossEdge.next;
+
+		}
+
+		do {
+
+			const twinEdge = edge.twin;
+			const oppositeFace = twinEdge.face;
+
+			if ( oppositeFace.mark === Visible ) {
+
+				if ( oppositeFace.distanceToPoint( eyePoint ) > this.tolerance ) {
+
+					// the opposite face can see the vertex, so proceed with next edge
+
+					this.computeHorizon( eyePoint, twinEdge, oppositeFace, horizon );
+
+				} else {
+
+					// the opposite face can't see the vertex, so this edge is part of the horizon
+
+					horizon.push( edge );
+
+				}
+
+			}
+
+			edge = edge.next;
+
+		} while ( edge !== crossEdge );
+
+		return this;
+
+	}
+
+	// Creates a face with the vertices 'eyeVertex.point', 'horizonEdge.tail' and 'horizonEdge.head' in CCW order
+
+	addAdjoiningFace( eyeVertex, horizonEdge ) {
+
+		// all the half edges are created in ccw order thus the face is always pointing outside the hull
+
+		const face = Face.create( eyeVertex, horizonEdge.tail(), horizonEdge.head() );
+
+		this.faces.push( face );
+
+		// join face.getEdge( - 1 ) with the horizon's opposite edge face.getEdge( - 1 ) = face.getEdge( 2 )
+
+		face.getEdge( - 1 ).setTwin( horizonEdge.twin );
+
+		return face.getEdge( 0 ); // the half edge whose vertex is the eyeVertex
+
+
+	}
+
+	//  Adds 'horizon.length' faces to the hull, each face will be linked with the
+	//  horizon opposite face and the face on the left/right
+
+	addNewFaces( eyeVertex, horizon ) {
+
+		this.newFaces = [];
+
+		let firstSideEdge = null;
+		let previousSideEdge = null;
+
+		for ( let i = 0; i < horizon.length; i ++ ) {
+
+			const horizonEdge = horizon[ i ];
+
+			// returns the right side edge
+
+			const sideEdge = this.addAdjoiningFace( eyeVertex, horizonEdge );
+
+			if ( firstSideEdge === null ) {
+
+				firstSideEdge = sideEdge;
+
+			} else {
+
+				// joins face.getEdge( 1 ) with previousFace.getEdge( 0 )
+
+				sideEdge.next.setTwin( previousSideEdge );
+
+			}
+
+			this.newFaces.push( sideEdge.face );
+			previousSideEdge = sideEdge;
+
+		}
+
+		// perform final join of new faces
+
+		firstSideEdge.next.setTwin( previousSideEdge );
+
+		return this;
+
+	}
+
+	// Adds a vertex to the hull
+
+	addVertexToHull( eyeVertex ) {
+
+		const horizon = [];
+
+		this.unassigned.clear();
+
+		// remove 'eyeVertex' from 'eyeVertex.face' so that it can't be added to the 'unassigned' vertex list
+
+		this.removeVertexFromFace( eyeVertex, eyeVertex.face );
+
+		this.computeHorizon( eyeVertex.point, null, eyeVertex.face, horizon );
+
+		this.addNewFaces( eyeVertex, horizon );
+
+		// reassign 'unassigned' vertices to the new faces
+
+		this.resolveUnassignedPoints( this.newFaces );
+
+		return	this;
+
+	}
+
+	cleanup() {
+
+		this.assigned.clear();
+		this.unassigned.clear();
+		this.newFaces = [];
+
+		return this;
+
+	}
+
+	compute() {
+
+		let vertex;
+
+		this.computeInitialHull();
+
+		// add all available vertices gradually to the hull
+
+		while ( ( vertex = this.nextVertexToAdd() ) !== undefined ) {
+
+			this.addVertexToHull( vertex );
+
+		}
+
+		this.reindexFaces();
+
+		this.cleanup();
+
+		return this;
+
+	}
+
+}
+
+//
+
+class Face {
+
+	constructor() {
+
+		this.normal = new Vector3();
+		this.midpoint = new Vector3();
+		this.area = 0;
+
+		this.constant = 0; // signed distance from face to the origin
+		this.outside = null; // reference to a vertex in a vertex list this face can see
+		this.mark = Visible;
+		this.edge = null;
+
+	}
+
+	static create( a, b, c ) {
+
+		const face = new Face();
+
+		const e0 = new HalfEdge( a, face );
+		const e1 = new HalfEdge( b, face );
+		const e2 = new HalfEdge( c, face );
+
+		// join edges
+
+		e0.next = e2.prev = e1;
+		e1.next = e0.prev = e2;
+		e2.next = e1.prev = e0;
+
+		// main half edge reference
+
+		face.edge = e0;
+
+		return face.compute();
+
+	}
+
+	getEdge( i ) {
+
+		let edge = this.edge;
+
+		while ( i > 0 ) {
+
+			edge = edge.next;
+			i --;
+
+		}
+
+		while ( i < 0 ) {
+
+			edge = edge.prev;
+			i ++;
+
+		}
+
+		return edge;
+
+	}
+
+	compute() {
+
+		const a = this.edge.tail();
+		const b = this.edge.head();
+		const c = this.edge.next.head();
+
+		_triangle.set( a.point, b.point, c.point );
+
+		_triangle.getNormal( this.normal );
+		_triangle.getMidpoint( this.midpoint );
+		this.area = _triangle.getArea();
+
+		this.constant = this.normal.dot( this.midpoint );
+
+		return this;
+
+	}
+
+	distanceToPoint( point ) {
+
+		return this.normal.dot( point ) - this.constant;
+
+	}
+
+}
+
+// Entity for a Doubly-Connected Edge List (DCEL).
+
+class HalfEdge {
+
+
+	constructor( vertex, face ) {
+
+		this.vertex = vertex;
+		this.prev = null;
+		this.next = null;
+		this.twin = null;
+		this.face = face;
+
+	}
+
+	head() {
+
+		return this.vertex;
+
+	}
+
+	tail() {
+
+		return this.prev ? this.prev.vertex : null;
+
+	}
+
+	length() {
+
+		const head = this.head();
+		const tail = this.tail();
+
+		if ( tail !== null ) {
+
+			return tail.point.distanceTo( head.point );
+
+		}
+
+		return - 1;
+
+	}
+
+	lengthSquared() {
+
+		const head = this.head();
+		const tail = this.tail();
+
+		if ( tail !== null ) {
+
+			return tail.point.distanceToSquared( head.point );
+
+		}
+
+		return - 1;
+
+	}
+
+	setTwin( edge ) {
+
+		this.twin = edge;
+		edge.twin = this;
+
+		return this;
+
+	}
+
+}
+
+// A vertex as a double linked list node.
+
+class VertexNode {
+
+	constructor( point ) {
+
+		this.point = point;
+		this.prev = null;
+		this.next = null;
+		this.face = null; // the face that is able to see this vertex
+
+	}
+
+}
+
+// A double linked list that contains vertex nodes.
+
+class VertexList {
+
+	constructor() {
+
+		this.head = null;
+		this.tail = null;
+
+	}
+
+	first() {
+
+		return this.head;
+
+	}
+
+	last() {
+
+		return this.tail;
+
+	}
+
+	clear() {
+
+		this.head = this.tail = null;
+
+		return this;
+
+	}
+
+	// Inserts a vertex before the target vertex
+
+	insertBefore( target, vertex ) {
+
+		vertex.prev = target.prev;
+		vertex.next = target;
+
+		if ( vertex.prev === null ) {
+
+			this.head = vertex;
+
+		} else {
+
+			vertex.prev.next = vertex;
+
+		}
+
+		target.prev = vertex;
+
+		return this;
+
+	}
+
+	// Inserts a vertex after the target vertex
+
+	insertAfter( target, vertex ) {
+
+		vertex.prev = target;
+		vertex.next = target.next;
+
+		if ( vertex.next === null ) {
+
+			this.tail = vertex;
+
+		} else {
+
+			vertex.next.prev = vertex;
+
+		}
+
+		target.next = vertex;
+
+		return this;
+
+	}
+
+	// Appends a vertex to the end of the linked list
+
+	append( vertex ) {
+
+		if ( this.head === null ) {
+
+			this.head = vertex;
+
+		} else {
+
+			this.tail.next = vertex;
+
+		}
+
+		vertex.prev = this.tail;
+		vertex.next = null; // the tail has no subsequent vertex
+
+		this.tail = vertex;
+
+		return this;
+
+	}
+
+	// Appends a chain of vertices where 'vertex' is the head.
+
+	appendChain( vertex ) {
+
+		if ( this.head === null ) {
+
+			this.head = vertex;
+
+		} else {
+
+			this.tail.next = vertex;
+
+		}
+
+		vertex.prev = this.tail;
+
+		// ensure that the 'tail' reference points to the last vertex of the chain
+
+		while ( vertex.next !== null ) {
+
+			vertex = vertex.next;
+
+		}
+
+		this.tail = vertex;
+
+		return this;
+
+	}
+
+	// Removes a vertex from the linked list
+
+	remove( vertex ) {
+
+		if ( vertex.prev === null ) {
+
+			this.head = vertex.next;
+
+		} else {
+
+			vertex.prev.next = vertex.next;
+
+		}
+
+		if ( vertex.next === null ) {
+
+			this.tail = vertex.prev;
+
+		} else {
+
+			vertex.next.prev = vertex.prev;
+
+		}
+
+		return this;
+
+	}
+
+	// Removes a list of vertices whose 'head' is 'a' and whose 'tail' is b
+
+	removeSubList( a, b ) {
+
+		if ( a.prev === null ) {
+
+			this.head = b.next;
+
+		} else {
+
+			a.prev.next = b.next;
+
+		}
+
+		if ( b.next === null ) {
+
+			this.tail = a.prev;
+
+		} else {
+
+			b.next.prev = a.prev;
+
+		}
+
+		return this;
+
+	}
+
+	isEmpty() {
+
+		return this.head === null;
+
+	}
+
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/jsm/geometries/ConvexGeometry.js
+
+
+
+class ConvexGeometry extends (/* unused pure expression or super */ null && (BufferGeometry)) {
+
+	constructor( points = [] ) {
+
+		super();
+
+		// buffers
+
+		const vertices = [];
+		const normals = [];
+
+		const convexHull = new ConvexHull().setFromPoints( points );
+
+		// generate vertices and normals
+
+		const faces = convexHull.faces;
+
+		for ( let i = 0; i < faces.length; i ++ ) {
+
+			const face = faces[ i ];
+			let edge = face.edge;
+
+			// we move along a doubly-connected edge list to access all face points (see HalfEdge docs)
+
+			do {
+
+				const point = edge.head().point;
+
+				vertices.push( point.x, point.y, point.z );
+				normals.push( face.normal.x, face.normal.y, face.normal.z );
+
+				edge = edge.next;
+
+			} while ( edge !== face.edge );
+
+		}
+
+		// build geometry
+
+		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+		this.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
+
+	}
+
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/geometry/datacube2.js
+
+
+
+
+
+
+
+
+class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
+
+  _filterDataContinuous( dataLB, dataUB, timeSlice ) {
+    if( dataLB < this.__dataLB ) {
+      dataLB = this.__dataLB;
+    }
+    if( dataUB > this.__dataUB ) {
+      dataUB = this.__dataUB;
+    }
+
+    this._selectedDataValues.length = 2;
+    this._selectedDataValues[ 0 ] = dataLB;
+    this._selectedDataValues[ 1 ] = dataUB;
+
+    // calculate voxelData -> colorKey transform
+    let data2ColorKeySlope = 1, data2ColorKeyIntercept = 0;
+    if( this.lutAutoRescale ) {
+      data2ColorKeySlope = (this.lutMaxColorID - this.lutMinColorID) / (this.__dataUB - this.__dataLB);
+      data2ColorKeyIntercept = (this.lutMinColorID + this.lutMaxColorID - data2ColorKeySlope * (this.__dataLB + this.__dataUB)) / 2.0;
+    }
+
+    if( typeof(timeSlice) === "number" ){
+      this._timeSlice = Math.floor( timeSlice );
+    }
+
+    const mapAlpha = this.lut.mapAlpha;
+    const voxelData = this.voxelData;
+    const lutMap = this.lutMap;
+    const singleChannel = this.colorFormat === three_module.RedFormat;
+    const voxelColor = this.voxelColor;
+
+    const voxelIndexOffset = this._timeSlice * this.nVoxels;
+    let voxelIndex = 0,
+        boundingMinX = Infinity, boundingMinY = Infinity, boundingMinZ = Infinity,
+        boundingMaxX = -Infinity, boundingMaxY = -Infinity, boundingMaxZ = -Infinity;
+    let withinFilters, voxelValue, voxelColorKey;
+
+    if( singleChannel ) {
+
+      // voxel alpha value
+      let voxelA;
+
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue < dataLB || voxelValue > dataUB) {
+              // hide this voxel as it's beyong threshold
+              voxelColor[ voxelIndex ] = 0;
+            } else {
+              voxelColorKey = Math.floor(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
+              voxelA = lutMap[ voxelColorKey ];
+
+              // NOTICE: we expect consecutive integer color keys!
+              if( voxelA === undefined ) {
+                // This shouldn't happen if color keys are consecutive
+                voxelColor[ voxelIndex ] = 0;
+              } else {
+
+                voxelColor[ voxelIndex ] = voxelA.R;
+
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+
+              }
+            }
+          }
+        }
+      }
+    } else {
+
+      // voxel RGBA value
+      let voxelRGBA;
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue < dataLB || voxelValue > dataUB) {
+              // hide this voxel as it's beyong threshold
+              voxelColor[ voxelIndex * 4 + 3 ] = 0;
+            } else {
+              voxelColorKey = Math.round(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
+              voxelRGBA = lutMap[ voxelColorKey ];
+
+              // NOTICE: we expect consecutive integer color keys!
+              if( voxelRGBA === undefined ) {
+                // This shouldn't happen if color keys are consecutive
+                voxelColor[ voxelIndex * 4 + 3 ] = 0;
+              } else {
+
+                voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
+                voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
+                voxelColor[ voxelIndex * 4 + 2 ] = voxelRGBA.B;
+
+                if( mapAlpha ) {
+                  voxelColor[ voxelIndex * 4 + 3 ] = voxelRGBA.A;
+                } else {
+                  voxelColor[ voxelIndex * 4 + 3 ] = 255;
+                }
+
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+
+              }
+            }
+
+          }
+        }
+      }
+
+    }
+
+    this.object.material.uniforms.bounding.value = Math.min(
+      Math.max(
+        boundingMaxX / this.modelShape.x - 0.5,
+        boundingMaxY / this.modelShape.y - 0.5,
+        boundingMaxZ / this.modelShape.z - 0.5,
+        0.5 - boundingMinX / this.modelShape.x,
+        0.5 - boundingMinY / this.modelShape.y,
+        0.5 - boundingMinZ / this.modelShape.z,
+        0.0
+      ),
+      0.5
+    );
+    this.object.material.uniformsNeedUpdate = true;
+
+    this.colorTexture.needsUpdate = true;
+  }
+  _filterDataDiscrete( selectedDataValues, timeSlice ) {
+
+    if( Array.isArray( selectedDataValues ) ){
+
+      // discrete color keys
+      this._selectedDataValues.length = 0;
+      let dataValue;
+
+      for( let jj = 0; jj < selectedDataValues.length; jj++ ) {
+        dataValue = selectedDataValues[ jj ];
+        if( dataValue <= this.lutMinColorID ) {
+          this._selectedDataValues.length = 0;
+          break;
+        }
+        this._selectedDataValues[ dataValue ] = true;
+      }
+      if( this._selectedDataValues.length === 0 ) {
+        for( dataValue = this.lutMinColorID + 1;
+              dataValue < this.lutMaxColorID; dataValue++ ) {
+          this._selectedDataValues[ dataValue ] = true;
+        }
+      }
+    }
+
+    if( typeof(timeSlice) === "number" ){
+      this._timeSlice = Math.floor( timeSlice );
+    }
+
+    const mapAlpha = this.lut.mapAlpha;
+    const voxelData = this.voxelData;
+    const lutMap = this.lutMap;
+    const singleChannel = this.colorFormat === three_module.RedFormat;
+    const voxelColor = this.voxelColor;
+
+    const voxelIndexOffset = this._timeSlice * this.nVoxels;
+    let voxelIndex = 0,
+        boundingMinX = Infinity, boundingMinY = Infinity, boundingMinZ = Infinity,
+        boundingMaxX = -Infinity, boundingMaxY = -Infinity, boundingMaxZ = -Infinity;
+    let withinFilters, voxelValue;
+
+    if( singleChannel ) {
+
+      // voxel alpha value
+      let voxelA;
+
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue <= this.lutMinColorID ) {
+              // special: always hide this voxel
+              voxelColor[ voxelIndex ] = 0;
+            } else {
+
+              voxelA = lutMap[ voxelValue ];
+              withinFilters = this._selectedDataValues[ voxelValue ];
+
+              if( voxelA !== undefined && withinFilters ) {
+                // this voxel should be displayed
+                voxelColor[ voxelIndex ] = voxelA.R;
+
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+              } else {
+                voxelColor[ voxelIndex ] = 0;
+              }
+
+            }
+
+          }
+        }
+      }
+    } else {
+
+      // voxel RGBA value
+      let voxelRGBA;
+      for ( let z = 0; z < this.modelShape.z; z++ ) {
+        for ( let y = 0; y < this.modelShape.y; y++ ) {
+          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
+
+            // no need to round up as this has been done in the constructor
+            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
+            if( voxelValue <= this.lutMinColorID ) {
+              // special: always hide this voxel
+              voxelColor[ voxelIndex * 4 + 3 ] = 0;
+            } else {
+
+              voxelRGBA = lutMap[ voxelValue ];
+              withinFilters = this._selectedDataValues[ voxelValue ];
+
+              if( voxelRGBA !== undefined && withinFilters ) {
+                // this voxel should be displayed
+                voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
+                voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
+                voxelColor[ voxelIndex * 4 + 2 ] = voxelRGBA.B;
+
+                if( mapAlpha ) {
+                  voxelColor[ voxelIndex * 4 + 3 ] = voxelRGBA.A;
+                } else {
+                  voxelColor[ voxelIndex * 4 + 3 ] = 255;
+                }
+                // set bounding box
+                if( boundingMinX > x ) { boundingMinX = x; }
+                if( boundingMinY > y ) { boundingMinY = y; }
+                if( boundingMinZ > z ) { boundingMinZ = z; }
+                if( boundingMaxX < x ) { boundingMaxX = x; }
+                if( boundingMaxY < y ) { boundingMaxY = y; }
+                if( boundingMaxZ < z ) { boundingMaxZ = z; }
+              } else {
+                voxelColor[ voxelIndex * 4 + 3 ] = 0;
+              }
+
+            }
+
+          }
+        }
+      }
+
+    }
+
+    this.object.material.uniforms.bounding.value = Math.min(
+      Math.max(
+        boundingMaxX / this.modelShape.x - 0.5,
+        boundingMaxY / this.modelShape.y - 0.5,
+        boundingMaxZ / this.modelShape.z - 0.5,
+        0.5 - boundingMinX / this.modelShape.x,
+        0.5 - boundingMinY / this.modelShape.y,
+        0.5 - boundingMinZ / this.modelShape.z,
+        0.0
+      ),
+      0.5
+    );
+    this.object.material.uniformsNeedUpdate = true;
+    this.colorTexture.needsUpdate = true;
+
+  }
+
+  updatePalette( selectedDataValues, timeSlice ){
+    if( !this._canvas.has_webgl2 ){ return; }
+
+    if( this.isDataContinuous ) {
+
+      if( !Array.isArray( selectedDataValues ) ) {
+        selectedDataValues = this._selectedDataValues;
+      }
+      let lb, ub;
+      if( selectedDataValues.length >= 2 ) {
+        /*lb = selectedDataValues[ 0 ];
+        ub = selectedDataValues[ 1 ];*/
+        lb = Math.min(...selectedDataValues);
+        ub = Math.max(...selectedDataValues);
+      } else {
+        lb = this.lutMinColorID;
+        ub = this.lutMaxColorID;
+      }
+      this._filterDataContinuous( lb, ub, timeSlice );
+
+    } else {
+
+      if( !Array.isArray( selectedDataValues ) ) {
+        selectedDataValues = this._selectedDataValues;
+      }
+      this._filterDataDiscrete( selectedDataValues, timeSlice );
+
+    }
+  }
+
+  constructor(g, canvas){
+
+
+    super( g, canvas );
+
+    if( !canvas.has_webgl2 ){
+      throw 'DataCube2, i.e. voxel cube must need WebGL2 support';
+    }
+
+    // this._params is g
+    // this.name = this._params.name;
+    // this.group_name = this._params.group.group_name;
+
+    this.type = 'DataCube2';
+    this.isDataCube2 = true;
+    this._display_mode = "hidden";
+    this._selectedDataValues = [];
+    this._timeSlice = 0;
+    // transform before applying trans_mat specified by `g`
+    // only useful for NiftiCube2
+    this._transform = new three_module.Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+
+    if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
+      this._transform.set(...g.trans_mat);
+    } else {
+      this._transform.set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+    }
+
+    let mesh;
+
+    // Need to check if this is nifticube
+    if( g.isNiftiCube2 ) {
+      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
+      this.voxelData = niftiData.image;
+      // width, height, depth of the model (not in world)
+      this.modelShape = new three_module.Vector3().fromArray( niftiData.shape );
+
+      // Make sure to register the initial transform matrix (from IJK to RAS)
+      // original g.trans_mat is nifti RAS to tkrRAS
+      // this._transform = g.trans_mat * niftiData.model2RAS
+      //   -> new transform from model center to tkrRAS
+      this._transform.multiply( niftiData.model2RAS );
+    } else {
+      // g.trans_mat is from model to tkrRAS
+      this.voxelData = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
+      // width, height, depth of the model (not in world)
+      this.modelShape = new three_module.Vector3().fromArray(
+        canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name)
+      );
+    }
+    this.nVoxels = this.modelShape.x * this.modelShape.y * this.modelShape.z;
+    // The color map might be specified separately
+    this.lut = g.color_map || canvas.global_data('__global_data__.VolumeColorLUT');
+    this.lutMap = this.lut.map;
+    this.lutMaxColorID = this.lut.mapMaxColorID;
+    this.lutMinColorID = this.lut.mapMinColorID;
+    this.lutAutoRescale = this.lut.colorIDAutoRescale === true;
+    this.isDataContinuous = this.lut.mapDataType === "continuous";
+    this.__dataLB = this.lutMinColorID;
+    this.__dataUB = this.lutMaxColorID;
+
+    // Generate 3D texture, to do so, we need to customize shaders
+    if( g.color_format === "RedFormat" ) {
+      this.colorFormat = three_module.RedFormat;
+      this.nColorChannels = 1;
+      this.voxelColor = new Uint8Array( this.nVoxels );
+    } else {
+      this.colorFormat = three_module.RGBAFormat;
+      this.nColorChannels = 4;
+      this.voxelColor = new Uint8Array( this.nVoxels * 4 );
+    }
+
+    // Change voxelData so all elements are integers (non-negative)
+    if( this.isDataContinuous ) {
+      if( this.lutAutoRescale ) {
+
+        this.__dataLB = Infinity;
+        this.__dataUB = -Infinity;
+        this.voxelData.forEach((vd) => {
+          if( this.__dataLB > vd ) { this.__dataLB = vd; }
+          if( this.__dataUB < vd ) { this.__dataUB = vd; }
+        })
+
+        if( this.__dataLB === Infinity ) {
+          this.__dataLB = this.lutMinColorID;
+        }
+        if( this.__dataUB === -Infinity ) {
+          this.__dataUB = this.lutMaxColorID;
+        }
+
+      }
+
+    } else {
+
+      this.voxelData.forEach((vd, ii) => {
+        if( vd < this.lutMinColorID || vd > this.lutMaxColorID ) {
+          this.voxelData[ ii ] = this.lutMinColorID;
+        } else if( !Number.isInteger(vd) ) {
+          this.voxelData[ ii ] =  Math.round( vd );
+        }
+      })
+    }
+
+    // Color texture - used to render colors
+    this.colorTexture = new three_module.Data3DTexture(
+      this.voxelColor, this.modelShape.x, this.modelShape.y, this.modelShape.z
+    );
+
+    this.colorTexture.minFilter = three_module.NearestFilter;
+    this.colorTexture.magFilter = three_module.NearestFilter;
+    this.colorTexture.format = this.colorFormat;
+    this.colorTexture.type = three_module.UnsignedByteType;
+    this.colorTexture.unpackAlignment = 1;
+
+    this.colorTexture.needsUpdate = true;
+
+    // Material
+    const shader = VolumeRenderShader1;
+
+
+    const uniforms = three_module.UniformsUtils.clone( shader.uniforms );
+    this._uniforms = uniforms;
+    // uniforms.map.value = data_texture;
+    uniforms.cmap.value = this.colorTexture;
+    uniforms.colorChannels.value = this.nColorChannels;
+    uniforms.alpha.value = -1.0;
+    uniforms.scale_inv.value.set(1 / this.modelShape.x, 1 / this.modelShape.y, 1 / this.modelShape.z);
+    uniforms.bounding.value = 0.5;
+
+    let material = new three_module.RawShaderMaterial( {
+      uniforms: uniforms,
+      vertexShader: shader.vertexShader,
+      fragmentShader: shader.fragmentShader,
+      side: three_module.BackSide, // The volume shader uses the backface as its "reference point"
+      transparent : true
+    } );
+
+    const geometry = new three_module.BoxGeometry(
+      this.modelShape.x,
+      this.modelShape.y,
+      this.modelShape.z
+    );
+
+    mesh = new three_module.Mesh( geometry, material );
+    mesh.name = 'mesh_datacube_' + g.name;
+
+    mesh.position.fromArray( g.position );
+    // TODO: need to check how threejs handle texture 3D to know why the s
+
+    mesh.userData.pre_render = () => { return( this.pre_render() ); };
+    mesh.userData.dispose = () => { this.dispose(); };
+
+    this._mesh = mesh;
+    this.object = mesh;
+
+    // initialize voxelColor
+    this.updatePalette();
+  }
+
+  dispose(){
+    if( this._canvas.has_webgl2 && this._mesh ){
+      this._mesh.material.dispose();
+      this._mesh.geometry.dispose();
+      // this._data_texture.dispose();
+      this.colorTexture.dispose();
+
+      // this._map_data = undefined;
+      // this.voxelData = undefined;
+    }
+  }
+
+  get_track_data( track_name, reset_material ){}
+
+  finish_init(){
+    // this.object
+
+    const transformDisabled = this._params.disable_trans_mat;
+
+    // temporarily disable transform matrix
+    this._params.disable_trans_mat = true;
+
+    // Finalize setups
+    super.finish_init();
+
+    // override transform
+    this._params.disable_trans_mat = transformDisabled;
+    this.object.userData.trans_mat = this._transform;
+
+    if( !transformDisabled ) {
+
+      this.object.applyMatrix4( this._transform );
+      this.object.updateMatrixWorld();
+
+    }
+
+    // data cube 2 must have groups and group parent is scene
+    // let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    // this._canvas.origin.remove( gp );
+    // this._canvas.scene.add( gp );
+
+    this.register_object( ['atlases'] );
+
+  }
+
+  pre_render() {
+    super.pre_render();
+  }
+
+}
+
+
+function gen_datacube2(g, canvas){
+  return( new DataCube2(g, canvas) );
+}
+
+
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/ext/geometries/TubeBufferGeometry2.js
+
+
+// TubeBufferGeometry2
+
+class TubeBufferGeometry2 extends three_module.BufferGeometry {
+  constructor ( path, tubularSegments, radius, radialSegments, closed ) {
+
+    super();
+
+  	this.type = 'TubeBufferGeometry2';
+
+  	this.parameters = {
+  		path: path,
+  		tubularSegments: tubularSegments,
+  		radius: radius,
+  		radialSegments: radialSegments,
+  		closed: closed
+  	};
+
+  	tubularSegments = tubularSegments || 64;
+  	radius = radius || 1;
+  	radialSegments = radialSegments || 8;
+  	closed = closed || false;
+
+
+  	this.tubularSegments = tubularSegments;
+  	this.radialSegments = radialSegments;
+  	this.radius = radius;
+  	this.closed = closed;
+
+  	// expose internals
+  	this.computeFrenetFrames();
+
+  	// helper variables
+
+  	this._vertex = new three_module.Vector3();
+  	this._normal = new three_module.Vector3();
+  	this._uv = new three_module.Vector2();
+  	this._P = new three_module.Vector3();
+
+  	// buffer
+
+  	const arr_vertices = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 3 ).fill(0);
+  	const arr_normals = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 3 ).fill(0);
+  	const arr_uvs = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 2 ).fill(0);
+
+  	this._indices = new Array( this.radialSegments * this.tubularSegments * 6 ).fill(0);
+  	this._vertices = new three_module.Float32BufferAttribute( arr_vertices, 3 );
+  	this._normals = new three_module.Float32BufferAttribute( arr_normals, 3 );
+  	this._uvs = new three_module.Float32BufferAttribute( arr_uvs, 2 );
+
+  	// create buffer data
+
+  	this.generateBufferData( true, true, true, false );
+
+  	// build geometry
+  	this.setIndex( this._indices );
+  	this.setAttribute( 'position', this._vertices );
+  	this.setAttribute( 'normal', this._normals );
+  	this.setAttribute( 'uv', this._uvs );
+
+
+  }
+
+  computeFrenetFrames(){
+    const frames = this.parameters.path.computeFrenetFrames( this.tubularSegments, this.closed );
+
+  	this.tangents = frames.tangents;
+  	this.normals = frames.normals;
+  	this.binormals = frames.binormals;
+  }
+
+
+
+  generateBufferData( vertices = true, uvs = false, indices = false, check_normal = false ) {
+
+    if( check_normal ){
+      if( !this.normals || this.normals.length < 1 || this.normals[ 0 ].length() === 0 ){
+        // normal is generated wrong, need to update
+        this.computeFrenetFrames();
+      }
+
+    }
+
+    if( vertices ){
+  		for ( let i = 0; i < this.tubularSegments; i ++ ) {
+
+  			this.generateSegment( i );
+
+  		}
+
+  		// if the geometry is not closed, generate the last row of vertices and normals
+  		// at the regular position on the given path
+  		//
+  		// if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
+
+  		this.generateSegment( ( this.closed === false ) ? this.tubularSegments : 0 );
+
+  		this._vertices.needsUpdate = true;
+    }
+
+
+    if( uvs ){
+
+		  // uvs are generated in a separate function.
+  		// this makes it easy compute correct values for closed geometries
+
+  		this.generateUVs();
+
+  		this._uvs.needsUpdate = true;
+    }
+
+
+    if( indices ){
+  		// finally create faces
+
+  		this.generateIndices();
+
+    }
+
+	}
+
+  generateSegment( i ) {
+
+		// we use getPointAt to sample evenly distributed points from the given path
+
+		this._P = this.parameters.path.getPoint( i / this.tubularSegments, this._P );
+
+
+		const N = this.normals[ i ];
+		const B = this.binormals[ i ];
+
+		// generate normals and vertices for the current segment
+
+		for ( let j = 0; j <= this.radialSegments; j ++ ) {
+
+			const v = j / this.radialSegments * Math.PI * 2;
+
+			const sin = Math.sin( v );
+			const cos = - Math.cos( v );
+
+			// normal
+
+			this._normal.x = ( cos * N.x + sin * B.x );
+			this._normal.y = ( cos * N.y + sin * B.y );
+			this._normal.z = ( cos * N.z + sin * B.z );
+			this._normal.normalize();
+
+			this._normals.setXYZ(
+			  ( this.radialSegments + 1 ) * i + j,
+			  this._normal.x, this._normal.y, this._normal.z
+			);
+
+			// vertex
+
+			this._vertex.x = this._P.x + this.radius * this._normal.x;
+			this._vertex.y = this._P.y + this.radius * this._normal.y;
+			this._vertex.z = this._P.z + this.radius * this._normal.z;
+
+      this._vertices.setXYZ(
+        ( this.radialSegments + 1 ) * i + j,
+        this._vertex.x, this._vertex.y, this._vertex.z
+      );
+
+		}
+
+	}
+
+	generateUVs() {
+
+		for ( let i = 0; i <= this.tubularSegments; i ++ ) {
+
+			for ( let j = 0; j <= this.radialSegments; j ++ ) {
+
+				this._uv.x = i / this.tubularSegments;
+				this._uv.y = j / this.radialSegments;
+
+				this._uvs.setXY( ( this.radialSegments + 1 ) * i + j, this._uv.x, this._uv.y );
+
+			}
+
+		}
+
+	}
+
+	generateIndices() {
+
+		for ( let j = 1; j <= this.tubularSegments; j ++ ) {
+
+			for ( let i = 1; i <= this.radialSegments; i ++ ) {
+
+				const a = ( this.radialSegments + 1 ) * ( j - 1 ) + ( i - 1 );
+				const b = ( this.radialSegments + 1 ) * j + ( i - 1 );
+				const c = ( this.radialSegments + 1 ) * j + i;
+				const d = ( this.radialSegments + 1 ) * ( j - 1 ) + i;
+
+				// faces
+        const idx = (j - 1) * this.radialSegments + i - 1;
+        this._indices[ idx * 6 ] = a;
+        this._indices[ idx * 6 + 1 ] = b;
+        this._indices[ idx * 6 + 2 ] = d;
+
+        this._indices[ idx * 6 + 3 ] = b;
+        this._indices[ idx * 6 + 4 ] = c;
+        this._indices[ idx * 6 + 5 ] = d;
+
+				// this.indices.push( a, b, d );
+				// this.indices.push( b, c, d );
+
+			}
+
+		}
+
+	}
+
+
+  toJSON () {
+    const data = super.toJSON();
+
+  	data.path = this.parameters.path.toJSON();
+
+  	return data;
+  }
+}
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/geometry/tube.js
+
+
+
+
+
+// construct curve
+function CustomLine( targets ) {
+	three_module.Curve.call( this );
+	this.targets = targets;
+	this._cached = targets.map((v) => {
+	  return(new three_module.Vector3());
+	});
+}
+CustomLine.prototype = Object.create( three_module.Curve.prototype );
+CustomLine.prototype.constructor = CustomLine;
+CustomLine.prototype.getPoint = function ( t, optionalTarget ) {
+  const tp = optionalTarget || new three_module.Vector3();
+	tp.x = this.targets[0].x * (1.0 - t) + this.targets[1].x * t;
+  tp.y = this.targets[0].y * (1.0 - t) + this.targets[1].y * t;
+  tp.z = this.targets[0].z * (1.0 - t) + this.targets[1].z * t;
+  return( tp );
+};
+CustomLine.prototype._changed = function() {
+
+  return(this.targets.every((v, ii) => {
+    const _c = this._cached[ii];
+    if( _c && _c.isVector3 ){
+      if( v.equals(_c) ){
+        return(true);
+      }
+      this._cached[ii].copy( v );
+    } else {
+      this._cached[ii] = v.clone();
+    }
+
+    return( false );
+
+  }));
+
+};
+
+
+class TubeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
+
+  constructor(g, canvas){
+
+    super( g, canvas );
+    // this._params is g
+    // this.name = this._params.name;
+    // this.group_name = this._params.group.group_name;
+
+    this.type = 'TubeMesh';
+    this.isTubeMesh = true;
+
+    this.radius = g.radius || 0.4;
+    this.tubularSegments = g.tubular_segments || 3;
+    this.radialSegments = g.radial_egments || 6;
+    this.is_closed = g.is_closed || false;
+
+    this.path_names = g.paths;
+
+    // TODO: validate paths
+    let t1;
+    this._targets = this.path_names.map((name) => {
+      t1 = canvas.threebrain_instances.get( name );
+      if( t1 && t1.isThreeBrainObject ){
+        return( t1 );
+      } else {
+        throw( `Cannot find object ${ name }.` );
+      }
+    });
+    this._target_positions = [
+      this._targets[0].world_position,
+      this._targets[1].world_position
+    ];
+
+
+
+
+    this._curve = new CustomLine( this._target_positions );
+
+    this._geometry = new TubeBufferGeometry2( this._curve, this.tubularSegments,
+                                              this.radius, this.radialSegments, this.is_closed );
+
+    this._material = new three_module.MeshLambertMaterial();
+
+    this.object = new three_module.Mesh( this._geometry, this._material );
+    this._mesh = this.object;
+
+
+    this._geometry.name = 'geom_tube2_' + g.name;
+    this._mesh.name = 'mesh_tube2_' + g.name;
+
+    // cache
+  	this._cached_position = [];
+
+  }
+
+
+  finish_init(){
+
+    super.finish_init();
+
+    // data cube 2 must have groups and group parent is scene
+    let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    gp.remove( this.object );
+    this._canvas.scene.add( this.object );
+
+  }
+
+  dispose(){
+    this._targets.length = 0;
+    this._mesh.material.dispose();
+    this._mesh.geometry.dispose();
+  }
+
+
+  pre_render(){
+
+    if( this.object ){
+      this._targets.forEach( (v, ii) => {
+        if( v._last_rendered !== results.elapsed_time ){
+          v.get_world_position();
+        }
+      } );
+
+      /*
+      if(
+        this._cached_position[0] !== this._target_positions[0] ||
+        this._cached_position[1] !== this._target_positions[1]
+      ) {
+        // position changed
+      }
+      */
+
+      // update positions
+      this._geometry.generateBufferData( true, false, false, true );
+    }
+  }
+
+
+}
+
+
+function gen_tube(g, canvas){
+  return( new TubeMesh(g, canvas) );
+}
+
+
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/shaders/SurfaceShader.js
+
+
+const compile_free_material = ( material, options, target_renderer ) => {
+
+  if( material.userData.compiled ){ return; }
+
+  material.userData.compiled = false;
+  material.userData.options = options;
+
+  material.onBeforeCompile = ( shader , renderer ) => {
+
+    shader.uniforms.mapping_type = options.mapping_type;
+    shader.uniforms.volume_map = options.volume_map;
+    shader.uniforms.scale_inv = options.scale_inv;
+    shader.uniforms.shift = options.shift;
+    shader.uniforms.sampler_bias = options.sampler_bias;
+    shader.uniforms.sampler_step = options.sampler_step;
+
+    shader.uniforms.elec_cols = options.elec_cols;
+    shader.uniforms.elec_locs = options.elec_locs;
+    shader.uniforms.elec_size = options.elec_size;
+    shader.uniforms.elec_active_size = options.elec_active_size;
+    shader.uniforms.elec_radius = options.elec_radius;
+    shader.uniforms.elec_decay = options.elec_decay;
+
+    shader.uniforms.blend_factor = options.blend_factor;
+
+    material.userData.shader = shader;
+
+    if( target_renderer !== undefined ){
+      if( target_renderer !== renderer ){
+        return;
+      }
+    }
+    material.userData.compiled = true;
+
+    shader.vertexShader = (0,utils/* remove_comments */.yi)(`
+precision mediump sampler2D;
+precision mediump sampler3D;
+uniform int mapping_type;
+uniform float elec_size;
+uniform float elec_active_size;
+uniform sampler3D volume_map;
+uniform sampler2D elec_cols;
+uniform sampler2D elec_locs;
+uniform vec3 scale_inv;
+uniform vec3 shift;
+uniform float sampler_bias;
+uniform float sampler_step;
+uniform float blend_factor;
+uniform float elec_radius;
+uniform float elec_decay;
+
+attribute vec3 track_color;
+vec3 zeros = vec3( 0.0 );
+
+vec4 sample1(vec3 p) {
+  vec4 re = vec4( 0.0, 0.0, 0.0, 0.0 );
+  vec3 threshold = vec3( 0.007843137, 0.007843137, 0.007843137 );
+  if( sampler_bias > 0.0 ){
+    vec3 dta = vec3( 0.0 );
+    vec4 tmp = vec4( 0.0 );
+    float count = 0.0;
+    for(dta.x = -sampler_bias; dta.x <= sampler_bias; dta.x+=sampler_step){
+      for(dta.y = -sampler_bias; dta.y <= sampler_bias; dta.y+=sampler_step){
+        for(dta.z = -sampler_bias; dta.z <= sampler_bias; dta.z+=sampler_step){
+          tmp = texture( volume_map, p + dta * scale_inv );
+          if(
+            tmp.a > 0.0 &&
+            (tmp.r > threshold.r ||
+            tmp.g > threshold.g ||
+            tmp.b > threshold.b)
+          ){
+            if( count == 0.0 ){
+              re = tmp;
+            } else {
+              re = mix( re, tmp, 1.0 / count );
+            }
+            count += 1.0;
+          }
+        }
+      }
+    }
+  } else {
+    re = texture( volume_map, p );
+  }
+  if( re.a == 0.0 ){
+    re.r = 1.0;
+    re.g = 1.0;
+    re.b = 1.0;
+  }
+  return( re );
+}
+
+
+vec3 sample2( vec3 p ) {
+  // p = (position + shift) * scale_inv
+  vec3 eloc;
+  vec3 ecol;
+  vec2 p2 = vec2( 0.0, 0.5 );
+  vec3 re = vec3( 0.0 );
+  float count = 0.0;
+  float len = 0.0;
+  float start = 0.5 / elec_size;
+  float end = elec_active_size / elec_size;
+  float step = 1.0 / elec_size;
+
+  for( p2.x = start; p2.x < end; p2.x += step ){
+    eloc = texture( elec_locs, p2 ).rgb;
+    len = max( length( ( eloc * 255.0 - 128.0 ) - p ) , 3.0 );
+    if( len < elec_radius ){
+      ecol = texture( elec_cols, p2 ).rgb;
+      re += 1.0 + ( ecol - 1.0 ) * exp( - len * elec_decay / elec_radius );
+      count += 1.0;
+    }
+  }
+  if( count == 0.0 ){
+    return ( vec3( 1.0 ) );
+  }
+  return (re / count);
+}
+`) + shader.vertexShader;
+
+    shader.vertexShader = shader.vertexShader.replace(
+      "#include <fog_vertex>",
+      (0,utils/* remove_comments */.yi)(
+`#include <fog_vertex>
+
+vec4 data_color0 = vec4( 0.0 );
+
+if( mapping_type == 1 ){
+    // is track_color is missing, or all zeros, it's invalid
+    if( track_color.rgb != zeros ){
+      vColor.rgb = mix( vColor.rgb, track_color.rgb, blend_factor );
+    }
+} else if( mapping_type == 2 ){
+  // vec3 data_position = (position + shift) * scale_inv + 0.5;
+  // data_color0 = sample1(
+  //   data_position -
+  //   scale_inv * vec3(0.5,-0.5,0.5)
+  // );
+  vec3 data_position = position + shift - vec3(0.5,-0.5,0.5);
+  data_color0 = sample1( data_position * scale_inv + 0.5 );
+
+#if defined( USE_COLOR_ALPHA )
+  vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
+  if( data_color0.a == 0.0 ){
+    vColor.a = 0.0;
+  }
+
+#elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
+	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
+#endif
+} else if( mapping_type == 3 ){
+  if( elec_active_size > 0.0 ){
+    data_color0.rgb = sample2( position + shift );
+    vColor.rgb = mix( vColor.rgb, data_color0.rgb, blend_factor );
+  }
+}
+`)
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <clipping_planes_fragment>",
+      (0,utils/* remove_comments */.yi)(
+`
+// Remove transparent fragments
+
+#if defined( USE_COLOR_ALPHA )
+  if( vColor.a == 0.0 ){
+    // gl_FragColor.a = 0.0;
+    // gl_FragColor.rgba = vec4(0.0);
+    discard;
+  }
+#endif
+#include <clipping_planes_fragment>
+`)
+    );
+  };
+
+
+  return( material );
+};
+
+
+
+;// CONCATENATED MODULE: ./src/js/geometry/free.js
+
+
+
+
+
+
+const MATERIAL_PARAMS = {
+  'transparent' : true,
+  'side': three_module.TwoPassDoubleSide,
+  'wireframeLinewidth' : 0.1,
+  'vertexColors' : true
+};
+
+// freemesh
+// CONSTANTS.DEFAULT_COLOR = 0;
+// CONSTANTS.VERTEX_COLOR = 1;
+// CONSTANTS.VOXEL_COLOR = 2;
+// CONSTANTS.ELECTRODE_COLOR = 3;
+
+class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
+
+  _ensure_track_color(){
+    if( !this._track_color ){
+      const track_color = new Uint8Array( this.__nvertices * 3 ).fill(255);
+      this._track_color = track_color;
+      this._geometry.setAttribute( 'track_color', new three_module.BufferAttribute( track_color, 3, true ) );
+    }
+  }
+
+  _link_userData(){
+    // register for compatibility
+    this._mesh.userData.pre_render = () => { return( this.pre_render() ); };
+    this._mesh.userData.dispose = () => { this.dispose(); };
+  }
+
+  // internally used
+  _set_track( skip_frame ){
+    // prepare
+    if( skip_frame !== undefined && skip_frame >= 0 ){
+      this.__skip_frame = skip_frame;
+    }
+    const value = this._params.value;
+    if( !value ){ return; }
+
+
+    const skip_items = this.__nvertices * this.__skip_frame;
+    if( skip_items > value.length ){ return; }
+
+    if( !this.__initialized ) {
+      value.forEach((v, ii) => {
+        value[ ii ] = Math.floor( v );
+      });
+    }
+    this._ensure_track_color();
+
+    // start settings track values
+    const lut = this._canvas.global_data('__global_data__.SurfaceColorLUT'),
+          lutMap = lut.map,
+          tcol = this._track_color;
+
+    // only set RGB, ignore A
+    let c, jj = skip_items;
+    for( let ii = 0; ii < this.__nvertices; ii++, jj++ ){
+      if( jj >= value.length ){
+        tcol[ ii * 3 ] = 0;
+        tcol[ ii * 3 + 1 ] = 0;
+        tcol[ ii * 3 + 2 ] = 0;
+        // tcol[ ii * 4 + 3 ] = 0;
+      } else {
+        c = lutMap[ value[ jj ] ];
+        if( c ){
+          tcol[ ii * 3 ] = c.R;
+          tcol[ ii * 3 + 1 ] = c.G;
+          tcol[ ii * 3 + 2 ] = c.B;
+          // tcol[ ii * 4 + 3 ] = 255;
+        } else {
+          tcol[ ii * 3 ] = 0;
+          tcol[ ii * 3 + 1 ] = 0;
+          tcol[ ii * 3 + 2 ] = 0;
+          // tcol[ ii * 4 + 3 ] = 0;
+        }
+      }
+    }
+    // this._mesh.material.needsUpdate = true;
+    this._geometry.attributes.track_color.needsUpdate = true;
+
+  }
+
+  // Primary color (Curv, sulc...)
+  _set_primary_color( color_name, update_color = false ){
+
+    let cname = color_name || this._vertex_cname;
+
+    // color data is lazy-loaded
+    const color_data = this._canvas.get_data(cname, this.misc_name, this.misc_group_name);
+
+    if( !(color_data && Array.isArray(color_data.value)) ){
+      if( update_color ){
+        this._mesh.material.needsUpdate = true;
+      }
+      return;
+    }
+
+    const g = this._params;
+    const nvertices = this._mesh.geometry.attributes.position.count;
+    if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
+      color_data.range = [-1, 1];
+    }
+
+    let scale = Math.max(color_data.range[1], -color_data.range[0]);
+
+    // generate color for each vertices
+    const _transform = (v, b = 10 / scale) => {
+      // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
+      let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
+      return( s / 255 );
+    };
+
+    color_data.value.forEach((v, ii) => {
+      if( ii >= nvertices ){ return; }
+      // Make it lighter using sigmoid function
+      let col = _transform(v);
+      this._vertex_color[ ii * 4 ] = col;
+      this._vertex_color[ ii * 4 + 1 ] = col;
+      this._vertex_color[ ii * 4 + 2 ] = col;
+      this._vertex_color[ ii * 4 + 3 ] = 1;
+    });
+
+    if( update_color ){
+      // update color to geometry
+      this._mesh.material.needsUpdate = true;
+    }
+
+  }
+
+  _check_material( update_canvas = false ){
+    const _mty = this._canvas.get_state('surface_material_type') || this._material_type;
+    if( !this._mesh.material['is' + _mty] ){
+      this.switch_material( _mty, update_canvas );
+    }
+  }
+
+  _set_color_from_datacube2( m, bias = 3.0 ){
+    console.debug("Generating surface colors from volume data...");
+
+    if( !m || !m.isDataCube2 ){
+      this._material_options.mapping_type.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
+      return;
+    }
+
+    if( this._material_options.mapping_type.value === constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR ) {
+      return;
+    }
+
+    this._volume_texture.image = m.colorTexture.image;
+
+
+    this._material_options.scale_inv.value.set(
+      1 / m.modelShape.x,
+      1 / m.modelShape.y,
+      1 / m.modelShape.z
+    );
+
+    /**
+     * We want to enable USE_COLOR_ALPHA so that vColor is vec4,
+     * This requires vertexAlphas to be true
+     * https://github.com/mrdoob/three.js/blob/be137e6da5fd682555cdcf5c8002717e4528f879/src/renderers/WebGLRenderer.js#L1442
+    */
+    this._mesh.material.vertexColors = true;
+    this._material_options.sampler_bias.value = bias;
+    this._material_options.sampler_step.value = bias / 2;
+    this._volume_texture.needsUpdate = true;
+
+  }
+
+  switch_material( material_type, update_canvas = false ){
+    if( material_type in this._materials ){
+      const _m = this._materials[ material_type ];
+      const _o = this._canvas.get_state("surface_opacity_left") || 0;
+
+      this._material_type = material_type;
+      this._mesh.material = _m;
+      this._mesh.material.vertexColors = true;
+      this._mesh.material.opacity = _o;
+      this._mesh.material.needsUpdate = true;
+      if( update_canvas ){
+        this._canvas.start_animation( 0 );
+      }
+    }
+  }
+
+  _link_electrodes(){
+
+    if( !Array.isArray( this._linked_electrodes ) ){
+      this._linked_electrodes = [];
+      this._canvas.electrodes.forEach((v) => {
+        for( let k in v ){
+          this._linked_electrodes.push( v[ k ] );
+        }
+      });
+
+      // this._linked_electrodes to shaders
+      const elec_size = this._linked_electrodes.length;
+      if( elec_size == 0 ){ return; }
+      const elec_locs = new Uint8Array( elec_size * 4 );
+      const locs_texture = new three_module.DataTexture( elec_locs, elec_size, 1 );
+
+      locs_texture.minFilter = three_module.NearestFilter;
+      locs_texture.magFilter = three_module.NearestFilter;
+      locs_texture.format = three_module.RGBAFormat;
+      locs_texture.type = three_module.UnsignedByteType;
+      locs_texture.unpackAlignment = 1;
+      locs_texture.needsUpdate = true;
+      this._material_options.elec_locs.value = locs_texture;
+
+      const elec_cols = new Uint8Array( elec_size * 4 );
+      const cols_texture = new three_module.DataTexture( elec_cols, elec_size, 1 );
+
+      cols_texture.minFilter = three_module.NearestFilter;
+      cols_texture.magFilter = three_module.NearestFilter;
+      cols_texture.format = three_module.RGBAFormat;
+      cols_texture.type = three_module.UnsignedByteType;
+      cols_texture.unpackAlignment = 1;
+      cols_texture.needsUpdate = true;
+      this._material_options.elec_cols.value = cols_texture;
+
+      this._material_options.elec_size.value = elec_size;
+      this._material_options.elec_active_size.value = elec_size;
+    }
+
+    const e_size = this._linked_electrodes.length;
+    if( !e_size ){ return; }
+
+    const e_locs = this._material_options.elec_locs.value.image.data;
+    const e_cols = this._material_options.elec_cols.value.image.data;
+
+    const p = new three_module.Vector3();
+    let ii = 0;
+    this._linked_electrodes.forEach((el) => {
+      if( el.material.isMeshBasicMaterial ){
+        el.getWorldPosition( p );
+        p.addScalar( 128 );
+        e_locs[ ii * 4 ] = Math.round( p.x );
+        e_locs[ ii * 4 + 1 ] = Math.round( p.y );
+        e_locs[ ii * 4 + 2 ] = Math.round( p.z );
+        e_cols[ ii * 4 ] = Math.floor( el.material.color.r * 255 );
+        e_cols[ ii * 4 + 1 ] = Math.floor( el.material.color.g * 255 );
+        e_cols[ ii * 4 + 2 ] = Math.floor( el.material.color.b * 255 );
+        ii++;
+      }
+    });
+    this._material_options.elec_locs.value.needsUpdate = true;
+    this._material_options.elec_cols.value.needsUpdate = true;
+    this._material_options.elec_active_size.value = ii;
+
+  }
+
+  finish_init(){
+
+    super.finish_init();
+
+    // Need to registr surface
+    // instead of using surface name, use
+    this.register_object( ['surfaces'] );
+
+    this._material_options.shift.value.copy( this._mesh.parent.position );
+
+    this._set_primary_color(this._vertex_cname, true);
+    this._set_track( 0 );
+
+
+    /*this._canvas.bind( this.name + "_link_electrodes", "canvas.finish_init", () => {
+      let nm, el;
+      this._canvas.electrodes.forEach((v) => {
+        for(nm in v){
+          el = v[ nm ];
+        }
+      });
+    }, this._canvas.el );*/
+
+
+    this.__initialized = true;
+  }
+
+  dispose(){
+    this._mesh.material.dispose();
+    this._mesh.geometry.dispose();
+    try {
+      this._volume_texture.dispose();
+    } catch (e) {}
+  }
+
+  pre_render(){
+    // check material
+    super.pre_render();
+    this._check_material( false );
+
+    if( !this.object.visible ) { return; }
+
+    // need to get current active datacube2
+    const atlas_type = this._canvas.get_state("atlas_type", "none"),
+          sub = this._canvas.get_state("target_subject", "none"),
+          inst = this._canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
+          ctype = this._canvas.get_state("surface_color_type", "vertices"),
+          sigma = this._canvas.get_state("surface_color_sigma", 3.0),
+          blend = this._canvas.get_state("surface_color_blend", 0.4),
+          decay = this._canvas.get_state("surface_color_decay", 0.15),
+          radius = this._canvas.get_state("surface_color_radius", 10.0),
+          refresh_flag = this._canvas.get_state("surface_color_refresh", undefined);
+
+    let col_code, material_needs_update = false;
+
+    this._mesh.material.transparent = this._mesh.material.opacity < 0.99;
+    switch (ctype) {
+      case 'vertices':
+        col_code = constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR;
+        break;
+
+      case 'sync from voxels':
+        col_code = constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR;
+        this._mesh.material.transparent = true;
+
+        // get current frame
+        if( this.time_stamp.length ){
+          let skip_frame = 0;
+
+          const currentTime = this._canvas.animParameters.time;
+
+          this.time_stamp.forEach((v, ii) => {
+            if( v <= currentTime ){
+              skip_frame = ii - 1;
+            }
+          });
+          if( skip_frame < 0 ){ skip_frame = 0; }
+
+          if( this.__skip_frame !== skip_frame){
+            this._set_track( skip_frame );
+          }
+        }
+        break;
+
+      case 'sync from electrodes':
+        col_code = constants/* CONSTANTS.ELECTRODE_COLOR */.t.ELECTRODE_COLOR;
+        this._link_electrodes();
+        break;
+
+      default:
+        col_code = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
+    };
+
+    if( this._material_options.mapping_type.value !== col_code ){
+      this._material_options.mapping_type.value = col_code;
+      material_needs_update = true;
+    }
+    if( this._material_options.blend_factor.value !== blend ){
+      this._material_options.blend_factor.value = blend;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_decay.value !== decay ){
+      this._material_options.elec_decay.value = decay;
+      material_needs_update = true;
+    }
+    if( this._material_options.elec_radius.value !== radius ){
+      this._material_options.elec_radius.value = radius;
+      material_needs_update = true;
+    }
+    if( this._blend_sigma !== sigma ){
+      this._blend_sigma = sigma;
+      material_needs_update = true;
+    }
+    if( this._refresh_flag !== refresh_flag ){
+      this._refresh_flag = refresh_flag;
+      material_needs_update = true;
+    }
+
+    // This step is slow
+    if( material_needs_update && col_code === constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR ){
+      // need to get current active datacube2
+      this._set_color_from_datacube2(inst, this._blend_sigma);
+    }
+  }
+
+  constructor(g, canvas){
+
+    super( g, canvas );
+    // this._params is g
+    // this.name = this._params.name;
+    // this.group_name = this._params.group.group_name;
+
+    this.type = 'FreeMesh';
+    this.isFreeMesh = true;
+
+    // STEP 1: initial settings
+    // when subject brain is messing, subject_code will be template subject such as N27,
+    // and display_code will be the missing subject
+    // actuall subject
+    this.subject_code = this._params.subject_code;
+    // display subject
+    this.display_code = canvas.get_data('subject_code', this._params.name,
+                                        this.group_name) || this.subject_code;
+    this.hemisphere = this._params.hemisphere || 'left';
+    this.surface_type = this._params.surface_type;
+    this.misc_name = '_misc_' + this.subject_code;
+    this.misc_group_name = '_internal_group_data_' + this.subject_code;
+    this._vertex_cname = this._canvas.get_data(
+      `default_vertex_${ this.hemisphere[0] }h_${ this.surface_type }`, this.name, this.group_name);
+
+    // STEP 2: data settings
+    const vertices = this._canvas.get_data('free_vertices_'+this.name, this.name, this.group_name);
+    const faces = this._canvas.get_data('free_faces_'+g.name, this.name, this.group_name);
+
+    // Make sure face index starts from 0
+    const _face_min = (0,utils/* min2 */.ht)(faces, 0);
+    if(_face_min !== 0) {
+      (0,utils/* sub2 */.Q0)(faces, _face_min);
+    }
+
+    // STEP 3: mesh settings
+    // For volume colors
+    this._volume_margin_size = 128;
+    this._volume_array = new Uint8Array( 32 );
+    // fake texture, will update later
+    this._volume_texture = new three_module.Data3DTexture(
+      this._volume_array, 2, 2, 2
+    );
+    this._volume_texture.minFilter = three_module.NearestFilter;
+    this._volume_texture.magFilter = three_module.LinearFilter;
+    this._volume_texture.format = three_module.RGBAFormat;
+    this._volume_texture.type = three_module.UnsignedByteType;
+    this._volume_texture.unpackAlignment = 1;
+
+
+    this._material_options = {
+      'mapping_type'      : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
+      'volume_map'        : { value : this._volume_texture },
+      'scale_inv'         : {
+        value : new three_module.Vector3(
+          1 / this._volume_margin_size, 1 / this._volume_margin_size,
+          1 / this._volume_margin_size
+        )
+      },
+      'shift'             : { value : new three_module.Vector3() },
+      'sampler_bias'      : { value : 3.0 },
+      'sampler_step'      : { value : 1.5 },
+      'elec_cols'         : { value : null },
+      'elec_locs'         : { value : null },
+      'elec_size'         : { value : 0 },
+      'elec_active_size'  : { value : 0 },
+      'elec_radius'       : { value: 10.0 },
+      'elec_decay'        : { value : 0.15 },
+      'blend_factor'      : { value : 0.4 }
+    };
+
+    this._materials = {
+      'MeshPhongMaterial' : compile_free_material(
+        new three_module.MeshPhongMaterial( MATERIAL_PARAMS),
+        this._material_options, this._canvas.main_renderer
+      ),
+      'MeshLambertMaterial': compile_free_material(
+        new three_module.MeshLambertMaterial( MATERIAL_PARAMS ),
+        this._material_options, this._canvas.main_renderer
+      )
+    };
+
+    this._geometry = new three_module.BufferGeometry();
+
+    // construct geometry
+    this.__nvertices = vertices.length;
+    const vertex_positions = new Float32Array( this.__nvertices * 3 ),
+          face_orders = new Uint32Array( faces.length * 3 ),
+          vertex_color = new Float32Array( this.__nvertices * 4 ).fill(1);
+
+    this._vertex_color = vertex_color;
+
+    vertices.forEach((v, ii) => {
+      vertex_positions[ ii * 3 ] = v[0];
+      vertex_positions[ ii * 3 + 1 ] = v[1];
+      vertex_positions[ ii * 3 + 2 ] = v[2];
+    });
+    faces.forEach((v, ii) => {
+      face_orders[ ii * 3 ] = v[0];
+      face_orders[ ii * 3 + 1 ] = v[1];
+      face_orders[ ii * 3 + 2 ] = v[2];
+    });
+
+    this._geometry.setIndex( new three_module.BufferAttribute(face_orders, 1) );
+    this._geometry.setAttribute( 'position', new three_module.BufferAttribute(vertex_positions, 3) );
+    this._geometry.setAttribute( 'color', new three_module.BufferAttribute( vertex_color, 4, true ) );
+
+
+    // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );
+    // gb.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
+
+    this._geometry.computeVertexNormals();
+    this._geometry.computeBoundingBox();
+    this._geometry.computeBoundingSphere();
+    //gb.faces = faces;
+
+    this._geometry.name = 'geom_free_' + g.name;
+
+    this._material_type = g.material_type || 'MeshPhongMaterial';
+    this._mesh = new three_module.Mesh(this._geometry, this._materials[this._material_type]);
+    this._mesh.name = 'mesh_free_' + g.name;
+
+    this._mesh.position.fromArray(g.position);
+
+    // calculate timestamps
+    this.time_stamp = (0,utils/* to_array */.AA)( this._params.time_stamp );
+    if(this.time_stamp.length > 0){
+
+      let min, max;
+      this.time_stamp.forEach((v) => {
+        if( min === undefined || min > v ){ min = v; }
+        if( max === undefined || max < v){ max = v; }
+      });
+      if( min !== undefined ){
+        let min_t = this._canvas.get_state( 'time_range_min0' );
+        if( min_t === undefined || min < min_t ){
+          this._canvas.set_state( 'time_range_min0', min );
+        }
+      }
+      if( max !== undefined ){
+        let max_t = this._canvas.get_state( 'time_range_max0' );
+        if( max_t === undefined || max < max_t ){
+          this._canvas.set_state( 'time_range_max0', max );
+        }
+      }
+
+    }
+
+    // register userData to comply with main framework
+    this._mesh.userData.construct_params = g;
+
+    // animation data (for backward-compatibility)
+    this._mesh.userData.ani_name = 'default';
+    this._mesh.userData.ani_all_names = Object.keys( g.keyframes );
+    this._mesh.userData.ani_exists = false;
+
+    // register object
+    this.object = this._mesh;
+
+    this._link_userData();
+  }
+
+}
+
+
+function gen_free(g, canvas){
+  return( new FreeMesh(g, canvas) );
+}
+
+
+
+// EXTERNAL MODULE: ./src/js/jsm/lines/LineSegments2.js
+var LineSegments2 = __webpack_require__(1445);
+// EXTERNAL MODULE: ./src/js/jsm/lines/LineMaterial.js
+var LineMaterial = __webpack_require__(1580);
+// EXTERNAL MODULE: ./src/js/jsm/lines/LineSegmentsGeometry.js
+var LineSegmentsGeometry = __webpack_require__(9376);
+;// CONCATENATED MODULE: ./src/js/geometry/line.js
+
+
+
+
+
+
+
+
+const tmp_vec3 = new three_module.Vector3();
+const tmp_col = new three_module.Color();
+
+function get_line_segments_singleton ( canvas ) {
+
+  if( canvas.singletons.has(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]) ) {
+    return( canvas.singletons.get(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]) );
+  }
+  const singleton = new LineSegmentsSingleton(canvas);
+  canvas.singletons.set(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"], singleton);
+  canvas.add_to_scene( singleton.mesh, true );
+
+  return( singleton );
+}
+
+class LineSegmentsSingleton {
+
+  ensure_nvertices( len ) {
+
+    if( this.vertex_positions.length < len * 3 ) {
+      // this._reset_attributes = true;
+      let tmp = this.vertex_positions;
+      this.vertex_positions = new Float32Array( len * 3 * 2 );
+      this.vertex_positions.set( tmp );
+
+      tmp = this.vertex_colors;
+      this.vertex_colors = new Float32Array( len * 3 * 2 );
+      this.vertex_colors.set( tmp );
+
+
+      tmp = this.line_widths;
+      this.line_widths = new Float32Array( len * 2 );
+      this.line_widths.set( tmp );
+
+      this.geometry.setPositions( this.vertex_positions );
+      this.geometry.setColors( this.vertex_colors );
+      this.geometry.setAttribute(
+        "linewidth",
+        new three_module.InstancedBufferAttribute(this.line_widths, 1));
+      // this.geometry.setDrawRange( 0, this.nvertices );
+      this.needsUpdate = true;
+    }
+  }
+
+  constructor (canvas) {
+
+    this._canvas = canvas;
+    this._segments = [];
+    this.vertex_positions = new Float32Array( 1500 );
+    this.vertex_colors = new Float32Array( 1500 );
+    this.line_widths = new Float32Array( 500 );
+    this.nvertices = 0;
+    this.geometry = new LineSegmentsGeometry/* LineSegmentsGeometry */.z();
+    this.geometry.setPositions( this.vertex_positions );
+    this.geometry.setColors( this.vertex_colors );
+
+    this.geometry.setAttribute(
+        "linewidth",
+        new three_module.InstancedBufferAttribute(this.line_widths, 1));
+    this.needsUpdate = false;
+    // this.geometry.setDrawRange( 0, 0 );
+
+    this.material = new LineMaterial/* LineMaterial */.Y({
+      // color: 0x0000ff,
+      vertexColors: true,
+      // depthTest: false,
+      dashed: false,
+      worldUnits: false,
+      linewidth: 1,
+      // side: DoubleSide,
+      alphaToCoverage: false,
+
+      onBeforeCompile: (shader) => {
+        shader.vertexShader = `
+          ${shader.vertexShader}
+        `.replace(`uniform float linewidth;`, `attribute float linewidth;`);
+      }
+    });
+
+
+    this.mesh = new LineSegments2/* LineSegments2 */.w( this.geometry, this.material );
+    this.mesh.computeLineDistances();
+
+    this.material.resolution.set(
+      this._canvas.client_width || window.innerWidth,
+      this._canvas.client_height || window.innerHeight
+    );
+
+  }
+
+  add_segment( inst ) {
+
+    if( !inst.isLineSegmentMesh ) {
+      throw "Can only add LineSegmentMesh instances to segment singleton";
+    }
+    const nverts = inst._nvertices;
+    if( nverts <= 1 ) {
+      throw "Cannot insert a line segment with less than 2 vertices";
+    }
+    const buff_starts = this.nvertices;
+
+    this.ensure_nvertices( this.nvertices + nverts );
+
+    // add inst to _segments
+    this._segments.push( inst );
+
+    // fill with 0 for both colors and vertices
+
+    for( let i = this.nvertices; i < this.nvertices + nverts; i++ ) {
+
+      // set segment positions
+      this.vertex_positions[ 3 * i ] = 0;
+      this.vertex_positions[ 3 * i + 1 ] = 0;
+      this.vertex_positions[ 3 * i + 2 ] = 0;
+
+      // set colors
+      this.vertex_colors[ 3 * i ] = 0;
+      this.vertex_colors[ 3 * i + 1 ] = 0;
+      this.vertex_colors[ 3 * i + 2 ] = 0;
+
+      // set line widths
+      this.line_widths[ i ] = 0;
+
+    }
+
+    this.nvertices = this.nvertices + nverts;
+    const buff_ends = this.nvertices;
+
+    inst._buffer_starts = buff_starts;
+    inst._buffer_ends = buff_ends;
+
+    // this.geometry.setDrawRange( 0, buff_ends );
+
+    return([ buff_starts, buff_ends ]);
+  }
+
+  dispose() {
+    this.disposed = true;
+    this.mesh.removeFromParent();
+    this._segments.length = 0;
+    this.geometry.dispose();
+    this.material.dispose();
+    this.vertex_positions = null;
+    this.vertex_colors = null;
+    if( this._canvas.singletons.has(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]) ) {
+      this._canvas.singletons.delete(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]);
+    }
+  }
+
+  update_segments() {
+
+    this._segments.forEach((s) => {
+      s.compute_vertices();
+    });
+
+  }
+
+  pre_render() {
+    super.pre_render();
+    if( this.disposed ) { return; }
+    this.material.resolution.set(
+    	this._canvas.client_width || window.innerWidth,
+      this._canvas.client_height || window.innerHeight
+    );
+
+    if( this.needsUpdate ) {
+      this.mesh.computeLineDistances();
+      this.geometry.attributes.instanceStart.needsUpdate = true;
+      this.geometry.attributes.instanceEnd.needsUpdate = true;
+      this.geometry.attributes.instanceColorStart.needsUpdate = true;
+      this.geometry.attributes.instanceColorEnd.needsUpdate = true;
+      this.geometry.attributes.linewidth.needsUpdate = true;
+    }
+  }
+
+}
+
+// shouldn't call it a mesh, but whatever, I'm already here
+
+class LineSegmentMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
+
+  compute_vertices() {
+
+    const bstarts = this._buffer_starts;
+    if( bstarts < 0 ) { return; }
+
+    const vpositions = this._singleton.vertex_positions;
+    const vcolors = this._singleton.vertex_colors;
+    const lwidths = this._singleton.line_widths;
+
+    if( this.valid ) {
+      if( this.isDynamic ) {
+
+        for( let ii = 0; ii < this._anchors.length; ii++ ){
+          const buff_pos = bstarts + ii;
+
+          const anchor = this._anchors[ii];
+          if( anchor.type === "dynamic" ) {
+            anchor.linked_to.object.getWorldPosition( tmp_vec3 );
+          } else {
+            tmp_vec3.fromArray( anchor.linked_to );
+          }
+
+          vpositions[ buff_pos * 3 ] = tmp_vec3.x;
+          vpositions[ buff_pos * 3 + 1 ] = tmp_vec3.y;
+          vpositions[ buff_pos * 3 + 2 ] = tmp_vec3.z;
+
+        }
+
+      } else {
+
+        for( let ii = 0; ii < this._nvertices; ii++ ) {
+
+          const buff_pos = bstarts + ii;
+          vpositions[ buff_pos * 3 ] = this._vertices[ ii * 3 ];
+          vpositions[ buff_pos * 3 + 1 ] = this._vertices[ ii * 3 + 1 ];
+          vpositions[ buff_pos * 3 + 2 ] = this._vertices[ ii * 3 + 2 ];
+
+        }
+      }
+
+      let color_idx = 0;
+      let width_idx = 0;
+      const this_vcolors = this.vertex_colors;
+      const this_lwidths = this.line_widths;
+
+      for( let ii = bstarts; ii < bstarts + this._nvertices; ii++, color_idx++, width_idx++ ){
+        if( 3 * color_idx >= this_vcolors.length ) {
+          color_idx = 0;
+        }
+
+        vcolors[ ii * 3 ] = this_vcolors[ color_idx * 3 ];
+        vcolors[ ii * 3 + 1 ] = this_vcolors[ color_idx * 3 + 1 ];
+        vcolors[ ii * 3 + 2 ] = this_vcolors[ color_idx * 3 + 2 ];
+
+
+        if( width_idx >= this_lwidths.length ) {
+          width_idx = 0;
+        }
+
+        lwidths[ ii / 2 ] = this_lwidths[ width_idx ];
+
+      }
+
+    } else {
+
+      let j;
+      for( let i = bstarts; i < bstarts + this._nvertices; i++ ) {
+        for( j = 0; j < 3; j++ ) {
+          vpositions[ i * 3 + j ] = 0;
+          vcolors[ i * 3 + j ] = 0;
+        }
+      }
+
+    }
+
+    this._singleton.needsUpdate = true;
+
+  }
+
+  constructor(g, canvas){
+
+    super( g, canvas );
+    // this._params is g
+    // this.name = this._params.name;
+    // this.group_name = this._params.group.group_name;
+
+    this.type = 'LineSegmentMesh';
+    this.isLineSegmentMesh = true;
+    this.valid = true;
+    this._singleton = get_line_segments_singleton( canvas );
+
+    // check if the line type is static or dynamic
+    // for dynamic lines, the positions must be a vectors of
+    // electrode names.
+    this.isDynamic = this._params.dynamic || false;
+
+    this._anchors = [];   // only used when dynamic
+    this._vertices = [];  // only used when static
+    this._nvertices = this._params.vertices.length;
+    this._buffer_starts = -1;
+    this._buffer_ends = -1;
+
+
+    const vcolors = (0,utils/* to_array */.AA)( this._params.vertex_colors || this._params.color );
+    if( vcolors.length === 0 ) {
+      this.vertex_colors = [0, 0, 0];
+    } else {
+      this.vertex_colors = new Array( vcolors.length * 3 );
+
+      vcolors.forEach( (col, i) => {
+        tmp_col.set( col );
+        this.vertex_colors[ i * 3 ] = tmp_col.r;
+        this.vertex_colors[ i * 3 + 1 ] = tmp_col.g;
+        this.vertex_colors[ i * 3 + 2 ] = tmp_col.b;
+      });
+    }
+
+    const lwidths = (0,utils/* to_array */.AA)( this._params.line_widths || this._params.width );
+    if( lwidths.length === 0 ) {
+      this.line_widths = [1];
+    } else {
+      this.line_widths = lwidths;
+    }
+
+    this._singleton.add_segment(this);
+
+
+    this.reference_position = new three_module.Vector3();
+    if( !this.isDynamic ) {
+      const pos = (0,utils/* to_array */.AA)( this._params.position );
+      if( pos.length === 3 ) {
+        this.reference_position.fromArray(pos);
+      }
+    }
+
+    this.finish_init();
+
+    // Do not use object. This is not regular mesh
+    this.object = null;
+
+  }
+
+
+  finish_init(){
+
+    // super.finish_init();
+
+    // data cube 2 must have groups and group parent is scene
+    // let gp = this.get_group_object();
+    // Move gp to global scene as its center is always 0,0,0
+    // gp.remove( this.object );
+    // this._canvas.scene.add( this.object );
+
+    if( this.isDynamic ) {
+      // use _anchors
+      this._params.vertices.forEach( (v, ii) => {
+        if( !this.valid ) { return; }
+
+        if( v.hasOwnProperty("subject_code") ) {
+          const subject_code = v["subject_code"];
+          const electrode_number = v["electrode"];
+
+          const elist = this._canvas.electrodes.get(subject_code);
+
+          // mark as invalid, and this line will (should) be hidden
+          if( !elist ) { this.valid = false; }
+
+          let electrode = undefined;
+
+          for(let k in elist) {
+            const elec = elist[k];
+            // check if object is electrode and number matches
+            if( typeof(elec) === "object" ) {
+              const inst = elec.userData.instance;
+              if( inst && inst.isSphere && inst._params.number === electrode_number ) {
+                // this is it
+                electrode = inst;
+              }
+            }
+          }
+
+          if( !electrode ) { this.valid = false; }
+          this._anchors[ii] = {
+            "type" : "dynamic",
+            "linked_to" : electrode,
+          };
+        } else {
+
+          const v_ = (0,utils/* to_array */.AA)( v["position"] );
+          if( v_.length === 3 ) {
+            this._anchors[ii] = {
+              "type" : "static",
+              "linked_to" : v_,
+            };
+          } else {
+            this.valid = false;
+          }
+
+        }
+
+
+
+
+      });
+
+    } else {
+      // static: this._params.vertices could be a simple array ?
+      this._params.vertices.forEach( (v, ii) => {
+        if( !this.valid ) { return; }
+
+        const v_ = (0,utils/* to_array */.AA)( v );
+        if( v_.length != 3 ) {
+          this.valid = false;
+          return;
+        }
+        this._vertices.push(
+          v_[0], v_[1], v_[2]
+        );
+      });
+    }
+
+
+    if( !this.valid ) { return; }
+
+    this.compute_vertices();
+
+  }
+
+  dispose(){
+  }
+
+
+  pre_render(){}
+
+
+}
+
+
+function gen_linesements(g, canvas){
+  return( new LineSegmentMesh(g, canvas) );
+}
+
+
+
+
+
+
+// EXTERNAL MODULE: ./src/js/ext/text_sprite.js
+var text_sprite = __webpack_require__(1086);
+;// CONCATENATED MODULE: ./src/js/geometry/compass.js
+/* mesh objects that always stays at the corner of canvas */
+
+
+
+
+
+
+class Compass {
+  constructor( camera, control, text = 'RAS' ){
+    this._camera = camera;
+    this._control = control;
+    this._text = text;
+
+    this.container = new three_module.Object3D();
+
+    this._left = new three_module.Vector3();
+    this._down = new three_module.Vector3();
+
+    const color = new three_module.Color();
+    const direction = new three_module.Vector3();
+    const origin = new three_module.Vector3( 0 , 0 , 0 );
+    const rotation = ['rotateZ', null, 'rotateX'];
+
+    for( let ii in text ){
+      // const geom = new CylinderGeometry( 0.5, 0.5, 3, 8 );
+      const _c = [0,0,0];
+      _c[ ii ] = 1;
+      color.fromArray( _c );
+      direction.fromArray( _c );
+      _c[ ii ] = 255;
+
+      // const line = new Mesh( geom, new MeshBasicMaterial({ color: color, side: DoubleSide }) );
+      // if( rotation[ii] ) { line[ rotation[ii] ]( Math.PI / 2 ); }
+
+      const axis = new three_module.ArrowHelper( direction, origin, 6, color.getHex(), 5.9 );
+      const sprite = new text_sprite/* TextSprite */.VW(text[ ii ], 6, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
+      sprite.position.copy( direction ).multiplyScalar( 9 );
+
+      axis.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      sprite.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this.container.add( axis );
+      this.container.add( sprite );
+
+    }
+
+  }
+
+  update(){
+    if( this.container.visible ) {
+
+      const aspRatio = (this._camera.top - this._camera.bottom) / (this._camera.right - this._camera.left);
+      const zoom = 1 / this._camera.zoom;
+
+      this._down.copy( this._camera.position ).sub( this._control.target ).normalize();
+
+      this.container.position.copy( this._camera.position )
+        .sub( this._down.multiplyScalar( 40 ) );
+
+      // calculate shift-left
+      this._left.copy( this._camera.up ).cross( this._down ).normalize()
+        .multiplyScalar( ( this._camera.left + this._camera.right ) / 2 );
+        // .multiplyScalar( ( this._camera.left + 10 * zoom + ( -150 * ( zoom - 1 ) ) ) );
+
+      this._down.copy( this._camera.up ).normalize()
+        .multiplyScalar( ( this._camera.bottom + 10 * zoom + ( -150 * ( zoom - 1 ) ) * aspRatio ) );
+
+      this.container.position.add( this._left ).add( this._down );
+      this.container.scale.set( zoom, zoom, zoom );
+
+    }
+  }
+
+  set_visibility( visible, callback ){
+    this.container.visible = (visible === true);
+    if( typeof callback === 'function' ){
+      callback();
+    }
+  }
+
+}
+
+
+
+
+
+;// CONCATENATED MODULE: ./src/js/jsm/math/Lut2.js
+
+
+class Lut {
+
+ 	constructor( colormap, count = 32 ) {
+
+		this.lut = [];
+		this.map = [];
+		this.n = 0;
+		this.minV = 0;
+		this.maxV = 1;
+
+		this.setColorMap( colormap, count );
+
+	}
+
+	set( value ) {
+
+		if ( value.isLut === true ) {
+
+			this.copy( value );
+
+		}
+
+		return this;
+
+	}
+
+	setMin( min ) {
+
+		this.minV = min;
+
+		return this;
+
+	}
+
+	setMax( max ) {
+
+		this.maxV = max;
+
+		return this;
+
+	}
+
+	setColorMap( colormap, count = 32 ) {
+
+		this.map = ColorMapKeywords[ colormap ] || ColorMapKeywords.rainbow;
+		this.n = count;
+
+		const step = 1.0 / this.n;
+
+		this.lut.length = 0;
+
+		for ( let i = 0; i <= 1; i += step ) {
+
+			for ( let j = 0; j < this.map.length - 1; j ++ ) {
+
+				if ( i >= this.map[ j ][ 0 ] && i < this.map[ j + 1 ][ 0 ] ) {
+
+					const min = this.map[ j ][ 0 ];
+					const max = this.map[ j + 1 ][ 0 ];
+
+					const minColor = new three_module.Color( this.map[ j ][ 1 ] );
+					const maxColor = new three_module.Color( this.map[ j + 1 ][ 1 ] );
+
+					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+
+					this.lut.push( color );
+
+				}
+
+			}
+
+		}
+
+		return this;
+
+	}
+
+	copy( lut ) {
+
+		this.lut = lut.lut;
+		this.map = lut.map;
+		this.n = lut.n;
+		this.minV = lut.minV;
+		this.maxV = lut.maxV;
+
+		return this;
+
+	}
+
+	getColor( alpha ) {
+
+		if ( alpha <= this.minV ) {
+
+			alpha = this.minV;
+
+		} else if ( alpha >= this.maxV ) {
+
+			alpha = this.maxV;
+
+		}
+
+		alpha = ( alpha - this.minV ) / ( this.maxV - this.minV );
+
+		let colorPosition = Math.round( alpha * this.n );
+		colorPosition == this.n ? colorPosition -= 1 : colorPosition;
+
+		return this.lut[ colorPosition ];
+
+	}
+
+	addColorMap( name, arrayOfColors ) {
+
+		ColorMapKeywords[ name ] = arrayOfColors;
+
+		return this;
+
+	}
+
+	createCanvas() {
+
+		const canvas = document.createElement( 'canvas' );
+		canvas.width = 1;
+		canvas.height = this.n;
+
+		this.updateCanvas( canvas );
+
+		return canvas;
+
+	}
+
+	updateCanvas( canvas ) {
+
+		const ctx = canvas.getContext( '2d', { alpha: false } );
+
+		const imageData = ctx.getImageData( 0, 0, 1, this.n );
+
+		const data = imageData.data;
+
+		let k = 0;
+
+		const step = 1.0 / this.n;
+
+		for ( let i = 1; i >= 0; i -= step ) {
+
+			for ( let j = this.map.length - 1; j >= 0; j -- ) {
+
+				if ( i < this.map[ j ][ 0 ] && i >= this.map[ j - 1 ][ 0 ] ) {
+
+					const min = this.map[ j - 1 ][ 0 ];
+					const max = this.map[ j ][ 0 ];
+
+					const minColor = new three_module.Color( this.map[ j - 1 ][ 1 ] );
+					const maxColor = new three_module.Color( this.map[ j ][ 1 ] );
+
+					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+
+					data[ k * 4 ] = Math.round( color.r * 255 );
+					data[ k * 4 + 1 ] = Math.round( color.g * 255 );
+					data[ k * 4 + 2 ] = Math.round( color.b * 255 );
+					data[ k * 4 + 3 ] = 255;
+
+					k += 1;
+
+				}
+
+			}
+
+		}
+
+		ctx.putImageData( imageData, 0, 0 );
+
+		return canvas;
+
+	}
+
+}
+
+Lut.prototype.isLut = true;
+
+const ColorMapKeywords = {
+
+	'rainbow': [[ 0.0, 0x0000FF ], [ 0.2, 0x00FFFF ], [ 0.5, 0x00FF00 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFF0000 ]],
+	'cooltowarm': [[ 0.0, 0x3C4EC2 ], [ 0.2, 0x9BBCFF ], [ 0.5, 0xDCDCDC ], [ 0.8, 0xF6A385 ], [ 1.0, 0xB40426 ]],
+	'blackbody': [[ 0.0, 0x000000 ], [ 0.2, 0x780000 ], [ 0.5, 0xE63200 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFFFFFF ]],
+	'grayscale': [[ 0.0, 0x000000 ], [ 0.2, 0x404040 ], [ 0.5, 0x7F7F80 ], [ 0.8, 0xBFBFBF ], [ 1.0, 0xFFFFFF ]]
+
+};
+
+function addToColorMapKeywords( color_name, cmap_keys ) {
+  if(ColorMapKeywords[color_name] === undefined){
+    ColorMapKeywords[color_name] = [];
+  }else{
+    ColorMapKeywords[color_name].length = 0;
+  }
+  const arr = ColorMapKeywords[color_name];
+  if(Array.isArray(cmap_keys)){
+    cmap_keys.forEach((el) => {
+      const e = el;
+      if( typeof e[1] === 'string' ){
+        e[1] = e[1].replace("0x", "#");
+      }
+      arr.push( e );
+    });
+  }
+}
+
+
+
+
+// EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
+var converter = __webpack_require__(7542);
+// EXTERNAL MODULE: ./node_modules/downloadjs/download.js
+var download = __webpack_require__(3729);
+var download_default = /*#__PURE__*/__webpack_require__.n(download);
+;// CONCATENATED MODULE: ./src/js/core/ViewerCanvas.js
+
+
+
+// import { OrthographicTrackballControls } from './OrthographicTrackballControls.js';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Geometry generator */
+const GEOMETRY_FACTORY = {
+  'sphere'    : sphere/* gen_sphere */.Lk,
+  'free'      : gen_free,
+  'datacube'  : gen_datacube,
+  'datacube2' : gen_datacube2,
+  'tube'      : gen_tube,
+  'linesegments' : gen_linesements,
+  'blank'     : (g, canvas) => { return(null) }
+};
+
+/**
+ * entering use | operator, leaving use & operator
+ * for example, entering canvas from off canvas (000) will be 001 | 000 = 001
+ * then, entering control panel will be 001 | 101 = 101.
+ * Leaving controller first, then to side panel will be
+ *   (101 & 011) | 011 = 011
+ * Or, entering side panel then leave controllers
+ *   (101 | 011) & 011 = 011
+ * hence the order of operation doesn't matter
+*/
+const MOUSE = {
+  ON_CANVAS       : 0b001,
+  ON_SIDE_CANVAS  : 0b011,
+  ON_CONTROLLER   : 0b101,
+  OFF_CONTROLLER  : 0b011,
+  OFF_SIDE_CANVAS : 0b101,
+  OFF_VIEWER      : 0b000
+}
+
+window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
+/* ------------------------------------ Layer setups ------------------------------------
+  Defines for each camera which layers are visible.
+  Protocols are
+    Layers:
+      - 0, 2, 3: Especially reserved for main camera
+      - 1, Shared by all cameras
+      - 4, 5, 6: Reserved for side-cameras
+      - 7: reserved for all, system reserved
+      - 8: main camera only, system reserved
+      - 9 side-cameras 1 only, system reserved
+      - 10 side-cameras 2 only, system reserved
+      - 11 side-cameras 3 only, system reserved
+      - 12 side-cameras 4 only, system reserved
+      - 13 all side cameras, system reserved
+      - 14~31 invisible
+
+*/
+
+// A storage to cache large objects such as mesh data
+const cached_storage = new StorageCache/* StorageCache */.B();
+
+// Make sure window.requestAnimationFrame exists
+// Override methods so that we have multiple support across platforms
+window.requestAnimationFrame =
+    window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    function (callback) {
+        setTimeout(function() { callback(Date.now()); },  1000/60);
+    };
+
+
+
+class ViewerCanvas {
+  constructor(
+    el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
+  ) {
+    this.isViewerCanvas = true;
+    if(DEBUG){
+      console.debug('Debug Mode: ON.');
+      this.DEBUG = true;
+    }else{
+      this.DEBUG = false;
+    }
+    if(cache === true){
+      this.use_cache = true;
+      this.cache = cached_storage;
+    }else if ( cache === false ){
+      this.use_cache = false;
+      this.cache = cached_storage;
+    }else{
+      this.use_cache = true;
+      this.cache = cache;
+    }
+
+    // DOM container information
+    this.$el = el;
+    this.container_id = this.$el.getAttribute( 'data-target' );
+    this.ready = false;
+    this._time_info = {
+      selected_object : {
+        position: new three_module.Vector3()
+      }
+    };
+    // Is system supporting WebGL2? some customized shaders might need this feature
+    // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
+    this.has_webgl2 = has_webgl2;
+
+    // Side panel initial size in pt
+    this.side_width = side_width;
+    this._sideCanvasCSSWidth = side_width;
+
+    // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
+    this.shiny_mode = shiny_mode;
+
+    // Element container
+    this.main_canvas = document.createElement('div');
+    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
+    this.main_canvas.style.width = width + 'px';
+    this.mainCanvas = this.main_canvas
+
+    // Container that stores mesh objects from inputs (user defined) for each inquery
+    this.mesh = new Map();
+    this.threebrain_instances = new Map();
+
+    // Stores all electrodes
+    this.subject_codes = [];
+    this.electrodes = new Map();
+    this.slices = new Map();
+    this.ct_scan = new Map();
+    this.atlases = new Map();
+    this.singletons = new Map();
+    this._show_ct = false;
+    this.surfaces = new Map();
+    this.state_data = new Map();
+
+    // action event listener functions and dispose flags
+    this._disposed = false;
+    this.event_dispatcher = new CanvasEvent(
+      this.main_canvas, this.container_id);
+    // set default values
+    this.set_state( 'coronal_depth', 0 );
+    this.set_state( 'axial_depth', 0 );
+    this.set_state( 'sagittal_depth', 0 );
+
+    // for global usage
+    this.shared_data = new Map();
+
+    // Stores all groups
+    this.group = new Map();
+
+    // All mesh/geoms in this store will be calculated when raycasting
+    this.clickable = new Map();
+    this.clickable_array = [];
+
+    // Dispatcher of handlers when mouse is clicked on the main canvas
+    this._mouse_click_callbacks = {};
+    this._keyboard_callbacks = {};
+
+    // update functions
+    this._custom_updates = new Map();
+    this._update_countdown = 5;
+
+    /* A render flag that tells renderers whether the canvas needs update.
+          Case -1, -2, ... ( < 0 ) : stop rendering
+          Case 0: render once
+          Case 1, 2: render until reset
+    lower render_flag will be ignored if higher one is set. For example, if
+    render_flag=2 and pause_animation only has input of 1, renderer will ignore
+    the pause signal.
+    */
+    this.render_flag = 0;
+
+    // Disable raycasting, soft deprecated
+    this.disable_raycast = true;
+
+    // If legend is drawn, should be continuous or discrete.
+    this.color_type = 'continuous';
+
+    // If there exists animations, this will control the flow;
+    this.animation_clips = new Map();
+    this.color_maps = new Map();
+    this.animParameters = new AnimationParameters();
+
+    // Set pixel ratio, separate settings for main and side renderers
+    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
+    // Generate a canvas domElement using 2d context to put all elements together
+    // Since it's 2d canvas, we might also add customized information onto it
+    this.domElement = document.createElement('canvas');
+    this.domContextWrapper = new context/* CanvasContext2D */.b( this.domElement, this.pixel_ratio[0] );
+    this.domContext = this.domContextWrapper.context;
+    this.background_color = '#ffffff'; // white background
+    this.foreground_color = '#000000';
+    this.domContext.fillStyle = this.background_color;
+
+
+    // General scene.
+    // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another to set render order
+    this.scene = new three_module.Scene();
+    this.origin = new three_module.Object3D();
+    this.origin.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
+    this.scene.add( this.origin );
+
+    /* Main camera
+        Main camera is initialized at 500,0,0. The distance is stayed at 500 away from
+        origin (stay at right &look at left)
+        The view range is set from -150 to 150 (left - right) respect container ratio
+        render distance is from 1 to 10000, sufficient for brain object.
+        Parameters:
+          position: 500,0,0
+          left: -150, right: 150, near 1, far: 10000
+          layers: 0, 1, 2, 3, 7, 8
+          center/lookat: origin (0,0,0)
+          up: 0,1,0 ( heads up )
+    */
+    this.mainCamera = new HauntedOrthographicCamera( this, width, height );
+
+    // Add main camera to scene
+    this.add_to_scene( this.mainCamera, true );
+
+    // Add ambient light to make scene soft
+    const ambient_light = new three_module.AmbientLight( constants/* CONSTANTS.COLOR_AMBIENT_LIGHT */.t.COLOR_AMBIENT_LIGHT, 1.0 );
+    ambient_light.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
+    ambient_light.name = 'main light - ambient';
+    this.add_to_scene( ambient_light, true ); // soft white light
+
+
+    // Set Main renderer, strongly recommend WebGL2
+    if( this.has_webgl2 ){
+      // We need to use webgl2 for VolumeRenderShader1 to work
+      let main_canvas_el = document.createElement('canvas'),
+          main_context = main_canvas_el.getContext( 'webgl2' );
+    	this.main_renderer = new three_module.WebGLRenderer({
+    	  antialias: false, alpha: true, canvas: main_canvas_el, context: main_context
+    	});
+    }else{
+    	this.main_renderer = new three_module.WebGLRenderer({ antialias: false, alpha: true });
+    }
+  	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
+  	this.main_renderer.setSize( width, height );
+  	this.main_renderer.autoClear = false; // Manual update so that it can render two scenes
+  	this.main_renderer.localClippingEnabled=true; // Enable clipping
+  	this.main_renderer.setClearColor( this.background_color );
+
+
+    // register mouse events to save time from fetching from DOM elements
+    this.register_main_canvas_events();
+
+    // this.main_canvas.appendChild( this.main_renderer.domElement );
+    this.main_canvas.appendChild( this.domElement );
+
+    let wrapper_canvas = document.createElement('div');
+    this.wrapper_canvas = wrapper_canvas;
+    this.main_canvas.style.display = 'inline-flex';
+    this.wrapper_canvas.style.display = 'flex';
+    this.wrapper_canvas.style.flexWrap = 'wrap';
+    this.wrapper_canvas.style.width = '100%';
+    this.sideCanvasEnabled = false;
+    this.sideCanvasList = {};
+
+    // Generate inner canvas DOM element
+    // coronal (FB), axial (IS), sagittal (LR)
+    // 3 planes are draggable, resizable with open-close toggles 250x250px initial
+    this.sideCanvasList.coronal = new SideCanvas( this, "coronal" );
+    this.sideCanvasList.axial = new SideCanvas( this, "axial" );
+    this.sideCanvasList.sagittal = new SideCanvas( this, "sagittal" );
+
+    // Add video
+    this.video_canvas = document.createElement('video');
+    this.video_canvas.setAttribute( "autoplay", "false" );
+    // this.video_canvas.setAttribute( "crossorigin", "use-credentials" );
+    this.video_canvas.muted = true;
+
+    // this.video_canvas.innerHTML = `<source src="" type="video/mp4">`
+    this.video_canvas.height = height / 4;
+    this.video_canvas._enabled = false;
+    this.video_canvas._time_start = Infinity;
+    this.video_canvas._duration = 0;
+    this.video_canvas._mode = "hidden";
+
+
+    // Add main canvas to wrapper element
+    this.wrapper_canvas.appendChild( this.main_canvas );
+    this.$el.appendChild( this.wrapper_canvas );
+
+    // Controls
+    this.trackball = new HauntedArcballControls( this );
+
+    // Follower that fixed at bottom-left
+    this.compass = new Compass( this.mainCamera, this.trackball );
+    // Hide the anchor first
+    this.add_to_scene( this.compass.container, true );
+
+
+    // Mouse helpers
+    const mouse_pointer = new three_module.Vector2(),
+        mouse_raycaster = new three_module.Raycaster();
+    // const mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
+    //     mouse_helper_root = new Mesh(
+    //       new BoxGeometry( 4,4,4 ),
+    //       new MeshBasicMaterial({ color : 0xff0000 })
+    //     );
+
+    // root is a green cube that's only visible in side cameras
+    // mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+    // mouse_helper.children.forEach( el => {
+    //   el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
+    // } );
+
+    // In side cameras, always render mouse_helper_root on top
+    // mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
+    // mouse_helper_root.material.depthTest = false;
+    // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
+
+    // mouse_helper.add( mouse_helper_root );
+
+    // this.mouse_helper = mouse_helper;
+    this.mouse_raycaster = mouse_raycaster;
+    this.mouse_pointer = mouse_pointer;
+    this.mouseState = MOUSE.OFF_VIEWER;
+
+    // this.add_to_scene(mouse_helper, true);
+
+    this.focus_box = new three_module.BoxHelper();
+    this.focus_box.material.color.setRGB( 1, 0, 0 );
+    this.focus_box.userData.added = false;
+    this.bounding_box = new three_module.BoxHelper();
+    this.bounding_box.material.color.setRGB( 0, 0, 1 );
+    this.bounding_box.userData.added = false;
+    this.bounding_box.layers.set( constants/* CONSTANTS.LAYER_INVISIBLE_31 */.t.LAYER_INVISIBLE_31 );
+
+
+    this.set_font_size();
+
+		// File loader
+    this.file_loader = new CanvasFileLoader( this );
+
+  }
+
+  /*---- Finalize init ------------------------------------------------------*/
+  register_main_canvas_events(){
+
+    // this.$el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
+    // this.$el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
+    /*
+    this.bind( "mouseEnteredViewer", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_CANVAS;
+    }, this.$el );
+    this.bind( "mouseLeftViewer", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_CANVAS;
+    }, this.$el );
+    this.bind( "mouseEnteredSidePanels", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_SIDE_CANVAS;
+    }, this.sideCanvasList.coronal.$el );
+    this.bind( "mouseLeftSidePanels", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_SIDE_CANVAS;
+    }, this.$el );
+    this.bind( "mouseEnteredControlPanel", "mouseenter", e => {
+      this.mouseState = this.mouseState | MOUSE.ON_CONTROLLER;
+    }, this.$el );
+    this.bind( "mouseLeftViewer", "mouseleave", e => {
+      this.mouseState = this.mouseState | MOUSE.OFF_CONTROLLER;
+    }, this.$el );
+    */
+
+    this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
+			  this.listen_keyboard = true;
+			}, this.main_canvas);
+		this.bind( 'main_canvas_mouseleave', 'mouseleave', (e) => {
+			  this.listen_keyboard = false;
+			}, this.main_canvas);
+
+		this.bind( 'main_canvas_dblclick', 'dblclick', (event) => { // Use => to create flexible access to this
+      if(this.mouse_event !== undefined && this.mouse_event.level > 2){
+        return(null);
+      }
+      this.mouse_event = {
+        'action' : 'dblclick',
+        'event' : event,
+        'dispose' : false,
+        'level' : 2
+      };
+
+    }, this.main_canvas, false );
+
+    this.bind( 'main_canvas_click', 'click', (event) => {
+      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
+        return(null);
+      }
+      this.mouse_event = {
+        'action' : 'click',
+        'button' : event.button,
+        'event' : event,
+        'dispose' : false,
+        'level' : 1
+      };
+
+    }, this.main_canvas, false );
+
+    this.bind( 'main_canvas_contextmenu', 'contextmenu', (event) => {
+      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
+        return(null);
+      }
+      this.mouse_event = {
+        'action' : 'contextmenu',
+        'button' : event.button,
+        'event' : event,
+        'dispose' : false,
+        'level' : 1
+      };
+
+    }, this.main_canvas, false );
+
+    this.bind( 'main_canvas_mousemove', 'mousemove', (event) => {
+      if(this.mouse_event !== undefined && this.mouse_event.level > 0){
+        return(null);
+      }
+      this.mouse_event = {
+        'action' : 'mousemove',
+        'event' : event,
+        'dispose' : false,
+        'level' : 0
+      };
+
+    }, this.main_canvas, false );
+
+    this.bind( 'main_canvas_mousedown', 'mousedown', (event) => {
+      this.mouse_event = {
+        'action' : 'mousedown',
+        'event' : event,
+        'dispose' : false,
+        'level' : 3
+      };
+
+    }, this.main_canvas, false );
+
+    this.bind( 'main_canvas_mouseup', 'mouseup', (event) => {
+      this.mouse_event = {
+        'action' : 'mouseup',
+        'event' : event,
+        'dispose' : true,
+        'level' : 0
+      };
+
+    }, this.main_canvas, false );
+
+    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
+      if (event.isComposing || event.keyCode === 229) { return; }
+      if( this.listen_keyboard ){
+        // event.preventDefault();
+        this.keyboard_event = {
+          'action' : 'keydown',
+          'event' : event,
+          'dispose' : false,
+          'level' : 0
+        };
+      }
+
+    }, document );
+
+
+    this.add_mouse_callback(
+      (evt) => {
+
+        // If editing mode enabled, disable this
+        return({
+          pass  : !this.edit_mode && (['click', 'dblclick'].includes( evt.action ) ||
+                  ( evt.action === 'mousedown' && evt.event.button === 2 )),
+          type  : 'clickable'
+        });
+      },
+      (res, evt) => {
+        this.focus_object( res.target_object );
+        try {
+          document.activeElement.blur();
+        } catch (e) {}
+        this.start_animation( 0 );
+      },
+      'set_obj_chosen'
+    );
+
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : ['click', 'dblclick'].includes( evt.action ) ||
+                  ( evt.action === 'mousedown' && evt.event.button === 2 ),
+          type  : 'clickable' //this.scene.children //'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const first_item = res.first_item;
+        if( first_item ){
+
+          const target_object = res.target_object,
+                from = first_item.point,
+                direction = first_item.face.normal.normalize();
+
+          // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
+          direction.transformDirection( target_object.matrixWorld );
+          let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
+          if(back){
+            direction.applyMatrix3(new three_module.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
+          }
+
+          // this.mouse_helper.position.fromArray( asArray(from) );
+          // this.mouse_helper.setDirection(direction);
+          // this.mouse_helper.visible = true;
+
+        }else{
+          // this.mouse_helper.visible = false;
+        }
+
+        this.start_animation(0);
+      },
+      'raycaster'
+    );
+
+    // Add handlers to set plane location when an electrode is clicked
+    this.add_mouse_callback(
+      (evt) => {
+        return({
+          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
+          type  : 'clickable'
+        });
+      },
+      ( res, evt ) => {
+        const obj = res.target_object;
+        if( obj && obj.isMesh && obj.userData.construct_params ){
+          const pos = new three_module.Vector3();
+          obj.getWorldPosition( pos );
+          this.dispatch_event( 'canvas.drive.setSliceCrosshair', {
+            x : pos.x,
+            y : pos.y,
+            z : pos.z,
+            centerCrosshair : true
+          } );
+        }
+      },
+      'side_viewer_depth'
+    );
+
+
+
+    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT */.t.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
+      let m = this.object_chosen || this._last_object_chosen,
+          last_obj = false,
+          this_obj = false,
+          first_obj = false;
+
+      // place flag first as the function might ends early
+      this.start_animation( 0 );
+
+      for( let _nm of this.mesh.keys() ){
+        this_obj = this.mesh.get( _nm );
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
+          if( !m ){
+            this.focus_object( this_obj, true );
+            return(null);
+          }
+          if( last_obj && last_obj.name === m.name ){
+            this.focus_object( this_obj, true );
+            return(null);
+          }
+          last_obj = this_obj;
+          if( !first_obj ){
+            first_obj = this_obj;
+          }
+        }
+      }
+      if( last_obj !== false ){
+        // has electrode
+        if( last_obj.name === m.name ){
+        // focus on the first one
+          last_obj = first_obj;
+        }
+        this.focus_object( last_obj, true );
+        return(null);
+      }
+
+    }, 'electrode_cycling_next');
+
+    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_PREV */.t.KEY_CYCLE_ELECTRODES_PREV, (evt) => {
+      let m = this.object_chosen || this._last_object_chosen,
+          last_obj = false,
+          this_obj = false,
+          first_obj = false;
+
+      // place flag first as the function might ends early
+      this.start_animation( 0 );
+
+      for( let _nm of this.mesh.keys() ){
+        this_obj = this.mesh.get( _nm );
+        if( this_obj.visible &&
+            this_obj.isMesh &&
+            this_obj.userData.construct_params.is_electrode
+        ){
+          if( m && last_obj && m.name == this_obj.name ){
+            this.focus_object( last_obj, true );
+            return(null);
+          }
+          last_obj = this_obj;
+        }
+      }
+      if( last_obj ){
+        this.focus_object( last_obj, true );
+      }
+    }, 'electrode_cycling_prev');
+
+    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CLIP_INFO_FOCUSED */.t.KEY_CLIP_INFO_FOCUSED, (evt) => {
+      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, true, false ) ){
+
+        const m = this.object_chosen || this._last_object_chosen;
+        // check if this is electrode
+        if( (0,sphere/* is_electrode */.OK)(m) ){
+          // get electrode information
+          const g = m.userData.construct_params,
+                subject_code = g.subject_code,
+                subject_data = this.shared_data.get( subject_code ),
+                tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
+                xfm = subject_data.matrices.xfm,
+                pos = new three_module.Vector3();
+
+          pos.fromArray( g.position );
+          let s = `${g.name}\n` + `tkrRAS: ${(0,utils/* vec3_to_string */.Wk)(g.position)}\n`;
+
+          //  T1_x y z
+          pos.applyMatrix4( tkrRAS_Scanner );
+          s = s + `T1 RAS: ${(0,utils/* vec3_to_string */.Wk)(pos)}\n`;
+
+          //  MNI305_x MNI305_y MNI305_z
+          pos.applyMatrix4( xfm );
+          s = s + `MNI305: ${(0,utils/* vec3_to_string */.Wk)(pos)}\n`;
+
+          (0,utils/* write_clipboard */.FD)(s);
+        }
+      }
+    }, 'copy_electrode_info');
+
+  }
+  finish_init(){
+    // finalizing initialization of each geom
+    this.dispatch_event( "canvas.finish_init" );
+  }
+
+  /*---- Add objects --------------------------------------------*/
+  add_to_scene( m, global = false ){
+    if( global ){
+      this.scene.add( m );
+    }else{
+      this.origin.add( m );
+    }
+  }
+
+  // Generic method to add objects
+  add_object(g){
+    //
+    if(this.DEBUG){
+      console.debug('Generating geometry '+g.type);
+    }
+    let gen_f = GEOMETRY_FACTORY[g.type],
+        inst = gen_f(g, this);
+
+    if( !inst || typeof(inst) !== 'object' || !inst.object ){
+      return;
+    }
+
+    // make sure subject array exists
+    this.init_subject( inst.subject_code );
+
+
+    inst.finish_init();
+    return( inst );
+  }
+
+  // Make object clickable (mainly electrodes)
+  add_clickable( name, obj ){
+    if( this.clickable.has( name ) ){
+      // remove from this.clickable_array
+      const sub = this.clickable.get( name ),
+            idx = this.clickable_array.indexOf( sub );
+      if( idx > -1 ){
+        this.clickable_array.splice(idx, 1);
+      }
+    }
+    this.clickable.set( name, obj );
+    this.clickable_array.push( obj );
+  }
+
+  // Add geom groups. This function can be async if the group contains
+  // cached data. However, if there is no external data needed, then this
+  // function is synchronous
+  add_group(g, cache_folder = 'threebrain_data', onProgress = null){
+    var gp = new three_module.Object3D();
+
+    gp.name = 'group_' + g.name;
+    (0,asArray/* asArray */._)(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
+    gp.position.fromArray( g.position );
+
+    if(g.trans_mat !== null){
+      let trans = new three_module.Matrix4();
+      trans.set(...g.trans_mat);
+      let inverse_trans = new three_module.Matrix4().copy( trans ).invert();
+
+      gp.userData.trans_mat = trans;
+      gp.userData.inv_trans_mat = inverse_trans;
+
+      if(!g.disable_trans_mat){
+        gp.applyMatrix4(trans);
+      }
+    }
+
+    gp.userData.construct_params = g;
+
+    if(!g.group_data || typeof g.group_data !== "object") {
+      g.group_data = {};
+    }
+
+    gp.userData.group_data = g.group_data;
+    this.group.set( g.name, gp );
+    this.add_to_scene(gp);
+
+    // Async loading group cached data
+
+    const cached_items = (0,asArray/* asArray */._)( g.cached_items );
+
+    const promises = cached_items.map(async (nm) => {
+      const cache_info = g.group_data[nm];
+
+      // cache_info should be object of paths for the first time. However
+      // if loaded before, the cache_info might be substituted by
+      // the cache values, which do not contain the file information anymore
+      if(
+        !cache_info || typeof(cache_info) !== "object" ||
+        typeof cache_info.file_name !== "string"
+      ) { return; }
+
+      const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
+      console.debug(path);
+      let v = await this.file_loader.read( path );
+      if( v && typeof(v) === "object" ) {
+        for(let key in v) {
+          g.group_data[key] = v[key];
+        }
+      }
+    });
+
+    return new Promise(resolve => {
+      Promise.all(promises).then(async () => {
+
+        // special case, if group name is "__global_data", then set group variable
+        if( g.name === '__global_data' && g.group_data ){
+          for( let _n in g.group_data ){
+            this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
+          }
+
+          // check if ".subject_codes" is in the name
+          const subject_codes = (0,asArray/* asArray */._)( this.shared_data.get(".subject_codes") );
+          if( subject_codes.length > 0 ){
+
+            // generate transform matrices
+            subject_codes.forEach((scode) => {
+
+              let subject_data = this.shared_data.get(scode);
+              if( !subject_data ){
+                subject_data = {};
+                this.shared_data.set(scode, subject_data);
+              }
+
+              const Norig = (0,utils/* as_Matrix4 */.xl)( subject_data.Norig );
+              const Torig = (0,utils/* as_Matrix4 */.xl)( subject_data.Torig );
+              const xfm = (0,utils/* as_Matrix4 */.xl)( subject_data.xfm );
+              const tkrRAS_MNI305 = (0,utils/* as_Matrix4 */.xl)( subject_data.vox2vox_MNI305 );
+              const MNI305_tkrRAS = new three_module.Matrix4()
+                .copy(tkrRAS_MNI305).invert();
+              const tkrRAS_Scanner = new three_module.Matrix4()
+                .copy(Norig)
+                .multiply(
+                  new three_module.Matrix4()
+                    .copy(Torig)
+                    .invert()
+                );
+              subject_data.matrices = {
+                Norig : Norig,
+                Torig : Torig,
+                xfm : xfm,
+                tkrRAS_MNI305 : tkrRAS_MNI305,
+                MNI305_tkrRAS : MNI305_tkrRAS,
+                tkrRAS_Scanner: tkrRAS_Scanner
+              };
+
+            });
+
+          }
+
+          const media_content = this.shared_data.get(".media_content");
+          if( media_content ){
+            for(let video_name in media_content){
+              const content = media_content[video_name];
+              if( !content.is_url ){
+                content.url = cache_folder + g.cache_name + '/' + content.url;
+                content.is_url = true;
+                const blob = await fetch(content.url).then(r => r.blob());
+                content.url = URL.createObjectURL(blob);
+              }
+            }
+          }
+
+        }
+
+        resolve( g.name );
+
+      });
+    });
+  }
+
+  // Debug stats (framerate)
+  addNerdStats(){
+    // if DEBUG, add stats information
+    if( this.__nerdStatsEnabled ) { return; }
+    this.nerdStats = new stats_module();
+    this.nerdStats.dom.style.display = 'block';
+    this.nerdStats.dom.style.position = 'absolute';
+    this.nerdStats.dom.style.top = '0';
+    this.nerdStats.dom.style.left = '0';
+    this.$el.appendChild( this.nerdStats.dom );
+    this.__nerdStatsEnabled = true;
+  }
+
+  /*---- Remove, dispose objects --------------------------------------------*/
+  remove_object( obj, resursive = true, dispose = true, depth = 100 ){
+    if( !obj && depth < 0 ){ return; }
+    if( resursive ){
+      if( Array.isArray( obj.children ) ){
+        for( let ii = obj.children.length - 1; ii >= 0; ii = Math.min(ii-1, obj.children.length) ){
+          if( ii < obj.children.length ){
+            this.remove_object( obj.children[ ii ], resursive, dispose, depth - 1 );
+          }
+        }
+      }
+    }
+    if( obj.parent ){
+      console.debug( 'removing object - ' + (obj.name || obj.type) );
+      obj.parent.remove( obj );
+    }
+
+    if( dispose ){
+      this.dispose_object( obj );
+    }
+  }
+  dispose_object( obj, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    const obj_name = obj.name || obj.type || 'unknown';
+    if( !quiet ){
+      console.debug('Disposing - ' + obj_name);
+    }
+    if( obj.userData && typeof obj.userData.dispose === 'function' ){
+      this._try_dispose( obj.userData, obj.name, quiet );
+    }else{
+      // Not implemented, try to guess dispose methods
+      this._try_dispose( obj.material, obj_name + '-material', quiet );
+      this._try_dispose( obj.geometry, obj_name + '-geometry', quiet );
+      this._try_dispose( obj, obj_name, quiet );
+    }
+  }
+
+  _try_dispose( obj, obj_name = undefined, quiet = false ){
+    if( !obj || typeof obj !== 'object' ) { return; }
+    if( typeof obj.dispose === 'function' ){
+      try {
+        obj.dispose();
+      } catch(e) {
+        if( !quiet ){
+          console.warn( 'Failed to dispose ' + (obj_name || obj.name || 'unknown') );
+        }
+      }
+    }
+  }
+
+  dispose(){
+    // Remove all objects, listeners, and dispose all
+    this._disposed = true;
+    this.ready = false;
+    this.animParameters.dispose();
+
+    // update functions
+    this._custom_updates.clear();
+
+    // Remove custom listeners
+    this.dispose_eventlisters();
+    this.trackball.enabled = false;
+    this.trackball.dispose();
+
+    // Remove customized objects
+    this.clear_all();
+
+    // Remove the rest objects in the scene
+    this.remove_object( this.scene );
+
+    // Call dispose method
+    this.threebrain_instances.forEach((el) => {
+      el.dispose();
+    });
+
+    // dispose scene
+    this.scene.dispose();
+    this.scene = null;
+
+    // Remove el
+    this.$el.innerHTML = '';
+
+    // How to dispose renderers? Not sure
+    this.domContext = null;
+    this.domContextWrapper = null;
+    this.main_renderer.dispose();
+    this.sideCanvasList.coronal.dispose();
+    this.sideCanvasList.axial.dispose();
+    this.sideCanvasList.sagittal.dispose();
+
+  }
+
+  // Function to clear all meshes, but still keep canvas valid
+  clear_all(){
+    // Stop showing information of any selected objects
+    this.object_chosen=undefined;
+    this.clickable.clear();
+    this.clickable_array.length = 0;
+    this.title = undefined;
+
+    this.subject_codes.length = 0;
+    this.electrodes.clear();
+    this.slices.clear();
+    this.ct_scan.clear();
+    this.surfaces.clear();
+    this.atlases.clear();
+
+    this.state_data.clear();
+    this.shared_data.clear();
+    this.color_maps.clear();
+    // this._mouse_click_callbacks['side_viewer_depth'] = undefined;
+
+    console.debug('TODO: Need to dispose animation clips');
+    this.animation_clips.clear();
+
+    this.group.forEach((g) => {
+      // g.parent.remove( g );
+      this.remove_object( g );
+    });
+    this.mesh.forEach((m) => {
+      this.remove_object( m );
+      // m.parent.remove( m );
+      // this.dispose_object(m);
+      // this.scene.remove( m );
+    });
+    this.mesh.clear();
+    this.threebrain_instances.clear();
+    this.group.clear();
+
+    this.singletons.forEach( (el) => {
+      try {
+        el.dispose();
+      } catch (e) {}
+    });
+    this.singletons.clear();
+
+    // set default values
+    this.set_state( 'coronal_depth', 0 );
+    this.set_state( 'axial_depth', 0 );
+    this.set_state( 'sagittal_depth', 0 );
+    this.dispatch_event( 'canvas.clear_all' );
+
+  }
+
+
+
+  /*---- Events -------------------------------------------------------------*/
+  bind( name, evtstr, fun, target, options = false ){
+    this.event_dispatcher.bind(name, evtstr, fun, target, options);
+  }
+  dispatch_event( type, data, immediate = false ){
+    this.event_dispatcher.dispatch_event( type, data, immediate );
+  }
+
+  dispose_eventlisters(){
+    this.event_dispatcher.dispose();
+  }
+
+
+  // callbacks
+  add_mouse_callback(check, callback, name){
+    this._mouse_click_callbacks[name] = [check, callback];
+  }
+  add_keyboard_callabck(keycode, callback, name){
+    this._keyboard_callbacks[name] = [keycode, callback];
+  }
+  handle_resize(width, height, lazy = false, center_camera = false){
+
+    if( this._disposed ) { return; }
+    if(width === undefined){
+      width = this.client_width;
+      height = this.client_height;
+
+    }else{
+      this.client_width = width;
+      this.client_height = height;
+    }
+
+    // console.debug('width: ' + width + '; height: ' + height);
+
+    if(lazy){
+      this.trackball.handleResize();
+
+      this.start_animation(0);
+
+      return(undefined);
+    }
+
+    var main_width = width,
+        main_height = height;
+
+    // Because when panning controls, we actually set views, hence need to calculate this smartly
+    // Update: might not need change
+	  if( center_camera ){
+      this.mainCamera.reset({ fov : true, position : false, zoom : false });
+	  }else{
+	    this.mainCamera.handleResize();
+	  }
+
+    this.main_canvas.style.width = main_width + 'px';
+    this.main_canvas.style.height = main_height + 'px';
+
+    this.main_renderer.setSize( main_width, main_height );
+
+    const pixelRatio = this.pixel_ratio[0];
+
+    if( this.domElement.width != main_width * pixelRatio ){
+      this.domElement.width = main_width * pixelRatio;
+      this.domElement.style.width = main_width + 'px';
+    }
+
+    if( this.domElement.height != main_height * pixelRatio ){
+      this.domElement.height = main_height * pixelRatio;
+      this.domElement.style.height = main_height + 'px';
+    }
+
+    this.video_canvas.height = main_height / 4;
+
+    this.trackball.handleResize();
+
+    this.start_animation(0);
+
+  }
+
+  /*---- Setter/getters -----------------------------------------------------*/
+  global_data(data_name){
+    const gp = this.group.get("__global_data");
+    let re = null;
+    // group exists
+    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+
+      re = gp.userData.group_data[data_name];
+    }
+
+    return(re);
+
+  }
+
+  // Get data from some geometry settings. Try to get from geom first, then get from group
+  get_data(data_name, from_geom, group_hint){
+
+    const m = this.mesh.get( from_geom );
+    let re, gp;
+
+    if( m ){
+      if(m.userData.hasOwnProperty(data_name)){
+        // Object itself own the property, no group needs to go to
+        return(m.userData[data_name]);
+      }else{
+        let g = m.userData.construct_params.group;
+        if(g !== null){
+          let group_name = g.group_name;
+          gp = this.group.get( group_name );
+          // set re
+        }
+      }
+    }else if(group_hint !== undefined){
+      let group_name = group_hint;
+      gp = this.group.get( group_name );
+      // set re
+
+    }else if(this.DEBUG){
+      console.error('Cannot find data with name ' + from_geom + ' at group ' + group_hint);
+    }
+
+    // group exists
+    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
+
+      re = gp.userData.group_data[data_name];
+    }
+
+    return(re);
+  }
+
+
+  // Canvas state
+  set_state( key, val ) {
+    this.state_data.set(key, val);
+    console.debug(`Canvas state set [${key}]`);
+    this.dispatch_event( "canvas.state.onChange", {
+      key: key,
+      value: val
+    });
+  }
+  get_state( key, missing = undefined ) {
+    return((0,utils/* get_or_default */.jM)( this.state_data, key, missing ));
+  }
+
+  // Font size magnification
+  set_font_size( magnification = 1 ){
+    // font size
+    this._lineHeight_normal = Math.round( 24 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_small = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_normal = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_small = Math.round( 16 * this.pixel_ratio[0] * magnification );
+    this._lineHeight_legend = Math.round( 20 * this.pixel_ratio[0] * magnification );
+    this._fontSize_legend = Math.round( 16 * this.pixel_ratio[0] * magnification );
+    this.set_state("font_magnification", magnification);
+  }
+
+  // Get mouse position (normalized)
+  get_mouse(){
+    if(this.mouse_event !== undefined && !this.mouse_event.dispose){
+      let event = this.mouse_event.event;
+
+      if( !event.offsetX && !event.offsetY ){
+        // Firefox, where offsetX,Y are always 0
+        const rect = this.domElement.getBoundingClientRect();
+        this.mouse_pointer.x = 2 * (event.clientX - rect.x) / rect.width - 1;
+        // three.js origin is from bottom-left while html origin is top-left
+        this.mouse_pointer.y = 2 * (rect.y - event.clientY) / rect.height + 1;
+      } else {
+        this.mouse_pointer.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
+        this.mouse_pointer.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
+      }
+    }
+  }
+
+  // To be implemented (abstract methods)
+  set_coronal_depth( depth ){
+    if( typeof this._set_coronal_depth === 'function' ){
+      this._set_coronal_depth( depth );
+    }else{
+      console.debug('Set coronal depth not implemented');
+    }
+  }
+  set_sagittal_depth( depth ){
+    if( typeof this._set_sagittal_depth === 'function' ){
+      this._set_sagittal_depth( depth );
+    }else{
+      console.debug('Set sagittal depth not implemented');
+    }
+  }
+
+  // -------- Camera, control trackballs ........
+  resetSideCanvas({
+    width, zoomLevel = true, position = false,
+    coronal = true, axial = true, sagittal = true
+  } = {}) {
+    if( typeof width !== 'number' ) {
+      width = this._sideCanvasCSSWidth;
+    }
+    if( width * 3 > this.client_height ){
+      width = Math.floor( this.client_height / 3 );
+    }
+    this.side_width = width;
+
+    // Resize side canvas, make sure this.side_width is proper
+    let pos = (0,asArray/* asArray */._)( position );
+    if( pos.length == 2 ) {
+      const bounding = this.$el.getBoundingClientRect();
+      const offsetX = Math.max( -bounding.x, pos[0] );
+      let offsetY = Math.max( -bounding.y, pos[1] );
+      if( coronal ) {
+        this.sideCanvasList.coronal.reset({
+          zoomLevel : zoomLevel,
+          position : [ offsetX, offsetY ],
+          crosshair: true
+        });
+      }
+      offsetY += width;
+      if( axial ) {
+        this.sideCanvasList.axial.reset({
+          zoomLevel : zoomLevel,
+          position : [ offsetX, offsetY ],
+          crosshair: true
+        });
+      }
+      offsetY += width;
+      if( sagittal ) {
+        this.sideCanvasList.sagittal.reset({
+          zoomLevel : zoomLevel,
+          position : [ offsetX, offsetY ],
+          crosshair: true
+        });
+      }
+      offsetY += width;
+    } else {
+      if( coronal ) {
+        this.sideCanvasList.coronal.reset({
+          zoomLevel : zoomLevel,
+          position : position,
+          crosshair: true
+        });
+      }
+      if( axial ) {
+        this.sideCanvasList.axial.reset({
+          zoomLevel : zoomLevel,
+          position : position,
+          crosshair: true
+        });
+      }
+      if( sagittal ) {
+        this.sideCanvasList.sagittal.reset({
+          zoomLevel : zoomLevel,
+          position : position,
+          crosshair: true
+        });
+      }
+    }
+
+  }
+
+  enableSideCanvas(){
+	  // Add side renderers to the element
+	  this.sideCanvasEnabled = true;
+	  this.sideCanvasList.coronal.enabled = true;
+	  this.sideCanvasList.axial.enabled = true;
+	  this.sideCanvasList.sagittal.enabled = true;
+	  this.start_animation( 0 );
+	}
+	disableSideCanvas(force = false){
+	  this.sideCanvasEnabled = false;
+	  this.sideCanvasList.coronal.enabled = false;
+	  this.sideCanvasList.axial.enabled = false;
+	  this.sideCanvasList.sagittal.enabled = false;
+	  this.start_animation( 0 );
+	}
+  /*---- Choose & highlight objects -----------------------------------------*/
+  set_raycaster(){
+    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.mainCamera );
+  }
+
+  _fast_raycast( request_type ){
+
+    let items;
+
+    this.set_raycaster();
+
+    this.mouse_raycaster.layers.disableAll();
+
+    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
+      // intersect with all clickables
+      // set raycaster to be layer 14
+      this.mouse_raycaster.layers.enable( constants/* CONSTANTS.LAYER_SYS_RAYCASTER_14 */.t.LAYER_SYS_RAYCASTER_14 );
+
+      // Only raycast with visible
+      items = this.mouse_raycaster.intersectObjects(
+        // asArray( this.clickable )
+        this.clickable_array.filter((e) => { return(e.visible === true) })
+      );
+      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
+    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
+      // set raycaster to be layer 8 (main camera)
+      this.mouse_raycaster.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      items = this.mouse_raycaster.intersectObjects( (0,asArray/* asArray */._)( request_type ), true );
+    }
+
+    if(this.DEBUG){
+      this._items = items;
+    }
+
+		return(items);
+
+  }
+
+  focus_object( m = undefined, helper = false, auto_unfocus = false ){
+
+    if( m ){
+      if( this.object_chosen ){
+        this.highlight( this.object_chosen, true );
+      }
+      this.object_chosen = m;
+      this._last_object_chosen = m;
+      this.highlight( this.object_chosen, false );
+      console.debug('object selected ' + m.name);
+
+      // if( helper ){
+      //   m.getWorldPosition( this.mouse_helper.position );
+      //   this.mouse_helper.visible = true;
+      // }
+
+
+    }else{
+      if( auto_unfocus ){
+        if( this.object_chosen ) {
+          this.highlight( this.object_chosen, true );
+          this.object_chosen = undefined;
+        }
+        // this.mouse_helper.visible = false;
+      }
+    }
+  }
+
+  /*
+  * @param reset whether to reset (hide) box that is snapped to m
+  */
+  highlight( m, reset = false ){
+
+    const highlight_disabled = (0,utils/* get_or_default */.jM)(
+      this.state_data,
+      'highlight_disabled',
+      false
+    );
+
+    // use bounding box with this.focus_box
+    if( !m || !m.isObject3D ){ return(null); }
+
+    this.focus_box.setFromObject( m );
+    if( !this.focus_box.userData.added ){
+      this.focus_box.userData.added = true;
+      this.add_to_scene( this.focus_box, true );
+    }
+
+    this.focus_box.visible = !reset && !highlight_disabled;
+
+    // check if there is highlight helper
+    if( m.children.length > 0 ){
+      m.children.forEach((_c) => {
+        if( _c.isMesh && _c.userData.is_highlight_helper ){
+          (0,utils/* set_visibility */.K3)( _c, !reset );
+          // _c.visible = !reset;
+        }
+      });
+    }
+
+  }
+
+  /*---- Colors, animations, media ------------------------------------------*/
+  add_colormap( name, alias, value_type, value_names, value_range, time_range,
+                color_keys, color_vals, n_levels, hard_range ){
+
+    const color_name = name + '--'  + this.container_id;
+
+    // Step 1: register to ColorMapKeywords
+    const cmap_keys = [];
+
+    // n_color is number of colors in Lut, not the true levels of colors
+    const n_color = Math.max( 2 , (0,asArray/* asArray */._)( color_keys ).length );
+
+    // Step 2:
+    for( let ii=0; ii < n_color; ii++ ){
+      cmap_keys.push([ ii / (n_color-1) , color_vals[ii] ]);
+    }
+
+    addToColorMapKeywords(
+      color_name,
+      cmap_keys
+    );
+
+    const lut = new Lut( color_name , n_color );
+
+    // min and max cannot be the same, otherwise colors will not be rendered
+    if( value_type === 'continuous' ){
+      lut.setMin( value_range[0] );
+      if( value_range[1] === value_range[0] ){
+        lut.setMax( value_range[0] + 1 );
+      }else{
+        lut.setMax( value_range[1] );
+      }
+    }else{
+      lut.setMin( 0 );
+      lut.setMax( Math.max( n_levels - 1, 1) );
+    }
+
+    // step 3: register hard range
+    let theoretical_range;
+    if( Array.isArray(hard_range) && hard_range.length == 2 ){
+      theoretical_range = [hard_range[0], hard_range[1]];
+    }
+
+    // step 4: set alias
+    let alt_name = alias;
+    if( typeof alt_name !== 'string' || alt_name === '' ){
+      alt_name = name;
+    }
+
+    this.color_maps.set( name, {
+      lut               : lut,
+      name              : name,
+      alias             : alt_name,
+      value_type        : value_type,
+      value_names       : (0,asArray/* asArray */._)( value_names ),
+      time_range        : time_range,
+      n_levels          : n_levels,
+      // Used for back-up
+      value_range       : [ lut.minV, lut.maxV ],
+      theoretical_range : theoretical_range
+    });
+
+  }
+
+  switch_colormap( name, value_range = [] ){
+    let cmap;
+    if( name ){
+      this.set_state( 'color_map', name );
+
+      cmap = this.color_maps.get( name );
+
+      // also need to query surface & datacube2 to check the time range
+
+      if( cmap ){
+        this.set_state( 'time_range_min', cmap.time_range[0] );
+        this.set_state( 'time_range_max', cmap.time_range[1] );
+      }else{
+        this.set_state( 'time_range_min', 0 );
+        this.set_state( 'time_range_max', 1 );
+      }
+
+    }else{
+      name = this.get_state( 'color_map', '' );
+      cmap = this.color_maps.get( name );
+      // return( this.color_maps.get( name ) );
+    }
+    if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
+        // Must be continuous color map
+        cmap.value_type === 'continuous' ){
+      // Check hard ranges
+      const hard_range = cmap.theoretical_range;
+      let minv = value_range[0],
+          maxv = value_range[1];
+      if( Array.isArray(hard_range) && hard_range.length == 2 ){
+        if( minv < hard_range[0] ){
+          minv = hard_range[0];
+          if( maxv < minv ){
+            maxv = minv + 1e-100;
+          }
+        }
+        if( maxv > hard_range[1] ){
+          maxv = hard_range[1];
+          if( maxv < minv ){
+            minv = maxv - 1e-100;
+          }
+        }
+      }
+
+      // set cmap value_range
+      cmap.lut.setMax( maxv );
+      cmap.lut.setMin( minv );
+      // Legend needs to be updated
+      this.start_animation( 0 );
+    }
+
+    this.update_time_range();
+    if( cmap ){
+      cmap.time_range[0] = this.animParameters.min;
+      cmap.time_range[1] = this.animParameters.max;
+    }
+    return( cmap );
+  }
+
+  get_color(v, name){
+    let cmap;
+    if( name ){
+      cmap = this.color_maps.get( name );
+    }else{
+      cmap = this.color_maps.get( this.get_state( 'color_map', '' ) );
+    }
+
+    if(cmap === undefined){
+      return('#e2e2e2');
+    }else{
+      return(cmap.lut.getColor(v));
+    }
+  }
+
+  switch_media( name ){
+    this.video_canvas._playing = false;
+    this.video_canvas.pause();
+    this.video_canvas.currentTime = 0;
+    this.video_canvas._enabled = false;
+
+    const media_content = this.shared_data.get(".media_content");
+    if( !media_content ){ return; }
+    const content = media_content[ name ];
+    if( !content ){ return; }
+    // name (animation name), durtion, time_start, asp_ratio, url
+    // set this.video_canvas;
+    const video_height = this.video_canvas.height;
+    this.video_canvas.src = content.url;
+    this.video_canvas._time_start = content.time_start;
+    this.video_canvas._asp_ratio = content.asp_ratio || (16/9);
+    this.video_canvas._duration = content.duration || Infinity;
+    this.video_canvas._name = content.name;
+    this.video_canvas._enabled = true;
+
+  }
+
+  start_video( speed, video_time ){
+    if( speed < 0.1 ){
+      this.pause_video( video_time );
+      return;
+    }
+    if( this.video_canvas.playbackRate !== speed ){
+      this.video_canvas.playbackRate = speed;
+    }
+
+    if( !this.video_canvas._playing ) {
+      this.video_canvas._playing = true;
+      this.video_canvas.play(() => {
+        this.video_canvas.currentTime = video_time.toFixed(2);
+      });
+    }
+  }
+
+  pause_video( video_time ){
+    if( this.video_canvas._playing || !this.video_canvas.paused ){
+      this.video_canvas._playing = false;
+      this.video_canvas.pause();
+    }
+
+    if ( video_time !== undefined ){
+      const delta = Math.abs(parseFloat(this.video_canvas.currentTime) - video_time);
+      if( delta > 0.05 ){
+        this.video_canvas.currentTime = video_time.toFixed(2);
+      }
+      // this.video_canvas.currentTime = video_time.toFixed(2);
+    }
+  }
+
+  // Generate animation clips and mixes
+  generate_animation_clips( animation_name = 'Value', set_current=true,
+                            callback = (e) => {} ){
+
+    if( animation_name === undefined ){
+      animation_name = this.shared_data.get('animation_name') || 'Value';
+    }else{
+      this.shared_data.set('animation_name', animation_name);
+    }
+
+    this.switch_media( animation_name );
+
+    // TODO: make sure cmap exists or use default lut
+    const cmap = this.switch_colormap( animation_name );
+    // this.color_maps
+
+    this.mesh.forEach( (m, k) => {
+      if( !m.isMesh || !m.userData.get_track_data ){ return(null); }
+
+      if( !m.userData.ani_exists ){ return(null); }
+
+      // keyframe is not none, generate animation clip(s)
+      /**
+       * Steps to make an animation
+       *
+       * 1. get keyframes, here is "ColorKeyframeTrack"
+       *        new ColorKeyframeTrack( '.material.color', time_key, color_value, InterpolateDiscrete )
+       *    keyframe doesn't specify which object, it also can only change one attribute
+       * 2. generate clip via "AnimationClip"
+       *        new AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
+       *    animation clip combines multiple keyframe, still, doesn't specify which object
+       * 3. mixer via "AnimationMixer"
+       *        new AnimationMixer( m );
+       *    A mixer specifies an object
+       * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
+       *    action.play() will play the animation clips
+       */
+
+      // Step 0: get animation time_stamp start time
+      // lut: lut,
+      // value_type: value_type,
+      // value_names: value_names, time_range: time_range
+
+      // Obtain mixer, which will be used in multiple places
+      let keyframe;
+
+      // Step 1: Obtain keyframe tracks
+      // if animation_name exists, get tracks, otherwise reset to default material
+      const track_data = m.userData.get_track_data( animation_name, true );
+
+      // no keyframe tracks, remove animation
+      if( !track_data ){
+
+        // If action is going, stop them all
+        if( m.userData.ani_mixer ){ m.userData.ani_mixer.stopAllAction(); }
+        return( null );
+
+      }
+
+      if( typeof m.userData.generate_animation === 'function'){
+        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, m.userData.ani_mixer );
+      }else{
+        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, m.userData.ani_mixer );
+      }
+      if( !keyframe ){ return; }
+
+      const _time_min = cmap.time_range[0],
+            _time_max = cmap.time_range[1];
+
+      const clip_name = 'action_' + m.name + '__' + track_data.name;
+      let clip = this.animation_clips.get( clip_name ), new_clip = false;
+
+      if( !clip ){
+        clip = new three_module.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
+        this.animation_clips.set( clip_name, clip );
+        new_clip = true;
+      }else{
+        clip.duration = _time_max - _time_min;
+        clip.tracks[0].name = keyframe.name;
+        clip.tracks[0].times = keyframe.times;
+        clip.tracks[0].values = keyframe.values;
+      }
+
+      // Step 3: create mixer
+      if( m.userData.ani_mixer ){
+        m.userData.ani_mixer.stopAllAction();
+      }
+      m.userData.ani_mixer = new three_module.AnimationMixer( m );
+      m.userData.ani_mixer.stopAllAction();
+
+      // Step 4: combine mixer with clip
+      const action = m.userData.ani_mixer.clipAction( clip );
+      action.play();
+
+
+    });
+
+
+
+    callback( cmap );
+  }
+
+
+  /*---- Update function at each animationframe -----------------------------*/
+  keyboard_update(){
+
+    if( !this.keyboard_event || this.keyboard_event.dispose ){
+      return( null );
+    }
+    this.keyboard_event.dispose = true;
+    if(this.keyboard_event.level <= 2){
+      this.keyboard_event.level = 0;
+    }
+
+    // handle
+    for( let _cb_name in this._keyboard_callbacks ){
+
+      if( this._keyboard_callbacks[ _cb_name ] &&
+          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
+        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
+      }
+
+    }
+  }
+  // method to target object with mouse pointed at
+  mouse_update(){
+
+    if( !this.mouse_event || this.mouse_event.dispose ){
+      return(null);
+    }
+
+    // dispose first as the callbacks might have error
+    this.mouse_event.dispose = true;
+    if(this.mouse_event.level <= 2){
+      this.mouse_event.level = 0;
+    }
+
+
+    // Call callbacks
+    let raycast_result, request_type, callback, request;
+
+    for( let _cb_name in this._mouse_click_callbacks ){
+      callback = this._mouse_click_callbacks[ _cb_name ];
+      if( callback === undefined ){
+        continue;
+      }
+      request = callback[0]( this.mouse_event );
+
+      if( request && request.pass ){
+
+        // raycast object
+        // check which object(s) to raycast on
+        request_type = request.type || 'clickable';
+
+        if( raycast_result === undefined ||
+            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
+          raycast_result = {
+            type  : request_type,
+            items : this._fast_raycast( request_type ),
+            meta  : request.meta
+          };
+        }
+
+        // Find object_chosen
+        if( raycast_result.items.length > 0 ){
+          // Has intersects!
+          const first_item = raycast_result.items[0],
+                target_object = first_item.object;
+
+          raycast_result.first_item = first_item;
+          raycast_result.target_object = target_object;
+        }
+
+        callback[1]( raycast_result, this.mouse_event );
+      }
+    }
+
+
+
+  }
+
+  // Animation-related:
+  incrementTime(){
+
+    this.animParameters.incrementTime();
+    const objectInfo = this.animParameters.userData.objectFocused;
+
+    // set chosen object to show mesh info
+    if(this.object_chosen !== undefined && this.object_chosen.userData ){
+
+      objectInfo.enabled = true;
+
+      const objectUserData = this.object_chosen.userData;
+      const objectConstructParams = objectUserData.construct_params;
+      this.object_chosen.getWorldPosition( objectInfo.position );
+
+      objectInfo.name = objectConstructParams.name;
+      objectInfo.customInfo = objectConstructParams.custom_info;
+      objectInfo.isElectrode = objectConstructParams.is_electrode || false;
+      objectInfo.MNI305Position = objectUserData.MNI305_position;
+
+      objectInfo.templateMapping.mapped = objectUserData._template_mapped || false;
+      objectInfo.templateMapping.shift = objectUserData._template_shift || 0;
+      objectInfo.templateMapping.space = objectUserData._template_space || 'original';
+      objectInfo.templateMapping.surface = objectUserData._template_surface || 'NA';
+      objectInfo.templateMapping.hemisphere = objectUserData._template_hemisphere || 'NA';
+      objectInfo.templateMapping.mni305 = objectUserData._template_mni305;
+
+
+      // show mesh value info
+      objectInfo.currentDataValue = undefined;
+      if( this.object_chosen.userData.ani_exists ){
+
+        const track_type = this.get_state("color_map");
+        const track_data = objectUserData.get_track_data( track_type );
+
+        if( track_data ){
+          const time_stamp = (0,asArray/* asArray */._)( track_data.time );
+          const values = (0,asArray/* asArray */._)( track_data.value );
+          const currentTime = this.animParameters.time;
+          let _tmp = - Infinity;
+          for( let ii in time_stamp ){
+            if(time_stamp[ ii ] <= currentTime && time_stamp[ ii ] > _tmp){
+              objectInfo.currentDataValue = values[ ii ];
+              _tmp = time_stamp[ ii ];
+            }
+          }
+        }
+      }
+    } else {
+      objectInfo.enabled = false;
+    }
+  }
+
+  // set renderer's flag (persist):
+  // 0: render once at next cycle
+  start_animation( persist = 0 ){
+    // persist 0, render once
+    // persist > 0, loop
+
+    const _flag = this.render_flag;
+    if(persist >= _flag){
+      this.render_flag = persist;
+    }
+    if( persist >= 2 && _flag < 2 ){
+      // _flag < 2 means prior state only renders the scene, but animation is paused
+      // if _flag >= 2, then clock was running, then there is no need to start clock
+      // persist >= 2 is a flag for animation to run
+      // animation clips need a clock
+      this.animParameters._clock.start();
+    }
+  }
+
+  // Pause animation
+  pause_animation( level = 1 ){
+    const _flag = this.render_flag;
+    if(_flag <= level){
+      this.render_flag = -1;
+
+      // When animation is stopped, we need to check if clock is running, if so, stop it
+      if( _flag >= 2 ){
+        this.animParameters._clock.stop();
+      }
+    }
+  }
+
+
+  update(){
+
+    this.get_mouse();
+    this.trackball.update();
+    this.compass.update();
+
+    try {
+      this.keyboard_update();
+      this.mouse_update();
+    } catch (e) {
+      if(this.DEBUG){
+        console.error(e);
+      }
+    }
+
+    // Run less frequently
+    if( this.ready && this._custom_updates.size ){
+      if( this._update_countdown > 0 ){
+        this._update_countdown--;
+      } else {
+        this._update_countdown = 5;
+        this._custom_updates.forEach((f) => {
+          try {
+            if( typeof(f) === "function" ){
+              f();
+            }
+          } catch (e) {
+            if(this.DEBUG){
+              console.error(e);
+            }
+          }
+        });
+      }
+    }
+
+  }
+
+  // re-render canvas to display additional information without 3D
+  mapToCanvas(){
+    const _width = this.domElement.width,
+          _height = this.domElement.height;
+
+    // Clear the whole canvas
+    this.domContext.fillStyle = this.background_color;
+    this.domContext.fillRect(0, 0, _width, _height);
+
+    // copy the main_renderer context
+    this.domContext.drawImage( this.main_renderer.domElement, 0, 0, _width, _height);
+
+  }
+
+  // Main render function, automatically scheduled
+  render(){
+
+    // double-buffer to make sure depth renderings
+    //this.main_renderer.setClearColor( renderer_colors[0] );
+    this.main_renderer.clear();
+
+    // Pre render all meshes
+    this.mesh.forEach((m) => {
+      if( typeof m.userData.pre_render === 'function' ){
+        try {
+          m.userData.pre_render();
+        } catch (e) {
+          if( !this.__render_error ) {
+            console.warn(e);
+            this.__render_error = true;
+          }
+        }
+      }
+    });
+
+    // Pre render all singletons
+    this.singletons.forEach((s) => {
+
+      if( s && typeof(s) === "object" && typeof s.pre_render === 'function' ) {
+        try {
+          s.pre_render();
+        } catch (e) {
+          if( !this.__render_error ) {
+            console.warn(e);
+            this.__render_error = true;
+          }
+        }
+      }
+
+    });
+
+    this.main_renderer.render( this.scene, this.mainCamera );
+
+    if(this.sideCanvasEnabled){
+
+      // temporarily disable slice depthWrite property so electrodes can
+      // display properly
+      const sliceInstance = this.state_data.get( "activeSliceInstance" );
+      const renderSlices = sliceInstance && sliceInstance.isDataCube;
+      if( renderSlices ) {
+        sliceInstance.sliceMaterial.depthWrite = false;
+      }
+
+      this.sideCanvasList.coronal.render();
+      this.sideCanvasList.axial.render();
+      this.sideCanvasList.sagittal.render();
+
+      if( renderSlices ) {
+        sliceInstance.sliceMaterial.depthWrite = true;
+      }
+
+    }
+
+  }
+
+  update_time_range(){
+    let min_t0 = this.get_state( 'time_range_min0' );
+    let max_t0 = this.get_state( 'time_range_max0' );
+    let min_t = this.get_state( 'time_range_min', 0 );
+    let max_t = this.get_state( 'time_range_max', 0 );
+
+    if( min_t0 !== undefined ){
+      min_t = Math.min( min_t, min_t0 );
+    }
+
+    if( max_t0 !== undefined ){
+      max_t = Math.max( max_t, max_t0 );
+    }
+    this.animParameters.min = min_t;
+    this.animParameters.max = max_t;
+  }
+
+
+  renderTitle( x = 10, y = 10, w = 100, h = 100 ){
+
+    if( typeof this.title !== "string" ) { return; }
+
+    const pixelRatio = this.pixel_ratio[0];
+
+    this._fontType = 'Courier New, monospace';
+    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * pixelRatio );
+    this._fontSize_title = this._fontSize_title || Math.round( 20 * pixelRatio );
+
+
+    this.domContext.fillStyle = this.foreground_color;
+    this.domContext.font = `${ this._fontSize_title }px ${ this._fontType }`;
+
+    if( this.sideCanvasEnabled ) {
+      x += this.side_width;
+    }
+    x += 10; // padding left
+    x *= pixelRatio;
+
+    // Add title
+    let ii = 0, ss = [];
+    ( this.title || '' )
+      .split('\\n')
+      .forEach( (ss, ii) => {
+        this.domContext.fillText( ss , x , y + this._lineHeight_title * (ii + 1) );
+      });
+  }
+
+  _draw_ani_old( x = 10, y = 10, w = 100, h = 100  ){
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+
+    // Add current time to bottom right corner
+    if( this.animParameters.renderTimestamp ) {
+      this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
+      this.domContext.fillText(
+        // Current clock time
+        `${ this.animParameters.time.toFixed(3) } s`,
+        // offset
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 1);
+    }
+  }
+
+  renderTimestamp( x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
+
+    if( !this.animParameters.exists ) { return; }
+
+    if( !context_wrapper ){
+      context_wrapper = this.domContextWrapper;
+    }
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+
+    context_wrapper._lineHeight_normal = this._lineHeight_normal;
+    context_wrapper._fontSize_normal = this._fontSize_normal;
+
+    // Add current time to bottom right corner
+    if( this.animParameters.renderTimestamp ) {
+      context_wrapper.set_font( this._fontSize_normal, this._fontType );
+      context_wrapper.fill_text(
+        // Current clock time
+        `${ this.animParameters.time.toFixed(3) } s`,
+
+        // offset
+        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
+    }
+  }
+
+  renderLegend( x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined ){
+
+    const cmap = this.switch_colormap();
+
+    // whether to draw legend
+    if( !this.animParameters.renderLegend ) { return; }
+    if( !(cmap && (cmap.lut.n !== undefined)) ) { return; }
+
+    if( !context_wrapper ){
+      context_wrapper = this.domContextWrapper;
+    }
+
+    // Added: if info text is disabled, then legend should not display
+    // correspoding value
+    let info_disabled = true;
+    let currentValue;
+    if( this.animParameters.userData.objectFocused.enabled && !this.get_state( 'info_text_disabled') ) {
+      info_disabled = false;
+      currentValue = this.animParameters.userData.objectFocused.currentDataValue;
+    }
+    const lut = cmap.lut,
+          color_type = cmap.value_type,
+          color_names = cmap.value_names,
+          legend_title = cmap.alias || '',
+          actual_range = (0,asArray/* asArray */._)( cmap.value_range );
+
+    this._lineHeight_legend = this._lineHeight_legend || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_legend = this._fontSize_legend || Math.round( 10 * this.pixel_ratio[0] );
+
+    let legend_width = 25 * this.pixel_ratio[0],
+        legend_offset = this._fontSize_legend * 7 + legend_width, // '__-1.231e+5__', more than 16 chars
+        title_offset = Math.ceil(
+          legend_title.length * this._fontSize_legend * 0.42 -
+          legend_width / 2 + legend_offset
+        );
+
+    // Get color map from lut
+    const continuous_cmap = color_type === 'continuous' && lut.n > 1;
+    const discrete_cmap = color_type === 'discrete' && lut.n > 0 && Array.isArray(color_names);
+
+    let legend_height = 0.50,                  // Legend takes 60% of the total heights
+        legend_start = 0.30;                  // Legend starts at 20% of the height
+
+    if( continuous_cmap ){
+      // Create a linear gradient map
+      const grd = this.domContext.createLinearGradient( 0 , 0 , 0 , h );
+
+      // Determine legend coordinates and steps
+      let legend_step = legend_height / ( lut.n - 1 );
+
+      // Starts from legend_start of total height (h)
+      grd.addColorStop( 0, this.background_color );
+      grd.addColorStop( legend_start - 4 / h, this.background_color );
+      for( let ii in lut.lut ){
+        grd.addColorStop( legend_start + legend_step * ii,
+            '#' + lut.lut[lut.n - 1 - ii].getHexString());
+      }
+      grd.addColorStop( legend_height + legend_start + 4 / h, this.background_color );
+
+      // Fill with gradient
+      context_wrapper.fill_gradient(  grd, w - legend_offset ,
+                                      legend_start * h ,
+                                      legend_width , legend_height * h );
+      //this.domContext.fillStyle = grd;
+      //this.domContext.fillRect( w - legend_offset , legend_start * h , legend_width , legend_height * h );
+
+      // Add value labels and title
+      let legent_ticks = [];
+      let zero_height = ( legend_start + lut.maxV * legend_height /
+                          (lut.maxV - lut.minV)) * h,
+          minV_height = (legend_height + legend_start) * h,
+          maxV_height = legend_start * h;
+      //  For ticks
+      let text_offset = Math.round( legend_offset - legend_width ),
+          text_start = Math.round( w - text_offset + this._fontSize_legend ),
+          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
+
+      // title. It should be 2 lines above legend grid
+      context_wrapper.set_font( this._fontSize_legend, this._fontType );
+      context_wrapper.set_font_color( this.foreground_color );
+
+      // console.log(`${w - legend_offset}, ${maxV_height - this._lineHeight_legend * 3 + text_halfheight}, ${this.domContext.font}, ${legend_title}`);
+      context_wrapper.fill_text( legend_title, w - title_offset,
+          maxV_height - this._lineHeight_legend * 2 + text_halfheight );
+
+      if( actual_range.length == 2 ){
+        let vrange = `${actual_range[0].toPrecision(4)} ~ ${actual_range[1].toPrecision(4)}`;
+        vrange = vrange.replace(/\.[0]+\ ~/, ' ~')
+                       .replace(/\.[0]+$/, '').replace(/\.[0]+e/, 'e');
+        context_wrapper.fill_text( `[${vrange}]`, w - Math.ceil( legend_offset * 1.2 ),
+          minV_height + this._lineHeight_legend * 2 + text_halfheight );
+      }
+
+
+      // ticks
+      let draw_zero = lut.minV < 0 && lut.maxV > 0;
+
+      if( typeof( currentValue ) === 'number' ){
+        // There is a colored object rendered, display it
+        let value_height = ( legend_start + (lut.maxV - currentValue) * legend_height / (lut.maxV - lut.minV)) * h;
+
+        // Decide whether to draw 0 and current object value
+        // When max and min is too close, hide 0, otherwise it'll be jittered
+        if( Math.abs( zero_height - value_height ) <= this._fontSize_legend ){
+          draw_zero = false;
+        }
+        if(Math.abs( value_height - minV_height) > this._fontSize_legend){
+          legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
+        }
+        if( value_height - minV_height > this._lineHeight_legend ){
+          value_height = minV_height + this._lineHeight_legend;
+        }
+        if(Math.abs( value_height - maxV_height) > this._fontSize_legend){
+          legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
+        }
+        if( maxV_height - value_height > this._lineHeight_legend ){
+          value_height = maxV_height - this._lineHeight_legend;
+        }
+
+        legent_ticks.push([
+          currentValue.toPrecision(4), value_height, 1 ]);
+      } else {
+        legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
+        legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
+      }
+
+      if( draw_zero ){
+        legent_ticks.push(['0', zero_height, 0]);
+      }
+
+
+      // Draw ticks
+      context_wrapper.set_font( this._fontSize_legend, this._fontType );
+      context_wrapper.set_font_color( this.foreground_color );
+
+      // Fill text
+      legent_ticks.forEach((tick) => {
+        if( tick[2] === 1 ){
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, true );
+          context_wrapper.fill_text( tick[0], text_start, tick[1] + text_halfheight );
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, false );
+        }else{
+          context_wrapper.fill_text( tick[0], text_start, tick[1] + text_halfheight );
+        }
+
+      });
+
+      // Fill ticks
+      // this.domContext.strokeStyle = this.foreground_color;  // do not set state of stroke if color not changed
+      // this.domContext.beginPath();
+      context_wrapper.start_draw_line();
+
+      legent_ticks.forEach((tick) => {
+        if( tick[2] === 0 ){
+          context_wrapper.draw_line([
+            [ w - text_offset , tick[1] ],
+            [ w - text_offset + text_halfheight , tick[1] ]
+          ]);
+          // this.domContext.moveTo( w - text_offset , tick[1] );
+          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] );
+        }else if( tick[2] === 1 ){
+          context_wrapper.draw_line([
+            [ w - text_offset , tick[1] ],
+            [ w - text_offset + text_halfheight , tick[1] - 2 ],
+            [ w - text_offset + text_halfheight , tick[1] + 2 ],
+            [ w - text_offset , tick[1] ]
+          ]);
+          // this.domContext.moveTo( w - text_offset , tick[1] );
+          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] - 2 );
+          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] + 2 );
+          // this.domContext.lineTo( w - text_offset , tick[1] );
+        }
+      });
+      // this.domContext.stroke();
+      context_wrapper.stroke_line();
+
+
+    }else if( discrete_cmap ){
+      // color_names must exists and length must be
+      const n_factors = cmap.n_levels; // Not color_names.length;
+      let _text_length = 1;
+
+      color_names.forEach((_n)=>{
+        if( _text_length < _n.length ){
+          _text_length = _n.length;
+        }
+      });
+
+      legend_offset = Math.ceil( this._fontSize_legend * 0.42 * ( _text_length + 7 ) + legend_width );
+
+      // this._lineHeight_legend * 2 = 60 px, this is the default block size
+      legend_height = ( ( n_factors - 1 ) * this._lineHeight_legend * 2 ) / h;
+      legend_height = legend_height > 0.60 ? 0.60: legend_height;
+
+      let legend_step = n_factors == 1 ? 52 : (legend_height / ( n_factors - 1 ));
+      let square_height = Math.floor( legend_step * h ) - 2;
+      square_height = square_height >= 50 ? 50 : Math.max(square_height, 4);
+
+
+      let text_offset = Math.round( legend_offset - legend_width ),
+          text_start = Math.round( w - text_offset + this._fontSize_legend ),
+          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
+
+
+      context_wrapper.set_font( this._fontSize_legend, this._fontType );
+      context_wrapper.set_font_color( this.foreground_color );
+
+      // Draw title. It should be 1 lines above legend grid
+      context_wrapper.fill_text( legend_title, w - title_offset, legend_start * h - 50 );
+
+      // Draw Ticks
+      for(let ii = 0; ii < n_factors; ii++ ){
+        let square_center = (legend_start + legend_step * ii) * h;
+        context_wrapper.fill_rect(
+          '#' + lut.getColor(ii).getHexString(),
+          w - legend_offset , square_center - square_height / 2 ,
+          legend_width , square_height
+        );
+
+        /*
+        this.domContext.beginPath();
+        this.domContext.moveTo( w - text_offset , square_center );
+        this.domContext.lineTo( w - text_offset + text_halfheight , square_center );
+        this.domContext.stroke();
+        */
+        context_wrapper.set_font_color( this.foreground_color );
+
+        if( !info_disabled && currentValue === color_names[ii]){
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, true );
+          context_wrapper.fill_text(color_names[ii],
+            text_start, square_center + text_halfheight, w - text_start - 1
+          );
+          context_wrapper.set_font( this._fontSize_legend, this._fontType, false );
+        }else{
+          context_wrapper.fill_text(color_names[ii],
+            text_start, square_center + text_halfheight, w - text_start - 1
+          );
+        }
+
+      }
+
+
+    }
+  }
+
+  renderSelectedObjectInfo(
+    x = 10, y = 10, w = 100, h = 100,
+    context_wrapper = undefined, force_left = false ){
+
+    const objectInfo = this.animParameters.userData.objectFocused;
+
+    // Add selected object information, or if not showing is set
+    if( !objectInfo.enabled || this.get_state( 'info_text_disabled') ){
+      // no object selected, discard
+      return;
+    }
+
+    if( !context_wrapper ){
+      context_wrapper = this.domContextWrapper;
+    }
+
+
+    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
+    this._lineHeight_small = this._lineHeight_small || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
+    this._fontSize_small = this._fontSize_small || Math.round( 10 * this.pixel_ratio[0] );
+
+    context_wrapper.set_font_color( this.foreground_color );
+    context_wrapper.set_font( this._fontSize_normal, this._fontType );
+
+    let text_left;
+    if( this.sideCanvasEnabled && !force_left ){
+      text_left = w - Math.ceil( 50 * this._fontSize_normal * 0.42 );
+    } else {
+      text_left = Math.ceil( this._fontSize_normal * 0.42 * 2 );
+    }
+    if( !this.__textPosition ) {
+      this.__textPosition = new three_module.Vector2();
+    }
+    const textPosition = this.__textPosition;
+    textPosition.set(
+      text_left,
+
+      // Make sure it's not hidden by control panel
+      this._lineHeight_normal + this._lineHeight_small + this.pixel_ratio[0] * 10
+    );
+
+    // Line 1: object name
+    context_wrapper.fill_text( objectInfo.name, textPosition.x, textPosition.y );
+
+    // Smaller
+    context_wrapper.set_font( this._fontSize_small, this._fontType );
+
+    // Line 2: Global position
+
+    let pos;
+    if( objectInfo.isElectrode ){
+      pos = objectInfo.MNI305Position;
+      if( pos && (pos.x !== 0 || pos.y !== 0 || pos.z !== 0) ){
+        textPosition.y += this._lineHeight_small
+        context_wrapper.fill_text( `MNI305: `, textPosition.x , textPosition.y );
+        context_wrapper.set_font( this._fontSize_small, this._fontType, true );
+        context_wrapper.fill_text(
+          `${pos.x.toFixed(0)},${pos.y.toFixed(0)},${pos.z.toFixed(0)}`,
+          textPosition.x + this._fontSize_small * 5, textPosition.y
+        );
+        context_wrapper.set_font( this._fontSize_small, this._fontType, false );
+      }
+    } else {
+      pos = objectInfo.position;
+      textPosition.y += this._lineHeight_small;
+      context_wrapper.fill_text(
+        `tkrRAS: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
+        textPosition.x, textPosition.y
+      );
+    }
+
+    // For electrodes
+    if( objectInfo.isElectrode ){
+      const mappingInfo = objectInfo.templateMapping;
+      const displayInfo = this.object_chosen.userData.display_info;
+
+      const _tn = displayInfo.threshold_name || '[None]';
+      let _tv = displayInfo.threshold_value;
+      if( typeof _tv === 'number' ){
+        _tv = _tv.toPrecision(4);
+      }
+
+      const _dn = displayInfo.display_name;
+      let _dv = objectInfo.currentDataValue;
+
+      if( typeof _dv === 'number' ){
+        _dv = _dv.toPrecision(4);
+      }
+
+      // Line 3: mapping method & surface type
+      /*
+      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
+
+      context_wrapper.fill_text.fillText(
+        `Surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
+        text_position[ 0 ], text_position[ 1 ]
+      );
+      */
+
+      // Line 4:
+      if( _dv !== undefined ){
+        textPosition.y += this._lineHeight_small;
+
+        context_wrapper.fill_text(
+          `Display:   ${ _dn } (${ _dv })`,
+          textPosition.x, textPosition.y
+        );
+      }
+
+
+      // Line 5:
+      if( _tv !== undefined ){
+        textPosition.y += this._lineHeight_small;
+
+        context_wrapper.fill_text(
+          `Threshold: ${ _tn } (${ _tv })`,
+          textPosition.x, textPosition.y
+        );
+      }
+
+
+    }
+
+    // Line last: customized message
+    textPosition.y += this._lineHeight_small;
+
+    context_wrapper.fill_text(
+      objectInfo.customInfo || '',
+      textPosition.x, textPosition.y
+    );
+
+  }
+
+  _draw_video( results, w, h, context_wrapper ){
+    if( !this.video_canvas._enabled || this.video_canvas._mode === 'hidden' ){ return; }
+    // set video time
+    const video_time = results.last_time - this.video_canvas._time_start;
+
+    if(
+      this.video_canvas.ended || video_time <= 0 ||
+      video_time > Math.min( this.video_canvas._duration, this.video_canvas.duration )
+    ){
+      this.pause_video( 0 );
+      return;
+    }
+
+    if( this.render_flag >= 2 ){
+      this.start_video( results.speed || 1, video_time );
+    } else {
+      // static, set timer
+      this.pause_video( video_time );
+    }
+
+    const video_height = this.video_canvas.height,
+          video_width = video_height * this.video_canvas._asp_ratio;
+    if( context_wrapper ){
+      context_wrapper.draw_video(
+        this.video_canvas, 0, h - video_height,
+        video_width, video_height
+      );
+    } else {
+      this.domContextWrapper.draw_video(
+        this.video_canvas, 0, h - video_height,
+        video_width, video_height
+      );
+    }
+
+
+  }
+
+  // Do not call this function directly after the initial call
+  // use "this.start_animation(0);" to render once
+  // use "this.start_animation(1);" to keep rendering
+  // this.pause_animation(1); to stop rendering
+  // Only use 0 or 1
+  animate(){
+
+    if( this._disposed ){ return; }
+
+    requestAnimationFrame( this.animate.bind(this) );
+
+    // If this.$el is hidden, do not render
+    if( !this.ready || this.$el.clientHeight <= 0 ){
+      return;
+    }
+
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
+
+    this.update();
+
+    // needs to incrementTime after update so chosen object information can be up to date
+    this.incrementTime();
+
+    if(this.render_flag >= 0){
+
+  		if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
+  		this.render();
+
+  		// draw main and side rendered images to this.domElement (2d context)
+  		this.mapToCanvas();
+
+
+  		// Add additional information
+      // const _pixelRatio = this.pixel_ratio[0];
+      // const _fontType = 'Courier New, monospace';
+
+      this.domContext.fillStyle = this.foreground_color;
+
+      // Draw title on the top left corner
+      this.renderTitle( 0, 0, _width, _height );
+
+      // Draw timestamp on the bottom right corner
+      this.renderTimestamp( 0, 0, _width, _height );
+
+      // Draw legend on the right side
+      this.renderLegend( 0, 0, _width, _height );
+
+      // Draw focused target information on the top right corner
+      this.renderSelectedObjectInfo( 0, 0, _width, _height );
+
+      // check if capturer is working
+      if( this.capturer_recording && this.capturer ){
+        this.capturer.add();
+      }
+    }
+
+    // this._draw_video( results, _width, _height );
+
+    if(this.render_flag === 0){
+      this.render_flag = -1;
+    }
+
+
+	}
+
+
+  /*---- Subjects, electrodes, surfaces, slices ----------------------------*/
+  init_subject( subject_code ){
+    if( !subject_code ){ return; }
+    if( ! this.subject_codes.includes( subject_code ) ){
+      this.subject_codes.push( subject_code );
+      this.electrodes.set( subject_code, {});
+      this.slices.set( subject_code, {} );
+      this.ct_scan.set( subject_code, {} );
+      this.surfaces.set(subject_code, {} );
+      this.atlases.set( subject_code, {} );
+    }
+  }
+
+  getAllSurfaceTypes(){
+    const re = { 'pial' : 1 }; // always put pials to the first one
+
+    this.group.forEach( (gp, g) => {
+      // let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
+      const res = constants/* CONSTANTS.REGEXP_SURFACE_GROUP.exec */.t.REGEXP_SURFACE_GROUP.exec(g);
+      if( res && res.length === 3 ){
+        re[ res[1] ] = 1;
+      }
+    });
+
+    return( Object.keys( re ) );
+  }
+
+  get_atlas_types(){
+    const current_subject = this.get_state('target_subject') || "";
+    let atlases = this.atlases.get( current_subject );
+    if( !atlases ) {
+      return([]);
+    }
+    atlases = Object.keys( atlases );
+    const re = atlases.map((v) => {
+      const m = constants/* CONSTANTS.REGEXP_ATLAS.exec */.t.REGEXP_ATLAS.exec( v );
+      if( m && m.length >= 2 ){
+        return( m[1] );
+      }
+      return( null );
+    }).filter((v) => {
+      return( typeof(v) === 'string' );
+    })
+
+
+    return( (0,asArray/* asArray */._)( re ) );
+  }
+
+  get_ct_types(){
+    const re = {};
+
+    this.ct_scan.forEach( (vol, s) => {
+      let volume_names = Object.keys( vol ),
+          //  T1 (YAB)
+          res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
+          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
+
+      if( res && res.length === 2 ){
+        re[ res[1] ] = 1;
+      }
+    });
+    return( Object.keys( re ) );
+  }
+
+
+  switch_subject( target_subject = '/', args = {}){
+
+    if( this.subject_codes.length === 0 ){
+      return( null );
+    }
+
+    const state = this.state_data;
+
+    // not actually switch subjects, only reset some options
+    if( !this.subject_codes.includes( target_subject ) ){
+
+      // get current subject
+      target_subject = state.get('target_subject');
+
+
+      // no subject initiated, use template if multiple subjects
+      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
+        // This happends when subjects are just loaded
+        if( this.shared_data.get(".multiple_subjects") ){
+          target_subject = this.shared_data.get(".template_subjects");
+        }
+      }
+
+      // error-proof
+      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
+        target_subject = this.subject_codes[0];
+      }
+
+    }
+    let subject_changed = state.get('target_subject') === target_subject;
+    state.set( 'target_subject', target_subject );
+
+    let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
+    let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
+    let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
+    let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
+    let slice_type = args.slice_type || state.get( 'slice_type' ) || 'T1';
+    let ct_type = args.ct_type || state.get( 'ct_type' ) || 'ct.aligned.t1';
+    let ct_threshold = args.ct_threshold || state.get( 'ct_threshold' ) || 0.8;
+
+    let map_template = state.get( 'map_template' ) || false;
+
+    if( args.map_template !== undefined ){
+      map_template = args.map_template;
+    }
+    let map_type_surface = args.map_type_surface || state.get( 'map_type_surface' ) || 'std.141';
+    let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
+    let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
+    let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
+
+    let activeSlices = state.get("activeSliceInstance");
+    const shownSlices = [], hiddenSlices = [];
+    if( activeSlices && activeSlices.isDataCube ) {
+      if( activeSlices.coronalActive ) {
+        shownSlices.push( "coronal" );
+      } else {
+        hiddenSlices.push( "coronal" );
+      }
+      if( activeSlices.sagittalActive ) {
+        shownSlices.push( "sagittal" );
+      } else {
+        hiddenSlices.push( "sagittal" );
+      }
+      if( activeSlices.axialActive ) {
+        shownSlices.push( "axial" );
+      } else {
+        hiddenSlices.push( "axial" );
+      }
+    }
+
+    // TODO: add checks
+    const subject_data  = this.shared_data.get( target_subject );
+
+    // tkRAS should be tkrRAS, TODO: fix this typo
+    const tkRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
+    const MNI305_tkRAS = subject_data.matrices.MNI305_tkrRAS;
+
+    let anterior_commissure = state.get('anterior_commissure') || new three_module.Vector3();
+    anterior_commissure.set(0,0,0);
+    anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
+
+    this.switch_slices( target_subject, slice_type );
+    this.switch_ct( target_subject, ct_type, ct_threshold );
+    this.switch_atlas( target_subject, atlas_type );
+    this.switch_surface( target_subject, surface_type,
+                          [surface_opacity_left, surface_opacity_right],
+                          [material_type_left, material_type_right] );
+
+    if( map_template ){
+      this.map_electrodes( target_subject, map_type_surface, map_type_volume );
+    }else{
+      this.map_electrodes( target_subject, 'reset', 'reset' );
+    }
+
+    // reset overlay
+    activeSlices = state.get("activeSliceInstance");
+    if( activeSlices && activeSlices.isDataCube ) {
+      activeSlices.showSlices( shownSlices );
+      activeSlices.hideSlices( hiddenSlices );
+    }
+
+    state.set( 'surface_type', surface_type );
+    state.set( 'atlas_type', atlas_type );
+    state.set( 'material_type_left', material_type_left );
+    state.set( 'material_type_right', material_type_right );
+    state.set( 'slice_type', slice_type );
+    state.set( 'ct_type', ct_type );
+    state.set( 'ct_threshold', ct_threshold );
+    state.set( 'map_template', map_template );
+    state.set( 'map_type_surface', map_type_surface );
+    state.set( 'map_type_volume', map_type_volume );
+    state.set( 'surface_opacity_left', surface_opacity_left );
+    state.set( 'surface_opacity_right', surface_opacity_right );
+    state.set( 'anterior_commissure', anterior_commissure );
+    state.set( 'tkRAS_MNI305', tkRAS_MNI305 );
+
+    // reset origin to AC
+    // this.origin.position.copy( anterior_commissure );
+
+    this.dispatch_event(
+      'switch_subject',
+      {
+        target_subject: target_subject
+      }
+    );
+
+    this.start_animation( 0 );
+
+  }
+
+  calculate_mni305(vec, nan_if_trans_not_found = true){
+    if( !vec.isVector3 ){
+      throw('vec must be a Vector3 instance');
+    }
+
+    const tkRAS_MNI305 = this.get_state('tkRAS_MNI305');
+    if( tkRAS_MNI305 && tkRAS_MNI305.isMatrix4 ){
+      // calculate MNI 305 position
+      vec.applyMatrix4(tkRAS_MNI305);
+    } else if( nan_if_trans_not_found ){
+      vec.set(NaN, NaN, NaN);
+    }
+    return(vec);
+  }
+
+  switch_surface( target_subject, surface_type = 'pial', opacity = [1, 1], material_type = ['normal', 'normal'] ){
+    // this.surfaces[ subject_code ][ g.name ] = m;
+    // Naming - Surface         Standard 141 Right Hemisphere - pial (YAB)
+    // or FreeSurfer Right Hemisphere - pial (YAB)
+    this.surfaces.forEach( (sf, subject_code) => {
+      for( let surface_name in sf ){
+        const m = sf[ surface_name ];
+        // m.visible = false;
+        (0,utils/* set_visibility */.K3)( m, false );
+        if( subject_code === target_subject ){
+
+          if(
+            surface_name === `Standard 141 Left Hemisphere - ${surface_type} (${target_subject})` ||
+            surface_name === `FreeSurfer Left Hemisphere - ${surface_type} (${target_subject})`
+          ){
+            (0,utils/* set_display_mode */.J1)( m, material_type[0] );
+            (0,utils/* set_visibility */.K3)( m, material_type[0] !== 'hidden' );
+            m.material.wireframe = ( material_type[0] === 'wireframe' );
+            m.material.opacity = opacity[0];
+            // m.material.transparent = opacity[0] < 0.99;
+          }else if(
+            surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
+            surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
+          ){
+            (0,utils/* set_display_mode */.J1)( m, material_type[1] );
+            (0,utils/* set_visibility */.K3)( m, material_type[1] !== 'hidden' );
+            m.material.wireframe = ( material_type[1] === 'wireframe' );
+            m.material.opacity = opacity[1];
+            // m.material.transparent = opacity[1] < 0.99;
+          }
+
+
+          // Re-calculate controls center so that rotation center is the center of mesh bounding box
+          this.bounding_box.setFromObject( m.parent );
+          this.bounding_box.geometry.computeBoundingBox();
+          const _b = this.bounding_box.geometry.boundingBox;
+          const newControlCenter = _b.min.clone()
+            .add( _b.max ).multiplyScalar( 0.5 );
+
+          newControlCenter.remember = true;
+          this.trackball.lookAt( newControlCenter );
+          this.trackball.update();
+
+        }
+      }
+    });
+    this.start_animation( 0 );
+  }
+
+  switch_slices( target_subject, slice_type = 'T1' ){
+
+    this.state_data.delete( "activeSliceInstance" );
+    //this.ssss
+    this.slices.forEach( (vol, subject_code) => {
+      for( let volume_name in vol ){
+        const m = vol[ volume_name ];
+        if( subject_code === target_subject && volume_name === `${slice_type} (${subject_code})`){
+          (0,utils/* set_visibility */.K3)( m[0].parent, true );
+          this.set_state( "activeSliceInstance", m[0].userData.instance );
+        }else{
+          // m[0].parent.visible = false;
+          (0,utils/* set_visibility */.K3)( m[0].parent, false );
+        }
+      }
+    });
+
+    this.start_animation( 0 );
+  }
+
+  // used to switch atlas, but can also switch other datacube2
+  switch_atlas( target_subject, atlas_type ){
+    /*if( subject_changed ) {
+      let atlas_types = asArray( this.atlases.get(target_subject) );
+
+    }*/
+    console.debug(`Setting volume data cube: ${atlas_type} (${target_subject})`);
+
+    this.atlases.forEach( (al, subject_code) => {
+      for( let atlas_name in al ){
+        const m = al[ atlas_name ];
+        if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
+          // m.visible = true;
+          (0,utils/* set_visibility */.K3)( m, true );
+          this.set_state( "activeDataCube2Instance", m.userData.instance );
+        }else{
+          // m.visible = false;
+          (0,utils/* set_visibility */.K3)( m, false );
+        }
+      }
+    });
+  }
+
+  switch_ct( target_subject, ct_type = 'ct.aligned.t1', ct_threshold = 0.8 ){
+
+    this.ct_scan.forEach( (vol, subject_code) => {
+      for( let ct_name in vol ){
+        const m = vol[ ct_name ];
+        if( subject_code === target_subject && ct_name === `${ct_type} (${subject_code})`){
+          // m.parent.visible = this._show_ct;
+          (0,utils/* set_visibility */.K3)( m.parent, this._show_ct );
+          m.material.uniforms.u_renderthreshold.value = ct_threshold;
+        }else{
+          // m.parent.visible = false;
+          (0,utils/* set_visibility */.K3)( m.parent, false );
+        }
+      }
+    });
+
+    this.start_animation( 0 );
+  }
+
+  // get matrices
+  get_subject_transforms( subject_code ) {
+    const scode = typeof subject_code === "string" ? subject_code : this.get_state("target_subject", "/");
+    const subject_data = this.shared_data.get( scode );
+    if(
+      !subject_data || typeof subject_data !== "object" ||
+      typeof subject_data.matrices !== "object"
+    ) {
+      throw `Cannot obtain transform matrices from subject: ${scode}`;
+    }
+    return( subject_data.matrices );
+  }
+
+  // Map electrodes
+  map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
+    /* DEBUG code
+    target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
+    pos_targ = new Vector3(),
+          pos_orig = new Vector3(),
+          mat1 = new Matrix4(),
+          mat2 = new Matrix4();
+    el = canvas.electrodes.get(origin_subject)["YAB, 29 - aTMP6"];
+    g = el.userData.construct_params,
+              is_surf = g.is_surface_electrode,
+              vert_num = g.vertex_number,
+              surf_type = g.surface_type,
+              mni305 = g.MNI305_position,
+              origin_position = g.position,
+              target_group = canvas.group.get( `Surface - ${surf_type} (${target_subject})` ),
+              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
+              pos_orig.fromArray( origin_position );
+mapped = false,
+            side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
+    */
+
+
+    const pos_targ = new three_module.Vector3(),
+          pos_orig = new three_module.Vector3();
+          // mat1 = new Matrix4(),
+          // mat2 = new Matrix4();
+
+    this.electrodes.forEach( (els, origin_subject) => {
+      for( let el_name in els ){
+        const el = els[ el_name ],
+              g = el.userData.construct_params,
+              is_surf = g.is_surface_electrode,
+              vert_num = g.vertex_number,
+              surf_type = g.surface_type,
+              mni305 = g.MNI305_position,
+              origin_position = g.position,
+              target_group = this.group.get( `Surface - ${surf_type} (${target_subject})` ),
+              // origin_volume = this.group.get( `Volume (${origin_subject})` ),
+              // target_volume = this.group.get( `Volume (${target_subject})` ),
+              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
+
+        // Calculate MNI 305 coordinate in template space
+        if( el.userData.MNI305_position === undefined ){
+          el.userData.MNI305_position = new three_module.Vector3().set(0, 0, 0);
+          if(
+            Array.isArray( mni305 ) && mni305.length === 3 &&
+            !( mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0 )
+          ) {
+            el.userData.MNI305_position.fromArray( mni305 );
+          } else {
+            const subject_data  = this.shared_data.get( origin_subject );
+            const tkrRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
+            pos_targ.fromArray( origin_position ).applyMatrix4( tkrRAS_MNI305 );
+            el.userData.MNI305_position.copy( pos_targ );
+          }
+        }
+
+        // mni305_points is always valid (if data is complete).
+        const mni305_points = el.userData.MNI305_position;
+        pos_orig.fromArray( origin_position );
+
+        let mapped = false,
+            side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
+
+        // always do MNI305 mapping first as calibration
+        if( !hide_electrode && volume === 'mni305' ){
+          // apply MNI 305 transformation
+          const subject_data2  = this.shared_data.get( target_subject );
+          const MNI305_tkrRAS = subject_data2.matrices.MNI305_tkrRAS;
+
+          if( mni305_points.x !== 0 || mni305_points.y !== 0 || mni305_points.z !== 0 ){
+            pos_targ.set( mni305_points.x, mni305_points.y, mni305_points.z ).applyMatrix4(MNI305_tkrRAS);
+            mapped = true;
+          }
+
+          if( mapped ){
+            el.position.copy( pos_targ );
+            el.userData._template_mni305 = pos_targ.clone();
+            el.userData._template_mapped = true;
+            el.userData._template_space = 'mni305';
+            el.userData._template_shift = 0;
+            el.userData._template_surface = g.surface_type;
+            el.userData._template_hemisphere = g.hemisphere;
+          }else{
+            el.userData._template_mni305 = undefined;
+          }
+
+        }
+
+        if( !hide_electrode && surface === 'std.141' && is_surf && vert_num >= 0 &&
+            target_group && target_group.isObject3D && target_group.children.length === 2 ){
+          // User choose std.141, electrode is surface electrode, and
+          // vert_num >= 0, meaning original surface is loaded, and target_surface exists
+          // meaning template surface is loaded
+          //
+          // check if target surface is std 141
+          let target_surface = target_group.children.filter((_t) => {
+            return( _t.name === `mesh_free_Standard 141 ${side} Hemisphere - ${surf_type} (${target_subject})`);
+          });
+
+          if( target_surface.length === 1 ){
+            // Find vert_num at target_surface[0]
+            const vertices = target_surface[0].geometry.getAttribute('position');
+            const shift = target_surface[0].getWorldPosition( el.parent.position.clone() );
+            pos_targ.set( vertices.getX( vert_num ), vertices.getY( vert_num ), vertices.getZ( vert_num ) ).add(shift);
+            el.position.copy( pos_targ );
+            el.userData._template_mapped = true;
+            el.userData._template_space = 'std.141';
+            el.userData._template_surface = g.surface_type;
+            el.userData._template_hemisphere = g.hemisphere;
+            if( el.userData._template_mni305 ){
+              el.userData._template_shift = pos_targ.distanceTo( el.userData._template_mni305 );
+            }
+            mapped = true;
+          }
+
+        }
+
+
+        // Reset electrode
+        if( !mapped ){
+          el.position.fromArray( origin_position );
+          el.userData._template_mapped = false;
+          el.userData._template_space = 'original';
+          el.userData._template_mni305 = undefined;
+          el.userData._template_shift = 0;
+          el.userData._template_surface = g.surface_type;
+          el.userData._template_hemisphere = g.hemisphere;
+        }
+        if( hide_electrode ){
+          // el.visible = false;
+          (0,utils/* set_visibility */.K3)( el, false );
+        }
+
+      }
+    });
+
+    // also update singletons
+    const line_segs = this.singletons.get(
+      constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]
+    );
+    if( line_segs ) {
+      line_segs.update_segments();
+    }
+    this.start_animation( 0 );
+  }
+
+
+  // export electrodes
+  electrodes_info(args={}){
+
+    const res = [];
+
+    this.electrodes.forEach( ( collection , subject_code ) => {
+      const _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
+            // _regexp = CONSTANTS.REGEXP_ELECTRODE,
+            subject_data  = this.shared_data.get( subject_code ),
+            tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
+            xfm = subject_data.matrices.xfm,
+            pos = new three_module.Vector3();
+      let parsed, e, g, inst, fs_label;
+      const label_list = {};
+
+      for( let k in collection ){
+        parsed = _regexp.exec( k );
+        // just incase
+        if( parsed && parsed.length === 3 ){
+
+          e = collection[ k ];
+          const row = e.userData.instance.get_summary( args );
+
+          if( row && typeof row ==="object" ) {
+            res.push( row );
+          }
+        }
+
+      }
+
+    });
+
+    return( res );
+  }
+
+  download_electrodes( format = 'json' ){
+    const res = this.electrodes_info();
+
+    if( res.length == 0 ){
+      alert("No electrode found!");
+      return;
+    }
+
+    if( format === 'json' ){
+      download_default()(
+        JSON.stringify(res) ,
+        'electrodes.json',
+        'application/json'
+      );
+    }else if( format === 'csv' ){
+      (0,converter.json2csv)(res, (err, csv) => {
+        download_default()( csv , 'electrodes.csv', 'plan/csv');
+      });
+    }
+
+  }
+
+  // Only show electrodes near 3 planes
+  updateElectrodeVisibilityOnSideCanvas( distance ){
+    if( typeof distance !== 'number' ){
+      distance = this.get_state( 'threshold_electrode_plane', Infinity);
+    }else{
+      this.set_state( 'threshold_electrode_plane', distance );
+    }
+    const _x = this.get_state( 'sagittal_depth', 0);
+    const _y = this.get_state( 'coronal_depth', 0);
+    const _z = this.get_state( 'axial_depth', 0);
+    const plane_pos = new three_module.Vector3().set( _x, _y, _z );
+    const diff = new three_module.Vector3();
+
+    this.electrodes.forEach((li, subcode) => {
+
+      for( let ename in li ){
+        const e = li[ ename ];
+
+        // Make sure layer 8 (main camera can see these electrodes)
+        e.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+        e.layers.enable( constants/* CONSTANTS.LAYER_SYS_RAYCASTER_14 */.t.LAYER_SYS_RAYCASTER_14 );
+
+        // get offsets
+        e.getWorldPosition( diff ).sub( plane_pos );
+
+        // Check visibility
+        if( Math.abs( diff.x ) <= distance ){
+          e.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
+        }
+        if( Math.abs( diff.y ) <= distance ){
+          e.layers.enable( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
+        }
+        if( Math.abs( diff.z ) <= distance ){
+          e.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
+        }
+      }
+
+    });
+
+  }
+
+
+
+  // ------------------------------ Drivers -----------------------------------
+  setBackground({ color } = {}) {
+    if( typeof color !== "number" && typeof color !== "string" ) {
+      return;
+    }
+    // calculate inversed color for text
+    const inversedColor = (0,utils/* invertColor */.qd)( color );
+
+    this.background_color = color;
+    this.foreground_color = inversedColor;
+
+    // Set renderer background to be v
+    this.main_renderer.setClearColor( this.background_color );
+    this.$el.style.backgroundColor = this.background_color;
+
+    const event = {
+      data: {
+        'background' : this.background_color,
+        'foreground' : this.foreground_color
+      },
+      priority: "deferred"
+    }
+    this.dispatch_event( "canvas.background.onChange", event.data );
+    // for shiny
+    this.dispatch_event( "canvas.controllers.onChange", event );
+
+    try {
+      this.sideCanvasList.coronal.setBackground( this.background_color );
+      this.sideCanvasList.axial.setBackground( this.background_color );
+      this.sideCanvasList.sagittal.setBackground( this.background_color );
+    } catch (e) {}
+
+    // force re-render
+    this.start_animation(0);
+
+    return event;
+  }
+  resetCanvas() {
+    // Center camera first.
+    this.handle_resize( undefined, undefined, false, true );
+		this.trackball.reset();
+		this.mainCamera.reset();
+    this.trackball.enabled = true;
+    this.start_animation(0);
+  }
+  getSideCanvasCrosshairMNI305( m ) {
+    // MNI 305 position of the intersection
+    const ints_z = this.get_state( 'axial_depth' ) || 0,
+          ints_y = this.get_state( 'coronal_depth' ) || 0,
+          ints_x = this.get_state( 'sagittal_depth' ) || 0;
+    m.set( ints_x , ints_y , ints_z );
+    return this.calculate_mni305( m );
+  }
+
+}
+
+
+
+
+
 
 
 
@@ -76953,10078 +87263,6 @@ class LineSegmentsGeometry extends three__WEBPACK_IMPORTED_MODULE_0__.InstancedB
 
 /***/ }),
 
-/***/ 6911:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-
-// EXPORTS
-__webpack_require__.d(__webpack_exports__, {
-  "S": () => (/* binding */ THREEBRAIN_CANVAS)
-});
-
-// EXTERNAL MODULE: ./node_modules/three/build/three.module.js
-var three_module = __webpack_require__(2212);
-// EXTERNAL MODULE: ./src/js/utils.js
-var utils = __webpack_require__(3658);
-;// CONCATENATED MODULE: ./src/js/core/HauntedArcballControls.js
-
-
-const STATE = {
-  NONE: - 1,
-  ROTATE: 0,
-  ZOOM: 1,
-  PAN: 2,
-  TOUCH_ROTATE: 3,
-  TOUCH_ZOOM_PAN: 4
-};
-const EPS = 0.000001;
-
-// events
-const _changeEvent = { type: 'change' };
-const _startEvent = { type: 'start' };
-const _endEvent = { type: 'end' };
-
-class HauntedArcballControls extends three_module.EventDispatcher {
-  constructor( canvas ) {
-    super();
-
-    this._canvas = canvas;
-    this.object = this._canvas.mainCamera;
-  	this.domElement = this._canvas.main_canvas;
-
-  	// API
-
-  	this.enabled = true;
-
-  	this.screen = { left: 0, top: 0, width: 0, height: 0 };
-
-  	this.radius = 0;
-
-  	this.rotateSpeed = 1.0;
-  	this.zoomSpeed = 1.2;
-
-  	this.noRotate = false;
-  	this.noZoom = false;
-  	this.noPan = false;
-  	this.noRoll = false;
-
-  	this.staticMoving = false;
-  	this.dynamicDampingFactor = 0.2;
-
-  	this.keys = [ 65 /*A*/, 83 /*S*/, 68 /*D*/ ];
-
-  	// internals
-	  this.target = new three_module.Vector3();
-    this._changed = true;
-    this._state = STATE.NONE;
-		this._prevState = STATE.NONE;
-
-		this._eye = new three_module.Vector3();
-
-		this._rotateStart = new three_module.Vector3();
-		this._rotateEnd = new three_module.Vector3();
-
-		this._zoomStart = new three_module.Vector2();
-		this._zoomEnd = new three_module.Vector2();
-
-		this._touchZoomDistanceStart = 0;
-		this._touchZoomDistanceEnd = 0;
-
-		this._panStart = new three_module.Vector2();
-		this._panEnd = new three_module.Vector2();
-		this._mouseOnScreen = new three_module.Vector2();
-
-		// project mouse to trackball
-		this._projectedOnBall = new three_module.Vector3();
-		this._objectUp = new three_module.Vector3();
-		this._mouseOnBall = new three_module.Vector3();
-
-		// rotation
-		this._rotateAxis = new three_module.Vector3();
-		this._rotateQuaternion = new three_module.Quaternion();
-		this._isRotating = false;
-
-		// zoom
-		this._isZooming = false;
-
-		// pan
-		this._panMouseChange = new three_module.Vector2(),
-		this._panDirection = new three_module.Vector3(),
-		this._isPanning = false;
-
-		// for reset
-
-  	this.target0 = this.target.clone();
-  	this.position0 = this.object.position.clone();
-  	this.up0 = this.object.up.clone();
-
-  	this.left0 = this.object.left;
-  	this.right0 = this.object.right;
-  	this.top0 = this.object.top;
-  	this.bottom0 = this.object.bottom;
-
-  	// Specialized for threeBrain
-  	this.zoomSpeed = 0.02;
-  	this.noPan = false;
-  	this.zoomMax = 10;
-  	this.zoomMin = 0.5;
-
-  	// Initial radius is 500
-  	// orthographic.radius = 400;
-  	this.dynamicDampingFactor=0.5;
-
-    // finalize
-    this.domElement.addEventListener( 'contextmenu', this.onContextmenu, false );
-  	this.domElement.addEventListener( 'mousedown', this.onMousedown, false );
-  	this.domElement.addEventListener( 'wheel', this.onMousewheel, false );
-
-  	this.domElement.addEventListener( 'touchstart', this.onTouchstart, false );
-  	this.domElement.addEventListener( 'touchend', this.onTouchend, false );
-  	this.domElement.addEventListener( 'touchmove', this.onTouchmove, false );
-
-  	window.addEventListener( 'keydown', this.onKeydown, false );
-  	window.addEventListener( 'keyup', this.onKeyup, false );
-
-  	this.handleResize();
-
-  	// force an update at start
-  	this.update();
-
-  }
-
-  dispatchEvent( event ) {
-    if ( this.enabled === false || typeof event !== "object" ) return;
-
-    if( event.type == "start" || event.type == "change" ) {
-      /*
-      if( this._canvas.render_flag < 0 ) {
-        this._canvas.handle_resize(undefined, undefined, true);
-      }
-      */
-      this._canvas.start_animation( 0 );
-    } else if ( event.type == "end" ) {
-      this._canvas.pause_animation( 1 );
-      this._canvas.dispatch_event( "canvas.mainCamera.onEnd", this.object.getState() );
-    }
-
-    super.dispatchEvent( event );
-  }
-
-  handleResize = () => {
-
-    if ( this.domElement === document ) {
-
-			this.screen.left = 0;
-			this.screen.top = 0;
-			this.screen.width = window.innerWidth;
-			this.screen.height = window.innerHeight;
-
-		} else {
-
-			const box = this.domElement.getBoundingClientRect();
-			// adjustments come from similar code in the jquery offset() function
-			const d = this.domElement.ownerDocument.documentElement;
-			this.screen.left = box.left + window.pageXOffset - d.clientLeft;
-			this.screen.top = box.top + window.pageYOffset - d.clientTop;
-			this.screen.width = box.width;
-			this.screen.height = box.height;
-
-		}
-
-		this.radius = 0.5 * Math.min( this.screen.width, this.screen.height );
-
-		this.left0 = this.object.left;
-		this.right0 = this.object.right;
-		this.top0 = this.object.top;
-		this.bottom0 = this.object.bottom;
-
-  }
-
-  getMouseOnScreen = ( pageX, pageY ) => {
-    this._mouseOnScreen.set(
-      ( pageX - this.screen.left ) / this.screen.width,
-			( pageY - this.screen.top ) / this.screen.height
-    );
-    return this._mouseOnScreen;
-  }
-
-  getMouseProjectionOnBall = ( pageX, pageY, fix_axis = 0 ) => {
-		this._mouseOnBall.set(
-			( pageX - this.screen.width * 0.5 - this.screen.left ) / this.radius,
-			( this.screen.height * 0.5 + this.screen.top - pageY ) / this.radius,
-			0.0
-		);
-		let length = this._mouseOnBall.length();
-		if( fix_axis === 1 ){
-		  // Fix x
-		  this._mouseOnBall.x = 0;
-		  length = Math.abs( this._mouseOnBall.y );
-		}else if ( fix_axis === 2 ){
-		  this._mouseOnBall.y = 0;
-		  length = Math.abs( this._mouseOnBall.x );
-		}else if ( fix_axis === 3 ){
-		  this._mouseOnBall.normalize();
-		  length = 1;
-		}
-
-		if ( this.noRoll ) {
-			if ( length < Math.SQRT1_2 ) {
-				this._mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-			} else {
-				this._mouseOnBall.z = 0.5 / length;
-			}
-		} else if ( length > 1.0 ) {
-			this._mouseOnBall.normalize();
-		} else {
-			this._mouseOnBall.z = Math.sqrt( 1.0 - length * length );
-		}
-		this._eye.copy( this.object.position ).sub( this.target );
-
-		this._projectedOnBall.copy( this.object.up ).setLength( this._mouseOnBall.y );
-		this._projectedOnBall.add( this._objectUp.copy( this.object.up ).cross( this._eye ).setLength( this._mouseOnBall.x ) );
-		this._projectedOnBall.add( this._eye.setLength( this._mouseOnBall.z ) );
-		return this._projectedOnBall;
-
-  }
-
-  rotateCamera = () => {
-
-		let angle = Math.acos( this._rotateStart.dot( this._rotateEnd ) / this._rotateStart.length() / this._rotateEnd.length() );
-
-		if( angle ) {
-	    // start event
-		  this._isRotating = true;
-		  this.dispatchEvent( _startEvent );
-
-			this._rotateAxis.crossVectors( this._rotateStart, this._rotateEnd ).normalize();
-
-			angle *= this.rotateSpeed;
-
-			this._rotateQuaternion.setFromAxisAngle( this._rotateAxis, - angle );
-
-			this._eye.applyQuaternion( this._rotateQuaternion );
-
-			this.object.up.applyQuaternion( this._rotateQuaternion );
-
-			this._rotateEnd.applyQuaternion( this._rotateQuaternion );
-
-			if ( this.staticMoving ) {
-
-				this._rotateStart.copy( this._rotateEnd );
-
-			} else {
-
-				this._rotateQuaternion.setFromAxisAngle( this._rotateAxis, angle * ( this.dynamicDampingFactor - 1.0 ) );
-				this._rotateStart.applyQuaternion( this._rotateQuaternion );
-
-			}
-
-			this._isRotating = true;
-
-		}else if ( this._isRotating ){
-		  this._isRotating = false;
-		  this.dispatchEvent( _endEvent );
-		}
-  }
-
-  zoomCamera = () => {
-
-    if ( this._state === STATE.TOUCH_ZOOM_PAN ) {
-
-			let factor = this._touchZoomDistanceEnd / this._touchZoomDistanceStart;
-			this._touchZoomDistanceStart = this._touchZoomDistanceEnd;
-
-      if( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ){
-
-        // start event
-			  this._isZooming = true;
-			  this.dispatchEvent( _startEvent );
-
-
-        this.object.zoom *= factor;
-        if( this.object.zoom > this.zoomMax ) {
-          this.object.zoom = this.zoomMax;
-        } else if ( this.object.zoom < this.zoomMin ) {
-          this.object.zoom = this.zoomMin;
-        }
-
-        this._changed = true;
-      }else if( this._isZooming ){
-			  // stop event
-			  this._isZooming = false;
-			  this.dispatchEvent( _endEvent );
-			}
-
-		} else {
-
-			let factor = 1.0 + ( this._zoomEnd.y - this._zoomStart.y ) * this.zoomSpeed;
-
-			if ( Math.abs( factor - 1.0 ) > EPS && factor > 0.0 ) {
-
-			  // start event
-			  this._isZooming = true;
-			  this.dispatchEvent( _startEvent );
-
-				this.object.zoom /= factor;
-
-				if( this.object.zoom > this.zoomMax ) {
-
-          this.object.zoom = this.zoomMax;
-          this._zoomStart.copy( this._zoomEnd );
-
-        } else if ( this.object.zoom < this.zoomMin ) {
-
-          this.object.zoom = this.zoomMin;
-          this._zoomStart.copy( this._zoomEnd );
-
-        } else if ( this.staticMoving ) {
-
-					this._zoomStart.copy( this._zoomEnd );
-
-				} else {
-
-					this._zoomStart.y += ( this._zoomEnd.y - this._zoomStart.y ) * this.dynamicDampingFactor;
-
-				}
-
-				this._changed = true;
-
-			}else if( this._isZooming ){
-			  // stop event
-			  this._isZooming = false;
-			  this.dispatchEvent( _endEvent );
-			}
-
-		}
-  }
-
-  panCamera = () => {
-    // this._panMouseChange = new Vector2(),
-		// this._panDirection = new Vector3(),
-		// this._isPanning = false;
-		// this._objectUp
-		this._panMouseChange.copy( this._panEnd ).sub( this._panStart );
-
-		if ( this._panMouseChange.lengthSq() > 0.00001 ) {
-		  // start event
-		  this._isPanning = true;
-		  this.dispatchEvent( _startEvent );
-
-			// Scale movement to keep clicked/dragged position under cursor
-			let scale_x = ( this.object.right - this.object.left ) / this.object.zoom;
-			let scale_y = ( this.object.top - this.object.bottom ) / this.object.zoom;
-			this._panMouseChange.x *= scale_x;
-			this._panMouseChange.y *= scale_y;
-
-			this._panDirection.copy( this._eye )
-			  .cross( this.object.up ).setLength( this._panMouseChange.x );
-			this._panDirection.add( this._objectUp.copy( this.object.up ).setLength( this._panMouseChange.y ) );
-
-			this.object.right = this.object.right - this._panMouseChange.x / 2;
-			this.object.left = this.object.left - this._panMouseChange.x / 2;
-			this.object.top = this.object.top + this._panMouseChange.y / 2;
-			this.object.bottom = this.object.bottom + this._panMouseChange.y / 2;
-
-			this.left0 = this.object.left;
-  		this.right0 = this.object.right;
-  		this.top0 = this.object.top;
-  		this.bottom0 = this.object.bottom;
-
-			if ( this.staticMoving ) {
-
-				this._panStart.copy( this._panEnd );
-
-			} else {
-
-				this._panStart.add( this._panMouseChange.subVectors( this._panEnd, this._panStart ).multiplyScalar( this.dynamicDampingFactor ) );
-
-			}
-
-			this._changed = true;
-
-		}else if (this._isPanning){
-		  this._isPanning = false;
-		  this.dispatchEvent( _endEvent );
-		}
-
-  }
-
-  update = () => {
-    this._eye.subVectors( this.object.position, this.target );
-
-		if ( ! this.noRotate ) {
-
-			this.rotateCamera();
-
-		}
-
-		if ( ! this.noZoom ) {
-
-			this.zoomCamera();
-
-			if ( this._changed ) {
-
-				this.object.updateProjectionMatrix();
-
-			}
-
-		}
-
-		if ( ! this.noPan ) {
-
-			this.panCamera();
-
-			if ( this._changed ) {
-
-				this.object.updateProjectionMatrix();
-
-			}
-
-		}
-
-		this.object.position.addVectors( this.target, this._eye );
-
-		this.object.lookAt( this.target );
-
-		if ( this._changed ) {
-
-			this.dispatchEvent( _changeEvent );
-
-			this._changed = false;
-
-		}
-  }
-
-  lookAt = ({ x , y , z , remember = false } = {}) => {
-    if( typeof x === "number" ) { this.target.x = x; }
-    if( typeof y === "number" ) { this.target.y = y; }
-    if( typeof z === "number" ) { this.target.z = z; }
-
-    if( remember ) {
-      this.target0.copy( this.target );
-    }
-  }
-
-  reset = () => {
-    this._state = STATE.NONE;
-		this._prevState = STATE.NONE;
-
-		this.target.copy( this.target0 );
-		this.object.position.copy( this.position0 );
-		this.object.up.copy( this.up0 );
-
-		this._eye.subVectors( this.object.position, this.target );
-
-		this.object.left = this.left0;
-		this.object.right = this.right0;
-		this.object.top = this.top0;
-		this.object.bottom = this.bottom0;
-
-		this.object.lookAt( this.target );
-
-		this.dispatchEvent( _changeEvent );
-
-		this._changed = false;
-  }
-
-  // listeners
-  onKeydown = ( event ) => {
-    if ( this.enabled === false ) return;
-    window.removeEventListener( 'keydown', this.onKeydown );
-    this._prevState = this._state;
-
-		if ( this._state !== STATE.NONE ) {
-			return;
-		} else if ( event.keyCode === this.keys[ STATE.ROTATE ] && ! this.noRotate ) {
-
-			this._state = STATE.ROTATE;
-
-		} else if ( event.keyCode === this.keys[ STATE.ZOOM ] && ! this.noZoom ) {
-
-			this._state = STATE.ZOOM;
-
-		} else if ( event.keyCode === this.keys[ STATE.PAN ] && ! this.noPan ) {
-
-			this._state = STATE.PAN;
-
-		}
-  }
-
-  onKeyup = ( event ) => {
-    if ( this.enabled === false ) return;
-
-    this._state = this._prevState;
-
-		window.addEventListener( 'keydown', this.onKeydown, false );
-  }
-
-  onMousedown = ( event ) => {
-    if ( this.enabled === false ) return;
-    event.preventDefault();
-		event.stopPropagation();
-
-		if ( this._state === STATE.NONE ) {
-			this._state = event.button;
-		}
-		if ( this._state === STATE.ROTATE && ! this.noRotate ) {
-		  // fix axis? altKey -> 3, ctrl -> 2, shift -> 1
-
-			this._rotateStart.copy( this.getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
-			this._rotateEnd.copy( this._rotateStart );
-		} else if ( this._state === STATE.ZOOM && ! this.noZoom ) {
-		  this._zoomStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
-			this._zoomEnd.copy( this._zoomStart );
-		} else if ( this._state === STATE.PAN && ! this.noPan ) {
-
-			this._panStart.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
-			this._panEnd.copy( this._panStart );
-
-		}
-
-		document.addEventListener( 'mousemove', this.onMousemove, false );
-		document.addEventListener( 'mouseup', this.onMouseup, false );
-    this.dispatchEvent( _startEvent );
-  }
-
-  onMousemove = ( event ) => {
-    if ( this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		if ( this._state === STATE.ROTATE && ! this.noRotate ) {
-
-			this._rotateEnd.copy( this.getMouseProjectionOnBall( event.pageX, event.pageY, event.altKey * 3 + event.ctrlKey * 2 + event.shiftKey ) );
-
-		} else if ( this._state === STATE.ZOOM && ! this.noZoom ) {
-
-			this._zoomEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
-
-		} else if ( this._state === STATE.PAN && ! this.noPan ) {
-
-			this._panEnd.copy( this.getMouseOnScreen( event.pageX, event.pageY ) );
-
-		}
-  }
-
-  onMouseup = ( event ) => {
-
-		if ( this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		this._state = STATE.NONE;
-
-		document.removeEventListener( 'mousemove', this.onMousemove );
-		document.removeEventListener( 'mouseup', this.onMouseup );
-		this.dispatchEvent( _endEvent );
-
-	}
-
-	onMousewheel = ( event ) => {
-
-		if ( this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		this._zoomStart.y += event.deltaY * 0.01;
-		this.dispatchEvent( _startEvent );
-		this.dispatchEvent( _endEvent );
-
-	}
-
-	onTouchstart = ( event ) => {
-
-		if ( this.enabled === false ) return;
-
-		switch ( event.touches.length ) {
-
-			case 1:
-				this._state = STATE.TOUCH_ROTATE;
-				this._rotateStart.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				this._rotateEnd.copy( this._rotateStart );
-				break;
-
-			case 2:
-				this._state = STATE.TOUCH_ZOOM_PAN;
-				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-				this._touchZoomDistanceEnd = this._touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
-
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				this._panStart.copy( this.getMouseOnScreen( x, y ) );
-				this._panEnd.copy( this._panStart );
-				break;
-
-			default:
-				this._state = STATE.NONE;
-
-		}
-		this.dispatchEvent( _startEvent );
-
-	}
-
-	onTouchmove = ( event ) => {
-
-		if ( this.enabled === false ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		switch ( event.touches.length ) {
-
-			case 1:
-				this._rotateEnd.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				break;
-
-			case 2:
-				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-				this._touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
-
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				this._panEnd.copy( this.getMouseOnScreen( x, y ) );
-				break;
-
-			default:
-				this._state = STATE.NONE;
-
-		}
-
-	}
-
-	onTouchend = ( event ) => {
-
-		if ( this.enabled === false ) return;
-
-		switch ( event.touches.length ) {
-
-			case 1:
-				this._rotateEnd.copy( this.getMouseProjectionOnBall( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				this._rotateStart.copy( this._rotateEnd );
-				break;
-
-			case 2:
-				this._touchZoomDistanceStart = this._touchZoomDistanceEnd = 0;
-
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
-				this._panEnd.copy( this.getMouseOnScreen( x, y ) );
-				this._panStart.copy( this._panEnd );
-				break;
-
-		}
-
-		this._state = STATE.NONE;
-		this.dispatchEvent( _endEvent );
-
-	}
-
-	onContextmenu = ( event ) => {
-
-		event.preventDefault();
-
-	}
-
-  dispose = () => {
-    this.domElement.removeEventListener( 'contextmenu', this.onContextmenu, false );
-		this.domElement.removeEventListener( 'mousedown', this.onMousedown, false );
-		this.domElement.removeEventListener( 'wheel', this.onMousewheel, false );
-
-		this.domElement.removeEventListener( 'touchstart', this.onTouchstart, false );
-		this.domElement.removeEventListener( 'touchend', this.onTouchend, false );
-		this.domElement.removeEventListener( 'touchmove', this.onTouchmove, false );
-
-		document.removeEventListener( 'mousemove', this.onMousemove, false );
-		document.removeEventListener( 'mouseup', this.onMouseup, false );
-
-		window.removeEventListener( 'keydown', this.onKeydown, false );
-		window.removeEventListener( 'keyup', this.onKeyup, false );
-  }
-}
-
-
-
-// EXTERNAL MODULE: ./src/js/constants.js
-var constants = __webpack_require__(975);
-;// CONCATENATED MODULE: ./src/js/core/HauntedOrthographicCamera.js
-
-
-
-const DEFAULT_CAMERA_LEFT = 150;
-
-class HauntedOrthographicCamera extends three_module.OrthographicCamera {
-  constructor ( canvas, width, height, near = 1, far = 10000 ) {
-    super(
-      -DEFAULT_CAMERA_LEFT, DEFAULT_CAMERA_LEFT,
-      height / width * DEFAULT_CAMERA_LEFT,
-      -height / width * DEFAULT_CAMERA_LEFT, near, far );
-
-    this._canvas = canvas;
-
-    this._originalPosition = new three_module.Vector3( 500, 0, 0 );
-
-    // getState()
-    this._stateTarget = new three_module.Vector3( 500, 0, 0 );
-    this._stateUp = new three_module.Vector3( 500, 0, 0 );
-    this._statePosition = new three_module.Vector3( 500, 0, 0 );
-
-    this.position.copy( this._originalPosition );
-		this.up.set(0,0,1);
-		this.layers.set( constants/* CONSTANTS.LAYER_USER_MAIN_CAMERA_0 */.t.LAYER_USER_MAIN_CAMERA_0 );
-		this.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
-		this.layers.enable( 2 );
-		this.layers.enable( 3 );
-		this.layers.enable( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
-		this.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-		this.lookAt( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN ); // Force camera
-
-		// Main camera light, casting from behind the mainCamera, only light up objects in CONSTANTS.LAYER_SYS_MAIN_CAMERA_8
-		this.backLight = new three_module.DirectionalLight( constants/* CONSTANTS.COLOR_MAIN_LIGHT */.t.COLOR_MAIN_LIGHT , 0.5 );
-    this.backLight.position.copy( constants/* CONSTANTS.VEC_ANAT_I */.t.VEC_ANAT_I );
-    this.backLight.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-    this.backLight.name = 'main light - directional';
-    this.add( this.backLight );
-
-
-    // listeners
-    // zoom-in, zoom-out
-    this._canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_ZOOM */.t.KEY_ZOOM, this.onKeyboardZoom, 'zoom');
-
-  }
-
-  onKeyboardZoom = ( event ) => {
-    if( event.event.shiftKey ){
-      this.zoom = this.zoom * 1.2; // zoom in
-    }else{
-      this.zoom = this.zoom / 1.2; // zoom out
-    }
-    this.updateProjectionMatrix();
-    this._canvas.start_animation( 0 );
-  }
-
-  handleResize() {
-    const _ratio1 = this._canvas.client_height / this._canvas.client_width
-    const _ratio2 = ( this.right - this.left ) / ( this.top - this.bottom );
-	  this.top = _ratio1 * ( this.top * _ratio2 ||  DEFAULT_CAMERA_LEFT );
-	  this.bottom = _ratio1 * ( this.bottom * _ratio2 || -DEFAULT_CAMERA_LEFT );
-    this.updateProjectionMatrix();
-  }
-
-  setPosition({ x, y, z, forceZUp = false, remember = false, updateProjection = true } = {}) {
-    if( typeof x === "number" ) { this.position.x = x; }
-    if( typeof y === "number" ) { this.position.y = y; }
-    if( typeof z === "number" ) { this.position.z = z; }
-
-    if( this.position.length() < 0.00001 ) {
-      this.position.set(0, 0, 500);
-    }
-    this.position.normalize().multiplyScalar( 500 );
-
-    if( forceZUp ) {
-      if( this.position.x !== 0 || this.position.y !== 0 ) {
-        this.up.set( 0, 0, 1 );
-      } else {
-        this.up.set( 0, 1, 0 );
-      }
-    }
-
-    if( remember ) {
-      this._originalPosition.copy( this.position );
-    }
-    if( updateProjection ) {
-      this.updateProjectionMatrix();
-    }
-  }
-
-  setPosition2( str ) {
-    // str can be left, right, anterior, posterior, superior, inferior
-    const str2 = str.toLowerCase()[0];
-    switch (str2) {
-      case 'r':
-        this.position.set( 500, 0, 0 );
-        this.up.set( 0, 0, 1 );
-        break;
-      case 'l':
-        this.position.set( -500, 0, 0 );
-        this.up.set( 0, 0, 1 );
-        break;
-      case 'a':
-        this.position.set( 0, 500, 0 );
-        this.up.set( 0, 0, 1 );
-        break;
-      case 'p':
-        this.position.set( 0, -500, 0 );
-        this.up.set( 0, 0, 1 );
-        break;
-      case 's':
-        this.position.set( 0, 0, 500 );
-        this.up.set( 0, 1, 0 );
-        break;
-      case 'i':
-        this.position.set( 0, 0, -500 );
-        this.up.set( 0, 1, 0 );
-        break;
-    }
-  }
-
-  setZoom({ zoom, updateProjection = true } = {}) {
-    if( zoom !== undefined ){
-      this.zoom = zoom;
-      if( updateProjection ) {
-        this.updateProjectionMatrix();
-      }
-    }
-  }
-
-  reset({ fov = true, position = true, zoom = true } = {}) {
-
-    if( fov ) {
-      const _ratio = this._canvas.client_height / this._canvas.client_width;
-      this.left = -DEFAULT_CAMERA_LEFT;
-      this.right = DEFAULT_CAMERA_LEFT;
-      this.top = _ratio * DEFAULT_CAMERA_LEFT;
-      this.bottom = - _ratio * DEFAULT_CAMERA_LEFT;
-    }
-
-    if( position ) {
-      this.setPosition( { updateProjection : false } );
-
-      if( this.position.x !== 0 || this.position.y !== 0 ) {
-        this.up.set( 0, 0, 1 );
-      } else {
-        this.up.set( 0, 1, 0 );
-      }
-    }
-    if( zoom ) {
-      this.setZoom( { zoom: 1, updateProjection : false } );
-    }
-    this.updateProjectionMatrix();
-
-  }
-
-  getState() {
-
-    return({
-      //[-1.9612333761590435, 0.7695650079159719, 26.928547456443564]
-      'target' : this.localToWorld( this._stateTarget.set(0, 0, 0) ),
-
-      // [0.032858884967361716, 0.765725462595094, 0.6423276497335524],
-      'up' : this._stateUp.copy( this.up ),
-
-      //[-497.73726242493797, 53.59986825131752, -10.689109034020102]
-      'position': this._statePosition.copy( this.position ),
-
-      'zoom' : this.zoom
-    });
-  }
-}
-
-
-
-;// CONCATENATED MODULE: ./src/js/core/AnimationParameters.js
-
-
-class AnimationParameters extends three_module.EventDispatcher {
-  constructor () {
-    super();
-    this._eventDispatcher = new three_module.EventDispatcher();
-    this.object = {
-      'Play/Pause' : false,
-      'Time' : 0,
-      'Speed' : 1
-    }
-    this.exists = false;
-    this.min = 0;
-    this.max = 0;
-    this.loop = true;
-    this.display = '[None]';
-    this.threshold = '[None]';
-
-    this._clock = new three_module.Clock();
-    this.oldTime = 0;
-    this.clockDelta = 0;
-
-    this.userData = {
-      objectFocused : {
-        enabled : false,
-        position : new three_module.Vector3(),
-        templateMapping : {}
-      }
-    };
-  }
-  get play() {
-    return this.object[ 'Play/Pause' ];
-  }
-  get time() {
-    return this.object[ 'Time' ];
-  }
-  get speed() {
-    return this.object[ 'Speed' ];
-  }
-  get renderLegend() {
-    return this.object[ 'Show Legend' ] ?? true;
-  }
-
-  get renderTimestamp () {
-    return this.object['Show Time'] ?? false;
-  }
-
-  set time ( v ) {
-    if( typeof v !== "number" ) {
-      v = this.min;
-    } else {
-      if( v < this.min ) {
-        v = this.min;
-      } else if( v > this.max ) {
-        v = v - this.max + this.min;
-        if( v > this.max ) {
-          v = this.min;
-        }
-      }
-    }
-    this.object[ 'Time' ] = v;
-    this._eventDispatcher.dispatchEvent({
-      type : "animation.time.onChange",
-      value : v
-    })
-  }
-
-  dispose() {
-    this._clock.stop();
-  }
-
-  get elapsedTime () {
-    return (this.time - this.oldTime) / 1000;
-  }
-
-  get trackPosition () {
-    return this.time - this.min;
-  }
-
-  incrementTime () {
-    // tok clock anyway
-
-    const clockDelta = this._clock.getDelta();
-    this.oldTime = this.time;
-
-    if( !this.exists ) {
-      this.clockDelta = 0;
-      this.currentTime = 0;
-      return false;
-    }
-
-    this.clockDelta = clockDelta;
-
-    // update time
-    if( this.play ) {
-      this.time = this.oldTime + this.clockDelta * this.speed;
-      return true;
-    }
-    return false;
-
-
-  }
-
-}
-
-
-
-// EXTERNAL MODULE: ./src/js/core/context.js + 2 modules
-var context = __webpack_require__(6326);
-// EXTERNAL MODULE: ./node_modules/nifti-reader-js/src/nifti.js
-var nifti = __webpack_require__(4075);
-var nifti_default = /*#__PURE__*/__webpack_require__.n(nifti);
-;// CONCATENATED MODULE: ./src/js/core/loaders.js
-
-
-
-class NiftiImage {
-  constructor ( data ) {
-    // parse nifti
-    if (nifti_default().isCompressed(data)) {
-        data = nifti_default().decompress(data);
-    }
-
-    this.header = nifti_default().readHeader(data);
-    const niftiImage = nifti_default().readImage(this.header, data);
-    if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_INT8) {
-      this.image = new Int8Array(niftiImage);
-      this.dataIsInt8 = true;
-    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_INT16) {
-      this.image = new Int16Array(niftiImage);
-      this.dataIsInt16 = true;
-    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_INT32) {
-      this.image = new Int32Array(niftiImage);
-      this.dataIsInt32 = true;
-    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_FLOAT32) {
-      this.image = new Float32Array(niftiImage);
-      this.dataIsFloat32 = true;
-    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_FLOAT64) {
-      this.image = new Float64Array(niftiImage);
-      this.dataIsFloat64 = true;
-    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_UINT8) {
-      this.image = new Uint8Array(niftiImage);
-      this.dataIsUInt8 = true;
-    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_UINT16) {
-      this.image = new Uint16Array(niftiImage);
-      this.dataIsUInt16 = true;
-    } else if (this.header.datatypeCode === (nifti_default()).NIFTI1.TYPE_UINT32) {
-      this.image = new Uint32Array(niftiImage);
-      this.dataIsUInt32 = true;
-    } else {
-      console.warn("NiftiImage: Cannot load NIFTI image data: the data type code is unsupported.")
-      this.image = undefined;
-    }
-
-    this.isNiftiImage = true;
-
-    // IJK to RAS
-    this.affine = new three_module.Matrix4().set(
-      this.header.affine[0][0],
-      this.header.affine[0][1],
-      this.header.affine[0][2],
-      this.header.affine[0][3],
-      this.header.affine[1][0],
-      this.header.affine[1][1],
-      this.header.affine[1][2],
-      this.header.affine[1][3],
-      this.header.affine[2][0],
-      this.header.affine[2][1],
-      this.header.affine[2][2],
-      this.header.affine[2][3],
-      this.header.affine[3][0],
-      this.header.affine[3][1],
-      this.header.affine[3][2],
-      this.header.affine[3][3]
-    );
-    this.shape = [
-      this.header.dims[1],
-      this.header.dims[2],
-      this.header.dims[3]
-    ];
-
-    // threeBrain uses the volume center as origin, hence the transform
-    // is shifted
-    const shift = new three_module.Matrix4().set(
-      1, 0, 0, this.shape[0] / 2,
-      0, 1, 0, this.shape[1] / 2,
-      0, 0, 1, this.shape[2] / 2,
-      0, 0, 0, 1
-    );
-
-    // IJK to scanner RAS (of the image)
-    this.model2RAS = this.affine.clone().multiply( shift );
-
-  }
-
-}
-
-class CanvasFileLoader {
-
-  constructor( canvas ) {
-    this.canvas = canvas;
-    this.cache = this.canvas.cache;
-    this.use_cache = this.canvas.use_cache;
-    this.fileReader = new FileReader();
-    this._currentFile = "";
-    this._currentType = "json";
-    this._currentCallback = null;
-    this._idle = true;
-
-    this.fileReader.addEventListener("loadstart", e => {
-      this._idle = false;
-      this._onLoadStart(e);
-    });
-    this.fileReader.addEventListener("loadend", e => {
-      // this._idle = true;
-    });
-    this.fileReader.addEventListener("load", e => {
-      e.currentFile = this._currentFile;
-      e.currentType = this._currentType;
-      this._onLoad(e, this._currentCallback);
-      this._idle = true;
-    });
-
-  }
-
-  _ensureIdle( callback ) {
-    return new Promise((resolve) => {
-      const checkIdle = () => {
-        if( this._idle ) {
-          this._idle  = false;
-          resolve( callback() );
-        } else {
-          setTimeout(checkIdle, 10);
-        }
-      }
-      checkIdle();
-    });
-  }
-
-  read( url ) {
-    const urlLowerCase = url.toLowerCase();
-    if( urlLowerCase.endsWith("nii") || urlLowerCase.endsWith("gz") ) {
-      return this.readNIFTI( url );
-    } else {
-      return this.readJSON( url );
-    }
-  }
-
-  readNIFTI( url ) {
-    return new Promise((resolve) => {
-      if( this.cache.check_item( url ) ){
-        resolve( this.cache.get_item( url ) );
-      } else {
-        fetch(url).then( r => r.blob() ).then( blob => {
-          this._ensureIdle(() => {
-            this._currentFile = url;
-            this._currentType = "nii";
-            this._currentCallback = resolve;
-            this.fileReader.readAsArrayBuffer( blob );
-          });
-        });
-      }
-    });
-  }
-  readJSON( url ) {
-    return new Promise((resolve) => {
-      if( this.cache.check_item( url ) ){
-        resolve( this.cache.get_item( url ) );
-      } else {
-        fetch(url).then( r => r.blob() ).then( blob => {
-          this._ensureIdle(() => {
-            this._currentFile = url;
-            this._currentType = "json";
-            this._currentCallback = resolve;
-            this.fileReader.readAsText( blob );
-          })
-        });
-      }
-    });
-
-  }
-
-  _onLoadStart( evt ) {
-    console.debug( 'Loading start!');
-  }
-  _onLoad( evt, callback ) {
-    console.debug( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
-
-    let v;
-    switch (evt.currentType) {
-      case 'json':
-        v = JSON.parse( evt.target.result );
-        break;
-      case 'nii':
-        v = {
-          "nifti_data" : new NiftiImage( evt.target.result )
-        };
-        break;
-      default:
-        // code
-    }
-
-    if( v !== undefined && this.use_cache ) {
-      // store to cache
-      this.cache.set_item( evt.currentFile, v );
-    }
-
-    this.canvas.start_animation(0);
-    if( typeof callback === "function" ) {
-      callback(v);
-    }
-  }
-
-}
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/libs/draggable.js
-
-function get_size(el){
-  const width = parseFloat(getComputedStyle(el, null).getPropertyValue('width').replace('px', ''));
-  const height = parseFloat(getComputedStyle(el, null).getPropertyValue('height').replace('px', ''));
-  return([width, height]);
-}
-
-function make_draggable(
-  elmnt, elmnt_header,
-  // top range and left range
-  parent_el = undefined,
-  mousedown_callback = (e, state)=>{}) {
-  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  var range = [-Infinity, Infinity, -Infinity, Infinity];
-  var state = 'pan', state_old;
-  var el_x, el_y;
-
-  if ( elmnt_header ) {
-    /* if present, the header is where you move the DIV from:*/
-    elmnt_header.onmousedown = dragMouseDown;
-    elmnt_header.oncontextmenu = right_clicked;
-  } else {
-    /* otherwise, move the DIV from anywhere inside the DIV:*/
-    elmnt.onmousedown = dragMouseDown;
-    elmnt.oncontextmenu = right_clicked;
-  }
-
-
-  function right_clicked ( e ){
-    const state_old = state;
-    state = 'pan';
-    dragMouseDown(e);
-    state = state_old;
-    return(false);
-  }
-
-
-  function dragMouseDown(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // get the mouse cursor position at startup:
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-
-    if( state === 'pan' ){
-      if( parent_el ){
-        // calculate range
-        // parent size
-        const parent_size = get_size(parent_el);
-        const el_size = get_size(elmnt);
-        if( parent_size[0] > el_size[0] ){
-          range[1] = parent_size[0] - el_size[0];
-          range[0] = 0;
-        }else{
-          range[0] = parent_size[0] - el_size[0];
-          range[1] = 0;
-        }
-
-        if( parent_size[1] > el_size[1] ){
-          range[3] = parent_size[1] - el_size[1];
-          range[2] = 0;
-        }else{
-          range[2] = parent_size[1] - el_size[1];
-          range[3] = 0;
-        }
-      }
-
-
-
-
-      // call a function whenever the cursor moves:
-      document.onmousemove = elementDrag;
-
-      mousedown_callback(e, {
-        state: 'pan'
-      });
-    }else{
-      // get xy location and return
-      el_x = elmnt.getBoundingClientRect().left;
-      el_y = elmnt.getBoundingClientRect().top;
-
-      document.onmousemove = mouseMove;
-
-      mousedown_callback(e, {
-        state : 'select',
-        x     : pos3 - el_x,
-        y     : pos4 - el_y
-      });
-    }
-
-    document.onmouseup = closeDragElement;
-
-  }
-
-  function mouseMove(e) {
-    if( state === 'select' && e.shiftKey ){
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      el_x = elmnt.getBoundingClientRect().left;
-      el_y = elmnt.getBoundingClientRect().top;
-
-      mousedown_callback(e, {
-        state : 'select',
-        x     : pos3 - el_x,
-        y     : pos4 - el_y
-      });
-    }
-  }
-
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // calculate the new cursor position:
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    // set the element's new position:
-    let eltop = elmnt.offsetTop - pos2,
-        elleft = elmnt.offsetLeft - pos1;
-
-    if( eltop < range[0] ){ eltop = range[0]; }
-    if( eltop > range[1] ){ eltop = range[1]; }
-    if( elleft < range[2] ){ elleft = range[2]; }
-    if( elleft > range[3] ){ elleft = range[3]; }
-
-    elmnt.style.top = eltop + "px";
-    elmnt.style.left = elleft + "px";
-  }
-
-  function closeDragElement() {
-    /* stop moving when mouse button is released:*/
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
-
-  return((s) => {
-    state = s;
-  });
-}
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/libs/resizable.js
-/*Make resizable div by Hung Nguyen*/
-function make_resizable(elem, force_ratio = false, on_resize = (w, h) => {}, on_stop = (w, h) => {}) {
-  const element = elem; // elem.querySelector('.resizable');
-  const resizers = elem.querySelectorAll('.resizable .resizer');
-  const minimum_size = 20;
-  let original_width = 0,
-      original_height = 0,
-      ratio = -1;
-  let original_x = 0,
-      original_y = 0,
-      original_mouse_x = 0,
-      original_mouse_y = 0;
-  let width = 0,
-      height = 0;
-  for (let i = 0; i < resizers.length; i++) {
-    let currentResizer = resizers[i];
-
-    let resize = (e) => {
-      width = original_width + (e.pageX - original_mouse_x);
-      height = original_height + (e.pageY - original_mouse_y);
-
-      if( force_ratio ){
-        if( original_width > original_height ){
-          width = height / ratio;
-        }else{
-          height = width * ratio;
-        }
-      }
-
-      width = width > minimum_size ? width : minimum_size;
-      if( force_ratio ){
-        height = height > (minimum_size * ratio)? height : (minimum_size*ratio);
-      }else{
-        height = height > minimum_size? height : minimum_size;
-      }
-
-
-
-      element.style.width = width + 'px';
-      element.style.height = height + 'px';
-      if (currentResizer.classList.contains('bottom-right')) {
-        // do nothing
-      }
-      else if (currentResizer.classList.contains('bottom-left')) {
-        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
-      }
-      else if (currentResizer.classList.contains('top-right')) {
-        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
-      }
-      else {
-        element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
-        element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
-      }
-
-      on_resize(width, height);
-    };
-
-    let stopResize = () => {
-      window.removeEventListener('mousemove', resize);
-      on_stop(width, height);
-    };
-
-
-    currentResizer.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      original_width = parseFloat(getComputedStyle(element, null).getPropertyValue('width').replace('px', ''));
-      original_height = parseFloat(getComputedStyle(element, null).getPropertyValue('height').replace('px', ''));
-      width = original_width;
-      height = original_height;
-      if( ratio <= 0 ){
-        ratio = original_height / original_width;
-      }
-
-      original_x = element.getBoundingClientRect().left;
-      original_y = element.getBoundingClientRect().top;
-      original_mouse_x = e.pageX;
-      original_mouse_y = e.pageY;
-      window.addEventListener('mousemove', resize);
-      window.addEventListener('mouseup', stopResize);
-    });
-
-  }
-}
-
-// makeResizableDiv('.resizable')
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/core/side_canvas.js
-
-
-
-
-
-
-class SideCanvas {
-
-  get zIndex () {
-    const re = parseInt( this.$el.style.zIndex );
-    if( isNaN(re) ) { return( 0 ); }
-    return re
-  }
-  set zIndex (v) {
-    this.$el.style.zIndex = v;
-  }
-
-  set enabled( v ) {
-    if( v ) {
-      this._enabled = true;
-	    this.$el.style.display = 'block';
-    } else {
-      this._enabled = false;
-	    this.$el.style.display = 'none';
-    }
-  }
-
-  get enabled () {
-    return this._enabled;
-  }
-
-  zoom( level ) {
-    if( level ) {
-      this.zoomLevel = level;
-    }
-    if( this.zoomLevel > 10 ) { this.zoomLevel = 10; }
-    if( this.zoomLevel < 1 ) { this.zoomLevel = 1; }
-    const cameraMargin = 128 / this.zoomLevel;
-    const maxTranslate = 128 - cameraMargin;
-
-    // get depths
-    let translateX = this.mainCanvas.get_state( 'sagittal_depth' ) || 0,
-        translateY = this.mainCanvas.get_state( 'coronal_depth' ) || 0,
-        translateZ = this.mainCanvas.get_state( 'axial_depth' ) || 0;
-
-    if( translateX > maxTranslate ) { translateX = maxTranslate; }
-    if( translateX < -maxTranslate ) { translateX = -maxTranslate; }
-    if( translateY > maxTranslate ) { translateY = maxTranslate; }
-    if( translateY < -maxTranslate ) { translateY = -maxTranslate; }
-    if( translateZ > maxTranslate ) { translateZ = maxTranslate; }
-    if( translateZ < -maxTranslate ) { translateZ = -maxTranslate; }
-
-    this.camera.left = -cameraMargin;
-    this.camera.right = cameraMargin;
-    this.camera.bottom = -cameraMargin;
-    this.camera.top = cameraMargin;
-
-    switch ( this.type ) {
-      case 'coronal':
-        this.camera.position.fromArray( [translateX, -500, translateZ] );
-        break;
-      case 'axial':
-        this.camera.position.fromArray( [translateX, translateY, 500] );
-        break;
-      case 'sagittal':
-        this.camera.position.fromArray( [-500, translateY, translateZ] );
-        break;
-      default:
-        throw 'SideCanvas: type must be coronal, sagittal, or axial';
-    }
-    this._lookAt.set( translateX, translateY, translateZ );
-    this.camera.lookAt( this._lookAt );
-    this.camera.updateProjectionMatrix();
-    this.mainCanvas.start_animation(0);
-  }
-
-  raiseTop() {
-    if( !this.mainCanvas.sideCanvasEnabled ) { return }
-
-    const sideCanvasCollection = this.mainCanvas.sideCanvasList;
-
-    let zIndex = [
-      [parseInt(sideCanvasCollection.coronal.zIndex), 'coronal'],
-      [parseInt(sideCanvasCollection.axial.zIndex), 'axial'],
-      [parseInt(sideCanvasCollection.sagittal.zIndex), 'sagittal']
-    ];
-    zIndex.sort((v1,v2) => {return(v1[0] - v2[0])});
-    zIndex.forEach((v, ii) => {
-      const type = v[ 1 ];
-      sideCanvasCollection[ type ].zIndex = ii;
-    });
-    this.zIndex = 4;
-  }
-
-  reset({
-    zoomLevel = false, position = true, size = true, crosshair = false
-  } = {}) {
-    let width, height, offsetX, offsetY;
-    if( position === true ) {
-      offsetX = 0;
-      offsetY = this.order * width;
-    } else if (Array.isArray(position) && position.length == 2) {
-      offsetX = position[0];
-      offsetY = position[1];
-    }
-    if( size === true ) {
-      const defaultWidth = Math.ceil( this.mainCanvas.side_width );
-      width = defaultWidth;
-      height = defaultWidth;
-    }
-    this.setDimension({
-      width   : width,
-      height  : height,
-      offsetX : offsetX,
-      offsetY : offsetY
-    });
-
-    if( zoomLevel === true ) {
-      this.zoom( 1 );
-    } else if( typeof zoomLevel === "number" ) {
-      if( zoomLevel > 10 ) { zoomLevel = 10; }
-      if( zoomLevel < 1 ) { zoomLevel = 1; }
-      this.zoom( zoomLevel );
-    }
-    if( crosshair ) {
-      this.setCrosshair({ x : 0, y : 0, z : 0, immediate : false });
-    }
-  }
-  setDimension({ width, height, offsetX, offsetY } = {}) {
-    // ignore height
-    let w = width ?? height;
-    if( w === undefined && offsetX === undefined && offsetY === undefined) {
-      return;
-    }
-    if( w === undefined ) {
-      w = Math.ceil( this.mainCanvas.side_width );
-    }
-    if( w <= 10 ) {
-      w = 10;
-    }
-    this.$el.style.width = `${w}px`;
-    this.$el.style.height = `${w}px`;
-    this.$canvas.style.width = '100%';
-		this.$canvas.style.height = '100%';
-
-    let _offsetX = Math.round( offsetX || 0 );
-    let _offsetY = Math.round( offsetY || (this.order * w) );
-    if( _offsetX === 0 ) { _offsetX = '0'; } else { _offsetX = `${_offsetX}px`; }
-    if( _offsetY === 0 ) { _offsetY = '0'; } else { _offsetY = `${_offsetY}px`; }
-
-    this.$el.style.left = _offsetX;
-    this.$el.style.top = _offsetY;
-
-  }
-
-  _calculateCrosshair( event ) {
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    const canvasPosition = this.$canvas.getBoundingClientRect(); // left, top
-    const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
-
-    const right = event.clientX - canvasPosition.left - canvasSize[0]/2;
-    const up = canvasSize[1]/2 + canvasPosition.top - event.clientY;
-
-    this.raiseTop();
-    this.pan({
-      right : right, up : up, unit : "css",
-      updateMainCamera : event.shiftKey
-    });
-  }
-
-
-  render() {
-    if( !this._enabled ) { return; }
-    this.renderer.clear();
-
-    this.renderer.render( this.mainCanvas.scene, this.camera );
-  }
-
-  dispose() {
-    this.renderer.dispose();
-  }
-
-  setBackground( color ) {
-    this._backgroundColor = color;
-    this.renderer.setClearColor( color );
-    this.$el.style.backgroundColor = color;
-  }
-
-  setCrosshair({x, y, z, immediate = true} = {}) {
-    // instead of setting slice instances, set data gui
-    /* const sliceInstance = this.mainCanvas.get_state( "activeSliceInstance" );
-    if( sliceInstance && sliceInstance.isDataCube ) {
-      sliceInstance.setCrosshair({
-        x : sagittalDepth,
-        y : coronalDepth,
-        z : axialDepth
-      });
-    }
-    */
-    this.mainCanvas.dispatch_event(
-      'canvas.drive.setSliceCrosshair',
-      {
-        x : x, y : y, z : z
-      },
-      immediate
-    );
-  }
-
-
-
-  pan({ right = 0, up = 0, unit = "css", updateMainCamera = false } = {}) {
-    //  this.raiseTop();
-
-    // data is xy coord relative to $canvas
-    let depthX, depthY;
-    if( unit === "css" ) {
-      const canvasSize = (0,utils/* get_element_size */.nq)( this.$canvas );
-      const canvasRenderSize = 256 / this.zoomLevel;
-      depthX = right / canvasSize[0] * canvasRenderSize;
-      depthY = up / canvasSize[1] * canvasRenderSize;
-    } else {
-      depthX = right;
-      depthY = up;
-    }
-
-    let sagittalDepth, coronalDepth, axialDepth;
-    switch ( this.type ) {
-      case 'coronal':
-        sagittalDepth = depthX + this._lookAt.x;
-        coronalDepth = this.mainCanvas.get_state( 'coronal_depth' );
-        axialDepth = depthY + this._lookAt.z;
-        break;
-      case 'axial':
-        sagittalDepth = depthX + this._lookAt.x;
-        coronalDepth = depthY + this._lookAt.y;
-        axialDepth = this.mainCanvas.get_state( 'axial_depth' );
-        break;
-      case 'sagittal':
-        sagittalDepth = this.mainCanvas.get_state( 'sagittal_depth' );
-        coronalDepth = -depthX + this._lookAt.y;
-        axialDepth = depthY + this._lookAt.z;
-        break;
-      default:
-        throw 'SideCanvas: type must be coronal, sagittal, or axial';
-    }
-
-    // console.log(`x: ${depthX}, y: ${depthY} of [${canvasSize[0]}, ${canvasSize[1]}]`);
-    // console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
-
-    // update slice depths
-    this.setCrosshair({
-      x : sagittalDepth,
-      y : coronalDepth,
-      z : axialDepth
-    });
-    // need to update mainCamera
-    if( updateMainCamera ) {
-      const newMainCameraPosition = new three_module.Vector3()
-        .set( sagittalDepth, coronalDepth, axialDepth )
-        .normalize().multiplyScalar(500);
-      if( newMainCameraPosition.length() === 0 ) {
-        newMainCameraPosition.x = 500;
-      }
-
-      // make S up as much as possible, try to heads up
-      const newMainCameraUp = this.mainCanvas.mainCamera.position.clone()
-        .cross( new three_module.Vector3(0, 0, 1) ).cross( newMainCameraPosition )
-        .normalize();
-
-      if( newMainCameraUp.z < 0 ) {
-        newMainCameraUp.multiplyScalar(-1);
-      }
-
-      this.mainCanvas.mainCamera.position.copy( newMainCameraPosition );
-      this.mainCanvas.mainCamera.up.copy( newMainCameraUp );
-    }
-  }
-
-  constructor ( mainCanvas, type = "coronal" ) {
-
-    this.type = type;
-    switch ( this.type ) {
-      case 'coronal':
-        this.order = 0;
-        this._headerText = "CORONAL (R=R)"
-        break;
-      case 'axial':
-        this.order = 1;
-        this._headerText = "AXIAL (R=R)"
-        break;
-      case 'sagittal':
-        this.order = 2;
-        this._headerText = "SAGITTAL";
-        break;
-      default:
-        throw 'SideCanvas: type must be coronal, sagittal, or axial';
-    }
-
-    this.mainCanvas = mainCanvas;
-    this.zoomLevel = 1;
-    this.pixelRatio = this.mainCanvas.pixel_ratio[1];
-
-    this._enabled = true;
-    this._lookAt = new three_module.Vector3( 0, 0, 0 );
-    this._container_id = mainCanvas.container_id;
-    const _w = this.mainCanvas.client_width ?? 256;
-    const _h = this.mainCanvas.client_height ?? 256;
-    this._renderHeight = 256;
-    this._canvasHeight = this._renderHeight * this.mainCanvas.pixel_ratio[1];
-
-    this.$el = document.createElement('div');
-    this.$el.id = this._container_id + '__' + type;
-    this.$el.style.display = 'none';
-    this.$el.className = 'THREEBRAIN-SIDE resizable';
-    this.$el.style.zIndex = this.order;
-    this.$el.style.top = ( this.order * this.mainCanvas.side_width ) + 'px';
-
-    // Make header
-    this.$header = document.createElement('div');
-    this.$header.innerText = this._headerText; //type.toUpperCase();
-    this.$header.className = 'THREEBRAIN-SIDE-HEADER';
-    this.$header.id = this._container_id + '__' + type + 'header';
-    this.$el.appendChild( this.$header );
-    // double-click on header to reset position
-    this.mainCanvas.bind( `${ this.type }_div_header_dblclick`, 'dblclick', (evt) => {
-      this.reset({ zoomLevel : false, position : true, size : true })
-    }, this.$header );
-
-    // Add side canvas element
-    this.$canvas = document.createElement('canvas');
-    this.$canvas.width = this._canvasHeight;
-    this.$canvas.height = this._canvasHeight;
-    this.$canvas.style.width = '100%';
-		this.$canvas.style.height = '100%';
-		this.$canvas.style.position = 'absolute';
-		this.$el.appendChild( this.$canvas );
-		this.context = this.$canvas.getContext('webgl2');
-
-		this.renderer = new three_module.WebGLRenderer({
-    	  antialias: false, alpha: true,
-    	  canvas: this.$canvas, context: this.context,
-    	  depths: false
-    	});
-  	this.renderer.setPixelRatio( this.mainCanvas.pixel_ratio[1] );
-  	this.renderer.autoClear = false; // Manual update so that it can render two scenes
-  	this.renderer.setSize( this._renderHeight, this._renderHeight );
-
-		// Add widgets
-		// zoom in tool
-		this.$zoomIn = document.createElement('div');
-		this.$zoomIn.className = 'zoom-tool';
-		this.$zoomIn.style.top = '23px'; // for header
-		this.$zoomIn.innerText = '+';
-		this.$el.appendChild( this.$zoomIn );
-		this.mainCanvas.bind( `${ this.type }_zoomin_click`, 'click', (e) => {
-		  let newZoomLevel = this.zoomLevel * 1.2;
-		  if( newZoomLevel > 10 ) { newZoomLevel = 10; }
-		  this.zoom( newZoomLevel );
-		}, this.$zoomIn);
-
-		// zoom out tool
-    this.$zoomOut = document.createElement('div');
-		this.$zoomOut.className = 'zoom-tool';
-		this.$zoomOut.style.top = '50px'; // header + $zoomIn
-		this.$zoomOut.innerText = '-';
-		this.$el.appendChild( this.$zoomOut );
-		this.mainCanvas.bind( `${ this.type }_zoomout_click`, 'click', (e) => {
-		  let newZoomLevel = this.zoomLevel / 1.2;
-		  if( newZoomLevel < 1.1 ) { newZoomLevel = 1; }
-		  this.zoom( newZoomLevel );
-		}, this.$zoomOut);
-
-		// toggle pan (translate) tool
-		this.$recenter = document.createElement('div');
-		this.$recenter.className = 'zoom-tool';
-		this.$recenter.style.top = '77px'; // header + $zoomIn + $zoomOut
-		this.$recenter.innerText = 'C';
-		this.$el.appendChild( this.$recenter );
-		this.mainCanvas.bind( `${ this.type }_recenter_click`, 'click', (e) => {
-		  this.zoom();
-		}, this.$recenter);
-
-		this.$reset = document.createElement('div');
-		this.$reset.className = 'zoom-tool';
-		this.$reset.style.top = '104px'; // header + $zoomIn + $zoomOut + $recenter
-		this.$reset.innerText = '0';
-		this.$el.appendChild( this.$reset );
-		this.mainCanvas.bind( `${ this.type }_zoom_reset_click`, 'click', (e) => {
-		  this.$canvas.style.top = '0';
-      this.$canvas.style.left = '0';
-		  this.zoom( 1 );
-		}, this.$reset );
-
-		// Add resize anchors to bottom-right
-		this.$resizeWrapper = document.createElement('div');
-		this.$resizeWrapper.className = 'resizers';
-		const $resizeAnchor = document.createElement('div');
-		$resizeAnchor.className = 'resizer bottom-right';
-		this.$resizeWrapper.appendChild( $resizeAnchor );
-		this.$el.appendChild( this.$resizeWrapper );
-
-		// Make header draggable within viewer
-    make_draggable( this.$el, this.$header, undefined, () => {
-      this.raiseTop();
-    });
-
-    // Make side canvas clickable
-    this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
-      evt.preventDefault();
-      this._focused = true;
-      this._calculateCrosshair( evt );
-    }, this.$canvas );
-    this.$canvas.oncontextmenu = function (evt) {
-      evt.preventDefault();
-    };
-    this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
-      evt.preventDefault();
-      this._focused = false;
-    }, this.$canvas );
-    this.mainCanvas.bind( `${ this.type }_cvs_setCrosshair`, 'mousemove', (evt) => {
-      evt.preventDefault();
-      if( !this._focused ) { return; }
-      this._calculateCrosshair( evt );
-    }, this.$canvas );
-
-    // Make $canvas scrollable, with changing slices
-    this.mainCanvas.bind( `${ this.type }_cvs_mousewheel`, 'mousewheel', (evt) => {
-      evt.preventDefault();
-      if( evt.altKey ){
-        const depthName = this.type + '_depth';
-        const currentDepth = this.mainCanvas.get_state( depthName );
-        if( evt.deltaY > 0 ){
-          this.mainCanvas.set_state( depthName, 1 + currentDepth );
-        }else if( evt.deltaY < 0 ){
-          this.mainCanvas.set_state( depthName, -1 + currentDepth );
-        }
-      }
-      this.setCrosshair({
-        x : sagittalDepth,
-        y : coronalDepth,
-        z : axialDepth
-      });
-    }, this.$canvas );
-
-    // Make $el resizable, keep current width and height
-    make_resizable( this.$el, true );
-
-
-    // --------------- Register 3js objects -------------
-    // Add OrthographicCamera
-    this.camera = new three_module.OrthographicCamera( -128, 128, 128, -128, 1, 10000 );
-		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
-		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_SIDE_CAMERAS_4 */.t.LAYER_USER_ALL_SIDE_CAMERAS_4 );
-		this.camera.layers.enable( 5 );
-		this.camera.layers.enable( 6 );
-		this.camera.layers.enable( 7 );
-		this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 */.t.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-
-		// Side light is needed so that side views are visible.
-		this.directionalLight = new three_module.DirectionalLight( 0xefefef, 0.5 );
-
-		switch ( this.type ) {
-      case 'coronal':
-        this.camera.position.fromArray( [0, -500, 0] );
-        this.camera.up.set( 0, 0, 1 );
-        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-        this.directionalLight.position.fromArray([0, -500, 0]); // set direction from P to A
-        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-        break;
-      case 'axial':
-        this.camera.position.fromArray( [0, 0, 500] );
-        this.camera.up.set( 0, 1, 0 );
-        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-        this.directionalLight.position.fromArray([0, 0, 500]); // set direction from I to S
-        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-        break;
-      case 'sagittal':
-        this.camera.position.fromArray( [-500, 0, 0] );
-        this.camera.up.set( 0, 0, 1 );
-        this.camera.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-        this.directionalLight.position.fromArray([-500, 0, 0]); // set direction from L to R
-        this.directionalLight.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-        break;
-      default:
-        throw 'SideCanvas: type must be coronal, sagittal, or axial';
-    }
-    this.camera.lookAt( this._lookAt );
-    this.camera.aspect = 1;
-    this.camera.updateProjectionMatrix();
-    // this.camera.add( this.directionalLight );
-
-    // TODO: main canvas need to add cameras and element
-    this.mainCanvas.add_to_scene( this.camera, true );
-    this.mainCanvas.add_to_scene( this.directionalLight, true );
-    this.mainCanvas.wrapper_canvas.appendChild( this.$el );
-
-    /*
-      this.sideCanvasList[ nm ] = {
-        'container' : div,
-        'canvas'    : cvs,
-        'context'   : cvs.getContext('2d'),
-        'camera'    : camera,
-        'reset'     : reset,
-        'get_zoom_level' : () => { return( zoom_level ) },
-        'set_zoom_level' : set_zoom_level
-      };
-    */
-
-  }
-
-}
-
-
-
-;// CONCATENATED MODULE: ./src/js/libs/stats.min.js
-/**
- * @author mrdoob / http://mrdoob.com/
- */
-
-const Stats = function () {
-
-	var mode = 0;
-
-	var container = document.createElement( 'div' );
-	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
-	container.addEventListener( 'click', function ( event ) {
-
-		event.preventDefault();
-		showPanel( ++ mode % container.children.length );
-
-	}, false );
-
-	//
-
-	function addPanel( panel ) {
-
-		container.appendChild( panel.dom );
-		return panel;
-
-	}
-
-	function showPanel( id ) {
-
-		for ( var i = 0; i < container.children.length; i ++ ) {
-
-			container.children[ i ].style.display = i === id ? 'block' : 'none';
-
-		}
-
-		mode = id;
-
-	}
-
-	//
-
-	var beginTime = ( performance || Date ).now(), prevTime = beginTime, frames = 0;
-
-	var fpsPanel = addPanel( new Stats.Panel( 'FPS', '#0ff', '#002' ) );
-	var msPanel = addPanel( new Stats.Panel( 'MS', '#0f0', '#020' ) );
-
-	if ( self.performance && self.performance.memory ) {
-
-		var memPanel = addPanel( new Stats.Panel( 'MB', '#f08', '#201' ) );
-
-	}
-
-	showPanel( 0 );
-
-	return {
-
-		REVISION: 16,
-
-		dom: container,
-
-		addPanel: addPanel,
-		showPanel: showPanel,
-
-		begin: function () {
-
-			beginTime = ( performance || Date ).now();
-
-		},
-
-		end: function () {
-
-			frames ++;
-
-			var time = ( performance || Date ).now();
-
-			msPanel.update( time - beginTime, 200 );
-
-			if ( time > prevTime + 1000 ) {
-
-				fpsPanel.update( ( frames * 1000 ) / ( time - prevTime ), 100 );
-
-				prevTime = time;
-				frames = 0;
-
-				if ( memPanel ) {
-
-					var memory = performance.memory;
-					memPanel.update( memory.usedJSHeapSize / 1048576, memory.jsHeapSizeLimit / 1048576 );
-
-				}
-
-			}
-
-			return time;
-
-		},
-
-		update: function () {
-
-			beginTime = this.end();
-
-		},
-
-		// Backwards Compatibility
-
-		domElement: container,
-		setMode: showPanel
-
-	};
-
-};
-
-Stats.Panel = function ( name, fg, bg ) {
-
-	var min = Infinity, max = 0, round = Math.round;
-	var PR = round( window.devicePixelRatio || 1 );
-
-	var WIDTH = 80 * PR, HEIGHT = 48 * PR,
-			TEXT_X = 3 * PR, TEXT_Y = 2 * PR,
-			GRAPH_X = 3 * PR, GRAPH_Y = 15 * PR,
-			GRAPH_WIDTH = 74 * PR, GRAPH_HEIGHT = 30 * PR;
-
-	var canvas = document.createElement( 'canvas' );
-	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
-	canvas.style.cssText = 'width:80px;height:48px';
-
-	var context = canvas.getContext( '2d' );
-	context.font = 'bold ' + ( 9 * PR ) + 'px Helvetica,Arial,sans-serif';
-	context.textBaseline = 'top';
-
-	context.fillStyle = bg;
-	context.fillRect( 0, 0, WIDTH, HEIGHT );
-
-	context.fillStyle = fg;
-	context.fillText( name, TEXT_X, TEXT_Y );
-	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
-
-	context.fillStyle = bg;
-	context.globalAlpha = 0.9;
-	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
-
-	return {
-
-		dom: canvas,
-
-		update: function ( value, maxValue ) {
-
-			min = Math.min( min, value );
-			max = Math.max( max, value );
-
-			context.fillStyle = bg;
-			context.globalAlpha = 1;
-			context.fillRect( 0, 0, WIDTH, GRAPH_Y );
-			context.fillStyle = fg;
-			context.fillText( round( value ) + ' ' + name + ' (' + round( min ) + '-' + round( max ) + ')', TEXT_X, TEXT_Y );
-
-			context.drawImage( canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT );
-
-			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, GRAPH_HEIGHT );
-
-			context.fillStyle = bg;
-			context.globalAlpha = 0.9;
-			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, round( ( 1 - ( value / maxValue ) ) * GRAPH_HEIGHT ) );
-
-		}
-
-	};
-
-};
-
-
-
-
-// EXTERNAL MODULE: ./src/js/core/StorageCache.js
-var StorageCache = __webpack_require__(7123);
-;// CONCATENATED MODULE: ./src/js/core/events.js
-
-
-class CanvasEvent {
-  constructor(el, container_id) {
-    // el must be a DOM element, no check here
-    if( el ) {
-      if(! el instanceof window.HTMLElement ) {
-        throw Error("CanvasEvent(el): el must be an HTMLElement.")
-      }
-      this._el = el;
-    } else {
-      this._el = document.createElement("div");
-    }
-
-    this._dispose_functions = new Map();
-    this._event_buffer = new Map();
-    this._container_id = container_id || this._el.getAttribute( 'data-target' );
-
-    this.throttle = true;
-    this.timeout = 100;
-  }
-
-  bind( name, evtstr, fun, target, options = false ){
-    // this.bind( "event name", "click", (evt) => {...} );
-
-    const _target = target || this._el;
-
-    // Dispose existing function
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      try {
-        _f();
-      } catch (e) {}
-      this._dispose_functions.delete( name );
-    }
-    this._dispose_functions.set( name, () => {
-      console.debug('Calling dispose function ' + name);
-      try {
-        _target.removeEventListener( evtstr , fun );
-      } catch (e) {
-        console.warn('Unable to dispose ' + name);
-      }
-    });
-
-    console.debug(`Registering event ${evtstr} (${name})`);
-    _target.addEventListener( evtstr , fun, options );
-  }
-
-  unbind( name ) {
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      try {
-        _f();
-      } catch (e) {}
-      this._dispose_functions.delete( name );
-    }
-  }
-
-  dispose() {
-    this._dispose_functions.forEach((_, _name) => {
-      this.unbind(_name);
-    });
-    this._dispose_functions.clear();
-  }
-
-  dispatch_event( type, data, immediate = false ){
-
-    if( typeof(type) !== "string" || type.length === 0 ) {
-      throw TypeError( 'CanvasEvent.dispatch_event: Can only dispatch event with type of none-empty string' );
-    }
-
-    if( !this._event_buffer.has(type) ) {
-      this._event_buffer.set(type, {
-        type: type,
-        throttlePause: false,
-        data: data,
-        dispatched: false
-      });
-    }
-    const evt_buffer = this._event_buffer.get(type);
-    evt_buffer.data = data;
-    evt_buffer.dispatched = false;
-
-    const immediate_ = this.throttle || immediate;
-    if( !immediate && evt_buffer.throttlePause ) {
-      // update data, but hold it
-      return;
-    }
-
-    evt_buffer.throttlePause = true;
-
-    const do_dispatch = () => {
-      evt_buffer.throttlePause = false;
-      if( evt_buffer.dispatched ) { return; }
-
-      // fire event with the newest data
-      const event = new CustomEvent(
-        evt_buffer.type,
-        {
-          container_id: this._container_id,
-          detail: evt_buffer.data
-        }
-      );
-
-      // Dispatch the event.
-      console.debug(`Dispatching event: ${evt_buffer.type} - ${evt_buffer.data}`);
-      this._el.dispatchEvent(event);
-      evt_buffer.dispatched = true;
-    };
-
-    if( immediate ) {
-      do_dispatch();
-    } else {
-      setTimeout(() => { do_dispatch(); }, this.timeout);
-    }
-
-  }
-
-  available_events() {
-    return [...this._dispose_functions.keys()];
-  }
-}
-
-
-
-;// CONCATENATED MODULE: ./src/js/Math/animations.js
-
-
-
-function generate_animation_default(m, track_data, cmap, animation_clips, mixer) {
-
-    // Generate keyframes
-    const _time_min = cmap.time_range[0],
-          _time_max = cmap.time_range[1];
-
-    // 1. timeStamps, TODO: get from settings the time range
-    const colors = [], time_stamp = [];
-    (0,utils/* to_array */.AA)( track_data.time ).forEach((v) => {
-      time_stamp.push( v - _time_min );
-    });
-    if( track_data.data_type === 'continuous' ){
-      (0,utils/* to_array */.AA)( track_data.value ).forEach((v) => {
-        let c = cmap.lut.getColor(v);
-        colors.push( c.r, c.g, c.b );
-      });
-    }else{
-      // discrete
-      const mapping = new Map(cmap.value_names.map((v, ii) => {return([v, ii])}));
-      (0,utils/* to_array */.AA)( track_data.value ).forEach((v) => {
-        let c = cmap.lut.getColor(mapping.get( v ));
-        /*if( !c ) {
-          console.log( v );
-          console.log( mapping.get( v ) );
-        }*/
-        if( c ){
-          colors.push( c.r, c.g, c.b );
-        }else{
-          colors.push( 1,1,1 );
-        }
-
-      });
-    }
-    const keyframe = new three_module.ColorKeyframeTrack(
-      track_data.target || '.material.color',
-      time_stamp, colors, three_module.InterpolateDiscrete
-    );
-
-    return(keyframe);
-}
-
-
-
-// EXTERNAL MODULE: ./src/js/geometry/sphere.js
-var sphere = __webpack_require__(960);
-// EXTERNAL MODULE: ./src/js/geometry/abstract.js
-var geometry_abstract = __webpack_require__(470);
-;// CONCATENATED MODULE: ./src/js/shaders/SliceShader.js
-
-
-
-const SliceShader = {
-  uniforms : {
-
-    // volume data
-    map : { value : null },
-
-    // volume dimension
-    mapShape : { value : new three_module.Vector3().set( 256, 256, 256 ) },
-
-    // transform matrix from world to volume IJK
-    world2IJK : { value : new three_module.Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1) },
-
-    // values below this threshold should be discarded
-    threshold : { value : 0.0 }
-
-  },
-
-  vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
-precision highp float;
-in vec3 position;
-uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
-out vec4 worldPosition;
-
-void main() {
-  // obtain the world position for vertex
-  worldPosition = modelMatrix * vec4( position, 1.0 );
-
-  gl_Position = projectionMatrix * viewMatrix * worldPosition;
-}`),
-  fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
-precision highp float;
-precision mediump sampler3D;
-in vec4 worldPosition;
-uniform float threshold;
-uniform sampler3D map;
-uniform vec3 mapShape;
-uniform mat4 world2IJK;
-out vec4 color;
-void main() {
-// calculate IJK, then sampler position
-
-  vec3 samplerPosition = ((world2IJK * worldPosition).xyz - vec3(1.0, 0.0, 1.0)) / (mapShape - 1.0);
-  if( any(greaterThan( samplerPosition, vec3(1.0) )) || any( lessThan(samplerPosition, vec3(0.0)) ) ) {
-    gl_FragDepth = gl_DepthRange.far;
-    color.a = 0.0;
-  } else {
-    color.rgb = texture(map, samplerPosition).rrr;
-    if( color.r <= threshold ) {
-      gl_FragDepth = gl_DepthRange.far;
-      color.a = 0.0;
-    } else {
-      gl_FragDepth = gl_FragCoord.z;
-      color.a = 1.0;
-    }
-  }
-}`)
-}
-
-
-
-;// CONCATENATED MODULE: ./src/js/shaders/Volume2DShader.js
-
-
-const Volume2dArrayShader_xy = {
-  uniforms: {
-    diffuse: { value: null },
-		depth: { value: 0 },
-		size: { value: new three_module.Vector3( 256, 256, 256 ) },
-		threshold: { value : 0.0 },
-		renderDepth: { value : 1.0 }
-	},
-	vertexShader: [
-    // '#version 300 es',
-    'uniform vec3 size;',
-    'out vec2 vUv;',
-    'void main() {',
-    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-    // Convert position.xy to 1.0-0.0
-    'vUv.xy = position.xy / size.xy + 0.5;',
-    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
-    '}'
-	].join( '\n' ),
-  fragmentShader: [
-    // '#version 300 es',
-
-    'precision highp float;',
-    'precision highp int;',
-    'precision highp sampler2DArray;',
-
-    'uniform sampler2DArray diffuse;',
-    'in vec2 vUv;',
-    'uniform int depth;',
-    'uniform float threshold;',
-    'uniform float renderDepth;',
-    // 'out vec4 out_FragColor;',
-
-    'void main() {',
-
-    'vec4 color = texture( diffuse, vec3( vUv, depth ) );',
-
-    'float is_opaque = float( color.r > threshold );',
-
-    // calculating z-depth, if transparent, make depth 1 (far)
-    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
-
-    // lighten a bit
-    'gl_FragColor = vec4( color.rrr, is_opaque );',
-
-    '}'
-  ].join( '\n' )
-};
-
-
-
-
-const Volume2dArrayShader_xz = {
-  uniforms: {
-    diffuse: { value: null },
-		depth: { value: 0 },
-		size: { value: new three_module.Vector3( 256, 256, 256 ) },
-		threshold: { value : 0.0 },
-		renderDepth: { value : 1.0 }
-	},
-	vertexShader: [
-    // '#version 300 es',
-    'uniform vec3 size;',
-    'out vec2 vUv;',
-    'void main() {',
-
-    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-    // Convert position.xz to 1.0-0.0
-    'vUv.xy = position.xy / size.xz + 0.5;',
-    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
-    '}'
-	].join( '\n' ),
-  fragmentShader: [
-    // '#version 300 es',
-
-    'precision highp float;',
-    'precision highp int;',
-    'precision highp sampler2DArray;',
-
-    'uniform sampler2DArray diffuse;',
-    'uniform vec3 size;',
-    'in vec2 vUv;',
-    'uniform float depth;',
-    'uniform float threshold;',
-    'uniform float renderDepth;',
-    // 'out vec4 out_FragColor;',
-
-    'void main() {',
-
-    'vec4 color = texture( diffuse, vec3( vUv.x, depth / size.y, floor( vUv.y * size.z ) ) );',
-
-    'float is_opaque = float( color.r > threshold );',
-
-    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
-
-    // lighten a bit
-    'gl_FragColor = vec4( color.rrr, is_opaque );',
-
-    '}'
-  ].join( '\n' )
-};
-
-const Volume2dArrayShader_yz = {
-  uniforms: {
-    diffuse: { value: null },
-		depth: { value: 0 },
-		size: { value: new three_module.Vector3( 256, 256, 256 ) },
-		threshold: { value : 0.0 },
-		renderDepth: { value : 1.0 }
-	},
-	vertexShader: [
-    // '#version 300 es',
-    'uniform vec3 size;',
-    'out vec2 vUv;',
-    'void main() {',
-
-    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-    // Convert position.xz to 1.0-0.0
-    'vUv.xy = position.xy / size.yz + 0.5;',
-    // 'vUv.y = 1.0 - vUv.y;', // original data is upside down // No, it's not, it's the orientation thing, do not do it here
-    '}'
-	].join( '\n' ),
-  fragmentShader: [
-    // '#version 300 es',
-
-    'precision highp float;',
-    'precision highp int;',
-    'precision highp sampler2DArray;',
-
-    'uniform sampler2DArray diffuse;',
-    'uniform vec3 size;',
-    'in vec2 vUv;',
-    'uniform float depth;',
-    'uniform float threshold;',
-    'uniform float renderDepth;',
-    // 'out vec4 out_FragColor;',
-
-    'void main() {',
-
-    'vec4 color = texture( diffuse, vec3( depth / size.x, vUv.x, floor( vUv.y * size.z ) ) );',
-
-    'float is_opaque = float( color.r > threshold );',
-
-    'gl_FragDepth = (1.0 - is_opaque * renderDepth) * (1.0 - gl_FragCoord.z) + gl_FragCoord.z;',
-
-    // lighten a bit
-    'gl_FragColor = vec4( color.rrr, is_opaque );',
-
-    '}'
-  ].join( '\n' )
-};
-
-
-
-;// CONCATENATED MODULE: ./src/js/geometry/datacube.js
-
-
-
-
-
-
-
-/* WebGL doesn't take transparency into consideration when calculating depth
-https://stackoverflow.com/questions/11165345/three-js-webgl-transparent-planes-hiding-other-planes-behind-them
-
-The hack is to rewrite shader, force transparent fragments to have depth of 1, which means transparent parts
-always hide behind other objects.
-
-However, is we set brain mesh to be transparent, the volume is still hidden behind the mesh and invisible.
-This is because when the renderer calculate depth first, and the mesh is in the front, then volume gets
-not rendered.
-What we need to do is to set render order to be -1, which means always render volume first, then the opaque
-parts will show.
-
-*/
-
-class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
-  constructor(g, canvas){
-    super(g, canvas);
-
-    this.type = 'DataCube';
-    this.isDataCube = true;
-    this.mainCanvasActive = false;
-    this._uniforms = three_module.UniformsUtils.clone( SliceShader.uniforms );
-
-    const subjectData = this._canvas.shared_data.get( this.subject_code );
-
-    // Shader will take care of it
-    g.disable_trans_mat = true;
-
-    // get cube (volume) data
-    if( g.isNiftiCube ) {
-      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
-      let imageMin = Infinity, imageMax = -Infinity;
-      niftiData.image.forEach(( v ) => {
-        if( imageMin > v ){ imageMin = v; }
-        if( imageMax < v ){ imageMax = v; }
-      })
-      this.cubeData = new Uint8Array( niftiData.image.length );
-      const slope = 255 / (imageMax - imageMin),
-            intercept = 255 - imageMax * slope,
-            threshold = g.threshold || 0;
-      niftiData.image.forEach(( v, ii ) => {
-        const d = v * slope + intercept;
-        if( d > threshold ) {
-          this.cubeData[ ii ] = d;
-        } else {
-          this.cubeData[ ii ] = 0;
-        }
-      })
-      this.cubeShape = new three_module.Vector3().fromArray( niftiData.shape );
-      const affine = niftiData.affine.clone();
-      if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
-        affine.copy( subjectData.matrices.Torig )
-          .multiply( subjectData.matrices.Norig.clone().invert() )
-          .multiply( niftiData.affine );
-      }
-      this._uniforms.world2IJK.value.copy( affine ).invert();
-    } else {
-      this.cubeData = new Uint8Array(canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name));
-      this.cubeShape = new three_module.Vector3().fromArray( canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name) );
-      this._uniforms.world2IJK.value.set(1,0,0,128, 0,1,0,128, 0,0,1,128, 0,0,0,1);
-    }
-    this.dataTexture = new three_module.Data3DTexture(
-      this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
-    );
-    this.dataTexture.minFilter = three_module.LinearFilter;
-    this.dataTexture.magFilter = three_module.LinearFilter;
-    this.dataTexture.format = three_module.RedFormat;
-    this.dataTexture.type = three_module.UnsignedByteType;
-    this.dataTexture.unpackAlignment = 1;
-    this.dataTexture.needsUpdate = true;
-
-    // Generate shader
-    this._uniforms.map.value = this.dataTexture;
-    this._uniforms.mapShape.value.copy( this.cubeShape );
-
-    const sliceMaterial = new three_module.RawShaderMaterial( {
-      uniforms: this._uniforms,
-      vertexShader: SliceShader.vertexShader,
-      fragmentShader: SliceShader.fragmentShader,
-      side: three_module.DoubleSide,
-      transparent : false,
-      depthWrite: true
-    } );
-    this.sliceMaterial = sliceMaterial;
-    const sliceGeometryXY = new three_module.PlaneGeometry( 256, 256 );
-    const sliceMeshXY = new three_module.Mesh( sliceGeometryXY, sliceMaterial );
-    sliceMeshXY.renderOrder = -1;
-    sliceMeshXY.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
-    sliceMeshXY.name = 'mesh_datacube__axial_' + g.name;
-
-
-    const sliceGeometryXZ = new three_module.PlaneGeometry( 256, 256 );
-    const sliceMeshXZ = new three_module.Mesh( sliceGeometryXZ, sliceMaterial );
-    sliceMeshXZ.rotateX( Math.PI / 2 );
-    sliceMeshXZ.renderOrder = -1;
-    sliceMeshXZ.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
-    sliceMeshXZ.name = 'mesh_datacube__coronal_' + g.name;
-
-    const sliceGeometryYZ = new three_module.PlaneGeometry( 256, 256 );
-    const sliceMeshYZ = new three_module.Mesh( sliceGeometryYZ, sliceMaterial );
-    sliceMeshYZ.rotateY( Math.PI / 2 ).rotateZ( Math.PI / 2 );
-    sliceMeshYZ.renderOrder = -1;
-    sliceMeshYZ.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
-    sliceMeshYZ.name = 'mesh_datacube__sagittal_' + g.name;
-
-
-  	this.object = [ sliceMeshXZ, sliceMeshXY, sliceMeshYZ ];
-
-  	// generate crosshair
-  	this.crosshairGroup = new three_module.Object3D();
-  	const crosshairGeometryLR = new three_module.BufferGeometry()
-  	  .setFromPoints([
-  	    new three_module.Vector3( -256, 0, 0 ), new three_module.Vector3( -4, 0, 0 ),
-  	    new three_module.Vector3( 4, 0, 0 ), new three_module.Vector3( 256, 0, 0 )
-  	  ]);
-  	const crosshairMaterialLR = new three_module.LineBasicMaterial({
-      color: 0x00ff00, transparent: false, depthTest : false
-    });
-    this.crosshairLR = new three_module.LineSegments( crosshairGeometryLR, crosshairMaterialLR );
-    this.crosshairLR.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    this.crosshairLR.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-    this.crosshairLR.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-    this.crosshairGroup.add( this.crosshairLR );
-
-    const crosshairGeometryPA = new three_module.BufferGeometry()
-  	  .setFromPoints([
-  	    new three_module.Vector3( 0, -256, 0 ), new three_module.Vector3( 0, -4, 0 ),
-  	    new three_module.Vector3( 0, 4, 0 ), new three_module.Vector3( 0, 256, 0 )
-  	  ]);
-  	const crosshairMaterialPA = new three_module.LineBasicMaterial({
-      color: 0x00ff00, transparent: false, depthTest : false
-    });
-    this.crosshairPA = new three_module.LineSegments( crosshairGeometryPA, crosshairMaterialPA );
-    this.crosshairPA.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    this.crosshairPA.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-    this.crosshairPA.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-    this.crosshairGroup.add( this.crosshairPA );
-
-    const crosshairGeometryIS = new three_module.BufferGeometry()
-  	  .setFromPoints([
-  	    new three_module.Vector3( 0, 0, -256 ), new three_module.Vector3( 0, 0, -4 ),
-  	    new three_module.Vector3( 0, 0, 4 ), new three_module.Vector3( 0, 0, 256 )
-  	  ]);
-  	const crosshairMaterialIS = new three_module.LineBasicMaterial({
-      color: 0x00ff00, transparent: false, depthTest : false
-    });
-    this.crosshairIS = new three_module.LineSegments( crosshairGeometryIS, crosshairMaterialIS );
-    this.crosshairIS.renderOrder = constants/* CONSTANTS.RENDER_ORDER.DataCube */.t.RENDER_ORDER.DataCube;
-    this.crosshairIS.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-    this.crosshairIS.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-    this.crosshairGroup.add( this.crosshairIS );
-
-
-    sliceMeshXY.userData.dispose = () => {
-  	  sliceMaterial.dispose();
-  	  sliceGeometryXY.dispose();
-      this.dataTexture.dispose();
-      this.crosshairIS.geometry.dispose();
-      this.crosshairIS.material.dispose();
-    };
-    sliceMeshXY.userData.instance = this;
-    this.sliceXY = sliceMeshXY;
-
-    sliceMeshXZ.userData.dispose = () => {
-  	  sliceMaterial.dispose();
-  	  sliceGeometryXZ.dispose();
-      this.dataTexture.dispose();
-      this.crosshairPA.geometry.dispose();
-      this.crosshairPA.material.dispose();
-    };
-    sliceMeshXZ.userData.instance = this;
-    this.sliceXZ = sliceMeshXZ;
-
-    sliceMeshYZ.userData.dispose = () => {
-  	  sliceMaterial.dispose();
-  	  sliceGeometryYZ.dispose();
-      this.dataTexture.dispose();
-      this.crosshairLR.geometry.dispose();
-      this.crosshairLR.material.dispose();
-    };
-    sliceMeshYZ.userData.instance = this;
-    this.sliceYZ = sliceMeshYZ;
-  }
-
-  dispose(){
-    this.crosshairLR.geometry.dispose();
-    this.crosshairLR.material.dispose();
-    this.crosshairPA.geometry.dispose();
-    this.crosshairPA.material.dispose();
-    this.crosshairIS.geometry.dispose();
-    this.crosshairIS.material.dispose();
-    this.sliceMaterial.dispose();
-    this.sliceGeometryXY.dispose();
-    this.sliceGeometryXZ.dispose();
-  	this.sliceGeometryYZ.dispose();
-    this.dataTexture.dispose();
-  }
-
-  get_track_data( track_name, reset_material ){}
-
-  pre_render(){}
-
-  setCrosshair({ x, y, z } = {}) {
-    if( x === undefined ) {
-      x = this._canvas.get_state( 'sagittal_depth', 0 );
-    }
-    // set sagittal
-    if( x > 128 ) { x = 128; }
-    if( x < -128 ) { x = -128; }
-    this.sliceYZ.position.x = x;
-    this.crosshairGroup.position.x = x;
-    this._canvas.set_state( 'sagittal_depth', x );
-
-    if( y === undefined ) {
-      y = this._canvas.get_state( 'coronal_depth', 0 );
-    }
-    // set coronal
-    if( y > 128 ) { y = 128; }
-    if( y < -128 ) { y = -128; }
-    this.sliceXZ.position.y = y;
-    this.crosshairGroup.position.y = y;
-    this._canvas.set_state( 'coronal_depth', y );
-
-    if( z === undefined ) {
-      z = this._canvas.get_state( 'axial_depth', 0 );
-    }
-    // set axial
-    if( z > 128 ) { z = 128; }
-    if( z < -128 ) { z = -128; }
-    this.sliceXY.position.z = z;
-    this.crosshairGroup.position.z = z;
-    this._canvas.set_state( 'axial_depth', z );
-
-    this._canvas.updateElectrodeVisibilityOnSideCanvas();
-
-    this._canvas.dispatch_event( "canvas.sliceCrosshair.onChange", {
-      position : this.crosshairGroup.position,
-      space: "tkrRAS"
-    });
-    // Animate on next refresh
-    this._canvas.start_animation( 0 );
-  }
-
-  showSlices( which ) {
-    const planType = (0,utils/* to_array */.AA)( which );
-    if( planType.length === 0 ) { return; }
-    if( planType.includes( 'coronal' ) ) {
-      this.sliceXZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      this._canvas.set_state( 'coronal_overlay', true );
-      this.coronalActive = true;
-    }
-    if( planType.includes( 'sagittal' ) ) {
-      this.sliceYZ.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      this._canvas.set_state( 'sagittal_overlay', true );
-      this.sagittalActive = true;
-    }
-    if( planType.includes( 'axial' ) ) {
-      this.sliceXY.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      this._canvas.set_state( 'axial_overlay', true );
-      this.axialActive = true;
-    }
-    // update crosshair to latest version
-    this.setCrosshair();
-    // this._canvas.start_animation( 0 );
-  }
-
-  hideSlices( which ) {
-    const planType = (0,utils/* to_array */.AA)( which );
-    if( planType.length === 0 ) { return; }
-    if( planType.includes( 'coronal' ) ) {
-      this.sliceXZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      this._canvas.set_state( 'coronal_overlay', false );
-      this.coronalActive = false;
-    }
-    if( planType.includes( 'sagittal' ) ) {
-      this.sliceYZ.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      this._canvas.set_state( 'sagittal_overlay', false );
-      this.sagittalActive = false;
-    }
-    if( planType.includes( 'axial' ) ) {
-      this.sliceXY.layers.disable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      this._canvas.set_state( 'axial_overlay', false );
-      this.axialActive = false;
-    }
-    this._canvas.start_animation( 0 );
-  }
-
-  finish_init(){
-    // Special, as m is a array of three planes
-    // this.object = mesh = [ mesh_xz, sliceMeshXY, mesh_yz ];
-
-    this._canvas.mesh.set( '_coronal_' + this.name, this.sliceXZ );
-    this._canvas.mesh.set( '_axial_' + this.name, this.sliceXY );
-    this._canvas.mesh.set( '_sagittal_' + this.name, this.sliceYZ );
-
-    if( this.clickable ){
-      this._canvas.add_clickable( '_coronal_' + this.name, this.sliceXZ );
-      this._canvas.add_clickable( '_axial_' + this.name, this.sliceXY );
-      this._canvas.add_clickable( '_sagittal_' + this.name, this.sliceYZ );
-    }
-    this.sliceXY.layers.set( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-    this.sliceXZ.layers.set( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-    this.sliceYZ.layers.set( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-
-    // data cube must have groups. The group is directly added to scene,
-    // regardlessly
-    let gp = this.get_group_object();
-    // Move gp to global scene as its center is always 0,0,0
-    this._canvas.origin.remove( gp );
-    gp.add( this.crosshairGroup );
-    this._canvas.scene.add( gp );
-
-    // set layer, add tp group
-    this.object.forEach((plane) => {
-
-      this.set_layer( [], plane );
-
-      gp.add( plane );
-      plane.userData.construct_params = this._params;
-      plane.updateMatrixWorld();
-    });
-
-    this.register_object( ['slices'] );
-
-
-    this.setCrosshair();
-    // reset side camera positions
-    // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
-    // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
-
-  }
-
-}
-
-
-function gen_datacube(g, canvas){
-  return( new DataCube(g, canvas) );
-}
-
-
-
-;// CONCATENATED MODULE: ./src/js/shaders/VolumeShader.js
-
-
-
-const VolumeRenderShader1 = {
-    uniforms: {
-      cmap: { value: null },
-      alpha : { value: -1.0 },
-      colorChannels : { value: 4 },
-      // steps: { value: 300 },
-      scale_inv: { value: new three_module.Vector3() },
-      bounding: { value : 0.5 },
-
-      stepSize: { value : 1.0 },
-
-      // lightDirection : { value : new Vector3() },
-
-      // only works when number of color channels is 1
-      color1WhenSingleChannel: { value: new three_module.Color().setHex(0x006400) },
-      color2WhenSingleChannel: { value: new three_module.Color().setHex(0x999999) },
-      // camera_center: { value: new Vector2() },
-    },
-    vertexShader: (0,utils/* remove_comments */.yi)(`#version 300 es
-precision highp float;
-in vec3 position;
-uniform mat4 modelMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform vec3 cameraPosition;
-uniform vec3 scale_inv;
-// uniform float steps;
-uniform float bounding;
-// uniform vec2 camera_center;
-
-out mat4 pmv;
-out vec3 vOrigin;
-// out vec3 vDirection;
-out vec3 vPosition;
-// out vec3 vSamplerBias;
-
-
-void main() {
-  pmv = projectionMatrix * modelViewMatrix;
-
-  vPosition = position;
-
-  gl_Position = pmv * vec4( position, 1.0 );
-  // vSamplerBias = vec3(0.5, -0.5, -0.5) * scale_inv + 0.5;
-
-  // For perspective camera, vorigin is camera
-  // vec4 vorig = inverse( modelMatrix ) * vec4( cameraPosition, 1.0 );
-  // vOrigin = - vorig.xyz * scale_inv;
-  // vDirection = position * scale_inv - vOrigin;
-
-  // Orthopgraphic camera, camera position in theory is at infinite,
-
-  // Ideally the following calculation should generate correct results
-  // vOrigin will be interpolated in fragmentShader, hence project and unproject
-  vec4 vOriginProjected = gl_Position;
-  vOriginProjected.z = -vOriginProjected.w;
-  vOrigin = (inverse(pmv) * vOriginProjected).xyz;
-  // vOrigin = gl_Position.xyw;
-  // vDirection = normalize(position - vOrigin);
-
-}
-`),
-    fragmentShader: (0,utils/* remove_comments */.yi)(`#version 300 es
-precision highp float;
-precision mediump sampler3D;
-in vec3 vOrigin;
-in vec3 vPosition;
-// in vec3 vDirection;
-// in vec3 vSamplerBias;
-in mat4 pmv;
-out vec4 color;
-uniform sampler3D cmap;
-uniform int colorChannels;
-uniform vec3 color1WhenSingleChannel;
-uniform vec3 color2WhenSingleChannel;
-uniform float alpha;
-uniform float stepSize;
-uniform vec3 scale_inv;
-// uniform vec3 lightDirection;
-uniform float bounding;
-vec4 fcolor;
-vec3 fOrigin;
-
-vec2 hitBox( vec3 orig, vec3 dir ) {
-  vec3 box_min = vec3( - bounding ) / scale_inv;
-  vec3 box_max = vec3( bounding ) / scale_inv;
-  vec3 inv_dir = 1.0 / dir;
-  vec3 tmin_tmp = ( box_min - orig ) * inv_dir;
-  vec3 tmax_tmp = ( box_max - orig ) * inv_dir;
-  vec3 tmin = min( tmin_tmp, tmax_tmp );
-  vec3 tmax = max( tmin_tmp, tmax_tmp );
-  float t0 = max( tmin.x, max( tmin.y, tmin.z ) );
-  float t1 = min( tmax.x, min( tmax.y, tmax.z ) );
-  return vec2( t0, t1 );
-}
-float getDepth( vec3 p ){
-  vec4 frag2 = pmv * vec4( p, 1.0 );
-
-  return(
-    (frag2.z / frag2.w * (gl_DepthRange.far - gl_DepthRange.near) +
-      gl_DepthRange.near + gl_DepthRange.far) * 0.5
-  );
-
-
-  // ndc.z = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) /
-  //      (gl_DepthRange.far - gl_DepthRange.near);
-  // return (frag2.z / frag2.w / 2.0 + 0.5);
-}
-vec4 sample2( vec3 p ) {
-  vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
-  if( colorChannels == 1 ) {
-    // using red channel as the color intensity
-    re.a = re.r;
-    re.rgb = color1WhenSingleChannel * re.r + color2WhenSingleChannel * (1.0 - re.r);
-  }
-  return re;
-}
-
-// Only used when channel number is >= 3
-vec3 getNormal( vec3 p ) {
-  vec4 ne;
-  vec3 zero3 = vec3(0.0, 0.0, 0.0);
-  vec3 normal = zero3;
-  vec3 pos0 = (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5;
-  vec3 pos = pos0;
-  vec4 re = texture( cmap, pos0 );
-
-  if( re.a == 0.0 || re.rgb == zero3 ) {
-    return normal;
-  }
-
-  float stp = max(max(abs(scale_inv.x), abs(scale_inv.y)), abs(scale_inv.z)) * 1.74;
-  vec2 dt = vec2(stp, stp);
-
-
-  // normal along xy
-  pos.xy = pos0.xy + dt;
-  ne = texture( cmap, pos );
-
-  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
-    normal.xy += dt;
-  }
-
-  pos.xy = pos0.xy - dt;
-  ne = texture( cmap, pos );
-
-  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
-    normal.xy -= dt;
-  }
-
-  // normal along xz
-  pos.y = pos0.y;
-  pos.xz = pos0.xz + dt;
-  ne = texture( cmap, pos );
-
-  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
-    normal.xz += dt;
-  }
-
-  pos.xz = pos0.xz - dt;
-  ne = texture( cmap, pos );
-
-  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
-    normal.xz -= dt;
-  }
-
-  // normal along yz
-  pos.x = pos0.x;
-  pos.yz = pos0.yz + dt;
-  ne = texture( cmap, pos );
-
-  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
-    normal.yz += dt;
-  }
-
-  pos.yz = pos0.yz - dt;
-  ne = texture( cmap, pos );
-
-  if( ne.a != 0.0 && (ne.rgb != re.rgb || ne.rgb != zero3) ) {
-    normal.yz -= dt;
-  }
-
-
-  return normalize( normal );
-}
-
-void main(){
-
-  // vec4 vOriginProjected = pmv * vec4( vPosition, 1.0 );
-  // vOriginProjected.z = -vOriginProjected.w;
-  // fOrigin = (inverse(pmv) * vOriginProjected).xyz;
-  fOrigin = vOrigin;
-
-  // vec3 rayDir = normalize( vDirection );
-  vec3 rayDir = normalize( vPosition - vOrigin );
-
-  vec2 bounds = hitBox( fOrigin, rayDir );
-  if ( bounds.x > bounds.y ) discard;
-  bounds.x = max( bounds.x, 0.0 );
-  // 0-255 need to be 0.5-255.5
-
-  // bounds.x is the length of ray
-  vec3 p = fOrigin + bounds.x * rayDir;
-  vec3 inc = 1.0 / abs( rayDir );
-  float delta = min( inc.x, min( inc.y, inc.z ) ) * max( abs( stepSize ), 0.1 );
-  // float delta = 0.5 / max( abs(rayDir.x), max( abs(rayDir.y), abs(rayDir.z) ) );
-
-  int nn = 0;
-  int valid_voxel = 0;
-  float mix_factor = 1.0;
-  vec4 last_color = vec4( 0.0, 0.0, 0.0, 0.0 );
-  vec3 zero_rgb = vec3( 0.0, 0.0, 0.0 );
-  vec3 nmal;
-
-  for ( float t = bounds.x; t < bounds.y; t += delta ) {
-    fcolor = sample2( p );
-
-    // Hit voxel
-    if( fcolor.a > 0.0 && fcolor.rgb != zero_rgb ){
-
-      if( alpha > 0.0 ){
-        fcolor.a *= alpha;
-      } else {
-        fcolor.a = 1.0;
-      }
-
-
-      if( fcolor.rgb != last_color.rgb ){
-        // We are right on the surface
-
-        last_color = fcolor;
-
-        if( nn == 0 ){
-          gl_FragDepth = getDepth( p );
-          color = fcolor;
-
-
-          if( colorChannels > 1 ) {
-            nmal = getNormal( p );
-            if(nmal != vec3(0.0, 0.0, 0.0)) {
-
-              // color.rgb *= pow(max( abs(dot(lightDirection, normalize(nmal))) , 1.0), 0.3);
-              color.rgb *= pow(max( abs(dot(rayDir, normalize(nmal - rayDir) )) , 0.25), 0.3);
-            }
-          }
-
-          color.a = max( color.a, 0.2 );
-        } else {
-          // blend
-          color.rgb = vec3( color.a ) * color.rgb + vec3( 1.0 - color.a ) * fcolor.rgb;
-          color.a = color.a + ( 1.0 - color.a ) * fcolor.a;
-          color = vec4( color.a ) * color + vec4( 1.0 - color.a ) * fcolor;
-        }
-
-        nn++;
-
-      } else {
-
-        color.a = min(color.a + 0.005, 1.0);
-
-      }
-
-      valid_voxel = 1;
-
-      if( nn >= 10 || color.a > 0.95 ){
-        break;
-      }
-
-    } else if ( valid_voxel > 0 ) {
-
-      // Leaving the structure reset states
-      last_color.rgb = zero_rgb;
-      valid_voxel = 0;
-    }
-    p += rayDir * delta;
-  }
-  if ( nn == 0 || color.a == 0.0 ) discard;
-
-  // calculate alpha at depth
-}
-`)};
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/jsm/math/ConvexHull.js
-
-
-/**
- * Ported from: https://github.com/maurizzzio/quickhull3d/ by Mauricio Poppe (https://github.com/maurizzzio)
- */
-
-const Visible = 0;
-const Deleted = 1;
-
-const _v1 = new three_module.Vector3();
-const _line3 = new three_module.Line3();
-const _plane = new three_module.Plane();
-const _closestPoint = new three_module.Vector3();
-const _triangle = new three_module.Triangle();
-
-class ConvexHull_ConvexHull {
-
-	constructor() {
-
-		this.tolerance = - 1;
-
-		this.faces = []; // the generated faces of the convex hull
-		this.newFaces = []; // this array holds the faces that are generated within a single iteration
-
-		// the vertex lists work as follows:
-		//
-		// let 'a' and 'b' be 'Face' instances
-		// let 'v' be points wrapped as instance of 'Vertex'
-		//
-		//     [v, v, ..., v, v, v, ...]
-		//      ^             ^
-		//      |             |
-		//  a.outside     b.outside
-		//
-		this.assigned = new VertexList();
-		this.unassigned = new VertexList();
-
-		this.vertices = []; 	// vertices of the hull (internal representation of given geometry data)
-
-	}
-
-	setFromPoints( points ) {
-
-		// The algorithm needs at least four points.
-
-		if ( points.length >= 4 ) {
-
-			this.makeEmpty();
-
-			for ( let i = 0, l = points.length; i < l; i ++ ) {
-
-				this.vertices.push( new VertexNode( points[ i ] ) );
-
-			}
-
-			this.compute();
-
-		}
-
-		return this;
-
-	}
-
-	setFromObject( object ) {
-
-		const points = [];
-
-		object.updateMatrixWorld( true );
-
-		object.traverse( function ( node ) {
-
-			const geometry = node.geometry;
-
-			if ( geometry !== undefined ) {
-
-				const attribute = geometry.attributes.position;
-
-				if ( attribute !== undefined ) {
-
-					for ( let i = 0, l = attribute.count; i < l; i ++ ) {
-
-						const point = new Vector3();
-
-						point.fromBufferAttribute( attribute, i ).applyMatrix4( node.matrixWorld );
-
-						points.push( point );
-
-					}
-
-				}
-
-			}
-
-		} );
-
-		return this.setFromPoints( points );
-
-	}
-
-	containsPoint( point ) {
-
-		const faces = this.faces;
-
-		for ( let i = 0, l = faces.length; i < l; i ++ ) {
-
-			const face = faces[ i ];
-
-			// compute signed distance and check on what half space the point lies
-
-			if ( face.distanceToPoint( point ) > this.tolerance ) return false;
-
-		}
-
-		return true;
-
-	}
-
-	intersectRay( ray, target ) {
-
-		// based on "Fast Ray-Convex Polyhedron Intersection" by Eric Haines, GRAPHICS GEMS II
-
-		const faces = this.faces;
-
-		let tNear = - Infinity;
-		let tFar = Infinity;
-
-		for ( let i = 0, l = faces.length; i < l; i ++ ) {
-
-			const face = faces[ i ];
-
-			// interpret faces as planes for the further computation
-
-			const vN = face.distanceToPoint( ray.origin );
-			const vD = face.normal.dot( ray.direction );
-
-			// if the origin is on the positive side of a plane (so the plane can "see" the origin) and
-			// the ray is turned away or parallel to the plane, there is no intersection
-
-			if ( vN > 0 && vD >= 0 ) return null;
-
-			// compute the distance from the ray’s origin to the intersection with the plane
-
-			const t = ( vD !== 0 ) ? ( - vN / vD ) : 0;
-
-			// only proceed if the distance is positive. a negative distance means the intersection point
-			// lies "behind" the origin
-
-			if ( t <= 0 ) continue;
-
-			// now categorized plane as front-facing or back-facing
-
-			if ( vD > 0 ) {
-
-				// plane faces away from the ray, so this plane is a back-face
-
-				tFar = Math.min( t, tFar );
-
-			} else {
-
-				// front-face
-
-				tNear = Math.max( t, tNear );
-
-			}
-
-			if ( tNear > tFar ) {
-
-				// if tNear ever is greater than tFar, the ray must miss the convex hull
-
-				return null;
-
-			}
-
-		}
-
-		// evaluate intersection point
-
-		// always try tNear first since its the closer intersection point
-
-		if ( tNear !== - Infinity ) {
-
-			ray.at( tNear, target );
-
-		} else {
-
-			ray.at( tFar, target );
-
-		}
-
-		return target;
-
-	}
-
-	intersectsRay( ray ) {
-
-		return this.intersectRay( ray, _v1 ) !== null;
-
-	}
-
-	makeEmpty() {
-
-		this.faces = [];
-		this.vertices = [];
-
-		return this;
-
-	}
-
-	// Adds a vertex to the 'assigned' list of vertices and assigns it to the given face
-
-	addVertexToFace( vertex, face ) {
-
-		vertex.face = face;
-
-		if ( face.outside === null ) {
-
-			this.assigned.append( vertex );
-
-		} else {
-
-			this.assigned.insertBefore( face.outside, vertex );
-
-		}
-
-		face.outside = vertex;
-
-		return this;
-
-	}
-
-	// Removes a vertex from the 'assigned' list of vertices and from the given face
-
-	removeVertexFromFace( vertex, face ) {
-
-		if ( vertex === face.outside ) {
-
-			// fix face.outside link
-
-			if ( vertex.next !== null && vertex.next.face === face ) {
-
-				// face has at least 2 outside vertices, move the 'outside' reference
-
-				face.outside = vertex.next;
-
-			} else {
-
-				// vertex was the only outside vertex that face had
-
-				face.outside = null;
-
-			}
-
-		}
-
-		this.assigned.remove( vertex );
-
-		return this;
-
-	}
-
-	// Removes all the visible vertices that a given face is able to see which are stored in the 'assigned' vertex list
-
-	removeAllVerticesFromFace( face ) {
-
-		if ( face.outside !== null ) {
-
-			// reference to the first and last vertex of this face
-
-			const start = face.outside;
-			let end = face.outside;
-
-			while ( end.next !== null && end.next.face === face ) {
-
-				end = end.next;
-
-			}
-
-			this.assigned.removeSubList( start, end );
-
-			// fix references
-
-			start.prev = end.next = null;
-			face.outside = null;
-
-			return start;
-
-		}
-
-	}
-
-	// Removes all the visible vertices that 'face' is able to see
-
-	deleteFaceVertices( face, absorbingFace ) {
-
-		const faceVertices = this.removeAllVerticesFromFace( face );
-
-		if ( faceVertices !== undefined ) {
-
-			if ( absorbingFace === undefined ) {
-
-				// mark the vertices to be reassigned to some other face
-
-				this.unassigned.appendChain( faceVertices );
-
-
-			} else {
-
-				// if there's an absorbing face try to assign as many vertices as possible to it
-
-				let vertex = faceVertices;
-
-				do {
-
-					// we need to buffer the subsequent vertex at this point because the 'vertex.next' reference
-					// will be changed by upcoming method calls
-
-					const nextVertex = vertex.next;
-
-					const distance = absorbingFace.distanceToPoint( vertex.point );
-
-					// check if 'vertex' is able to see 'absorbingFace'
-
-					if ( distance > this.tolerance ) {
-
-						this.addVertexToFace( vertex, absorbingFace );
-
-					} else {
-
-						this.unassigned.append( vertex );
-
-					}
-
-					// now assign next vertex
-
-					vertex = nextVertex;
-
-				} while ( vertex !== null );
-
-			}
-
-		}
-
-		return this;
-
-	}
-
-	// Reassigns as many vertices as possible from the unassigned list to the new faces
-
-	resolveUnassignedPoints( newFaces ) {
-
-		if ( this.unassigned.isEmpty() === false ) {
-
-			let vertex = this.unassigned.first();
-
-			do {
-
-				// buffer 'next' reference, see .deleteFaceVertices()
-
-				const nextVertex = vertex.next;
-
-				let maxDistance = this.tolerance;
-
-				let maxFace = null;
-
-				for ( let i = 0; i < newFaces.length; i ++ ) {
-
-					const face = newFaces[ i ];
-
-					if ( face.mark === Visible ) {
-
-						const distance = face.distanceToPoint( vertex.point );
-
-						if ( distance > maxDistance ) {
-
-							maxDistance = distance;
-							maxFace = face;
-
-						}
-
-						if ( maxDistance > 1000 * this.tolerance ) break;
-
-					}
-
-				}
-
-				// 'maxFace' can be null e.g. if there are identical vertices
-
-				if ( maxFace !== null ) {
-
-					this.addVertexToFace( vertex, maxFace );
-
-				}
-
-				vertex = nextVertex;
-
-			} while ( vertex !== null );
-
-		}
-
-		return this;
-
-	}
-
-	// Computes the extremes of a simplex which will be the initial hull
-
-	computeExtremes() {
-
-		const min = new Vector3();
-		const max = new Vector3();
-
-		const minVertices = [];
-		const maxVertices = [];
-
-		// initially assume that the first vertex is the min/max
-
-		for ( let i = 0; i < 3; i ++ ) {
-
-			minVertices[ i ] = maxVertices[ i ] = this.vertices[ 0 ];
-
-		}
-
-		min.copy( this.vertices[ 0 ].point );
-		max.copy( this.vertices[ 0 ].point );
-
-		// compute the min/max vertex on all six directions
-
-		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
-
-			const vertex = this.vertices[ i ];
-			const point = vertex.point;
-
-			// update the min coordinates
-
-			for ( let j = 0; j < 3; j ++ ) {
-
-				if ( point.getComponent( j ) < min.getComponent( j ) ) {
-
-					min.setComponent( j, point.getComponent( j ) );
-					minVertices[ j ] = vertex;
-
-				}
-
-			}
-
-			// update the max coordinates
-
-			for ( let j = 0; j < 3; j ++ ) {
-
-				if ( point.getComponent( j ) > max.getComponent( j ) ) {
-
-					max.setComponent( j, point.getComponent( j ) );
-					maxVertices[ j ] = vertex;
-
-				}
-
-			}
-
-		}
-
-		// use min/max vectors to compute an optimal epsilon
-
-		this.tolerance = 3 * Number.EPSILON * (
-			Math.max( Math.abs( min.x ), Math.abs( max.x ) ) +
-			Math.max( Math.abs( min.y ), Math.abs( max.y ) ) +
-			Math.max( Math.abs( min.z ), Math.abs( max.z ) )
-		);
-
-		return { min: minVertices, max: maxVertices };
-
-	}
-
-	// Computes the initial simplex assigning to its faces all the points
-	// that are candidates to form part of the hull
-
-	computeInitialHull() {
-
-		const vertices = this.vertices;
-		const extremes = this.computeExtremes();
-		const min = extremes.min;
-		const max = extremes.max;
-
-		// 1. Find the two vertices 'v0' and 'v1' with the greatest 1d separation
-		// (max.x - min.x)
-		// (max.y - min.y)
-		// (max.z - min.z)
-
-		let maxDistance = 0;
-		let index = 0;
-
-		for ( let i = 0; i < 3; i ++ ) {
-
-			const distance = max[ i ].point.getComponent( i ) - min[ i ].point.getComponent( i );
-
-			if ( distance > maxDistance ) {
-
-				maxDistance = distance;
-				index = i;
-
-			}
-
-		}
-
-		const v0 = min[ index ];
-		const v1 = max[ index ];
-		let v2;
-		let v3;
-
-		// 2. The next vertex 'v2' is the one farthest to the line formed by 'v0' and 'v1'
-
-		maxDistance = 0;
-		_line3.set( v0.point, v1.point );
-
-		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
-
-			const vertex = vertices[ i ];
-
-			if ( vertex !== v0 && vertex !== v1 ) {
-
-				_line3.closestPointToPoint( vertex.point, true, _closestPoint );
-
-				const distance = _closestPoint.distanceToSquared( vertex.point );
-
-				if ( distance > maxDistance ) {
-
-					maxDistance = distance;
-					v2 = vertex;
-
-				}
-
-			}
-
-		}
-
-		// 3. The next vertex 'v3' is the one farthest to the plane 'v0', 'v1', 'v2'
-
-		maxDistance = - 1;
-		_plane.setFromCoplanarPoints( v0.point, v1.point, v2.point );
-
-		for ( let i = 0, l = this.vertices.length; i < l; i ++ ) {
-
-			const vertex = vertices[ i ];
-
-			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 ) {
-
-				const distance = Math.abs( _plane.distanceToPoint( vertex.point ) );
-
-				if ( distance > maxDistance ) {
-
-					maxDistance = distance;
-					v3 = vertex;
-
-				}
-
-			}
-
-		}
-
-		const faces = [];
-
-		if ( _plane.distanceToPoint( v3.point ) < 0 ) {
-
-			// the face is not able to see the point so 'plane.normal' is pointing outside the tetrahedron
-
-			faces.push(
-				Face.create( v0, v1, v2 ),
-				Face.create( v3, v1, v0 ),
-				Face.create( v3, v2, v1 ),
-				Face.create( v3, v0, v2 )
-			);
-
-			// set the twin edge
-
-			for ( let i = 0; i < 3; i ++ ) {
-
-				const j = ( i + 1 ) % 3;
-
-				// join face[ i ] i > 0, with the first face
-
-				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( j ) );
-
-				// join face[ i ] with face[ i + 1 ], 1 <= i <= 3
-
-				faces[ i + 1 ].getEdge( 1 ).setTwin( faces[ j + 1 ].getEdge( 0 ) );
-
-			}
-
-		} else {
-
-			// the face is able to see the point so 'plane.normal' is pointing inside the tetrahedron
-
-			faces.push(
-				Face.create( v0, v2, v1 ),
-				Face.create( v3, v0, v1 ),
-				Face.create( v3, v1, v2 ),
-				Face.create( v3, v2, v0 )
-			);
-
-			// set the twin edge
-
-			for ( let i = 0; i < 3; i ++ ) {
-
-				const j = ( i + 1 ) % 3;
-
-				// join face[ i ] i > 0, with the first face
-
-				faces[ i + 1 ].getEdge( 2 ).setTwin( faces[ 0 ].getEdge( ( 3 - i ) % 3 ) );
-
-				// join face[ i ] with face[ i + 1 ]
-
-				faces[ i + 1 ].getEdge( 0 ).setTwin( faces[ j + 1 ].getEdge( 1 ) );
-
-			}
-
-		}
-
-		// the initial hull is the tetrahedron
-
-		for ( let i = 0; i < 4; i ++ ) {
-
-			this.faces.push( faces[ i ] );
-
-		}
-
-		// initial assignment of vertices to the faces of the tetrahedron
-
-		for ( let i = 0, l = vertices.length; i < l; i ++ ) {
-
-			const vertex = vertices[ i ];
-
-			if ( vertex !== v0 && vertex !== v1 && vertex !== v2 && vertex !== v3 ) {
-
-				maxDistance = this.tolerance;
-				let maxFace = null;
-
-				for ( let j = 0; j < 4; j ++ ) {
-
-					const distance = this.faces[ j ].distanceToPoint( vertex.point );
-
-					if ( distance > maxDistance ) {
-
-						maxDistance = distance;
-						maxFace = this.faces[ j ];
-
-					}
-
-				}
-
-				if ( maxFace !== null ) {
-
-					this.addVertexToFace( vertex, maxFace );
-
-				}
-
-			}
-
-		}
-
-		return this;
-
-	}
-
-	// Removes inactive faces
-
-	reindexFaces() {
-
-		const activeFaces = [];
-
-		for ( let i = 0; i < this.faces.length; i ++ ) {
-
-			const face = this.faces[ i ];
-
-			if ( face.mark === Visible ) {
-
-				activeFaces.push( face );
-
-			}
-
-		}
-
-		this.faces = activeFaces;
-
-		return this;
-
-	}
-
-	// Finds the next vertex to create faces with the current hull
-
-	nextVertexToAdd() {
-
-		// if the 'assigned' list of vertices is empty, no vertices are left. return with 'undefined'
-
-		if ( this.assigned.isEmpty() === false ) {
-
-			let eyeVertex, maxDistance = 0;
-
-			// grap the first available face and start with the first visible vertex of that face
-
-			const eyeFace = this.assigned.first().face;
-			let vertex = eyeFace.outside;
-
-			// now calculate the farthest vertex that face can see
-
-			do {
-
-				const distance = eyeFace.distanceToPoint( vertex.point );
-
-				if ( distance > maxDistance ) {
-
-					maxDistance = distance;
-					eyeVertex = vertex;
-
-				}
-
-				vertex = vertex.next;
-
-			} while ( vertex !== null && vertex.face === eyeFace );
-
-			return eyeVertex;
-
-		}
-
-	}
-
-	// Computes a chain of half edges in CCW order called the 'horizon'.
-	// For an edge to be part of the horizon it must join a face that can see
-	// 'eyePoint' and a face that cannot see 'eyePoint'.
-
-	computeHorizon( eyePoint, crossEdge, face, horizon ) {
-
-		// moves face's vertices to the 'unassigned' vertex list
-
-		this.deleteFaceVertices( face );
-
-		face.mark = Deleted;
-
-		let edge;
-
-		if ( crossEdge === null ) {
-
-			edge = crossEdge = face.getEdge( 0 );
-
-		} else {
-
-			// start from the next edge since 'crossEdge' was already analyzed
-			// (actually 'crossEdge.twin' was the edge who called this method recursively)
-
-			edge = crossEdge.next;
-
-		}
-
-		do {
-
-			const twinEdge = edge.twin;
-			const oppositeFace = twinEdge.face;
-
-			if ( oppositeFace.mark === Visible ) {
-
-				if ( oppositeFace.distanceToPoint( eyePoint ) > this.tolerance ) {
-
-					// the opposite face can see the vertex, so proceed with next edge
-
-					this.computeHorizon( eyePoint, twinEdge, oppositeFace, horizon );
-
-				} else {
-
-					// the opposite face can't see the vertex, so this edge is part of the horizon
-
-					horizon.push( edge );
-
-				}
-
-			}
-
-			edge = edge.next;
-
-		} while ( edge !== crossEdge );
-
-		return this;
-
-	}
-
-	// Creates a face with the vertices 'eyeVertex.point', 'horizonEdge.tail' and 'horizonEdge.head' in CCW order
-
-	addAdjoiningFace( eyeVertex, horizonEdge ) {
-
-		// all the half edges are created in ccw order thus the face is always pointing outside the hull
-
-		const face = Face.create( eyeVertex, horizonEdge.tail(), horizonEdge.head() );
-
-		this.faces.push( face );
-
-		// join face.getEdge( - 1 ) with the horizon's opposite edge face.getEdge( - 1 ) = face.getEdge( 2 )
-
-		face.getEdge( - 1 ).setTwin( horizonEdge.twin );
-
-		return face.getEdge( 0 ); // the half edge whose vertex is the eyeVertex
-
-
-	}
-
-	//  Adds 'horizon.length' faces to the hull, each face will be linked with the
-	//  horizon opposite face and the face on the left/right
-
-	addNewFaces( eyeVertex, horizon ) {
-
-		this.newFaces = [];
-
-		let firstSideEdge = null;
-		let previousSideEdge = null;
-
-		for ( let i = 0; i < horizon.length; i ++ ) {
-
-			const horizonEdge = horizon[ i ];
-
-			// returns the right side edge
-
-			const sideEdge = this.addAdjoiningFace( eyeVertex, horizonEdge );
-
-			if ( firstSideEdge === null ) {
-
-				firstSideEdge = sideEdge;
-
-			} else {
-
-				// joins face.getEdge( 1 ) with previousFace.getEdge( 0 )
-
-				sideEdge.next.setTwin( previousSideEdge );
-
-			}
-
-			this.newFaces.push( sideEdge.face );
-			previousSideEdge = sideEdge;
-
-		}
-
-		// perform final join of new faces
-
-		firstSideEdge.next.setTwin( previousSideEdge );
-
-		return this;
-
-	}
-
-	// Adds a vertex to the hull
-
-	addVertexToHull( eyeVertex ) {
-
-		const horizon = [];
-
-		this.unassigned.clear();
-
-		// remove 'eyeVertex' from 'eyeVertex.face' so that it can't be added to the 'unassigned' vertex list
-
-		this.removeVertexFromFace( eyeVertex, eyeVertex.face );
-
-		this.computeHorizon( eyeVertex.point, null, eyeVertex.face, horizon );
-
-		this.addNewFaces( eyeVertex, horizon );
-
-		// reassign 'unassigned' vertices to the new faces
-
-		this.resolveUnassignedPoints( this.newFaces );
-
-		return	this;
-
-	}
-
-	cleanup() {
-
-		this.assigned.clear();
-		this.unassigned.clear();
-		this.newFaces = [];
-
-		return this;
-
-	}
-
-	compute() {
-
-		let vertex;
-
-		this.computeInitialHull();
-
-		// add all available vertices gradually to the hull
-
-		while ( ( vertex = this.nextVertexToAdd() ) !== undefined ) {
-
-			this.addVertexToHull( vertex );
-
-		}
-
-		this.reindexFaces();
-
-		this.cleanup();
-
-		return this;
-
-	}
-
-}
-
-//
-
-class Face {
-
-	constructor() {
-
-		this.normal = new Vector3();
-		this.midpoint = new Vector3();
-		this.area = 0;
-
-		this.constant = 0; // signed distance from face to the origin
-		this.outside = null; // reference to a vertex in a vertex list this face can see
-		this.mark = Visible;
-		this.edge = null;
-
-	}
-
-	static create( a, b, c ) {
-
-		const face = new Face();
-
-		const e0 = new HalfEdge( a, face );
-		const e1 = new HalfEdge( b, face );
-		const e2 = new HalfEdge( c, face );
-
-		// join edges
-
-		e0.next = e2.prev = e1;
-		e1.next = e0.prev = e2;
-		e2.next = e1.prev = e0;
-
-		// main half edge reference
-
-		face.edge = e0;
-
-		return face.compute();
-
-	}
-
-	getEdge( i ) {
-
-		let edge = this.edge;
-
-		while ( i > 0 ) {
-
-			edge = edge.next;
-			i --;
-
-		}
-
-		while ( i < 0 ) {
-
-			edge = edge.prev;
-			i ++;
-
-		}
-
-		return edge;
-
-	}
-
-	compute() {
-
-		const a = this.edge.tail();
-		const b = this.edge.head();
-		const c = this.edge.next.head();
-
-		_triangle.set( a.point, b.point, c.point );
-
-		_triangle.getNormal( this.normal );
-		_triangle.getMidpoint( this.midpoint );
-		this.area = _triangle.getArea();
-
-		this.constant = this.normal.dot( this.midpoint );
-
-		return this;
-
-	}
-
-	distanceToPoint( point ) {
-
-		return this.normal.dot( point ) - this.constant;
-
-	}
-
-}
-
-// Entity for a Doubly-Connected Edge List (DCEL).
-
-class HalfEdge {
-
-
-	constructor( vertex, face ) {
-
-		this.vertex = vertex;
-		this.prev = null;
-		this.next = null;
-		this.twin = null;
-		this.face = face;
-
-	}
-
-	head() {
-
-		return this.vertex;
-
-	}
-
-	tail() {
-
-		return this.prev ? this.prev.vertex : null;
-
-	}
-
-	length() {
-
-		const head = this.head();
-		const tail = this.tail();
-
-		if ( tail !== null ) {
-
-			return tail.point.distanceTo( head.point );
-
-		}
-
-		return - 1;
-
-	}
-
-	lengthSquared() {
-
-		const head = this.head();
-		const tail = this.tail();
-
-		if ( tail !== null ) {
-
-			return tail.point.distanceToSquared( head.point );
-
-		}
-
-		return - 1;
-
-	}
-
-	setTwin( edge ) {
-
-		this.twin = edge;
-		edge.twin = this;
-
-		return this;
-
-	}
-
-}
-
-// A vertex as a double linked list node.
-
-class VertexNode {
-
-	constructor( point ) {
-
-		this.point = point;
-		this.prev = null;
-		this.next = null;
-		this.face = null; // the face that is able to see this vertex
-
-	}
-
-}
-
-// A double linked list that contains vertex nodes.
-
-class VertexList {
-
-	constructor() {
-
-		this.head = null;
-		this.tail = null;
-
-	}
-
-	first() {
-
-		return this.head;
-
-	}
-
-	last() {
-
-		return this.tail;
-
-	}
-
-	clear() {
-
-		this.head = this.tail = null;
-
-		return this;
-
-	}
-
-	// Inserts a vertex before the target vertex
-
-	insertBefore( target, vertex ) {
-
-		vertex.prev = target.prev;
-		vertex.next = target;
-
-		if ( vertex.prev === null ) {
-
-			this.head = vertex;
-
-		} else {
-
-			vertex.prev.next = vertex;
-
-		}
-
-		target.prev = vertex;
-
-		return this;
-
-	}
-
-	// Inserts a vertex after the target vertex
-
-	insertAfter( target, vertex ) {
-
-		vertex.prev = target;
-		vertex.next = target.next;
-
-		if ( vertex.next === null ) {
-
-			this.tail = vertex;
-
-		} else {
-
-			vertex.next.prev = vertex;
-
-		}
-
-		target.next = vertex;
-
-		return this;
-
-	}
-
-	// Appends a vertex to the end of the linked list
-
-	append( vertex ) {
-
-		if ( this.head === null ) {
-
-			this.head = vertex;
-
-		} else {
-
-			this.tail.next = vertex;
-
-		}
-
-		vertex.prev = this.tail;
-		vertex.next = null; // the tail has no subsequent vertex
-
-		this.tail = vertex;
-
-		return this;
-
-	}
-
-	// Appends a chain of vertices where 'vertex' is the head.
-
-	appendChain( vertex ) {
-
-		if ( this.head === null ) {
-
-			this.head = vertex;
-
-		} else {
-
-			this.tail.next = vertex;
-
-		}
-
-		vertex.prev = this.tail;
-
-		// ensure that the 'tail' reference points to the last vertex of the chain
-
-		while ( vertex.next !== null ) {
-
-			vertex = vertex.next;
-
-		}
-
-		this.tail = vertex;
-
-		return this;
-
-	}
-
-	// Removes a vertex from the linked list
-
-	remove( vertex ) {
-
-		if ( vertex.prev === null ) {
-
-			this.head = vertex.next;
-
-		} else {
-
-			vertex.prev.next = vertex.next;
-
-		}
-
-		if ( vertex.next === null ) {
-
-			this.tail = vertex.prev;
-
-		} else {
-
-			vertex.next.prev = vertex.prev;
-
-		}
-
-		return this;
-
-	}
-
-	// Removes a list of vertices whose 'head' is 'a' and whose 'tail' is b
-
-	removeSubList( a, b ) {
-
-		if ( a.prev === null ) {
-
-			this.head = b.next;
-
-		} else {
-
-			a.prev.next = b.next;
-
-		}
-
-		if ( b.next === null ) {
-
-			this.tail = a.prev;
-
-		} else {
-
-			b.next.prev = a.prev;
-
-		}
-
-		return this;
-
-	}
-
-	isEmpty() {
-
-		return this.head === null;
-
-	}
-
-}
-
-
-
-;// CONCATENATED MODULE: ./src/js/jsm/geometries/ConvexGeometry.js
-
-
-
-class ConvexGeometry extends (/* unused pure expression or super */ null && (BufferGeometry)) {
-
-	constructor( points = [] ) {
-
-		super();
-
-		// buffers
-
-		const vertices = [];
-		const normals = [];
-
-		const convexHull = new ConvexHull().setFromPoints( points );
-
-		// generate vertices and normals
-
-		const faces = convexHull.faces;
-
-		for ( let i = 0; i < faces.length; i ++ ) {
-
-			const face = faces[ i ];
-			let edge = face.edge;
-
-			// we move along a doubly-connected edge list to access all face points (see HalfEdge docs)
-
-			do {
-
-				const point = edge.head().point;
-
-				vertices.push( point.x, point.y, point.z );
-				normals.push( face.normal.x, face.normal.y, face.normal.z );
-
-				edge = edge.next;
-
-			} while ( edge !== face.edge );
-
-		}
-
-		// build geometry
-
-		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
-		this.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
-
-	}
-
-}
-
-
-
-;// CONCATENATED MODULE: ./src/js/geometry/datacube2.js
-
-
-
-
-
-
-
-
-class DataCube2 extends geometry_abstract/* AbstractThreeBrainObject */.j {
-
-  _filterDataContinuous( dataLB, dataUB, timeSlice ) {
-    if( dataLB < this.__dataLB ) {
-      dataLB = this.__dataLB;
-    }
-    if( dataUB > this.__dataUB ) {
-      dataUB = this.__dataUB;
-    }
-
-    this._selectedDataValues.length = 2;
-    this._selectedDataValues[ 0 ] = dataLB;
-    this._selectedDataValues[ 1 ] = dataUB;
-
-    // calculate voxelData -> colorKey transform
-    let data2ColorKeySlope = 1, data2ColorKeyIntercept = 0;
-    if( this.lutAutoRescale ) {
-      data2ColorKeySlope = (this.lutMaxColorID - this.lutMinColorID) / (this.__dataUB - this.__dataLB);
-      data2ColorKeyIntercept = (this.lutMinColorID + this.lutMaxColorID - data2ColorKeySlope * (this.__dataLB + this.__dataUB)) / 2.0;
-    }
-
-    if( typeof(timeSlice) === "number" ){
-      this._timeSlice = Math.floor( timeSlice );
-    }
-
-    const mapAlpha = this.lut.mapAlpha;
-    const voxelData = this.voxelData;
-    const lutMap = this.lutMap;
-    const singleChannel = this.colorFormat === three_module.RedFormat;
-    const voxelColor = this.voxelColor;
-
-    const voxelIndexOffset = this._timeSlice * this.nVoxels;
-    let voxelIndex = 0,
-        boundingMinX = Infinity, boundingMinY = Infinity, boundingMinZ = Infinity,
-        boundingMaxX = -Infinity, boundingMaxY = -Infinity, boundingMaxZ = -Infinity;
-    let withinFilters, voxelValue, voxelColorKey;
-
-    if( singleChannel ) {
-
-      // voxel alpha value
-      let voxelA;
-
-      for ( let z = 0; z < this.modelShape.z; z++ ) {
-        for ( let y = 0; y < this.modelShape.y; y++ ) {
-          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
-            // no need to round up as this has been done in the constructor
-            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue < dataLB || voxelValue > dataUB) {
-              // hide this voxel as it's beyong threshold
-              voxelColor[ voxelIndex ] = 0;
-            } else {
-              voxelColorKey = Math.floor(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
-              voxelA = lutMap[ voxelColorKey ];
-
-              // NOTICE: we expect consecutive integer color keys!
-              if( voxelA === undefined ) {
-                // This shouldn't happen if color keys are consecutive
-                voxelColor[ voxelIndex ] = 0;
-              } else {
-
-                voxelColor[ voxelIndex ] = voxelA.R;
-
-                // set bounding box
-                if( boundingMinX > x ) { boundingMinX = x; }
-                if( boundingMinY > y ) { boundingMinY = y; }
-                if( boundingMinZ > z ) { boundingMinZ = z; }
-                if( boundingMaxX < x ) { boundingMaxX = x; }
-                if( boundingMaxY < y ) { boundingMaxY = y; }
-                if( boundingMaxZ < z ) { boundingMaxZ = z; }
-
-              }
-            }
-          }
-        }
-      }
-    } else {
-
-      // voxel RGBA value
-      let voxelRGBA;
-      for ( let z = 0; z < this.modelShape.z; z++ ) {
-        for ( let y = 0; y < this.modelShape.y; y++ ) {
-          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
-
-            // no need to round up as this has been done in the constructor
-            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue < dataLB || voxelValue > dataUB) {
-              // hide this voxel as it's beyong threshold
-              voxelColor[ voxelIndex * 4 + 3 ] = 0;
-            } else {
-              voxelColorKey = Math.round(voxelValue * data2ColorKeySlope + data2ColorKeyIntercept);
-              voxelRGBA = lutMap[ voxelColorKey ];
-
-              // NOTICE: we expect consecutive integer color keys!
-              if( voxelRGBA === undefined ) {
-                // This shouldn't happen if color keys are consecutive
-                voxelColor[ voxelIndex * 4 + 3 ] = 0;
-              } else {
-
-                voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
-                voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
-                voxelColor[ voxelIndex * 4 + 2 ] = voxelRGBA.B;
-
-                if( mapAlpha ) {
-                  voxelColor[ voxelIndex * 4 + 3 ] = voxelRGBA.A;
-                } else {
-                  voxelColor[ voxelIndex * 4 + 3 ] = 255;
-                }
-
-                // set bounding box
-                if( boundingMinX > x ) { boundingMinX = x; }
-                if( boundingMinY > y ) { boundingMinY = y; }
-                if( boundingMinZ > z ) { boundingMinZ = z; }
-                if( boundingMaxX < x ) { boundingMaxX = x; }
-                if( boundingMaxY < y ) { boundingMaxY = y; }
-                if( boundingMaxZ < z ) { boundingMaxZ = z; }
-
-              }
-            }
-
-          }
-        }
-      }
-
-    }
-
-    this.object.material.uniforms.bounding.value = Math.min(
-      Math.max(
-        boundingMaxX / this.modelShape.x - 0.5,
-        boundingMaxY / this.modelShape.y - 0.5,
-        boundingMaxZ / this.modelShape.z - 0.5,
-        0.5 - boundingMinX / this.modelShape.x,
-        0.5 - boundingMinY / this.modelShape.y,
-        0.5 - boundingMinZ / this.modelShape.z,
-        0.0
-      ),
-      0.5
-    );
-    this.object.material.uniformsNeedUpdate = true;
-
-    this.colorTexture.needsUpdate = true;
-  }
-  _filterDataDiscrete( selectedDataValues, timeSlice ) {
-
-    if( Array.isArray( selectedDataValues ) ){
-
-      // discrete color keys
-      this._selectedDataValues.length = 0;
-      let dataValue;
-
-      for( let jj = 0; jj < selectedDataValues.length; jj++ ) {
-        dataValue = selectedDataValues[ jj ];
-        if( dataValue <= this.lutMinColorID ) {
-          this._selectedDataValues.length = 0;
-          break;
-        }
-        this._selectedDataValues[ dataValue ] = true;
-      }
-      if( this._selectedDataValues.length === 0 ) {
-        for( dataValue = this.lutMinColorID + 1;
-              dataValue < this.lutMaxColorID; dataValue++ ) {
-          this._selectedDataValues[ dataValue ] = true;
-        }
-      }
-    }
-
-    if( typeof(timeSlice) === "number" ){
-      this._timeSlice = Math.floor( timeSlice );
-    }
-
-    const mapAlpha = this.lut.mapAlpha;
-    const voxelData = this.voxelData;
-    const lutMap = this.lutMap;
-    const singleChannel = this.colorFormat === three_module.RedFormat;
-    const voxelColor = this.voxelColor;
-
-    const voxelIndexOffset = this._timeSlice * this.nVoxels;
-    let voxelIndex = 0,
-        boundingMinX = Infinity, boundingMinY = Infinity, boundingMinZ = Infinity,
-        boundingMaxX = -Infinity, boundingMaxY = -Infinity, boundingMaxZ = -Infinity;
-    let withinFilters, voxelValue;
-
-    if( singleChannel ) {
-
-      // voxel alpha value
-      let voxelA;
-
-      for ( let z = 0; z < this.modelShape.z; z++ ) {
-        for ( let y = 0; y < this.modelShape.y; y++ ) {
-          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
-
-            // no need to round up as this has been done in the constructor
-            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue <= this.lutMinColorID ) {
-              // special: always hide this voxel
-              voxelColor[ voxelIndex ] = 0;
-            } else {
-
-              voxelA = lutMap[ voxelValue ];
-              withinFilters = this._selectedDataValues[ voxelValue ];
-
-              if( voxelA !== undefined && withinFilters ) {
-                // this voxel should be displayed
-                voxelColor[ voxelIndex ] = voxelA.R;
-
-                // set bounding box
-                if( boundingMinX > x ) { boundingMinX = x; }
-                if( boundingMinY > y ) { boundingMinY = y; }
-                if( boundingMinZ > z ) { boundingMinZ = z; }
-                if( boundingMaxX < x ) { boundingMaxX = x; }
-                if( boundingMaxY < y ) { boundingMaxY = y; }
-                if( boundingMaxZ < z ) { boundingMaxZ = z; }
-              } else {
-                voxelColor[ voxelIndex ] = 0;
-              }
-
-            }
-
-          }
-        }
-      }
-    } else {
-
-      // voxel RGBA value
-      let voxelRGBA;
-      for ( let z = 0; z < this.modelShape.z; z++ ) {
-        for ( let y = 0; y < this.modelShape.y; y++ ) {
-          for ( let x = 0; x < this.modelShape.x; x++, voxelIndex++ ) {
-
-            // no need to round up as this has been done in the constructor
-            voxelValue = voxelData[ voxelIndex + voxelIndexOffset ];
-            if( voxelValue <= this.lutMinColorID ) {
-              // special: always hide this voxel
-              voxelColor[ voxelIndex * 4 + 3 ] = 0;
-            } else {
-
-              voxelRGBA = lutMap[ voxelValue ];
-              withinFilters = this._selectedDataValues[ voxelValue ];
-
-              if( voxelRGBA !== undefined && withinFilters ) {
-                // this voxel should be displayed
-                voxelColor[ voxelIndex * 4 ] = voxelRGBA.R;
-                voxelColor[ voxelIndex * 4 + 1 ] = voxelRGBA.G;
-                voxelColor[ voxelIndex * 4 + 2 ] = voxelRGBA.B;
-
-                if( mapAlpha ) {
-                  voxelColor[ voxelIndex * 4 + 3 ] = voxelRGBA.A;
-                } else {
-                  voxelColor[ voxelIndex * 4 + 3 ] = 255;
-                }
-                // set bounding box
-                if( boundingMinX > x ) { boundingMinX = x; }
-                if( boundingMinY > y ) { boundingMinY = y; }
-                if( boundingMinZ > z ) { boundingMinZ = z; }
-                if( boundingMaxX < x ) { boundingMaxX = x; }
-                if( boundingMaxY < y ) { boundingMaxY = y; }
-                if( boundingMaxZ < z ) { boundingMaxZ = z; }
-              } else {
-                voxelColor[ voxelIndex * 4 + 3 ] = 0;
-              }
-
-            }
-
-          }
-        }
-      }
-
-    }
-
-    this.object.material.uniforms.bounding.value = Math.min(
-      Math.max(
-        boundingMaxX / this.modelShape.x - 0.5,
-        boundingMaxY / this.modelShape.y - 0.5,
-        boundingMaxZ / this.modelShape.z - 0.5,
-        0.5 - boundingMinX / this.modelShape.x,
-        0.5 - boundingMinY / this.modelShape.y,
-        0.5 - boundingMinZ / this.modelShape.z,
-        0.0
-      ),
-      0.5
-    );
-    this.object.material.uniformsNeedUpdate = true;
-    this.colorTexture.needsUpdate = true;
-
-  }
-
-  updatePalette( selectedDataValues, timeSlice ){
-    if( !this._canvas.has_webgl2 ){ return; }
-
-    if( this.isDataContinuous ) {
-
-      if( !Array.isArray( selectedDataValues ) ) {
-        selectedDataValues = this._selectedDataValues;
-      }
-      let lb, ub;
-      if( selectedDataValues.length >= 2 ) {
-        /*lb = selectedDataValues[ 0 ];
-        ub = selectedDataValues[ 1 ];*/
-        lb = Math.min(...selectedDataValues);
-        ub = Math.max(...selectedDataValues);
-      } else {
-        lb = this.lutMinColorID;
-        ub = this.lutMaxColorID;
-      }
-      this._filterDataContinuous( lb, ub, timeSlice );
-
-    } else {
-
-      if( !Array.isArray( selectedDataValues ) ) {
-        selectedDataValues = this._selectedDataValues;
-      }
-      this._filterDataDiscrete( selectedDataValues, timeSlice );
-
-    }
-  }
-
-  constructor(g, canvas){
-
-
-    super( g, canvas );
-
-    if( !canvas.has_webgl2 ){
-      throw 'DataCube2, i.e. voxel cube must need WebGL2 support';
-    }
-
-    // this._params is g
-    // this.name = this._params.name;
-    // this.group_name = this._params.group.group_name;
-
-    this.type = 'DataCube2';
-    this.isDataCube2 = true;
-    this._display_mode = "hidden";
-    this._selectedDataValues = [];
-    this._timeSlice = 0;
-    // transform before applying trans_mat specified by `g`
-    // only useful for NiftiCube2
-    this._transform = new three_module.Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-
-    if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
-      this._transform.set(...g.trans_mat);
-    } else {
-      this._transform.set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-    }
-
-    let mesh;
-
-    // Need to check if this is nifticube
-    if( g.isNiftiCube2 ) {
-      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
-      this.voxelData = niftiData.image;
-      // width, height, depth of the model (not in world)
-      this.modelShape = new three_module.Vector3().fromArray( niftiData.shape );
-
-      // Make sure to register the initial transform matrix (from IJK to RAS)
-      // original g.trans_mat is nifti RAS to tkrRAS
-      // this._transform = g.trans_mat * niftiData.model2RAS
-      //   -> new transform from model center to tkrRAS
-      this._transform.multiply( niftiData.model2RAS );
-    } else {
-      // g.trans_mat is from model to tkrRAS
-      this.voxelData = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);
-      // width, height, depth of the model (not in world)
-      this.modelShape = new three_module.Vector3().fromArray(
-        canvas.get_data('datacube_dim_'+g.name, g.name, g.group.group_name)
-      );
-    }
-    this.nVoxels = this.modelShape.x * this.modelShape.y * this.modelShape.z;
-    // The color map might be specified separately
-    this.lut = g.color_map || canvas.global_data('__global_data__.VolumeColorLUT');
-    this.lutMap = this.lut.map;
-    this.lutMaxColorID = this.lut.mapMaxColorID;
-    this.lutMinColorID = this.lut.mapMinColorID;
-    this.lutAutoRescale = this.lut.colorIDAutoRescale === true;
-    this.isDataContinuous = this.lut.mapDataType === "continuous";
-    this.__dataLB = this.lutMinColorID;
-    this.__dataUB = this.lutMaxColorID;
-
-    // Generate 3D texture, to do so, we need to customize shaders
-    if( g.color_format === "RedFormat" ) {
-      this.colorFormat = three_module.RedFormat;
-      this.nColorChannels = 1;
-      this.voxelColor = new Uint8Array( this.nVoxels );
-    } else {
-      this.colorFormat = three_module.RGBAFormat;
-      this.nColorChannels = 4;
-      this.voxelColor = new Uint8Array( this.nVoxels * 4 );
-    }
-
-    // Change voxelData so all elements are integers (non-negative)
-    if( this.isDataContinuous ) {
-      if( this.lutAutoRescale ) {
-
-        this.__dataLB = Infinity;
-        this.__dataUB = -Infinity;
-        this.voxelData.forEach((vd) => {
-          if( this.__dataLB > vd ) { this.__dataLB = vd; }
-          if( this.__dataUB < vd ) { this.__dataUB = vd; }
-        })
-
-        if( this.__dataLB === Infinity ) {
-          this.__dataLB = this.lutMinColorID;
-        }
-        if( this.__dataUB === -Infinity ) {
-          this.__dataUB = this.lutMaxColorID;
-        }
-
-      }
-
-    } else {
-
-      this.voxelData.forEach((vd, ii) => {
-        if( vd < this.lutMinColorID || vd > this.lutMaxColorID ) {
-          this.voxelData[ ii ] = this.lutMinColorID;
-        } else if( !Number.isInteger(vd) ) {
-          this.voxelData[ ii ] =  Math.round( vd );
-        }
-      })
-    }
-
-    // Color texture - used to render colors
-    this.colorTexture = new three_module.Data3DTexture(
-      this.voxelColor, this.modelShape.x, this.modelShape.y, this.modelShape.z
-    );
-
-    this.colorTexture.minFilter = three_module.NearestFilter;
-    this.colorTexture.magFilter = three_module.NearestFilter;
-    this.colorTexture.format = this.colorFormat;
-    this.colorTexture.type = three_module.UnsignedByteType;
-    this.colorTexture.unpackAlignment = 1;
-
-    this.colorTexture.needsUpdate = true;
-
-    // Material
-    const shader = VolumeRenderShader1;
-
-
-    const uniforms = three_module.UniformsUtils.clone( shader.uniforms );
-    this._uniforms = uniforms;
-    // uniforms.map.value = data_texture;
-    uniforms.cmap.value = this.colorTexture;
-    uniforms.colorChannels.value = this.nColorChannels;
-    uniforms.alpha.value = -1.0;
-    uniforms.scale_inv.value.set(1 / this.modelShape.x, 1 / this.modelShape.y, 1 / this.modelShape.z);
-    uniforms.bounding.value = 0.5;
-
-    let material = new three_module.RawShaderMaterial( {
-      uniforms: uniforms,
-      vertexShader: shader.vertexShader,
-      fragmentShader: shader.fragmentShader,
-      side: three_module.BackSide, // The volume shader uses the backface as its "reference point"
-      transparent : true
-    } );
-
-    const geometry = new three_module.BoxGeometry(
-      this.modelShape.x,
-      this.modelShape.y,
-      this.modelShape.z
-    );
-
-    mesh = new three_module.Mesh( geometry, material );
-    mesh.name = 'mesh_datacube_' + g.name;
-
-    mesh.position.fromArray( g.position );
-    // TODO: need to check how threejs handle texture 3D to know why the s
-
-    mesh.userData.pre_render = () => { return( this.pre_render() ); };
-    mesh.userData.dispose = () => { this.dispose(); };
-
-    this._mesh = mesh;
-    this.object = mesh;
-
-    // initialize voxelColor
-    this.updatePalette();
-  }
-
-  dispose(){
-    if( this._canvas.has_webgl2 && this._mesh ){
-      this._mesh.material.dispose();
-      this._mesh.geometry.dispose();
-      // this._data_texture.dispose();
-      this.colorTexture.dispose();
-
-      // this._map_data = undefined;
-      // this.voxelData = undefined;
-    }
-  }
-
-  get_track_data( track_name, reset_material ){}
-
-  finish_init(){
-    // this.object
-
-    const transformDisabled = this._params.disable_trans_mat;
-
-    // temporarily disable transform matrix
-    this._params.disable_trans_mat = true;
-
-    // Finalize setups
-    super.finish_init();
-
-    // override transform
-    this._params.disable_trans_mat = transformDisabled;
-    this.object.userData.trans_mat = this._transform;
-
-    if( !transformDisabled ) {
-
-      this.object.applyMatrix4( this._transform );
-      this.object.updateMatrixWorld();
-
-    }
-
-    // data cube 2 must have groups and group parent is scene
-    // let gp = this.get_group_object();
-    // Move gp to global scene as its center is always 0,0,0
-    // this._canvas.origin.remove( gp );
-    // this._canvas.scene.add( gp );
-
-    this.register_object( ['atlases'] );
-
-  }
-
-  pre_render() {
-    super.pre_render();
-  }
-
-}
-
-
-function gen_datacube2(g, canvas){
-  return( new DataCube2(g, canvas) );
-}
-
-
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/ext/geometries/TubeBufferGeometry2.js
-
-
-// TubeBufferGeometry2
-
-class TubeBufferGeometry2 extends three_module.BufferGeometry {
-  constructor ( path, tubularSegments, radius, radialSegments, closed ) {
-
-    super();
-
-  	this.type = 'TubeBufferGeometry2';
-
-  	this.parameters = {
-  		path: path,
-  		tubularSegments: tubularSegments,
-  		radius: radius,
-  		radialSegments: radialSegments,
-  		closed: closed
-  	};
-
-  	tubularSegments = tubularSegments || 64;
-  	radius = radius || 1;
-  	radialSegments = radialSegments || 8;
-  	closed = closed || false;
-
-
-  	this.tubularSegments = tubularSegments;
-  	this.radialSegments = radialSegments;
-  	this.radius = radius;
-  	this.closed = closed;
-
-  	// expose internals
-  	this.computeFrenetFrames();
-
-  	// helper variables
-
-  	this._vertex = new three_module.Vector3();
-  	this._normal = new three_module.Vector3();
-  	this._uv = new three_module.Vector2();
-  	this._P = new three_module.Vector3();
-
-  	// buffer
-
-  	const arr_vertices = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 3 ).fill(0);
-  	const arr_normals = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 3 ).fill(0);
-  	const arr_uvs = new Array( (this.radialSegments + 1) * (this.tubularSegments + 1) * 2 ).fill(0);
-
-  	this._indices = new Array( this.radialSegments * this.tubularSegments * 6 ).fill(0);
-  	this._vertices = new three_module.Float32BufferAttribute( arr_vertices, 3 );
-  	this._normals = new three_module.Float32BufferAttribute( arr_normals, 3 );
-  	this._uvs = new three_module.Float32BufferAttribute( arr_uvs, 2 );
-
-  	// create buffer data
-
-  	this.generateBufferData( true, true, true, false );
-
-  	// build geometry
-  	this.setIndex( this._indices );
-  	this.setAttribute( 'position', this._vertices );
-  	this.setAttribute( 'normal', this._normals );
-  	this.setAttribute( 'uv', this._uvs );
-
-
-  }
-
-  computeFrenetFrames(){
-    const frames = this.parameters.path.computeFrenetFrames( this.tubularSegments, this.closed );
-
-  	this.tangents = frames.tangents;
-  	this.normals = frames.normals;
-  	this.binormals = frames.binormals;
-  }
-
-
-
-  generateBufferData( vertices = true, uvs = false, indices = false, check_normal = false ) {
-
-    if( check_normal ){
-      if( !this.normals || this.normals.length < 1 || this.normals[ 0 ].length() === 0 ){
-        // normal is generated wrong, need to update
-        this.computeFrenetFrames();
-      }
-
-    }
-
-    if( vertices ){
-  		for ( let i = 0; i < this.tubularSegments; i ++ ) {
-
-  			this.generateSegment( i );
-
-  		}
-
-  		// if the geometry is not closed, generate the last row of vertices and normals
-  		// at the regular position on the given path
-  		//
-  		// if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
-
-  		this.generateSegment( ( this.closed === false ) ? this.tubularSegments : 0 );
-
-  		this._vertices.needsUpdate = true;
-    }
-
-
-    if( uvs ){
-
-		  // uvs are generated in a separate function.
-  		// this makes it easy compute correct values for closed geometries
-
-  		this.generateUVs();
-
-  		this._uvs.needsUpdate = true;
-    }
-
-
-    if( indices ){
-  		// finally create faces
-
-  		this.generateIndices();
-
-    }
-
-	}
-
-  generateSegment( i ) {
-
-		// we use getPointAt to sample evenly distributed points from the given path
-
-		this._P = this.parameters.path.getPoint( i / this.tubularSegments, this._P );
-
-
-		const N = this.normals[ i ];
-		const B = this.binormals[ i ];
-
-		// generate normals and vertices for the current segment
-
-		for ( let j = 0; j <= this.radialSegments; j ++ ) {
-
-			const v = j / this.radialSegments * Math.PI * 2;
-
-			const sin = Math.sin( v );
-			const cos = - Math.cos( v );
-
-			// normal
-
-			this._normal.x = ( cos * N.x + sin * B.x );
-			this._normal.y = ( cos * N.y + sin * B.y );
-			this._normal.z = ( cos * N.z + sin * B.z );
-			this._normal.normalize();
-
-			this._normals.setXYZ(
-			  ( this.radialSegments + 1 ) * i + j,
-			  this._normal.x, this._normal.y, this._normal.z
-			);
-
-			// vertex
-
-			this._vertex.x = this._P.x + this.radius * this._normal.x;
-			this._vertex.y = this._P.y + this.radius * this._normal.y;
-			this._vertex.z = this._P.z + this.radius * this._normal.z;
-
-      this._vertices.setXYZ(
-        ( this.radialSegments + 1 ) * i + j,
-        this._vertex.x, this._vertex.y, this._vertex.z
-      );
-
-		}
-
-	}
-
-	generateUVs() {
-
-		for ( let i = 0; i <= this.tubularSegments; i ++ ) {
-
-			for ( let j = 0; j <= this.radialSegments; j ++ ) {
-
-				this._uv.x = i / this.tubularSegments;
-				this._uv.y = j / this.radialSegments;
-
-				this._uvs.setXY( ( this.radialSegments + 1 ) * i + j, this._uv.x, this._uv.y );
-
-			}
-
-		}
-
-	}
-
-	generateIndices() {
-
-		for ( let j = 1; j <= this.tubularSegments; j ++ ) {
-
-			for ( let i = 1; i <= this.radialSegments; i ++ ) {
-
-				const a = ( this.radialSegments + 1 ) * ( j - 1 ) + ( i - 1 );
-				const b = ( this.radialSegments + 1 ) * j + ( i - 1 );
-				const c = ( this.radialSegments + 1 ) * j + i;
-				const d = ( this.radialSegments + 1 ) * ( j - 1 ) + i;
-
-				// faces
-        const idx = (j - 1) * this.radialSegments + i - 1;
-        this._indices[ idx * 6 ] = a;
-        this._indices[ idx * 6 + 1 ] = b;
-        this._indices[ idx * 6 + 2 ] = d;
-
-        this._indices[ idx * 6 + 3 ] = b;
-        this._indices[ idx * 6 + 4 ] = c;
-        this._indices[ idx * 6 + 5 ] = d;
-
-				// this.indices.push( a, b, d );
-				// this.indices.push( b, c, d );
-
-			}
-
-		}
-
-	}
-
-
-  toJSON () {
-    const data = super.toJSON();
-
-  	data.path = this.parameters.path.toJSON();
-
-  	return data;
-  }
-}
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/geometry/tube.js
-
-
-
-
-
-// construct curve
-function CustomLine( targets ) {
-	three_module.Curve.call( this );
-	this.targets = targets;
-	this._cached = targets.map((v) => {
-	  return(new three_module.Vector3());
-	});
-}
-CustomLine.prototype = Object.create( three_module.Curve.prototype );
-CustomLine.prototype.constructor = CustomLine;
-CustomLine.prototype.getPoint = function ( t, optionalTarget ) {
-  const tp = optionalTarget || new three_module.Vector3();
-	tp.x = this.targets[0].x * (1.0 - t) + this.targets[1].x * t;
-  tp.y = this.targets[0].y * (1.0 - t) + this.targets[1].y * t;
-  tp.z = this.targets[0].z * (1.0 - t) + this.targets[1].z * t;
-  return( tp );
-};
-CustomLine.prototype._changed = function() {
-
-  return(this.targets.every((v, ii) => {
-    const _c = this._cached[ii];
-    if( _c && _c.isVector3 ){
-      if( v.equals(_c) ){
-        return(true);
-      }
-      this._cached[ii].copy( v );
-    } else {
-      this._cached[ii] = v.clone();
-    }
-
-    return( false );
-
-  }));
-
-};
-
-
-class TubeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
-
-  constructor(g, canvas){
-
-    super( g, canvas );
-    // this._params is g
-    // this.name = this._params.name;
-    // this.group_name = this._params.group.group_name;
-
-    this.type = 'TubeMesh';
-    this.isTubeMesh = true;
-
-    this.radius = g.radius || 0.4;
-    this.tubularSegments = g.tubular_segments || 3;
-    this.radialSegments = g.radial_egments || 6;
-    this.is_closed = g.is_closed || false;
-
-    this.path_names = g.paths;
-
-    // TODO: validate paths
-    let t1;
-    this._targets = this.path_names.map((name) => {
-      t1 = canvas.threebrain_instances.get( name );
-      if( t1 && t1.isThreeBrainObject ){
-        return( t1 );
-      } else {
-        throw( `Cannot find object ${ name }.` );
-      }
-    });
-    this._target_positions = [
-      this._targets[0].world_position,
-      this._targets[1].world_position
-    ];
-
-
-
-
-    this._curve = new CustomLine( this._target_positions );
-
-    this._geometry = new TubeBufferGeometry2( this._curve, this.tubularSegments,
-                                              this.radius, this.radialSegments, this.is_closed );
-
-    this._material = new three_module.MeshLambertMaterial();
-
-    this.object = new three_module.Mesh( this._geometry, this._material );
-    this._mesh = this.object;
-
-
-    this._geometry.name = 'geom_tube2_' + g.name;
-    this._mesh.name = 'mesh_tube2_' + g.name;
-
-    // cache
-  	this._cached_position = [];
-
-  }
-
-
-  finish_init(){
-
-    super.finish_init();
-
-    // data cube 2 must have groups and group parent is scene
-    let gp = this.get_group_object();
-    // Move gp to global scene as its center is always 0,0,0
-    gp.remove( this.object );
-    this._canvas.scene.add( this.object );
-
-  }
-
-  dispose(){
-    this._targets.length = 0;
-    this._mesh.material.dispose();
-    this._mesh.geometry.dispose();
-  }
-
-
-  pre_render(){
-
-    if( this.object ){
-      this._targets.forEach( (v, ii) => {
-        if( v._last_rendered !== results.elapsed_time ){
-          v.get_world_position();
-        }
-      } );
-
-      /*
-      if(
-        this._cached_position[0] !== this._target_positions[0] ||
-        this._cached_position[1] !== this._target_positions[1]
-      ) {
-        // position changed
-      }
-      */
-
-      // update positions
-      this._geometry.generateBufferData( true, false, false, true );
-    }
-  }
-
-
-}
-
-
-function gen_tube(g, canvas){
-  return( new TubeMesh(g, canvas) );
-}
-
-
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/shaders/SurfaceShader.js
-
-
-const compile_free_material = ( material, options, target_renderer ) => {
-
-  if( material.userData.compiled ){ return; }
-
-  material.userData.compiled = false;
-  material.userData.options = options;
-
-  material.onBeforeCompile = ( shader , renderer ) => {
-
-    shader.uniforms.mapping_type = options.mapping_type;
-    shader.uniforms.volume_map = options.volume_map;
-    shader.uniforms.scale_inv = options.scale_inv;
-    shader.uniforms.shift = options.shift;
-    shader.uniforms.sampler_bias = options.sampler_bias;
-    shader.uniforms.sampler_step = options.sampler_step;
-
-    shader.uniforms.elec_cols = options.elec_cols;
-    shader.uniforms.elec_locs = options.elec_locs;
-    shader.uniforms.elec_size = options.elec_size;
-    shader.uniforms.elec_active_size = options.elec_active_size;
-    shader.uniforms.elec_radius = options.elec_radius;
-    shader.uniforms.elec_decay = options.elec_decay;
-
-    shader.uniforms.blend_factor = options.blend_factor;
-
-    material.userData.shader = shader;
-
-    if( target_renderer !== undefined ){
-      if( target_renderer !== renderer ){
-        return;
-      }
-    }
-    material.userData.compiled = true;
-
-    shader.vertexShader = (0,utils/* remove_comments */.yi)(`
-precision mediump sampler2D;
-precision mediump sampler3D;
-uniform int mapping_type;
-uniform float elec_size;
-uniform float elec_active_size;
-uniform sampler3D volume_map;
-uniform sampler2D elec_cols;
-uniform sampler2D elec_locs;
-uniform vec3 scale_inv;
-uniform vec3 shift;
-uniform float sampler_bias;
-uniform float sampler_step;
-uniform float blend_factor;
-uniform float elec_radius;
-uniform float elec_decay;
-
-attribute vec3 track_color;
-vec3 zeros = vec3( 0.0 );
-
-vec4 sample1(vec3 p) {
-  vec4 re = vec4( 0.0, 0.0, 0.0, 0.0 );
-  vec3 threshold = vec3( 0.007843137, 0.007843137, 0.007843137 );
-  if( sampler_bias > 0.0 ){
-    vec3 dta = vec3( 0.0 );
-    vec4 tmp = vec4( 0.0 );
-    float count = 0.0;
-    for(dta.x = -sampler_bias; dta.x <= sampler_bias; dta.x+=sampler_step){
-      for(dta.y = -sampler_bias; dta.y <= sampler_bias; dta.y+=sampler_step){
-        for(dta.z = -sampler_bias; dta.z <= sampler_bias; dta.z+=sampler_step){
-          tmp = texture( volume_map, p + dta * scale_inv );
-          if(
-            tmp.a > 0.0 &&
-            (tmp.r > threshold.r ||
-            tmp.g > threshold.g ||
-            tmp.b > threshold.b)
-          ){
-            if( count == 0.0 ){
-              re = tmp;
-            } else {
-              re = mix( re, tmp, 1.0 / count );
-            }
-            count += 1.0;
-          }
-        }
-      }
-    }
-  } else {
-    re = texture( volume_map, p );
-  }
-  if( re.a == 0.0 ){
-    re.r = 1.0;
-    re.g = 1.0;
-    re.b = 1.0;
-  }
-  return( re );
-}
-
-
-vec3 sample2( vec3 p ) {
-  // p = (position + shift) * scale_inv
-  vec3 eloc;
-  vec3 ecol;
-  vec2 p2 = vec2( 0.0, 0.5 );
-  vec3 re = vec3( 0.0 );
-  float count = 0.0;
-  float len = 0.0;
-  float start = 0.5 / elec_size;
-  float end = elec_active_size / elec_size;
-  float step = 1.0 / elec_size;
-
-  for( p2.x = start; p2.x < end; p2.x += step ){
-    eloc = texture( elec_locs, p2 ).rgb;
-    len = max( length( ( eloc * 255.0 - 128.0 ) - p ) , 3.0 );
-    if( len < elec_radius ){
-      ecol = texture( elec_cols, p2 ).rgb;
-      re += 1.0 + ( ecol - 1.0 ) * exp( - len * elec_decay / elec_radius );
-      count += 1.0;
-    }
-  }
-  if( count == 0.0 ){
-    return ( vec3( 1.0 ) );
-  }
-  return (re / count);
-}
-`) + shader.vertexShader;
-
-    shader.vertexShader = shader.vertexShader.replace(
-      "#include <fog_vertex>",
-      (0,utils/* remove_comments */.yi)(
-`#include <fog_vertex>
-
-vec4 data_color0 = vec4( 0.0 );
-
-if( mapping_type == 1 ){
-    // is track_color is missing, or all zeros, it's invalid
-    if( track_color.rgb != zeros ){
-      vColor.rgb = mix( vColor.rgb, track_color.rgb, blend_factor );
-    }
-} else if( mapping_type == 2 ){
-  // vec3 data_position = (position + shift) * scale_inv + 0.5;
-  // data_color0 = sample1(
-  //   data_position -
-  //   scale_inv * vec3(0.5,-0.5,0.5)
-  // );
-  vec3 data_position = position + shift - vec3(0.5,-0.5,0.5);
-  data_color0 = sample1( data_position * scale_inv + 0.5 );
-
-#if defined( USE_COLOR_ALPHA )
-  vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
-  if( data_color0.a == 0.0 ){
-    vColor.a = 0.0;
-  }
-
-#elif defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
-	vColor.rgb = mix( max(vec3( 1.0 ) - vColor.rgb / 2.0, vColor.rgb), data_color0.rgb, blend_factor );
-#endif
-} else if( mapping_type == 3 ){
-  if( elec_active_size > 0.0 ){
-    data_color0.rgb = sample2( position + shift );
-    vColor.rgb = mix( vColor.rgb, data_color0.rgb, blend_factor );
-  }
-}
-`)
-    );
-
-    shader.fragmentShader = shader.fragmentShader.replace(
-      "#include <clipping_planes_fragment>",
-      (0,utils/* remove_comments */.yi)(
-`
-// Remove transparent fragments
-
-#if defined( USE_COLOR_ALPHA )
-  if( vColor.a == 0.0 ){
-    // gl_FragColor.a = 0.0;
-    // gl_FragColor.rgba = vec4(0.0);
-    discard;
-  }
-#endif
-#include <clipping_planes_fragment>
-`)
-    );
-  };
-
-
-  return( material );
-};
-
-
-
-;// CONCATENATED MODULE: ./src/js/geometry/free.js
-
-
-
-
-
-
-const MATERIAL_PARAMS = {
-  'transparent' : true,
-  'side': three_module.TwoPassDoubleSide,
-  'wireframeLinewidth' : 0.1,
-  'vertexColors' : true
-};
-
-// freemesh
-// CONSTANTS.DEFAULT_COLOR = 0;
-// CONSTANTS.VERTEX_COLOR = 1;
-// CONSTANTS.VOXEL_COLOR = 2;
-// CONSTANTS.ELECTRODE_COLOR = 3;
-
-class FreeMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
-
-  _ensure_track_color(){
-    if( !this._track_color ){
-      const track_color = new Uint8Array( this.__nvertices * 3 ).fill(255);
-      this._track_color = track_color;
-      this._geometry.setAttribute( 'track_color', new three_module.BufferAttribute( track_color, 3, true ) );
-    }
-  }
-
-  _link_userData(){
-    // register for compatibility
-    this._mesh.userData.pre_render = () => { return( this.pre_render() ); };
-    this._mesh.userData.dispose = () => { this.dispose(); };
-  }
-
-  // internally used
-  _set_track( skip_frame ){
-    // prepare
-    if( skip_frame !== undefined && skip_frame >= 0 ){
-      this.__skip_frame = skip_frame;
-    }
-    const value = this._params.value;
-    if( !value ){ return; }
-
-
-    const skip_items = this.__nvertices * this.__skip_frame;
-    if( skip_items > value.length ){ return; }
-
-    if( !this.__initialized ) {
-      value.forEach((v, ii) => {
-        value[ ii ] = Math.floor( v );
-      });
-    }
-    this._ensure_track_color();
-
-    // start settings track values
-    const lut = this._canvas.global_data('__global_data__.SurfaceColorLUT'),
-          lutMap = lut.map,
-          tcol = this._track_color;
-
-    // only set RGB, ignore A
-    let c, jj = skip_items;
-    for( let ii = 0; ii < this.__nvertices; ii++, jj++ ){
-      if( jj >= value.length ){
-        tcol[ ii * 3 ] = 0;
-        tcol[ ii * 3 + 1 ] = 0;
-        tcol[ ii * 3 + 2 ] = 0;
-        // tcol[ ii * 4 + 3 ] = 0;
-      } else {
-        c = lutMap[ value[ jj ] ];
-        if( c ){
-          tcol[ ii * 3 ] = c.R;
-          tcol[ ii * 3 + 1 ] = c.G;
-          tcol[ ii * 3 + 2 ] = c.B;
-          // tcol[ ii * 4 + 3 ] = 255;
-        } else {
-          tcol[ ii * 3 ] = 0;
-          tcol[ ii * 3 + 1 ] = 0;
-          tcol[ ii * 3 + 2 ] = 0;
-          // tcol[ ii * 4 + 3 ] = 0;
-        }
-      }
-    }
-    // this._mesh.material.needsUpdate = true;
-    this._geometry.attributes.track_color.needsUpdate = true;
-
-  }
-
-  // Primary color (Curv, sulc...)
-  _set_primary_color( color_name, update_color = false ){
-
-    let cname = color_name || this._vertex_cname;
-
-    // color data is lazy-loaded
-    const color_data = this._canvas.get_data(cname, this.misc_name, this.misc_group_name);
-
-    if( !(color_data && Array.isArray(color_data.value)) ){
-      if( update_color ){
-        this._mesh.material.needsUpdate = true;
-      }
-      return;
-    }
-
-    const g = this._params;
-    const nvertices = this._mesh.geometry.attributes.position.count;
-    if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
-      color_data.range = [-1, 1];
-    }
-
-    let scale = Math.max(color_data.range[1], -color_data.range[0]);
-
-    // generate color for each vertices
-    const _transform = (v, b = 10 / scale) => {
-      // let _s = 1.0 / ( 1.0 + Math.exp(b * 1)) - 0.5 * 2.0001;
-      let s = Math.floor( 153.9 / ( 1.0 + Math.exp(b * v)) ) + 100;
-      return( s / 255 );
-    };
-
-    color_data.value.forEach((v, ii) => {
-      if( ii >= nvertices ){ return; }
-      // Make it lighter using sigmoid function
-      let col = _transform(v);
-      this._vertex_color[ ii * 4 ] = col;
-      this._vertex_color[ ii * 4 + 1 ] = col;
-      this._vertex_color[ ii * 4 + 2 ] = col;
-      this._vertex_color[ ii * 4 + 3 ] = 1;
-    });
-
-    if( update_color ){
-      // update color to geometry
-      this._mesh.material.needsUpdate = true;
-    }
-
-  }
-
-  _check_material( update_canvas = false ){
-    const _mty = this._canvas.get_state('surface_material_type') || this._material_type;
-    if( !this._mesh.material['is' + _mty] ){
-      this.switch_material( _mty, update_canvas );
-    }
-  }
-
-  _set_color_from_datacube2( m, bias = 3.0 ){
-    console.debug("Generating surface colors from volume data...");
-
-    if( !m || !m.isDataCube2 ){
-      this._material_options.mapping_type.value = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
-      return;
-    }
-
-    if( this._material_options.mapping_type.value === constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR ) {
-      return;
-    }
-
-    this._volume_texture.image = m.colorTexture.image;
-
-
-    this._material_options.scale_inv.value.set(
-      1 / m.modelShape.x,
-      1 / m.modelShape.y,
-      1 / m.modelShape.z
-    );
-
-    /**
-     * We want to enable USE_COLOR_ALPHA so that vColor is vec4,
-     * This requires vertexAlphas to be true
-     * https://github.com/mrdoob/three.js/blob/be137e6da5fd682555cdcf5c8002717e4528f879/src/renderers/WebGLRenderer.js#L1442
-    */
-    this._mesh.material.vertexColors = true;
-    this._material_options.sampler_bias.value = bias;
-    this._material_options.sampler_step.value = bias / 2;
-    this._volume_texture.needsUpdate = true;
-
-  }
-
-  switch_material( material_type, update_canvas = false ){
-    if( material_type in this._materials ){
-      const _m = this._materials[ material_type ];
-      const _o = this._canvas.get_state("surface_opacity_left") || 0;
-
-      this._material_type = material_type;
-      this._mesh.material = _m;
-      this._mesh.material.vertexColors = true;
-      this._mesh.material.opacity = _o;
-      this._mesh.material.needsUpdate = true;
-      if( update_canvas ){
-        this._canvas.start_animation( 0 );
-      }
-    }
-  }
-
-  _link_electrodes(){
-
-    if( !Array.isArray( this._linked_electrodes ) ){
-      this._linked_electrodes = [];
-      this._canvas.electrodes.forEach((v) => {
-        for( let k in v ){
-          this._linked_electrodes.push( v[ k ] );
-        }
-      });
-
-      // this._linked_electrodes to shaders
-      const elec_size = this._linked_electrodes.length;
-      if( elec_size == 0 ){ return; }
-      const elec_locs = new Uint8Array( elec_size * 4 );
-      const locs_texture = new three_module.DataTexture( elec_locs, elec_size, 1 );
-
-      locs_texture.minFilter = three_module.NearestFilter;
-      locs_texture.magFilter = three_module.NearestFilter;
-      locs_texture.format = three_module.RGBAFormat;
-      locs_texture.type = three_module.UnsignedByteType;
-      locs_texture.unpackAlignment = 1;
-      locs_texture.needsUpdate = true;
-      this._material_options.elec_locs.value = locs_texture;
-
-      const elec_cols = new Uint8Array( elec_size * 4 );
-      const cols_texture = new three_module.DataTexture( elec_cols, elec_size, 1 );
-
-      cols_texture.minFilter = three_module.NearestFilter;
-      cols_texture.magFilter = three_module.NearestFilter;
-      cols_texture.format = three_module.RGBAFormat;
-      cols_texture.type = three_module.UnsignedByteType;
-      cols_texture.unpackAlignment = 1;
-      cols_texture.needsUpdate = true;
-      this._material_options.elec_cols.value = cols_texture;
-
-      this._material_options.elec_size.value = elec_size;
-      this._material_options.elec_active_size.value = elec_size;
-    }
-
-    const e_size = this._linked_electrodes.length;
-    if( !e_size ){ return; }
-
-    const e_locs = this._material_options.elec_locs.value.image.data;
-    const e_cols = this._material_options.elec_cols.value.image.data;
-
-    const p = new three_module.Vector3();
-    let ii = 0;
-    this._linked_electrodes.forEach((el) => {
-      if( el.material.isMeshBasicMaterial ){
-        el.getWorldPosition( p );
-        p.addScalar( 128 );
-        e_locs[ ii * 4 ] = Math.round( p.x );
-        e_locs[ ii * 4 + 1 ] = Math.round( p.y );
-        e_locs[ ii * 4 + 2 ] = Math.round( p.z );
-        e_cols[ ii * 4 ] = Math.floor( el.material.color.r * 255 );
-        e_cols[ ii * 4 + 1 ] = Math.floor( el.material.color.g * 255 );
-        e_cols[ ii * 4 + 2 ] = Math.floor( el.material.color.b * 255 );
-        ii++;
-      }
-    });
-    this._material_options.elec_locs.value.needsUpdate = true;
-    this._material_options.elec_cols.value.needsUpdate = true;
-    this._material_options.elec_active_size.value = ii;
-
-  }
-
-  finish_init(){
-
-    super.finish_init();
-
-    // Need to registr surface
-    // instead of using surface name, use
-    this.register_object( ['surfaces'] );
-
-    this._material_options.shift.value.copy( this._mesh.parent.position );
-
-    this._set_primary_color(this._vertex_cname, true);
-    this._set_track( 0 );
-
-
-    /*this._canvas.bind( this.name + "_link_electrodes", "canvas.finish_init", () => {
-      let nm, el;
-      this._canvas.electrodes.forEach((v) => {
-        for(nm in v){
-          el = v[ nm ];
-        }
-      });
-    }, this._canvas.el );*/
-
-
-    this.__initialized = true;
-  }
-
-  dispose(){
-    this._mesh.material.dispose();
-    this._mesh.geometry.dispose();
-    try {
-      this._volume_texture.dispose();
-    } catch (e) {}
-  }
-
-  pre_render(){
-    // check material
-    super.pre_render();
-    this._check_material( false );
-
-    if( !this.object.visible ) { return; }
-
-    // need to get current active datacube2
-    const atlas_type = this._canvas.get_state("atlas_type", "none"),
-          sub = this._canvas.get_state("target_subject", "none"),
-          inst = this._canvas.threebrain_instances.get(`Atlas - ${atlas_type} (${sub})`),
-          ctype = this._canvas.get_state("surface_color_type", "vertices"),
-          sigma = this._canvas.get_state("surface_color_sigma", 3.0),
-          blend = this._canvas.get_state("surface_color_blend", 0.4),
-          decay = this._canvas.get_state("surface_color_decay", 0.15),
-          radius = this._canvas.get_state("surface_color_radius", 10.0),
-          refresh_flag = this._canvas.get_state("surface_color_refresh", undefined);
-
-    let col_code, material_needs_update = false;
-
-    this._mesh.material.transparent = this._mesh.material.opacity < 0.99;
-    switch (ctype) {
-      case 'vertices':
-        col_code = constants/* CONSTANTS.VERTEX_COLOR */.t.VERTEX_COLOR;
-        break;
-
-      case 'sync from voxels':
-        col_code = constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR;
-        this._mesh.material.transparent = true;
-
-        // get current frame
-        if( this.time_stamp.length ){
-          let skip_frame = 0;
-
-          const currentTime = this._canvas.animParameters.time;
-
-          this.time_stamp.forEach((v, ii) => {
-            if( v <= currentTime ){
-              skip_frame = ii - 1;
-            }
-          });
-          if( skip_frame < 0 ){ skip_frame = 0; }
-
-          if( this.__skip_frame !== skip_frame){
-            this._set_track( skip_frame );
-          }
-        }
-        break;
-
-      case 'sync from electrodes':
-        col_code = constants/* CONSTANTS.ELECTRODE_COLOR */.t.ELECTRODE_COLOR;
-        this._link_electrodes();
-        break;
-
-      default:
-        col_code = constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR;
-    };
-
-    if( this._material_options.mapping_type.value !== col_code ){
-      this._material_options.mapping_type.value = col_code;
-      material_needs_update = true;
-    }
-    if( this._material_options.blend_factor.value !== blend ){
-      this._material_options.blend_factor.value = blend;
-      material_needs_update = true;
-    }
-    if( this._material_options.elec_decay.value !== decay ){
-      this._material_options.elec_decay.value = decay;
-      material_needs_update = true;
-    }
-    if( this._material_options.elec_radius.value !== radius ){
-      this._material_options.elec_radius.value = radius;
-      material_needs_update = true;
-    }
-    if( this._blend_sigma !== sigma ){
-      this._blend_sigma = sigma;
-      material_needs_update = true;
-    }
-    if( this._refresh_flag !== refresh_flag ){
-      this._refresh_flag = refresh_flag;
-      material_needs_update = true;
-    }
-
-    // This step is slow
-    if( material_needs_update && col_code === constants/* CONSTANTS.VOXEL_COLOR */.t.VOXEL_COLOR ){
-      // need to get current active datacube2
-      this._set_color_from_datacube2(inst, this._blend_sigma);
-    }
-  }
-
-  constructor(g, canvas){
-
-    super( g, canvas );
-    // this._params is g
-    // this.name = this._params.name;
-    // this.group_name = this._params.group.group_name;
-
-    this.type = 'FreeMesh';
-    this.isFreeMesh = true;
-
-    // STEP 1: initial settings
-    // when subject brain is messing, subject_code will be template subject such as N27,
-    // and display_code will be the missing subject
-    // actuall subject
-    this.subject_code = this._params.subject_code;
-    // display subject
-    this.display_code = canvas.get_data('subject_code', this._params.name,
-                                        this.group_name) || this.subject_code;
-    this.hemisphere = this._params.hemisphere || 'left';
-    this.surface_type = this._params.surface_type;
-    this.misc_name = '_misc_' + this.subject_code;
-    this.misc_group_name = '_internal_group_data_' + this.subject_code;
-    this._vertex_cname = this._canvas.get_data(
-      `default_vertex_${ this.hemisphere[0] }h_${ this.surface_type }`, this.name, this.group_name);
-
-    // STEP 2: data settings
-    const vertices = this._canvas.get_data('free_vertices_'+this.name, this.name, this.group_name);
-    const faces = this._canvas.get_data('free_faces_'+g.name, this.name, this.group_name);
-
-    // Make sure face index starts from 0
-    const _face_min = (0,utils/* min2 */.ht)(faces, 0);
-    if(_face_min !== 0) {
-      (0,utils/* sub2 */.Q0)(faces, _face_min);
-    }
-
-    // STEP 3: mesh settings
-    // For volume colors
-    this._volume_margin_size = 128;
-    this._volume_array = new Uint8Array( 32 );
-    // fake texture, will update later
-    this._volume_texture = new three_module.Data3DTexture(
-      this._volume_array, 2, 2, 2
-    );
-    this._volume_texture.minFilter = three_module.NearestFilter;
-    this._volume_texture.magFilter = three_module.LinearFilter;
-    this._volume_texture.format = three_module.RGBAFormat;
-    this._volume_texture.type = three_module.UnsignedByteType;
-    this._volume_texture.unpackAlignment = 1;
-
-
-    this._material_options = {
-      'mapping_type'      : { value : constants/* CONSTANTS.DEFAULT_COLOR */.t.DEFAULT_COLOR },
-      'volume_map'        : { value : this._volume_texture },
-      'scale_inv'         : {
-        value : new three_module.Vector3(
-          1 / this._volume_margin_size, 1 / this._volume_margin_size,
-          1 / this._volume_margin_size
-        )
-      },
-      'shift'             : { value : new three_module.Vector3() },
-      'sampler_bias'      : { value : 3.0 },
-      'sampler_step'      : { value : 1.5 },
-      'elec_cols'         : { value : null },
-      'elec_locs'         : { value : null },
-      'elec_size'         : { value : 0 },
-      'elec_active_size'  : { value : 0 },
-      'elec_radius'       : { value: 10.0 },
-      'elec_decay'        : { value : 0.15 },
-      'blend_factor'      : { value : 0.4 }
-    };
-
-    this._materials = {
-      'MeshPhongMaterial' : compile_free_material(
-        new three_module.MeshPhongMaterial( MATERIAL_PARAMS),
-        this._material_options, this._canvas.main_renderer
-      ),
-      'MeshLambertMaterial': compile_free_material(
-        new three_module.MeshLambertMaterial( MATERIAL_PARAMS ),
-        this._material_options, this._canvas.main_renderer
-      )
-    };
-
-    this._geometry = new three_module.BufferGeometry();
-
-    // construct geometry
-    this.__nvertices = vertices.length;
-    const vertex_positions = new Float32Array( this.__nvertices * 3 ),
-          face_orders = new Uint32Array( faces.length * 3 ),
-          vertex_color = new Float32Array( this.__nvertices * 4 ).fill(1);
-
-    this._vertex_color = vertex_color;
-
-    vertices.forEach((v, ii) => {
-      vertex_positions[ ii * 3 ] = v[0];
-      vertex_positions[ ii * 3 + 1 ] = v[1];
-      vertex_positions[ ii * 3 + 2 ] = v[2];
-    });
-    faces.forEach((v, ii) => {
-      face_orders[ ii * 3 ] = v[0];
-      face_orders[ ii * 3 + 1 ] = v[1];
-      face_orders[ ii * 3 + 2 ] = v[2];
-    });
-
-    this._geometry.setIndex( new three_module.BufferAttribute(face_orders, 1) );
-    this._geometry.setAttribute( 'position', new three_module.BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'color', new three_module.BufferAttribute( vertex_color, 4, true ) );
-
-
-    // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );
-    // gb.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
-
-    this._geometry.computeVertexNormals();
-    this._geometry.computeBoundingBox();
-    this._geometry.computeBoundingSphere();
-    //gb.faces = faces;
-
-    this._geometry.name = 'geom_free_' + g.name;
-
-    this._material_type = g.material_type || 'MeshPhongMaterial';
-    this._mesh = new three_module.Mesh(this._geometry, this._materials[this._material_type]);
-    this._mesh.name = 'mesh_free_' + g.name;
-
-    this._mesh.position.fromArray(g.position);
-
-    // calculate timestamps
-    this.time_stamp = (0,utils/* to_array */.AA)( this._params.time_stamp );
-    if(this.time_stamp.length > 0){
-
-      let min, max;
-      this.time_stamp.forEach((v) => {
-        if( min === undefined || min > v ){ min = v; }
-        if( max === undefined || max < v){ max = v; }
-      });
-      if( min !== undefined ){
-        let min_t = this._canvas.get_state( 'time_range_min0' );
-        if( min_t === undefined || min < min_t ){
-          this._canvas.set_state( 'time_range_min0', min );
-        }
-      }
-      if( max !== undefined ){
-        let max_t = this._canvas.get_state( 'time_range_max0' );
-        if( max_t === undefined || max < max_t ){
-          this._canvas.set_state( 'time_range_max0', max );
-        }
-      }
-
-    }
-
-    // register userData to comply with main framework
-    this._mesh.userData.construct_params = g;
-
-    // animation data (for backward-compatibility)
-    this._mesh.userData.ani_name = 'default';
-    this._mesh.userData.ani_all_names = Object.keys( g.keyframes );
-    this._mesh.userData.ani_exists = false;
-
-    // register object
-    this.object = this._mesh;
-
-    this._link_userData();
-  }
-
-}
-
-
-function gen_free(g, canvas){
-  return( new FreeMesh(g, canvas) );
-}
-
-
-
-// EXTERNAL MODULE: ./src/js/jsm/lines/LineSegments2.js
-var LineSegments2 = __webpack_require__(1445);
-// EXTERNAL MODULE: ./src/js/jsm/lines/LineMaterial.js
-var LineMaterial = __webpack_require__(1580);
-// EXTERNAL MODULE: ./src/js/jsm/lines/LineSegmentsGeometry.js
-var LineSegmentsGeometry = __webpack_require__(9376);
-;// CONCATENATED MODULE: ./src/js/geometry/line.js
-
-
-
-
-
-
-
-
-const tmp_vec3 = new three_module.Vector3();
-const tmp_col = new three_module.Color();
-
-function get_line_segments_singleton ( canvas ) {
-
-  if( canvas.singletons.has(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]) ) {
-    return( canvas.singletons.get(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]) );
-  }
-  const singleton = new LineSegmentsSingleton(canvas);
-  canvas.singletons.set(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"], singleton);
-  canvas.add_to_scene( singleton.mesh, true );
-
-  return( singleton );
-}
-
-class LineSegmentsSingleton {
-
-  ensure_nvertices( len ) {
-
-    if( this.vertex_positions.length < len * 3 ) {
-      // this._reset_attributes = true;
-      let tmp = this.vertex_positions;
-      this.vertex_positions = new Float32Array( len * 3 * 2 );
-      this.vertex_positions.set( tmp );
-
-      tmp = this.vertex_colors;
-      this.vertex_colors = new Float32Array( len * 3 * 2 );
-      this.vertex_colors.set( tmp );
-
-
-      tmp = this.line_widths;
-      this.line_widths = new Float32Array( len * 2 );
-      this.line_widths.set( tmp );
-
-      this.geometry.setPositions( this.vertex_positions );
-      this.geometry.setColors( this.vertex_colors );
-      this.geometry.setAttribute(
-        "linewidth",
-        new three_module.InstancedBufferAttribute(this.line_widths, 1));
-      // this.geometry.setDrawRange( 0, this.nvertices );
-      this.needsUpdate = true;
-    }
-  }
-
-  constructor (canvas) {
-
-    this._canvas = canvas;
-    this._segments = [];
-    this.vertex_positions = new Float32Array( 1500 );
-    this.vertex_colors = new Float32Array( 1500 );
-    this.line_widths = new Float32Array( 500 );
-    this.nvertices = 0;
-    this.geometry = new LineSegmentsGeometry/* LineSegmentsGeometry */.z();
-    this.geometry.setPositions( this.vertex_positions );
-    this.geometry.setColors( this.vertex_colors );
-
-    this.geometry.setAttribute(
-        "linewidth",
-        new three_module.InstancedBufferAttribute(this.line_widths, 1));
-    this.needsUpdate = false;
-    // this.geometry.setDrawRange( 0, 0 );
-
-    this.material = new LineMaterial/* LineMaterial */.Y({
-      // color: 0x0000ff,
-      vertexColors: true,
-      // depthTest: false,
-      dashed: false,
-      worldUnits: false,
-      linewidth: 1,
-      // side: DoubleSide,
-      alphaToCoverage: false,
-
-      onBeforeCompile: (shader) => {
-        shader.vertexShader = `
-          ${shader.vertexShader}
-        `.replace(`uniform float linewidth;`, `attribute float linewidth;`);
-      }
-    });
-
-
-    this.mesh = new LineSegments2/* LineSegments2 */.w( this.geometry, this.material );
-    this.mesh.computeLineDistances();
-
-    this.material.resolution.set(
-      this._canvas.client_width || window.innerWidth,
-      this._canvas.client_height || window.innerHeight
-    );
-
-  }
-
-  add_segment( inst ) {
-
-    if( !inst.isLineSegmentMesh ) {
-      throw "Can only add LineSegmentMesh instances to segment singleton";
-    }
-    const nverts = inst._nvertices;
-    if( nverts <= 1 ) {
-      throw "Cannot insert a line segment with less than 2 vertices";
-    }
-    const buff_starts = this.nvertices;
-
-    this.ensure_nvertices( this.nvertices + nverts );
-
-    // add inst to _segments
-    this._segments.push( inst );
-
-    // fill with 0 for both colors and vertices
-
-    for( let i = this.nvertices; i < this.nvertices + nverts; i++ ) {
-
-      // set segment positions
-      this.vertex_positions[ 3 * i ] = 0;
-      this.vertex_positions[ 3 * i + 1 ] = 0;
-      this.vertex_positions[ 3 * i + 2 ] = 0;
-
-      // set colors
-      this.vertex_colors[ 3 * i ] = 0;
-      this.vertex_colors[ 3 * i + 1 ] = 0;
-      this.vertex_colors[ 3 * i + 2 ] = 0;
-
-      // set line widths
-      this.line_widths[ i ] = 0;
-
-    }
-
-    this.nvertices = this.nvertices + nverts;
-    const buff_ends = this.nvertices;
-
-    inst._buffer_starts = buff_starts;
-    inst._buffer_ends = buff_ends;
-
-    // this.geometry.setDrawRange( 0, buff_ends );
-
-    return([ buff_starts, buff_ends ]);
-  }
-
-  dispose() {
-    this.disposed = true;
-    this.mesh.removeFromParent();
-    this._segments.length = 0;
-    this.geometry.dispose();
-    this.material.dispose();
-    this.vertex_positions = null;
-    this.vertex_colors = null;
-    if( this._canvas.singletons.has(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]) ) {
-      this._canvas.singletons.delete(constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]);
-    }
-  }
-
-  update_segments() {
-
-    this._segments.forEach((s) => {
-      s.compute_vertices();
-    });
-
-  }
-
-  pre_render() {
-    super.pre_render();
-    if( this.disposed ) { return; }
-    this.material.resolution.set(
-    	this._canvas.client_width || window.innerWidth,
-      this._canvas.client_height || window.innerHeight
-    );
-
-    if( this.needsUpdate ) {
-      this.mesh.computeLineDistances();
-      this.geometry.attributes.instanceStart.needsUpdate = true;
-      this.geometry.attributes.instanceEnd.needsUpdate = true;
-      this.geometry.attributes.instanceColorStart.needsUpdate = true;
-      this.geometry.attributes.instanceColorEnd.needsUpdate = true;
-      this.geometry.attributes.linewidth.needsUpdate = true;
-    }
-  }
-
-}
-
-// shouldn't call it a mesh, but whatever, I'm already here
-
-class LineSegmentMesh extends geometry_abstract/* AbstractThreeBrainObject */.j {
-
-  compute_vertices() {
-
-    const bstarts = this._buffer_starts;
-    if( bstarts < 0 ) { return; }
-
-    const vpositions = this._singleton.vertex_positions;
-    const vcolors = this._singleton.vertex_colors;
-    const lwidths = this._singleton.line_widths;
-
-    if( this.valid ) {
-      if( this.isDynamic ) {
-
-        for( let ii = 0; ii < this._anchors.length; ii++ ){
-          const buff_pos = bstarts + ii;
-
-          const anchor = this._anchors[ii];
-          if( anchor.type === "dynamic" ) {
-            anchor.linked_to.object.getWorldPosition( tmp_vec3 );
-          } else {
-            tmp_vec3.fromArray( anchor.linked_to );
-          }
-
-          vpositions[ buff_pos * 3 ] = tmp_vec3.x;
-          vpositions[ buff_pos * 3 + 1 ] = tmp_vec3.y;
-          vpositions[ buff_pos * 3 + 2 ] = tmp_vec3.z;
-
-        }
-
-      } else {
-
-        for( let ii = 0; ii < this._nvertices; ii++ ) {
-
-          const buff_pos = bstarts + ii;
-          vpositions[ buff_pos * 3 ] = this._vertices[ ii * 3 ];
-          vpositions[ buff_pos * 3 + 1 ] = this._vertices[ ii * 3 + 1 ];
-          vpositions[ buff_pos * 3 + 2 ] = this._vertices[ ii * 3 + 2 ];
-
-        }
-      }
-
-      let color_idx = 0;
-      let width_idx = 0;
-      const this_vcolors = this.vertex_colors;
-      const this_lwidths = this.line_widths;
-
-      for( let ii = bstarts; ii < bstarts + this._nvertices; ii++, color_idx++, width_idx++ ){
-        if( 3 * color_idx >= this_vcolors.length ) {
-          color_idx = 0;
-        }
-
-        vcolors[ ii * 3 ] = this_vcolors[ color_idx * 3 ];
-        vcolors[ ii * 3 + 1 ] = this_vcolors[ color_idx * 3 + 1 ];
-        vcolors[ ii * 3 + 2 ] = this_vcolors[ color_idx * 3 + 2 ];
-
-
-        if( width_idx >= this_lwidths.length ) {
-          width_idx = 0;
-        }
-
-        lwidths[ ii / 2 ] = this_lwidths[ width_idx ];
-
-      }
-
-    } else {
-
-      let j;
-      for( let i = bstarts; i < bstarts + this._nvertices; i++ ) {
-        for( j = 0; j < 3; j++ ) {
-          vpositions[ i * 3 + j ] = 0;
-          vcolors[ i * 3 + j ] = 0;
-        }
-      }
-
-    }
-
-    this._singleton.needsUpdate = true;
-
-  }
-
-  constructor(g, canvas){
-
-    super( g, canvas );
-    // this._params is g
-    // this.name = this._params.name;
-    // this.group_name = this._params.group.group_name;
-
-    this.type = 'LineSegmentMesh';
-    this.isLineSegmentMesh = true;
-    this.valid = true;
-    this._singleton = get_line_segments_singleton( canvas );
-
-    // check if the line type is static or dynamic
-    // for dynamic lines, the positions must be a vectors of
-    // electrode names.
-    this.isDynamic = this._params.dynamic || false;
-
-    this._anchors = [];   // only used when dynamic
-    this._vertices = [];  // only used when static
-    this._nvertices = this._params.vertices.length;
-    this._buffer_starts = -1;
-    this._buffer_ends = -1;
-
-
-    const vcolors = (0,utils/* to_array */.AA)( this._params.vertex_colors || this._params.color );
-    if( vcolors.length === 0 ) {
-      this.vertex_colors = [0, 0, 0];
-    } else {
-      this.vertex_colors = new Array( vcolors.length * 3 );
-
-      vcolors.forEach( (col, i) => {
-        tmp_col.set( col );
-        this.vertex_colors[ i * 3 ] = tmp_col.r;
-        this.vertex_colors[ i * 3 + 1 ] = tmp_col.g;
-        this.vertex_colors[ i * 3 + 2 ] = tmp_col.b;
-      });
-    }
-
-    const lwidths = (0,utils/* to_array */.AA)( this._params.line_widths || this._params.width );
-    if( lwidths.length === 0 ) {
-      this.line_widths = [1];
-    } else {
-      this.line_widths = lwidths;
-    }
-
-    this._singleton.add_segment(this);
-
-
-    this.reference_position = new three_module.Vector3();
-    if( !this.isDynamic ) {
-      const pos = (0,utils/* to_array */.AA)( this._params.position );
-      if( pos.length === 3 ) {
-        this.reference_position.fromArray(pos);
-      }
-    }
-
-    this.finish_init();
-
-    // Do not use object. This is not regular mesh
-    this.object = null;
-
-  }
-
-
-  finish_init(){
-
-    // super.finish_init();
-
-    // data cube 2 must have groups and group parent is scene
-    // let gp = this.get_group_object();
-    // Move gp to global scene as its center is always 0,0,0
-    // gp.remove( this.object );
-    // this._canvas.scene.add( this.object );
-
-    if( this.isDynamic ) {
-      // use _anchors
-      this._params.vertices.forEach( (v, ii) => {
-        if( !this.valid ) { return; }
-
-        if( v.hasOwnProperty("subject_code") ) {
-          const subject_code = v["subject_code"];
-          const electrode_number = v["electrode"];
-
-          const elist = this._canvas.electrodes.get(subject_code);
-
-          // mark as invalid, and this line will (should) be hidden
-          if( !elist ) { this.valid = false; }
-
-          let electrode = undefined;
-
-          for(let k in elist) {
-            const elec = elist[k];
-            // check if object is electrode and number matches
-            if( typeof(elec) === "object" ) {
-              const inst = elec.userData.instance;
-              if( inst && inst.isSphere && inst._params.number === electrode_number ) {
-                // this is it
-                electrode = inst;
-              }
-            }
-          }
-
-          if( !electrode ) { this.valid = false; }
-          this._anchors[ii] = {
-            "type" : "dynamic",
-            "linked_to" : electrode,
-          };
-        } else {
-
-          const v_ = (0,utils/* to_array */.AA)( v["position"] );
-          if( v_.length === 3 ) {
-            this._anchors[ii] = {
-              "type" : "static",
-              "linked_to" : v_,
-            };
-          } else {
-            this.valid = false;
-          }
-
-        }
-
-
-
-
-      });
-
-    } else {
-      // static: this._params.vertices could be a simple array ?
-      this._params.vertices.forEach( (v, ii) => {
-        if( !this.valid ) { return; }
-
-        const v_ = (0,utils/* to_array */.AA)( v );
-        if( v_.length != 3 ) {
-          this.valid = false;
-          return;
-        }
-        this._vertices.push(
-          v_[0], v_[1], v_[2]
-        );
-      });
-    }
-
-
-    if( !this.valid ) { return; }
-
-    this.compute_vertices();
-
-  }
-
-  dispose(){
-  }
-
-
-  pre_render(){}
-
-
-}
-
-
-function gen_linesements(g, canvas){
-  return( new LineSegmentMesh(g, canvas) );
-}
-
-
-
-
-
-
-// EXTERNAL MODULE: ./src/js/ext/text_sprite.js
-var text_sprite = __webpack_require__(1086);
-;// CONCATENATED MODULE: ./src/js/geometry/compass.js
-/* mesh objects that always stays at the corner of canvas */
-
-
-
-
-
-
-class Compass {
-  constructor( camera, control, text = 'RAS' ){
-    this._camera = camera;
-    this._control = control;
-    this._text = text;
-
-    this.container = new three_module.Object3D();
-    this.container.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-
-    this._left = new three_module.Vector3();
-    this._down = new three_module.Vector3();
-
-    const color = new three_module.Color();
-    const direction = new three_module.Vector3();
-    const origin = new three_module.Vector3( 0 , 0 , 0 );
-    const rotation = ['rotateZ', null, 'rotateX'];
-
-    for( let ii in text ){
-      // const geom = new CylinderGeometry( 0.5, 0.5, 3, 8 );
-      const _c = [0,0,0];
-      _c[ ii ] = 1;
-      color.fromArray( _c );
-      direction.fromArray( _c );
-      _c[ ii ] = 255;
-
-      // const line = new Mesh( geom, new MeshBasicMaterial({ color: color, side: DoubleSide }) );
-      // if( rotation[ii] ) { line[ rotation[ii] ]( Math.PI / 2 ); }
-
-      const axis = new three_module.ArrowHelper( direction, origin, 6, color.getHex(), 5.9 );
-      const sprite = new text_sprite/* TextSprite */.VW(text[ ii ], 6, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
-      sprite.position.copy( direction ).multiplyScalar( 9 );
-
-      this.container.add( axis );
-      this.container.add( sprite );
-
-    }
-
-  }
-
-  update(){
-    if( this.container.visible ) {
-
-      const aspRatio = (this._camera.top - this._camera.bottom) / (this._camera.right - this._camera.left);
-      const zoom = 1 / this._camera.zoom;
-
-      this._down.copy( this._camera.position ).sub( this._control.target ).normalize();
-
-      this.container.position.copy( this._camera.position )
-        .sub( this._down.multiplyScalar( 40 ) );
-
-      // calculate shift-left
-      this._left.copy( this._camera.up ).cross( this._down ).normalize()
-        .multiplyScalar( ( this._camera.left + this._camera.right ) / 2 );
-        // .multiplyScalar( ( this._camera.left + 10 * zoom + ( -150 * ( zoom - 1 ) ) ) );
-
-      this._down.copy( this._camera.up ).normalize()
-        .multiplyScalar( ( this._camera.bottom + 10 * zoom + ( -150 * ( zoom - 1 ) ) * aspRatio ) );
-
-      this.container.position.add( this._left ).add( this._down );
-      this.container.scale.set( zoom, zoom, zoom );
-
-    }
-  }
-
-  set_visibility( visible, callback ){
-    this.container.visible = (visible === true);
-    if( typeof callback === 'function' ){
-      callback();
-    }
-  }
-
-}
-
-
-
-
-
-;// CONCATENATED MODULE: ./src/js/jsm/math/Lut2.js
-
-
-class Lut {
-
- 	constructor( colormap, count = 32 ) {
-
-		this.lut = [];
-		this.map = [];
-		this.n = 0;
-		this.minV = 0;
-		this.maxV = 1;
-
-		this.setColorMap( colormap, count );
-
-	}
-
-	set( value ) {
-
-		if ( value.isLut === true ) {
-
-			this.copy( value );
-
-		}
-
-		return this;
-
-	}
-
-	setMin( min ) {
-
-		this.minV = min;
-
-		return this;
-
-	}
-
-	setMax( max ) {
-
-		this.maxV = max;
-
-		return this;
-
-	}
-
-	setColorMap( colormap, count = 32 ) {
-
-		this.map = ColorMapKeywords[ colormap ] || ColorMapKeywords.rainbow;
-		this.n = count;
-
-		const step = 1.0 / this.n;
-
-		this.lut.length = 0;
-
-		for ( let i = 0; i <= 1; i += step ) {
-
-			for ( let j = 0; j < this.map.length - 1; j ++ ) {
-
-				if ( i >= this.map[ j ][ 0 ] && i < this.map[ j + 1 ][ 0 ] ) {
-
-					const min = this.map[ j ][ 0 ];
-					const max = this.map[ j + 1 ][ 0 ];
-
-					const minColor = new three_module.Color( this.map[ j ][ 1 ] );
-					const maxColor = new three_module.Color( this.map[ j + 1 ][ 1 ] );
-
-					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
-
-					this.lut.push( color );
-
-				}
-
-			}
-
-		}
-
-		return this;
-
-	}
-
-	copy( lut ) {
-
-		this.lut = lut.lut;
-		this.map = lut.map;
-		this.n = lut.n;
-		this.minV = lut.minV;
-		this.maxV = lut.maxV;
-
-		return this;
-
-	}
-
-	getColor( alpha ) {
-
-		if ( alpha <= this.minV ) {
-
-			alpha = this.minV;
-
-		} else if ( alpha >= this.maxV ) {
-
-			alpha = this.maxV;
-
-		}
-
-		alpha = ( alpha - this.minV ) / ( this.maxV - this.minV );
-
-		let colorPosition = Math.round( alpha * this.n );
-		colorPosition == this.n ? colorPosition -= 1 : colorPosition;
-
-		return this.lut[ colorPosition ];
-
-	}
-
-	addColorMap( name, arrayOfColors ) {
-
-		ColorMapKeywords[ name ] = arrayOfColors;
-
-		return this;
-
-	}
-
-	createCanvas() {
-
-		const canvas = document.createElement( 'canvas' );
-		canvas.width = 1;
-		canvas.height = this.n;
-
-		this.updateCanvas( canvas );
-
-		return canvas;
-
-	}
-
-	updateCanvas( canvas ) {
-
-		const ctx = canvas.getContext( '2d', { alpha: false } );
-
-		const imageData = ctx.getImageData( 0, 0, 1, this.n );
-
-		const data = imageData.data;
-
-		let k = 0;
-
-		const step = 1.0 / this.n;
-
-		for ( let i = 1; i >= 0; i -= step ) {
-
-			for ( let j = this.map.length - 1; j >= 0; j -- ) {
-
-				if ( i < this.map[ j ][ 0 ] && i >= this.map[ j - 1 ][ 0 ] ) {
-
-					const min = this.map[ j - 1 ][ 0 ];
-					const max = this.map[ j ][ 0 ];
-
-					const minColor = new three_module.Color( this.map[ j - 1 ][ 1 ] );
-					const maxColor = new three_module.Color( this.map[ j ][ 1 ] );
-
-					const color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
-
-					data[ k * 4 ] = Math.round( color.r * 255 );
-					data[ k * 4 + 1 ] = Math.round( color.g * 255 );
-					data[ k * 4 + 2 ] = Math.round( color.b * 255 );
-					data[ k * 4 + 3 ] = 255;
-
-					k += 1;
-
-				}
-
-			}
-
-		}
-
-		ctx.putImageData( imageData, 0, 0 );
-
-		return canvas;
-
-	}
-
-}
-
-Lut.prototype.isLut = true;
-
-const ColorMapKeywords = {
-
-	'rainbow': [[ 0.0, 0x0000FF ], [ 0.2, 0x00FFFF ], [ 0.5, 0x00FF00 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFF0000 ]],
-	'cooltowarm': [[ 0.0, 0x3C4EC2 ], [ 0.2, 0x9BBCFF ], [ 0.5, 0xDCDCDC ], [ 0.8, 0xF6A385 ], [ 1.0, 0xB40426 ]],
-	'blackbody': [[ 0.0, 0x000000 ], [ 0.2, 0x780000 ], [ 0.5, 0xE63200 ], [ 0.8, 0xFFFF00 ], [ 1.0, 0xFFFFFF ]],
-	'grayscale': [[ 0.0, 0x000000 ], [ 0.2, 0x404040 ], [ 0.5, 0x7F7F80 ], [ 0.8, 0xBFBFBF ], [ 1.0, 0xFFFFFF ]]
-
-};
-
-function addToColorMapKeywords( color_name, cmap_keys ) {
-  if(ColorMapKeywords[color_name] === undefined){
-    ColorMapKeywords[color_name] = [];
-  }else{
-    ColorMapKeywords[color_name].length = 0;
-  }
-  const arr = ColorMapKeywords[color_name];
-  if(Array.isArray(cmap_keys)){
-    cmap_keys.forEach((el) => {
-      const e = el;
-      if( typeof e[1] === 'string' ){
-        e[1] = e[1].replace("0x", "#");
-      }
-      arr.push( e );
-    });
-  }
-}
-
-
-
-
-// EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
-var converter = __webpack_require__(7542);
-// EXTERNAL MODULE: ./node_modules/downloadjs/download.js
-var download = __webpack_require__(3729);
-var download_default = /*#__PURE__*/__webpack_require__.n(download);
-;// CONCATENATED MODULE: ./src/js/threejs_scene.js
-
-
-// import { OrthographicTrackballControls } from './core/OrthographicTrackballControls.js';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Geometry generator */
-const GEOMETRY_FACTORY = {
-  'sphere'    : sphere/* gen_sphere */.Lk,
-  'free'      : gen_free,
-  'datacube'  : gen_datacube,
-  'datacube2' : gen_datacube2,
-  'tube'      : gen_tube,
-  'linesegments' : gen_linesements,
-  'blank'     : (g, canvas) => { return(null) }
-};
-
-/**
- * entering use | operator, leaving use & operator
- * for example, entering canvas from off canvas (000) will be 001 | 000 = 001
- * then, entering control panel will be 001 | 101 = 101.
- * Leaving controller first, then to side panel will be
- *   (101 & 011) | 011 = 011
- * Or, entering side panel then leave controllers
- *   (101 | 011) & 011 = 011
- * hence the order of operation doesn't matter
-*/
-const MOUSE = {
-  ON_CANVAS       : 0b001,
-  ON_SIDE_CANVAS  : 0b011,
-  ON_CONTROLLER   : 0b101,
-  OFF_CONTROLLER  : 0b011,
-  OFF_SIDE_CANVAS : 0b101,
-  OFF_VIEWER      : 0b000
-}
-
-window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
-/* ------------------------------------ Layer setups ------------------------------------
-  Defines for each camera which layers are visible.
-  Protocols are
-    Layers:
-      - 0, 2, 3: Especially reserved for main camera
-      - 1, Shared by all cameras
-      - 4, 5, 6: Reserved for side-cameras
-      - 7: reserved for all, system reserved
-      - 8: main camera only, system reserved
-      - 9 side-cameras 1 only, system reserved
-      - 10 side-cameras 2 only, system reserved
-      - 11 side-cameras 3 only, system reserved
-      - 12 side-cameras 4 only, system reserved
-      - 13 all side cameras, system reserved
-      - 14~31 invisible
-
-*/
-
-// A storage to cache large objects such as mesh data
-const cached_storage = new StorageCache/* StorageCache */.B();
-
-// Make sure window.requestAnimationFrame exists
-// Override methods so that we have multiple support across platforms
-window.requestAnimationFrame =
-    window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.msRequestAnimationFrame ||
-    window.oRequestAnimationFrame ||
-    function (callback) {
-        setTimeout(function() { callback(Date.now()); },  1000/60);
-    };
-
-
-
-class THREEBRAIN_CANVAS {
-  constructor(
-    el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
-  ) {
-
-    if(DEBUG){
-      console.debug('Debug Mode: ON.');
-      this.DEBUG = true;
-    }else{
-      this.DEBUG = false;
-    }
-    if(cache === true){
-      this.use_cache = true;
-      this.cache = cached_storage;
-    }else if ( cache === false ){
-      this.use_cache = false;
-      this.cache = cached_storage;
-    }else{
-      this.use_cache = true;
-      this.cache = cache;
-    }
-
-    // DOM container information
-    this.$el = el;
-    this.container_id = this.$el.getAttribute( 'data-target' );
-    this.ready = false;
-    this._time_info = {
-      selected_object : {
-        position: new three_module.Vector3()
-      }
-    };
-
-    // Is system supporting WebGL2? some customized shaders might need this feature
-    // As of 08-2019, only chrome, firefox, and opera support full implementation of WebGL.
-    this.has_webgl2 = has_webgl2;
-
-    // Side panel initial size in pt
-    this.side_width = side_width;
-    this._sideCanvasCSSWidth = side_width;
-
-    // Indicator of whether we are in R-shiny environment, might change the name in the future if python, matlab are supported
-    this.shiny_mode = shiny_mode;
-
-    // Element container
-    this.main_canvas = document.createElement('div');
-    this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
-    this.main_canvas.style.width = width + 'px';
-
-    // Container that stores mesh objects from inputs (user defined) for each inquery
-    this.mesh = new Map();
-    this.threebrain_instances = new Map();
-
-    // Stores all electrodes
-    this.subject_codes = [];
-    this.electrodes = new Map();
-    this.slices = new Map();
-    this.ct_scan = new Map();
-    this.atlases = new Map();
-    this.singletons = new Map();
-    this._show_ct = false;
-    this.surfaces = new Map();
-    this.state_data = new Map();
-
-    // action event listener functions and dispose flags
-    this._disposed = false;
-    this.event_dispatcher = new CanvasEvent(
-      this.main_canvas, this.container_id);
-    // set default values
-    this.set_state( 'coronal_depth', 0 );
-    this.set_state( 'axial_depth', 0 );
-    this.set_state( 'sagittal_depth', 0 );
-
-    // for global usage
-    this.shared_data = new Map();
-
-    // Stores all groups
-    this.group = new Map();
-
-    // All mesh/geoms in this store will be calculated when raycasting
-    this.clickable = new Map();
-    this.clickable_array = [];
-
-    // Dispatcher of handlers when mouse is clicked on the main canvas
-    this._mouse_click_callbacks = {};
-    this._keyboard_callbacks = {};
-
-    // update functions
-    this._custom_updates = new Map();
-    this._update_countdown = 5;
-
-    /* A render flag that tells renderers whether the canvas needs update.
-          Case -1, -2, ... ( < 0 ) : stop rendering
-          Case 0: render once
-          Case 1, 2: render until reset
-    lower render_flag will be ignored if higher one is set. For example, if
-    render_flag=2 and pause_animation only has input of 1, renderer will ignore
-    the pause signal.
-    */
-    this.render_flag = 0;
-
-    // Disable raycasting, soft deprecated
-    this.disable_raycast = true;
-
-    // If legend is drawn, should be continuous or discrete.
-    this.color_type = 'continuous';
-
-    // If there exists animations, this will control the flow;
-    this.animation_clips = new Map();
-    this.color_maps = new Map();
-    this.animParameters = new AnimationParameters();
-
-    // Set pixel ratio, separate settings for main and side renderers
-    this.pixel_ratio = [ window.devicePixelRatio, window.devicePixelRatio ];
-    // Generate a canvas domElement using 2d context to put all elements together
-    // Since it's 2d canvas, we might also add customized information onto it
-    this.domElement = document.createElement('canvas');
-    this.domContextWrapper = new context/* CanvasContext2D */.b( this.domElement, this.pixel_ratio[0] );
-    this.domContext = this.domContextWrapper.context;
-    this.background_color = '#ffffff'; // white background
-    this.foreground_color = '#000000';
-    this.domContext.fillStyle = this.background_color;
-
-
-    // General scene.
-    // Use solution from https://stackoverflow.com/questions/13309289/three-js-geometry-on-top-of-another to set render order
-    this.scene = new three_module.Scene();
-    this.origin = new three_module.Object3D();
-    this.origin.position.copy( constants/* CONSTANTS.VEC_ORIGIN */.t.VEC_ORIGIN );
-    this.scene.add( this.origin );
-
-    /* Main camera
-        Main camera is initialized at 500,0,0. The distance is stayed at 500 away from
-        origin (stay at right &look at left)
-        The view range is set from -150 to 150 (left - right) respect container ratio
-        render distance is from 1 to 10000, sufficient for brain object.
-        Parameters:
-          position: 500,0,0
-          left: -150, right: 150, near 1, far: 10000
-          layers: 0, 1, 2, 3, 7, 8
-          center/lookat: origin (0,0,0)
-          up: 0,1,0 ( heads up )
-    */
-    this.mainCamera = new HauntedOrthographicCamera( this, width, height );
-
-    // Add main camera to scene
-    this.add_to_scene( this.mainCamera, true );
-
-    // Add ambient light to make scene soft
-    const ambient_light = new three_module.AmbientLight( constants/* CONSTANTS.COLOR_AMBIENT_LIGHT */.t.COLOR_AMBIENT_LIGHT, 1.0 );
-    ambient_light.layers.set( constants/* CONSTANTS.LAYER_SYS_ALL_CAMERAS_7 */.t.LAYER_SYS_ALL_CAMERAS_7 );
-    ambient_light.name = 'main light - ambient';
-    this.add_to_scene( ambient_light, true ); // soft white light
-
-
-    // Set Main renderer, strongly recommend WebGL2
-    if( this.has_webgl2 ){
-      // We need to use webgl2 for VolumeRenderShader1 to work
-      let main_canvas_el = document.createElement('canvas'),
-          main_context = main_canvas_el.getContext( 'webgl2' );
-    	this.main_renderer = new three_module.WebGLRenderer({
-    	  antialias: false, alpha: true, canvas: main_canvas_el, context: main_context
-    	});
-    }else{
-    	this.main_renderer = new three_module.WebGLRenderer({ antialias: false, alpha: true });
-    }
-  	this.main_renderer.setPixelRatio( this.pixel_ratio[0] );
-  	this.main_renderer.setSize( width, height );
-  	this.main_renderer.autoClear = false; // Manual update so that it can render two scenes
-  	this.main_renderer.localClippingEnabled=true; // Enable clipping
-  	this.main_renderer.setClearColor( this.background_color );
-
-
-    // register mouse events to save time from fetching from DOM elements
-    this.register_main_canvas_events();
-
-    // this.main_canvas.appendChild( this.main_renderer.domElement );
-    this.main_canvas.appendChild( this.domElement );
-
-    let wrapper_canvas = document.createElement('div');
-    this.wrapper_canvas = wrapper_canvas;
-    this.main_canvas.style.display = 'inline-flex';
-    this.wrapper_canvas.style.display = 'flex';
-    this.wrapper_canvas.style.flexWrap = 'wrap';
-    this.wrapper_canvas.style.width = '100%';
-    this.sideCanvasEnabled = false;
-    this.sideCanvasList = {};
-
-    // Generate inner canvas DOM element
-    // coronal (FB), axial (IS), sagittal (LR)
-    // 3 planes are draggable, resizable with open-close toggles 250x250px initial
-    this.sideCanvasList.coronal = new SideCanvas( this, "coronal" );
-    this.sideCanvasList.axial = new SideCanvas( this, "axial" );
-    this.sideCanvasList.sagittal = new SideCanvas( this, "sagittal" );
-
-    // Add video
-    this.video_canvas = document.createElement('video');
-    this.video_canvas.setAttribute( "autoplay", "false" );
-    // this.video_canvas.setAttribute( "crossorigin", "use-credentials" );
-    this.video_canvas.muted = true;
-
-    // this.video_canvas.innerHTML = `<source src="" type="video/mp4">`
-    this.video_canvas.height = height / 4;
-    this.video_canvas._enabled = false;
-    this.video_canvas._time_start = Infinity;
-    this.video_canvas._duration = 0;
-    this.video_canvas._mode = "hidden";
-
-
-    // Add main canvas to wrapper element
-    this.wrapper_canvas.appendChild( this.main_canvas );
-    this.$el.appendChild( this.wrapper_canvas );
-
-
-    this.has_stats = false;
-
-
-    // Controls
-    this.trackball = new HauntedArcballControls( this );
-
-    // Follower that fixed at bottom-left
-    this.compass = new Compass( this.mainCamera, this.trackball );
-    // Hide the anchor first
-    this.add_to_scene( this.compass.container, true );
-
-
-    // Mouse helpers
-    const mouse_pointer = new three_module.Vector2(),
-        mouse_raycaster = new three_module.Raycaster();
-    // const mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-    //     mouse_helper_root = new Mesh(
-    //       new BoxGeometry( 4,4,4 ),
-    //       new MeshBasicMaterial({ color : 0xff0000 })
-    //     );
-
-    // root is a green cube that's only visible in side cameras
-    // mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    // mouse_helper.children.forEach( el => {
-    //   el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    // } );
-
-    // In side cameras, always render mouse_helper_root on top
-    // mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
-    // mouse_helper_root.material.depthTest = false;
-    // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
-
-    // mouse_helper.add( mouse_helper_root );
-
-    // this.mouse_helper = mouse_helper;
-    this.mouse_raycaster = mouse_raycaster;
-    this.mouse_pointer = mouse_pointer;
-    this.mouseState = MOUSE.OFF_VIEWER;
-
-    // this.add_to_scene(mouse_helper, true);
-
-    this.focus_box = new three_module.BoxHelper();
-    this.focus_box.material.color.setRGB( 1, 0, 0 );
-    this.focus_box.userData.added = false;
-    this.bounding_box = new three_module.BoxHelper();
-    this.bounding_box.material.color.setRGB( 0, 0, 1 );
-    this.bounding_box.userData.added = false;
-    this.bounding_box.layers.set( constants/* CONSTANTS.LAYER_INVISIBLE_31 */.t.LAYER_INVISIBLE_31 );
-
-
-    this.set_font_size();
-
-		// File loader
-    this.file_loader = new CanvasFileLoader( this );
-
-  }
-
-  /*---- Finalize init ------------------------------------------------------*/
-  register_main_canvas_events(){
-
-    // this.$el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    // this.$el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
-    /*
-    this.bind( "mouseEnteredViewer", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_CANVAS;
-    }, this.$el );
-    this.bind( "mouseLeftViewer", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_CANVAS;
-    }, this.$el );
-    this.bind( "mouseEnteredSidePanels", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_SIDE_CANVAS;
-    }, this.sideCanvasList.coronal.$el );
-    this.bind( "mouseLeftSidePanels", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_SIDE_CANVAS;
-    }, this.$el );
-    this.bind( "mouseEnteredControlPanel", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_CONTROLLER;
-    }, this.$el );
-    this.bind( "mouseLeftViewer", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_CONTROLLER;
-    }, this.$el );
-    */
-
-    this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
-			  this.listen_keyboard = true;
-			}, this.main_canvas);
-		this.bind( 'main_canvas_mouseleave', 'mouseleave', (e) => {
-			  this.listen_keyboard = false;
-			}, this.main_canvas);
-
-		this.bind( 'main_canvas_dblclick', 'dblclick', (event) => { // Use => to create flexible access to this
-      if(this.mouse_event !== undefined && this.mouse_event.level > 2){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'dblclick',
-        'event' : event,
-        'dispose' : false,
-        'level' : 2
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_click', 'click', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'click',
-        'button' : event.button,
-        'event' : event,
-        'dispose' : false,
-        'level' : 1
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_contextmenu', 'contextmenu', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'contextmenu',
-        'button' : event.button,
-        'event' : event,
-        'dispose' : false,
-        'level' : 1
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mousemove', 'mousemove', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 0){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'mousemove',
-        'event' : event,
-        'dispose' : false,
-        'level' : 0
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mousedown', 'mousedown', (event) => {
-      this.mouse_event = {
-        'action' : 'mousedown',
-        'event' : event,
-        'dispose' : false,
-        'level' : 3
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mouseup', 'mouseup', (event) => {
-      this.mouse_event = {
-        'action' : 'mouseup',
-        'event' : event,
-        'dispose' : true,
-        'level' : 0
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
-      if (event.isComposing || event.keyCode === 229) { return; }
-      if( this.listen_keyboard ){
-        // event.preventDefault();
-        this.keyboard_event = {
-          'action' : 'keydown',
-          'event' : event,
-          'dispose' : false,
-          'level' : 0
-        };
-      }
-
-    }, document );
-
-
-    this.add_mouse_callback(
-      (evt) => {
-
-        // If editing mode enabled, disable this
-        return({
-          pass  : !this.edit_mode && (['click', 'dblclick'].includes( evt.action ) ||
-                  ( evt.action === 'mousedown' && evt.event.button === 2 )),
-          type  : 'clickable'
-        });
-      },
-      (res, evt) => {
-        this.focus_object( res.target_object );
-        try {
-          document.activeElement.blur();
-        } catch (e) {}
-        this.start_animation( 0 );
-      },
-      'set_obj_chosen'
-    );
-
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : ['click', 'dblclick'].includes( evt.action ) ||
-                  ( evt.action === 'mousedown' && evt.event.button === 2 ),
-          type  : 'clickable' //this.scene.children //'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const first_item = res.first_item;
-        if( first_item ){
-
-          const target_object = res.target_object,
-                from = first_item.point,
-                direction = first_item.face.normal.normalize();
-
-          // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
-          direction.transformDirection( target_object.matrixWorld );
-          let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
-          if(back){
-            direction.applyMatrix3(new three_module.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
-          }
-
-          // this.mouse_helper.position.fromArray( to_array(from) );
-          // this.mouse_helper.setDirection(direction);
-          // this.mouse_helper.visible = true;
-
-        }else{
-          // this.mouse_helper.visible = false;
-        }
-
-        this.start_animation(0);
-      },
-      'raycaster'
-    );
-
-    // Add handlers to set plane location when an electrode is clicked
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.isMesh && obj.userData.construct_params ){
-          const pos = new three_module.Vector3();
-          obj.getWorldPosition( pos );
-          this.dispatch_event( 'canvas.drive.setSliceCrosshair', {
-            x : pos.x,
-            y : pos.y,
-            z : pos.z,
-            centerCrosshair : true
-          } );
-        }
-      },
-      'side_viewer_depth'
-    );
-
-
-
-    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT */.t.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
-      let m = this.object_chosen || this._last_object_chosen,
-          last_obj = false,
-          this_obj = false,
-          first_obj = false;
-
-      // place flag first as the function might ends early
-      this.start_animation( 0 );
-
-      for( let _nm of this.mesh.keys() ){
-        this_obj = this.mesh.get( _nm );
-        if( this_obj.visible &&
-            this_obj.isMesh &&
-            this_obj.userData.construct_params.is_electrode
-        ){
-          if( !m ){
-            this.focus_object( this_obj, true );
-            return(null);
-          }
-          if( last_obj && last_obj.name === m.name ){
-            this.focus_object( this_obj, true );
-            return(null);
-          }
-          last_obj = this_obj;
-          if( !first_obj ){
-            first_obj = this_obj;
-          }
-        }
-      }
-      if( last_obj !== false ){
-        // has electrode
-        if( last_obj.name === m.name ){
-        // focus on the first one
-          last_obj = first_obj;
-        }
-        this.focus_object( last_obj, true );
-        return(null);
-      }
-
-    }, 'electrode_cycling_next');
-
-    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_PREV */.t.KEY_CYCLE_ELECTRODES_PREV, (evt) => {
-      let m = this.object_chosen || this._last_object_chosen,
-          last_obj = false,
-          this_obj = false,
-          first_obj = false;
-
-      // place flag first as the function might ends early
-      this.start_animation( 0 );
-
-      for( let _nm of this.mesh.keys() ){
-        this_obj = this.mesh.get( _nm );
-        if( this_obj.visible &&
-            this_obj.isMesh &&
-            this_obj.userData.construct_params.is_electrode
-        ){
-          if( m && last_obj && m.name == this_obj.name ){
-            this.focus_object( last_obj, true );
-            return(null);
-          }
-          last_obj = this_obj;
-        }
-      }
-      if( last_obj ){
-        this.focus_object( last_obj, true );
-      }
-    }, 'electrode_cycling_prev');
-
-    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CLIP_INFO_FOCUSED */.t.KEY_CLIP_INFO_FOCUSED, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, true, false ) ){
-
-        const m = this.object_chosen || this._last_object_chosen;
-        // check if this is electrode
-        if( (0,sphere/* is_electrode */.OK)(m) ){
-          // get electrode information
-          const g = m.userData.construct_params,
-                subject_code = g.subject_code,
-                subject_data = this.shared_data.get( subject_code ),
-                tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
-                xfm = subject_data.matrices.xfm,
-                pos = new three_module.Vector3();
-
-          pos.fromArray( g.position );
-          let s = `${g.name}\n` + `tkrRAS: ${(0,utils/* vec3_to_string */.Wk)(g.position)}\n`;
-
-          //  T1_x y z
-          pos.applyMatrix4( tkrRAS_Scanner );
-          s = s + `T1 RAS: ${(0,utils/* vec3_to_string */.Wk)(pos)}\n`;
-
-          //  MNI305_x MNI305_y MNI305_z
-          pos.applyMatrix4( xfm );
-          s = s + `MNI305: ${(0,utils/* vec3_to_string */.Wk)(pos)}\n`;
-
-          (0,utils/* write_clipboard */.FD)(s);
-        }
-      }
-    }, 'copy_electrode_info');
-
-  }
-  finish_init(){
-    // finalizing initialization of each geom
-    this.dispatch_event( "canvas.finish_init" );
-  }
-
-  /*---- Add objects --------------------------------------------*/
-  add_to_scene( m, global = false ){
-    if( global ){
-      this.scene.add( m );
-    }else{
-      this.origin.add( m );
-    }
-  }
-
-  // Generic method to add objects
-  add_object(g){
-    //
-    if(this.DEBUG){
-      console.debug('Generating geometry '+g.type);
-    }
-    let gen_f = GEOMETRY_FACTORY[g.type],
-        inst = gen_f(g, this);
-
-    if( !inst || typeof(inst) !== 'object' || !inst.object ){
-      return;
-    }
-
-    // make sure subject array exists
-    this.init_subject( inst.subject_code );
-
-
-    inst.finish_init();
-    return( inst );
-  }
-
-  // Make object clickable (mainly electrodes)
-  add_clickable( name, obj ){
-    if( this.clickable.has( name ) ){
-      // remove from this.clickable_array
-      const sub = this.clickable.get( name ),
-            idx = this.clickable_array.indexOf( sub );
-      if( idx > -1 ){
-        this.clickable_array.splice(idx, 1);
-      }
-    }
-    this.clickable.set( name, obj );
-    this.clickable_array.push( obj );
-  }
-
-  // Add geom groups. This function can be async if the group contains
-  // cached data. However, if there is no external data needed, then this
-  // function is synchronous
-  add_group(g, cache_folder = 'threebrain_data', onProgress = null){
-    var gp = new three_module.Object3D();
-
-    gp.name = 'group_' + g.name;
-    (0,utils/* to_array */.AA)(g.layer).forEach( (ii) => { gp.layers.enable( ii ) } );
-    gp.position.fromArray( g.position );
-
-    if(g.trans_mat !== null){
-      let trans = new three_module.Matrix4();
-      trans.set(...g.trans_mat);
-      let inverse_trans = new three_module.Matrix4().copy( trans ).invert();
-
-      gp.userData.trans_mat = trans;
-      gp.userData.inv_trans_mat = inverse_trans;
-
-      if(!g.disable_trans_mat){
-        gp.applyMatrix4(trans);
-      }
-    }
-
-    gp.userData.construct_params = g;
-
-    if(!g.group_data || typeof g.group_data !== "object") {
-      g.group_data = {};
-    }
-
-    gp.userData.group_data = g.group_data;
-    this.group.set( g.name, gp );
-    this.add_to_scene(gp);
-
-    // Async loading group cached data
-
-    const cached_items = (0,utils/* to_array */.AA)( g.cached_items );
-
-    const promises = cached_items.map(async (nm) => {
-      const cache_info = g.group_data[nm];
-
-      // cache_info should be object of paths for the first time. However
-      // if loaded before, the cache_info might be substituted by
-      // the cache values, which do not contain the file information anymore
-      if(
-        !cache_info || typeof(cache_info) !== "object" ||
-        typeof cache_info.file_name !== "string"
-      ) { return; }
-
-      const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-      console.debug(path);
-      let v = await this.file_loader.read( path );
-      if( v && typeof(v) === "object" ) {
-        for(let key in v) {
-          g.group_data[key] = v[key];
-        }
-      }
-    });
-
-    return new Promise(resolve => {
-      Promise.all(promises).then(async () => {
-
-        // special case, if group name is "__global_data", then set group variable
-        if( g.name === '__global_data' && g.group_data ){
-          for( let _n in g.group_data ){
-            this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
-          }
-
-          // check if ".subject_codes" is in the name
-          const subject_codes = (0,utils/* to_array */.AA)( this.shared_data.get(".subject_codes") );
-          if( subject_codes.length > 0 ){
-
-            // generate transform matrices
-            subject_codes.forEach((scode) => {
-
-              let subject_data = this.shared_data.get(scode);
-              if( !subject_data ){
-                subject_data = {};
-                this.shared_data.set(scode, subject_data);
-              }
-
-              const Norig = (0,utils/* as_Matrix4 */.xl)( subject_data.Norig );
-              const Torig = (0,utils/* as_Matrix4 */.xl)( subject_data.Torig );
-              const xfm = (0,utils/* as_Matrix4 */.xl)( subject_data.xfm );
-              const tkrRAS_MNI305 = (0,utils/* as_Matrix4 */.xl)( subject_data.vox2vox_MNI305 );
-              const MNI305_tkrRAS = new three_module.Matrix4()
-                .copy(tkrRAS_MNI305).invert();
-              const tkrRAS_Scanner = new three_module.Matrix4()
-                .copy(Norig)
-                .multiply(
-                  new three_module.Matrix4()
-                    .copy(Torig)
-                    .invert()
-                );
-              subject_data.matrices = {
-                Norig : Norig,
-                Torig : Torig,
-                xfm : xfm,
-                tkrRAS_MNI305 : tkrRAS_MNI305,
-                MNI305_tkrRAS : MNI305_tkrRAS,
-                tkrRAS_Scanner: tkrRAS_Scanner
-              };
-
-            });
-
-          }
-
-          const media_content = this.shared_data.get(".media_content");
-          if( media_content ){
-            for(let video_name in media_content){
-              const content = media_content[video_name];
-              if( !content.is_url ){
-                content.url = cache_folder + g.cache_name + '/' + content.url;
-                content.is_url = true;
-                const blob = await fetch(content.url).then(r => r.blob());
-                content.url = URL.createObjectURL(blob);
-              }
-            }
-          }
-
-        }
-
-        resolve( g.name );
-
-      });
-    });
-  }
-
-  // Debug stats (framerate)
-  _add_stats(){
-    // if DEBUG, add stats information
-    // Stats
-    if(!this.has_stats){
-      this.has_stats = true;
-      this.stats = new Stats();
-      this.stats.domElement.style.display = 'block';
-      this.stats.domElement.style.position = 'absolute';
-      this.stats.domElement.style.top = '0';
-      this.stats.domElement.style.left = '0';
-      this.$el.appendChild( this.stats.domElement );
-    }
-  }
-
-  /*---- Remove, dispose objects --------------------------------------------*/
-  remove_object( obj, resursive = true, dispose = true, depth = 100 ){
-    if( !obj && depth < 0 ){ return; }
-    if( resursive ){
-      if( Array.isArray( obj.children ) ){
-        for( let ii = obj.children.length - 1; ii >= 0; ii = Math.min(ii-1, obj.children.length) ){
-          if( ii < obj.children.length ){
-            this.remove_object( obj.children[ ii ], resursive, dispose, depth - 1 );
-          }
-        }
-      }
-    }
-    if( obj.parent ){
-      console.debug( 'removing object - ' + (obj.name || obj.type) );
-      obj.parent.remove( obj );
-    }
-
-    if( dispose ){
-      this.dispose_object( obj );
-    }
-  }
-  dispose_object( obj, quiet = false ){
-    if( !obj || typeof obj !== 'object' ) { return; }
-    const obj_name = obj.name || obj.type || 'unknown';
-    if( !quiet ){
-      console.debug('Disposing - ' + obj_name);
-    }
-    if( obj.userData && typeof obj.userData.dispose === 'function' ){
-      this._try_dispose( obj.userData, obj.name, quiet );
-    }else{
-      // Not implemented, try to guess dispose methods
-      this._try_dispose( obj.material, obj_name + '-material', quiet );
-      this._try_dispose( obj.geometry, obj_name + '-geometry', quiet );
-      this._try_dispose( obj, obj_name, quiet );
-    }
-  }
-
-  _try_dispose( obj, obj_name = undefined, quiet = false ){
-    if( !obj || typeof obj !== 'object' ) { return; }
-    if( typeof obj.dispose === 'function' ){
-      try {
-        obj.dispose();
-      } catch(e) {
-        if( !quiet ){
-          console.warn( 'Failed to dispose ' + (obj_name || obj.name || 'unknown') );
-        }
-      }
-    }
-  }
-
-  dispose(){
-    // Remove all objects, listeners, and dispose all
-    this._disposed = true;
-    this.ready = false;
-    this.animParameters.dispose();
-
-    // update functions
-    this._custom_updates.clear();
-
-    // Remove custom listeners
-    this.dispose_eventlisters();
-    this.trackball.enabled = false;
-    this.trackball.dispose();
-
-    // Remove customized objects
-    this.clear_all();
-
-    // Remove the rest objects in the scene
-    this.remove_object( this.scene );
-
-    // Call dispose method
-    this.threebrain_instances.forEach((el) => {
-      el.dispose();
-    });
-
-    // dispose scene
-    this.scene.dispose();
-    this.scene = null;
-
-    // Remove el
-    this.$el.innerHTML = '';
-
-    // How to dispose renderers? Not sure
-    this.domContext = null;
-    this.domContextWrapper = null;
-    this.main_renderer.dispose();
-    this.sideCanvasList.coronal.dispose();
-    this.sideCanvasList.axial.dispose();
-    this.sideCanvasList.sagittal.dispose();
-
-  }
-
-  // Function to clear all meshes, but still keep canvas valid
-  clear_all(){
-    // Stop showing information of any selected objects
-    this.object_chosen=undefined;
-    this.clickable.clear();
-    this.clickable_array.length = 0;
-    this.title = undefined;
-
-    this.subject_codes.length = 0;
-    this.electrodes.clear();
-    this.slices.clear();
-    this.ct_scan.clear();
-    this.surfaces.clear();
-    this.atlases.clear();
-
-    this.state_data.clear();
-    this.shared_data.clear();
-    this.color_maps.clear();
-    // this._mouse_click_callbacks['side_viewer_depth'] = undefined;
-
-    console.debug('TODO: Need to dispose animation clips');
-    this.animation_clips.clear();
-
-    this.group.forEach((g) => {
-      // g.parent.remove( g );
-      this.remove_object( g );
-    });
-    this.mesh.forEach((m) => {
-      this.remove_object( m );
-      // m.parent.remove( m );
-      // this.dispose_object(m);
-      // this.scene.remove( m );
-    });
-    this.mesh.clear();
-    this.threebrain_instances.clear();
-    this.group.clear();
-
-    this.singletons.forEach( (el) => {
-      try {
-        el.dispose();
-      } catch (e) {}
-    });
-    this.singletons.clear();
-
-    // set default values
-    this.set_state( 'coronal_depth', 0 );
-    this.set_state( 'axial_depth', 0 );
-    this.set_state( 'sagittal_depth', 0 );
-    this.dispatch_event( 'canvas.clear_all' );
-
-  }
-
-
-
-  /*---- Events -------------------------------------------------------------*/
-  bind( name, evtstr, fun, target, options = false ){
-    this.event_dispatcher.bind(name, evtstr, fun, target, options);
-  }
-  dispatch_event( type, data, immediate = false ){
-    this.event_dispatcher.dispatch_event( type, data, immediate );
-  }
-
-  dispose_eventlisters(){
-    this.event_dispatcher.dispose();
-  }
-
-
-  // callbacks
-  add_mouse_callback(check, callback, name){
-    this._mouse_click_callbacks[name] = [check, callback];
-  }
-  add_keyboard_callabck(keycode, callback, name){
-    this._keyboard_callbacks[name] = [keycode, callback];
-  }
-  handle_resize(width, height, lazy = false, center_camera = false){
-
-    if( this._disposed ) { return; }
-    if(width === undefined){
-      width = this.client_width;
-      height = this.client_height;
-
-    }else{
-      this.client_width = width;
-      this.client_height = height;
-    }
-
-    // console.debug('width: ' + width + '; height: ' + height);
-
-    if(lazy){
-      this.trackball.handleResize();
-
-      this.start_animation(0);
-
-      return(undefined);
-    }
-
-    var main_width = width,
-        main_height = height;
-
-    // Because when panning controls, we actually set views, hence need to calculate this smartly
-    // Update: might not need change
-	  if( center_camera ){
-      this.mainCamera.reset({ fov : true, position : false, zoom : false });
-	  }else{
-	    this.mainCamera.handleResize();
-	  }
-
-    this.main_canvas.style.width = main_width + 'px';
-    this.main_canvas.style.height = main_height + 'px';
-
-    this.main_renderer.setSize( main_width, main_height );
-
-    const pixelRatio = this.pixel_ratio[0];
-
-    if( this.domElement.width != main_width * pixelRatio ){
-      this.domElement.width = main_width * pixelRatio;
-      this.domElement.style.width = main_width + 'px';
-    }
-
-    if( this.domElement.height != main_height * pixelRatio ){
-      this.domElement.height = main_height * pixelRatio;
-      this.domElement.style.height = main_height + 'px';
-    }
-
-    this.video_canvas.height = main_height / 4;
-
-    this.trackball.handleResize();
-
-    this.start_animation(0);
-
-  }
-
-  /*---- Setter/getters -----------------------------------------------------*/
-  global_data(data_name){
-    const gp = this.group.get("__global_data");
-    let re = null;
-    // group exists
-    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
-
-      re = gp.userData.group_data[data_name];
-    }
-
-    return(re);
-
-  }
-
-  // Get data from some geometry settings. Try to get from geom first, then get from group
-  get_data(data_name, from_geom, group_hint){
-
-    const m = this.mesh.get( from_geom );
-    let re, gp;
-
-    if( m ){
-      if(m.userData.hasOwnProperty(data_name)){
-        // Object itself own the property, no group needs to go to
-        return(m.userData[data_name]);
-      }else{
-        let g = m.userData.construct_params.group;
-        if(g !== null){
-          let group_name = g.group_name;
-          gp = this.group.get( group_name );
-          // set re
-        }
-      }
-    }else if(group_hint !== undefined){
-      let group_name = group_hint;
-      gp = this.group.get( group_name );
-      // set re
-
-    }else if(this.DEBUG){
-      console.error('Cannot find data with name ' + from_geom + ' at group ' + group_hint);
-    }
-
-    // group exists
-    if(gp && gp.userData.group_data !== null && gp.userData.group_data.hasOwnProperty(data_name)){
-
-      re = gp.userData.group_data[data_name];
-    }
-
-    return(re);
-  }
-
-
-  // Canvas state
-  set_state( key, val ) {
-    this.state_data.set(key, val);
-    console.debug(`Canvas state set [${key}]`);
-    this.dispatch_event( "canvas.state.onChange", {
-      key: key,
-      value: val
-    });
-  }
-  get_state( key, missing = undefined ) {
-    return((0,utils/* get_or_default */.jM)( this.state_data, key, missing ));
-  }
-
-  // Font size magnification
-  set_font_size( magnification = 1 ){
-    // font size
-    this._lineHeight_normal = Math.round( 24 * this.pixel_ratio[0] * magnification );
-    this._lineHeight_small = Math.round( 20 * this.pixel_ratio[0] * magnification );
-    this._fontSize_normal = Math.round( 20 * this.pixel_ratio[0] * magnification );
-    this._fontSize_small = Math.round( 16 * this.pixel_ratio[0] * magnification );
-    this._lineHeight_legend = Math.round( 20 * this.pixel_ratio[0] * magnification );
-    this._fontSize_legend = Math.round( 16 * this.pixel_ratio[0] * magnification );
-    this.set_state("font_magnification", magnification);
-  }
-
-  // Get mouse position (normalized)
-  get_mouse(){
-    if(this.mouse_event !== undefined && !this.mouse_event.dispose){
-      let event = this.mouse_event.event;
-
-      if( !event.offsetX && !event.offsetY ){
-        // Firefox, where offsetX,Y are always 0
-        const rect = this.domElement.getBoundingClientRect();
-        this.mouse_pointer.x = 2 * (event.clientX - rect.x) / rect.width - 1;
-        // three.js origin is from bottom-left while html origin is top-left
-        this.mouse_pointer.y = 2 * (rect.y - event.clientY) / rect.height + 1;
-      } else {
-        this.mouse_pointer.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
-        this.mouse_pointer.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
-      }
-    }
-  }
-
-  // To be implemented (abstract methods)
-  set_coronal_depth( depth ){
-    if( typeof this._set_coronal_depth === 'function' ){
-      this._set_coronal_depth( depth );
-    }else{
-      console.debug('Set coronal depth not implemented');
-    }
-  }
-  set_sagittal_depth( depth ){
-    if( typeof this._set_sagittal_depth === 'function' ){
-      this._set_sagittal_depth( depth );
-    }else{
-      console.debug('Set sagittal depth not implemented');
-    }
-  }
-
-  // -------- Camera, control trackballs ........
-  resetSideCanvas({
-    width, zoomLevel = true, position = false,
-    coronal = true, axial = true, sagittal = true
-  } = {}) {
-    if( typeof width !== 'number' ) {
-      width = this._sideCanvasCSSWidth;
-    }
-    if( width * 3 > this.client_height ){
-      width = Math.floor( this.client_height / 3 );
-    }
-    this.side_width = width;
-
-    // Resize side canvas, make sure this.side_width is proper
-    let pos = (0,utils/* to_array */.AA)( position );
-    if( pos.length == 2 ) {
-      const bounding = this.$el.getBoundingClientRect();
-      const offsetX = Math.max( -bounding.x, pos[0] );
-      let offsetY = Math.max( -bounding.y, pos[1] );
-      if( coronal ) {
-        this.sideCanvasList.coronal.reset({
-          zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ],
-          crosshair: true
-        });
-      }
-      offsetY += width;
-      if( axial ) {
-        this.sideCanvasList.axial.reset({
-          zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ],
-          crosshair: true
-        });
-      }
-      offsetY += width;
-      if( sagittal ) {
-        this.sideCanvasList.sagittal.reset({
-          zoomLevel : zoomLevel,
-          position : [ offsetX, offsetY ],
-          crosshair: true
-        });
-      }
-      offsetY += width;
-    } else {
-      if( coronal ) {
-        this.sideCanvasList.coronal.reset({
-          zoomLevel : zoomLevel,
-          position : position,
-          crosshair: true
-        });
-      }
-      if( axial ) {
-        this.sideCanvasList.axial.reset({
-          zoomLevel : zoomLevel,
-          position : position,
-          crosshair: true
-        });
-      }
-      if( sagittal ) {
-        this.sideCanvasList.sagittal.reset({
-          zoomLevel : zoomLevel,
-          position : position,
-          crosshair: true
-        });
-      }
-    }
-
-  }
-
-  enableSideCanvas(){
-	  // Add side renderers to the element
-	  this.sideCanvasEnabled = true;
-	  this.sideCanvasList.coronal.enabled = true;
-	  this.sideCanvasList.axial.enabled = true;
-	  this.sideCanvasList.sagittal.enabled = true;
-	  this.start_animation( 0 );
-	}
-	disableSideCanvas(force = false){
-	  this.sideCanvasEnabled = false;
-	  this.sideCanvasList.coronal.enabled = false;
-	  this.sideCanvasList.axial.enabled = false;
-	  this.sideCanvasList.sagittal.enabled = false;
-	  this.start_animation( 0 );
-	}
-  /*---- Choose & highlight objects -----------------------------------------*/
-  set_raycaster(){
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.mainCamera );
-  }
-
-  _fast_raycast( request_type ){
-
-    let items;
-
-    this.set_raycaster();
-
-    this.mouse_raycaster.layers.disableAll();
-
-    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
-      // intersect with all clickables
-      // set raycaster to be layer 14
-      this.mouse_raycaster.layers.enable( constants/* CONSTANTS.LAYER_SYS_RAYCASTER_14 */.t.LAYER_SYS_RAYCASTER_14 );
-
-      // Only raycast with visible
-      items = this.mouse_raycaster.intersectObjects(
-        // to_array( this.clickable )
-        this.clickable_array.filter((e) => { return(e.visible === true) })
-      );
-      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
-    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
-      // set raycaster to be layer 8 (main camera)
-      this.mouse_raycaster.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      items = this.mouse_raycaster.intersectObjects( (0,utils/* to_array */.AA)( request_type ), true );
-    }
-
-    if(this.DEBUG){
-      this._items = items;
-    }
-
-		return(items);
-
-  }
-
-  focus_object( m = undefined, helper = false, auto_unfocus = false ){
-
-    if( m ){
-      if( this.object_chosen ){
-        this.highlight( this.object_chosen, true );
-      }
-      this.object_chosen = m;
-      this._last_object_chosen = m;
-      this.highlight( this.object_chosen, false );
-      console.debug('object selected ' + m.name);
-
-      // if( helper ){
-      //   m.getWorldPosition( this.mouse_helper.position );
-      //   this.mouse_helper.visible = true;
-      // }
-
-
-    }else{
-      if( auto_unfocus ){
-        if( this.object_chosen ) {
-          this.highlight( this.object_chosen, true );
-          this.object_chosen = undefined;
-        }
-        // this.mouse_helper.visible = false;
-      }
-    }
-  }
-
-  /*
-  * @param reset whether to reset (hide) box that is snapped to m
-  */
-  highlight( m, reset = false ){
-
-    const highlight_disabled = (0,utils/* get_or_default */.jM)(
-      this.state_data,
-      'highlight_disabled',
-      false
-    );
-
-    // use bounding box with this.focus_box
-    if( !m || !m.isObject3D ){ return(null); }
-
-    this.focus_box.setFromObject( m );
-    if( !this.focus_box.userData.added ){
-      this.focus_box.userData.added = true;
-      this.add_to_scene( this.focus_box, true );
-    }
-
-    this.focus_box.visible = !reset && !highlight_disabled;
-
-    // check if there is highlight helper
-    if( m.children.length > 0 ){
-      m.children.forEach((_c) => {
-        if( _c.isMesh && _c.userData.is_highlight_helper ){
-          (0,utils/* set_visibility */.K3)( _c, !reset );
-          // _c.visible = !reset;
-        }
-      });
-    }
-
-  }
-
-  /*---- Colors, animations, media ------------------------------------------*/
-  add_colormap( name, alias, value_type, value_names, value_range, time_range,
-                color_keys, color_vals, n_levels, hard_range ){
-
-    const color_name = name + '--'  + this.container_id;
-
-    // Step 1: register to ColorMapKeywords
-    const cmap_keys = [];
-
-    // n_color is number of colors in Lut, not the true levels of colors
-    const n_color = Math.max( 2 , (0,utils/* to_array */.AA)( color_keys ).length );
-
-    // Step 2:
-    for( let ii=0; ii < n_color; ii++ ){
-      cmap_keys.push([ ii / (n_color-1) , color_vals[ii] ]);
-    }
-
-    addToColorMapKeywords(
-      color_name,
-      cmap_keys
-    );
-
-    const lut = new Lut( color_name , n_color );
-
-    // min and max cannot be the same, otherwise colors will not be rendered
-    if( value_type === 'continuous' ){
-      lut.setMin( value_range[0] );
-      if( value_range[1] === value_range[0] ){
-        lut.setMax( value_range[0] + 1 );
-      }else{
-        lut.setMax( value_range[1] );
-      }
-    }else{
-      lut.setMin( 0 );
-      lut.setMax( Math.max( n_levels - 1, 1) );
-    }
-
-    // step 3: register hard range
-    let theoretical_range;
-    if( Array.isArray(hard_range) && hard_range.length == 2 ){
-      theoretical_range = [hard_range[0], hard_range[1]];
-    }
-
-    // step 4: set alias
-    let alt_name = alias;
-    if( typeof alt_name !== 'string' || alt_name === '' ){
-      alt_name = name;
-    }
-
-    this.color_maps.set( name, {
-      lut               : lut,
-      name              : name,
-      alias             : alt_name,
-      value_type        : value_type,
-      value_names       : (0,utils/* to_array */.AA)( value_names ),
-      time_range        : time_range,
-      n_levels          : n_levels,
-      // Used for back-up
-      value_range       : [ lut.minV, lut.maxV ],
-      theoretical_range : theoretical_range
-    });
-
-  }
-
-  switch_colormap( name, value_range = [] ){
-    let cmap;
-    if( name ){
-      this.set_state( 'color_map', name );
-
-      cmap = this.color_maps.get( name );
-
-      // also need to query surface & datacube2 to check the time range
-
-      if( cmap ){
-        this.set_state( 'time_range_min', cmap.time_range[0] );
-        this.set_state( 'time_range_max', cmap.time_range[1] );
-      }else{
-        this.set_state( 'time_range_min', 0 );
-        this.set_state( 'time_range_max', 1 );
-      }
-
-    }else{
-      name = this.get_state( 'color_map', '' );
-      cmap = this.color_maps.get( name );
-      // return( this.color_maps.get( name ) );
-    }
-    if( cmap && value_range.length === 2 && value_range[0] < value_range[1] &&
-        // Must be continuous color map
-        cmap.value_type === 'continuous' ){
-      // Check hard ranges
-      const hard_range = cmap.theoretical_range;
-      let minv = value_range[0],
-          maxv = value_range[1];
-      if( Array.isArray(hard_range) && hard_range.length == 2 ){
-        if( minv < hard_range[0] ){
-          minv = hard_range[0];
-          if( maxv < minv ){
-            maxv = minv + 1e-100;
-          }
-        }
-        if( maxv > hard_range[1] ){
-          maxv = hard_range[1];
-          if( maxv < minv ){
-            minv = maxv - 1e-100;
-          }
-        }
-      }
-
-      // set cmap value_range
-      cmap.lut.setMax( maxv );
-      cmap.lut.setMin( minv );
-      // Legend needs to be updated
-      this.start_animation( 0 );
-    }
-
-    this.update_time_range();
-    if( cmap ){
-      cmap.time_range[0] = this.animParameters.min;
-      cmap.time_range[1] = this.animParameters.max;
-    }
-    return( cmap );
-  }
-
-  get_color(v, name){
-    let cmap;
-    if( name ){
-      cmap = this.color_maps.get( name );
-    }else{
-      cmap = this.color_maps.get( this.get_state( 'color_map', '' ) );
-    }
-
-    if(cmap === undefined){
-      return('#e2e2e2');
-    }else{
-      return(cmap.lut.getColor(v));
-    }
-  }
-
-  switch_media( name ){
-    this.video_canvas._playing = false;
-    this.video_canvas.pause();
-    this.video_canvas.currentTime = 0;
-    this.video_canvas._enabled = false;
-
-    const media_content = this.shared_data.get(".media_content");
-    if( !media_content ){ return; }
-    const content = media_content[ name ];
-    if( !content ){ return; }
-    // name (animation name), durtion, time_start, asp_ratio, url
-    // set this.video_canvas;
-    const video_height = this.video_canvas.height;
-    this.video_canvas.src = content.url;
-    this.video_canvas._time_start = content.time_start;
-    this.video_canvas._asp_ratio = content.asp_ratio || (16/9);
-    this.video_canvas._duration = content.duration || Infinity;
-    this.video_canvas._name = content.name;
-    this.video_canvas._enabled = true;
-
-  }
-
-  start_video( speed, video_time ){
-    if( speed < 0.1 ){
-      this.pause_video( video_time );
-      return;
-    }
-    if( this.video_canvas.playbackRate !== speed ){
-      this.video_canvas.playbackRate = speed;
-    }
-
-    if( !this.video_canvas._playing ) {
-      this.video_canvas._playing = true;
-      this.video_canvas.play(() => {
-        this.video_canvas.currentTime = video_time.toFixed(2);
-      });
-    }
-  }
-
-  pause_video( video_time ){
-    if( this.video_canvas._playing || !this.video_canvas.paused ){
-      this.video_canvas._playing = false;
-      this.video_canvas.pause();
-    }
-
-    if ( video_time !== undefined ){
-      const delta = Math.abs(parseFloat(this.video_canvas.currentTime) - video_time);
-      if( delta > 0.05 ){
-        this.video_canvas.currentTime = video_time.toFixed(2);
-      }
-      // this.video_canvas.currentTime = video_time.toFixed(2);
-    }
-  }
-
-  // Generate animation clips and mixes
-  generate_animation_clips( animation_name = 'Value', set_current=true,
-                            callback = (e) => {} ){
-
-    if( animation_name === undefined ){
-      animation_name = this.shared_data.get('animation_name') || 'Value';
-    }else{
-      this.shared_data.set('animation_name', animation_name);
-    }
-
-    this.switch_media( animation_name );
-
-    // TODO: make sure cmap exists or use default lut
-    const cmap = this.switch_colormap( animation_name );
-    // this.color_maps
-
-    this.mesh.forEach( (m, k) => {
-      if( !m.isMesh || !m.userData.get_track_data ){ return(null); }
-
-      if( !m.userData.ani_exists ){ return(null); }
-
-      // keyframe is not none, generate animation clip(s)
-      /**
-       * Steps to make an animation
-       *
-       * 1. get keyframes, here is "ColorKeyframeTrack"
-       *        new ColorKeyframeTrack( '.material.color', time_key, color_value, InterpolateDiscrete )
-       *    keyframe doesn't specify which object, it also can only change one attribute
-       * 2. generate clip via "AnimationClip"
-       *        new AnimationClip( clip_name , this.time_range_max - this.time_range_min, keyframes );
-       *    animation clip combines multiple keyframe, still, doesn't specify which object
-       * 3. mixer via "AnimationMixer"
-       *        new AnimationMixer( m );
-       *    A mixer specifies an object
-       * 4. combine mixer with clips via "action = mixer.clipAction( clip );"
-       *    action.play() will play the animation clips
-       */
-
-      // Step 0: get animation time_stamp start time
-      // lut: lut,
-      // value_type: value_type,
-      // value_names: value_names, time_range: time_range
-
-      // Obtain mixer, which will be used in multiple places
-      let keyframe;
-
-      // Step 1: Obtain keyframe tracks
-      // if animation_name exists, get tracks, otherwise reset to default material
-      const track_data = m.userData.get_track_data( animation_name, true );
-
-      // no keyframe tracks, remove animation
-      if( !track_data ){
-
-        // If action is going, stop them all
-        if( m.userData.ani_mixer ){ m.userData.ani_mixer.stopAllAction(); }
-        return( null );
-
-      }
-
-      if( typeof m.userData.generate_animation === 'function'){
-        keyframe = m.userData.generate_animation(track_data, cmap, this.animation_clips, m.userData.ani_mixer );
-      }else{
-        keyframe = generate_animation_default(m, track_data, cmap, this.animation_clips, m.userData.ani_mixer );
-      }
-      if( !keyframe ){ return; }
-
-      const _time_min = cmap.time_range[0],
-            _time_max = cmap.time_range[1];
-
-      const clip_name = 'action_' + m.name + '__' + track_data.name;
-      let clip = this.animation_clips.get( clip_name ), new_clip = false;
-
-      if( !clip ){
-        clip = new three_module.AnimationClip( clip_name, _time_max - _time_min, [keyframe] );
-        this.animation_clips.set( clip_name, clip );
-        new_clip = true;
-      }else{
-        clip.duration = _time_max - _time_min;
-        clip.tracks[0].name = keyframe.name;
-        clip.tracks[0].times = keyframe.times;
-        clip.tracks[0].values = keyframe.values;
-      }
-
-      // Step 3: create mixer
-      if( m.userData.ani_mixer ){
-        m.userData.ani_mixer.stopAllAction();
-      }
-      m.userData.ani_mixer = new three_module.AnimationMixer( m );
-      m.userData.ani_mixer.stopAllAction();
-
-      // Step 4: combine mixer with clip
-      const action = m.userData.ani_mixer.clipAction( clip );
-      action.play();
-
-
-    });
-
-
-
-    callback( cmap );
-  }
-
-
-  /*---- Update function at each animationframe -----------------------------*/
-  keyboard_update(){
-
-    if( !this.keyboard_event || this.keyboard_event.dispose ){
-      return( null );
-    }
-    this.keyboard_event.dispose = true;
-    if(this.keyboard_event.level <= 2){
-      this.keyboard_event.level = 0;
-    }
-
-    // handle
-    for( let _cb_name in this._keyboard_callbacks ){
-
-      if( this._keyboard_callbacks[ _cb_name ] &&
-          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
-        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
-      }
-
-    }
-  }
-  // method to target object with mouse pointed at
-  mouse_update(){
-
-    if( !this.mouse_event || this.mouse_event.dispose ){
-      return(null);
-    }
-
-    // dispose first as the callbacks might have error
-    this.mouse_event.dispose = true;
-    if(this.mouse_event.level <= 2){
-      this.mouse_event.level = 0;
-    }
-
-
-    // Call callbacks
-    let raycast_result, request_type, callback, request;
-
-    for( let _cb_name in this._mouse_click_callbacks ){
-      callback = this._mouse_click_callbacks[ _cb_name ];
-      if( callback === undefined ){
-        continue;
-      }
-      request = callback[0]( this.mouse_event );
-
-      if( request && request.pass ){
-
-        // raycast object
-        // check which object(s) to raycast on
-        request_type = request.type || 'clickable';
-
-        if( raycast_result === undefined ||
-            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
-          raycast_result = {
-            type  : request_type,
-            items : this._fast_raycast( request_type ),
-            meta  : request.meta
-          };
-        }
-
-        // Find object_chosen
-        if( raycast_result.items.length > 0 ){
-          // Has intersects!
-          const first_item = raycast_result.items[0],
-                target_object = first_item.object;
-
-          raycast_result.first_item = first_item;
-          raycast_result.target_object = target_object;
-        }
-
-        callback[1]( raycast_result, this.mouse_event );
-      }
-    }
-
-
-
-  }
-
-  // Animation-related:
-  incrementTime(){
-
-    this.animParameters.incrementTime();
-    const objectInfo = this.animParameters.userData.objectFocused;
-
-    // set chosen object to show mesh info
-    if(this.object_chosen !== undefined && this.object_chosen.userData ){
-
-      objectInfo.enabled = true;
-
-      const objectUserData = this.object_chosen.userData;
-      const objectConstructParams = objectUserData.construct_params;
-      this.object_chosen.getWorldPosition( objectInfo.position );
-
-      objectInfo.name = objectConstructParams.name;
-      objectInfo.customInfo = objectConstructParams.custom_info;
-      objectInfo.isElectrode = objectConstructParams.is_electrode || false;
-      objectInfo.MNI305Position = objectUserData.MNI305_position;
-
-      objectInfo.templateMapping.mapped = objectUserData._template_mapped || false;
-      objectInfo.templateMapping.shift = objectUserData._template_shift || 0;
-      objectInfo.templateMapping.space = objectUserData._template_space || 'original';
-      objectInfo.templateMapping.surface = objectUserData._template_surface || 'NA';
-      objectInfo.templateMapping.hemisphere = objectUserData._template_hemisphere || 'NA';
-      objectInfo.templateMapping.mni305 = objectUserData._template_mni305;
-
-
-      // show mesh value info
-      objectInfo.currentDataValue = undefined;
-      if( this.object_chosen.userData.ani_exists ){
-
-        const track_type = this.get_state("color_map");
-        const track_data = objectUserData.get_track_data( track_type );
-
-        if( track_data ){
-          const time_stamp = (0,utils/* to_array */.AA)( track_data.time );
-          const values = (0,utils/* to_array */.AA)( track_data.value );
-          const currentTime = this.animParameters.time;
-          let _tmp = - Infinity;
-          for( let ii in time_stamp ){
-            if(time_stamp[ ii ] <= currentTime && time_stamp[ ii ] > _tmp){
-              objectInfo.currentDataValue = values[ ii ];
-              _tmp = time_stamp[ ii ];
-            }
-          }
-        }
-      }
-    } else {
-      objectInfo.enabled = false;
-    }
-  }
-
-  // set renderer's flag (persist):
-  // 0: render once at next cycle
-  start_animation( persist = 0 ){
-    // persist 0, render once
-    // persist > 0, loop
-
-    const _flag = this.render_flag;
-    if(persist >= _flag){
-      this.render_flag = persist;
-    }
-    if( persist >= 2 && _flag < 2 ){
-      // _flag < 2 means prior state only renders the scene, but animation is paused
-      // if _flag >= 2, then clock was running, then there is no need to start clock
-      // persist >= 2 is a flag for animation to run
-      // animation clips need a clock
-      this.animParameters._clock.start();
-    }
-  }
-
-  // Pause animation
-  pause_animation( level = 1 ){
-    const _flag = this.render_flag;
-    if(_flag <= level){
-      this.render_flag = -1;
-
-      // When animation is stopped, we need to check if clock is running, if so, stop it
-      if( _flag >= 2 ){
-        this.animParameters._clock.stop();
-      }
-    }
-  }
-
-
-  update(){
-
-    this.get_mouse();
-    this.trackball.update();
-    this.compass.update();
-
-    try {
-      this.keyboard_update();
-      this.mouse_update();
-    } catch (e) {
-      if(this.DEBUG){
-        console.error(e);
-      }
-    }
-
-    // Run less frequently
-    if( this.ready && this._custom_updates.size ){
-      if( this._update_countdown > 0 ){
-        this._update_countdown--;
-      } else {
-        this._update_countdown = 5;
-        this._custom_updates.forEach((f) => {
-          try {
-            if( typeof(f) === "function" ){
-              f();
-            }
-          } catch (e) {
-            if(this.DEBUG){
-              console.error(e);
-            }
-          }
-        });
-      }
-    }
-
-  }
-
-  // re-render canvas to display additional information without 3D
-  mapToCanvas(){
-    const _width = this.domElement.width,
-          _height = this.domElement.height;
-
-    // Clear the whole canvas
-    this.domContext.fillStyle = this.background_color;
-    this.domContext.fillRect(0, 0, _width, _height);
-
-    // copy the main_renderer context
-    this.domContext.drawImage( this.main_renderer.domElement, 0, 0, _width, _height);
-
-  }
-
-  // Main render function, automatically scheduled
-  render(){
-
-    // double-buffer to make sure depth renderings
-    //this.main_renderer.setClearColor( renderer_colors[0] );
-    this.main_renderer.clear();
-
-    // Pre render all meshes
-    this.mesh.forEach((m) => {
-      if( typeof m.userData.pre_render === 'function' ){
-        try {
-          m.userData.pre_render();
-        } catch (e) {
-          if( !this.__render_error ) {
-            console.warn(e);
-            this.__render_error = true;
-          }
-        }
-      }
-    });
-
-    // Pre render all singletons
-    this.singletons.forEach((s) => {
-
-      if( s && typeof(s) === "object" && typeof s.pre_render === 'function' ) {
-        try {
-          s.pre_render();
-        } catch (e) {
-          if( !this.__render_error ) {
-            console.warn(e);
-            this.__render_error = true;
-          }
-        }
-      }
-
-    });
-
-    this.main_renderer.render( this.scene, this.mainCamera );
-
-    if(this.sideCanvasEnabled){
-
-      // temporarily disable slice depthWrite property so electrodes can
-      // display properly
-      const sliceInstance = this.state_data.get( "activeSliceInstance" );
-      const renderSlices = sliceInstance && sliceInstance.isDataCube;
-      if( renderSlices ) {
-        sliceInstance.sliceMaterial.depthWrite = false;
-      }
-
-      this.sideCanvasList.coronal.render();
-      this.sideCanvasList.axial.render();
-      this.sideCanvasList.sagittal.render();
-
-      if( renderSlices ) {
-        sliceInstance.sliceMaterial.depthWrite = true;
-      }
-
-    }
-
-  }
-
-  update_time_range(){
-    let min_t0 = this.get_state( 'time_range_min0' );
-    let max_t0 = this.get_state( 'time_range_max0' );
-    let min_t = this.get_state( 'time_range_min', 0 );
-    let max_t = this.get_state( 'time_range_max', 0 );
-
-    if( min_t0 !== undefined ){
-      min_t = Math.min( min_t, min_t0 );
-    }
-
-    if( max_t0 !== undefined ){
-      max_t = Math.max( max_t, max_t0 );
-    }
-    this.animParameters.min = min_t;
-    this.animParameters.max = max_t;
-  }
-
-
-  renderTitle( x = 10, y = 10, w = 100, h = 100 ){
-
-    if( typeof this.title !== "string" ) { return; }
-
-    const pixelRatio = this.pixel_ratio[0];
-
-    this._fontType = 'Courier New, monospace';
-    this._lineHeight_title = this._lineHeight_title || Math.round( 25 * pixelRatio );
-    this._fontSize_title = this._fontSize_title || Math.round( 20 * pixelRatio );
-
-
-    this.domContext.fillStyle = this.foreground_color;
-    this.domContext.font = `${ this._fontSize_title }px ${ this._fontType }`;
-
-    if( this.sideCanvasEnabled ) {
-      x += this.side_width;
-    }
-    x += 10; // padding left
-    x *= pixelRatio;
-
-    // Add title
-    let ii = 0, ss = [];
-    ( this.title || '' )
-      .split('\\n')
-      .forEach( (ss, ii) => {
-        this.domContext.fillText( ss , x , y + this._lineHeight_title * (ii + 1) );
-      });
-  }
-
-  _draw_ani_old( x = 10, y = 10, w = 100, h = 100  ){
-
-    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
-    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
-
-    // Add current time to bottom right corner
-    if( this.animParameters.renderTimestamp ) {
-      this.domContext.font = `${ this._fontSize_normal }px ${ this._fontType }`;
-      this.domContext.fillText(
-        // Current clock time
-        `${ this.animParameters.time.toFixed(3) } s`,
-        // offset
-        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 1);
-    }
-  }
-
-  renderTimestamp( x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined  ){
-
-    if( !this.animParameters.exists ) { return; }
-
-    if( !context_wrapper ){
-      context_wrapper = this.domContextWrapper;
-    }
-
-    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
-    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
-
-    context_wrapper._lineHeight_normal = this._lineHeight_normal;
-    context_wrapper._fontSize_normal = this._fontSize_normal;
-
-    // Add current time to bottom right corner
-    if( this.animParameters.renderTimestamp ) {
-      context_wrapper.set_font( this._fontSize_normal, this._fontType );
-      context_wrapper.fill_text(
-        // Current clock time
-        `${ this.animParameters.time.toFixed(3) } s`,
-
-        // offset
-        w - this._fontSize_normal * 8, h - this._lineHeight_normal * 2);
-    }
-  }
-
-  renderLegend( x = 10, y = 10, w = 100, h = 100, context_wrapper = undefined ){
-
-    const cmap = this.switch_colormap();
-
-    // whether to draw legend
-    if( !this.animParameters.renderLegend ) { return; }
-    if( !(cmap && (cmap.lut.n !== undefined)) ) { return; }
-
-    if( !context_wrapper ){
-      context_wrapper = this.domContextWrapper;
-    }
-
-    // Added: if info text is disabled, then legend should not display
-    // correspoding value
-    let info_disabled = true;
-    let currentValue;
-    if( this.animParameters.userData.objectFocused.enabled && !this.get_state( 'info_text_disabled') ) {
-      info_disabled = false;
-      currentValue = this.animParameters.userData.objectFocused.currentDataValue;
-    }
-    const lut = cmap.lut,
-          color_type = cmap.value_type,
-          color_names = cmap.value_names,
-          legend_title = cmap.alias || '',
-          actual_range = (0,utils/* to_array */.AA)( cmap.value_range );
-
-    this._lineHeight_legend = this._lineHeight_legend || Math.round( 15 * this.pixel_ratio[0] );
-    this._fontSize_legend = this._fontSize_legend || Math.round( 10 * this.pixel_ratio[0] );
-
-    let legend_width = 25 * this.pixel_ratio[0],
-        legend_offset = this._fontSize_legend * 7 + legend_width, // '__-1.231e+5__', more than 16 chars
-        title_offset = Math.ceil(
-          legend_title.length * this._fontSize_legend * 0.42 -
-          legend_width / 2 + legend_offset
-        );
-
-    // Get color map from lut
-    const continuous_cmap = color_type === 'continuous' && lut.n > 1;
-    const discrete_cmap = color_type === 'discrete' && lut.n > 0 && Array.isArray(color_names);
-
-    let legend_height = 0.50,                  // Legend takes 60% of the total heights
-        legend_start = 0.30;                  // Legend starts at 20% of the height
-
-    if( continuous_cmap ){
-      // Create a linear gradient map
-      const grd = this.domContext.createLinearGradient( 0 , 0 , 0 , h );
-
-      // Determine legend coordinates and steps
-      let legend_step = legend_height / ( lut.n - 1 );
-
-      // Starts from legend_start of total height (h)
-      grd.addColorStop( 0, this.background_color );
-      grd.addColorStop( legend_start - 4 / h, this.background_color );
-      for( let ii in lut.lut ){
-        grd.addColorStop( legend_start + legend_step * ii,
-            '#' + lut.lut[lut.n - 1 - ii].getHexString());
-      }
-      grd.addColorStop( legend_height + legend_start + 4 / h, this.background_color );
-
-      // Fill with gradient
-      context_wrapper.fill_gradient(  grd, w - legend_offset ,
-                                      legend_start * h ,
-                                      legend_width , legend_height * h );
-      //this.domContext.fillStyle = grd;
-      //this.domContext.fillRect( w - legend_offset , legend_start * h , legend_width , legend_height * h );
-
-      // Add value labels and title
-      let legent_ticks = [];
-      let zero_height = ( legend_start + lut.maxV * legend_height /
-                          (lut.maxV - lut.minV)) * h,
-          minV_height = (legend_height + legend_start) * h,
-          maxV_height = legend_start * h;
-      //  For ticks
-      let text_offset = Math.round( legend_offset - legend_width ),
-          text_start = Math.round( w - text_offset + this._fontSize_legend ),
-          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
-
-      // title. It should be 2 lines above legend grid
-      context_wrapper.set_font( this._fontSize_legend, this._fontType );
-      context_wrapper.set_font_color( this.foreground_color );
-
-      // console.log(`${w - legend_offset}, ${maxV_height - this._lineHeight_legend * 3 + text_halfheight}, ${this.domContext.font}, ${legend_title}`);
-      context_wrapper.fill_text( legend_title, w - title_offset,
-          maxV_height - this._lineHeight_legend * 2 + text_halfheight );
-
-      if( actual_range.length == 2 ){
-        let vrange = `${actual_range[0].toPrecision(4)} ~ ${actual_range[1].toPrecision(4)}`;
-        vrange = vrange.replace(/\.[0]+\ ~/, ' ~')
-                       .replace(/\.[0]+$/, '').replace(/\.[0]+e/, 'e');
-        context_wrapper.fill_text( `[${vrange}]`, w - Math.ceil( legend_offset * 1.2 ),
-          minV_height + this._lineHeight_legend * 2 + text_halfheight );
-      }
-
-
-      // ticks
-      let draw_zero = lut.minV < 0 && lut.maxV > 0;
-
-      if( typeof( currentValue ) === 'number' ){
-        // There is a colored object rendered, display it
-        let value_height = ( legend_start + (lut.maxV - currentValue) * legend_height / (lut.maxV - lut.minV)) * h;
-
-        // Decide whether to draw 0 and current object value
-        // When max and min is too close, hide 0, otherwise it'll be jittered
-        if( Math.abs( zero_height - value_height ) <= this._fontSize_legend ){
-          draw_zero = false;
-        }
-        if(Math.abs( value_height - minV_height) > this._fontSize_legend){
-          legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
-        }
-        if( value_height - minV_height > this._lineHeight_legend ){
-          value_height = minV_height + this._lineHeight_legend;
-        }
-        if(Math.abs( value_height - maxV_height) > this._fontSize_legend){
-          legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
-        }
-        if( maxV_height - value_height > this._lineHeight_legend ){
-          value_height = maxV_height - this._lineHeight_legend;
-        }
-
-        legent_ticks.push([
-          currentValue.toPrecision(4), value_height, 1 ]);
-      } else {
-        legent_ticks.push([lut.minV.toPrecision(4), minV_height, 0]);
-        legent_ticks.push([lut.maxV.toPrecision(4), maxV_height, 0]);
-      }
-
-      if( draw_zero ){
-        legent_ticks.push(['0', zero_height, 0]);
-      }
-
-
-      // Draw ticks
-      context_wrapper.set_font( this._fontSize_legend, this._fontType );
-      context_wrapper.set_font_color( this.foreground_color );
-
-      // Fill text
-      legent_ticks.forEach((tick) => {
-        if( tick[2] === 1 ){
-          context_wrapper.set_font( this._fontSize_legend, this._fontType, true );
-          context_wrapper.fill_text( tick[0], text_start, tick[1] + text_halfheight );
-          context_wrapper.set_font( this._fontSize_legend, this._fontType, false );
-        }else{
-          context_wrapper.fill_text( tick[0], text_start, tick[1] + text_halfheight );
-        }
-
-      });
-
-      // Fill ticks
-      // this.domContext.strokeStyle = this.foreground_color;  // do not set state of stroke if color not changed
-      // this.domContext.beginPath();
-      context_wrapper.start_draw_line();
-
-      legent_ticks.forEach((tick) => {
-        if( tick[2] === 0 ){
-          context_wrapper.draw_line([
-            [ w - text_offset , tick[1] ],
-            [ w - text_offset + text_halfheight , tick[1] ]
-          ]);
-          // this.domContext.moveTo( w - text_offset , tick[1] );
-          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] );
-        }else if( tick[2] === 1 ){
-          context_wrapper.draw_line([
-            [ w - text_offset , tick[1] ],
-            [ w - text_offset + text_halfheight , tick[1] - 2 ],
-            [ w - text_offset + text_halfheight , tick[1] + 2 ],
-            [ w - text_offset , tick[1] ]
-          ]);
-          // this.domContext.moveTo( w - text_offset , tick[1] );
-          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] - 2 );
-          // this.domContext.lineTo( w - text_offset + text_halfheight , tick[1] + 2 );
-          // this.domContext.lineTo( w - text_offset , tick[1] );
-        }
-      });
-      // this.domContext.stroke();
-      context_wrapper.stroke_line();
-
-
-    }else if( discrete_cmap ){
-      // color_names must exists and length must be
-      const n_factors = cmap.n_levels; // Not color_names.length;
-      let _text_length = 1;
-
-      color_names.forEach((_n)=>{
-        if( _text_length < _n.length ){
-          _text_length = _n.length;
-        }
-      });
-
-      legend_offset = Math.ceil( this._fontSize_legend * 0.42 * ( _text_length + 7 ) + legend_width );
-
-      // this._lineHeight_legend * 2 = 60 px, this is the default block size
-      legend_height = ( ( n_factors - 1 ) * this._lineHeight_legend * 2 ) / h;
-      legend_height = legend_height > 0.60 ? 0.60: legend_height;
-
-      let legend_step = n_factors == 1 ? 52 : (legend_height / ( n_factors - 1 ));
-      let square_height = Math.floor( legend_step * h ) - 2;
-      square_height = square_height >= 50 ? 50 : Math.max(square_height, 4);
-
-
-      let text_offset = Math.round( legend_offset - legend_width ),
-          text_start = Math.round( w - text_offset + this._fontSize_legend ),
-          text_halfheight = Math.round( this._fontSize_legend * 0.21 );
-
-
-      context_wrapper.set_font( this._fontSize_legend, this._fontType );
-      context_wrapper.set_font_color( this.foreground_color );
-
-      // Draw title. It should be 1 lines above legend grid
-      context_wrapper.fill_text( legend_title, w - title_offset, legend_start * h - 50 );
-
-      // Draw Ticks
-      for(let ii = 0; ii < n_factors; ii++ ){
-        let square_center = (legend_start + legend_step * ii) * h;
-        context_wrapper.fill_rect(
-          '#' + lut.getColor(ii).getHexString(),
-          w - legend_offset , square_center - square_height / 2 ,
-          legend_width , square_height
-        );
-
-        /*
-        this.domContext.beginPath();
-        this.domContext.moveTo( w - text_offset , square_center );
-        this.domContext.lineTo( w - text_offset + text_halfheight , square_center );
-        this.domContext.stroke();
-        */
-        context_wrapper.set_font_color( this.foreground_color );
-
-        if( !info_disabled && currentValue === color_names[ii]){
-          context_wrapper.set_font( this._fontSize_legend, this._fontType, true );
-          context_wrapper.fill_text(color_names[ii],
-            text_start, square_center + text_halfheight, w - text_start - 1
-          );
-          context_wrapper.set_font( this._fontSize_legend, this._fontType, false );
-        }else{
-          context_wrapper.fill_text(color_names[ii],
-            text_start, square_center + text_halfheight, w - text_start - 1
-          );
-        }
-
-      }
-
-
-    }
-  }
-
-  renderSelectedObjectInfo(
-    x = 10, y = 10, w = 100, h = 100,
-    context_wrapper = undefined, force_left = false ){
-
-    const objectInfo = this.animParameters.userData.objectFocused;
-
-    // Add selected object information, or if not showing is set
-    if( !objectInfo.enabled || this.get_state( 'info_text_disabled') ){
-      // no object selected, discard
-      return;
-    }
-
-    if( !context_wrapper ){
-      context_wrapper = this.domContextWrapper;
-    }
-
-
-    this._lineHeight_normal = this._lineHeight_normal || Math.round( 25 * this.pixel_ratio[0] );
-    this._lineHeight_small = this._lineHeight_small || Math.round( 15 * this.pixel_ratio[0] );
-    this._fontSize_normal = this._fontSize_normal || Math.round( 15 * this.pixel_ratio[0] );
-    this._fontSize_small = this._fontSize_small || Math.round( 10 * this.pixel_ratio[0] );
-
-    context_wrapper.set_font_color( this.foreground_color );
-    context_wrapper.set_font( this._fontSize_normal, this._fontType );
-
-    let text_left;
-    if( this.sideCanvasEnabled && !force_left ){
-      text_left = w - Math.ceil( 50 * this._fontSize_normal * 0.42 );
-    } else {
-      text_left = Math.ceil( this._fontSize_normal * 0.42 * 2 );
-    }
-    if( !this.__textPosition ) {
-      this.__textPosition = new three_module.Vector2();
-    }
-    const textPosition = this.__textPosition;
-    textPosition.set(
-      text_left,
-
-      // Make sure it's not hidden by control panel
-      this._lineHeight_normal + this._lineHeight_small + this.pixel_ratio[0] * 10
-    );
-
-    // Line 1: object name
-    context_wrapper.fill_text( objectInfo.name, textPosition.x, textPosition.y );
-
-    // Smaller
-    context_wrapper.set_font( this._fontSize_small, this._fontType );
-
-    // Line 2: Global position
-
-    let pos;
-    if( objectInfo.isElectrode ){
-      pos = objectInfo.MNI305Position;
-      if( pos && (pos.x !== 0 || pos.y !== 0 || pos.z !== 0) ){
-        textPosition.y += this._lineHeight_small
-        context_wrapper.fill_text( `MNI305: `, textPosition.x , textPosition.y );
-        context_wrapper.set_font( this._fontSize_small, this._fontType, true );
-        context_wrapper.fill_text(
-          `${pos.x.toFixed(0)},${pos.y.toFixed(0)},${pos.z.toFixed(0)}`,
-          textPosition.x + this._fontSize_small * 5, textPosition.y
-        );
-        context_wrapper.set_font( this._fontSize_small, this._fontType, false );
-      }
-    } else {
-      pos = objectInfo.position;
-      textPosition.y += this._lineHeight_small;
-      context_wrapper.fill_text(
-        `tkrRAS: (${pos.x.toFixed(2)},${pos.y.toFixed(2)},${pos.z.toFixed(2)})`,
-        textPosition.x, textPosition.y
-      );
-    }
-
-    // For electrodes
-    if( objectInfo.isElectrode ){
-      const mappingInfo = objectInfo.templateMapping;
-      const displayInfo = this.object_chosen.userData.display_info;
-
-      const _tn = displayInfo.threshold_name || '[None]';
-      let _tv = displayInfo.threshold_value;
-      if( typeof _tv === 'number' ){
-        _tv = _tv.toPrecision(4);
-      }
-
-      const _dn = displayInfo.display_name;
-      let _dv = objectInfo.currentDataValue;
-
-      if( typeof _dv === 'number' ){
-        _dv = _dv.toPrecision(4);
-      }
-
-      // Line 3: mapping method & surface type
-      /*
-      text_position[ 1 ] = text_position[ 1 ] + this._lineHeight_small;
-
-      context_wrapper.fill_text.fillText(
-        `Surface: ${ _m.surface }, shift vs. MNI305: ${ _m.shift.toFixed(2) }`,
-        text_position[ 0 ], text_position[ 1 ]
-      );
-      */
-
-      // Line 4:
-      if( _dv !== undefined ){
-        textPosition.y += this._lineHeight_small;
-
-        context_wrapper.fill_text(
-          `Display:   ${ _dn } (${ _dv })`,
-          textPosition.x, textPosition.y
-        );
-      }
-
-
-      // Line 5:
-      if( _tv !== undefined ){
-        textPosition.y += this._lineHeight_small;
-
-        context_wrapper.fill_text(
-          `Threshold: ${ _tn } (${ _tv })`,
-          textPosition.x, textPosition.y
-        );
-      }
-
-
-    }
-
-    // Line last: customized message
-    textPosition.y += this._lineHeight_small;
-
-    context_wrapper.fill_text(
-      objectInfo.customInfo || '',
-      textPosition.x, textPosition.y
-    );
-
-  }
-
-  _draw_video( results, w, h, context_wrapper ){
-    if( !this.video_canvas._enabled || this.video_canvas._mode === 'hidden' ){ return; }
-    // set video time
-    const video_time = results.last_time - this.video_canvas._time_start;
-
-    if(
-      this.video_canvas.ended || video_time <= 0 ||
-      video_time > Math.min( this.video_canvas._duration, this.video_canvas.duration )
-    ){
-      this.pause_video( 0 );
-      return;
-    }
-
-    if( this.render_flag >= 2 ){
-      this.start_video( results.speed || 1, video_time );
-    } else {
-      // static, set timer
-      this.pause_video( video_time );
-    }
-
-    const video_height = this.video_canvas.height,
-          video_width = video_height * this.video_canvas._asp_ratio;
-    if( context_wrapper ){
-      context_wrapper.draw_video(
-        this.video_canvas, 0, h - video_height,
-        video_width, video_height
-      );
-    } else {
-      this.domContextWrapper.draw_video(
-        this.video_canvas, 0, h - video_height,
-        video_width, video_height
-      );
-    }
-
-
-  }
-
-  // Do not call this function directly after the initial call
-  // use "this.start_animation(0);" to render once
-  // use "this.start_animation(1);" to keep rendering
-  // this.pause_animation(1); to stop rendering
-  // Only use 0 or 1
-  animate(){
-
-    if( this._disposed ){ return; }
-
-    requestAnimationFrame( this.animate.bind(this) );
-
-    // If this.$el is hidden, do not render
-    if( !this.ready || this.$el.clientHeight <= 0 ){
-      return;
-    }
-
-    const _width = this.domElement.width;
-    const _height = this.domElement.height;
-
-    // Do not render if the canvas is too small
-    // Do not change flags, wait util the state come back to normal
-    if(_width <= 10 || _height <= 10) { return; }
-
-    this.update();
-
-    // needs to incrementTime after update so chosen object information can be up to date
-    this.incrementTime();
-
-    if(this.render_flag >= 0){
-
-      if(this.has_stats){ this.stats.update(); }
-  		this.render();
-
-  		// draw main and side rendered images to this.domElement (2d context)
-  		this.mapToCanvas();
-
-
-  		// Add additional information
-      // const _pixelRatio = this.pixel_ratio[0];
-      // const _fontType = 'Courier New, monospace';
-
-      this.domContext.fillStyle = this.foreground_color;
-
-      // Draw title on the top left corner
-      this.renderTitle( 0, 0, _width, _height );
-
-      // Draw timestamp on the bottom right corner
-      this.renderTimestamp( 0, 0, _width, _height );
-
-      // Draw legend on the right side
-      this.renderLegend( 0, 0, _width, _height );
-
-      // Draw focused target information on the top right corner
-      this.renderSelectedObjectInfo( 0, 0, _width, _height );
-
-      // check if capturer is working
-      if( this.capturer_recording && this.capturer ){
-        this.capturer.add();
-      }
-    }
-
-    // this._draw_video( results, _width, _height );
-
-    if(this.render_flag === 0){
-      this.render_flag = -1;
-    }
-
-
-	}
-
-
-  /*---- Subjects, electrodes, surfaces, slices ----------------------------*/
-  init_subject( subject_code ){
-    if( !subject_code ){ return; }
-    if( ! this.subject_codes.includes( subject_code ) ){
-      this.subject_codes.push( subject_code );
-      this.electrodes.set( subject_code, {});
-      this.slices.set( subject_code, {} );
-      this.ct_scan.set( subject_code, {} );
-      this.surfaces.set(subject_code, {} );
-      this.atlases.set( subject_code, {} );
-    }
-  }
-
-  getAllSurfaceTypes(){
-    const re = { 'pial' : 1 }; // always put pials to the first one
-
-    this.group.forEach( (gp, g) => {
-      // let res = new RegExp('^Surface - ([a-zA-Z0-9_-]+) \\((.*)\\)$').exec(g);
-      const res = constants/* CONSTANTS.REGEXP_SURFACE_GROUP.exec */.t.REGEXP_SURFACE_GROUP.exec(g);
-      if( res && res.length === 3 ){
-        re[ res[1] ] = 1;
-      }
-    });
-
-    return( Object.keys( re ) );
-  }
-
-  get_atlas_types(){
-    const current_subject = this.get_state('target_subject') || "";
-    let atlases = this.atlases.get( current_subject );
-    if( !atlases ) {
-      return([]);
-    }
-    atlases = Object.keys( atlases );
-    const re = atlases.map((v) => {
-      const m = constants/* CONSTANTS.REGEXP_ATLAS.exec */.t.REGEXP_ATLAS.exec( v );
-      if( m && m.length >= 2 ){
-        return( m[1] );
-      }
-      return( null );
-    }).filter((v) => {
-      return( typeof(v) === 'string' );
-    })
-
-
-    return( (0,utils/* to_array */.AA)( re ) );
-  }
-
-  get_ct_types(){
-    const re = {};
-
-    this.ct_scan.forEach( (vol, s) => {
-      let volume_names = Object.keys( vol ),
-          //  T1 (YAB)
-          res = new RegExp('^(.*) \\(' + s + '\\)$').exec(g);
-          // res = CONSTANTS.REGEXP_VOLUME.exec(g);
-
-      if( res && res.length === 2 ){
-        re[ res[1] ] = 1;
-      }
-    });
-    return( Object.keys( re ) );
-  }
-
-
-  switch_subject( target_subject = '/', args = {}){
-
-    if( this.subject_codes.length === 0 ){
-      return( null );
-    }
-
-    const state = this.state_data;
-
-    // not actually switch subjects, only reset some options
-    if( !this.subject_codes.includes( target_subject ) ){
-
-      // get current subject
-      target_subject = state.get('target_subject');
-
-
-      // no subject initiated, use template if multiple subjects
-      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
-        // This happends when subjects are just loaded
-        if( this.shared_data.get(".multiple_subjects") ){
-          target_subject = this.shared_data.get(".template_subjects");
-        }
-      }
-
-      // error-proof
-      if( !target_subject || !this.subject_codes.includes( target_subject ) ){
-        target_subject = this.subject_codes[0];
-      }
-
-    }
-    let subject_changed = state.get('target_subject') === target_subject;
-    state.set( 'target_subject', target_subject );
-
-    let surface_type = args.surface_type || state.get( 'surface_type' ) || 'pial';
-    let atlas_type = args.atlas_type || state.get( 'atlas_type' ) || 'none';
-    let material_type_left = args.material_type_left || state.get( 'material_type_left' ) || 'normal';
-    let material_type_right = args.material_type_right || state.get( 'material_type_right' ) || 'normal';
-    let slice_type = args.slice_type || state.get( 'slice_type' ) || 'T1';
-    let ct_type = args.ct_type || state.get( 'ct_type' ) || 'ct.aligned.t1';
-    let ct_threshold = args.ct_threshold || state.get( 'ct_threshold' ) || 0.8;
-
-    let map_template = state.get( 'map_template' ) || false;
-
-    if( args.map_template !== undefined ){
-      map_template = args.map_template;
-    }
-    let map_type_surface = args.map_type_surface || state.get( 'map_type_surface' ) || 'std.141';
-    let map_type_volume = args.map_type_volume || state.get( 'map_type_volume' ) || 'mni305';
-    let surface_opacity_left = args.surface_opacity_left || state.get( 'surface_opacity_left' ) || 1;
-    let surface_opacity_right = args.surface_opacity_right || state.get( 'surface_opacity_right' ) || 1;
-
-    let activeSlices = state.get("activeSliceInstance");
-    const shownSlices = [], hiddenSlices = [];
-    if( activeSlices && activeSlices.isDataCube ) {
-      if( activeSlices.coronalActive ) {
-        shownSlices.push( "coronal" );
-      } else {
-        hiddenSlices.push( "coronal" );
-      }
-      if( activeSlices.sagittalActive ) {
-        shownSlices.push( "sagittal" );
-      } else {
-        hiddenSlices.push( "sagittal" );
-      }
-      if( activeSlices.axialActive ) {
-        shownSlices.push( "axial" );
-      } else {
-        hiddenSlices.push( "axial" );
-      }
-    }
-
-    // TODO: add checks
-    const subject_data  = this.shared_data.get( target_subject );
-
-    // tkRAS should be tkrRAS, TODO: fix this typo
-    const tkRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
-    const MNI305_tkRAS = subject_data.matrices.MNI305_tkrRAS;
-
-    let anterior_commissure = state.get('anterior_commissure') || new three_module.Vector3();
-    anterior_commissure.set(0,0,0);
-    anterior_commissure.setFromMatrixPosition( MNI305_tkRAS );
-
-    this.switch_slices( target_subject, slice_type );
-    this.switch_ct( target_subject, ct_type, ct_threshold );
-    this.switch_atlas( target_subject, atlas_type );
-    this.switch_surface( target_subject, surface_type,
-                          [surface_opacity_left, surface_opacity_right],
-                          [material_type_left, material_type_right] );
-
-    if( map_template ){
-      this.map_electrodes( target_subject, map_type_surface, map_type_volume );
-    }else{
-      this.map_electrodes( target_subject, 'reset', 'reset' );
-    }
-
-    // reset overlay
-    activeSlices = state.get("activeSliceInstance");
-    if( activeSlices && activeSlices.isDataCube ) {
-      activeSlices.showSlices( shownSlices );
-      activeSlices.hideSlices( hiddenSlices );
-    }
-
-    state.set( 'surface_type', surface_type );
-    state.set( 'atlas_type', atlas_type );
-    state.set( 'material_type_left', material_type_left );
-    state.set( 'material_type_right', material_type_right );
-    state.set( 'slice_type', slice_type );
-    state.set( 'ct_type', ct_type );
-    state.set( 'ct_threshold', ct_threshold );
-    state.set( 'map_template', map_template );
-    state.set( 'map_type_surface', map_type_surface );
-    state.set( 'map_type_volume', map_type_volume );
-    state.set( 'surface_opacity_left', surface_opacity_left );
-    state.set( 'surface_opacity_right', surface_opacity_right );
-    state.set( 'anterior_commissure', anterior_commissure );
-    state.set( 'tkRAS_MNI305', tkRAS_MNI305 );
-
-    // reset origin to AC
-    // this.origin.position.copy( anterior_commissure );
-
-    this.dispatch_event(
-      'switch_subject',
-      {
-        target_subject: target_subject
-      }
-    );
-
-    this.start_animation( 0 );
-
-  }
-
-  calculate_mni305(vec, nan_if_trans_not_found = true){
-    if( !vec.isVector3 ){
-      throw('vec must be a Vector3 instance');
-    }
-
-    const tkRAS_MNI305 = this.get_state('tkRAS_MNI305');
-    if( tkRAS_MNI305 && tkRAS_MNI305.isMatrix4 ){
-      // calculate MNI 305 position
-      vec.applyMatrix4(tkRAS_MNI305);
-    } else if( nan_if_trans_not_found ){
-      vec.set(NaN, NaN, NaN);
-    }
-    return(vec);
-  }
-
-  switch_surface( target_subject, surface_type = 'pial', opacity = [1, 1], material_type = ['normal', 'normal'] ){
-    // this.surfaces[ subject_code ][ g.name ] = m;
-    // Naming - Surface         Standard 141 Right Hemisphere - pial (YAB)
-    // or FreeSurfer Right Hemisphere - pial (YAB)
-    this.surfaces.forEach( (sf, subject_code) => {
-      for( let surface_name in sf ){
-        const m = sf[ surface_name ];
-        // m.visible = false;
-        (0,utils/* set_visibility */.K3)( m, false );
-        if( subject_code === target_subject ){
-
-          if(
-            surface_name === `Standard 141 Left Hemisphere - ${surface_type} (${target_subject})` ||
-            surface_name === `FreeSurfer Left Hemisphere - ${surface_type} (${target_subject})`
-          ){
-            (0,utils/* set_display_mode */.J1)( m, material_type[0] );
-            (0,utils/* set_visibility */.K3)( m, material_type[0] !== 'hidden' );
-            m.material.wireframe = ( material_type[0] === 'wireframe' );
-            m.material.opacity = opacity[0];
-            // m.material.transparent = opacity[0] < 0.99;
-          }else if(
-            surface_name === `Standard 141 Right Hemisphere - ${surface_type} (${target_subject})` ||
-            surface_name === `FreeSurfer Right Hemisphere - ${surface_type} (${target_subject})`
-          ){
-            (0,utils/* set_display_mode */.J1)( m, material_type[1] );
-            (0,utils/* set_visibility */.K3)( m, material_type[1] !== 'hidden' );
-            m.material.wireframe = ( material_type[1] === 'wireframe' );
-            m.material.opacity = opacity[1];
-            // m.material.transparent = opacity[1] < 0.99;
-          }
-
-
-          // Re-calculate controls center so that rotation center is the center of mesh bounding box
-          this.bounding_box.setFromObject( m.parent );
-          this.bounding_box.geometry.computeBoundingBox();
-          const _b = this.bounding_box.geometry.boundingBox;
-          const newControlCenter = _b.min.clone()
-            .add( _b.max ).multiplyScalar( 0.5 );
-
-          newControlCenter.remember = true;
-          this.trackball.lookAt( newControlCenter );
-          this.trackball.update();
-
-        }
-      }
-    });
-    this.start_animation( 0 );
-  }
-
-  switch_slices( target_subject, slice_type = 'T1' ){
-
-    this.state_data.delete( "activeSliceInstance" );
-    //this.ssss
-    this.slices.forEach( (vol, subject_code) => {
-      for( let volume_name in vol ){
-        const m = vol[ volume_name ];
-        if( subject_code === target_subject && volume_name === `${slice_type} (${subject_code})`){
-          (0,utils/* set_visibility */.K3)( m[0].parent, true );
-          this.set_state( "activeSliceInstance", m[0].userData.instance );
-        }else{
-          // m[0].parent.visible = false;
-          (0,utils/* set_visibility */.K3)( m[0].parent, false );
-        }
-      }
-    });
-
-    this.start_animation( 0 );
-  }
-
-  // used to switch atlas, but can also switch other datacube2
-  switch_atlas( target_subject, atlas_type ){
-    /*if( subject_changed ) {
-      let atlas_types = to_array( this.atlases.get(target_subject) );
-
-    }*/
-    console.debug(`Setting volume data cube: ${atlas_type} (${target_subject})`);
-
-    this.atlases.forEach( (al, subject_code) => {
-      for( let atlas_name in al ){
-        const m = al[ atlas_name ];
-        if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
-          // m.visible = true;
-          (0,utils/* set_visibility */.K3)( m, true );
-          this.set_state( "activeDataCube2Instance", m.userData.instance );
-        }else{
-          // m.visible = false;
-          (0,utils/* set_visibility */.K3)( m, false );
-        }
-      }
-    });
-  }
-
-  switch_ct( target_subject, ct_type = 'ct.aligned.t1', ct_threshold = 0.8 ){
-
-    this.ct_scan.forEach( (vol, subject_code) => {
-      for( let ct_name in vol ){
-        const m = vol[ ct_name ];
-        if( subject_code === target_subject && ct_name === `${ct_type} (${subject_code})`){
-          // m.parent.visible = this._show_ct;
-          (0,utils/* set_visibility */.K3)( m.parent, this._show_ct );
-          m.material.uniforms.u_renderthreshold.value = ct_threshold;
-        }else{
-          // m.parent.visible = false;
-          (0,utils/* set_visibility */.K3)( m.parent, false );
-        }
-      }
-    });
-
-    this.start_animation( 0 );
-  }
-
-  // get matrices
-  get_subject_transforms( subject_code ) {
-    const scode = typeof subject_code === "string" ? subject_code : this.get_state("target_subject", "/");
-    const subject_data = this.shared_data.get( scode );
-    if(
-      !subject_data || typeof subject_data !== "object" ||
-      typeof subject_data.matrices !== "object"
-    ) {
-      throw `Cannot obtain transform matrices from subject: ${scode}`;
-    }
-    return( subject_data.matrices );
-  }
-
-  // Map electrodes
-  map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
-    /* DEBUG code
-    target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
-    pos_targ = new Vector3(),
-          pos_orig = new Vector3(),
-          mat1 = new Matrix4(),
-          mat2 = new Matrix4();
-    el = canvas.electrodes.get(origin_subject)["YAB, 29 - aTMP6"];
-    g = el.userData.construct_params,
-              is_surf = g.is_surface_electrode,
-              vert_num = g.vertex_number,
-              surf_type = g.surface_type,
-              mni305 = g.MNI305_position,
-              origin_position = g.position,
-              target_group = canvas.group.get( `Surface - ${surf_type} (${target_subject})` ),
-              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
-              pos_orig.fromArray( origin_position );
-mapped = false,
-            side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
-    */
-
-
-    const pos_targ = new three_module.Vector3(),
-          pos_orig = new three_module.Vector3();
-          // mat1 = new Matrix4(),
-          // mat2 = new Matrix4();
-
-    this.electrodes.forEach( (els, origin_subject) => {
-      for( let el_name in els ){
-        const el = els[ el_name ],
-              g = el.userData.construct_params,
-              is_surf = g.is_surface_electrode,
-              vert_num = g.vertex_number,
-              surf_type = g.surface_type,
-              mni305 = g.MNI305_position,
-              origin_position = g.position,
-              target_group = this.group.get( `Surface - ${surf_type} (${target_subject})` ),
-              // origin_volume = this.group.get( `Volume (${origin_subject})` ),
-              // target_volume = this.group.get( `Volume (${target_subject})` ),
-              hide_electrode = origin_position[0] === 0 && origin_position[1] === 0 && origin_position[2] === 0;
-
-        // Calculate MNI 305 coordinate in template space
-        if( el.userData.MNI305_position === undefined ){
-          el.userData.MNI305_position = new three_module.Vector3().set(0, 0, 0);
-          if(
-            Array.isArray( mni305 ) && mni305.length === 3 &&
-            !( mni305[0] === 0 && mni305[1] === 0 && mni305[2] === 0 )
-          ) {
-            el.userData.MNI305_position.fromArray( mni305 );
-          } else {
-            const subject_data  = this.shared_data.get( origin_subject );
-            const tkrRAS_MNI305 = subject_data.matrices.tkrRAS_MNI305;
-            pos_targ.fromArray( origin_position ).applyMatrix4( tkrRAS_MNI305 );
-            el.userData.MNI305_position.copy( pos_targ );
-          }
-        }
-
-        // mni305_points is always valid (if data is complete).
-        const mni305_points = el.userData.MNI305_position;
-        pos_orig.fromArray( origin_position );
-
-        let mapped = false,
-            side = (typeof g.hemisphere === 'string' && g.hemisphere.length > 0) ? (g.hemisphere.charAt(0).toUpperCase() + g.hemisphere.slice(1)) : '';
-
-        // always do MNI305 mapping first as calibration
-        if( !hide_electrode && volume === 'mni305' ){
-          // apply MNI 305 transformation
-          const subject_data2  = this.shared_data.get( target_subject );
-          const MNI305_tkrRAS = subject_data2.matrices.MNI305_tkrRAS;
-
-          if( mni305_points.x !== 0 || mni305_points.y !== 0 || mni305_points.z !== 0 ){
-            pos_targ.set( mni305_points.x, mni305_points.y, mni305_points.z ).applyMatrix4(MNI305_tkrRAS);
-            mapped = true;
-          }
-
-          if( mapped ){
-            el.position.copy( pos_targ );
-            el.userData._template_mni305 = pos_targ.clone();
-            el.userData._template_mapped = true;
-            el.userData._template_space = 'mni305';
-            el.userData._template_shift = 0;
-            el.userData._template_surface = g.surface_type;
-            el.userData._template_hemisphere = g.hemisphere;
-          }else{
-            el.userData._template_mni305 = undefined;
-          }
-
-        }
-
-        if( !hide_electrode && surface === 'std.141' && is_surf && vert_num >= 0 &&
-            target_group && target_group.isObject3D && target_group.children.length === 2 ){
-          // User choose std.141, electrode is surface electrode, and
-          // vert_num >= 0, meaning original surface is loaded, and target_surface exists
-          // meaning template surface is loaded
-          //
-          // check if target surface is std 141
-          let target_surface = target_group.children.filter((_t) => {
-            return( _t.name === `mesh_free_Standard 141 ${side} Hemisphere - ${surf_type} (${target_subject})`);
-          });
-
-          if( target_surface.length === 1 ){
-            // Find vert_num at target_surface[0]
-            const vertices = target_surface[0].geometry.getAttribute('position');
-            const shift = target_surface[0].getWorldPosition( el.parent.position.clone() );
-            pos_targ.set( vertices.getX( vert_num ), vertices.getY( vert_num ), vertices.getZ( vert_num ) ).add(shift);
-            el.position.copy( pos_targ );
-            el.userData._template_mapped = true;
-            el.userData._template_space = 'std.141';
-            el.userData._template_surface = g.surface_type;
-            el.userData._template_hemisphere = g.hemisphere;
-            if( el.userData._template_mni305 ){
-              el.userData._template_shift = pos_targ.distanceTo( el.userData._template_mni305 );
-            }
-            mapped = true;
-          }
-
-        }
-
-
-        // Reset electrode
-        if( !mapped ){
-          el.position.fromArray( origin_position );
-          el.userData._template_mapped = false;
-          el.userData._template_space = 'original';
-          el.userData._template_mni305 = undefined;
-          el.userData._template_shift = 0;
-          el.userData._template_surface = g.surface_type;
-          el.userData._template_hemisphere = g.hemisphere;
-        }
-        if( hide_electrode ){
-          // el.visible = false;
-          (0,utils/* set_visibility */.K3)( el, false );
-        }
-
-      }
-    });
-
-    // also update singletons
-    const line_segs = this.singletons.get(
-      constants/* CONSTANTS.SINGLETONS.line-segments */.t.SINGLETONS["line-segments"]
-    );
-    if( line_segs ) {
-      line_segs.update_segments();
-    }
-    this.start_animation( 0 );
-  }
-
-
-  // export electrodes
-  electrodes_info(args={}){
-
-    const res = [];
-
-    this.electrodes.forEach( ( collection , subject_code ) => {
-      const _regexp = new RegExp(`^${subject_code}, ([0-9]+) \\- (.*)$`),
-            // _regexp = CONSTANTS.REGEXP_ELECTRODE,
-            subject_data  = this.shared_data.get( subject_code ),
-            tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
-            xfm = subject_data.matrices.xfm,
-            pos = new three_module.Vector3();
-      let parsed, e, g, inst, fs_label;
-      const label_list = {};
-
-      for( let k in collection ){
-        parsed = _regexp.exec( k );
-        // just incase
-        if( parsed && parsed.length === 3 ){
-
-          e = collection[ k ];
-          const row = e.userData.instance.get_summary( args );
-
-          if( row && typeof row ==="object" ) {
-            res.push( row );
-          }
-        }
-
-      }
-
-    });
-
-    return( res );
-  }
-
-  download_electrodes( format = 'json' ){
-    const res = this.electrodes_info();
-
-    if( res.length == 0 ){
-      alert("No electrode found!");
-      return;
-    }
-
-    if( format === 'json' ){
-      download_default()(
-        JSON.stringify(res) ,
-        'electrodes.json',
-        'application/json'
-      );
-    }else if( format === 'csv' ){
-      (0,converter.json2csv)(res, (err, csv) => {
-        download_default()( csv , 'electrodes.csv', 'plan/csv');
-      });
-    }
-
-  }
-
-  // Only show electrodes near 3 planes
-  updateElectrodeVisibilityOnSideCanvas( distance ){
-    if( typeof distance !== 'number' ){
-      distance = this.get_state( 'threshold_electrode_plane', Infinity);
-    }else{
-      this.set_state( 'threshold_electrode_plane', distance );
-    }
-    const _x = this.get_state( 'sagittal_depth', 0);
-    const _y = this.get_state( 'coronal_depth', 0);
-    const _z = this.get_state( 'axial_depth', 0);
-    const plane_pos = new three_module.Vector3().set( _x, _y, _z );
-    const diff = new three_module.Vector3();
-
-    this.electrodes.forEach((li, subcode) => {
-
-      for( let ename in li ){
-        const e = li[ ename ];
-
-        // Make sure layer 8 (main camera can see these electrodes)
-        e.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-        e.layers.enable( constants/* CONSTANTS.LAYER_SYS_RAYCASTER_14 */.t.LAYER_SYS_RAYCASTER_14 );
-
-        // get offsets
-        e.getWorldPosition( diff ).sub( plane_pos );
-
-        // Check visibility
-        if( Math.abs( diff.x ) <= distance ){
-          e.layers.enable( constants/* CONSTANTS.LAYER_SYS_SAGITTAL_11 */.t.LAYER_SYS_SAGITTAL_11 );
-        }
-        if( Math.abs( diff.y ) <= distance ){
-          e.layers.enable( constants/* CONSTANTS.LAYER_SYS_CORONAL_9 */.t.LAYER_SYS_CORONAL_9 );
-        }
-        if( Math.abs( diff.z ) <= distance ){
-          e.layers.enable( constants/* CONSTANTS.LAYER_SYS_AXIAL_10 */.t.LAYER_SYS_AXIAL_10 );
-        }
-      }
-
-    });
-
-  }
-
-
-
-  // ------------------------------ Drivers -----------------------------------
-  setBackground({ color } = {}) {
-    if( typeof color !== "number" && typeof color !== "string" ) {
-      return;
-    }
-    // calculate inversed color for text
-    const inversedColor = (0,utils/* invertColor */.qd)( color );
-
-    this.background_color = color;
-    this.foreground_color = inversedColor;
-
-    // Set renderer background to be v
-    this.main_renderer.setClearColor( this.background_color );
-    this.$el.style.backgroundColor = this.background_color;
-
-    const event = {
-      data: {
-        'background' : this.background_color,
-        'foreground' : this.foreground_color
-      },
-      priority: "deferred"
-    }
-    this.dispatch_event( "canvas.background.onChange", event.data );
-    // for shiny
-    this.dispatch_event( "canvas.controllers.onChange", event );
-
-    try {
-      this.sideCanvasList.coronal.setBackground( this.background_color );
-      this.sideCanvasList.axial.setBackground( this.background_color );
-      this.sideCanvasList.sagittal.setBackground( this.background_color );
-    } catch (e) {}
-
-    // force re-render
-    this.start_animation(0);
-
-    return event;
-  }
-  resetCanvas() {
-    // Center camera first.
-    this.handle_resize( undefined, undefined, false, true );
-		this.trackball.reset();
-		this.mainCamera.reset();
-    this.trackball.enabled = true;
-    this.start_animation(0);
-  }
-  getSideCanvasCrosshairMNI305( m ) {
-    // MNI 305 position of the intersection
-    const ints_z = this.get_state( 'axial_depth' ) || 0,
-          ints_y = this.get_state( 'coronal_depth' ) || 0,
-          ints_x = this.get_state( 'sagittal_depth' ) || 0;
-    m.set( ints_x , ints_y , ints_z );
-    return this.calculate_mni305( m );
-  }
-
-}
-
-
-
-
-// window.THREEBRAIN_CANVAS = THREEBRAIN_CANVAS;
-
-
-
-
-
-/***/ }),
-
 /***/ 9898:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -87069,7 +87307,6 @@ function asArray(x){
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "qd": () => (/* binding */ invertColor),
-/* harmony export */   "Bd": () => (/* binding */ padZero),
 /* harmony export */   "nr": () => (/* binding */ to_dict),
 /* harmony export */   "AA": () => (/* binding */ to_array),
 /* harmony export */   "nq": () => (/* binding */ get_element_size),
@@ -87084,7 +87321,7 @@ function asArray(x){
 /* harmony export */   "J1": () => (/* binding */ set_display_mode),
 /* harmony export */   "yi": () => (/* binding */ remove_comments)
 /* harmony export */ });
-/* unused harmony exports debounce, float_to_int32, storageAvailable */
+/* unused harmony exports padZero, debounce, float_to_int32, storageAvailable */
 /* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2152);
 /* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(clipboard__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2212);
@@ -87745,14 +87982,6 @@ var __webpack_exports__ = {};
 
 // EXTERNAL MODULE: ./node_modules/three/build/three.module.js
 var three_module = __webpack_require__(2212);
-// EXTERNAL MODULE: ./src/js/download.js
-var download = __webpack_require__(3121);
-// EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
-var converter = __webpack_require__(7542);
-// EXTERNAL MODULE: ./src/js/constants.js
-var constants = __webpack_require__(975);
-// EXTERNAL MODULE: ./src/js/utils.js
-var utils = __webpack_require__(3658);
 ;// CONCATENATED MODULE: ./src/js/jsm/capabilities/WebGL.js
 class WebGL {
 
@@ -87846,75 +88075,18 @@ class WebGL {
 
 /* harmony default export */ const capabilities_WebGL = (WebGL);
 
+// EXTERNAL MODULE: ./src/js/download.js
+var download = __webpack_require__(3121);
+// EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
+var converter = __webpack_require__(7542);
+// EXTERNAL MODULE: ./src/js/constants.js
+var constants = __webpack_require__(975);
 // EXTERNAL MODULE: ./src/js/core/StorageCache.js
 var StorageCache = __webpack_require__(7123);
 // EXTERNAL MODULE: ./src/js/core/ViewerApp.js
 var ViewerApp = __webpack_require__(7849);
-// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js
-var injectStylesIntoStyleTag = __webpack_require__(3379);
-var injectStylesIntoStyleTag_default = /*#__PURE__*/__webpack_require__.n(injectStylesIntoStyleTag);
-// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/styleDomAPI.js
-var styleDomAPI = __webpack_require__(7795);
-var styleDomAPI_default = /*#__PURE__*/__webpack_require__.n(styleDomAPI);
-// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/insertBySelector.js
-var insertBySelector = __webpack_require__(569);
-var insertBySelector_default = /*#__PURE__*/__webpack_require__.n(insertBySelector);
-// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js
-var setAttributesWithoutAttributes = __webpack_require__(3565);
-var setAttributesWithoutAttributes_default = /*#__PURE__*/__webpack_require__.n(setAttributesWithoutAttributes);
-// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/insertStyleElement.js
-var insertStyleElement = __webpack_require__(9216);
-var insertStyleElement_default = /*#__PURE__*/__webpack_require__.n(insertStyleElement);
-// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/styleTagTransform.js
-var styleTagTransform = __webpack_require__(4589);
-var styleTagTransform_default = /*#__PURE__*/__webpack_require__.n(styleTagTransform);
-// EXTERNAL MODULE: ./node_modules/css-loader/dist/cjs.js!./src/css/dipterix.css
-var dipterix = __webpack_require__(794);
-;// CONCATENATED MODULE: ./src/css/dipterix.css
-
-      
-      
-      
-      
-      
-      
-      
-      
-      
-
-var options = {};
-
-options.styleTagTransform = (styleTagTransform_default());
-options.setAttributes = (setAttributesWithoutAttributes_default());
-
-      options.insert = insertBySelector_default().bind(null, "head");
-    
-options.domAPI = (styleDomAPI_default());
-options.insertStyleElement = (insertStyleElement_default());
-
-var update = injectStylesIntoStyleTag_default()(dipterix/* default */.Z, options);
-
-
-
-
-       /* harmony default export */ const css_dipterix = (dipterix/* default */.Z && dipterix/* default.locals */.Z.locals ? dipterix/* default.locals */.Z.locals : undefined);
-
-;// CONCATENATED MODULE: ./src/index.js
-/**
- * @Author: Zhengjia Wang
- * Adapter of model (threejs_scene) and viewer (htmlwidgets)
- */
-
+;// CONCATENATED MODULE: ./src/js/core/ViewerWrapper.js
 // External libraries
-
-
-
-
-
-
-
-
-
 
 
 
@@ -87931,7 +88103,7 @@ class ViewerWrapper {
 
   get containerID () {
     // previously this.element_id
-    this.$container.getAttribute('id');
+    return this.$container.getAttribute('id');
   }
   get cacheID () {
     return `__THREEBRAIN_CONTAINER_${ this.containerID }__`;
@@ -88151,6 +88323,11 @@ class ViewerWrapper {
 
     this.render( reset );
 
+    this.DEBUG = data.settings.debug || false;
+    if( this.DEBUG ) {
+      window.appWrapper = this;
+    }
+
 
   }
 
@@ -88172,25 +88349,94 @@ class ViewerWrapper {
   }
 }
 
+
+
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js
+var injectStylesIntoStyleTag = __webpack_require__(3379);
+var injectStylesIntoStyleTag_default = /*#__PURE__*/__webpack_require__.n(injectStylesIntoStyleTag);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/styleDomAPI.js
+var styleDomAPI = __webpack_require__(7795);
+var styleDomAPI_default = /*#__PURE__*/__webpack_require__.n(styleDomAPI);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/insertBySelector.js
+var insertBySelector = __webpack_require__(569);
+var insertBySelector_default = /*#__PURE__*/__webpack_require__.n(insertBySelector);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js
+var setAttributesWithoutAttributes = __webpack_require__(3565);
+var setAttributesWithoutAttributes_default = /*#__PURE__*/__webpack_require__.n(setAttributesWithoutAttributes);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/insertStyleElement.js
+var insertStyleElement = __webpack_require__(9216);
+var insertStyleElement_default = /*#__PURE__*/__webpack_require__.n(insertStyleElement);
+// EXTERNAL MODULE: ./node_modules/style-loader/dist/runtime/styleTagTransform.js
+var styleTagTransform = __webpack_require__(4589);
+var styleTagTransform_default = /*#__PURE__*/__webpack_require__.n(styleTagTransform);
+// EXTERNAL MODULE: ./node_modules/css-loader/dist/cjs.js!./src/css/dipterix.css
+var dipterix = __webpack_require__(794);
+;// CONCATENATED MODULE: ./src/css/dipterix.css
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var options = {};
+
+options.styleTagTransform = (styleTagTransform_default());
+options.setAttributes = (setAttributesWithoutAttributes_default());
+
+      options.insert = insertBySelector_default().bind(null, "head");
+    
+options.domAPI = (styleDomAPI_default());
+options.insertStyleElement = (insertStyleElement_default());
+
+var update = injectStylesIntoStyleTag_default()(dipterix/* default */.Z, options);
+
+
+
+
+       /* harmony default export */ const css_dipterix = (dipterix/* default */.Z && dipterix/* default.locals */.Z.locals ? dipterix/* default.locals */.Z.locals : undefined);
+
+;// CONCATENATED MODULE: ./src/index.js
+/**
+ * @Author: Zhengjia Wang
+ * Adapter of model (threejs_scene) and viewer (htmlwidgets)
+ */
+
+// External libraries
+
+
+
+
+
+// Viewer class
+
+
+
+
+
+
 const ThreeBrainLib = {
   ViewerApp           : ViewerApp/* ViewerApp */.o,
   ViewerWrapper       : ViewerWrapper,
   StorageCache        : StorageCache/* StorageCache */.B,
   constants           : constants/* CONSTANTS */.t,
   utils : {
-    CONSTANTS         : constants/* CONSTANTS */.t,
     THREE             : three_module,
     WebGL             : capabilities_WebGL,
-    MathUtils         : three_module.MathUtils,
-    padZero           : utils/* padZero */.Bd,
-    to_array          : utils/* to_array */.AA,
-    get_element_size  : utils/* get_element_size */.nq,
-    get_or_default    : utils/* get_or_default */.jM,
     json2csv          : converter.json2csv,
     download          : download/* download */.L,
   }
 }
-window.ThreeBrainLib = ThreeBrainLib;
+
+
+try {
+  window.ThreeBrainLib = ThreeBrainLib;
+} catch (e) {}
+
 
 
 })();

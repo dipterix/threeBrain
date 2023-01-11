@@ -1,8 +1,8 @@
 import { CONSTANTS } from '../constants.js';
 import { Vector3, OrthographicCamera, DirectionalLight, WebGLRenderer } from 'three';
 import { get_element_size } from '../utils.js';
-import { make_draggable } from '../libs/draggable.js';
-import { make_resizable } from '../libs/resizable.js';
+import { makeDraggable } from '../utility/draggable.js';
+import { makeResizable } from '../utility/resizable.js';
 
 class SideCanvas {
 
@@ -401,7 +401,7 @@ class SideCanvas {
 		this.$el.appendChild( this.$resizeWrapper );
 
 		// Make header draggable within viewer
-    make_draggable( this.$el, this.$header, undefined, () => {
+    makeDraggable( this.$el, this.$header, undefined, () => {
       this.raiseTop();
     });
 
@@ -444,7 +444,7 @@ class SideCanvas {
     }, this.$canvas );
 
     // Make $el resizable, keep current width and height
-    make_resizable( this.$el, true );
+    makeResizable( this.$el, true );
 
 
     // --------------- Register 3js objects -------------
