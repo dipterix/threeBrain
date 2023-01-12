@@ -148,6 +148,7 @@ class EnhancedGUI extends GUI {
       currentFolder = new EnhancedGUI( {
         parent: this, title : folderName
       });
+      currentFolder.close();
     }
 
     if( subTitles.length === 0 ) {

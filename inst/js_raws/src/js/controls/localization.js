@@ -728,7 +728,7 @@ function register_controls_localization( ViewerControlCenter ){
         position = electrode_from_ct( inst, this.canvas );
         break;
       case "MRI slice":
-        position = electrode_from_slice( scode, this.canvas );
+        position = electrode_from_slice( subjectCode, this.canvas );
         break;
       default:
         return;
@@ -1210,7 +1210,8 @@ function register_controls_localization( ViewerControlCenter ){
     });
 
     // open folder
-    this.gui.openFolder( folderName );
+    this.gui.openFolder( folderName, false );
+    this.gui.openFolder( CONSTANTS.FOLDERS[ 'atlas' ] , false );
 
     this.gui.hideControllers([
       '- tkrRAS', '- MNI305', '- T1 RAS', 'Interpolate Size',

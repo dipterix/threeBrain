@@ -152,7 +152,7 @@ CONSTANTS.FOLDERS = {
   'electrode-mapping'     : 'Electrode Settings',
   'animation'             : 'Data Visualization',
   'highlight-selection'   : 'Data Visualization',
-  'localization'          : 'Electrode Settings > Localization'
+  'localization'          : 'Electrode Localization'
 };
 
 CONSTANTS.THRESHOLD_OPERATORS = [

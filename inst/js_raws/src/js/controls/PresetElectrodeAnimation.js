@@ -42,7 +42,8 @@ function registerPresetElectrodeAnimation( ViewerControlCenter ){
       // const playbackSpeed = this.ctrlAnimSpeed.getValue() || 1;
 
       if( !cmap ){
-        this.ctrlLegendVisible.setValue(false);
+        this.ctrlLegendVisible.setValue( false );
+        this.ctrlRenderTimestamp.setValue( false );
         if( clipName === '[None]' ){
           this.canvas.electrodes.forEach((_d) => {
             for( let _kk in _d ){
@@ -422,7 +423,7 @@ function registerPresetElectrodeAnimation( ViewerControlCenter ){
     this.ctrlLegendVisible.setValue( this.settings.show_legend );
     this.ctrlRenderTimestamp.setValue( this.settings.render_timestamp || false );
     this.ctrlClipName.setValue( initial );
-    this.gui.openFolder( folderName );
+    this.gui.openFolder( folderName, false );
 
   }
 
