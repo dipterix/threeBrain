@@ -9,9 +9,9 @@ import {
   Mesh, MeshBasicMaterial
 } from 'three';
 import { asArray } from '../utility/asArray.js';
-import { get_element_size, get_or_default,
-  has_meta_keys, vec3_to_string, write_clipboard, as_Matrix4,
-  set_visibility, set_display_mode, invertColor
+import { asColor, invertColor, colorLuma } from '../utility/color.js';
+import { get_element_size, get_or_default, as_Matrix4,
+  set_visibility, set_display_mode
 } from '../utils.js';
 // import { OrthographicTrackballControls } from './OrthographicTrackballControls.js';
 import { HauntedArcballControls } from './HauntedArcballControls.js';
@@ -89,21 +89,13 @@ window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
 // A storage to cache large objects such as mesh data
 const cached_storage = new StorageCache();
 
-// Make sure window.requestAnimationFrame exists
-// Override methods so that we have multiple support across platforms
-window.requestAnimationFrame =
-    window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.msRequestAnimationFrame ||
-    window.oRequestAnimationFrame ||
-    function (callback) {
-        setTimeout(function() { callback(Date.now()); },  1000/60);
-    };
-
-
 
 class ViewerCanvas {
+
+  // private
+
+  // public
+
   constructor(
     el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
   ) {
@@ -128,7 +120,6 @@ class ViewerCanvas {
     // DOM container information
     this.$el = el;
     this.container_id = this.$el.getAttribute( 'data-target' );
-    this.ready = false;
     this._time_info = {
       selected_object : {
         position: new Vector3()
@@ -149,7 +140,7 @@ class ViewerCanvas {
     this.main_canvas = document.createElement('div');
     this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
     this.main_canvas.style.width = width + 'px';
-    this.mainCanvas = this.main_canvas
+    this.$mainCanvas = this.main_canvas
 
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
@@ -187,21 +178,18 @@ class ViewerCanvas {
 
     // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
-    this._keyboard_callbacks = {};
 
     // update functions
-    this._custom_updates = new Map();
-    this._update_countdown = 5;
 
     /* A render flag that tells renderers whether the canvas needs update.
           Case -1, -2, ... ( < 0 ) : stop rendering
           Case 0: render once
           Case 1, 2: render until reset
-    lower render_flag will be ignored if higher one is set. For example, if
-    render_flag=2 and pause_animation only has input of 1, renderer will ignore
+    lower _renderFlag will be ignored if higher one is set. For example, if
+    _renderFlag=2 and pause_animation only has input of 1, renderer will ignore
     the pause signal.
     */
-    this.render_flag = 0;
+    this._renderFlag = 0;
 
     // Disable raycasting, soft deprecated
     this.disable_raycast = true;
@@ -274,10 +262,6 @@ class ViewerCanvas {
   	this.main_renderer.localClippingEnabled=true; // Enable clipping
   	this.main_renderer.setClearColor( this.background_color );
 
-
-    // register mouse events to save time from fetching from DOM elements
-    this.register_main_canvas_events();
-
     // this.main_canvas.appendChild( this.main_renderer.domElement );
     this.main_canvas.appendChild( this.domElement );
 
@@ -325,33 +309,9 @@ class ViewerCanvas {
 
 
     // Mouse helpers
-    const mouse_pointer = new Vector2(),
-        mouse_raycaster = new Raycaster();
-    // const mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-    //     mouse_helper_root = new Mesh(
-    //       new BoxGeometry( 4,4,4 ),
-    //       new MeshBasicMaterial({ color : 0xff0000 })
-    //     );
-
-    // root is a green cube that's only visible in side cameras
-    // mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    // mouse_helper.children.forEach( el => {
-    //   el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    // } );
-
-    // In side cameras, always render mouse_helper_root on top
-    // mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
-    // mouse_helper_root.material.depthTest = false;
-    // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
-
-    // mouse_helper.add( mouse_helper_root );
-
-    // this.mouse_helper = mouse_helper;
-    this.mouse_raycaster = mouse_raycaster;
-    this.mouse_pointer = mouse_pointer;
-    this.mouseState = MOUSE.OFF_VIEWER;
-
-    // this.add_to_scene(mouse_helper, true);
+    this.mousePositionOnScreen = new Vector2();
+    this.mouseRaycaster = new Raycaster();
+    this._mouseEvent = undefined;
 
     this.focus_box = new BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
@@ -367,314 +327,66 @@ class ViewerCanvas {
 		// File loader
     this.file_loader = new CanvasFileLoader( this );
 
+    this.activated = false;
+    this.$el.addEventListener( 'viewerApp.mouse.enterViewer', this._activateViewer );
+    this.$el.addEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
+    this.$el.addEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown, { capture : true } );
+
+    // this listener has been moved to controlCenter. Ideally all listeners go there
+    // and this canvas is just in charge of passively rendering & updating things
+    // this.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
+  }
+  _activateViewer = () => {
+    this.activated = true;
+    this.start_animation( 0 );
+  }
+  _deactivateViewer = () => { this.activated = false; }
+  /* Moved to viewer control center
+  _onMouseMove = ( event ) => {
+    if( this.activated ) {
+      this._mouseEvent = event;
+    }
+  }
+  */
+  _onMouseDown = ( event ) => {
+    // async, but raycaster is always up to date
+    const p = this.raycastClickables()
+      .then((item) => {
+        if( event.detail.button == 2 && item ) {
+          if( item.object && item.object.isMesh && item.object.userData.construct_params ) {
+            const crosshairPosition = item.object.getWorldPosition( new Vector3() );
+            crosshairPosition.centerCrosshair = true;
+            this.dispatch_event( 'canvas.drive.setSliceCrosshair', crosshairPosition );
+          }
+        }
+      });
+    return p;
   }
 
-  /*---- Finalize init ------------------------------------------------------*/
-  register_main_canvas_events(){
+  raycastClickables = () => {
 
-    // this.$el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    // this.$el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
-    /*
-    this.bind( "mouseEnteredViewer", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_CANVAS;
-    }, this.$el );
-    this.bind( "mouseLeftViewer", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_CANVAS;
-    }, this.$el );
-    this.bind( "mouseEnteredSidePanels", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_SIDE_CANVAS;
-    }, this.sideCanvasList.coronal.$el );
-    this.bind( "mouseLeftSidePanels", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_SIDE_CANVAS;
-    }, this.$el );
-    this.bind( "mouseEnteredControlPanel", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_CONTROLLER;
-    }, this.$el );
-    this.bind( "mouseLeftViewer", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_CONTROLLER;
-    }, this.$el );
-    */
+    const raycaster = this.updateRaycast();
 
-    this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
-			  this.listen_keyboard = true;
-			}, this.main_canvas);
-		this.bind( 'main_canvas_mouseleave', 'mouseleave', (e) => {
-			  this.listen_keyboard = false;
-			}, this.main_canvas);
+    return new Promise(resolve => {
 
-		this.bind( 'main_canvas_dblclick', 'dblclick', (event) => { // Use => to create flexible access to this
-      if(this.mouse_event !== undefined && this.mouse_event.level > 2){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'dblclick',
-        'event' : event,
-        'dispose' : false,
-        'level' : 2
-      };
+      if( !raycaster ) { resolve( undefined ); }
 
-    }, this.main_canvas, false );
+      // where clickable objects stay
+      raycaster.layers.set( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
 
-    this.bind( 'main_canvas_click', 'click', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'click',
-        'button' : event.button,
-        'event' : event,
-        'dispose' : false,
-        'level' : 1
-      };
+      // Only raycast with visible
+      const items = raycaster.intersectObjects(
+        // asArray( this.clickable )
+        this.clickable_array.filter((e) => { return( e.visible ) })
+      );
 
-    }, this.main_canvas, false );
+      if( !items || items.length === 0 ) { resolve( undefined ); }
 
-    this.bind( 'main_canvas_contextmenu', 'contextmenu', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'contextmenu',
-        'button' : event.button,
-        'event' : event,
-        'dispose' : false,
-        'level' : 1
-      };
+      const item = items[ 0 ];
+      this.focus_object( item.object );
 
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mousemove', 'mousemove', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 0){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'mousemove',
-        'event' : event,
-        'dispose' : false,
-        'level' : 0
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mousedown', 'mousedown', (event) => {
-      this.mouse_event = {
-        'action' : 'mousedown',
-        'event' : event,
-        'dispose' : false,
-        'level' : 3
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mouseup', 'mouseup', (event) => {
-      this.mouse_event = {
-        'action' : 'mouseup',
-        'event' : event,
-        'dispose' : true,
-        'level' : 0
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
-      if (event.isComposing || event.keyCode === 229) { return; }
-      if( this.listen_keyboard ){
-        // event.preventDefault();
-        this.keyboard_event = {
-          'action' : 'keydown',
-          'event' : event,
-          'dispose' : false,
-          'level' : 0
-        };
-      }
-
-    }, document );
-
-
-    this.add_mouse_callback(
-      (evt) => {
-
-        // If editing mode enabled, disable this
-        return({
-          pass  : !this.edit_mode && (['click', 'dblclick'].includes( evt.action ) ||
-                  ( evt.action === 'mousedown' && evt.event.button === 2 )),
-          type  : 'clickable'
-        });
-      },
-      (res, evt) => {
-        this.focus_object( res.target_object );
-        try {
-          document.activeElement.blur();
-        } catch (e) {}
-        this.start_animation( 0 );
-      },
-      'set_obj_chosen'
-    );
-
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : ['click', 'dblclick'].includes( evt.action ) ||
-                  ( evt.action === 'mousedown' && evt.event.button === 2 ),
-          type  : 'clickable' //this.scene.children //'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const first_item = res.first_item;
-        if( first_item ){
-
-          const target_object = res.target_object,
-                from = first_item.point,
-                direction = first_item.face.normal.normalize();
-
-          // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
-          direction.transformDirection( target_object.matrixWorld );
-          let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
-          if(back){
-            direction.applyMatrix3(new Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
-          }
-
-          // this.mouse_helper.position.fromArray( asArray(from) );
-          // this.mouse_helper.setDirection(direction);
-          // this.mouse_helper.visible = true;
-
-        }else{
-          // this.mouse_helper.visible = false;
-        }
-
-        this.start_animation(0);
-      },
-      'raycaster'
-    );
-
-    // Add handlers to set plane location when an electrode is clicked
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.isMesh && obj.userData.construct_params ){
-          const pos = new Vector3();
-          obj.getWorldPosition( pos );
-          this.dispatch_event( 'canvas.drive.setSliceCrosshair', {
-            x : pos.x,
-            y : pos.y,
-            z : pos.z,
-            centerCrosshair : true
-          } );
-        }
-      },
-      'side_viewer_depth'
-    );
-
-
-
-    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
-      let m = this.object_chosen || this._last_object_chosen,
-          last_obj = false,
-          this_obj = false,
-          first_obj = false;
-
-      // place flag first as the function might ends early
-      this.start_animation( 0 );
-
-      for( let _nm of this.mesh.keys() ){
-        this_obj = this.mesh.get( _nm );
-        if( this_obj.visible &&
-            this_obj.isMesh &&
-            this_obj.userData.construct_params.is_electrode
-        ){
-          if( !m ){
-            this.focus_object( this_obj, true );
-            return(null);
-          }
-          if( last_obj && last_obj.name === m.name ){
-            this.focus_object( this_obj, true );
-            return(null);
-          }
-          last_obj = this_obj;
-          if( !first_obj ){
-            first_obj = this_obj;
-          }
-        }
-      }
-      if( last_obj !== false ){
-        // has electrode
-        if( last_obj.name === m.name ){
-        // focus on the first one
-          last_obj = first_obj;
-        }
-        this.focus_object( last_obj, true );
-        return(null);
-      }
-
-    }, 'electrode_cycling_next');
-
-    this.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELECTRODES_PREV, (evt) => {
-      let m = this.object_chosen || this._last_object_chosen,
-          last_obj = false,
-          this_obj = false,
-          first_obj = false;
-
-      // place flag first as the function might ends early
-      this.start_animation( 0 );
-
-      for( let _nm of this.mesh.keys() ){
-        this_obj = this.mesh.get( _nm );
-        if( this_obj.visible &&
-            this_obj.isMesh &&
-            this_obj.userData.construct_params.is_electrode
-        ){
-          if( m && last_obj && m.name == this_obj.name ){
-            this.focus_object( last_obj, true );
-            return(null);
-          }
-          last_obj = this_obj;
-        }
-      }
-      if( last_obj ){
-        this.focus_object( last_obj, true );
-      }
-    }, 'electrode_cycling_prev');
-
-    this.add_keyboard_callabck( CONSTANTS.KEY_CLIP_INFO_FOCUSED, (evt) => {
-      if( has_meta_keys( evt.event, false, true, false ) ){
-
-        const m = this.object_chosen || this._last_object_chosen;
-        // check if this is electrode
-        if( is_electrode(m) ){
-          // get electrode information
-          const g = m.userData.construct_params,
-                subject_code = g.subject_code,
-                subject_data = this.shared_data.get( subject_code ),
-                tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
-                xfm = subject_data.matrices.xfm,
-                pos = new Vector3();
-
-          pos.fromArray( g.position );
-          let s = `${g.name}\n` + `tkrRAS: ${vec3_to_string(g.position)}\n`;
-
-          //  T1_x y z
-          pos.applyMatrix4( tkrRAS_Scanner );
-          s = s + `T1 RAS: ${vec3_to_string(pos)}\n`;
-
-          //  MNI305_x MNI305_y MNI305_z
-          pos.applyMatrix4( xfm );
-          s = s + `MNI305: ${vec3_to_string(pos)}\n`;
-
-          write_clipboard(s);
-        }
-      }
-    }, 'copy_electrode_info');
-
-  }
-  finish_init(){
-    // finalizing initialization of each geom
-    this.dispatch_event( "canvas.finish_init" );
+      resolve( item );
+    })
   }
 
   /*---- Add objects --------------------------------------------*/
@@ -914,14 +626,15 @@ class ViewerCanvas {
   dispose(){
     // Remove all objects, listeners, and dispose all
     this._disposed = true;
-    this.ready = false;
+    this.activated = false;
     this.animParameters.dispose();
 
-    // update functions
-    this._custom_updates.clear();
-
-    // Remove custom listeners
-    this.dispose_eventlisters();
+    // Remove listeners
+    this.$el.removeEventListener( 'viewerApp.mouse.enterViewer', this._activateViewer );
+    this.$el.removeEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
+    this.$el.removeEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown );
+    // this.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
+    this.event_dispatcher.dispose();
     this.trackball.enabled = false;
     this.trackball.dispose();
 
@@ -1001,7 +714,6 @@ class ViewerCanvas {
     this.set_state( 'coronal_depth', 0 );
     this.set_state( 'axial_depth', 0 );
     this.set_state( 'sagittal_depth', 0 );
-    this.dispatch_event( 'canvas.clear_all' );
 
   }
 
@@ -1015,18 +727,7 @@ class ViewerCanvas {
     this.event_dispatcher.dispatch_event( type, data, immediate );
   }
 
-  dispose_eventlisters(){
-    this.event_dispatcher.dispose();
-  }
-
-
   // callbacks
-  add_mouse_callback(check, callback, name){
-    this._mouse_click_callbacks[name] = [check, callback];
-  }
-  add_keyboard_callabck(keycode, callback, name){
-    this._keyboard_callbacks[name] = [keycode, callback];
-  }
   handle_resize(width, height, lazy = false, center_camera = false){
 
     if( this._disposed ) { return; }
@@ -1162,37 +863,24 @@ class ViewerCanvas {
   }
 
   // Get mouse position (normalized)
-  get_mouse(){
-    if(this.mouse_event !== undefined && !this.mouse_event.dispose){
-      let event = this.mouse_event.event;
+  updateRaycast() {
+    if( !this.activated ) { return; }
+    if( !this._mouseEvent ) { return; }
 
-      if( !event.offsetX && !event.offsetY ){
-        // Firefox, where offsetX,Y are always 0
-        const rect = this.domElement.getBoundingClientRect();
-        this.mouse_pointer.x = 2 * (event.clientX - rect.x) / rect.width - 1;
-        // three.js origin is from bottom-left while html origin is top-left
-        this.mouse_pointer.y = 2 * (rect.y - event.clientY) / rect.height + 1;
-      } else {
-        this.mouse_pointer.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
-        this.mouse_pointer.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
-      }
-    }
-  }
+    const event = this._mouseEvent;
 
-  // To be implemented (abstract methods)
-  set_coronal_depth( depth ){
-    if( typeof this._set_coronal_depth === 'function' ){
-      this._set_coronal_depth( depth );
-    }else{
-      console.debug('Set coronal depth not implemented');
+    if( !event.offsetX && !event.offsetY ){
+      // Firefox, where offsetX,Y are always 0
+      const rect = this.domElement.getBoundingClientRect();
+      this.mousePositionOnScreen.x = 2 * (event.clientX - rect.x) / rect.width - 1;
+      // three.js origin is from bottom-left while html origin is top-left
+      this.mousePositionOnScreen.y = 2 * (rect.y - event.clientY) / rect.height + 1;
+    } else {
+      this.mousePositionOnScreen.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
+      this.mousePositionOnScreen.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
     }
-  }
-  set_sagittal_depth( depth ){
-    if( typeof this._set_sagittal_depth === 'function' ){
-      this._set_sagittal_depth( depth );
-    }else{
-      console.debug('Set sagittal depth not implemented');
-    }
+    this.mouseRaycaster.setFromCamera( this.mousePositionOnScreen, this.mainCamera );
+    return this.mouseRaycaster;
   }
 
   // -------- Camera, control trackballs ........
@@ -1280,42 +968,6 @@ class ViewerCanvas {
 	  this.start_animation( 0 );
 	}
   /*---- Choose & highlight objects -----------------------------------------*/
-  set_raycaster(){
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.mainCamera );
-  }
-
-  _fast_raycast( request_type ){
-
-    let items;
-
-    this.set_raycaster();
-
-    this.mouse_raycaster.layers.disableAll();
-
-    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
-      // intersect with all clickables
-      // set raycaster to be layer 14
-      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_RAYCASTER_14 );
-
-      // Only raycast with visible
-      items = this.mouse_raycaster.intersectObjects(
-        // asArray( this.clickable )
-        this.clickable_array.filter((e) => { return(e.visible === true) })
-      );
-      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
-    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
-      // set raycaster to be layer 8 (main camera)
-      this.mouse_raycaster.layers.enable( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
-      items = this.mouse_raycaster.intersectObjects( asArray( request_type ), true );
-    }
-
-    if(this.DEBUG){
-      this._items = items;
-    }
-
-		return(items);
-
-  }
 
   focus_object( m = undefined, helper = false, auto_unfocus = false ){
 
@@ -1328,11 +980,6 @@ class ViewerCanvas {
       this.highlight( this.object_chosen, false );
       console.debug('object selected ' + m.name);
 
-      // if( helper ){
-      //   m.getWorldPosition( this.mouse_helper.position );
-      //   this.mouse_helper.visible = true;
-      // }
-
 
     }else{
       if( auto_unfocus ){
@@ -1340,7 +987,6 @@ class ViewerCanvas {
           this.highlight( this.object_chosen, true );
           this.object_chosen = undefined;
         }
-        // this.mouse_helper.visible = false;
       }
     }
   }
@@ -1675,82 +1321,6 @@ class ViewerCanvas {
 
 
   /*---- Update function at each animationframe -----------------------------*/
-  keyboard_update(){
-
-    if( !this.keyboard_event || this.keyboard_event.dispose ){
-      return( null );
-    }
-    this.keyboard_event.dispose = true;
-    if(this.keyboard_event.level <= 2){
-      this.keyboard_event.level = 0;
-    }
-
-    // handle
-    for( let _cb_name in this._keyboard_callbacks ){
-
-      if( this._keyboard_callbacks[ _cb_name ] &&
-          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
-        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
-      }
-
-    }
-  }
-  // method to target object with mouse pointed at
-  mouse_update(){
-
-    if( !this.mouse_event || this.mouse_event.dispose ){
-      return(null);
-    }
-
-    // dispose first as the callbacks might have error
-    this.mouse_event.dispose = true;
-    if(this.mouse_event.level <= 2){
-      this.mouse_event.level = 0;
-    }
-
-
-    // Call callbacks
-    let raycast_result, request_type, callback, request;
-
-    for( let _cb_name in this._mouse_click_callbacks ){
-      callback = this._mouse_click_callbacks[ _cb_name ];
-      if( callback === undefined ){
-        continue;
-      }
-      request = callback[0]( this.mouse_event );
-
-      if( request && request.pass ){
-
-        // raycast object
-        // check which object(s) to raycast on
-        request_type = request.type || 'clickable';
-
-        if( raycast_result === undefined ||
-            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
-          raycast_result = {
-            type  : request_type,
-            items : this._fast_raycast( request_type ),
-            meta  : request.meta
-          };
-        }
-
-        // Find object_chosen
-        if( raycast_result.items.length > 0 ){
-          // Has intersects!
-          const first_item = raycast_result.items[0],
-                target_object = first_item.object;
-
-          raycast_result.first_item = first_item;
-          raycast_result.target_object = target_object;
-        }
-
-        callback[1]( raycast_result, this.mouse_event );
-      }
-    }
-
-
-
-  }
 
   // Animation-related:
   incrementTime(){
@@ -1805,17 +1375,36 @@ class ViewerCanvas {
     }
   }
 
-  // set renderer's flag (persist):
+  // set renderer's flag (persistLevel):
   // 0: render once at next cycle
-  start_animation( persist = 0 ){
-    // persist 0, render once
-    // persist > 0, loop
+  start_animation( persistLevel = 0 ){
+    // persistLevel 0, render once
+    // persistLevel > 0, loop
 
-    const _flag = this.render_flag;
-    if(persist >= _flag){
-      this.render_flag = persist;
+    const _flag = this._renderFlag;
+    if( persistLevel >= _flag ){
+      this._renderFlag = persistLevel;
     }
-    if( persist >= 2 && _flag < 2 ){
+    if( persistLevel >= 2 && _flag < 2 ){
+      // _flag < 2 means prior state only renders the scene, but animation is paused
+      // if _flag >= 2, then clock was running, then there is no need to start clock
+      // persist >= 2 is a flag for animation to run
+      // animation clips need a clock
+      this.animParameters._clock.start();
+    }
+  }
+  get needsUpdate () { return this._renderFlag >= 0; }
+  set needsUpdate ( persistLevel ) {
+    if( persistLevel === true ) {
+      persistLevel = 0;
+    }
+    // persistLevel 0, render once
+    // persistLevel > 0, loop
+    const _flag = this._renderFlag;
+    if( persistLevel >= _flag ){
+      this._renderFlag = persistLevel;
+    }
+    if( persistLevel >= 2 && _flag < 2 ){
       // _flag < 2 means prior state only renders the scene, but animation is paused
       // if _flag >= 2, then clock was running, then there is no need to start clock
       // persist >= 2 is a flag for animation to run
@@ -1826,9 +1415,9 @@ class ViewerCanvas {
 
   // Pause animation
   pause_animation( level = 1 ){
-    const _flag = this.render_flag;
+    const _flag = this._renderFlag;
     if(_flag <= level){
-      this.render_flag = -1;
+      this._renderFlag = -1;
 
       // When animation is stopped, we need to check if clock is running, if so, stop it
       if( _flag >= 2 ){
@@ -1836,42 +1425,16 @@ class ViewerCanvas {
       }
     }
   }
+  pauseAnimation ( persistLevel = 1 ) {
+    this.pause_animation( persistLevel );
+  }
 
 
   update(){
 
-    this.get_mouse();
     this.trackball.update();
     this.compass.update();
-
-    try {
-      this.keyboard_update();
-      this.mouse_update();
-    } catch (e) {
-      if(this.DEBUG){
-        console.error(e);
-      }
-    }
-
-    // Run less frequently
-    if( this.ready && this._custom_updates.size ){
-      if( this._update_countdown > 0 ){
-        this._update_countdown--;
-      } else {
-        this._update_countdown = 5;
-        this._custom_updates.forEach((f) => {
-          try {
-            if( typeof(f) === "function" ){
-              f();
-            }
-          } catch (e) {
-            if(this.DEBUG){
-              console.error(e);
-            }
-          }
-        });
-      }
-    }
+    if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
 
   }
 
@@ -1891,6 +1454,13 @@ class ViewerCanvas {
 
   // Main render function, automatically scheduled
   render(){
+
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
 
     // double-buffer to make sure depth renderings
     //this.main_renderer.setClearColor( renderer_colors[0] );
@@ -1946,6 +1516,42 @@ class ViewerCanvas {
         sliceInstance.sliceMaterial.depthWrite = true;
       }
 
+    }
+
+
+
+		// draw main and side rendered images to this.domElement (2d context)
+		this.mapToCanvas();
+
+
+		// Add additional information
+    // const _pixelRatio = this.pixel_ratio[0];
+    // const _fontType = 'Courier New, monospace';
+
+    this.domContext.fillStyle = this.foreground_color;
+
+    // Draw title on the top left corner
+    this.renderTitle( 0, 0, _width, _height );
+
+    // Draw timestamp on the bottom right corner
+    this.renderTimestamp( 0, 0, _width, _height );
+
+    // Draw legend on the right side
+    this.renderLegend( 0, 0, _width, _height );
+
+    // Draw focused target information on the top right corner
+    this.renderSelectedObjectInfo( 0, 0, _width, _height );
+
+    // check if capturer is working
+    if( this.capturer_recording && this.capturer ){
+      this.capturer.add();
+    }
+
+    // this._draw_video( results, _width, _height );
+
+    // reset render flag
+    if(this._renderFlag === 0){
+      this._renderFlag = -1;
     }
 
   }
@@ -2431,7 +2037,7 @@ class ViewerCanvas {
       return;
     }
 
-    if( this.render_flag >= 2 ){
+    if( this._renderFlag >= 2 ){
       this.start_video( results.speed || 1, video_time );
     } else {
       // static, set timer
@@ -2454,76 +2060,6 @@ class ViewerCanvas {
 
 
   }
-
-  // Do not call this function directly after the initial call
-  // use "this.start_animation(0);" to render once
-  // use "this.start_animation(1);" to keep rendering
-  // this.pause_animation(1); to stop rendering
-  // Only use 0 or 1
-  animate(){
-
-    if( this._disposed ){ return; }
-
-    requestAnimationFrame( this.animate.bind(this) );
-
-    // If this.$el is hidden, do not render
-    if( !this.ready || this.$el.clientHeight <= 0 ){
-      return;
-    }
-
-    const _width = this.domElement.width;
-    const _height = this.domElement.height;
-
-    // Do not render if the canvas is too small
-    // Do not change flags, wait util the state come back to normal
-    if(_width <= 10 || _height <= 10) { return; }
-
-    this.update();
-
-    // needs to incrementTime after update so chosen object information can be up to date
-    this.incrementTime();
-
-    if(this.render_flag >= 0){
-
-  		if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
-  		this.render();
-
-  		// draw main and side rendered images to this.domElement (2d context)
-  		this.mapToCanvas();
-
-
-  		// Add additional information
-      // const _pixelRatio = this.pixel_ratio[0];
-      // const _fontType = 'Courier New, monospace';
-
-      this.domContext.fillStyle = this.foreground_color;
-
-      // Draw title on the top left corner
-      this.renderTitle( 0, 0, _width, _height );
-
-      // Draw timestamp on the bottom right corner
-      this.renderTimestamp( 0, 0, _width, _height );
-
-      // Draw legend on the right side
-      this.renderLegend( 0, 0, _width, _height );
-
-      // Draw focused target information on the top right corner
-      this.renderSelectedObjectInfo( 0, 0, _width, _height );
-
-      // check if capturer is working
-      if( this.capturer_recording && this.capturer ){
-        this.capturer.add();
-      }
-    }
-
-    // this._draw_video( results, _width, _height );
-
-    if(this.render_flag === 0){
-      this.render_flag = -1;
-    }
-
-
-	}
 
 
   /*---- Subjects, electrodes, surfaces, slices ----------------------------*/
@@ -3111,18 +2647,24 @@ mapped = false,
 
   // ------------------------------ Drivers -----------------------------------
   setBackground({ color } = {}) {
-    if( typeof color !== "number" && typeof color !== "string" ) {
-      return;
-    }
-    // calculate inversed color for text
-    const inversedColor = invertColor( color );
+    if( color === undefined || color === null ) { return; }
 
-    this.background_color = color;
-    this.foreground_color = inversedColor;
+    const c = asColor( color , new Color() );
+    const backgroundLuma = colorLuma( c );
+    this.background_color = `#${ c.getHexString() }`;
+
+    invertColor( c );
+    this.foreground_color = `#${ c.getHexString() }`;
 
     // Set renderer background to be v
     this.main_renderer.setClearColor( this.background_color );
     this.$el.style.backgroundColor = this.background_color;
+
+    if( backgroundLuma < 0.4 ) {
+      this.$el.classList.add( 'dark-viewer' );
+    } else {
+      this.$el.classList.remove( 'dark-viewer' );
+    }
 
     const event = {
       data: {

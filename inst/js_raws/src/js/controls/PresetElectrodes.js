@@ -1,5 +1,5 @@
 import { is_electrode } from '../geometry/sphere.js';
-import { to_array, has_meta_keys } from '../utils.js';
+import { to_array } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 import { set_visibility } from '../utils.js';
 
@@ -110,17 +110,24 @@ function registerPresetElectrodes( ViewerControlCenter ){
         this.fire_change();
       });
     controllerElectrodeVisiblility.setValue( initialSelection );
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY, 'Visibility', folderName );
-
-    // Add shortcuts
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY, (evt) => {
-      if( has_meta_keys( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY,
+        name    : 'Visibility',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         let selectedIndex = ( visibleChoices.indexOf( controllerElectrodeVisiblility.getValue() ) + 1) % visibleChoices.length;
         if( selectedIndex >= 0 ){
           controllerElectrodeVisiblility.setValue( visibleChoices[ selectedIndex ] );
         }
       }
-    }, 'gui_c_electrodes');
+    });
 
     this.canvas.set_state('electrode_label', { scale : 2, visible : false });
     this.gui
@@ -135,12 +142,22 @@ function registerPresetElectrodes( ViewerControlCenter ){
       .onChange((v) => {
         this.updateElectrodeText({ visible : v });
       });
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY,
+        name    : 'Text Visibility',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         const v = controllerElectrodeTextVisible.getValue();
         controllerElectrodeTextVisible.setValue( !v );
       }
-    }, 'gui_c_electrode_labels');
+    });
 
   };
 
@@ -151,9 +168,9 @@ function registerPresetElectrodes( ViewerControlCenter ){
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_template': v });
         if( v ){
-          this.gui.show_item( [ 'Surface Mapping' , 'Volume Mapping' ] , folderName );
+          this.gui.showControllers( [ 'Surface Mapping' , 'Volume Mapping' ] , folderName );
         } else {
-          this.gui.hide_item( [ 'Surface Mapping' , 'Volume Mapping' ], folderName );
+          this.gui.hideControllers( [ 'Surface Mapping' , 'Volume Mapping' ], folderName );
         }
         this.fire_change();
       });

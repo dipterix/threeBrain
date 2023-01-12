@@ -1,4 +1,4 @@
-import { to_array, get_or_default, has_meta_keys } from '../utils.js';
+import { to_array, get_or_default } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 import { set_visibility } from '../utils.js';
 
@@ -333,38 +333,50 @@ function registerPresetElectrodeAnimation( ViewerControlCenter ){
         }
       });
 
-    this.canvas.bind( `dat_gui_ctrlAnimTime_mousewheel`, 'mousewheel',
-      (evt) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-        if( evt.altKey ){
-          const currentTime = this.animParameters.time;
-          this.animParameters.time = currentTime + Math.sign( evt.deltaY ) * step;
-        }
-      }, this.ctrlAnimTime.domElement );
-
     // Add keyboard shortcut
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_TOGGLE_ANIMATION, (evt) => {
-      if( has_meta_keys( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_TOGGLE_ANIMATION,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_TOGGLE_ANIMATION,
+        name    : 'Play/Pause',
+        folderName : folderName,
+      },
+      callback  : () => {
         const isPlaying = this.ctrlAnimPlay.getValue();
         this.ctrlAnimPlay.setValue( !isPlaying );
       }
-    }, 'gui_toggle_animation');
+    });
 
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ANIMATION, (evt) => {
-      if( has_meta_keys( evt.event, false, false, false ) ){
-        let current_idx = (names.indexOf( this.ctrlClipName.getValue() ) + 1) % names.length;
-        if( current_idx >= 0 ){
-          this.ctrlClipName.setValue( names[ current_idx ] );
-        }
-      } else if ( has_meta_keys( evt.event, true, false, false ) ){
-        let current_idx = names.indexOf( this.ctrlClipName.getValue() ) - 1;
-        if( current_idx < 0 ){ current_idx += names.length; }
-        if( current_idx >= 0 ){
-          this.ctrlClipName.setValue( names[ current_idx ] );
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_ANIMATION,
+      // shiftKey  : can be true or false
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_ANIMATION,
+        name    : 'Display Data',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          let current_idx = names.indexOf( this.ctrlClipName.getValue() ) - 1;
+          if( current_idx < 0 ){ current_idx += names.length; }
+          if( current_idx >= 0 ){
+            this.ctrlClipName.setValue( names[ current_idx ] );
+          }
+        } else {
+          let current_idx = (names.indexOf( this.ctrlClipName.getValue() ) + 1) % names.length;
+          if( current_idx >= 0 ){
+            this.ctrlClipName.setValue( names[ current_idx ] );
+          }
         }
       }
-    }, 'gui_cycle_animation');
+    });
 
     this.canvas.video_canvas._mode = "muted";
     this.canvas.video_canvas.muted = true;

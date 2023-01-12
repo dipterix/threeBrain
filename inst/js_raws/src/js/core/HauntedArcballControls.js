@@ -127,12 +127,7 @@ class HauntedArcballControls extends EventDispatcher {
     if ( this.enabled === false || typeof event !== "object" ) return;
 
     if( event.type == "start" || event.type == "change" ) {
-      /*
-      if( this._canvas.render_flag < 0 ) {
-        this._canvas.handle_resize(undefined, undefined, true);
-      }
-      */
-      this._canvas.start_animation( 0 );
+      this._canvas.needsUpdate = true;
     } else if ( event.type == "end" ) {
       this._canvas.pause_animation( 1 );
       this._canvas.dispatch_event( "canvas.mainCamera.onEnd", this.object.getState() );

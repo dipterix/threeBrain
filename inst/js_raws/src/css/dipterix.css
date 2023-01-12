@@ -105,9 +105,8 @@
 }
 
 .threejs-control .lil-gui {
-	--font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", monospace;
-	--width: 100%;
-
+  --font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", monospace;
+  --width: 100%;
   --background-color: #f6f6f6;
 	--text-color: #3d3d3d;
 	--title-background-color: #efefef;
@@ -118,6 +117,27 @@
 	--number-color: #07aacf;
 	--string-color: #8da300;
 }
+
+.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui {
+	--background-color: #32405e;
+	--text-color: #ebe193;
+	--title-background-color: #713154;
+	--title-text-color: #ffffff;
+	--widget-color: #057170;
+	--hover-color: #057170;
+	--focus-color: #b74f88;
+	--number-color: #ddfcff;
+	--string-color: #ffbf00;
+}
+
+.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui .title {
+  background-color: var(--title-background-color);
+}
+
+.threejs-control .lil-gui children {
+  padding-bottom : 1px;
+}
+
 
 .threejs-control .lil-gui.root > .title {
   text-align: center;

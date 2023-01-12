@@ -449,7 +449,12 @@ class SideCanvas {
 
     // --------------- Register 3js objects -------------
     // Add OrthographicCamera
-    this.camera = new OrthographicCamera( -128, 128, 128, -128, 1, 10000 );
+
+    // need to see ranges from +- 128 * sqrt(3) ~= +-222
+    // The distance to origin is 500, hence the render range is:
+    //  near = 500 - 222 = 278
+    //  far  = 500 + 222 = 722
+    this.camera = new OrthographicCamera( -128, 128, 128, -128, 278, 722 );
 		this.camera.layers.enable( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
 		this.camera.layers.enable( CONSTANTS.LAYER_USER_ALL_SIDE_CAMERAS_4 );
 		this.camera.layers.enable( 5 );

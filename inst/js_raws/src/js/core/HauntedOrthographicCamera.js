@@ -39,20 +39,6 @@ class HauntedOrthographicCamera extends OrthographicCamera {
     this.add( this.backLight );
 
 
-    // listeners
-    // zoom-in, zoom-out
-    this._canvas.add_keyboard_callabck( CONSTANTS.KEY_ZOOM, this.onKeyboardZoom, 'zoom');
-
-  }
-
-  onKeyboardZoom = ( event ) => {
-    if( event.event.shiftKey ){
-      this.zoom = this.zoom * 1.2; // zoom in
-    }else{
-      this.zoom = this.zoom / 1.2; // zoom out
-    }
-    this.updateProjectionMatrix();
-    this._canvas.start_animation( 0 );
   }
 
   handleResize() {

@@ -1,4 +1,3 @@
-import { to_array, has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 
 
@@ -131,17 +130,25 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
         this.canvas.set_state( "surface_color_refresh", Date() );
         this._update_canvas();
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, "Voxel Display", folderName );
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_ATLAS_MODE, (evt) => {
-      if( has_meta_keys( evt.event, false, false, false ) ){
-        // have to update dynamically because it could change
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_ATLAS_MODE,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE,
+        name    : 'Voxel Display',
+        folderName : folderName,
+      },
+      callback  : () => {
         if( ctrlDC2Display.getValue() === 'hidden' ) {
           ctrlDC2Display.setValue( "normal" );
         } else {
           ctrlDC2Display.setValue( "hidden" );
         }
       }
-    }, 'gui_atlas_display_mode');
+    });
 
     // Controls the opacity of the voxels
     this.gui

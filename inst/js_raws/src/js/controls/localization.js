@@ -1,5 +1,5 @@
 import { Vector3, SpriteMaterial, DoubleSide } from 'three';
-import { vec3_to_string, has_meta_keys } from '../utils.js';
+import { vector3ToString } from '../utility/vector3ToString.js';
 import { CONSTANTS } from '../constants.js';
 import { is_electrode } from '../geometry/sphere.js';
 import { intersect_volume, electrode_from_ct } from '../Math/raycast_volume.js';
@@ -532,10 +532,9 @@ function electrode_from_slice( scode, canvas ){
     !sliceInstance.isDataCube ) { return; }
   const planes = sliceInstance.object;
 
-  canvas.set_raycaster();
-  canvas.mouse_raycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+  canvas.mouseRaycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
 
-  const items = canvas.mouse_raycaster.intersectObjects( planes );
+  const items = canvas.mouseRaycaster.intersectObjects( planes );
 
   if( !items.length ){ return; }
 
@@ -643,8 +642,7 @@ function interpolate_electrode_from_slice( canvas, electrodes, size ){
   const src = canvas.mainCamera.position;
   const dst = new Vector3();
 
-  canvas.set_raycaster();
-  canvas.mouse_raycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+  canvas.mouseRaycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
@@ -678,8 +676,7 @@ function extend_electrode_from_slice( canvas, electrodes, size ){
   const src = canvas.mainCamera.position;
   const dst = new Vector3();
 
-  canvas.set_raycaster();
-  canvas.mouse_raycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
+  canvas.mouseRaycaster.layers.set( CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 );
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
@@ -708,6 +705,42 @@ function extend_electrode_from_slice( canvas, electrodes, size ){
 }
 
 function register_controls_localization( ViewerControlCenter ){
+
+  ViewerControlCenter.prototype.intersectActiveDataCube2 = function( mode ) {
+    // mode can be "CT/volume", "MRI slice", or "refine"
+    // default is to derive from controller
+
+    if( typeof mode !== "string" ) {
+      const controller = this.gui.getController( 'Edit Mode' );
+      if( !controller || controller.isfake ) { return }
+      mode = controller.getValue();
+    }
+
+    const subjectCode = this.canvas.get_state("target_subject");
+    if( !subjectCode || subjectCode == '' ) { return; }
+
+    this.canvas.updateRaycast();
+
+    let position;
+    switch(mode){
+      case "CT/volume":
+        const inst = this.getActiveDataCube2();
+        position = electrode_from_ct( inst, this.canvas );
+        break;
+      case "MRI slice":
+        position = electrode_from_slice( scode, this.canvas );
+        break;
+      default:
+        return;
+    }
+
+    if(
+      !position || typeof(position) !== "object" || !position.isVector3 ||
+      isNaN( position.x )
+    ) { return; }
+
+    return position;
+  }
 
   ViewerControlCenter.prototype.clearLocalization = function(update_shiny = true){
     const electrodes = this.__localize_electrode_list;
@@ -1020,71 +1053,50 @@ function register_controls_localization( ViewerControlCenter ){
       folderName: folderName
     });
 
-    // will get tkrRAS
-    const electrode_pos = () => {
-      const mode = edit_mode.getValue();
-      const scode = this.canvas.get_state("target_subject");
-      if( !mode || !scode || scode === "" ){ return; }
-      let pos_alt;
-      switch(mode){
-        case "CT/volume":
-          const inst = this.getActiveDataCube2();
-          pos_alt = electrode_from_ct( inst, this.canvas );
-          break;
-        case "MRI slice":
-          pos_alt = electrode_from_slice( scode, this.canvas );
-          break;
-        case "refine":
-          if(
-            refine_electrode &&
-            refine_electrode.isLocElectrode
-          ){
-            pos.copy( refine_electrode.object.position );
-            pos_alt = pos;
-            break;
-          }
-        default:
-          return;
-      }
-      if( !pos_alt || !pos_alt.isVector3 || isNaN(pos_alt.x) ){ return; }
-      return( pos_alt );
-    };
-
     // add canvas update
-    this.canvas._custom_updates.set("localization_update", () => {
-      const electrode_position = electrode_pos();
+    let throttleCount = 0;
+    this.addEventListener( "viewerApp.animationFrame.update", () => {
 
-      if( !electrode_position ||
-          !electrode_position.isVector3 ){
+      const mode = edit_mode.getValue();
+
+      let position;
+      if( mode === 'refine' ) {
+        if(
+          refine_electrode &&
+          refine_electrode.isLocElectrode
+        ){
+          pos.copy( refine_electrode.object.position );
+          position = pos;
+        }
+      } else {
+        position = this.intersectActiveDataCube2( mode );
+      }
+
+      if( !position || !position.isVector3 ) {
         tkr_loc.setValue("");
         mni_loc.setValue("");
         t1_loc.setValue("");
         return;
+      } else {
+        const subjectCode = this.canvas.get_state("target_subject"),
+              subjectData = this.canvas.shared_data.get( subjectCode );
+
+        // tkrRAS
+        tkr_loc.setValue( vector3ToString( position ) );
+
+        // T1 ScannerRAS = Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+        position.applyMatrix4( subjectData.matrices.tkrRAS_Scanner );
+        t1_loc.setValue( vector3ToString( position ) );
+
+        // MNI305 = xfm * ScannerRAS
+        position.applyMatrix4( subjectData.matrices.xfm );
+        mni_loc.setValue( vector3ToString( position ) );
       }
-      const scode = this.canvas.get_state("target_subject"),
-            subject_data = this.canvas.shared_data.get( scode );
-
-      // tkrRAS
-      tkr_loc.setValue( vec3_to_string( electrode_position ) );
-
-      // T1 ScannerRAS = Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
-      electrode_position.applyMatrix4(
-        subject_data.matrices.tkrRAS_Scanner
-      );
-      t1_loc.setValue( vec3_to_string( electrode_position ) );
-
-      // MNI305 = xfm * ScannerRAS
-      electrode_position.applyMatrix4(
-        subject_data.matrices.xfm
-      );
-      mni_loc.setValue( vec3_to_string( electrode_position ) );
-
     });
 
-    // bind dblclick
-    this.canvas.bind( 'localization_dblclick', 'dblclick',
-      (event) => {
-        const scode = this.canvas.get_state("target_subject"),
+    // bind dblclick ssss
+    this.addEventListener( "viewerApp.mouse.doubleClick", () => {
+      const scode = this.canvas.get_state("target_subject"),
               mode = edit_mode.getValue();
         if(
           !mode || mode == "disabled" ||
@@ -1095,7 +1107,7 @@ function register_controls_localization( ViewerControlCenter ){
         if( mode === "CT/volume" || mode === "MRI slice" ){
 
           // If mode is add,
-          const electrode_position = electrode_pos();
+          const electrode_position = this.intersectActiveDataCube2( mode );
           if(
             !electrode_position ||
             !electrode_position.isVector3 ||
@@ -1132,39 +1144,70 @@ function register_controls_localization( ViewerControlCenter ){
           this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
         }
 
-
-      }, this.canvas.main_canvas, false );
+    });
 
     // bind adjustment
-    const adjust_electrode_position = (evt, nm, idx, step = 0.1) => {
+    const xyzTo123 = { x : 0 , y : 1, z : 2 };
+    const adjust_electrode_position = ({
+      axis, step = 0.1
+    }) => {
       if( !refine_electrode || !is_electrode( refine_electrode.object ) ){ return; }
       const mode = edit_mode.getValue();
       if( mode !== "refine" ){ return; }
-      if( has_meta_keys( evt.event, false, false, false ) ){
-        // R
-        refine_electrode.object.position[nm] += step;
-        refine_electrode.object.userData.construct_params.position[idx] += step;
-      } else if( has_meta_keys( evt.event, true, false, false ) ){
-        // L
-        refine_electrode.object.position[nm] -= step;
-        refine_electrode.object.userData.construct_params.position[idx] -= step;
-      }
+
+      refine_electrode.object.position[ axis ] += step;
+      refine_electrode.object.userData.construct_params.position[ xyzTo123[ axis ] ] += step;
       refine_electrode.update_line();
       if(this.shiny){
         this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
       }
       this._update_canvas();
     }
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_R, (evt) => {
-      adjust_electrode_position(evt, "x", 0);
-    }, 'gui_refine_electrode_R');
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_A, (evt) => {
-      adjust_electrode_position(evt, "y", 1);
-    }, 'gui_refine_electrode_A');
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_S, (evt) => {
-      adjust_electrode_position(evt, "z", 2);
-    }, 'gui_refine_electrode_S');
 
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_R,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          adjust_electrode_position({ axis : 'x' , step : -0.1 });
+        } else {
+          adjust_electrode_position({ axis : 'x' , step : 0.1 });
+        }
+      }
+    });
+
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_A,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          adjust_electrode_position({ axis : 'y' , step : -0.1 });
+        } else {
+          adjust_electrode_position({ axis : 'y' , step : 0.1 });
+        }
+      }
+    });
+
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_S,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          adjust_electrode_position({ axis : 'z' , step : -0.1 });
+        } else {
+          adjust_electrode_position({ axis : 'z' , step : 0.1 });
+        }
+      }
+    });
 
     // open folder
     this.gui.openFolder( folderName );

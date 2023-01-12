@@ -972,7 +972,7 @@ module.exports.TinyEmitter = E;
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n\n  --background-color: #f6f6f6;\n\t--text-color: #3d3d3d;\n\t--title-background-color: #efefef;\n\t--title-text-color: #3d3d3d;\n\t--widget-color: #eaeaea;\n\t--hover-color: #f0f0f0;\n\t--focus-color: #fafafa;\n\t--number-color: #07aacf;\n\t--string-color: #8da300;\n}\n\n.threejs-control .lil-gui.root > .title {\n  text-align: center;\n}\n\n\n.threejs-control .lil-gui.root > .children > .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: calc(var(--folder-indent) + 2em);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  background-color: var(--text-color);\n  color: var(--background-color);\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-100%, 0);\n  left: calc( var(--folder-indent) / -2.0 );\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n  text-align: center;\n  width: 2em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n", "",{"version":3,"sources":["webpack://./src/css/dipterix.css"],"names":[],"mappings":";AACA;EACE,wJAAwJ;EACxJ,eAAe;EACf,gBAAgB;EAChB,gBAAgB;EAChB,cAAc;AAChB;;AAEA;;IAEI,oBAAoB;AACxB;;AAEA;;;;;IAKI,SAAS;IACT,oBAAoB;IACpB,kBAAkB;IAClB,oBAAoB;AACxB;;AAEA;EACE,uBAAuB;AACzB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;;;;;;EAME,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,kBAAkB;EAClB,UAAU;EACV,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,YAAY;EACZ,UAAU;EACV,SAAS;AACX;;;AAGA;EACE,kBAAkB;EAClB,YAAY;EACZ,gBAAgB;EAChB,oBAAoB;EACpB,YAAY;EACZ,gBAAgB;EAChB,kBAAkB;EAClB,WAAW;EACX,0BAA0B;AAC5B;;AAEA;EACE,qBAAqB;AACvB;AACA;EACE,iDAAiD;EACjD,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;AACb;AACA;EACE,eAAe;AACjB;;AAEA;IACI,mBAAmB;IACnB,kBAAkB;IAClB,kBAAkB;IAClB,wBAAwB;IACxB,mBAAmB;IACnB,mBAAmB;IACnB,oBAAoB;IACpB,oBAAoB;AACxB;;AAEA;EACE,0BAA0B;AAC5B;;AAEA;EACE,oBAAoB;AACtB;;AAEA;CACC,oEAAoE;CACpE,aAAa;;EAEZ,2BAA2B;CAC5B,qBAAqB;CACrB,iCAAiC;CACjC,2BAA2B;CAC3B,uBAAuB;CACvB,sBAAsB;CACtB,sBAAsB;CACtB,uBAAuB;CACvB,uBAAuB;AACxB;;AAEA;EACE,kBAAkB;AACpB;;;AAGA;EACE,YAAY;IACV,+BAA+B;IAC/B,uBAAuB;IACvB,yBAAyB;EAC3B,6CAA6C;EAC7C,0CAA0C;AAC5C;;;AAGA;;;;EAIE,uBAAuB;AACzB;;AAEA;IACI,UAAU;AACd;;;AAGA;EACE,UAAU;EACV,uBAAuB;EACvB,kBAAkB;AACpB;;AAEA;EACE,YAAY;AACd;;;AAGA;EACE,kBAAkB;EAClB,aAAa;EACb,YAAY;EACZ,SAAS;EACT,UAAU;EACV,iBAAiB;EACjB,gBAAgB;EAChB,0BAA0B;EAC1B,iBAAiB;AACnB;AACA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,eAAe;EACf,gBAAgB;EAChB,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,YAAY;AACd;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,UAAU;EACV,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,eAAe;EACf,iBAAiB;EACjB,kBAAkB;EAClB,eAAe;AACjB;;AAEA;EACE,kCAAkC;EAClC,uCAAuC;AACzC;;;;;AAKA;;;;;;;;;;;CAWC;;;AAGD;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,sBAAsB;AACxB;;AAEA;EACE,QAAQ;EACR,SAAS;EACT,yDAAyD;EACzD,uBAAuB;EACvB,8BAA8B;EAC9B,kBAAkB;EAClB,kCAAkC;EAClC,qCAAqC;EACrC,+BAA+B;AACjC;;AAEA;EACE,OAAO;EACP,SAAS;EACT,mBAAmB,EAAE,iBAAiB;EACtC,0BAA0B;AAC5B;AACA;EACE,QAAQ;EACR,SAAS;EACT,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,OAAO;EACP,YAAY;EACZ,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,QAAQ;EACR,YAAY;EACZ,mBAAmB;EACnB,wBAAwB;AAC1B;;;AAGA,iBAAiB;AACjB;EACE,kBAAkB;AACpB;AACA;EACE,6BAA6B;EAC7B,yBAAyB;EACzB,cAAc;EACd,mCAAmC;EACnC,8BAA8B;EAC9B,kBAAkB;EAClB,mBAAmB;EACnB,8BAA8B;EAC9B,yCAAyC;EACzC,YAAY;EACZ,oBAAoB;EACpB,iBAAiB;EACjB,iBAAiB;EACjB,cAAc;EACd,4BAA4B;EAC5B,oBAAoB;EACpB,UAAU;EACV,iBAAiB;EACjB,iBAAiB;EACjB,kBAAkB;EAClB,UAAU;AACZ;;AAEA;EACE,sBAAsB;EACtB,eAAe;EACf,iCAAiC;AACnC;AACA;EACE,sBAAsB;AACxB;AACA;EACE,aAAa;EACb,kBAAkB;EAClB,QAAQ;EACR,gCAAgC;EAChC,SAAS;EACT,cAAc;EACd,sBAAsB;AACxB;;AAEA;EACE,WAAW;AACb;;;AAGA;EACE,0BAA0B,EAAE,eAAe;EAC3C,8BAA8B,EAAE,SAAS;EACzC,kBAAkB;EAClB,YAAY;EACZ,aAAa;EACb,uDAAuD;AACzD;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,cAAc;EACd,WAAW;EACX,yCAAyC;EACzC,kBAAkB;EAClB,gBAAgB;EAChB,kBAAkB;EAClB,kBAAkB;EAClB,mBAAmB;EACnB,oBAAoB;AACtB","sourcesContent":["\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui {\n\t--font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n\t--width: 100%;\n\n  --background-color: #f6f6f6;\n\t--text-color: #3d3d3d;\n\t--title-background-color: #efefef;\n\t--title-text-color: #3d3d3d;\n\t--widget-color: #eaeaea;\n\t--hover-color: #f0f0f0;\n\t--focus-color: #fafafa;\n\t--number-color: #07aacf;\n\t--string-color: #8da300;\n}\n\n.threejs-control .lil-gui.root > .title {\n  text-align: center;\n}\n\n\n.threejs-control .lil-gui.root > .children > .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: calc(var(--folder-indent) + 2em);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  background-color: var(--text-color);\n  color: var(--background-color);\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-100%, 0);\n  left: calc( var(--folder-indent) / -2.0 );\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n  text-align: center;\n  width: 2em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n"],"sourceRoot":""}]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui {\n  --font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n  --width: 100%;\n  --background-color: #f6f6f6;\n\t--text-color: #3d3d3d;\n\t--title-background-color: #efefef;\n\t--title-text-color: #3d3d3d;\n\t--widget-color: #eaeaea;\n\t--hover-color: #f0f0f0;\n\t--focus-color: #fafafa;\n\t--number-color: #07aacf;\n\t--string-color: #8da300;\n}\n\n.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui {\n\t--background-color: #32405e;\n\t--text-color: #ebe193;\n\t--title-background-color: #713154;\n\t--title-text-color: #ffffff;\n\t--widget-color: #057170;\n\t--hover-color: #057170;\n\t--focus-color: #b74f88;\n\t--number-color: #ddfcff;\n\t--string-color: #ffbf00;\n}\n\n.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui .title {\n  background-color: var(--title-background-color);\n}\n\n.threejs-control .lil-gui children {\n  padding-bottom : 1px;\n}\n\n\n.threejs-control .lil-gui.root > .title {\n  text-align: center;\n}\n\n\n.threejs-control .lil-gui.root > .children > .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: calc(var(--folder-indent) + 2em);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  background-color: var(--text-color);\n  color: var(--background-color);\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-100%, 0);\n  left: calc( var(--folder-indent) / -2.0 );\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n  text-align: center;\n  width: 2em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n", "",{"version":3,"sources":["webpack://./src/css/dipterix.css"],"names":[],"mappings":";AACA;EACE,wJAAwJ;EACxJ,eAAe;EACf,gBAAgB;EAChB,gBAAgB;EAChB,cAAc;AAChB;;AAEA;;IAEI,oBAAoB;AACxB;;AAEA;;;;;IAKI,SAAS;IACT,oBAAoB;IACpB,kBAAkB;IAClB,oBAAoB;AACxB;;AAEA;EACE,uBAAuB;AACzB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;;;;;;EAME,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,kBAAkB;EAClB,UAAU;EACV,gBAAgB;AAClB;AACA;EACE,WAAW;EACX,YAAY;EACZ,UAAU;EACV,SAAS;AACX;;;AAGA;EACE,kBAAkB;EAClB,YAAY;EACZ,gBAAgB;EAChB,oBAAoB;EACpB,YAAY;EACZ,gBAAgB;EAChB,kBAAkB;EAClB,WAAW;EACX,0BAA0B;AAC5B;;AAEA;EACE,qBAAqB;AACvB;AACA;EACE,iDAAiD;EACjD,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;AACb;AACA;EACE,eAAe;AACjB;;AAEA;IACI,mBAAmB;IACnB,kBAAkB;IAClB,kBAAkB;IAClB,wBAAwB;IACxB,mBAAmB;IACnB,mBAAmB;IACnB,oBAAoB;IACpB,oBAAoB;AACxB;;AAEA;EACE,0BAA0B;AAC5B;;AAEA;EACE,oBAAoB;AACtB;;AAEA;EACE,oEAAoE;EACpE,aAAa;EACb,2BAA2B;CAC5B,qBAAqB;CACrB,iCAAiC;CACjC,2BAA2B;CAC3B,uBAAuB;CACvB,sBAAsB;CACtB,sBAAsB;CACtB,uBAAuB;CACvB,uBAAuB;AACxB;;AAEA;CACC,2BAA2B;CAC3B,qBAAqB;CACrB,iCAAiC;CACjC,2BAA2B;CAC3B,uBAAuB;CACvB,sBAAsB;CACtB,sBAAsB;CACtB,uBAAuB;CACvB,uBAAuB;AACxB;;AAEA;EACE,+CAA+C;AACjD;;AAEA;EACE,oBAAoB;AACtB;;;AAGA;EACE,kBAAkB;AACpB;;;AAGA;EACE,YAAY;IACV,+BAA+B;IAC/B,uBAAuB;IACvB,yBAAyB;EAC3B,6CAA6C;EAC7C,0CAA0C;AAC5C;;;AAGA;;;;EAIE,uBAAuB;AACzB;;AAEA;IACI,UAAU;AACd;;;AAGA;EACE,UAAU;EACV,uBAAuB;EACvB,kBAAkB;AACpB;;AAEA;EACE,YAAY;AACd;;;AAGA;EACE,kBAAkB;EAClB,aAAa;EACb,YAAY;EACZ,SAAS;EACT,UAAU;EACV,iBAAiB;EACjB,gBAAgB;EAChB,0BAA0B;EAC1B,iBAAiB;AACnB;AACA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,eAAe;EACf,gBAAgB;EAChB,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,YAAY;AACd;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,WAAW;EACX,YAAY;EACZ,UAAU;EACV,kCAAkC;EAClC,uCAAuC;EACvC,WAAW;EACX,eAAe;EACf,iBAAiB;EACjB,kBAAkB;EAClB,eAAe;AACjB;;AAEA;EACE,kCAAkC;EAClC,uCAAuC;AACzC;;;;;AAKA;;;;;;;;;;;CAWC;;;AAGD;EACE,kBAAkB;AACpB;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,sBAAsB;AACxB;;AAEA;EACE,QAAQ;EACR,SAAS;EACT,yDAAyD;EACzD,uBAAuB;EACvB,8BAA8B;EAC9B,kBAAkB;EAClB,kCAAkC;EAClC,qCAAqC;EACrC,+BAA+B;AACjC;;AAEA;EACE,OAAO;EACP,SAAS;EACT,mBAAmB,EAAE,iBAAiB;EACtC,0BAA0B;AAC5B;AACA;EACE,QAAQ;EACR,SAAS;EACT,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,OAAO;EACP,YAAY;EACZ,mBAAmB;EACnB,yBAAyB;AAC3B;AACA;EACE,QAAQ;EACR,YAAY;EACZ,mBAAmB;EACnB,wBAAwB;AAC1B;;;AAGA,iBAAiB;AACjB;EACE,kBAAkB;AACpB;AACA;EACE,6BAA6B;EAC7B,yBAAyB;EACzB,cAAc;EACd,mCAAmC;EACnC,8BAA8B;EAC9B,kBAAkB;EAClB,mBAAmB;EACnB,8BAA8B;EAC9B,yCAAyC;EACzC,YAAY;EACZ,oBAAoB;EACpB,iBAAiB;EACjB,iBAAiB;EACjB,cAAc;EACd,4BAA4B;EAC5B,oBAAoB;EACpB,UAAU;EACV,iBAAiB;EACjB,iBAAiB;EACjB,kBAAkB;EAClB,UAAU;AACZ;;AAEA;EACE,sBAAsB;EACtB,eAAe;EACf,iCAAiC;AACnC;AACA;EACE,sBAAsB;AACxB;AACA;EACE,aAAa;EACb,kBAAkB;EAClB,QAAQ;EACR,gCAAgC;EAChC,SAAS;EACT,cAAc;EACd,sBAAsB;AACxB;;AAEA;EACE,WAAW;AACb;;;AAGA;EACE,0BAA0B,EAAE,eAAe;EAC3C,8BAA8B,EAAE,SAAS;EACzC,kBAAkB;EAClB,YAAY;EACZ,aAAa;EACb,uDAAuD;AACzD;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,cAAc;EACd,WAAW;EACX,yCAAyC;EACzC,kBAAkB;EAClB,gBAAgB;EAChB,kBAAkB;EAClB,kBAAkB;EAClB,mBAAmB;EACnB,oBAAoB;AACtB","sourcesContent":["\n.threejs-brain-container {\n  font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\";\n  font-size: 1rem;\n  font-weight: 400;\n  line-height: 1.5;\n  color: #212529;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container select {\n    text-transform: none;\n}\n\n.threejs-brain-container button,\n.threejs-brain-container input,\n.threejs-brain-container optgroup,\n.threejs-brain-container select,\n.threejs-brain-container textarea {\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    line-height: inherit;\n}\n\n.hidden {\n  display: none!important;\n}\n\n#webglmessage {\n  position: absolute;\n}\n\n.threejs-control .dg .c,\n.threejs-control .dg button,\n.threejs-control .dg input,\n.threejs-control .dg optgroup,\n.threejs-control .dg select,\n.threejs-control .dg textarea {\n  line-height: normal;\n}\n\n.html-widget.threejs-brain-container {\n  display: flex;\n  position: relative;\n  padding: 0;\n  overflow: hidden;\n}\n.html-widget.threejs-brain-container>.threejs-brain-canvas {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0;\n}\n\n\n.threejs-control {\n  position: relative;\n  float: right;\n  max-width: 300px;\n  margin-bottom: -100%;\n  width: 300px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  z-index: 10;\n  /* pointer-events: none; */\n}\n\n.threejs-control .dg .c select{\n  color: cornflowerblue;\n}\n.threejs-control .dg {\n  font: 11px monospace, 'Lucida Grande', sans-serif;\n  position: relative;\n}\n\n.threejs-control .dg .cr.color .property-name {\n  overflow-y: hidden;\n}\n\n.threejs-control .dg .cr.function .property-name {\n  width: 100%;\n}\n.threejs-control .dg .cr.function .c {\n  display: hidden;\n}\n\n.threejs-control .dg .property-name {\n    text-overflow: clip;\n    overflow-y: hidden;\n    overflow-x: hidden;\n    /* overflow-x: scroll; */\n    white-space: nowrap;\n    /* hide scrollbar */\n    padding-bottom: 17px;\n    margin-bottom: -17px;\n}\n\n.threejs-control *{\n  /* pointer-events: auto; */\n}\n\n.threejs-control div.close-button{\n  width:100%!important;\n}\n\n.threejs-control .lil-gui {\n  --font-family: Menlo, Monaco, Consolas, \"Droid Sans Mono\", monospace;\n  --width: 100%;\n  --background-color: #f6f6f6;\n\t--text-color: #3d3d3d;\n\t--title-background-color: #efefef;\n\t--title-text-color: #3d3d3d;\n\t--widget-color: #eaeaea;\n\t--hover-color: #f0f0f0;\n\t--focus-color: #fafafa;\n\t--number-color: #07aacf;\n\t--string-color: #8da300;\n}\n\n.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui {\n\t--background-color: #32405e;\n\t--text-color: #ebe193;\n\t--title-background-color: #713154;\n\t--title-text-color: #ffffff;\n\t--widget-color: #057170;\n\t--hover-color: #057170;\n\t--focus-color: #b74f88;\n\t--number-color: #ddfcff;\n\t--string-color: #ffbf00;\n}\n\n.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui .title {\n  background-color: var(--title-background-color);\n}\n\n.threejs-control .lil-gui children {\n  padding-bottom : 1px;\n}\n\n\n.threejs-control .lil-gui.root > .title {\n  text-align: center;\n}\n\n\n.threejs-control .lil-gui.root > .children > .lil-gui > .children {\n  border: none;\n    border-left-color: currentcolor;\n    border-left-style: none;\n    border-left-width: medium;\n  margin-left: calc(var(--folder-indent) + 2em);\n  border-left: 2px solid var(--widget-color);\n}\n\n\n.threejs-control .dg.main,\n.threejs-control .dg.main *,\n.threejs-control .dg.main ::after,\n.threejs-control .dg.main ::before{\n  box-sizing: content-box;\n}\n\n.threejs-control .dg.main:hover {\n    opacity: 1;\n}\n\n\n.THREEBRAIN-SIDE-DIVIDER {\n  width: 5px;\n  background-color: black;\n  cursor: col-resize;\n}\n\n.THREEBRAIN-SIDE-DIVIDER::before {\n  content: ' ';\n}\n\n\n.THREEBRAIN-SIDE {\n  position: absolute;\n  height: 250px;\n  width: 250px;\n  margin: 0;\n  padding: 0;\n  min-height: 100px;\n  overflow: hidden;\n  outline: 1px solid #2e2e2e;\n  outline-offset: 0;\n}\n.THREEBRAIN-SIDE-HEADER {\n  position: absolute;\n  z-index: 4;\n  width: 100%;\n  height: 21px;\n  text-align: center;\n  font-size: 12px;\n  padding-top: 2px;\n  background-color: rgb(100,100,100);\n  background-color: rgba(100,100,100,0.5);\n  color: #fff;\n  cursor: move;\n}\n\n.THREEBRAIN-SIDE .zoom-tool {\n  position: absolute;\n  z-index: 9;\n  width: 25px;\n  height: 25px;\n  right: 2px;\n  background-color: rgb(200,200,200);\n  background-color: rgba(200,200,200,0.5);\n  color: #fff;\n  cursor: pointer;\n  line-height: 25px;\n  text-align: center;\n  font-size: 16px;\n}\n\n.THREEBRAIN-SIDE .zoom-tool.pan-active {\n  background-color: rgb(250,200,200);\n  background-color: rgba(250,200,200,0.8);\n}\n\n\n\n\n/**\n* Resizable divs, by Hung Nguyen\n* Use case:\n<div class='resizable'>\n  <div class='resizers'>\n    <div class='resizer top-left'></div>\n    <div class='resizer top-right'></div>\n    <div class='resizer bottom-left'></div>\n    <div class='resizer bottom-right'></div>\n  </div>\n</div>\n*/\n\n\n.resizable {\n  position: absolute;\n}\n\n.resizable .resizers{\n  width: 100%;\n  height: 100%;\n  box-sizing: border-box;\n}\n\n.resizable .resizers .resizer{\n  width: 0;\n  height: 0;\n  /*border-radius: 50%; /*magic to turn square into circle*/\n  background: transparent;\n  /* border: 3px solid #4286f4;*/\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-left: 10px solid #e2e2e2;\n}\n\n.resizable .resizers .resizer.top-left {\n  left: 0;\n  top: -5px;\n  cursor: nwse-resize; /*resizer cursor*/\n  transform: rotate(-135deg);\n}\n.resizable .resizers .resizer.top-right {\n  right: 0;\n  top: -5px;\n  cursor: nesw-resize;\n  transform: rotate(-45deg);\n}\n.resizable .resizers .resizer.bottom-left {\n  left: 0;\n  bottom: -5px;\n  cursor: nesw-resize;\n  transform: rotate(135deg);\n}\n.resizable .resizers .resizer.bottom-right {\n  right: 0;\n  bottom: -5px;\n  cursor: nwse-resize;\n  transform: rotate(45deg);\n}\n\n\n/* Tooltip text */\n.threejs-control .lil-gui .controller[viewer-tooltip] {\n  position: relative;\n}\n.threejs-control .lil-gui .controller[viewer-tooltip]:before {\n  content: attr(viewer-tooltip);\n  background-color: #f9f9f9;\n  color: #000000;\n  background-color: var(--text-color);\n  color: var(--background-color);\n  position: absolute;\n  white-space: nowrap;\n  transform: translate(-100%, 0);\n  left: calc( var(--folder-indent) / -2.0 );\n  opacity: 0.7;\n  font-family: inherit;\n  font-weight: bold;\n  text-shadow: none;\n  padding: 0 3px;\n  -webkit-border-radius: 0.2em;\n  border-radius: 0.2em;\n  z-index: 1;\n  line-height: 17px;\n  font-size: 0.85em;\n  text-align: center;\n  width: 2em;\n}\n\n.threejs-brain-blank-container {\n  background-color: #eee;\n  cursor: pointer;\n  transition: background-color 0.3s;\n}\n.threejs-brain-blank-container:hover {\n  background-color: #666;\n}\n.threejs-brain-modal {\n  margin:0 auto;\n  position: absolute;\n  top: 50%;\n  transform: translate(-50%, -50%);\n  left: 50%;\n  font-size: 2em;\n  transition: color 0.3s;\n}\n\n.threejs-brain-blank-container:hover .threejs-brain-modal{\n  color: #eee;\n}\n\n\n.threejs-brain-loader {\n  border: 16px solid #f3f3f3; /* Light grey */\n  border-top: 16px solid #3498db; /* Blue */\n  border-radius: 50%;\n  width: 120px;\n  height: 120px;\n  animation: threejs-brain-loader-spin 2s linear infinite;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress {\n  position: relative;\n}\n\n.threejs-brain-canvas .threejs-control .threejs-control-progress > span {\n  display: block;\n  height: 2px;\n  background-color: rgba(24, 116, 205, 0.8);\n  position: relative;\n  overflow: hidden;\n  text-align: center;\n  font-size: x-small;\n  white-space: nowrap;\n  transition: width 2s;\n}\n\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -62354,6 +62354,8 @@ CONSTANTS.VEC_ANAT_I = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, -1 
 CONSTANTS.KEY_ZOOM                    = "KeyZ";         // `z/⇧Z` - zoom out/in
 CONSTANTS.KEY_CYCLE_LEFT              = "BracketLeft";  // `[` - cycle through left hemisphere material
 CONSTANTS.KEY_CYCLE_RIGHT             = "BracketRight"; // `]` - cycle through right hemisphere material
+CONSTANTS.KEY_CYCLE_LEFT_OPACITY      = "BracketLeft";  // `⇧[` - cycle through left hemisphere opacity
+CONSTANTS.KEY_CYCLE_RIGHT_OPACITY     = "BracketRight"; // `⇧[` - cycle through right hemisphere opacity
 CONSTANTS.KEY_CYCLE_SURFACE_COLOR     = "KeyK";         // `k` - cycling surface color type
 CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT   = "Period";       // `.` - choosing next electrodes
 CONSTANTS.KEY_CYCLE_ELECTRODES_PREV   = "Comma";        // `,` - choosing previous electrodes
@@ -62370,7 +62372,8 @@ CONSTANTS.KEY_MOVE_AXIAL              = "KeyQ";         // `w/⇧W` - move axial
 CONSTANTS.KEY_MOVE_SAGITTAL           = "KeyW";         // `e/⇧E` - move sagittal forward/backward
 CONSTANTS.KEY_CYCLE_ANIMATION         = "KeyD";         // `d/⇧D` - cycle through animation clips or values
 CONSTANTS.KEY_TOGGLE_ANIMATION        = "KeyS";         // `s` - play/pause timer
-CONSTANTS.KEY_CLIP_INFO_FOCUSED       = "KeyC";         // `Ctrl+c` - copy electrode coordinate information to clipboard
+CONSTANTS.KEY_COPY_CONTROLLER_DATA    = "KeyC";         // `Ctrl+c` - copy the controller data to clipboard
+CONSTANTS.KEY_PASTE_CONTROLLER_DATA   = "KeyV";         // `Ctrl+v` - paste the controller data from clipboard
 CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_R = "Digit1";     // `1/⇧1` - adjust electrode locations along Right/Left axis
 CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_A = "Digit2";     // `2/⇧2` - adjust electrode locations along Anterior/Posterior axis
 CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_S = "Digit3";     // `3/⇧3` - adjust electrode locations along Superior/Inferior axis
@@ -62384,9 +62387,12 @@ CONSTANTS.TOOLTIPS = {};
 CONSTANTS.TOOLTIPS.KEY_ZOOM                    = "z/Z";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT              = "[";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT             = "]";
+CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT_OPACITY      = "⇧[";
+CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT_OPACITY     = "⇧]";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_NEXT   = ".";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_ELECTRODES_PREV   = ",";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY   = "v";
+CONSTANTS.TOOLTIPS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY   = "⇧V";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE           = "p";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR     = "k";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL          = "⇧M";
@@ -62404,7 +62410,8 @@ CONSTANTS.TOOLTIPS.KEY_NEW_ELECTRODE_EDITOR    = "1";
 CONSTANTS.TOOLTIPS.KEY_LABEL_FOCUS_EDITOR      = "2";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_REMOVE_EDITOR     = "r";
 CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE        = "l";
-CONSTANTS.TOOLTIPS.KEY_CLIP_INFO_FOCUSED       = "ctrl+c";
+CONSTANTS.TOOLTIPS.KEY_COPY_CONTROLLER_DATA    = "ctrl+c";
+CONSTANTS.TOOLTIPS.KEY_PASTE_CONTROLLER_DATA   = "ctrl+v";
 CONSTANTS.TOOLTIPS.KEY_ADJUST_ELECTRODE_LOCATION_R = "1/⇧1";
 CONSTANTS.TOOLTIPS.KEY_ADJUST_ELECTRODE_LOCATION_A = "2/⇧2";
 CONSTANTS.TOOLTIPS.KEY_ADJUST_ELECTRODE_LOCATION_S = "3/⇧3";
@@ -67714,9 +67721,6 @@ class EnhancedGUI extends lil_gui_esm {
 
 class MouseKeyboard extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_2__/* .ThrottledEventDispatcher */ .v {
 
-  // private
-  #app;
-
   // static
   static OFF_VIEWER     = 0b00000;
   static ON_VIEWER      = 0b00001;
@@ -67757,147 +67761,133 @@ class MouseKeyboard extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODUL
   constructor ( app ) {
     super( app.$wrapper );
 
-    this.#app = app;
+    this._app = app;
     this.mouseLocation = MouseKeyboard.OFF_VIEWER;
     this._mouseDownHold = false;
     this.timeout = 300;
 
 
-    this.#app.$wrapper.addEventListener(
-      "mouseenter", this.#onViewerFocused );
-    this.#app.$wrapper.addEventListener(
-      "mouseleave", this.#onViewerBlurred );
-    this.#app.$controllerContainer.addEventListener(
-      "mouseenter", this.#onControllerFocused );
-    this.#app.$controllerContainer.addEventListener(
-      "mouseleave", this.#onControllerBlurred );
+    this._app.$wrapper.addEventListener(
+      "mouseenter", this._onViewerFocused );
+    this._app.$wrapper.addEventListener(
+      "mouseleave", this._onViewerBlurred );
+    this._app.$controllerContainer.addEventListener(
+      "mouseenter", this._onControllerFocused );
+    this._app.$controllerContainer.addEventListener(
+      "mouseleave", this._onControllerBlurred );
 
-    this.#app.canvas.sideCanvasList.coronal.$el.addEventListener(
-      "mouseenter", this.#onCoronalViewFocused );
-    this.#app.canvas.sideCanvasList.coronal.$el.addEventListener(
-      "mouseleave", this.#onCoronalViewBlurred );
-    this.#app.canvas.sideCanvasList.axial.$el.addEventListener(
-      "mouseenter", this.#onAxialViewFocused );
-    this.#app.canvas.sideCanvasList.axial.$el.addEventListener(
-      "mouseleave", this.#onAxialViewBlurred );
-    this.#app.canvas.sideCanvasList.sagittal.$el.addEventListener(
-      "mouseenter", this.#onSagittalViewFocused );
-    this.#app.canvas.sideCanvasList.sagittal.$el.addEventListener(
-      "mouseleave", this.#onSagittalViewBlurred );
+    this._app.canvas.sideCanvasList.coronal.$el.addEventListener(
+      "mouseenter", this._onCoronalViewFocused );
+    this._app.canvas.sideCanvasList.coronal.$el.addEventListener(
+      "mouseleave", this._onCoronalViewBlurred );
+    this._app.canvas.sideCanvasList.axial.$el.addEventListener(
+      "mouseenter", this._onAxialViewFocused );
+    this._app.canvas.sideCanvasList.axial.$el.addEventListener(
+      "mouseleave", this._onAxialViewBlurred );
+    this._app.canvas.sideCanvasList.sagittal.$el.addEventListener(
+      "mouseenter", this._onSagittalViewFocused );
+    this._app.canvas.sideCanvasList.sagittal.$el.addEventListener(
+      "mouseleave", this._onSagittalViewBlurred );
 
-    this.#app.canvas.mainCanvas.addEventListener(
-      "contextmenu", this.#onMainCanvasContextMenu );
-    this.#app.canvas.mainCanvas.addEventListener(
-      "mousedown", this.#onMainCanvasMouseDown );
-    this.#app.canvas.mainCanvas.addEventListener(
-      "mouseup", this.#onMainCanvasMouseUp );
-    this.#app.canvas.mainCanvas.addEventListener(
-      "click", this.#onMainCanvasClicked );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "contextmenu", this._onMainCanvasContextMenu );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "mousedown", this._onMainCanvasMouseDown );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "mouseup", this._onMainCanvasMouseUp );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "click", this._onMainCanvasClicked );
 
-    document.addEventListener( 'keydown', this.#onKeydown );
+    document.addEventListener( 'keydown', this._onKeydown, { capture : true } );
 
-
-
-    /*
-
-
-    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
-      if (event.isComposing || event.keyCode === 229) { return; }
-      if( this.listen_keyboard ){
-        // event.preventDefault();
-        this.keyboard_event = {
-          'action' : 'keydown',
-          'event' : event,
-          'dispose' : false,
-          'level' : 0
-        };
-      }
-
-    }, document );
-    */
   }
 
   dispose() {
     super.dispose();
-    this.#app.$wrapper.removeEventListener( "mouseenter", this.#onViewerFocused );
-    this.#app.$wrapper.removeEventListener( "mouseleave", this.#onViewerBlurred );
-    this.#app.$controllerContainer.removeEventListener( "mouseenter", this.#onControllerFocused );
-    this.#app.$controllerContainer.removeEventListener( "mouseleave", this.#onControllerBlurred );
+    this._app.$wrapper.removeEventListener( "mouseenter", this._onViewerFocused );
+    this._app.$wrapper.removeEventListener( "mouseleave", this._onViewerBlurred );
+    this._app.$controllerContainer.removeEventListener( "mouseenter", this._onControllerFocused );
+    this._app.$controllerContainer.removeEventListener( "mouseleave", this._onControllerBlurred );
 
-    this.#app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseenter", this.#onCoronalViewFocused );
-    this.#app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseleave", this.#onCoronalViewBlurred );
-    this.#app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseenter", this.#onAxialViewFocused );
-    this.#app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseleave", this.#onAxialViewBlurred );
-    this.#app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseenter", this.#onSagittalViewFocused );
-    this.#app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseleave", this.#onSagittalViewBlurred );
+    this._app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseenter", this._onCoronalViewFocused );
+    this._app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseleave", this._onCoronalViewBlurred );
+    this._app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseenter", this._onAxialViewFocused );
+    this._app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseleave", this._onAxialViewBlurred );
+    this._app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseenter", this._onSagittalViewFocused );
+    this._app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseleave", this._onSagittalViewBlurred );
 
-    this.#app.canvas.mainCanvas.removeEventListener( "contextmenu", this.#onMainCanvasContextMenu );
-    this.#app.canvas.mainCanvas.removeEventListener( "mousedown", this.#onMainCanvasMouseDown );
-    this.#app.canvas.mainCanvas.removeEventListener( "mouseup", this.#onMainCanvasMouseUp );
-    this.#app.canvas.mainCanvas.removeEventListener( "click", this.#onMainCanvasClicked );
+    this._app.canvas.$mainCanvas.removeEventListener( "contextmenu", this._onMainCanvasContextMenu );
+    this._app.canvas.$mainCanvas.removeEventListener( "mousedown", this._onMainCanvasMouseDown );
+    this._app.canvas.$mainCanvas.removeEventListener( "mouseup", this._onMainCanvasMouseUp );
+    this._app.canvas.$mainCanvas.removeEventListener( "click", this._onMainCanvasClicked );
 
-    document.removeEventListener( 'keydown', this.#onKeydown );
+    document.removeEventListener( 'keydown', this._onKeydown );
 
     this.mouseLocation = MouseKeyboard.OFF_VIEWER;
   }
 
 
-  #onViewerFocused = () => {
+  _onViewerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_VIEWER;
+    this.dispatch( "viewerApp.mouse.enterViewer", null, false );
   }
-  #onViewerBlurred = () => {
+  _onViewerBlurred = () => {
     this.mouseLocation = this.mouseLocation & MouseKeyboard.OFF_VIEWER;
+    this.dispatch( "viewerApp.mouse.leaveViewer", null, false );
   }
-  #onControllerFocused = () => {
+  _onControllerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CONTROLLER;
   }
-  #onControllerBlurred = () => {
+  _onControllerBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_CONTROLLER;
   }
-  #onCoronalViewFocused = () => {
+  _onCoronalViewFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CORONAL;
   }
-  #onCoronalViewBlurred = () => {
+  _onCoronalViewBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_CORONAL;
   }
-  #onAxialViewFocused = () => {
+  _onAxialViewFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_AXIAL;
   }
-  #onAxialViewBlurred = () => {
+  _onAxialViewBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_AXIAL;
   }
-  #onSagittalViewFocused = () => {
+  _onSagittalViewFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_SAGITTAL;
   }
-  #onSagittalViewBlurred = () => {
+  _onSagittalViewBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_SAGITTAL;
   }
-  #onMainCanvasContextMenu = () => {
+  _onMainCanvasContextMenu = () => {
     // this should fire immediately
-    this.dispatch( "viewerApp.mouseKeyboard.contextmenu", null, true );
+    this.dispatch( "viewerApp.mouse.contextmenu", null, true );
   }
-  #onMainCanvasMouseDown = () => {
+  _onMainCanvasMouseDown = ( event ) => {
     // this should fire immediately
     this._mouseDownHold = true;
-    this.dispatch( "viewerApp.mouseKeyboard.mousedown", null, true );
+    this.dispatch( "viewerApp.mouse.mousedown", event, true );
   }
-  #onMainCanvasMouseUp = () => {
+  _onMainCanvasMouseUp = () => {
     // this should fire immediately
     this._mouseDownHold = false;
-    this.dispatch( "viewerApp.mouseKeyboard.mouseup", null, true );
+    this.dispatch( "viewerApp.mouse.mouseup", null, true );
   }
-  #onMainCanvasClicked = ( event ) => {
+  _onMainCanvasClicked = ( event ) => {
     // this should be fired delayed
-    this.dispatch( "viewerApp.mouseKeyboard.click", event.detail, false );
+    this.dispatch( "viewerApp.mouse.click", event, false );
   }
-  #onKeydown = ( event ) => {
-    if( event.isComposing || this.mouseLocation === MouseKeyboard.OFF_VIEWER ) { return; }
+  _onKeydown = ( event ) => {
+    // keyCode is deprecated, but I found no better substitution
+    if( event.isComposing || event.keyCode === 229 || this.mouseLocation === MouseKeyboard.OFF_VIEWER ) { return; }
     if( this.mouseLocation & MouseKeyboard.ON_CONTROLLER ) {
-      if( this.#app.controllerGUI.isFocused ) { return; }
+      if( this._app.controllerGUI.isFocused ) {
+        console.log("Focused -> " + this.mouseLocation);
+        return;
+      }
     }
     event.preventDefault();
-    console.log( event.key );
-    this.dispatch( "viewerApp.mouseKeyboard.keydown", event, true );
+    this.dispatch( "viewerApp.keyboad.keydown", event, true );
   }
 
 
@@ -68174,13 +68164,14 @@ class ThrottledEventDispatcher {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "o": () => (/* binding */ ViewerApp)
 /* harmony export */ });
-/* harmony import */ var _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5857);
-/* harmony import */ var _utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(9898);
+/* harmony import */ var _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(5857);
+/* harmony import */ var _utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(9898);
 /* harmony import */ var _EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6546);
-/* harmony import */ var _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1141);
-/* harmony import */ var _ViewerCanvas_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(8683);
+/* harmony import */ var _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(8959);
+/* harmony import */ var _ViewerCanvas_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4300);
 /* harmony import */ var _MouseKeyboard_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6153);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(975);
+/* harmony import */ var _requestAnimationFrame_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(4305);
 
 
 
@@ -68189,7 +68180,8 @@ class ThrottledEventDispatcher {
 
 
 
-class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5__/* .ThrottledEventDispatcher */ .v {
+
+class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6__/* .ThrottledEventDispatcher */ .v {
 
   constructor({
 
@@ -68213,6 +68205,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
     this.DEBUG = debug;
     this.isViewerApp = true;
     this.controllerClosed = false;
+    this.ready = false;
 
     // this.outputId = this.$wrapper.getAttribute( 'data-target' );
 
@@ -68249,7 +68242,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
 
     // 3. Controller placeholder
     // initialized as placeholder, will be replaced by lil-gui
-    this.$controllerGUI = document.createElement('div');
+    // this.$controllerGUI = document.createElement('div');
 
     // 4. Information container
     this.$informationContainer = document.createElement('div');
@@ -68276,7 +68269,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
      *          - 6. Information text
      */
     // add 3 to 2
-    this.$controllerContainer.appendChild( this.$controllerGUI );
+    // this.$controllerContainer.appendChild( this.$controllerGUI );
     // add 2 to 1
     this.$settingsPanel.appendChild( this.$controllerContainer );
     // add $progress to 5
@@ -68297,21 +68290,25 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
       height ?? this.$wrapper.clientHeight,
       250, false, cache, this.DEBUG, true );
 
-    this.canvas.animate();
-
     // Add listeners for mouse
     this.mouseKeyboard = new _MouseKeyboard_js__WEBPACK_IMPORTED_MODULE_3__/* .MouseKeyboard */ .q( this );
 
-
+    this.animate();
   }
 
   get mouseLocation () { return this.mouseKeyboard.mouseLocation; }
 
   dispose() {
+    this._disposed = true;
     super.dispose();
     this.mouseKeyboard.dispose();
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
+      this.controllerGUI = undefined;
+    }
+    if( this.controlCenter ) {
+      try { this.controlCenter.dispose(); } catch (e) {}
+      this.controlCenter = undefined;
     }
   }
 
@@ -68472,13 +68469,17 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
       try { this.controllerGUI.dispose(); } catch (e) {}
       this.controllerGUI = undefined;
     }
+    if( this.controlCenter ) {
+      try { this.controlCenter.dispose(); } catch (e) {}
+      this.controlCenter = undefined;
+    }
 
-    this.groups = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( data.groups );
-    this.geoms = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( data.geoms );
+    this.groups = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__/* .asArray */ ._)( data.groups );
+    this.geoms = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__/* .asArray */ ._)( data.geoms );
     this.settings = data.settings;
     this.initialControllerValues = data.settings.default_controllers || {};
     this.hasAnimation = data.settings.has_animation;
-    this.colorMaps = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( data.settings.color_maps );
+    this.colorMaps = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__/* .asArray */ ._)( data.settings.color_maps );
 
     // canvas flags
     this.canvas.DEBUG = this.DEBUG;
@@ -68566,6 +68567,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
     if( _isObsolete() ) { return; }
 
     // this.canvas.finish_init();
+    // this.canvas.dispatch_event( "canvas.finish_init" );
 
     this.setProgressBar({
       progress : 100,
@@ -68573,49 +68575,14 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
     });
 
     // ---- Finalizing: add controllers ----------------------------------------
-    this.updateControllers();
+    this.updateControllers({ reset : true });
+
 
     // FIXME: Add driver, which contains shiny support
     // this.shiny.register_gui( this.gui, this.presets );
 
 
-
-    // The following stuff need to run *after* controller set up
-    // TODO: consider moving these to the canvas class
-    /* Update camera zoom. If we set camera position, then shiny will behave weird and we have to
-    * reset camera every time. To solve this problem, we only reset zoom level
-    *
-    * this is the line that causes the problem
-    */
-    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
-    this.canvas.set_font_size( this.settings.font_magnification || 1 );
-
-    // Compile everything
-    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
-
-    // Set side camera
-    if( this.settings.side_camera || false ){
-
-      // Set canvas zoom-in level
-      if( this.settings.side_display || false ){
-        this.canvas.enableSideCanvas();
-        // reset so that the size is displayed correctly
-        this._reset_flag = true;
-      }else{
-        this.canvas.disableSideCanvas();
-      }
-
-    }else{
-      this.canvas.disableSideCanvas();
-    }
-
     this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
-
-    // remember last settings
-    try {
-      this.controlCenter.update();
-      this.controllerGUI.setFromDictionary( this.defaultControllerValues );
-    } catch (e) {}
 
     // Force starting rendering
     this.canvas.render();
@@ -68630,7 +68597,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
     }
 
     // canvas is ready. set flag
-    this.canvas.ready = true;
+    this.ready = true;
 
     // run customized js code
     if( this.settings.custom_javascript &&
@@ -68655,9 +68622,14 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
 
   }
 
-  updateControllers() {
+  updateControllers( { reset = false } = {} ) {
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
+      this.controllerGUI = undefined;
+    }
+    if( this.controlCenter ) {
+      try { this.controlCenter.dispose(); } catch (e) {}
+      this.controlCenter = undefined;
     }
     this.controllerGUI = new _EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_0__/* .EnhancedGUI */ .H({
       autoPlace: false,
@@ -68676,20 +68648,17 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
       this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
     });
 
-    // Set side bar
+    this.$controllerContainer.innerHTML = '';
+
     if( this.settings.hide_controls ) {
 
       // Do not show controller GUI at all.
       this.controllerClosed = true;
-      const $placeholder = document.createElement("div");
-      this.$controllerContainer.replaceChild( $placeholder, this.$controllerGUI );
-      this.$controllerGUI = $placeholder;
+      this.controllerGUI.hide();
+
     } else {
 
-      // set GUI
-      this.$controllerContainer.replaceChild( this.controllerGUI.domElement, this.$controllerGUI );
-      this.$controllerGUI = this.controllerGUI.domElement;
-
+      this.controllerGUI.show();
       if( this.settings.control_display ) {
         this.controllerClosed = false;
       } else {
@@ -68703,11 +68672,11 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
       this.controllerGUI.open();
     }
 
+    this.$controllerContainer.appendChild( this.controllerGUI.domElement );
+
     // Add listeners
     const enabledPresets = this.settings.control_presets;
-    this.controlCenter = new _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__/* .ViewerControlCenter */ .Y(
-      this.canvas, this.controllerGUI, this.settings, this.shiny
-    );
+    this.controlCenter = new _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__/* .ViewerControlCenter */ .Y( this );
     // ---------------------------- Defaults
     this.controlCenter.addPreset_background();
 
@@ -68728,7 +68697,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
 
     // ---- Add Presets --------------------------------------------------------
     let animationControllerRegistered = false;
-    (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_6__/* .asArray */ ._)( enabledPresets ).forEach(( presetName ) => {
+    (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__/* .asArray */ ._)( enabledPresets ).forEach(( presetName ) => {
 
       try {
         if( presetName === 'animation' ){
@@ -68744,7 +68713,81 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
     if( !animationControllerRegistered ){
       this.controlCenter.addPreset_animation();
     }
+
+
+    // The following stuff need to run *after* controller set up
+    // TODO: consider moving these to the canvas class
+    /* Update camera zoom. If we set camera position, then shiny will behave weird and we have to
+    * reset camera every time. To solve this problem, we only reset zoom level
+    *
+    * this is the line that causes the problem
+    */
+    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
+    this.canvas.set_font_size( this.settings.font_magnification || 1 );
+
+    // Compile everything
+    // this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
+
+    // Set side camera
+    if( this.settings.side_camera || false ){
+
+      // Set canvas zoom-in level
+      if( this.settings.side_display || false ){
+        this.canvas.enableSideCanvas();
+        // reset so that the size is displayed correctly
+        this._reset_flag = true;
+      }else{
+        this.canvas.disableSideCanvas();
+      }
+
+    }else{
+      this.canvas.disableSideCanvas();
+    }
+
+    // Update inputs that require selectors since the options might vary
+    this.controlCenter.updateSelectorOptions();
+
+    // remember last settings
+
+    if( reset ) {
+      this.controllerGUI.setFromDictionary( this.initialControllerValues );
+    }
   }
+
+  // Do not call this function directly after the initial call
+  // use "this.canvas.needsUpdate = true;" to render once
+  // use "this.canvas.needsUpdate = 1;" to keep rendering
+  // this.pauseAnimation(1); to stop rendering
+  // Only use 0 or 1
+  animate(){
+
+    if( this._disposed ){ return; }
+
+    (0,_requestAnimationFrame_js__WEBPACK_IMPORTED_MODULE_5__/* .requestAnimationFrame */ .U)( this.animate.bind(this) );
+
+    // If this.$el is hidden, do not render
+    if( !this.ready || this.$wrapper.clientHeight <= 0 ){
+      return;
+    }
+
+    const _width = this.canvas.domElement.width;
+    const _height = this.canvas.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
+
+    this.canvas.update();
+    // needs to incrementTime after update so chosen object information can be up to date
+    this.canvas.incrementTime();
+
+    this.controlCenter.update();
+
+    if( this.canvas.needsUpdate ){
+  		this.canvas.render();
+    }
+
+	}
 }
 
 
@@ -68752,7 +68795,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_5_
 
 /***/ }),
 
-/***/ 8683:
+/***/ 4300:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -68766,6 +68809,75 @@ __webpack_require__.d(__webpack_exports__, {
 var three_module = __webpack_require__(2212);
 // EXTERNAL MODULE: ./src/js/utility/asArray.js
 var asArray = __webpack_require__(9898);
+;// CONCATENATED MODULE: ./src/js/utility/color.js
+
+
+function asColor( hex, c ) {
+
+  if( !c || (typeof c !== 'object') || !c.isColor ) {
+    throw TypeError('asColor: c must be a THREE.Color');
+  }
+
+  if( typeof hex === 'object' && hex ) {
+
+    // assume hex = { r: ?, g: ?, b: ? }
+    return c.copy( hex );
+
+  }
+
+  if( typeof hex === 'number' ) {
+
+    // e.g.: hex = 0xccff99
+    return c.set( hex );
+
+  }
+
+  if( typeof hex === 'string' ) {
+    if ( hex.indexOf('#') !== 0 ) {
+        hex = "#" + hex;
+    }
+    if ( hex.length > 7 ) {
+      hex = hex.slice( 0 , 7 );
+    }
+    return c.setStyle( hex );
+  }
+
+  if( Array.isArray( hex ) ) {
+    c.fromArray( hex );
+    if ( hex.some( v => { return v > 1 ; }) ) {
+      c.multiplyScalar( 1/ 255 );
+    }
+    return c;
+  }
+
+  throw TypeError('asColor: unknown input type.');
+}
+
+
+function invertColor ( c ) {
+
+  c.r = 1 - c.r;
+  c.g = 1 - c.g;
+  c.b = 1 - c.b;
+
+  return c;
+
+};
+
+// returns 0 for darkest dark and 1 for whitest white
+function colorLuma ( c ) {
+  // per ITU-R BT.709 ( if color luma < 0.4, then it's too dark?)
+
+  // https://contrastchecker.online/color-relative-luminance-calculator
+  const r = c.r <= 0.03928 ? c.r / 12.92 : ((c.r+0.055)/1.055) ^ 2.4;
+  const g = c.g <= 0.03928 ? c.g / 12.92 : ((c.g+0.055)/1.055) ^ 2.4;
+  const b = c.b <= 0.03928 ? c.b / 12.92 : ((c.b+0.055)/1.055) ^ 2.4;
+
+  return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}
+
+
+
 // EXTERNAL MODULE: ./src/js/utils.js
 var utils = __webpack_require__(3658);
 ;// CONCATENATED MODULE: ./src/js/core/HauntedArcballControls.js
@@ -68898,12 +69010,7 @@ class HauntedArcballControls extends three_module.EventDispatcher {
     if ( this.enabled === false || typeof event !== "object" ) return;
 
     if( event.type == "start" || event.type == "change" ) {
-      /*
-      if( this._canvas.render_flag < 0 ) {
-        this._canvas.handle_resize(undefined, undefined, true);
-      }
-      */
-      this._canvas.start_animation( 0 );
+      this._canvas.needsUpdate = true;
     } else if ( event.type == "end" ) {
       this._canvas.pause_animation( 1 );
       this._canvas.dispatch_event( "canvas.mainCamera.onEnd", this.object.getState() );
@@ -69493,20 +69600,6 @@ class HauntedOrthographicCamera extends three_module.OrthographicCamera {
     this.add( this.backLight );
 
 
-    // listeners
-    // zoom-in, zoom-out
-    this._canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_ZOOM */.t.KEY_ZOOM, this.onKeyboardZoom, 'zoom');
-
-  }
-
-  onKeyboardZoom = ( event ) => {
-    if( event.event.shiftKey ){
-      this.zoom = this.zoom * 1.2; // zoom in
-    }else{
-      this.zoom = this.zoom / 1.2; // zoom out
-    }
-    this.updateProjectionMatrix();
-    this._canvas.start_animation( 0 );
   }
 
   handleResize() {
@@ -70634,7 +70727,12 @@ class SideCanvas {
 
     // --------------- Register 3js objects -------------
     // Add OrthographicCamera
-    this.camera = new three_module.OrthographicCamera( -128, 128, 128, -128, 1, 10000 );
+
+    // need to see ranges from +- 128 * sqrt(3) ~= +-222
+    // The distance to origin is 500, hence the render range is:
+    //  near = 500 - 222 = 278
+    //  far  = 500 + 222 = 722
+    this.camera = new three_module.OrthographicCamera( -128, 128, 128, -128, 278, 722 );
 		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_CAMERA_1 */.t.LAYER_USER_ALL_CAMERA_1 );
 		this.camera.layers.enable( constants/* CONSTANTS.LAYER_USER_ALL_SIDE_CAMERAS_4 */.t.LAYER_USER_ALL_SIDE_CAMERAS_4 );
 		this.camera.layers.enable( 5 );
@@ -75652,6 +75750,7 @@ var download_default = /*#__PURE__*/__webpack_require__.n(download);
 
 
 
+
 // import { OrthographicTrackballControls } from './OrthographicTrackballControls.js';
 
 
@@ -75728,21 +75827,13 @@ window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
 // A storage to cache large objects such as mesh data
 const cached_storage = new StorageCache/* StorageCache */.B();
 
-// Make sure window.requestAnimationFrame exists
-// Override methods so that we have multiple support across platforms
-window.requestAnimationFrame =
-    window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.msRequestAnimationFrame ||
-    window.oRequestAnimationFrame ||
-    function (callback) {
-        setTimeout(function() { callback(Date.now()); },  1000/60);
-    };
-
-
 
 class ViewerCanvas {
+
+  // private
+
+  // public
+
   constructor(
     el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
   ) {
@@ -75767,7 +75858,6 @@ class ViewerCanvas {
     // DOM container information
     this.$el = el;
     this.container_id = this.$el.getAttribute( 'data-target' );
-    this.ready = false;
     this._time_info = {
       selected_object : {
         position: new three_module.Vector3()
@@ -75788,7 +75878,7 @@ class ViewerCanvas {
     this.main_canvas = document.createElement('div');
     this.main_canvas.className = 'THREEBRAIN-MAIN-CANVAS';
     this.main_canvas.style.width = width + 'px';
-    this.mainCanvas = this.main_canvas
+    this.$mainCanvas = this.main_canvas
 
     // Container that stores mesh objects from inputs (user defined) for each inquery
     this.mesh = new Map();
@@ -75826,21 +75916,18 @@ class ViewerCanvas {
 
     // Dispatcher of handlers when mouse is clicked on the main canvas
     this._mouse_click_callbacks = {};
-    this._keyboard_callbacks = {};
 
     // update functions
-    this._custom_updates = new Map();
-    this._update_countdown = 5;
 
     /* A render flag that tells renderers whether the canvas needs update.
           Case -1, -2, ... ( < 0 ) : stop rendering
           Case 0: render once
           Case 1, 2: render until reset
-    lower render_flag will be ignored if higher one is set. For example, if
-    render_flag=2 and pause_animation only has input of 1, renderer will ignore
+    lower _renderFlag will be ignored if higher one is set. For example, if
+    _renderFlag=2 and pause_animation only has input of 1, renderer will ignore
     the pause signal.
     */
-    this.render_flag = 0;
+    this._renderFlag = 0;
 
     // Disable raycasting, soft deprecated
     this.disable_raycast = true;
@@ -75913,10 +76000,6 @@ class ViewerCanvas {
   	this.main_renderer.localClippingEnabled=true; // Enable clipping
   	this.main_renderer.setClearColor( this.background_color );
 
-
-    // register mouse events to save time from fetching from DOM elements
-    this.register_main_canvas_events();
-
     // this.main_canvas.appendChild( this.main_renderer.domElement );
     this.main_canvas.appendChild( this.domElement );
 
@@ -75964,33 +76047,9 @@ class ViewerCanvas {
 
 
     // Mouse helpers
-    const mouse_pointer = new three_module.Vector2(),
-        mouse_raycaster = new three_module.Raycaster();
-    // const mouse_helper = new ArrowHelper(new Vector3( 0, 0, 1 ), new Vector3( 0, 0, 0 ), 50, 0xff0000, 2 ),
-    //     mouse_helper_root = new Mesh(
-    //       new BoxGeometry( 4,4,4 ),
-    //       new MeshBasicMaterial({ color : 0xff0000 })
-    //     );
-
-    // root is a green cube that's only visible in side cameras
-    // mouse_helper_root.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    // mouse_helper.children.forEach( el => {
-    //   el.layers.set( CONSTANTS.LAYER_SYS_ALL_SIDE_CAMERAS_13 );
-    // } );
-
-    // In side cameras, always render mouse_helper_root on top
-    // mouse_helper_root.renderOrder = CONSTANTS.MAX_RENDER_ORDER;
-    // mouse_helper_root.material.depthTest = false;
-    // mouse_helper_root.onBeforeRender = function( renderer ) { renderer.clearDepth(); };
-
-    // mouse_helper.add( mouse_helper_root );
-
-    // this.mouse_helper = mouse_helper;
-    this.mouse_raycaster = mouse_raycaster;
-    this.mouse_pointer = mouse_pointer;
-    this.mouseState = MOUSE.OFF_VIEWER;
-
-    // this.add_to_scene(mouse_helper, true);
+    this.mousePositionOnScreen = new three_module.Vector2();
+    this.mouseRaycaster = new three_module.Raycaster();
+    this._mouseEvent = undefined;
 
     this.focus_box = new three_module.BoxHelper();
     this.focus_box.material.color.setRGB( 1, 0, 0 );
@@ -76006,314 +76065,66 @@ class ViewerCanvas {
 		// File loader
     this.file_loader = new CanvasFileLoader( this );
 
+    this.activated = false;
+    this.$el.addEventListener( 'viewerApp.mouse.enterViewer', this._activateViewer );
+    this.$el.addEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
+    this.$el.addEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown, { capture : true } );
+
+    // this listener has been moved to controlCenter. Ideally all listeners go there
+    // and this canvas is just in charge of passively rendering & updating things
+    // this.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
+  }
+  _activateViewer = () => {
+    this.activated = true;
+    this.start_animation( 0 );
+  }
+  _deactivateViewer = () => { this.activated = false; }
+  /* Moved to viewer control center
+  _onMouseMove = ( event ) => {
+    if( this.activated ) {
+      this._mouseEvent = event;
+    }
+  }
+  */
+  _onMouseDown = ( event ) => {
+    // async, but raycaster is always up to date
+    const p = this.raycastClickables()
+      .then((item) => {
+        if( event.detail.button == 2 && item ) {
+          if( item.object && item.object.isMesh && item.object.userData.construct_params ) {
+            const crosshairPosition = item.object.getWorldPosition( new three_module.Vector3() );
+            crosshairPosition.centerCrosshair = true;
+            this.dispatch_event( 'canvas.drive.setSliceCrosshair', crosshairPosition );
+          }
+        }
+      });
+    return p;
   }
 
-  /*---- Finalize init ------------------------------------------------------*/
-  register_main_canvas_events(){
+  raycastClickables = () => {
 
-    // this.$el.addEventListener( 'mouseenter', (e) => { this.listen_keyboard = true });
-    // this.$el.addEventListener( 'mouseleave', (e) => { this.listen_keyboard = false });
-    /*
-    this.bind( "mouseEnteredViewer", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_CANVAS;
-    }, this.$el );
-    this.bind( "mouseLeftViewer", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_CANVAS;
-    }, this.$el );
-    this.bind( "mouseEnteredSidePanels", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_SIDE_CANVAS;
-    }, this.sideCanvasList.coronal.$el );
-    this.bind( "mouseLeftSidePanels", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_SIDE_CANVAS;
-    }, this.$el );
-    this.bind( "mouseEnteredControlPanel", "mouseenter", e => {
-      this.mouseState = this.mouseState | MOUSE.ON_CONTROLLER;
-    }, this.$el );
-    this.bind( "mouseLeftViewer", "mouseleave", e => {
-      this.mouseState = this.mouseState | MOUSE.OFF_CONTROLLER;
-    }, this.$el );
-    */
+    const raycaster = this.updateRaycast();
 
-    this.bind( 'main_canvas_mouseenter', 'mouseenter', (e) => {
-			  this.listen_keyboard = true;
-			}, this.main_canvas);
-		this.bind( 'main_canvas_mouseleave', 'mouseleave', (e) => {
-			  this.listen_keyboard = false;
-			}, this.main_canvas);
+    return new Promise(resolve => {
 
-		this.bind( 'main_canvas_dblclick', 'dblclick', (event) => { // Use => to create flexible access to this
-      if(this.mouse_event !== undefined && this.mouse_event.level > 2){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'dblclick',
-        'event' : event,
-        'dispose' : false,
-        'level' : 2
-      };
+      if( !raycaster ) { resolve( undefined ); }
 
-    }, this.main_canvas, false );
+      // where clickable objects stay
+      raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_RAYCASTER_14 */.t.LAYER_SYS_RAYCASTER_14 );
 
-    this.bind( 'main_canvas_click', 'click', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'click',
-        'button' : event.button,
-        'event' : event,
-        'dispose' : false,
-        'level' : 1
-      };
+      // Only raycast with visible
+      const items = raycaster.intersectObjects(
+        // asArray( this.clickable )
+        this.clickable_array.filter((e) => { return( e.visible ) })
+      );
 
-    }, this.main_canvas, false );
+      if( !items || items.length === 0 ) { resolve( undefined ); }
 
-    this.bind( 'main_canvas_contextmenu', 'contextmenu', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 1){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'contextmenu',
-        'button' : event.button,
-        'event' : event,
-        'dispose' : false,
-        'level' : 1
-      };
+      const item = items[ 0 ];
+      this.focus_object( item.object );
 
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mousemove', 'mousemove', (event) => {
-      if(this.mouse_event !== undefined && this.mouse_event.level > 0){
-        return(null);
-      }
-      this.mouse_event = {
-        'action' : 'mousemove',
-        'event' : event,
-        'dispose' : false,
-        'level' : 0
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mousedown', 'mousedown', (event) => {
-      this.mouse_event = {
-        'action' : 'mousedown',
-        'event' : event,
-        'dispose' : false,
-        'level' : 3
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_mouseup', 'mouseup', (event) => {
-      this.mouse_event = {
-        'action' : 'mouseup',
-        'event' : event,
-        'dispose' : true,
-        'level' : 0
-      };
-
-    }, this.main_canvas, false );
-
-    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
-      if (event.isComposing || event.keyCode === 229) { return; }
-      if( this.listen_keyboard ){
-        // event.preventDefault();
-        this.keyboard_event = {
-          'action' : 'keydown',
-          'event' : event,
-          'dispose' : false,
-          'level' : 0
-        };
-      }
-
-    }, document );
-
-
-    this.add_mouse_callback(
-      (evt) => {
-
-        // If editing mode enabled, disable this
-        return({
-          pass  : !this.edit_mode && (['click', 'dblclick'].includes( evt.action ) ||
-                  ( evt.action === 'mousedown' && evt.event.button === 2 )),
-          type  : 'clickable'
-        });
-      },
-      (res, evt) => {
-        this.focus_object( res.target_object );
-        try {
-          document.activeElement.blur();
-        } catch (e) {}
-        this.start_animation( 0 );
-      },
-      'set_obj_chosen'
-    );
-
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : ['click', 'dblclick'].includes( evt.action ) ||
-                  ( evt.action === 'mousedown' && evt.event.button === 2 ),
-          type  : 'clickable' //this.scene.children //'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const first_item = res.first_item;
-        if( first_item ){
-
-          const target_object = res.target_object,
-                from = first_item.point,
-                direction = first_item.face.normal.normalize();
-
-          // Some objects may be rotated, hence we need to update normal according to target object matrix world first to get action (world) normal direction
-          direction.transformDirection( target_object.matrixWorld );
-          let back = this.mouse_raycaster.ray.direction.dot(direction) > 0; // Check if the normal is hidden by object (from camera)
-          if(back){
-            direction.applyMatrix3(new three_module.Matrix3().set(-1,0,0,0,-1,0,0,0,-1));
-          }
-
-          // this.mouse_helper.position.fromArray( asArray(from) );
-          // this.mouse_helper.setDirection(direction);
-          // this.mouse_helper.visible = true;
-
-        }else{
-          // this.mouse_helper.visible = false;
-        }
-
-        this.start_animation(0);
-      },
-      'raycaster'
-    );
-
-    // Add handlers to set plane location when an electrode is clicked
-    this.add_mouse_callback(
-      (evt) => {
-        return({
-          pass  : evt.action === 'mousedown' && evt.event.button === 2, // right-click, but only when mouse down (mouse drag won't affect)
-          type  : 'clickable'
-        });
-      },
-      ( res, evt ) => {
-        const obj = res.target_object;
-        if( obj && obj.isMesh && obj.userData.construct_params ){
-          const pos = new three_module.Vector3();
-          obj.getWorldPosition( pos );
-          this.dispatch_event( 'canvas.drive.setSliceCrosshair', {
-            x : pos.x,
-            y : pos.y,
-            z : pos.z,
-            centerCrosshair : true
-          } );
-        }
-      },
-      'side_viewer_depth'
-    );
-
-
-
-    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT */.t.KEY_CYCLE_ELECTRODES_NEXT, (evt) => {
-      let m = this.object_chosen || this._last_object_chosen,
-          last_obj = false,
-          this_obj = false,
-          first_obj = false;
-
-      // place flag first as the function might ends early
-      this.start_animation( 0 );
-
-      for( let _nm of this.mesh.keys() ){
-        this_obj = this.mesh.get( _nm );
-        if( this_obj.visible &&
-            this_obj.isMesh &&
-            this_obj.userData.construct_params.is_electrode
-        ){
-          if( !m ){
-            this.focus_object( this_obj, true );
-            return(null);
-          }
-          if( last_obj && last_obj.name === m.name ){
-            this.focus_object( this_obj, true );
-            return(null);
-          }
-          last_obj = this_obj;
-          if( !first_obj ){
-            first_obj = this_obj;
-          }
-        }
-      }
-      if( last_obj !== false ){
-        // has electrode
-        if( last_obj.name === m.name ){
-        // focus on the first one
-          last_obj = first_obj;
-        }
-        this.focus_object( last_obj, true );
-        return(null);
-      }
-
-    }, 'electrode_cycling_next');
-
-    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_PREV */.t.KEY_CYCLE_ELECTRODES_PREV, (evt) => {
-      let m = this.object_chosen || this._last_object_chosen,
-          last_obj = false,
-          this_obj = false,
-          first_obj = false;
-
-      // place flag first as the function might ends early
-      this.start_animation( 0 );
-
-      for( let _nm of this.mesh.keys() ){
-        this_obj = this.mesh.get( _nm );
-        if( this_obj.visible &&
-            this_obj.isMesh &&
-            this_obj.userData.construct_params.is_electrode
-        ){
-          if( m && last_obj && m.name == this_obj.name ){
-            this.focus_object( last_obj, true );
-            return(null);
-          }
-          last_obj = this_obj;
-        }
-      }
-      if( last_obj ){
-        this.focus_object( last_obj, true );
-      }
-    }, 'electrode_cycling_prev');
-
-    this.add_keyboard_callabck( constants/* CONSTANTS.KEY_CLIP_INFO_FOCUSED */.t.KEY_CLIP_INFO_FOCUSED, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, true, false ) ){
-
-        const m = this.object_chosen || this._last_object_chosen;
-        // check if this is electrode
-        if( (0,sphere/* is_electrode */.OK)(m) ){
-          // get electrode information
-          const g = m.userData.construct_params,
-                subject_code = g.subject_code,
-                subject_data = this.shared_data.get( subject_code ),
-                tkrRAS_Scanner = subject_data.matrices.tkrRAS_Scanner,
-                xfm = subject_data.matrices.xfm,
-                pos = new three_module.Vector3();
-
-          pos.fromArray( g.position );
-          let s = `${g.name}\n` + `tkrRAS: ${(0,utils/* vec3_to_string */.Wk)(g.position)}\n`;
-
-          //  T1_x y z
-          pos.applyMatrix4( tkrRAS_Scanner );
-          s = s + `T1 RAS: ${(0,utils/* vec3_to_string */.Wk)(pos)}\n`;
-
-          //  MNI305_x MNI305_y MNI305_z
-          pos.applyMatrix4( xfm );
-          s = s + `MNI305: ${(0,utils/* vec3_to_string */.Wk)(pos)}\n`;
-
-          (0,utils/* write_clipboard */.FD)(s);
-        }
-      }
-    }, 'copy_electrode_info');
-
-  }
-  finish_init(){
-    // finalizing initialization of each geom
-    this.dispatch_event( "canvas.finish_init" );
+      resolve( item );
+    })
   }
 
   /*---- Add objects --------------------------------------------*/
@@ -76553,14 +76364,15 @@ class ViewerCanvas {
   dispose(){
     // Remove all objects, listeners, and dispose all
     this._disposed = true;
-    this.ready = false;
+    this.activated = false;
     this.animParameters.dispose();
 
-    // update functions
-    this._custom_updates.clear();
-
-    // Remove custom listeners
-    this.dispose_eventlisters();
+    // Remove listeners
+    this.$el.removeEventListener( 'viewerApp.mouse.enterViewer', this._activateViewer );
+    this.$el.removeEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
+    this.$el.removeEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown );
+    // this.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
+    this.event_dispatcher.dispose();
     this.trackball.enabled = false;
     this.trackball.dispose();
 
@@ -76640,7 +76452,6 @@ class ViewerCanvas {
     this.set_state( 'coronal_depth', 0 );
     this.set_state( 'axial_depth', 0 );
     this.set_state( 'sagittal_depth', 0 );
-    this.dispatch_event( 'canvas.clear_all' );
 
   }
 
@@ -76654,18 +76465,7 @@ class ViewerCanvas {
     this.event_dispatcher.dispatch_event( type, data, immediate );
   }
 
-  dispose_eventlisters(){
-    this.event_dispatcher.dispose();
-  }
-
-
   // callbacks
-  add_mouse_callback(check, callback, name){
-    this._mouse_click_callbacks[name] = [check, callback];
-  }
-  add_keyboard_callabck(keycode, callback, name){
-    this._keyboard_callbacks[name] = [keycode, callback];
-  }
   handle_resize(width, height, lazy = false, center_camera = false){
 
     if( this._disposed ) { return; }
@@ -76801,37 +76601,24 @@ class ViewerCanvas {
   }
 
   // Get mouse position (normalized)
-  get_mouse(){
-    if(this.mouse_event !== undefined && !this.mouse_event.dispose){
-      let event = this.mouse_event.event;
+  updateRaycast() {
+    if( !this.activated ) { return; }
+    if( !this._mouseEvent ) { return; }
 
-      if( !event.offsetX && !event.offsetY ){
-        // Firefox, where offsetX,Y are always 0
-        const rect = this.domElement.getBoundingClientRect();
-        this.mouse_pointer.x = 2 * (event.clientX - rect.x) / rect.width - 1;
-        // three.js origin is from bottom-left while html origin is top-left
-        this.mouse_pointer.y = 2 * (rect.y - event.clientY) / rect.height + 1;
-      } else {
-        this.mouse_pointer.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
-        this.mouse_pointer.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
-      }
-    }
-  }
+    const event = this._mouseEvent;
 
-  // To be implemented (abstract methods)
-  set_coronal_depth( depth ){
-    if( typeof this._set_coronal_depth === 'function' ){
-      this._set_coronal_depth( depth );
-    }else{
-      console.debug('Set coronal depth not implemented');
+    if( !event.offsetX && !event.offsetY ){
+      // Firefox, where offsetX,Y are always 0
+      const rect = this.domElement.getBoundingClientRect();
+      this.mousePositionOnScreen.x = 2 * (event.clientX - rect.x) / rect.width - 1;
+      // three.js origin is from bottom-left while html origin is top-left
+      this.mousePositionOnScreen.y = 2 * (rect.y - event.clientY) / rect.height + 1;
+    } else {
+      this.mousePositionOnScreen.x = ( event.offsetX / this.domElement.clientWidth ) * 2 - 1;
+      this.mousePositionOnScreen.y = - ( event.offsetY / this.domElement.clientHeight ) * 2 + 1;
     }
-  }
-  set_sagittal_depth( depth ){
-    if( typeof this._set_sagittal_depth === 'function' ){
-      this._set_sagittal_depth( depth );
-    }else{
-      console.debug('Set sagittal depth not implemented');
-    }
+    this.mouseRaycaster.setFromCamera( this.mousePositionOnScreen, this.mainCamera );
+    return this.mouseRaycaster;
   }
 
   // -------- Camera, control trackballs ........
@@ -76919,42 +76706,6 @@ class ViewerCanvas {
 	  this.start_animation( 0 );
 	}
   /*---- Choose & highlight objects -----------------------------------------*/
-  set_raycaster(){
-    this.mouse_raycaster.setFromCamera( this.mouse_pointer, this.mainCamera );
-  }
-
-  _fast_raycast( request_type ){
-
-    let items;
-
-    this.set_raycaster();
-
-    this.mouse_raycaster.layers.disableAll();
-
-    if( request_type === undefined || request_type === true || request_type === 'clickable' ){
-      // intersect with all clickables
-      // set raycaster to be layer 14
-      this.mouse_raycaster.layers.enable( constants/* CONSTANTS.LAYER_SYS_RAYCASTER_14 */.t.LAYER_SYS_RAYCASTER_14 );
-
-      // Only raycast with visible
-      items = this.mouse_raycaster.intersectObjects(
-        // asArray( this.clickable )
-        this.clickable_array.filter((e) => { return(e.visible === true) })
-      );
-      // items = this.mouse_raycaster.intersectObjects( this.scene.children );
-    }else if( request_type.isObject3D || Array.isArray( request_type ) ){
-      // set raycaster to be layer 8 (main camera)
-      this.mouse_raycaster.layers.enable( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      items = this.mouse_raycaster.intersectObjects( (0,asArray/* asArray */._)( request_type ), true );
-    }
-
-    if(this.DEBUG){
-      this._items = items;
-    }
-
-		return(items);
-
-  }
 
   focus_object( m = undefined, helper = false, auto_unfocus = false ){
 
@@ -76967,11 +76718,6 @@ class ViewerCanvas {
       this.highlight( this.object_chosen, false );
       console.debug('object selected ' + m.name);
 
-      // if( helper ){
-      //   m.getWorldPosition( this.mouse_helper.position );
-      //   this.mouse_helper.visible = true;
-      // }
-
 
     }else{
       if( auto_unfocus ){
@@ -76979,7 +76725,6 @@ class ViewerCanvas {
           this.highlight( this.object_chosen, true );
           this.object_chosen = undefined;
         }
-        // this.mouse_helper.visible = false;
       }
     }
   }
@@ -77314,82 +77059,6 @@ class ViewerCanvas {
 
 
   /*---- Update function at each animationframe -----------------------------*/
-  keyboard_update(){
-
-    if( !this.keyboard_event || this.keyboard_event.dispose ){
-      return( null );
-    }
-    this.keyboard_event.dispose = true;
-    if(this.keyboard_event.level <= 2){
-      this.keyboard_event.level = 0;
-    }
-
-    // handle
-    for( let _cb_name in this._keyboard_callbacks ){
-
-      if( this._keyboard_callbacks[ _cb_name ] &&
-          this.keyboard_event.event.code === this._keyboard_callbacks[ _cb_name ][0] ){
-        this._keyboard_callbacks[ _cb_name ][1]( this.keyboard_event );
-      }
-
-    }
-  }
-  // method to target object with mouse pointed at
-  mouse_update(){
-
-    if( !this.mouse_event || this.mouse_event.dispose ){
-      return(null);
-    }
-
-    // dispose first as the callbacks might have error
-    this.mouse_event.dispose = true;
-    if(this.mouse_event.level <= 2){
-      this.mouse_event.level = 0;
-    }
-
-
-    // Call callbacks
-    let raycast_result, request_type, callback, request;
-
-    for( let _cb_name in this._mouse_click_callbacks ){
-      callback = this._mouse_click_callbacks[ _cb_name ];
-      if( callback === undefined ){
-        continue;
-      }
-      request = callback[0]( this.mouse_event );
-
-      if( request && request.pass ){
-
-        // raycast object
-        // check which object(s) to raycast on
-        request_type = request.type || 'clickable';
-
-        if( raycast_result === undefined ||
-            (raycast_result !== raycast_result.type && request_type !== 'clickable') ){
-          raycast_result = {
-            type  : request_type,
-            items : this._fast_raycast( request_type ),
-            meta  : request.meta
-          };
-        }
-
-        // Find object_chosen
-        if( raycast_result.items.length > 0 ){
-          // Has intersects!
-          const first_item = raycast_result.items[0],
-                target_object = first_item.object;
-
-          raycast_result.first_item = first_item;
-          raycast_result.target_object = target_object;
-        }
-
-        callback[1]( raycast_result, this.mouse_event );
-      }
-    }
-
-
-
-  }
 
   // Animation-related:
   incrementTime(){
@@ -77444,17 +77113,36 @@ class ViewerCanvas {
     }
   }
 
-  // set renderer's flag (persist):
+  // set renderer's flag (persistLevel):
   // 0: render once at next cycle
-  start_animation( persist = 0 ){
-    // persist 0, render once
-    // persist > 0, loop
+  start_animation( persistLevel = 0 ){
+    // persistLevel 0, render once
+    // persistLevel > 0, loop
 
-    const _flag = this.render_flag;
-    if(persist >= _flag){
-      this.render_flag = persist;
+    const _flag = this._renderFlag;
+    if( persistLevel >= _flag ){
+      this._renderFlag = persistLevel;
     }
-    if( persist >= 2 && _flag < 2 ){
+    if( persistLevel >= 2 && _flag < 2 ){
+      // _flag < 2 means prior state only renders the scene, but animation is paused
+      // if _flag >= 2, then clock was running, then there is no need to start clock
+      // persist >= 2 is a flag for animation to run
+      // animation clips need a clock
+      this.animParameters._clock.start();
+    }
+  }
+  get needsUpdate () { return this._renderFlag >= 0; }
+  set needsUpdate ( persistLevel ) {
+    if( persistLevel === true ) {
+      persistLevel = 0;
+    }
+    // persistLevel 0, render once
+    // persistLevel > 0, loop
+    const _flag = this._renderFlag;
+    if( persistLevel >= _flag ){
+      this._renderFlag = persistLevel;
+    }
+    if( persistLevel >= 2 && _flag < 2 ){
       // _flag < 2 means prior state only renders the scene, but animation is paused
       // if _flag >= 2, then clock was running, then there is no need to start clock
       // persist >= 2 is a flag for animation to run
@@ -77465,9 +77153,9 @@ class ViewerCanvas {
 
   // Pause animation
   pause_animation( level = 1 ){
-    const _flag = this.render_flag;
+    const _flag = this._renderFlag;
     if(_flag <= level){
-      this.render_flag = -1;
+      this._renderFlag = -1;
 
       // When animation is stopped, we need to check if clock is running, if so, stop it
       if( _flag >= 2 ){
@@ -77475,42 +77163,16 @@ class ViewerCanvas {
       }
     }
   }
+  pauseAnimation ( persistLevel = 1 ) {
+    this.pause_animation( persistLevel );
+  }
 
 
   update(){
 
-    this.get_mouse();
     this.trackball.update();
     this.compass.update();
-
-    try {
-      this.keyboard_update();
-      this.mouse_update();
-    } catch (e) {
-      if(this.DEBUG){
-        console.error(e);
-      }
-    }
-
-    // Run less frequently
-    if( this.ready && this._custom_updates.size ){
-      if( this._update_countdown > 0 ){
-        this._update_countdown--;
-      } else {
-        this._update_countdown = 5;
-        this._custom_updates.forEach((f) => {
-          try {
-            if( typeof(f) === "function" ){
-              f();
-            }
-          } catch (e) {
-            if(this.DEBUG){
-              console.error(e);
-            }
-          }
-        });
-      }
-    }
+    if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
 
   }
 
@@ -77530,6 +77192,13 @@ class ViewerCanvas {
 
   // Main render function, automatically scheduled
   render(){
+
+    const _width = this.domElement.width;
+    const _height = this.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
 
     // double-buffer to make sure depth renderings
     //this.main_renderer.setClearColor( renderer_colors[0] );
@@ -77585,6 +77254,42 @@ class ViewerCanvas {
         sliceInstance.sliceMaterial.depthWrite = true;
       }
 
+    }
+
+
+
+		// draw main and side rendered images to this.domElement (2d context)
+		this.mapToCanvas();
+
+
+		// Add additional information
+    // const _pixelRatio = this.pixel_ratio[0];
+    // const _fontType = 'Courier New, monospace';
+
+    this.domContext.fillStyle = this.foreground_color;
+
+    // Draw title on the top left corner
+    this.renderTitle( 0, 0, _width, _height );
+
+    // Draw timestamp on the bottom right corner
+    this.renderTimestamp( 0, 0, _width, _height );
+
+    // Draw legend on the right side
+    this.renderLegend( 0, 0, _width, _height );
+
+    // Draw focused target information on the top right corner
+    this.renderSelectedObjectInfo( 0, 0, _width, _height );
+
+    // check if capturer is working
+    if( this.capturer_recording && this.capturer ){
+      this.capturer.add();
+    }
+
+    // this._draw_video( results, _width, _height );
+
+    // reset render flag
+    if(this._renderFlag === 0){
+      this._renderFlag = -1;
     }
 
   }
@@ -78070,7 +77775,7 @@ class ViewerCanvas {
       return;
     }
 
-    if( this.render_flag >= 2 ){
+    if( this._renderFlag >= 2 ){
       this.start_video( results.speed || 1, video_time );
     } else {
       // static, set timer
@@ -78093,76 +77798,6 @@ class ViewerCanvas {
 
 
   }
-
-  // Do not call this function directly after the initial call
-  // use "this.start_animation(0);" to render once
-  // use "this.start_animation(1);" to keep rendering
-  // this.pause_animation(1); to stop rendering
-  // Only use 0 or 1
-  animate(){
-
-    if( this._disposed ){ return; }
-
-    requestAnimationFrame( this.animate.bind(this) );
-
-    // If this.$el is hidden, do not render
-    if( !this.ready || this.$el.clientHeight <= 0 ){
-      return;
-    }
-
-    const _width = this.domElement.width;
-    const _height = this.domElement.height;
-
-    // Do not render if the canvas is too small
-    // Do not change flags, wait util the state come back to normal
-    if(_width <= 10 || _height <= 10) { return; }
-
-    this.update();
-
-    // needs to incrementTime after update so chosen object information can be up to date
-    this.incrementTime();
-
-    if(this.render_flag >= 0){
-
-  		if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
-  		this.render();
-
-  		// draw main and side rendered images to this.domElement (2d context)
-  		this.mapToCanvas();
-
-
-  		// Add additional information
-      // const _pixelRatio = this.pixel_ratio[0];
-      // const _fontType = 'Courier New, monospace';
-
-      this.domContext.fillStyle = this.foreground_color;
-
-      // Draw title on the top left corner
-      this.renderTitle( 0, 0, _width, _height );
-
-      // Draw timestamp on the bottom right corner
-      this.renderTimestamp( 0, 0, _width, _height );
-
-      // Draw legend on the right side
-      this.renderLegend( 0, 0, _width, _height );
-
-      // Draw focused target information on the top right corner
-      this.renderSelectedObjectInfo( 0, 0, _width, _height );
-
-      // check if capturer is working
-      if( this.capturer_recording && this.capturer ){
-        this.capturer.add();
-      }
-    }
-
-    // this._draw_video( results, _width, _height );
-
-    if(this.render_flag === 0){
-      this.render_flag = -1;
-    }
-
-
-	}
 
 
   /*---- Subjects, electrodes, surfaces, slices ----------------------------*/
@@ -78750,18 +78385,24 @@ mapped = false,
 
   // ------------------------------ Drivers -----------------------------------
   setBackground({ color } = {}) {
-    if( typeof color !== "number" && typeof color !== "string" ) {
-      return;
-    }
-    // calculate inversed color for text
-    const inversedColor = (0,utils/* invertColor */.qd)( color );
+    if( color === undefined || color === null ) { return; }
 
-    this.background_color = color;
-    this.foreground_color = inversedColor;
+    const c = asColor( color , new three_module.Color() );
+    const backgroundLuma = colorLuma( c );
+    this.background_color = `#${ c.getHexString() }`;
+
+    invertColor( c );
+    this.foreground_color = `#${ c.getHexString() }`;
 
     // Set renderer background to be v
     this.main_renderer.setClearColor( this.background_color );
     this.$el.style.backgroundColor = this.background_color;
+
+    if( backgroundLuma < 0.4 ) {
+      this.$el.classList.add( 'dark-viewer' );
+    } else {
+      this.$el.classList.remove( 'dark-viewer' );
+    }
 
     const event = {
       data: {
@@ -78814,7 +78455,7 @@ mapped = false,
 
 /***/ }),
 
-/***/ 1141:
+/***/ 8959:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -78824,12 +78465,61 @@ __webpack_require__.d(__webpack_exports__, {
   "Y": () => (/* binding */ ViewerControlCenter)
 });
 
-// EXTERNAL MODULE: ./src/js/utils.js
-var utils = __webpack_require__(3658);
+// EXTERNAL MODULE: ./node_modules/three/build/three.module.js
+var three_module = __webpack_require__(2212);
 // EXTERNAL MODULE: ./src/js/constants.js
 var constants = __webpack_require__(975);
-;// CONCATENATED MODULE: ./src/js/controls/PresetBackground.js
+// EXTERNAL MODULE: ./src/js/geometry/sphere.js
+var sphere = __webpack_require__(960);
+// EXTERNAL MODULE: ./node_modules/clipboard/dist/clipboard.js
+var clipboard = __webpack_require__(2152);
+var clipboard_default = /*#__PURE__*/__webpack_require__.n(clipboard);
+;// CONCATENATED MODULE: ./src/js/utility/copyToClipboard.js
 
+
+function write_clipboard_maker(){
+  let btn, msg;
+
+  return((s) => {
+
+    if( btn === undefined ){
+      btn = document.createElement("button");
+      new (clipboard_default())(btn, {
+        text : (trigger) => {
+          const s = msg;
+          msg = undefined;
+          return(s);
+        }
+      });
+    }
+
+
+    if( s && s !== ""){
+      msg = s;
+      btn.click();
+    }
+  });
+
+}
+const copyToClipboard = write_clipboard_maker();
+
+
+
+;// CONCATENATED MODULE: ./src/js/utility/vector3ToString.js
+function vector3ToString(v, ifInvalid = "", precision = 2){
+  if( !v ){ return( ifInvalid ); }
+  if( Array.isArray(v) && v.length >= 3 ){
+    return(`${v[0].toFixed(precision)}, ${v[1].toFixed(precision)}, ${v[2].toFixed(precision)}`)
+  }
+  if( v.isVector3 ){
+    return(`${v.x.toFixed(precision)}, ${v.y.toFixed(precision)}, ${v.z.toFixed(precision)}`)
+  }
+  return( ifInvalid );
+}
+
+
+
+;// CONCATENATED MODULE: ./src/js/controls/PresetBackground.js
 
 
 // 1. Background colors
@@ -79109,8 +78799,6 @@ function register_controls_record( ViewerControlCenter ){
 
 
 
-// EXTERNAL MODULE: ./node_modules/three/build/three.module.js
-var three_module = __webpack_require__(2212);
 ;// CONCATENATED MODULE: ./src/js/controls/PresetMainCamera.js
 
 
@@ -79222,7 +78910,6 @@ function registerPresetCoordinateCompass( ViewerControlCenter ){
 
 
 
-
 // 6. toggle side panel
 // 7. reset side panel position
 // 8. coronal, axial, sagittal position (depth)
@@ -79308,21 +78995,18 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       */
       this.setSlice({ y : v });
     });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL */.t.TOOLTIPS.KEY_MOVE_CORONAL, 'Coronal (P - A)', folderName );
 
     const controllerAxial = this.gui
       .addController('Axial (I - S)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
         this.setSlice({ z : v });
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL */.t.TOOLTIPS.KEY_MOVE_AXIAL, 'Axial (I - S)', folderName );
 
     const controllerSagittal = this.gui
       .addController('Sagittal (L - R)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
         this.setSlice({ x : v });
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL */.t.TOOLTIPS.KEY_MOVE_SAGITTAL, 'Sagittal (L - R)', folderName );
 
     const controllerCrosshair = this.gui
       .addController( 'Intersect MNI305', "0.00, 0.00, 0.00", { folderName: folderName } )
@@ -79381,71 +79065,134 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       .onChange((v) => {
         this.showSlices( 'coronal', v );
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL */.t.TOOLTIPS.KEY_OVERLAY_CORONAL, 'Overlay Coronal', folderName );
 
     const controllerOverlayAxial = this.gui
       .addController('Overlay Axial', false, { folderName : folderName })
       .onChange((v) => {
         this.showSlices( 'axial', v );
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL */.t.TOOLTIPS.KEY_OVERLAY_AXIAL, 'Overlay Axial', folderName );
 
     const controllerOverlaySagittal = this.gui
       .addController('Overlay Sagittal', false, { folderName : folderName })
       .onChange((v) => {
         this.showSlices( 'sagittal', v );
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL */.t.TOOLTIPS.KEY_OVERLAY_SAGITTAL, 'Overlay Sagittal', folderName );
 
-    // register overlay keyboard shortcuts
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_OVERLAY_CORONAL */.t.KEY_OVERLAY_CORONAL, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
+    // register keyboard shortcuts
+
+    // Coronal
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_OVERLAY_CORONAL */.t.KEY_OVERLAY_CORONAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL */.t.TOOLTIPS.KEY_OVERLAY_CORONAL,
+        name    : 'Overlay Coronal',
+        folderName : folderName,
+      },
+      callback  : () => {
         const _v = controllerOverlayCoronal.getValue();
         controllerOverlayCoronal.setValue( !_v );
       }
-    }, 'overlay_coronal');
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_MOVE_CORONAL */.t.KEY_MOVE_CORONAL, (evt) => {
-      const _v = controllerOverlayCoronal.getValue();
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
-        controllerOverlayCoronal.setValue( _v - 1 );
-      }else if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        controllerOverlayCoronal.setValue( _v + 1 );
+    });
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_MOVE_CORONAL */.t.KEY_MOVE_CORONAL,
+      // shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL */.t.TOOLTIPS.KEY_MOVE_CORONAL,
+        name    : 'Coronal (P - A)',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        const _v = controllerCoronal.getValue();
+        if( event.shiftKey ){
+          controllerCoronal.setValue( _v - 1 );
+        } else {
+          controllerCoronal.setValue( _v + 1 );
+        }
       }
-    }, 'move_coronal');
+    });
 
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_OVERLAY_AXIAL */.t.KEY_OVERLAY_AXIAL, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
+    // Axial
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_OVERLAY_AXIAL */.t.KEY_OVERLAY_AXIAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL */.t.TOOLTIPS.KEY_OVERLAY_AXIAL,
+        name    : 'Overlay Axial',
+        folderName : folderName,
+      },
+      callback  : () => {
         const _v = controllerOverlayAxial.getValue();
         controllerOverlayAxial.setValue( !_v );
       }
-    }, 'overlay_axial');
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_MOVE_AXIAL */.t.KEY_MOVE_AXIAL, (evt) => {
-      const _v = controllerOverlayAxial.getValue();
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
-        controllerOverlayAxial.setValue( _v - 1 );
-      }else if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        controllerOverlayAxial.setValue( _v + 1 );
+    });
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_MOVE_AXIAL */.t.KEY_MOVE_AXIAL,
+      // shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL */.t.TOOLTIPS.KEY_MOVE_AXIAL,
+        name    : 'Axial (I - S)',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        const _v = controllerAxial.getValue();
+        if( event.shiftKey ){
+          controllerAxial.setValue( _v - 1 );
+        } else {
+          controllerAxial.setValue( _v + 1 );
+        }
       }
-    }, 'move_axial');
+    });
 
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_OVERLAY_SAGITTAL */.t.KEY_OVERLAY_SAGITTAL, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
+    // Sagittal
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_OVERLAY_SAGITTAL */.t.KEY_OVERLAY_SAGITTAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL */.t.TOOLTIPS.KEY_OVERLAY_SAGITTAL,
+        name    : 'Overlay Sagittal',
+        folderName : folderName,
+      },
+      callback  : () => {
         const _v = controllerOverlaySagittal.getValue();
         controllerOverlaySagittal.setValue( !_v );
       }
-    }, 'overlay_sagittal');
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_MOVE_SAGITTAL */.t.KEY_MOVE_SAGITTAL, (evt) => {
-      const _v = controllerOverlaySagittal.getValue();
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
-        controllerOverlaySagittal.setValue( _v - 1 );
-      }else if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        controllerOverlaySagittal.setValue( _v + 1 );
+    });
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_MOVE_SAGITTAL */.t.KEY_MOVE_SAGITTAL,
+      // shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL */.t.TOOLTIPS.KEY_MOVE_SAGITTAL,
+        name    : 'Sagittal (L - R)',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        const _v = controllerSagittal.getValue();
+        if( event.shiftKey ){
+          controllerSagittal.setValue( _v - 1 );
+        } else {
+          controllerSagittal.setValue( _v + 1 );
+        }
       }
-    }, 'move_sagittal');
+    });
 
     this.canvas.bind( `canvasDriveSetSliceOverlay`, 'canvas.drive.setSliceOverlay',
       (evt) => {
@@ -79523,7 +79270,6 @@ function registerPresetSwitchSubject( ViewerControlCenter ){
 ;// CONCATENATED MODULE: ./src/js/controls/PresetSurface.js
 
 
-
 // 11. surface type
 // 12. Hemisphere material/transparency
 // surface color
@@ -79555,10 +79301,18 @@ function registerPresetSurface( ViewerControlCenter ){
         this.fire_change({ 'surface_type' : v });
       });
     controllerSurfaceType.setValue( initialSurfaceType );
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE */.t.TOOLTIPS.KEY_CYCLE_SURFACE, 'Surface Type', folderName );
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_SURFACE */.t.KEY_CYCLE_SURFACE, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_SURFACE */.t.KEY_CYCLE_SURFACE,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE */.t.TOOLTIPS.KEY_CYCLE_SURFACE,
+        name    : 'Surface Type',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         const selectedType = controllerSurfaceType.getValue();
         let selectedIndex = ( surfaceTypeChoices.indexOf( selectedType ) + 1 );
         selectedIndex = selectedIndex % surfaceTypeChoices.length;
@@ -79566,7 +79320,7 @@ function registerPresetSurface( ViewerControlCenter ){
           controllerSurfaceType.setValue( surfaceTypeChoices[ selectedIndex ] );
         }
       }
-    }, 'gui_surf_type2');
+    });
 
     const controllerSurfaceMaterial = this.gui
       .addController('Surface Material', "", {
@@ -79577,10 +79331,18 @@ function registerPresetSurface( ViewerControlCenter ){
         this._update_canvas();
       });
     controllerSurfaceMaterial.setValue( initialMaterialType );
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL */.t.TOOLTIPS.KEY_CYCLE_MATERIAL, 'Surface Material', folderName );
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_MATERIAL */.t.KEY_CYCLE_MATERIAL, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_MATERIAL */.t.KEY_CYCLE_MATERIAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL */.t.TOOLTIPS.KEY_CYCLE_MATERIAL,
+        name    : 'Surface Material',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         const selectedType = controllerSurfaceMaterial.getValue();
         let selectedIndex = ( materialChoices.indexOf( selectedType ) + 1 );
         selectedIndex = selectedIndex % materialChoices.length;
@@ -79588,8 +79350,7 @@ function registerPresetSurface( ViewerControlCenter ){
           controllerSurfaceMaterial.setValue( materialChoices[ selectedIndex ] );
         }
       }
-    }, 'gui_surf_material');
-
+    });
 
   };
 
@@ -79605,7 +79366,24 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'material_type_left': v });
         this.fire_change();
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT */.t.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Hemisphere', folderName );
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_LEFT */.t.KEY_CYCLE_LEFT,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT */.t.TOOLTIPS.KEY_CYCLE_LEFT,
+        name    : 'Left Hemisphere',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        let styleIndex = (options.indexOf( ctrlLHStyle.getValue() ) + 1) % options.length;
+        if( styleIndex >= 0 ){
+          ctrlLHStyle.setValue( options[ styleIndex ] );
+        }
+      }
+    });
 
     const ctrlRHStyle = this.gui
       .addController('Right Hemisphere', 'normal', { args : options, folderName : folderName })
@@ -79613,7 +79391,24 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'material_type_right': v });
         this.fire_change();
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT */.t.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Hemisphere', folderName );
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_RIGHT */.t.KEY_CYCLE_RIGHT,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT */.t.TOOLTIPS.KEY_CYCLE_RIGHT,
+        name    : 'Right Hemisphere',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        let styleIndex = (options.indexOf( ctrlRHStyle.getValue() ) + 1) % options.length;
+        if( styleIndex >= 0 ){
+          ctrlRHStyle.setValue( options[ styleIndex ] );
+        }
+      }
+    });
 
     const ctrlLHOpacity = this.gui
       .addController('Left Opacity', 1.0, { folderName : folderName })
@@ -79622,7 +79417,23 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
         this.fire_change();
       });
-    this.gui.addTooltip( '⇧' + constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT */.t.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Opacity', folderName );
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_LEFT_OPACITY */.t.KEY_CYCLE_LEFT_OPACITY,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT_OPACITY */.t.TOOLTIPS.KEY_CYCLE_LEFT_OPACITY,
+        name    : 'Left Opacity',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        let opacity = ctrlLHOpacity.getValue() - 0.3;
+        if( opacity < 0 ){ opacity = 1; }
+        ctrlLHOpacity.setValue( opacity );
+      }
+    });
 
     const ctrlRHOpacity = this.gui
       .addController('Right Opacity', 1.0, { folderName : folderName })
@@ -79631,34 +79442,24 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
         this.fire_change();
       });
-    this.gui.addTooltip( '⇧' + constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT */.t.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Opacity', folderName );
-
-    // add keyboard shortcut
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_LEFT */.t.KEY_CYCLE_LEFT, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
-        let opacity = ctrlLHOpacity.getValue() - 0.3;
-        if( opacity < 0 ){ opacity = 1; }
-        ctrlLHOpacity.setValue( opacity );
-      }else if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        let styleIndex = (options.indexOf( ctrlLHStyle.getValue() ) + 1) % options.length;
-        if( styleIndex >= 0 ){
-          ctrlLHStyle.setValue( options[ styleIndex ] );
-        }
-      }
-    }, 'gui_left_cycle');
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_RIGHT */.t.KEY_CYCLE_RIGHT, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_RIGHT_OPACITY */.t.KEY_CYCLE_RIGHT_OPACITY,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT_OPACITY */.t.TOOLTIPS.KEY_CYCLE_RIGHT_OPACITY,
+        name    : 'Right Opacity',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         let opacity = ctrlRHOpacity.getValue() - 0.3;
         if( opacity < 0 ){ opacity = 1; }
         ctrlRHOpacity.setValue( opacity );
-      }else if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        let styleIndex = (options.indexOf( ctrlRHStyle.getValue() ) + 1) % options.length;
-        if( styleIndex >= 0 ){
-          ctrlRHStyle.setValue( options[ styleIndex ] );
-        }
       }
-    }, 'gui_right_cycle');
+    });
+
   };
 
   ViewerControlCenter.prototype.addPreset_surface_color = function(){
@@ -79703,17 +79504,25 @@ function registerPresetSurface( ViewerControlCenter ){
       })
       .setValue( this.canvas.get_state("surface_color_type", 'vertices') );
 
-
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_SURFACE_COLOR */.t.KEY_CYCLE_SURFACE_COLOR, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_SURFACE_COLOR */.t.KEY_CYCLE_SURFACE_COLOR,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR */.t.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR,
+        name    : 'Surface Color',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         // options
         let selectedIndex = (options.indexOf( ctrlSurfaceColorType.getValue() ) + 1) % options.length;
         if( selectedIndex >= 0 ){
           ctrlSurfaceColorType.setValue( options[ selectedIndex ] );
         }
       }
-    }, 'gui_surf_color_type');
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR */.t.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR, 'Surface Color', folderName );
+    });
 
     this.gui
       .addController( "Blend Factor", 0.0, { folderName : folderName } )
@@ -79780,8 +79589,8 @@ function registerPresetSurface( ViewerControlCenter ){
 
 
 
-// EXTERNAL MODULE: ./src/js/geometry/sphere.js
-var sphere = __webpack_require__(960);
+// EXTERNAL MODULE: ./src/js/utils.js
+var utils = __webpack_require__(3658);
 ;// CONCATENATED MODULE: ./src/js/controls/PresetElectrodes.js
 
 
@@ -79895,17 +79704,24 @@ function registerPresetElectrodes( ViewerControlCenter ){
         this.fire_change();
       });
     controllerElectrodeVisiblility.setValue( initialSelection );
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY */.t.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY, 'Visibility', folderName );
-
-    // Add shortcuts
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY */.t.KEY_CYCLE_ELEC_VISIBILITY, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_ELEC_VISIBILITY */.t.KEY_CYCLE_ELEC_VISIBILITY,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY */.t.TOOLTIPS.KEY_CYCLE_ELEC_VISIBILITY,
+        name    : 'Visibility',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         let selectedIndex = ( visibleChoices.indexOf( controllerElectrodeVisiblility.getValue() ) + 1) % visibleChoices.length;
         if( selectedIndex >= 0 ){
           controllerElectrodeVisiblility.setValue( visibleChoices[ selectedIndex ] );
         }
       }
-    }, 'gui_c_electrodes');
+    });
 
     this.canvas.set_state('electrode_label', { scale : 2, visible : false });
     this.gui
@@ -79920,12 +79736,22 @@ function registerPresetElectrodes( ViewerControlCenter ){
       .onChange((v) => {
         this.updateElectrodeText({ visible : v });
       });
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY */.t.KEY_TOGGLE_ELEC_LABEL_VISIBILITY, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY */.t.KEY_TOGGLE_ELEC_LABEL_VISIBILITY,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY */.t.TOOLTIPS.KEY_TOGGLE_ELEC_LABEL_VISIBILITY,
+        name    : 'Text Visibility',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         const v = controllerElectrodeTextVisible.getValue();
         controllerElectrodeTextVisible.setValue( !v );
       }
-    }, 'gui_c_electrode_labels');
+    });
 
   };
 
@@ -79936,9 +79762,9 @@ function registerPresetElectrodes( ViewerControlCenter ){
       .onChange((v) => {
         this.canvas.switch_subject( '/', { 'map_template': v });
         if( v ){
-          this.gui.show_item( [ 'Surface Mapping' , 'Volume Mapping' ] , folderName );
+          this.gui.showControllers( [ 'Surface Mapping' , 'Volume Mapping' ] , folderName );
         } else {
-          this.gui.hide_item( [ 'Surface Mapping' , 'Volume Mapping' ], folderName );
+          this.gui.hideControllers( [ 'Surface Mapping' , 'Volume Mapping' ], folderName );
         }
         this.fire_change();
       });
@@ -80331,38 +80157,50 @@ function registerPresetElectrodeAnimation( ViewerControlCenter ){
         }
       });
 
-    this.canvas.bind( `dat_gui_ctrlAnimTime_mousewheel`, 'mousewheel',
-      (evt) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-        if( evt.altKey ){
-          const currentTime = this.animParameters.time;
-          this.animParameters.time = currentTime + Math.sign( evt.deltaY ) * step;
-        }
-      }, this.ctrlAnimTime.domElement );
-
     // Add keyboard shortcut
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_TOGGLE_ANIMATION */.t.KEY_TOGGLE_ANIMATION, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_TOGGLE_ANIMATION */.t.KEY_TOGGLE_ANIMATION,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_TOGGLE_ANIMATION */.t.TOOLTIPS.KEY_TOGGLE_ANIMATION,
+        name    : 'Play/Pause',
+        folderName : folderName,
+      },
+      callback  : () => {
         const isPlaying = this.ctrlAnimPlay.getValue();
         this.ctrlAnimPlay.setValue( !isPlaying );
       }
-    }, 'gui_toggle_animation');
+    });
 
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ANIMATION */.t.KEY_CYCLE_ANIMATION, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        let current_idx = (names.indexOf( this.ctrlClipName.getValue() ) + 1) % names.length;
-        if( current_idx >= 0 ){
-          this.ctrlClipName.setValue( names[ current_idx ] );
-        }
-      } else if ( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
-        let current_idx = names.indexOf( this.ctrlClipName.getValue() ) - 1;
-        if( current_idx < 0 ){ current_idx += names.length; }
-        if( current_idx >= 0 ){
-          this.ctrlClipName.setValue( names[ current_idx ] );
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_ANIMATION */.t.KEY_CYCLE_ANIMATION,
+      // shiftKey  : can be true or false
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ANIMATION */.t.TOOLTIPS.KEY_CYCLE_ANIMATION,
+        name    : 'Display Data',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          let current_idx = names.indexOf( this.ctrlClipName.getValue() ) - 1;
+          if( current_idx < 0 ){ current_idx += names.length; }
+          if( current_idx >= 0 ){
+            this.ctrlClipName.setValue( names[ current_idx ] );
+          }
+        } else {
+          let current_idx = (names.indexOf( this.ctrlClipName.getValue() ) + 1) % names.length;
+          if( current_idx >= 0 ){
+            this.ctrlClipName.setValue( names[ current_idx ] );
+          }
         }
       }
-    }, 'gui_cycle_animation');
+    });
 
     this.canvas.video_canvas._mode = "muted";
     this.canvas.video_canvas.muted = true;
@@ -80419,7 +80257,6 @@ function registerPresetElectrodeAnimation( ViewerControlCenter ){
 
 
 ;// CONCATENATED MODULE: ./src/js/controls/PresetRaymarchingVoxels.js
-
 
 
 
@@ -80552,17 +80389,25 @@ function registerPresetRaymarchingVoxels( ViewerControlCenter ){
         this.canvas.set_state( "surface_color_refresh", Date() );
         this._update_canvas();
       });
-    this.gui.addTooltip( constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE */.t.TOOLTIPS.KEY_CYCLE_ATLAS_MODE, "Voxel Display", folderName );
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_CYCLE_ATLAS_MODE */.t.KEY_CYCLE_ATLAS_MODE, (evt) => {
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        // have to update dynamically because it could change
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_ATLAS_MODE */.t.KEY_CYCLE_ATLAS_MODE,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : constants/* CONSTANTS.TOOLTIPS.KEY_CYCLE_ATLAS_MODE */.t.TOOLTIPS.KEY_CYCLE_ATLAS_MODE,
+        name    : 'Voxel Display',
+        folderName : folderName,
+      },
+      callback  : () => {
         if( ctrlDC2Display.getValue() === 'hidden' ) {
           ctrlDC2Display.setValue( "normal" );
         } else {
           ctrlDC2Display.setValue( "hidden" );
         }
       }
-    }, 'gui_atlas_display_mode');
+    });
 
     // Controls the opacity of the voxels
     this.gui
@@ -80662,8 +80507,6 @@ function raycast_volume_geneator(){
   const raycast_volume = (
     origin, direction, volumeModelShape,
     map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {
-    // canvas.mouse_raycaster.ray.origin
-    // canvas.mouse_raycaster.ray.direction
 
     mx = volumeModelShape.x;
     my = volumeModelShape.y;
@@ -80835,13 +80678,11 @@ const intersect_volume = electrode_from_ct_generator();
 const electrode_from_ct = ( inst, canvas ) => {
   // const inst = this.current_voxel_type();
   if( !inst || !inst.isDataCube2 ){ return; }
-  canvas.set_raycaster();
-
 
   return (
     intersect_volume(
-      canvas.mouse_raycaster.ray.origin,
-      canvas.mouse_raycaster.ray.direction,
+      canvas.mouseRaycaster.ray.origin,
+      canvas.mouseRaycaster.ray.direction,
       inst, canvas
     )
   );
@@ -81393,10 +81234,9 @@ function electrode_from_slice( scode, canvas ){
     !sliceInstance.isDataCube ) { return; }
   const planes = sliceInstance.object;
 
-  canvas.set_raycaster();
-  canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+  canvas.mouseRaycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
 
-  const items = canvas.mouse_raycaster.intersectObjects( planes );
+  const items = canvas.mouseRaycaster.intersectObjects( planes );
 
   if( !items.length ){ return; }
 
@@ -81504,8 +81344,7 @@ function interpolate_electrode_from_slice( canvas, electrodes, size ){
   const src = canvas.mainCamera.position;
   const dst = new three_module.Vector3();
 
-  canvas.set_raycaster();
-  canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+  canvas.mouseRaycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
@@ -81539,8 +81378,7 @@ function extend_electrode_from_slice( canvas, electrodes, size ){
   const src = canvas.mainCamera.position;
   const dst = new three_module.Vector3();
 
-  canvas.set_raycaster();
-  canvas.mouse_raycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+  canvas.mouseRaycaster.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
   electrodes[electrodes.length - 2].object.getWorldPosition( dst );
 
   const n = size - 1;
@@ -81569,6 +81407,42 @@ function extend_electrode_from_slice( canvas, electrodes, size ){
 }
 
 function register_controls_localization( ViewerControlCenter ){
+
+  ViewerControlCenter.prototype.intersectActiveDataCube2 = function( mode ) {
+    // mode can be "CT/volume", "MRI slice", or "refine"
+    // default is to derive from controller
+
+    if( typeof mode !== "string" ) {
+      const controller = this.gui.getController( 'Edit Mode' );
+      if( !controller || controller.isfake ) { return }
+      mode = controller.getValue();
+    }
+
+    const subjectCode = this.canvas.get_state("target_subject");
+    if( !subjectCode || subjectCode == '' ) { return; }
+
+    this.canvas.updateRaycast();
+
+    let position;
+    switch(mode){
+      case "CT/volume":
+        const inst = this.getActiveDataCube2();
+        position = electrode_from_ct( inst, this.canvas );
+        break;
+      case "MRI slice":
+        position = electrode_from_slice( scode, this.canvas );
+        break;
+      default:
+        return;
+    }
+
+    if(
+      !position || typeof(position) !== "object" || !position.isVector3 ||
+      isNaN( position.x )
+    ) { return; }
+
+    return position;
+  }
 
   ViewerControlCenter.prototype.clearLocalization = function(update_shiny = true){
     const electrodes = this.__localize_electrode_list;
@@ -81881,71 +81755,50 @@ function register_controls_localization( ViewerControlCenter ){
       folderName: folderName
     });
 
-    // will get tkrRAS
-    const electrode_pos = () => {
-      const mode = edit_mode.getValue();
-      const scode = this.canvas.get_state("target_subject");
-      if( !mode || !scode || scode === "" ){ return; }
-      let pos_alt;
-      switch(mode){
-        case "CT/volume":
-          const inst = this.getActiveDataCube2();
-          pos_alt = electrode_from_ct( inst, this.canvas );
-          break;
-        case "MRI slice":
-          pos_alt = electrode_from_slice( scode, this.canvas );
-          break;
-        case "refine":
-          if(
-            refine_electrode &&
-            refine_electrode.isLocElectrode
-          ){
-            pos.copy( refine_electrode.object.position );
-            pos_alt = pos;
-            break;
-          }
-        default:
-          return;
-      }
-      if( !pos_alt || !pos_alt.isVector3 || isNaN(pos_alt.x) ){ return; }
-      return( pos_alt );
-    };
-
     // add canvas update
-    this.canvas._custom_updates.set("localization_update", () => {
-      const electrode_position = electrode_pos();
+    let throttleCount = 0;
+    this.addEventListener( "viewerApp.animationFrame.update", () => {
 
-      if( !electrode_position ||
-          !electrode_position.isVector3 ){
+      const mode = edit_mode.getValue();
+
+      let position;
+      if( mode === 'refine' ) {
+        if(
+          refine_electrode &&
+          refine_electrode.isLocElectrode
+        ){
+          pos.copy( refine_electrode.object.position );
+          position = pos;
+        }
+      } else {
+        position = this.intersectActiveDataCube2( mode );
+      }
+
+      if( !position || !position.isVector3 ) {
         tkr_loc.setValue("");
         mni_loc.setValue("");
         t1_loc.setValue("");
         return;
+      } else {
+        const subjectCode = this.canvas.get_state("target_subject"),
+              subjectData = this.canvas.shared_data.get( subjectCode );
+
+        // tkrRAS
+        tkr_loc.setValue( vector3ToString( position ) );
+
+        // T1 ScannerRAS = Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+        position.applyMatrix4( subjectData.matrices.tkrRAS_Scanner );
+        t1_loc.setValue( vector3ToString( position ) );
+
+        // MNI305 = xfm * ScannerRAS
+        position.applyMatrix4( subjectData.matrices.xfm );
+        mni_loc.setValue( vector3ToString( position ) );
       }
-      const scode = this.canvas.get_state("target_subject"),
-            subject_data = this.canvas.shared_data.get( scode );
-
-      // tkrRAS
-      tkr_loc.setValue( (0,utils/* vec3_to_string */.Wk)( electrode_position ) );
-
-      // T1 ScannerRAS = Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
-      electrode_position.applyMatrix4(
-        subject_data.matrices.tkrRAS_Scanner
-      );
-      t1_loc.setValue( (0,utils/* vec3_to_string */.Wk)( electrode_position ) );
-
-      // MNI305 = xfm * ScannerRAS
-      electrode_position.applyMatrix4(
-        subject_data.matrices.xfm
-      );
-      mni_loc.setValue( (0,utils/* vec3_to_string */.Wk)( electrode_position ) );
-
     });
 
-    // bind dblclick
-    this.canvas.bind( 'localization_dblclick', 'dblclick',
-      (event) => {
-        const scode = this.canvas.get_state("target_subject"),
+    // bind dblclick ssss
+    this.addEventListener( "viewerApp.mouse.doubleClick", () => {
+      const scode = this.canvas.get_state("target_subject"),
               mode = edit_mode.getValue();
         if(
           !mode || mode == "disabled" ||
@@ -81956,7 +81809,7 @@ function register_controls_localization( ViewerControlCenter ){
         if( mode === "CT/volume" || mode === "MRI slice" ){
 
           // If mode is add,
-          const electrode_position = electrode_pos();
+          const electrode_position = this.intersectActiveDataCube2( mode );
           if(
             !electrode_position ||
             !electrode_position.isVector3 ||
@@ -81993,39 +81846,70 @@ function register_controls_localization( ViewerControlCenter ){
           this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
         }
 
-
-      }, this.canvas.main_canvas, false );
+    });
 
     // bind adjustment
-    const adjust_electrode_position = (evt, nm, idx, step = 0.1) => {
+    const xyzTo123 = { x : 0 , y : 1, z : 2 };
+    const adjust_electrode_position = ({
+      axis, step = 0.1
+    }) => {
       if( !refine_electrode || !(0,sphere/* is_electrode */.OK)( refine_electrode.object ) ){ return; }
       const mode = edit_mode.getValue();
       if( mode !== "refine" ){ return; }
-      if( (0,utils/* has_meta_keys */.xy)( evt.event, false, false, false ) ){
-        // R
-        refine_electrode.object.position[nm] += step;
-        refine_electrode.object.userData.construct_params.position[idx] += step;
-      } else if( (0,utils/* has_meta_keys */.xy)( evt.event, true, false, false ) ){
-        // L
-        refine_electrode.object.position[nm] -= step;
-        refine_electrode.object.userData.construct_params.position[idx] -= step;
-      }
+
+      refine_electrode.object.position[ axis ] += step;
+      refine_electrode.object.userData.construct_params.position[ xyzTo123[ axis ] ] += step;
       refine_electrode.update_line();
       if(this.shiny){
         this.fire_change({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
       }
       this._update_canvas();
     }
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_R */.t.KEY_ADJUST_ELECTRODE_LOCATION_R, (evt) => {
-      adjust_electrode_position(evt, "x", 0);
-    }, 'gui_refine_electrode_R');
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_A */.t.KEY_ADJUST_ELECTRODE_LOCATION_A, (evt) => {
-      adjust_electrode_position(evt, "y", 1);
-    }, 'gui_refine_electrode_A');
-    this.canvas.add_keyboard_callabck( constants/* CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_S */.t.KEY_ADJUST_ELECTRODE_LOCATION_S, (evt) => {
-      adjust_electrode_position(evt, "z", 2);
-    }, 'gui_refine_electrode_S');
 
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_R */.t.KEY_ADJUST_ELECTRODE_LOCATION_R,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          adjust_electrode_position({ axis : 'x' , step : -0.1 });
+        } else {
+          adjust_electrode_position({ axis : 'x' , step : 0.1 });
+        }
+      }
+    });
+
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_A */.t.KEY_ADJUST_ELECTRODE_LOCATION_A,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          adjust_electrode_position({ axis : 'y' , step : -0.1 });
+        } else {
+          adjust_electrode_position({ axis : 'y' , step : 0.1 });
+        }
+      }
+    });
+
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_ADJUST_ELECTRODE_LOCATION_S */.t.KEY_ADJUST_ELECTRODE_LOCATION_S,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : ( event ) => {
+        if( event.shiftKey ) {
+          adjust_electrode_position({ axis : 'z' , step : -0.1 });
+        } else {
+          adjust_electrode_position({ axis : 'z' , step : 0.1 });
+        }
+      }
+    });
 
     // open folder
     this.gui.openFolder( folderName );
@@ -82044,6 +81928,13 @@ function register_controls_localization( ViewerControlCenter ){
 
 
 ;// CONCATENATED MODULE: ./src/js/core/ViewerControlCenter.js
+
+
+
+
+
+
+
 // 1. Background colors
 
 
@@ -82086,17 +81977,28 @@ function register_controls_localization( ViewerControlCenter ){
 // 18. Electrode localization
 
 
+// const mouseMoveEvent = { type : "viewerApp.mouse.mousemove" };
+const mouseSingleClickEvent = { type : "viewerApp.mouse.singleClick" };
+const mouseDoubleClickEvent = { type : "viewerApp.mouse.doubleClick" };
 
-class ViewerControlCenter{
+const keyDownEvent = { type : "viewerApp.keyboad.keydown" };
+const animationFrameUpdateEvent = { type : "viewerApp.animationFrame.update" };
+
+class ViewerControlCenter extends three_module.EventDispatcher {
 
   /**
    * Initialization, defines canvas (viewer), gui controller (viewer), and settings (initial values)
    */
-  constructor(canvas, gui, settings, shiny){
-    this.canvas = canvas;
-    this.gui = gui;
-    this.settings = settings;
-    this.shiny = shiny;
+  constructor( viewerApp ){
+
+    super();
+
+    this.throttleLevel = 4;
+    this._updateCount = 0;
+    this.canvas = viewerApp.canvas;
+    this.gui = viewerApp.controllerGUI;
+    this.settings = viewerApp.settings;
+    // FIXME: this.shiny = shiny;
 
     this.electrode_regexp = RegExp('^electrodes-(.+)$');
 
@@ -82118,6 +82020,277 @@ class ViewerControlCenter{
       }
     };
     this.animParameters._eventDispatcher.addEventListener( "animation.time.onChange", this._animOnTimeChange )
+
+    // keyboard event dispatcher
+    this.canvas.$el.addEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
+    this.canvas.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
+    this.canvas.$el.addEventListener( "viewerApp.mouse.click" , this._onClicked );
+
+    // other keyboard events
+
+    // use `>` to go to next electrode
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT */.t.KEY_CYCLE_ELECTRODES_NEXT,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : () => {
+        const focusedObject = this.canvas.object_chosen || this.canvas._last_object_chosen;
+        let previousObject, firstObject;
+        // place flag first as the function might ends early
+        this.canvas.needsUpdate = true;
+
+        for( let meshName of this.canvas.mesh.keys() ){
+          const obj = this.canvas.mesh.get( meshName );
+          if( (0,sphere/* is_electrode */.OK)( obj ) && obj.visible ) {
+
+            if( !focusedObject ) {
+              this.canvas.focus_object( obj , true );
+              return;
+            }
+
+            if ( previousObject && previousObject.name === focusedObject.name ) {
+              this.canvas.focus_object( obj , true );
+              return;
+            }
+
+            previousObject = obj;
+            if( firstObject === undefined ) { firstObject = obj; }
+
+          }
+        }
+        if( previousObject !== undefined ){
+
+          if( previousObject.name === focusedObject.name ){
+            // focus on the first one
+            previousObject = firstObject;
+          }
+          this.canvas.focus_object( previousObject, true );
+        }
+      }
+    })
+
+    // use `<` to go to previous electrode
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_CYCLE_ELECTRODES_PREV */.t.KEY_CYCLE_ELECTRODES_PREV,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : () => {
+        const focusedObject = this.canvas.object_chosen || this.canvas._last_object_chosen;
+        let previousObject, firstObject;
+        // place flag first as the function might ends early
+        this.canvas.needsUpdate = true;
+
+        for( let meshName of this.canvas.mesh.keys() ){
+          const obj = this.canvas.mesh.get( meshName );
+          if( (0,sphere/* is_electrode */.OK)( obj ) && obj.visible ) {
+
+            if( previousObject && focusedObject && obj.name == focusedObject.name ){
+              this.canvas.focus_object( previousObject, true );
+              return ;
+            }
+            previousObject = obj;
+
+          }
+        }
+        if( previousObject ){
+          this.canvas.focus_object( previousObject, true );
+        }
+      }
+    })
+
+    // `Ctrl+C` to copy controller
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_COPY_CONTROLLER_DATA */.t.KEY_COPY_CONTROLLER_DATA,
+      shiftKey  : false,
+      ctrlKey   : true,
+      altKey    : false,
+      metaKey   : true,
+      metaIsCtrl: true,
+      callback  : ( event ) => {
+        const data = {
+          isThreeBrainControllerData : true,
+          controllerData : this.gui.save( true ),
+          sliceCrosshair : {}
+        };
+
+        // some extra information
+
+        const position = this.canvas.getSideCanvasCrosshairMNI305( new three_module.Vector3() );
+        const subject = this.canvas.get_state( "target_subject" );
+        const subjectData = this.canvas.shared_data.get( subject );
+
+        // position is in tkrRAS
+        data.sliceCrosshair.tkrRAS = vector3ToString( position ),
+
+        // position is in Scanner
+        position.applyMatrix4( subjectData.matrices.tkrRAS_Scanner );
+        data.sliceCrosshair.scannerRAS = vector3ToString( position ),
+
+        // position is in MNI-305
+        position.applyMatrix4( subjectData.matrices.xfm );
+        data.sliceCrosshair.mni305RAS = vector3ToString( position ),
+
+        // position is in MNI-152
+        position.applyMatrix4( new three_module.Matrix4().set(
+          0.9975,   -0.0073,  0.0176,   -0.0429,
+          0.0146,   1.0009,   -0.0024,  1.5496,
+          -0.0130,  -0.0093,  0.9971,   1.1840,
+          0,        0,        0,        1
+        ) );
+        data.sliceCrosshair.mni152RAS = vector3ToString( position ),
+
+        copyToClipboard( JSON.stringify( data ) );
+      }
+    });
+
+    // `Ctrl+V` to set controller from clipboard
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_PASTE_CONTROLLER_DATA */.t.KEY_PASTE_CONTROLLER_DATA,
+      shiftKey  : false,
+      ctrlKey   : true,
+      altKey    : false,
+      metaKey   : true,
+      metaIsCtrl: true,
+      callback  : async () => {
+        try {
+          await navigator.permissions.query({ name: 'clipboard-read' });
+        } catch (e) {}
+        const clipText = await navigator.clipboard.readText();
+
+        const data = JSON.parse( clipText );
+        if( typeof data === "object" && data !== null && data.isThreeBrainControllerData ) {
+
+          const controllerData = data.controllerData;
+          if( controllerData && typeof controllerData === "object") {
+            // TODO: filter controllerData
+            this.gui.load( controllerData );
+          }
+
+        }
+
+      }
+    });
+
+    // `z/Z` to zoom-in/out
+    this.bindKeyboard({
+      codes     : constants/* CONSTANTS.KEY_ZOOM */.t.KEY_ZOOM,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      metaIsCtrl: false,
+      callback  : ( event ) => {
+        const camera = this.canvas.mainCamera;
+        let zoom = camera.zoom;
+        if( event.shiftKey ) {
+          zoom *= 1.2; // zoom in
+        } else {
+          zoom /= 1.2; // zoom out
+        }
+        if( zoom > 10 ) { zoom = 10; }
+        if( zoom < 0.5 ) { zoom = 0.5; }
+        camera.zoom = zoom;
+        camera.updateProjectionMatrix();
+        this.canvas.needsUpdate = true;
+      }
+    });
+
+  }
+
+  dispose() {
+    this.canvas.$el.removeEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
+    this.canvas.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
+    this.canvas.$el.removeEventListener( "viewerApp.mouse.click" , this._onClicked );
+  }
+
+  _onMouseMove = ( event ) => {
+    if( this.canvas.activated ) {
+      this.canvas._mouseEvent = event;
+      // this.dispatchEvent( mouseMoveEvent );
+    }
+  }
+
+  _onClicked = ( event ) => {
+    const clickEvent = event.detail;
+    if( this.canvas.activated ) {
+
+      if( clickEvent.detail > 1 ) {
+        this.dispatchEvent( mouseDoubleClickEvent );
+      } else {
+        this.dispatchEvent( mouseSingleClickEvent );
+      }
+    }
+  }
+
+  _onKeyDown = ( event ) => {
+    if( this.canvas.activated ) {
+      const keyboardEvent = event.detail;
+
+      keyDownEvent.key      = keyboardEvent.key;
+      keyDownEvent.code     = keyboardEvent.code;
+      keyDownEvent.shiftKey = keyboardEvent.shiftKey;
+      keyDownEvent.ctrlKey  = keyboardEvent.ctrlKey;
+      keyDownEvent.altKey   = keyboardEvent.altKey;
+      keyDownEvent.metaKey  = keyboardEvent.metaKey;
+
+      this.dispatchEvent( keyDownEvent );
+    }
+    /*
+    const keyboardEvent = event.detail;
+    const keyboardData = {
+      type      : "viewerApp.keyboad.keydown",
+      key       : keyboardEvent.key,
+      code      : keyboardEvent.code,
+      // keyCode   : keyboardEvent.keyCode, // deprecated API, use code instead
+      shiftKey  : keyboardEvent.shiftKey,
+      ctrlKey   : keyboardEvent.ctrlKey,
+      altKey    : keyboardEvent.altKey,
+      metaKey   : keyboardEvent.metaKey
+    };
+
+    // this event will not be registered to $wrapper and will be bound to this class
+    // so auto-disposed when replaced
+    this.dispatchEvent( keyboardData );
+    */
+
+  }
+
+  bindKeyboard({
+    codes, callback, tooltip,
+    shiftKey, ctrlKey, altKey,
+    metaKey, metaIsCtrl = false
+  } = {}) {
+    let codeArray;
+    if( !Array.isArray( codes ) ) {
+      codeArray = [ codes ];
+    } else {
+      codeArray = codes;
+    }
+    this.addEventListener( "viewerApp.keyboad.keydown", ( event ) => {
+      if( !codeArray.includes( event.code ) ) { return; }
+      if( shiftKey !== undefined && ( event.shiftKey !== shiftKey ) ) { return; }
+      if( altKey !== undefined && ( event.altKey !== altKey ) ) { return; }
+      if( metaIsCtrl ) {
+        if( ctrlKey !== undefined || metaKey !== undefined ) {
+          if( (ctrlKey || metaKey) !== (event.ctrlKey || event.metaKey) ) { return; }
+        }
+      } else {
+        if( ctrlKey !== undefined && ( event.ctrlKey !== ctrlKey ) ) { return; }
+        if( metaKey !== undefined && ( event.metaKey !== metaKey ) ) { return; }
+      }
+      callback( event );
+    });
+    if( typeof tooltip === "object" && tooltip !== null ) {
+      this.gui.addTooltip(
+        tooltip.key,
+        tooltip.name,
+        tooltip.folderName
+      );
+    }
   }
 
   enablePlayback ( enable = true ) {
@@ -82125,12 +82298,23 @@ class ViewerControlCenter{
     this.ctrlAnimPlay.setValue( enable );
   }
 
-
-  // update gui controllers
-  update(){
+  updateSelectorOptions() {
     this.updateDataCube2Types();
     // this.set_surface_ctype( true );
     this._update_canvas();
+  }
+  // update gui controllers
+  update(){
+
+    if( this._updateCount >= this.throttleLevel ) {
+      this._updateCount = 0;
+    } else {
+      this._updateCount++;
+    }
+    if( this._updateCount !== 0 ) { return; }
+
+    this.dispatchEvent( animationFrameUpdateEvent );
+
   }
 
   /**
@@ -82153,7 +82337,7 @@ class ViewerControlCenter{
 
   c_syncviewer(){
     if( this.shiny.shiny_mode ){
-      const folder_name = CONSTANTS.FOLDERS['sync-viewers'];
+      const folder_name = constants/* CONSTANTS.FOLDERS.sync-viewers */.t.FOLDERS["sync-viewers"];
       this.gui.add_item('Send to Other Viewers', () => {
         this.fire_change({ 'sync' : this.shiny.uuid }, 'event' );
       }, {folder_name: folder_name });
@@ -84648,6 +84832,29 @@ class CanvasContext2D {
   }
 
 }
+
+
+
+
+/***/ }),
+
+/***/ 4305:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "U": () => (/* binding */ requestAnimationFrame)
+/* harmony export */ });
+
+const requestAnimationFrame = window.requestAnimationFrame ||
+  window.mozRequestAnimationFrame ||
+  window.webkitRequestAnimationFrame ||
+  window.msRequestAnimationFrame ||
+  window.oRequestAnimationFrame ||
+  function (callback) {
+      setTimeout(function() { callback(Date.now()); },  1000/60);
+  };
+
 
 
 
@@ -87306,47 +87513,21 @@ function asArray(x){
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "qd": () => (/* binding */ invertColor),
 /* harmony export */   "nr": () => (/* binding */ to_dict),
 /* harmony export */   "AA": () => (/* binding */ to_array),
 /* harmony export */   "nq": () => (/* binding */ get_element_size),
 /* harmony export */   "jM": () => (/* binding */ get_or_default),
 /* harmony export */   "ht": () => (/* binding */ min2),
 /* harmony export */   "Q0": () => (/* binding */ sub2),
-/* harmony export */   "Wk": () => (/* binding */ vec3_to_string),
-/* harmony export */   "xy": () => (/* binding */ has_meta_keys),
-/* harmony export */   "FD": () => (/* binding */ write_clipboard),
 /* harmony export */   "xl": () => (/* binding */ as_Matrix4),
 /* harmony export */   "K3": () => (/* binding */ set_visibility),
 /* harmony export */   "J1": () => (/* binding */ set_display_mode),
 /* harmony export */   "yi": () => (/* binding */ remove_comments)
 /* harmony export */ });
 /* unused harmony exports padZero, debounce, float_to_int32, storageAvailable */
-/* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2152);
-/* harmony import */ var clipboard__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(clipboard__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2212);
-
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2212);
 
 // import download from 'downloadjs';
-
-const invertColor = function(hex) {
-    if (hex.indexOf('#') === 0) {
-        hex = hex.slice(1);
-    }
-    // convert 3-digit hex to 6-digits.
-    if (hex.length === 3) {
-        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-    }
-    if (hex.length !== 6) {
-        throw new Error('Invalid HEX color.');
-    }
-    // invert color components
-    var r = (255 - parseInt(hex.slice(0, 2), 16)).toString(16),
-        g = (255 - parseInt(hex.slice(2, 4), 16)).toString(16),
-        b = (255 - parseInt(hex.slice(4, 6), 16)).toString(16);
-    // pad each with zeros and return
-    return '#' + padZero(r) + padZero(g) + padZero(b);
-};
 
 function padZero(str, len) {
     len = len || 2;
@@ -87483,17 +87664,6 @@ function get_or_default(map, key, _default = undefined){
     map.set( key, _default );
     return( _default );
   }
-}
-
-function vec3_to_string(v, ifInvalid = "", precision = 2){
-  if( !v ){ return( ifInvalid ); }
-  if( Array.isArray(v) ){
-    return(`${v[0].toFixed(precision)}, ${v[1].toFixed(precision)}, ${v[2].toFixed(precision)}`)
-  }
-  if( v.isVector3 ){
-    return(`${v.x.toFixed(precision)}, ${v.y.toFixed(precision)}, ${v.z.toFixed(precision)}`)
-  }
-  return( ifInvalid );
 }
 
 function set_visibility( m, visible ) {
@@ -87634,44 +87804,10 @@ const float_to_int32 = ( function () {
 } )();
 
 
-function has_meta_keys( event, shift = true, ctrl = true, alt = true){
-  let v1 = 0 + event.shiftKey + (event.ctrlKey || event.metaKey) * 2 + event.altKey * 4,
-      v2 = 0 + shift + ctrl * 2 + alt * 4;
-  if( v1 === v2 ){
-    return(true);
-  }
-  return( false );
-}
-
-function write_clipboard_maker(){
-  let btn, msg;
-
-  return((s) => {
-
-    if( btn === undefined ){
-      btn = document.createElement("button");
-      new (clipboard__WEBPACK_IMPORTED_MODULE_0___default())(btn, {
-        text : (trigger) => {
-          const s = msg;
-          msg = undefined;
-          return(s);
-        }
-      });
-    }
-
-
-    if( s && s !== ""){
-      msg = s;
-      btn.click();
-    }
-  });
-
-}
-const write_clipboard = write_clipboard_maker();
 
 
 function as_Matrix4(m) {
-  const re = new three__WEBPACK_IMPORTED_MODULE_1__.Matrix4();
+  const re = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
   if(!Array.isArray(m)){ return(re); }
 
   if( m.length <= 4 ){
@@ -88079,6 +88215,9 @@ class WebGL {
 var download = __webpack_require__(3121);
 // EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
 var converter = __webpack_require__(7542);
+// EXTERNAL MODULE: ./node_modules/clipboard/dist/clipboard.js
+var clipboard = __webpack_require__(2152);
+var clipboard_default = /*#__PURE__*/__webpack_require__.n(clipboard);
 // EXTERNAL MODULE: ./src/js/constants.js
 var constants = __webpack_require__(975);
 // EXTERNAL MODULE: ./src/js/core/StorageCache.js
@@ -88412,6 +88551,7 @@ var update = injectStylesIntoStyleTag_default()(dipterix/* default */.Z, options
 
 
 
+
 // Viewer class
 
 
@@ -88429,6 +88569,7 @@ const ThreeBrainLib = {
     WebGL             : capabilities_WebGL,
     json2csv          : converter.json2csv,
     download          : download/* download */.L,
+    ClipboardJS       : (clipboard_default())
   }
 }
 

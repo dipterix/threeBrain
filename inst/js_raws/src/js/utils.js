@@ -1,25 +1,5 @@
-import ClipboardJS from 'clipboard';
 import { Matrix4 } from 'three';
 // import download from 'downloadjs';
-
-const invertColor = function(hex) {
-    if (hex.indexOf('#') === 0) {
-        hex = hex.slice(1);
-    }
-    // convert 3-digit hex to 6-digits.
-    if (hex.length === 3) {
-        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-    }
-    if (hex.length !== 6) {
-        throw new Error('Invalid HEX color.');
-    }
-    // invert color components
-    var r = (255 - parseInt(hex.slice(0, 2), 16)).toString(16),
-        g = (255 - parseInt(hex.slice(2, 4), 16)).toString(16),
-        b = (255 - parseInt(hex.slice(4, 6), 16)).toString(16);
-    // pad each with zeros and return
-    return '#' + padZero(r) + padZero(g) + padZero(b);
-};
 
 function padZero(str, len) {
     len = len || 2;
@@ -156,17 +136,6 @@ function get_or_default(map, key, _default = undefined){
     map.set( key, _default );
     return( _default );
   }
-}
-
-function vec3_to_string(v, ifInvalid = "", precision = 2){
-  if( !v ){ return( ifInvalid ); }
-  if( Array.isArray(v) ){
-    return(`${v[0].toFixed(precision)}, ${v[1].toFixed(precision)}, ${v[2].toFixed(precision)}`)
-  }
-  if( v.isVector3 ){
-    return(`${v.x.toFixed(precision)}, ${v.y.toFixed(precision)}, ${v.z.toFixed(precision)}`)
-  }
-  return( ifInvalid );
 }
 
 function set_visibility( m, visible ) {
@@ -307,40 +276,6 @@ const float_to_int32 = ( function () {
 } )();
 
 
-function has_meta_keys( event, shift = true, ctrl = true, alt = true){
-  let v1 = 0 + event.shiftKey + (event.ctrlKey || event.metaKey) * 2 + event.altKey * 4,
-      v2 = 0 + shift + ctrl * 2 + alt * 4;
-  if( v1 === v2 ){
-    return(true);
-  }
-  return( false );
-}
-
-function write_clipboard_maker(){
-  let btn, msg;
-
-  return((s) => {
-
-    if( btn === undefined ){
-      btn = document.createElement("button");
-      new ClipboardJS(btn, {
-        text : (trigger) => {
-          const s = msg;
-          msg = undefined;
-          return(s);
-        }
-      });
-    }
-
-
-    if( s && s !== ""){
-      msg = s;
-      btn.click();
-    }
-  });
-
-}
-const write_clipboard = write_clipboard_maker();
 
 
 function as_Matrix4(m) {
@@ -363,10 +298,9 @@ function as_Matrix4(m) {
   return( re );
 }
 
-export { invertColor, padZero, to_dict, to_array,
+export { padZero, to_dict, to_array,
   get_element_size, get_or_default, debounce, min2,
-  sub2, float_to_int32, vec3_to_string,
-  has_meta_keys, write_clipboard, as_Matrix4,
+  sub2, float_to_int32, as_Matrix4,
   set_visibility, set_display_mode, remove_comments,
   storageAvailable };
 

@@ -1,4 +1,3 @@
-import { invertColor } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 
 // 1. Background colors

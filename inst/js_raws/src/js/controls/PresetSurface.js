@@ -1,5 +1,4 @@
 import { CONSTANTS } from '../constants.js';
-import { has_meta_keys } from '../utils.js';
 
 // 11. surface type
 // 12. Hemisphere material/transparency
@@ -32,10 +31,18 @@ function registerPresetSurface( ViewerControlCenter ){
         this.fire_change({ 'surface_type' : v });
       });
     controllerSurfaceType.setValue( initialSurfaceType );
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE, 'Surface Type', folderName );
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE, (evt) => {
-      if( has_meta_keys( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_SURFACE,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE,
+        name    : 'Surface Type',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         const selectedType = controllerSurfaceType.getValue();
         let selectedIndex = ( surfaceTypeChoices.indexOf( selectedType ) + 1 );
         selectedIndex = selectedIndex % surfaceTypeChoices.length;
@@ -43,7 +50,7 @@ function registerPresetSurface( ViewerControlCenter ){
           controllerSurfaceType.setValue( surfaceTypeChoices[ selectedIndex ] );
         }
       }
-    }, 'gui_surf_type2');
+    });
 
     const controllerSurfaceMaterial = this.gui
       .addController('Surface Material', "", {
@@ -54,10 +61,18 @@ function registerPresetSurface( ViewerControlCenter ){
         this._update_canvas();
       });
     controllerSurfaceMaterial.setValue( initialMaterialType );
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL, 'Surface Material', folderName );
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_MATERIAL, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_MATERIAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_MATERIAL,
+        name    : 'Surface Material',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         const selectedType = controllerSurfaceMaterial.getValue();
         let selectedIndex = ( materialChoices.indexOf( selectedType ) + 1 );
         selectedIndex = selectedIndex % materialChoices.length;
@@ -65,8 +80,7 @@ function registerPresetSurface( ViewerControlCenter ){
           controllerSurfaceMaterial.setValue( materialChoices[ selectedIndex ] );
         }
       }
-    }, 'gui_surf_material');
-
+    });
 
   };
 
@@ -82,7 +96,24 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'material_type_left': v });
         this.fire_change();
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Hemisphere', folderName );
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_LEFT,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT,
+        name    : 'Left Hemisphere',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        let styleIndex = (options.indexOf( ctrlLHStyle.getValue() ) + 1) % options.length;
+        if( styleIndex >= 0 ){
+          ctrlLHStyle.setValue( options[ styleIndex ] );
+        }
+      }
+    });
 
     const ctrlRHStyle = this.gui
       .addController('Right Hemisphere', 'normal', { args : options, folderName : folderName })
@@ -90,7 +121,24 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'material_type_right': v });
         this.fire_change();
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Hemisphere', folderName );
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_RIGHT,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT,
+        name    : 'Right Hemisphere',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        let styleIndex = (options.indexOf( ctrlRHStyle.getValue() ) + 1) % options.length;
+        if( styleIndex >= 0 ){
+          ctrlRHStyle.setValue( options[ styleIndex ] );
+        }
+      }
+    });
 
     const ctrlLHOpacity = this.gui
       .addController('Left Opacity', 1.0, { folderName : folderName })
@@ -99,7 +147,23 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'surface_opacity_left': v });
         this.fire_change();
       });
-    this.gui.addTooltip( '⇧' + CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT, 'Left Opacity', folderName );
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_LEFT_OPACITY,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_LEFT_OPACITY,
+        name    : 'Left Opacity',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        let opacity = ctrlLHOpacity.getValue() - 0.3;
+        if( opacity < 0 ){ opacity = 1; }
+        ctrlLHOpacity.setValue( opacity );
+      }
+    });
 
     const ctrlRHOpacity = this.gui
       .addController('Right Opacity', 1.0, { folderName : folderName })
@@ -108,34 +172,24 @@ function registerPresetSurface( ViewerControlCenter ){
         this.canvas.switch_subject( '/', { 'surface_opacity_right': v });
         this.fire_change();
       });
-    this.gui.addTooltip( '⇧' + CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT, 'Right Opacity', folderName );
-
-    // add keyboard shortcut
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_LEFT, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
-        let opacity = ctrlLHOpacity.getValue() - 0.3;
-        if( opacity < 0 ){ opacity = 1; }
-        ctrlLHOpacity.setValue( opacity );
-      }else if( has_meta_keys( evt.event, false, false, false ) ){
-        let styleIndex = (options.indexOf( ctrlLHStyle.getValue() ) + 1) % options.length;
-        if( styleIndex >= 0 ){
-          ctrlLHStyle.setValue( options[ styleIndex ] );
-        }
-      }
-    }, 'gui_left_cycle');
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_RIGHT, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_RIGHT_OPACITY,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_RIGHT_OPACITY,
+        name    : 'Right Opacity',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         let opacity = ctrlRHOpacity.getValue() - 0.3;
         if( opacity < 0 ){ opacity = 1; }
         ctrlRHOpacity.setValue( opacity );
-      }else if( has_meta_keys( evt.event, false, false, false ) ){
-        let styleIndex = (options.indexOf( ctrlRHStyle.getValue() ) + 1) % options.length;
-        if( styleIndex >= 0 ){
-          ctrlRHStyle.setValue( options[ styleIndex ] );
-        }
       }
-    }, 'gui_right_cycle');
+    });
+
   };
 
   ViewerControlCenter.prototype.addPreset_surface_color = function(){
@@ -180,17 +234,25 @@ function registerPresetSurface( ViewerControlCenter ){
       })
       .setValue( this.canvas.get_state("surface_color_type", 'vertices') );
 
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_CYCLE_SURFACE_COLOR, (evt) => {
-      if( has_meta_keys( evt.event, false, false, false ) ){
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_SURFACE_COLOR,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR,
+        name    : 'Surface Color',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
         // options
         let selectedIndex = (options.indexOf( ctrlSurfaceColorType.getValue() ) + 1) % options.length;
         if( selectedIndex >= 0 ){
           ctrlSurfaceColorType.setValue( options[ selectedIndex ] );
         }
       }
-    }, 'gui_surf_color_type');
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_CYCLE_SURFACE_COLOR, 'Surface Color', folderName );
+    });
 
     this.gui
       .addController( "Blend Factor", 0.0, { folderName : folderName } )

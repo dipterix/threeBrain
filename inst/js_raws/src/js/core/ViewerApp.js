@@ -5,6 +5,7 @@ import { ViewerControlCenter } from './ViewerControlCenter.js';
 import { ViewerCanvas } from './ViewerCanvas.js';
 import { MouseKeyboard } from './MouseKeyboard.js';
 import { CONSTANTS } from '../constants.js';
+import { requestAnimationFrame } from './requestAnimationFrame.js';
 
 class ViewerApp extends ThrottledEventDispatcher {
 
@@ -30,6 +31,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     this.DEBUG = debug;
     this.isViewerApp = true;
     this.controllerClosed = false;
+    this.ready = false;
 
     // this.outputId = this.$wrapper.getAttribute( 'data-target' );
 
@@ -66,7 +68,7 @@ class ViewerApp extends ThrottledEventDispatcher {
 
     // 3. Controller placeholder
     // initialized as placeholder, will be replaced by lil-gui
-    this.$controllerGUI = document.createElement('div');
+    // this.$controllerGUI = document.createElement('div');
 
     // 4. Information container
     this.$informationContainer = document.createElement('div');
@@ -93,7 +95,7 @@ class ViewerApp extends ThrottledEventDispatcher {
      *          - 6. Information text
      */
     // add 3 to 2
-    this.$controllerContainer.appendChild( this.$controllerGUI );
+    // this.$controllerContainer.appendChild( this.$controllerGUI );
     // add 2 to 1
     this.$settingsPanel.appendChild( this.$controllerContainer );
     // add $progress to 5
@@ -114,21 +116,25 @@ class ViewerApp extends ThrottledEventDispatcher {
       height ?? this.$wrapper.clientHeight,
       250, false, cache, this.DEBUG, true );
 
-    this.canvas.animate();
-
     // Add listeners for mouse
     this.mouseKeyboard = new MouseKeyboard( this );
 
-
+    this.animate();
   }
 
   get mouseLocation () { return this.mouseKeyboard.mouseLocation; }
 
   dispose() {
+    this._disposed = true;
     super.dispose();
     this.mouseKeyboard.dispose();
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
+      this.controllerGUI = undefined;
+    }
+    if( this.controlCenter ) {
+      try { this.controlCenter.dispose(); } catch (e) {}
+      this.controlCenter = undefined;
     }
   }
 
@@ -289,6 +295,10 @@ class ViewerApp extends ThrottledEventDispatcher {
       try { this.controllerGUI.dispose(); } catch (e) {}
       this.controllerGUI = undefined;
     }
+    if( this.controlCenter ) {
+      try { this.controlCenter.dispose(); } catch (e) {}
+      this.controlCenter = undefined;
+    }
 
     this.groups = asArray( data.groups );
     this.geoms = asArray( data.geoms );
@@ -383,6 +393,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     if( _isObsolete() ) { return; }
 
     // this.canvas.finish_init();
+    // this.canvas.dispatch_event( "canvas.finish_init" );
 
     this.setProgressBar({
       progress : 100,
@@ -390,49 +401,14 @@ class ViewerApp extends ThrottledEventDispatcher {
     });
 
     // ---- Finalizing: add controllers ----------------------------------------
-    this.updateControllers();
+    this.updateControllers({ reset : true });
+
 
     // FIXME: Add driver, which contains shiny support
     // this.shiny.register_gui( this.gui, this.presets );
 
 
-
-    // The following stuff need to run *after* controller set up
-    // TODO: consider moving these to the canvas class
-    /* Update camera zoom. If we set camera position, then shiny will behave weird and we have to
-    * reset camera every time. To solve this problem, we only reset zoom level
-    *
-    * this is the line that causes the problem
-    */
-    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
-    this.canvas.set_font_size( this.settings.font_magnification || 1 );
-
-    // Compile everything
-    this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
-
-    // Set side camera
-    if( this.settings.side_camera || false ){
-
-      // Set canvas zoom-in level
-      if( this.settings.side_display || false ){
-        this.canvas.enableSideCanvas();
-        // reset so that the size is displayed correctly
-        this._reset_flag = true;
-      }else{
-        this.canvas.disableSideCanvas();
-      }
-
-    }else{
-      this.canvas.disableSideCanvas();
-    }
-
     this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
-
-    // remember last settings
-    try {
-      this.controlCenter.update();
-      this.controllerGUI.setFromDictionary( this.defaultControllerValues );
-    } catch (e) {}
 
     // Force starting rendering
     this.canvas.render();
@@ -447,7 +423,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     }
 
     // canvas is ready. set flag
-    this.canvas.ready = true;
+    this.ready = true;
 
     // run customized js code
     if( this.settings.custom_javascript &&
@@ -472,9 +448,14 @@ class ViewerApp extends ThrottledEventDispatcher {
 
   }
 
-  updateControllers() {
+  updateControllers( { reset = false } = {} ) {
     if( this.controllerGUI ) {
       try { this.controllerGUI.dispose(); } catch (e) {}
+      this.controllerGUI = undefined;
+    }
+    if( this.controlCenter ) {
+      try { this.controlCenter.dispose(); } catch (e) {}
+      this.controlCenter = undefined;
     }
     this.controllerGUI = new EnhancedGUI({
       autoPlace: false,
@@ -493,20 +474,17 @@ class ViewerApp extends ThrottledEventDispatcher {
       this.resize( this.$wrapper.clientWidth, this.$wrapper.clientHeight );
     });
 
-    // Set side bar
+    this.$controllerContainer.innerHTML = '';
+
     if( this.settings.hide_controls ) {
 
       // Do not show controller GUI at all.
       this.controllerClosed = true;
-      const $placeholder = document.createElement("div");
-      this.$controllerContainer.replaceChild( $placeholder, this.$controllerGUI );
-      this.$controllerGUI = $placeholder;
+      this.controllerGUI.hide();
+
     } else {
 
-      // set GUI
-      this.$controllerContainer.replaceChild( this.controllerGUI.domElement, this.$controllerGUI );
-      this.$controllerGUI = this.controllerGUI.domElement;
-
+      this.controllerGUI.show();
       if( this.settings.control_display ) {
         this.controllerClosed = false;
       } else {
@@ -520,11 +498,11 @@ class ViewerApp extends ThrottledEventDispatcher {
       this.controllerGUI.open();
     }
 
+    this.$controllerContainer.appendChild( this.controllerGUI.domElement );
+
     // Add listeners
     const enabledPresets = this.settings.control_presets;
-    this.controlCenter = new ViewerControlCenter(
-      this.canvas, this.controllerGUI, this.settings, this.shiny
-    );
+    this.controlCenter = new ViewerControlCenter( this );
     // ---------------------------- Defaults
     this.controlCenter.addPreset_background();
 
@@ -561,7 +539,81 @@ class ViewerApp extends ThrottledEventDispatcher {
     if( !animationControllerRegistered ){
       this.controlCenter.addPreset_animation();
     }
+
+
+    // The following stuff need to run *after* controller set up
+    // TODO: consider moving these to the canvas class
+    /* Update camera zoom. If we set camera position, then shiny will behave weird and we have to
+    * reset camera every time. To solve this problem, we only reset zoom level
+    *
+    * this is the line that causes the problem
+    */
+    this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
+    this.canvas.set_font_size( this.settings.font_magnification || 1 );
+
+    // Compile everything
+    // this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
+
+    // Set side camera
+    if( this.settings.side_camera || false ){
+
+      // Set canvas zoom-in level
+      if( this.settings.side_display || false ){
+        this.canvas.enableSideCanvas();
+        // reset so that the size is displayed correctly
+        this._reset_flag = true;
+      }else{
+        this.canvas.disableSideCanvas();
+      }
+
+    }else{
+      this.canvas.disableSideCanvas();
+    }
+
+    // Update inputs that require selectors since the options might vary
+    this.controlCenter.updateSelectorOptions();
+
+    // remember last settings
+
+    if( reset ) {
+      this.controllerGUI.setFromDictionary( this.initialControllerValues );
+    }
   }
+
+  // Do not call this function directly after the initial call
+  // use "this.canvas.needsUpdate = true;" to render once
+  // use "this.canvas.needsUpdate = 1;" to keep rendering
+  // this.pauseAnimation(1); to stop rendering
+  // Only use 0 or 1
+  animate(){
+
+    if( this._disposed ){ return; }
+
+    requestAnimationFrame( this.animate.bind(this) );
+
+    // If this.$el is hidden, do not render
+    if( !this.ready || this.$wrapper.clientHeight <= 0 ){
+      return;
+    }
+
+    const _width = this.canvas.domElement.width;
+    const _height = this.canvas.domElement.height;
+
+    // Do not render if the canvas is too small
+    // Do not change flags, wait util the state come back to normal
+    if(_width <= 10 || _height <= 10) { return; }
+
+    this.canvas.update();
+    // needs to incrementTime after update so chosen object information can be up to date
+    this.canvas.incrementTime();
+
+    this.controlCenter.update();
+
+    if( this.canvas.needsUpdate ){
+  		this.canvas.render();
+    }
+
+	}
 }
 
 export { ViewerApp };

@@ -1,12 +1,11 @@
 require(dipsaus)
 brain <- raveio::rave_brain('devel/PAV006')
 formalArgs(threeBrain::threejs_brain)
-brain$localize(
-  ct_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/CT_RAW.nii",
-  mri_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/MRI_RAW.nii",
-  transform_matrix = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/coregistration/ct2t1.mat",
-  transform_space = "fsl",
-# brain$plot(
+print(brain$localize(
+  ct_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/derivative/CT_RAW.nii.gz",
+  mri_path = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/derivative/MRI_RAW.nii",
+  transform_matrix = "~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV006/rave-imaging/derivative/transform-ctIJK2mrRAS.txt",
+  transform_space = "ijk2ras",
   # start_zoom = 10,
   # background = "#ccff99",
   # cex = 2,
@@ -23,9 +22,12 @@ brain$localize(
   # control_display = FALSE,
   # camera_pos = c( 0,0, 1),
   symmetric = FALSE,
-  debug = FALSE,
-  title = 'adadasddasdas asda'
-)
+  debug = TRUE,
+  title = 'adadasddasdas asda',
+  controllers = list(
+    "Background Color" = "#ccff99"
+  )
+))
 
 # [21] "default_colormap"         "palettes"
 # [23] "value_ranges"             "value_alias"

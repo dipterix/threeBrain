@@ -1,4 +1,3 @@
-import { has_meta_keys } from '../utils.js';
 import { CONSTANTS } from '../constants.js';
 import { Vector3 } from 'three';
 
@@ -87,21 +86,18 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       */
       this.setSlice({ y : v });
     });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL, 'Coronal (P - A)', folderName );
 
     const controllerAxial = this.gui
       .addController('Axial (I - S)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
         this.setSlice({ z : v });
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL, 'Axial (I - S)', folderName );
 
     const controllerSagittal = this.gui
       .addController('Sagittal (L - R)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
         this.setSlice({ x : v });
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL, 'Sagittal (L - R)', folderName );
 
     const controllerCrosshair = this.gui
       .addController( 'Intersect MNI305', "0.00, 0.00, 0.00", { folderName: folderName } )
@@ -160,71 +156,134 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       .onChange((v) => {
         this.showSlices( 'coronal', v );
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL, 'Overlay Coronal', folderName );
 
     const controllerOverlayAxial = this.gui
       .addController('Overlay Axial', false, { folderName : folderName })
       .onChange((v) => {
         this.showSlices( 'axial', v );
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL, 'Overlay Axial', folderName );
 
     const controllerOverlaySagittal = this.gui
       .addController('Overlay Sagittal', false, { folderName : folderName })
       .onChange((v) => {
         this.showSlices( 'sagittal', v );
       });
-    this.gui.addTooltip( CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL, 'Overlay Sagittal', folderName );
 
-    // register overlay keyboard shortcuts
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_CORONAL, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
+    // register keyboard shortcuts
+
+    // Coronal
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_OVERLAY_CORONAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_OVERLAY_CORONAL,
+        name    : 'Overlay Coronal',
+        folderName : folderName,
+      },
+      callback  : () => {
         const _v = controllerOverlayCoronal.getValue();
         controllerOverlayCoronal.setValue( !_v );
       }
-    }, 'overlay_coronal');
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_MOVE_CORONAL, (evt) => {
-      const _v = controllerOverlayCoronal.getValue();
-      if( has_meta_keys( evt.event, true, false, false ) ){
-        controllerOverlayCoronal.setValue( _v - 1 );
-      }else if( has_meta_keys( evt.event, false, false, false ) ){
-        controllerOverlayCoronal.setValue( _v + 1 );
+    });
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_MOVE_CORONAL,
+      // shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_MOVE_CORONAL,
+        name    : 'Coronal (P - A)',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        const _v = controllerCoronal.getValue();
+        if( event.shiftKey ){
+          controllerCoronal.setValue( _v - 1 );
+        } else {
+          controllerCoronal.setValue( _v + 1 );
+        }
       }
-    }, 'move_coronal');
+    });
 
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_AXIAL, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
+    // Axial
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_OVERLAY_AXIAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_OVERLAY_AXIAL,
+        name    : 'Overlay Axial',
+        folderName : folderName,
+      },
+      callback  : () => {
         const _v = controllerOverlayAxial.getValue();
         controllerOverlayAxial.setValue( !_v );
       }
-    }, 'overlay_axial');
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_MOVE_AXIAL, (evt) => {
-      const _v = controllerOverlayAxial.getValue();
-      if( has_meta_keys( evt.event, true, false, false ) ){
-        controllerOverlayAxial.setValue( _v - 1 );
-      }else if( has_meta_keys( evt.event, false, false, false ) ){
-        controllerOverlayAxial.setValue( _v + 1 );
+    });
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_MOVE_AXIAL,
+      // shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_MOVE_AXIAL,
+        name    : 'Axial (I - S)',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        const _v = controllerAxial.getValue();
+        if( event.shiftKey ){
+          controllerAxial.setValue( _v - 1 );
+        } else {
+          controllerAxial.setValue( _v + 1 );
+        }
       }
-    }, 'move_axial');
+    });
 
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_OVERLAY_SAGITTAL, (evt) => {
-      if( has_meta_keys( evt.event, true, false, false ) ){
+    // Sagittal
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_OVERLAY_SAGITTAL,
+      shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_OVERLAY_SAGITTAL,
+        name    : 'Overlay Sagittal',
+        folderName : folderName,
+      },
+      callback  : () => {
         const _v = controllerOverlaySagittal.getValue();
         controllerOverlaySagittal.setValue( !_v );
       }
-    }, 'overlay_sagittal');
-
-    this.canvas.add_keyboard_callabck( CONSTANTS.KEY_MOVE_SAGITTAL, (evt) => {
-      const _v = controllerOverlaySagittal.getValue();
-      if( has_meta_keys( evt.event, true, false, false ) ){
-        controllerOverlaySagittal.setValue( _v - 1 );
-      }else if( has_meta_keys( evt.event, false, false, false ) ){
-        controllerOverlaySagittal.setValue( _v + 1 );
+    });
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_MOVE_SAGITTAL,
+      // shiftKey  : true,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      tooltip   : {
+        key     : CONSTANTS.TOOLTIPS.KEY_MOVE_SAGITTAL,
+        name    : 'Sagittal (L - R)',
+        folderName : folderName,
+      },
+      callback  : ( event ) => {
+        const _v = controllerSagittal.getValue();
+        if( event.shiftKey ){
+          controllerSagittal.setValue( _v - 1 );
+        } else {
+          controllerSagittal.setValue( _v + 1 );
+        }
       }
-    }, 'move_sagittal');
+    });
 
     this.canvas.bind( `canvasDriveSetSliceOverlay`, 'canvas.drive.setSliceOverlay',
       (evt) => {

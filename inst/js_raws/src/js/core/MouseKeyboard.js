@@ -4,9 +4,6 @@ import { CONSTANTS } from '../constants.js';
 
 class MouseKeyboard extends ThrottledEventDispatcher {
 
-  // private
-  #app;
-
   // static
   static OFF_VIEWER     = 0b00000;
   static ON_VIEWER      = 0b00001;
@@ -47,147 +44,133 @@ class MouseKeyboard extends ThrottledEventDispatcher {
   constructor ( app ) {
     super( app.$wrapper );
 
-    this.#app = app;
+    this._app = app;
     this.mouseLocation = MouseKeyboard.OFF_VIEWER;
     this._mouseDownHold = false;
     this.timeout = 300;
 
 
-    this.#app.$wrapper.addEventListener(
-      "mouseenter", this.#onViewerFocused );
-    this.#app.$wrapper.addEventListener(
-      "mouseleave", this.#onViewerBlurred );
-    this.#app.$controllerContainer.addEventListener(
-      "mouseenter", this.#onControllerFocused );
-    this.#app.$controllerContainer.addEventListener(
-      "mouseleave", this.#onControllerBlurred );
+    this._app.$wrapper.addEventListener(
+      "mouseenter", this._onViewerFocused );
+    this._app.$wrapper.addEventListener(
+      "mouseleave", this._onViewerBlurred );
+    this._app.$controllerContainer.addEventListener(
+      "mouseenter", this._onControllerFocused );
+    this._app.$controllerContainer.addEventListener(
+      "mouseleave", this._onControllerBlurred );
 
-    this.#app.canvas.sideCanvasList.coronal.$el.addEventListener(
-      "mouseenter", this.#onCoronalViewFocused );
-    this.#app.canvas.sideCanvasList.coronal.$el.addEventListener(
-      "mouseleave", this.#onCoronalViewBlurred );
-    this.#app.canvas.sideCanvasList.axial.$el.addEventListener(
-      "mouseenter", this.#onAxialViewFocused );
-    this.#app.canvas.sideCanvasList.axial.$el.addEventListener(
-      "mouseleave", this.#onAxialViewBlurred );
-    this.#app.canvas.sideCanvasList.sagittal.$el.addEventListener(
-      "mouseenter", this.#onSagittalViewFocused );
-    this.#app.canvas.sideCanvasList.sagittal.$el.addEventListener(
-      "mouseleave", this.#onSagittalViewBlurred );
+    this._app.canvas.sideCanvasList.coronal.$el.addEventListener(
+      "mouseenter", this._onCoronalViewFocused );
+    this._app.canvas.sideCanvasList.coronal.$el.addEventListener(
+      "mouseleave", this._onCoronalViewBlurred );
+    this._app.canvas.sideCanvasList.axial.$el.addEventListener(
+      "mouseenter", this._onAxialViewFocused );
+    this._app.canvas.sideCanvasList.axial.$el.addEventListener(
+      "mouseleave", this._onAxialViewBlurred );
+    this._app.canvas.sideCanvasList.sagittal.$el.addEventListener(
+      "mouseenter", this._onSagittalViewFocused );
+    this._app.canvas.sideCanvasList.sagittal.$el.addEventListener(
+      "mouseleave", this._onSagittalViewBlurred );
 
-    this.#app.canvas.mainCanvas.addEventListener(
-      "contextmenu", this.#onMainCanvasContextMenu );
-    this.#app.canvas.mainCanvas.addEventListener(
-      "mousedown", this.#onMainCanvasMouseDown );
-    this.#app.canvas.mainCanvas.addEventListener(
-      "mouseup", this.#onMainCanvasMouseUp );
-    this.#app.canvas.mainCanvas.addEventListener(
-      "click", this.#onMainCanvasClicked );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "contextmenu", this._onMainCanvasContextMenu );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "mousedown", this._onMainCanvasMouseDown );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "mouseup", this._onMainCanvasMouseUp );
+    this._app.canvas.$mainCanvas.addEventListener(
+      "click", this._onMainCanvasClicked );
 
-    document.addEventListener( 'keydown', this.#onKeydown );
+    document.addEventListener( 'keydown', this._onKeydown, { capture : true } );
 
-
-
-    /*
-
-
-    this.bind( 'main_canvas_keydown', 'keydown', (event) => {
-      if (event.isComposing || event.keyCode === 229) { return; }
-      if( this.listen_keyboard ){
-        // event.preventDefault();
-        this.keyboard_event = {
-          'action' : 'keydown',
-          'event' : event,
-          'dispose' : false,
-          'level' : 0
-        };
-      }
-
-    }, document );
-    */
   }
 
   dispose() {
     super.dispose();
-    this.#app.$wrapper.removeEventListener( "mouseenter", this.#onViewerFocused );
-    this.#app.$wrapper.removeEventListener( "mouseleave", this.#onViewerBlurred );
-    this.#app.$controllerContainer.removeEventListener( "mouseenter", this.#onControllerFocused );
-    this.#app.$controllerContainer.removeEventListener( "mouseleave", this.#onControllerBlurred );
+    this._app.$wrapper.removeEventListener( "mouseenter", this._onViewerFocused );
+    this._app.$wrapper.removeEventListener( "mouseleave", this._onViewerBlurred );
+    this._app.$controllerContainer.removeEventListener( "mouseenter", this._onControllerFocused );
+    this._app.$controllerContainer.removeEventListener( "mouseleave", this._onControllerBlurred );
 
-    this.#app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseenter", this.#onCoronalViewFocused );
-    this.#app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseleave", this.#onCoronalViewBlurred );
-    this.#app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseenter", this.#onAxialViewFocused );
-    this.#app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseleave", this.#onAxialViewBlurred );
-    this.#app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseenter", this.#onSagittalViewFocused );
-    this.#app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseleave", this.#onSagittalViewBlurred );
+    this._app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseenter", this._onCoronalViewFocused );
+    this._app.canvas.sideCanvasList.coronal.$el.removeEventListener( "mouseleave", this._onCoronalViewBlurred );
+    this._app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseenter", this._onAxialViewFocused );
+    this._app.canvas.sideCanvasList.axial.$el.removeEventListener( "mouseleave", this._onAxialViewBlurred );
+    this._app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseenter", this._onSagittalViewFocused );
+    this._app.canvas.sideCanvasList.sagittal.$el.removeEventListener( "mouseleave", this._onSagittalViewBlurred );
 
-    this.#app.canvas.mainCanvas.removeEventListener( "contextmenu", this.#onMainCanvasContextMenu );
-    this.#app.canvas.mainCanvas.removeEventListener( "mousedown", this.#onMainCanvasMouseDown );
-    this.#app.canvas.mainCanvas.removeEventListener( "mouseup", this.#onMainCanvasMouseUp );
-    this.#app.canvas.mainCanvas.removeEventListener( "click", this.#onMainCanvasClicked );
+    this._app.canvas.$mainCanvas.removeEventListener( "contextmenu", this._onMainCanvasContextMenu );
+    this._app.canvas.$mainCanvas.removeEventListener( "mousedown", this._onMainCanvasMouseDown );
+    this._app.canvas.$mainCanvas.removeEventListener( "mouseup", this._onMainCanvasMouseUp );
+    this._app.canvas.$mainCanvas.removeEventListener( "click", this._onMainCanvasClicked );
 
-    document.removeEventListener( 'keydown', this.#onKeydown );
+    document.removeEventListener( 'keydown', this._onKeydown );
 
     this.mouseLocation = MouseKeyboard.OFF_VIEWER;
   }
 
 
-  #onViewerFocused = () => {
+  _onViewerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_VIEWER;
+    this.dispatch( "viewerApp.mouse.enterViewer", null, false );
   }
-  #onViewerBlurred = () => {
+  _onViewerBlurred = () => {
     this.mouseLocation = this.mouseLocation & MouseKeyboard.OFF_VIEWER;
+    this.dispatch( "viewerApp.mouse.leaveViewer", null, false );
   }
-  #onControllerFocused = () => {
+  _onControllerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CONTROLLER;
   }
-  #onControllerBlurred = () => {
+  _onControllerBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_CONTROLLER;
   }
-  #onCoronalViewFocused = () => {
+  _onCoronalViewFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CORONAL;
   }
-  #onCoronalViewBlurred = () => {
+  _onCoronalViewBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_CORONAL;
   }
-  #onAxialViewFocused = () => {
+  _onAxialViewFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_AXIAL;
   }
-  #onAxialViewBlurred = () => {
+  _onAxialViewBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_AXIAL;
   }
-  #onSagittalViewFocused = () => {
+  _onSagittalViewFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_SAGITTAL;
   }
-  #onSagittalViewBlurred = () => {
+  _onSagittalViewBlurred = () => {
     this.mouseLocation = this.mouseLocation ^ MouseKeyboard.ON_SAGITTAL;
   }
-  #onMainCanvasContextMenu = () => {
+  _onMainCanvasContextMenu = () => {
     // this should fire immediately
-    this.dispatch( "viewerApp.mouseKeyboard.contextmenu", null, true );
+    this.dispatch( "viewerApp.mouse.contextmenu", null, true );
   }
-  #onMainCanvasMouseDown = () => {
+  _onMainCanvasMouseDown = ( event ) => {
     // this should fire immediately
     this._mouseDownHold = true;
-    this.dispatch( "viewerApp.mouseKeyboard.mousedown", null, true );
+    this.dispatch( "viewerApp.mouse.mousedown", event, true );
   }
-  #onMainCanvasMouseUp = () => {
+  _onMainCanvasMouseUp = () => {
     // this should fire immediately
     this._mouseDownHold = false;
-    this.dispatch( "viewerApp.mouseKeyboard.mouseup", null, true );
+    this.dispatch( "viewerApp.mouse.mouseup", null, true );
   }
-  #onMainCanvasClicked = ( event ) => {
+  _onMainCanvasClicked = ( event ) => {
     // this should be fired delayed
-    this.dispatch( "viewerApp.mouseKeyboard.click", event.detail, false );
+    this.dispatch( "viewerApp.mouse.click", event, false );
   }
-  #onKeydown = ( event ) => {
-    if( event.isComposing || this.mouseLocation === MouseKeyboard.OFF_VIEWER ) { return; }
+  _onKeydown = ( event ) => {
+    // keyCode is deprecated, but I found no better substitution
+    if( event.isComposing || event.keyCode === 229 || this.mouseLocation === MouseKeyboard.OFF_VIEWER ) { return; }
     if( this.mouseLocation & MouseKeyboard.ON_CONTROLLER ) {
-      if( this.#app.controllerGUI.isFocused ) { return; }
+      if( this._app.controllerGUI.isFocused ) {
+        console.log("Focused -> " + this.mouseLocation);
+        return;
+      }
     }
     event.preventDefault();
-    console.log( event.key );
-    this.dispatch( "viewerApp.mouseKeyboard.keydown", event, true );
+    this.dispatch( "viewerApp.keyboad.keydown", event, true );
   }
 
 

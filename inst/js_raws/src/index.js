@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import WebGL from './js/jsm/capabilities/WebGL.js'
 import { download } from './js/download.js';
 import { json2csv } from 'json-2-csv';
+import ClipboardJS from 'clipboard';
 
 // Viewer class
 import { CONSTANTS } from './js/constants.js';
@@ -26,6 +27,7 @@ const ThreeBrainLib = {
     WebGL             : WebGL,
     json2csv          : json2csv,
     download          : download,
+    ClipboardJS       : ClipboardJS
   }
 }
 

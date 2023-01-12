@@ -1,3 +1,10 @@
+import { Vector3, Matrix4, EventDispatcher } from 'three';
+import { CONSTANTS } from '../constants.js';
+import { is_electrode } from '../geometry/sphere.js';
+import { copyToClipboard } from '../utility/copyToClipboard.js';
+import { vector3ToString } from '../utility/vector3ToString.js';
+
+
 // 1. Background colors
 import { registerPresetBackground } from '../controls/PresetBackground.js';
 
@@ -40,17 +47,28 @@ import { registerPresetRaymarchingVoxels } from '../controls/PresetRaymarchingVo
 // 18. Electrode localization
 import { register_controls_localization } from '../controls/localization.js';
 
+// const mouseMoveEvent = { type : "viewerApp.mouse.mousemove" };
+const mouseSingleClickEvent = { type : "viewerApp.mouse.singleClick" };
+const mouseDoubleClickEvent = { type : "viewerApp.mouse.doubleClick" };
 
-class ViewerControlCenter{
+const keyDownEvent = { type : "viewerApp.keyboad.keydown" };
+const animationFrameUpdateEvent = { type : "viewerApp.animationFrame.update" };
+
+class ViewerControlCenter extends EventDispatcher {
 
   /**
    * Initialization, defines canvas (viewer), gui controller (viewer), and settings (initial values)
    */
-  constructor(canvas, gui, settings, shiny){
-    this.canvas = canvas;
-    this.gui = gui;
-    this.settings = settings;
-    this.shiny = shiny;
+  constructor( viewerApp ){
+
+    super();
+
+    this.throttleLevel = 4;
+    this._updateCount = 0;
+    this.canvas = viewerApp.canvas;
+    this.gui = viewerApp.controllerGUI;
+    this.settings = viewerApp.settings;
+    // FIXME: this.shiny = shiny;
 
     this.electrode_regexp = RegExp('^electrodes-(.+)$');
 
@@ -72,6 +90,277 @@ class ViewerControlCenter{
       }
     };
     this.animParameters._eventDispatcher.addEventListener( "animation.time.onChange", this._animOnTimeChange )
+
+    // keyboard event dispatcher
+    this.canvas.$el.addEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
+    this.canvas.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
+    this.canvas.$el.addEventListener( "viewerApp.mouse.click" , this._onClicked );
+
+    // other keyboard events
+
+    // use `>` to go to next electrode
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_ELECTRODES_NEXT,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : () => {
+        const focusedObject = this.canvas.object_chosen || this.canvas._last_object_chosen;
+        let previousObject, firstObject;
+        // place flag first as the function might ends early
+        this.canvas.needsUpdate = true;
+
+        for( let meshName of this.canvas.mesh.keys() ){
+          const obj = this.canvas.mesh.get( meshName );
+          if( is_electrode( obj ) && obj.visible ) {
+
+            if( !focusedObject ) {
+              this.canvas.focus_object( obj , true );
+              return;
+            }
+
+            if ( previousObject && previousObject.name === focusedObject.name ) {
+              this.canvas.focus_object( obj , true );
+              return;
+            }
+
+            previousObject = obj;
+            if( firstObject === undefined ) { firstObject = obj; }
+
+          }
+        }
+        if( previousObject !== undefined ){
+
+          if( previousObject.name === focusedObject.name ){
+            // focus on the first one
+            previousObject = firstObject;
+          }
+          this.canvas.focus_object( previousObject, true );
+        }
+      }
+    })
+
+    // use `<` to go to previous electrode
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_CYCLE_ELECTRODES_PREV,
+      shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      callback  : () => {
+        const focusedObject = this.canvas.object_chosen || this.canvas._last_object_chosen;
+        let previousObject, firstObject;
+        // place flag first as the function might ends early
+        this.canvas.needsUpdate = true;
+
+        for( let meshName of this.canvas.mesh.keys() ){
+          const obj = this.canvas.mesh.get( meshName );
+          if( is_electrode( obj ) && obj.visible ) {
+
+            if( previousObject && focusedObject && obj.name == focusedObject.name ){
+              this.canvas.focus_object( previousObject, true );
+              return ;
+            }
+            previousObject = obj;
+
+          }
+        }
+        if( previousObject ){
+          this.canvas.focus_object( previousObject, true );
+        }
+      }
+    })
+
+    // `Ctrl+C` to copy controller
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_COPY_CONTROLLER_DATA,
+      shiftKey  : false,
+      ctrlKey   : true,
+      altKey    : false,
+      metaKey   : true,
+      metaIsCtrl: true,
+      callback  : ( event ) => {
+        const data = {
+          isThreeBrainControllerData : true,
+          controllerData : this.gui.save( true ),
+          sliceCrosshair : {}
+        };
+
+        // some extra information
+
+        const position = this.canvas.getSideCanvasCrosshairMNI305( new Vector3() );
+        const subject = this.canvas.get_state( "target_subject" );
+        const subjectData = this.canvas.shared_data.get( subject );
+
+        // position is in tkrRAS
+        data.sliceCrosshair.tkrRAS = vector3ToString( position ),
+
+        // position is in Scanner
+        position.applyMatrix4( subjectData.matrices.tkrRAS_Scanner );
+        data.sliceCrosshair.scannerRAS = vector3ToString( position ),
+
+        // position is in MNI-305
+        position.applyMatrix4( subjectData.matrices.xfm );
+        data.sliceCrosshair.mni305RAS = vector3ToString( position ),
+
+        // position is in MNI-152
+        position.applyMatrix4( new Matrix4().set(
+          0.9975,   -0.0073,  0.0176,   -0.0429,
+          0.0146,   1.0009,   -0.0024,  1.5496,
+          -0.0130,  -0.0093,  0.9971,   1.1840,
+          0,        0,        0,        1
+        ) );
+        data.sliceCrosshair.mni152RAS = vector3ToString( position ),
+
+        copyToClipboard( JSON.stringify( data ) );
+      }
+    });
+
+    // `Ctrl+V` to set controller from clipboard
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_PASTE_CONTROLLER_DATA,
+      shiftKey  : false,
+      ctrlKey   : true,
+      altKey    : false,
+      metaKey   : true,
+      metaIsCtrl: true,
+      callback  : async () => {
+        try {
+          await navigator.permissions.query({ name: 'clipboard-read' });
+        } catch (e) {}
+        const clipText = await navigator.clipboard.readText();
+
+        const data = JSON.parse( clipText );
+        if( typeof data === "object" && data !== null && data.isThreeBrainControllerData ) {
+
+          const controllerData = data.controllerData;
+          if( controllerData && typeof controllerData === "object") {
+            // TODO: filter controllerData
+            this.gui.load( controllerData );
+          }
+
+        }
+
+      }
+    });
+
+    // `z/Z` to zoom-in/out
+    this.bindKeyboard({
+      codes     : CONSTANTS.KEY_ZOOM,
+      // shiftKey  : false,
+      ctrlKey   : false,
+      altKey    : false,
+      metaKey   : false,
+      metaIsCtrl: false,
+      callback  : ( event ) => {
+        const camera = this.canvas.mainCamera;
+        let zoom = camera.zoom;
+        if( event.shiftKey ) {
+          zoom *= 1.2; // zoom in
+        } else {
+          zoom /= 1.2; // zoom out
+        }
+        if( zoom > 10 ) { zoom = 10; }
+        if( zoom < 0.5 ) { zoom = 0.5; }
+        camera.zoom = zoom;
+        camera.updateProjectionMatrix();
+        this.canvas.needsUpdate = true;
+      }
+    });
+
+  }
+
+  dispose() {
+    this.canvas.$el.removeEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
+    this.canvas.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
+    this.canvas.$el.removeEventListener( "viewerApp.mouse.click" , this._onClicked );
+  }
+
+  _onMouseMove = ( event ) => {
+    if( this.canvas.activated ) {
+      this.canvas._mouseEvent = event;
+      // this.dispatchEvent( mouseMoveEvent );
+    }
+  }
+
+  _onClicked = ( event ) => {
+    const clickEvent = event.detail;
+    if( this.canvas.activated ) {
+
+      if( clickEvent.detail > 1 ) {
+        this.dispatchEvent( mouseDoubleClickEvent );
+      } else {
+        this.dispatchEvent( mouseSingleClickEvent );
+      }
+    }
+  }
+
+  _onKeyDown = ( event ) => {
+    if( this.canvas.activated ) {
+      const keyboardEvent = event.detail;
+
+      keyDownEvent.key      = keyboardEvent.key;
+      keyDownEvent.code     = keyboardEvent.code;
+      keyDownEvent.shiftKey = keyboardEvent.shiftKey;
+      keyDownEvent.ctrlKey  = keyboardEvent.ctrlKey;
+      keyDownEvent.altKey   = keyboardEvent.altKey;
+      keyDownEvent.metaKey  = keyboardEvent.metaKey;
+
+      this.dispatchEvent( keyDownEvent );
+    }
+    /*
+    const keyboardEvent = event.detail;
+    const keyboardData = {
+      type      : "viewerApp.keyboad.keydown",
+      key       : keyboardEvent.key,
+      code      : keyboardEvent.code,
+      // keyCode   : keyboardEvent.keyCode, // deprecated API, use code instead
+      shiftKey  : keyboardEvent.shiftKey,
+      ctrlKey   : keyboardEvent.ctrlKey,
+      altKey    : keyboardEvent.altKey,
+      metaKey   : keyboardEvent.metaKey
+    };
+
+    // this event will not be registered to $wrapper and will be bound to this class
+    // so auto-disposed when replaced
+    this.dispatchEvent( keyboardData );
+    */
+
+  }
+
+  bindKeyboard({
+    codes, callback, tooltip,
+    shiftKey, ctrlKey, altKey,
+    metaKey, metaIsCtrl = false
+  } = {}) {
+    let codeArray;
+    if( !Array.isArray( codes ) ) {
+      codeArray = [ codes ];
+    } else {
+      codeArray = codes;
+    }
+    this.addEventListener( "viewerApp.keyboad.keydown", ( event ) => {
+      if( !codeArray.includes( event.code ) ) { return; }
+      if( shiftKey !== undefined && ( event.shiftKey !== shiftKey ) ) { return; }
+      if( altKey !== undefined && ( event.altKey !== altKey ) ) { return; }
+      if( metaIsCtrl ) {
+        if( ctrlKey !== undefined || metaKey !== undefined ) {
+          if( (ctrlKey || metaKey) !== (event.ctrlKey || event.metaKey) ) { return; }
+        }
+      } else {
+        if( ctrlKey !== undefined && ( event.ctrlKey !== ctrlKey ) ) { return; }
+        if( metaKey !== undefined && ( event.metaKey !== metaKey ) ) { return; }
+      }
+      callback( event );
+    });
+    if( typeof tooltip === "object" && tooltip !== null ) {
+      this.gui.addTooltip(
+        tooltip.key,
+        tooltip.name,
+        tooltip.folderName
+      );
+    }
   }
 
   enablePlayback ( enable = true ) {
@@ -79,12 +368,23 @@ class ViewerControlCenter{
     this.ctrlAnimPlay.setValue( enable );
   }
 
-
-  // update gui controllers
-  update(){
+  updateSelectorOptions() {
     this.updateDataCube2Types();
     // this.set_surface_ctype( true );
     this._update_canvas();
+  }
+  // update gui controllers
+  update(){
+
+    if( this._updateCount >= this.throttleLevel ) {
+      this._updateCount = 0;
+    } else {
+      this._updateCount++;
+    }
+    if( this._updateCount !== 0 ) { return; }
+
+    this.dispatchEvent( animationFrameUpdateEvent );
+
   }
 
   /**

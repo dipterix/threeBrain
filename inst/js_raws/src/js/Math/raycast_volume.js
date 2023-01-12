@@ -19,8 +19,6 @@ function raycast_volume_geneator(){
   const raycast_volume = (
     origin, direction, volumeModelShape,
     map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {
-    // canvas.mouse_raycaster.ray.origin
-    // canvas.mouse_raycaster.ray.direction
 
     mx = volumeModelShape.x;
     my = volumeModelShape.y;
@@ -192,13 +190,11 @@ const intersect_volume = electrode_from_ct_generator();
 const electrode_from_ct = ( inst, canvas ) => {
   // const inst = this.current_voxel_type();
   if( !inst || !inst.isDataCube2 ){ return; }
-  canvas.set_raycaster();
-
 
   return (
     intersect_volume(
-      canvas.mouse_raycaster.ray.origin,
-      canvas.mouse_raycaster.ray.direction,
+      canvas.mouseRaycaster.ray.origin,
+      canvas.mouseRaycaster.ray.direction,
       inst, canvas
     )
   );
