@@ -1,6 +1,6 @@
 import { ThrottledEventDispatcher } from './ThrottledEventDispatcher.js';
 import { ViewerApp } from './ViewerApp.js';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from './constants.js';
 
 const _enterViewerEvent = {
   type      : "viewerApp.mouse.enterViewer",

@@ -1,4 +1,4 @@
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { CCanvasRecorder } from '../capture/CCanvasRecorder.js';
 import { PDFContext } from '../core/context.js';
 

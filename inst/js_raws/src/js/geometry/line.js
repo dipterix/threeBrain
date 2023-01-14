@@ -1,4 +1,4 @@
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { AbstractThreeBrainObject } from './abstract.js';
 import { Vector3, Color, Mesh, DoubleSide, VertexColors, InstancedBufferAttribute } from 'three';
 import { LineSegments2 } from '../jsm/lines/LineSegments2.js';

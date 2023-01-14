@@ -1,7 +1,7 @@
 import {
   Vector2, Vector3, Matrix3, Matrix4, OrthographicCamera, DirectionalLight
 } from 'three';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from './constants.js';
 
 const DEFAULT_CAMERA_LEFT = 150;
 

@@ -1,4 +1,4 @@
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 
 // 5. display axis anchor
 

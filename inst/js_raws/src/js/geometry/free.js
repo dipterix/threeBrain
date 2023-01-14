@@ -3,7 +3,7 @@ import { TwoPassDoubleSide, BufferAttribute, DataTexture, NearestFilter,
          LinearFilter, RGBAFormat, UnsignedByteType, Vector3,
          MeshPhongMaterial, MeshLambertMaterial, BufferGeometry, Mesh,
          Data3DTexture } from 'three';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { to_array, min2, sub2 } from '../utils.js';
 import { compile_free_material } from '../shaders/SurfaceShader.js';
 
@@ -144,7 +144,7 @@ class FreeMesh extends AbstractThreeBrainObject {
   }
 
   _set_color_from_datacube2( m, bias = 3.0 ){
-    console.debug("Generating surface colors from volume data...");
+    // console.debug("Generating surface colors from volume data...");
 
     if( !m || !m.isDataCube2 ){
       this._material_options.mapping_type.value = CONSTANTS.DEFAULT_COLOR;

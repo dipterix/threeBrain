@@ -23,7 +23,7 @@ import { CanvasFileLoader } from './loaders.js';
 import { SideCanvas } from './SideCanvas.js';
 import { StorageCache } from './StorageCache.js';
 import { CanvasEvent } from './events.js';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from './constants.js';
 import { generate_animation_default } from '../Math/animations.js';
 import { Compass } from '../geometry/compass.js';
 import { GeometryFactory } from './GeometryFactory.js';

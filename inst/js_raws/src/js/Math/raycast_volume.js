@@ -10,12 +10,6 @@ function raycast_volume_geneator(){
   let mx, my, mz, i, j, k, tmp, k1, k2, l_res;
   const res = [NaN, NaN, NaN, NaN, NaN, NaN, NaN];
 
-  /*window.orig = orig;
-  window.projection = projection;
-  window.p = p;
-  window.p1 = p1;
-  window.f = f;*/
-
   const raycast_volume = (
     origin, direction, volumeModelShape,
     map_array, delta = 0.5, snap_raycaster = true, colorChannels = 4 ) => {

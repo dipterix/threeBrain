@@ -12,7 +12,7 @@
 
 // This is a global cache that is shared across the widgets.
 window.global_cache = window.global_cache || new ThreeBrainLib.StorageCache();
-window.THREE = ThreeBrainLib.utils.THREE;
+window.THREE = ThreeBrainLib.ExternLibs.THREE;
 
 HTMLWidgets.widget({
 

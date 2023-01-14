@@ -1,5 +1,5 @@
 import { AbstractThreeBrainObject } from './abstract.js';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { to_array, get_or_default } from '../utils.js';
 import { Object3D, LineBasicMaterial, BufferGeometry, Data3DTexture, RedFormat, LinearFilter,
          UnsignedByteType, RawShaderMaterial, Vector3, DoubleSide, UniformsUtils,

@@ -1,4 +1,4 @@
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from './constants.js';
 import { Vector3, OrthographicCamera, DirectionalLight, WebGLRenderer } from 'three';
 import { get_element_size } from '../utils.js';
 import { makeDraggable } from '../utility/draggable.js';

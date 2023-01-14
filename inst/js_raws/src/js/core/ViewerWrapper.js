@@ -1,5 +1,5 @@
 // External libraries
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from './constants.js';
 import { MathUtils } from 'three';
 import WebGL from '../jsm/capabilities/WebGL.js'
 import { StorageCache } from './StorageCache.js';

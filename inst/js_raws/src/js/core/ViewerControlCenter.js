@@ -1,5 +1,5 @@
 import { Vector3, Matrix4, EventDispatcher } from 'three';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from './constants.js';
 import { is_electrode } from '../geometry/sphere.js';
 import { copyToClipboard } from '../utility/copyToClipboard.js';
 import { vector3ToString } from '../utility/vector3ToString.js';

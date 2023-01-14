@@ -1,6 +1,6 @@
 import { Vector3, SpriteMaterial, DoubleSide } from 'three';
 import { vector3ToString } from '../utility/vector3ToString.js';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { is_electrode } from '../geometry/sphere.js';
 import { intersect_volume, electrode_from_ct } from '../Math/raycast_volume.js';
 import * as download from 'downloadjs';

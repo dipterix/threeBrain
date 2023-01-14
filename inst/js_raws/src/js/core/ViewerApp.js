@@ -4,7 +4,7 @@ import { EnhancedGUI } from './EnhancedGUI.js';
 import { ViewerControlCenter } from './ViewerControlCenter.js';
 import { ViewerCanvas } from './ViewerCanvas.js';
 import { MouseKeyboard } from './MouseKeyboard.js';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from './constants.js';
 import { requestAnimationFrame } from './requestAnimationFrame.js';
 
 

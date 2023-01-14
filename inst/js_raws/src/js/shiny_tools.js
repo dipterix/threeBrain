@@ -6,7 +6,7 @@ This file defines shiny callback functions (js to shiny)
 import { debounce, to_array, get_or_default, set_visibility } from './utils.js';
 import { MathUtils, Vector3, Color } from 'three';
 import { add_electrode, is_electrode } from './geometry/sphere.js';
-import { CONSTANTS } from './constants.js';
+import { CONSTANTS } from './core/constants.js';
 
 function storageAvailable(type) {
   try {

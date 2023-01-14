@@ -1,5 +1,5 @@
 import { CCFrameEncoder } from './CCFrameEncoder.js';
-import { download } from '../download.js';
+import * as download from 'downloadjs';
 // import { ArrayBufferDataStream, BlobBuffer, WebMWriter } from './webm-writer-0.2.0.js';
 
 

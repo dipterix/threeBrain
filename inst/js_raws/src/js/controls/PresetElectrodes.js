@@ -1,6 +1,6 @@
 import { is_electrode } from '../geometry/sphere.js';
 import { to_array } from '../utils.js';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { set_visibility } from '../utils.js';
 
 // 13. electrode visibility, highlight, groups

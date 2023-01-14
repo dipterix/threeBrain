@@ -4,7 +4,7 @@ import { MeshBasicMaterial, MeshLambertMaterial, SpriteMaterial,
          Matrix4 } from 'three';
 import { Sprite2, TextTexture } from '../ext/text_sprite.js';
 import { to_array, get_or_default } from '../utils.js';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 
 const MATERIAL_PARAMS = { 'transparent' : false };
 

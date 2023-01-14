@@ -3,7 +3,7 @@ import { Vector3, Matrix4, Data3DTexture, NearestFilter, FloatType,
          RGBAFormat, RedFormat, UnsignedByteType, LinearFilter, UniformsUtils,
          RawShaderMaterial, BackSide, Mesh,
          BoxGeometry } from 'three';
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { get_or_default } from '../utils.js';
 import { VolumeRenderShader1 } from '../shaders/VolumeShader.js';
 import { ConvexGeometry } from '../jsm/geometries/ConvexGeometry.js';

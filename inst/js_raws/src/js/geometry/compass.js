@@ -1,6 +1,6 @@
 /* mesh objects that always stays at the corner of canvas */
 
-import { CONSTANTS } from '../constants.js';
+import { CONSTANTS } from '../core/constants.js';
 import { Object3D, Vector3, ArrowHelper, Color, Mesh, MeshBasicMaterial, DoubleSide } from 'three';
 import { TextSprite } from '../ext/text_sprite.js';
 
