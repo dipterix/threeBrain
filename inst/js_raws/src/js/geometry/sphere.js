@@ -108,7 +108,7 @@ class Sphere extends AbstractThreeBrainObject {
 
   set label(name) {
     this._text_label = `${name}`;
-    console.debug(`Setting label: ${this._text_label}`);
+    // console.debug(`Setting label: ${this._text_label}`);
     this._text_map.draw_text( this._text_label );
   }
 

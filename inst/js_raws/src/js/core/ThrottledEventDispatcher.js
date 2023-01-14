@@ -31,17 +31,13 @@ class ThrottledEventDispatcher {
 
     if( this._listeners.has( _callbackId ) ) {
       const existingCallback = this._listeners.get( _callbackId );
-      if( this.debug ) {
-        console.debug( `Executing previous listener - ${ _callbackId }` );
-      }
+      this.debugVerbose( `Executing previous listener - ${ _callbackId }` );
       this._listeners.delete( _callbackId );
       if( executePrevious && typeof existingCallback === 'function' ) {
         try { existingCallback(); } catch (e) {}
       }
       this._listeners.set( _callbackId , () => {
-        if( this.debug ) {
-          console.debug( `Re-registering listener - ${ _callbackId }` );
-        }
+        this.debugVerbose( `Re-registering listener - ${ _callbackId }` );
         try {
           this.$wrapper.removeEventListener( type, existingCallback );
         } catch (e) {
@@ -77,7 +73,7 @@ class ThrottledEventDispatcher {
     this._listeners.clear();
   }
 
-  dispatch( type, data, immediate = false ){
+  dispatch({ type, data, immediate = false, muffled = false}){
 
     if( typeof(type) !== "string" || type.length === 0 ) {
       throw TypeError( 'ThrottledEventDispatcher.dispatch: Can only dispatch event of none-empty type' );
@@ -94,6 +90,7 @@ class ThrottledEventDispatcher {
         // make sure doDispatch only called once
         throttlePause: false,
         data: data,
+        muffled: muffled,
         dispatched: false
       }
       if( !immediate_ ) {
@@ -102,6 +99,7 @@ class ThrottledEventDispatcher {
     } else {
       buffer = this._eventBuffers.get( type );
       buffer.data = data;
+      buffer.muffled = muffled;
       buffer.dispatched = false;
       exists = true;
     }
@@ -110,11 +108,7 @@ class ThrottledEventDispatcher {
       buffer.dispatched = true;
       buffer.throttlePause = false;
 
-      if( exists ) {
-        try {
-          this._eventBuffers.delete( type );
-        } catch (e) {}
-      }
+      // if( exists ) { try { this._eventBuffers.delete( type ); } catch (e) {} }
 
       const event = new CustomEvent(
         buffer.type,
@@ -126,7 +120,9 @@ class ThrottledEventDispatcher {
       );
 
       // Dispatch the event.
-      console.debug(`Dispatching immediate event: ${ buffer.type }`);
+      if( !buffer.muffled ) {
+        this.debugVerbose(`[${ this.constructor.name }] is dispatching an immediate event: ${ buffer.type }`);
+      }
       this.$wrapper.dispatchEvent(event);
 
       return;
@@ -147,9 +143,8 @@ class ThrottledEventDispatcher {
       // remove buffer. It's ok if this operation fails
       // buffer.dispatched=true will prevent buffer from being fired again
       // this operation is to release memory
-      try {
-        this._eventBuffers.delete( type );
-      } catch (e) {}
+
+      // try { this._eventBuffers.delete( type ); } catch (e) {}
 
       buffer.throttlePause = false;
       if( buffer.dispatched ) { return; }
@@ -166,7 +161,9 @@ class ThrottledEventDispatcher {
       );
 
       // Dispatch the event.
-      console.debug(`Dispatching throttled event: ${ buffer.type }`);
+      if( !buffer.muffled ) {
+        this.debugVerbose(`[${ this.constructor.name }] is dispatching an throttled event: ${ buffer.type }`);
+      }
       this.$wrapper.dispatchEvent(event);
 
     };
@@ -177,6 +174,12 @@ class ThrottledEventDispatcher {
 
   availableEventNames() {
     return [ ...this._listeners.keys() ];
+  }
+
+  debugVerbose( message ) {
+    if( this.debug ) {
+      console.debug( message )
+    }
   }
 }
 

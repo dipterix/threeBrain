@@ -12,13 +12,6 @@ function registerPresetMainCamera( ViewerControlCenter ){
       this.canvas.resetCanvas();
     }, { folderName: folderName });
 
-    this.canvas.bind(
-      "canvasDriveResetCamera",
-      "canvas.drive.resetCamera",
-      ( event ) => {
-        this.canvas.resetCanvas();
-      }
-    );
   };
 
   ViewerControlCenter.prototype.initializeCameraPosition = function(){
@@ -61,15 +54,6 @@ function registerPresetMainCamera( ViewerControlCenter ){
     });
 
     this.initializeCameraPosition();
-
-    this.canvas.bind(
-      "canvasDriveSetCameraPosition2",
-      "canvas.drive.setCameraPosition2",
-      ( event ) => {
-        // { position : "anterior" }
-        controller.setValue( event.detail.position );
-      }
-    );
 
   }
 

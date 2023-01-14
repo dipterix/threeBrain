@@ -190,9 +190,15 @@ class DataCube extends AbstractThreeBrainObject {
     };
     sliceMeshYZ.userData.instance = this;
     this.sliceYZ = sliceMeshYZ;
+
+
+
+    // set up events
+    this._canvas.$el.addEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
   }
 
   dispose(){
+    this._canvas.$el.removeEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
     this.crosshairLR.geometry.dispose();
     this.crosshairLR.material.dispose();
     this.crosshairPA.geometry.dispose();
@@ -243,9 +249,14 @@ class DataCube extends AbstractThreeBrainObject {
 
     this._canvas.updateElectrodeVisibilityOnSideCanvas();
 
-    this._canvas.dispatch_event( "canvas.sliceCrosshair.onChange", {
-      position : this.crosshairGroup.position,
-      space: "tkrRAS"
+    // Calculate MNI305 positions
+    const crosshairMNI = this._canvas.getSideCanvasCrosshairMNI305(
+      this.crosshairGroup.position.clone() );
+    const displayText = `${crosshairMNI.x.toFixed(1)}, ${crosshairMNI.y.toFixed(1)}, ${crosshairMNI.z.toFixed(1)}`
+
+    this._canvas.setControllerValue({
+      name : "Intersect MNI305",
+      value: displayText
     });
     // Animate on next refresh
     this._canvas.start_animation( 0 );
@@ -338,6 +349,11 @@ class DataCube extends AbstractThreeBrainObject {
     // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
     // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
 
+
+  }
+
+  _onSetSliceCrosshair = ( event ) => {
+    this.setCrosshair( event.detail );
   }
 
 }

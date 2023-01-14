@@ -2,6 +2,31 @@ import { ThrottledEventDispatcher } from './ThrottledEventDispatcher.js';
 import { ViewerApp } from './ViewerApp.js';
 import { CONSTANTS } from '../constants.js';
 
+const _enterViewerEvent = {
+  type      : "viewerApp.mouse.enterViewer",
+  immediate : false,
+  muffled   : true
+};
+const _leaveViewerEvent = {
+  type      : "viewerApp.mouse.leaveViewer",
+  immediate : false,
+  muffled   : true
+};
+
+const _contextMenuEvent = {
+  type      : "viewerApp.mouse.contextmenu",
+  immediate : false,
+  muffled   : true
+}
+
+const _mouseUpEvent = {
+  type      : "viewerApp.mouse.mouseup",
+  immediate : true,
+  muffled   : true
+}
+
+
+
 class MouseKeyboard extends ThrottledEventDispatcher {
 
   // static
@@ -109,14 +134,13 @@ class MouseKeyboard extends ThrottledEventDispatcher {
     this.mouseLocation = MouseKeyboard.OFF_VIEWER;
   }
 
-
   _onViewerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_VIEWER;
-    this.dispatch( "viewerApp.mouse.enterViewer", null, false );
+    this.dispatch( _enterViewerEvent );
   }
   _onViewerBlurred = () => {
     this.mouseLocation = this.mouseLocation & MouseKeyboard.OFF_VIEWER;
-    this.dispatch( "viewerApp.mouse.leaveViewer", null, false );
+    this.dispatch( _leaveViewerEvent );
   }
   _onControllerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CONTROLLER;
@@ -144,21 +168,31 @@ class MouseKeyboard extends ThrottledEventDispatcher {
   }
   _onMainCanvasContextMenu = () => {
     // this should fire immediately
-    this.dispatch( "viewerApp.mouse.contextmenu", null, true );
+    this.dispatch( _contextMenuEvent );
   }
   _onMainCanvasMouseDown = ( event ) => {
     // this should fire immediately
     this._mouseDownHold = true;
-    this.dispatch( "viewerApp.mouse.mousedown", event, true );
+    this.dispatch({
+      type      : "viewerApp.mouse.mousedown",
+      data      : event,
+      immediate : true,
+      muffled   : true
+    });
   }
   _onMainCanvasMouseUp = () => {
     // this should fire immediately
     this._mouseDownHold = false;
-    this.dispatch( "viewerApp.mouse.mouseup", null, true );
+    this.dispatch( _mouseUpEvent );
   }
   _onMainCanvasClicked = ( event ) => {
     // this should be fired delayed
-    this.dispatch( "viewerApp.mouse.click", event, false );
+    this.dispatch({
+      type      : "viewerApp.mouse.click",
+      data      : event,
+      immediate : false,
+      muffled   : true
+    });
   }
   _onKeydown = ( event ) => {
     // keyCode is deprecated, but I found no better substitution
@@ -170,7 +204,12 @@ class MouseKeyboard extends ThrottledEventDispatcher {
       }
     }
     event.preventDefault();
-    this.dispatch( "viewerApp.keyboad.keydown", event, true );
+    this.dispatch({
+      type      : "viewerApp.keyboad.keydown",
+      data      : event,
+      immediate : true,
+      muffled   : true
+    });
   }
 
 

@@ -68,7 +68,7 @@ class ViewerWrapper {
     this.height = height;
     this.shinyMode = shinyMode;
     this.viewerMode = viewerMode;
-    this.DEBUG = false;
+    this.debug = false;
     this.uuid = MathUtils.generateUUID();
 
     // DOM related
@@ -161,7 +161,7 @@ class ViewerWrapper {
       $wrapper : this.$viewerWrapper,
       width : this.width, height : this.height,
       cache : this.cache,
-      debug : this.DEBUG
+      debug : this.debug
     });
 
     this.cacheViewer();
@@ -188,7 +188,10 @@ class ViewerWrapper {
       this.cacheViewer();
     }
     if( !this.viewer ) { throw 'THREEBRAIN: Trying to use a cached/existing viewer, but the viewer is nowhere to be found!'; }
-    console.debug('THREEBRAIN: Re-using an existing/cached viewer.');
+    if( this.debug ) {
+      console.debug('[ViewerWrapper.useCachedViewer]: Re-using an existing/cached viewer.');
+    }
+
 
     this.$viewerWrapper = this.viewer.el;
     if( this.viewerMode ) {
@@ -225,6 +228,7 @@ class ViewerWrapper {
       bootstrapData : data,
       reset : reset
     };
+    this.debug = data.settings.debug || false;
 
     if( !this.initalized ) {
       if( data.force_render ) {
@@ -235,8 +239,7 @@ class ViewerWrapper {
 
     this.render( reset );
 
-    this.DEBUG = data.settings.debug || false;
-    if( this.DEBUG ) {
+    if( this.debug ) {
       window.appWrapper = this;
     }
 

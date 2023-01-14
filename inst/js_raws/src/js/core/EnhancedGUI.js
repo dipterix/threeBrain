@@ -328,11 +328,12 @@ class EnhancedGUI extends GUI {
     ];
     const data = to_dict( args );
     keys.forEach((k) => {
-      if( data[k] !== undefined ){
+      const value = data[k];
+      if( value !== undefined ){
         const controller = this.getController( k, "", false );
         if( !controller.isfake ) {
-          console.debug(`Setting ${ k }`);
-          controller.setValue( data[k] );
+          console.debug(`Initialize setting ${ k } -> ${ value }`);
+          controller.setValue( value );
         }
       }
     });

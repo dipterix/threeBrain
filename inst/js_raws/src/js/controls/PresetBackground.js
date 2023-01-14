@@ -15,15 +15,6 @@ function registerPresetBackground( ViewerControlCenter ){
       .onChange((v) => { this.canvas.setBackground({ color : v }); })
       .setValue( initialValue );
 
-    // bind driver
-    this.canvas.bind(
-      "canvasDriveBackgound",
-      "canvas.drive.background",
-      ( event ) => {
-        // { color : 0xfff }
-        controller.setValue( event.detail.color )
-      }
-    );
   }
 
   return( ViewerControlCenter );

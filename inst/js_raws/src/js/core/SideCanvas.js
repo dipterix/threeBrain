@@ -34,7 +34,7 @@ class SideCanvas {
       this.zoomLevel = level;
     }
     if( this.zoomLevel > 10 ) { this.zoomLevel = 10; }
-    if( this.zoomLevel < 1 ) { this.zoomLevel = 1; }
+    if( this.zoomLevel < 1.05 ) { this.zoomLevel = 1; }
     const cameraMargin = 128 / this.zoomLevel;
     const maxTranslate = 128 - cameraMargin;
 
@@ -123,7 +123,8 @@ class SideCanvas {
       this.zoom( zoomLevel );
     }
     if( crosshair ) {
-      this.setCrosshair({ x : 0, y : 0, z : 0, immediate : false });
+      this.mainCanvas.setSliceCrosshair({ x : 0, y : 0, z : 0, immediate : false });
+      // this.setCrosshair({ x : 0, y : 0, z : 0, immediate : false });
     }
   }
   setDimension({ width, height, offsetX, offsetY } = {}) {
@@ -178,6 +179,17 @@ class SideCanvas {
   }
 
   dispose() {
+    this.$header.removeEventListener( "dblclick" , this._onDoubleClick );
+    this.$zoomIn.removeEventListener( "click" , this._onZoomInClicked );
+    this.$zoomIn.removeEventListener( "click" , this._onZoomOutClicked );
+    this.$recenter.removeEventListener( "click" , this._onRecenterClicked );
+    this.$reset.removeEventListener( "click" , this._onResetClicked );
+
+    this.$canvas.removeEventListener( "mousedown" , this._onMouseDown );
+    this.$canvas.removeEventListener( "contextmenu" , this._onContextMenu );
+    this.$canvas.removeEventListener( "mouseup" , this._onMouseUp );
+    this.$canvas.removeEventListener( "mousemove" , this._onMouseMove );
+    this.$canvas.removeEventListener( "mousewheel" , this._onMouseWheel );
     this.renderer.dispose();
   }
 
@@ -186,27 +198,6 @@ class SideCanvas {
     this.renderer.setClearColor( color );
     this.$el.style.backgroundColor = color;
   }
-
-  setCrosshair({x, y, z, immediate = true} = {}) {
-    // instead of setting slice instances, set data gui
-    /* const sliceInstance = this.mainCanvas.get_state( "activeSliceInstance" );
-    if( sliceInstance && sliceInstance.isDataCube ) {
-      sliceInstance.setCrosshair({
-        x : sagittalDepth,
-        y : coronalDepth,
-        z : axialDepth
-      });
-    }
-    */
-    this.mainCanvas.dispatch_event(
-      'canvas.drive.setSliceCrosshair',
-      {
-        x : x, y : y, z : z
-      },
-      immediate
-    );
-  }
-
 
 
   pan({ right = 0, up = 0, unit = "css", updateMainCamera = false } = {}) {
@@ -249,11 +240,10 @@ class SideCanvas {
     // console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
 
     // update slice depths
-    this.setCrosshair({
+    this.mainCanvas.setSliceCrosshair({
       x : sagittalDepth,
       y : coronalDepth,
-      z : axialDepth
-    });
+      z : axialDepth, immediate : false });
     // need to update mainCamera
     if( updateMainCamera ) {
       const newMainCameraPosition = new Vector3()
@@ -322,10 +312,6 @@ class SideCanvas {
     this.$header.className = 'THREEBRAIN-SIDE-HEADER';
     this.$header.id = this._container_id + '__' + type + 'header';
     this.$el.appendChild( this.$header );
-    // double-click on header to reset position
-    this.mainCanvas.bind( `${ this.type }_div_header_dblclick`, 'dblclick', (evt) => {
-      this.reset({ zoomLevel : false, position : true, size : true })
-    }, this.$header );
 
     // Add side canvas element
     this.$canvas = document.createElement('canvas');
@@ -353,11 +339,6 @@ class SideCanvas {
 		this.$zoomIn.style.top = '23px'; // for header
 		this.$zoomIn.innerText = '+';
 		this.$el.appendChild( this.$zoomIn );
-		this.mainCanvas.bind( `${ this.type }_zoomin_click`, 'click', (e) => {
-		  let newZoomLevel = this.zoomLevel * 1.2;
-		  if( newZoomLevel > 10 ) { newZoomLevel = 10; }
-		  this.zoom( newZoomLevel );
-		}, this.$zoomIn);
 
 		// zoom out tool
     this.$zoomOut = document.createElement('div');
@@ -365,11 +346,6 @@ class SideCanvas {
 		this.$zoomOut.style.top = '50px'; // header + $zoomIn
 		this.$zoomOut.innerText = '-';
 		this.$el.appendChild( this.$zoomOut );
-		this.mainCanvas.bind( `${ this.type }_zoomout_click`, 'click', (e) => {
-		  let newZoomLevel = this.zoomLevel / 1.2;
-		  if( newZoomLevel < 1.1 ) { newZoomLevel = 1; }
-		  this.zoom( newZoomLevel );
-		}, this.$zoomOut);
 
 		// toggle pan (translate) tool
 		this.$recenter = document.createElement('div');
@@ -377,20 +353,13 @@ class SideCanvas {
 		this.$recenter.style.top = '77px'; // header + $zoomIn + $zoomOut
 		this.$recenter.innerText = 'C';
 		this.$el.appendChild( this.$recenter );
-		this.mainCanvas.bind( `${ this.type }_recenter_click`, 'click', (e) => {
-		  this.zoom();
-		}, this.$recenter);
+
 
 		this.$reset = document.createElement('div');
 		this.$reset.className = 'zoom-tool';
 		this.$reset.style.top = '104px'; // header + $zoomIn + $zoomOut + $recenter
 		this.$reset.innerText = '0';
 		this.$el.appendChild( this.$reset );
-		this.mainCanvas.bind( `${ this.type }_zoom_reset_click`, 'click', (e) => {
-		  this.$canvas.style.top = '0';
-      this.$canvas.style.left = '0';
-		  this.zoom( 1 );
-		}, this.$reset );
 
 		// Add resize anchors to bottom-right
 		this.$resizeWrapper = document.createElement('div');
@@ -405,43 +374,6 @@ class SideCanvas {
       this.raiseTop();
     });
 
-    // Make side canvas clickable
-    this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
-      evt.preventDefault();
-      this._focused = true;
-      this._calculateCrosshair( evt );
-    }, this.$canvas );
-    this.$canvas.oncontextmenu = function (evt) {
-      evt.preventDefault();
-    };
-    this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
-      evt.preventDefault();
-      this._focused = false;
-    }, this.$canvas );
-    this.mainCanvas.bind( `${ this.type }_cvs_setCrosshair`, 'mousemove', (evt) => {
-      evt.preventDefault();
-      if( !this._focused ) { return; }
-      this._calculateCrosshair( evt );
-    }, this.$canvas );
-
-    // Make $canvas scrollable, with changing slices
-    this.mainCanvas.bind( `${ this.type }_cvs_mousewheel`, 'mousewheel', (evt) => {
-      evt.preventDefault();
-      if( evt.altKey ){
-        const depthName = this.type + '_depth';
-        const currentDepth = this.mainCanvas.get_state( depthName );
-        if( evt.deltaY > 0 ){
-          this.mainCanvas.set_state( depthName, 1 + currentDepth );
-        }else if( evt.deltaY < 0 ){
-          this.mainCanvas.set_state( depthName, -1 + currentDepth );
-        }
-      }
-      this.setCrosshair({
-        x : sagittalDepth,
-        y : coronalDepth,
-        z : axialDepth
-      });
-    }, this.$canvas );
 
     // Make $el resizable, keep current width and height
     makeResizable( this.$el, true );
@@ -495,23 +427,95 @@ class SideCanvas {
     this.camera.updateProjectionMatrix();
     // this.camera.add( this.directionalLight );
 
-    // TODO: main canvas need to add cameras and element
     this.mainCanvas.add_to_scene( this.camera, true );
     this.mainCanvas.add_to_scene( this.directionalLight, true );
     this.mainCanvas.wrapper_canvas.appendChild( this.$el );
 
-    /*
-      this.sideCanvasList[ nm ] = {
-        'container' : div,
-        'canvas'    : cvs,
-        'context'   : cvs.getContext('2d'),
-        'camera'    : camera,
-        'reset'     : reset,
-        'get_zoom_level' : () => { return( zoom_level ) },
-        'set_zoom_level' : set_zoom_level
-      };
-    */
 
+    // ---- Bind events --------------------------------------------------------
+    // double-click on header to reset position
+    this.$header.addEventListener( "dblclick" , this._onDoubleClick );
+    this.$zoomIn.addEventListener( "click" , this._onZoomInClicked );
+    this.$zoomOut.addEventListener( "click" , this._onZoomOutClicked );
+    this.$recenter.addEventListener( "click" , this._onRecenterClicked );
+    this.$reset.addEventListener( "click" , this._onResetClicked );
+
+    this.$canvas.addEventListener( "mousedown" , this._onMouseDown );
+    this.$canvas.addEventListener( "contextmenu" , this._onContextMenu );
+    this.$canvas.addEventListener( "mouseup" , this._onMouseUp );
+    this.$canvas.addEventListener( "mousemove" , this._onMouseMove );
+    this.$canvas.addEventListener( "mousewheel" , this._onMouseWheel );
+  }
+
+  _onResetClicked = () => {
+	  this.$canvas.style.top = '0';
+    this.$canvas.style.left = '0';
+	  this.zoom( 1 );
+	}
+
+  _onMouseDown = ( evt ) => {
+    evt.preventDefault();
+    this._focused = true;
+    this._calculateCrosshair( evt );
+  }
+
+  _onContextMenu = ( evt ) => {
+    evt.preventDefault();
+  }
+
+  _onMouseUp = ( evt ) => {
+    evt.preventDefault();
+    this._focused = false;
+  }
+
+  _onMouseMove = ( evt ) => {
+    if( !this._focused ) { return; }
+    evt.preventDefault();
+    this._calculateCrosshair( evt );
+  }
+
+  _onMouseWheel = ( evt ) => {
+    evt.preventDefault();
+    const depthName = this.type + '_depth';
+    console.log(depthName);
+    let currentDepth = this.mainCanvas.get_state( depthName );
+    if( evt.deltaY > 0 ){
+      currentDepth += 0.5;
+    }else if( evt.deltaY < 0 ){
+      currentDepth -= 0.5;
+    }
+    this.mainCanvas.set_state( depthName, currentDepth );
+
+    switch (this.type) {
+      case 'sagital':
+        this.mainCanvas.setSliceCrosshair({ x : currentDepth })
+        break;
+      case 'coronal':
+        this.mainCanvas.setSliceCrosshair({ y : currentDepth })
+        break;
+      case 'axial':
+        this.mainCanvas.setSliceCrosshair({ z : currentDepth })
+        break;
+      default:
+        // code
+    }
+  }
+
+  _onRecenterClicked = () => {
+    this.zoom();
+  }
+
+  _onZoomOutClicked = () => {
+    let newZoomLevel = this.zoomLevel / 1.2;
+	  this.zoom( newZoomLevel );
+  }
+
+  _onZoomInClicked = () => {
+    let newZoomLevel = this.zoomLevel * 1.2;
+	  this.zoom( newZoomLevel );
+  }
+  _onDoubleClick = () => {
+    this.reset({ zoomLevel : false, position : true, size : true })
   }
 
 }

@@ -168,10 +168,10 @@ class CanvasFileLoader {
   }
 
   _onLoadStart( evt ) {
-    console.debug( 'Loading start!');
+    this.canvas.debugVerbose( 'Loading start!' );
   }
   _onLoad( evt, callback ) {
-    console.debug( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
+    this.canvas.debugVerbose( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
 
     let v;
     switch (evt.currentType) {

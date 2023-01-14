@@ -7,6 +7,18 @@ import { MouseKeyboard } from './MouseKeyboard.js';
 import { CONSTANTS } from '../constants.js';
 import { requestAnimationFrame } from './requestAnimationFrame.js';
 
+
+const _updateDataStartEvent = {
+  type      : "viewerApp.updateData.start",
+  immediate : true
+}
+
+const _updateDataEndEvent = {
+  type      : "viewerApp.updateData.end",
+  immediate : true
+}
+
+
 class ViewerApp extends ThrottledEventDispatcher {
 
   constructor({
@@ -28,7 +40,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     super( $wrapper );
 
     // Flags
-    this.DEBUG = debug;
+    this.debug = debug;
     this.isViewerApp = true;
     this.controllerClosed = false;
     this.ready = false;
@@ -114,7 +126,7 @@ class ViewerApp extends ThrottledEventDispatcher {
       this.$wrapper,
       width ?? this.$wrapper.clientWidth,
       height ?? this.$wrapper.clientHeight,
-      250, false, cache, this.DEBUG, true );
+      250, false, cache, this.debug, true );
 
     // Add listeners for mouse
     this.mouseKeyboard = new MouseKeyboard( this );
@@ -148,9 +160,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     this.$progress.style.width = `${ progress }%`;
 
     if( message ) {
-      if( this.DEBUG ) {
-        console.debug(`THREEBRAIN (viewer app progress): ${ message }`);
-      }
+      this.debugVerbose(`[ViewerApp.setProgressBar]: ${ message }`);
       this.$informationText.innerHTML = `<small>${ message }</small>`;
     } else {
       this.$informationText.innerHTML = "";
@@ -187,7 +197,7 @@ class ViewerApp extends ThrottledEventDispatcher {
   }
 
   bootstrap( { bootstrapData, reset = false } ) {
-    this.DEBUG = this.DEBUG || bootstrapData.debug;
+    this.debug = this.debug || bootstrapData.debug;
 
     // read configurations
     const path = bootstrapData.settings.cache_folder + bootstrapData.data_filename;
@@ -209,8 +219,8 @@ class ViewerApp extends ThrottledEventDispatcher {
      */
     const readerIsObsolete = () => {
       const re = this.__fileReader !== fileReader;
-      if( re && this.DEBUG ) {
-        console.debug( "THREEBRAIN (viewer.render): configuration is obsolete, abandon current process to yield." );
+      if( re ) {
+        this.debugVerbose( "[ViewerApp.bootstrap]: configuration is obsolete, abandon current process to yield." );
       }
       return ( re );
     };
@@ -278,7 +288,7 @@ class ViewerApp extends ThrottledEventDispatcher {
 
   async updateData({ data, reset = false, isObsolete = false }) {
 
-    this.dispatch( "viewerApp.updateData.start", {}, true );
+    this.dispatch( _updateDataStartEvent );
 
     const _isObsolete = ( args ) => {
       if( typeof isObsolete !== 'function' ) { return isObsolete; }
@@ -286,7 +296,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     }
     if( _isObsolete( "Updating viewer data" ) ) { return; }
 
-    this.DEBUG = data.settings.debug || false;
+    this.debug = data.settings.debug || false;
 
     // clear canvas
     this.canvas.pause_animation(9999);
@@ -308,11 +318,11 @@ class ViewerApp extends ThrottledEventDispatcher {
     this.colorMaps = asArray( data.settings.color_maps );
 
     // canvas flags
-    this.canvas.DEBUG = this.DEBUG;
+    this.canvas.debug = this.debug;
     this.canvas.mainCamera.needsReset = reset === true;
     // this.shiny.set_token( this.settings.token );
 
-    if( this.DEBUG ) {
+    if( this.debug ) {
       this.enableDebugger();
     }
 
@@ -392,9 +402,6 @@ class ViewerApp extends ThrottledEventDispatcher {
     await Promise.all( geomPromises );
     if( _isObsolete() ) { return; }
 
-    // this.canvas.finish_init();
-    // this.canvas.dispatch_event( "canvas.finish_init" );
-
     this.setProgressBar({
       progress : 100,
       message : "Finalizing..."
@@ -429,9 +436,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     if( this.settings.custom_javascript &&
         this.settings.custom_javascript !== ''){
 
-      if( this.canvas.DEBUG ){
-        console.debug("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
-      }
+      this.debugVerbose("[ViewerApp.updateData]: Executing customized js code:\n"+this.settings.custom_javascript);
       (( viewerApp ) => {
         try {
           eval( this.settings.custom_javascript );
@@ -444,7 +449,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     // Make sure it's hidden though progress will hide it
     this.$informationContainer.style.display = 'none';
 
-    this.dispatch( "viewerApp.updateData.end", {}, true );
+    this.dispatch( _updateDataEndEvent );
 
   }
 
@@ -500,19 +505,17 @@ class ViewerApp extends ThrottledEventDispatcher {
 
     this.$controllerContainer.appendChild( this.controllerGUI.domElement );
 
-    // Add listeners
+    // ---- Add Presets --------------------------------------------------------
     const enabledPresets = this.settings.control_presets;
     this.controlCenter = new ViewerControlCenter( this );
-    // ---------------------------- Defaults
+    // ---- Defaults -----------------------------------------------------------
     this.controlCenter.addPreset_background();
-
-    // ---------------------------- Main, side canvas settings is on top
-    // this.controlCenter.addPreset_recorder();
     this.controlCenter.addPreset_resetCamera();
     this.controlCenter.addPreset_setCameraPosition2();
     this.controlCenter.addPreset_compass();
+    // this.controlCenter.addPreset_recorder();
 
-    // ---------------------------- Side cameras
+    // ---- Side canvas --------------------------------------------------------
     if( this.settings.side_camera ){
     //   // this.gui.add_folder('Side Canvas').open();
       this.controlCenter.addPreset_enableSidePanel();
@@ -521,24 +524,23 @@ class ViewerApp extends ThrottledEventDispatcher {
       this.controlCenter.addPreset_sideViewElectrodeThreshold();
     }
 
-    // ---- Add Presets --------------------------------------------------------
-    let animationControllerRegistered = false;
-    asArray( enabledPresets ).forEach(( presetName ) => {
+    // ---- Subject volume, surface, and electrodes ----------------------------
+    this.controlCenter.addPreset_subject2();
+    this.controlCenter.addPreset_surface_type2();
+    this.controlCenter.addPreset_hemisphere_material();
+    this.controlCenter.addPreset_surface_color();
+    this.controlCenter.addPreset_map_template();
+    this.controlCenter.addPreset_electrodes();
+    this.controlCenter.addPreset_voxel();
 
-      try {
-        if( presetName === 'animation' ){
-          animationControllerRegistered = true;
-        }
-        this.controlCenter['addPreset_' + presetName]();
-      } catch (e) {
-        if(this.DEBUG){
-          console.warn(`Cannot add preset ${ presetName }`);
-        }
-      }
-    });
-    if( !animationControllerRegistered ){
-      this.controlCenter.addPreset_animation();
+    // ---- Localization -------------------------------------------------------
+    if( enabledPresets.includes( "localization" )) {
+      this.controlCenter.addPreset_localization();
     }
+
+    // ---- Data Visualization -------------------------------------------------
+    this.controlCenter.addPreset_animation();
+    this.controlCenter.addPreset_display_highlights();
 
 
     // The following stuff need to run *after* controller set up
@@ -549,7 +551,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     * this is the line that causes the problem
     */
     this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
-    this.canvas.set_font_size( this.settings.font_magnification || 1 );
+    this.canvas.setFontSize( this.settings.font_magnification || 1 );
 
     // Compile everything
     // this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
@@ -561,7 +563,7 @@ class ViewerApp extends ThrottledEventDispatcher {
       if( this.settings.side_display || false ){
         this.canvas.enableSideCanvas();
         // reset so that the size is displayed correctly
-        this._reset_flag = true;
+        // this._reset_flag = true;
       }else{
         this.canvas.disableSideCanvas();
       }

@@ -3,7 +3,7 @@ import { CONSTANTS } from '../constants.js';
 import { is_electrode } from '../geometry/sphere.js';
 import { copyToClipboard } from '../utility/copyToClipboard.js';
 import { vector3ToString } from '../utility/vector3ToString.js';
-
+import { asColor } from '../utility/color.js';
 
 // 1. Background colors
 import { registerPresetBackground } from '../controls/PresetBackground.js';
@@ -78,11 +78,6 @@ class ViewerControlCenter extends EventDispatcher {
 
     this.animParameters = this.canvas.animParameters;
 
-    this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
-      (evt) => {
-        this.update();
-      }, this.canvas.main_canvas );
-
     this._animOnTimeChange = () => {
       // update time controller
       if( this.ctrlAnimTime !== undefined ) {
@@ -95,6 +90,10 @@ class ViewerControlCenter extends EventDispatcher {
     this.canvas.$el.addEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
     this.canvas.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
     this.canvas.$el.addEventListener( "viewerApp.mouse.click" , this._onClicked );
+    this.canvas.$el.addEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
+
+    // dead loop...
+    // this.canvas.$el.addEventListener( "viewerApp.subject.changed", this.updateSelectorOptions );
 
     // other keyboard events
 
@@ -269,12 +268,139 @@ class ViewerControlCenter extends EventDispatcher {
       }
     });
 
+    // Installs driver
+    this.canvas.$el.addEventListener( "viewerApp.controller.setValue" , this._onDriveController );
+
   }
 
   dispose() {
     this.canvas.$el.removeEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
     this.canvas.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
     this.canvas.$el.removeEventListener( "viewerApp.mouse.click" , this._onClicked );
+    this.canvas.$el.removeEventListener( "viewerApp.controller.setValue" , this._onDriveController );
+    this.canvas.$el.removeEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
+    // this.canvas.$el.removeEventListener( "viewerApp.subject.changed", this.updateSelectorOptions );
+  }
+
+  _onSetSliceCrosshair = ( event ) => {
+    if( typeof event.detail.x === "number" ) {
+      const controller = this.gui.getController( 'Sagittal (L - R)' );
+      if( !controller.isfake ) {
+        controller.object[ 'Sagittal (L - R)' ] = event.detail.x;
+        controller.updateDisplay();
+      }
+    }
+    if( typeof event.detail.y === "number" ) {
+      const controller = this.gui.getController( 'Coronal (P - A)' );
+      if( !controller.isfake ) {
+        controller.object[ 'Coronal (P - A)' ] = event.detail.y;
+        controller.updateDisplay();
+      }
+    }
+    if( typeof event.detail.z === "number" ) {
+      const controller = this.gui.getController( 'Axial (I - S)' );
+      if( !controller.isfake ) {
+        controller.object[ 'Axial (I - S)' ] = event.detail.z;
+        controller.updateDisplay();
+      }
+    }
+  }
+
+  _onDriveController = ( event ) => {
+
+    // should be { name, value, folderName }
+    const message = event.detail;
+    if( typeof message !== "object" || message === null ) { return; }
+
+    if( typeof message.name !== "string" || message.name === "" ) { return; }
+
+    // get controller
+    const controller = this.gui.getController( message.name , message.folderName );
+    if( !controller || controller.isfake ) {
+      console.warn(`Cannot find threeBrain viewer controller: ${ message.name }`);
+      return;
+    }
+
+    if( controller._disabled ) {
+      console.warn(`ThreeBrain viewer controller is disabled: ${ message.name }`);
+      return;
+    }
+
+    // check controller type
+    const classList = controller.domElement.classList;
+
+    // Button
+    if( classList.contains( "function" ) ) {
+      controller.$button.click();
+      return;
+    }
+
+    // Color
+    if( classList.contains( "function" ) ) {
+      controller.setValue(
+        asColor( message.value, new Color() ).getHexString()
+      );
+      return;
+    }
+
+    // Boolean
+    if( classList.contains( "boolean" ) ) {
+      if( message.value ) {
+        controller.setValue( true );
+      } else {
+        controller.setValue( false );
+      }
+      return;
+    }
+
+    // String
+    if( classList.contains( "string" ) ) {
+      if( typeof message.value === "object" ) {
+        controller.setValue( JSON.stringify( message.value ) );
+      } else {
+        controller.setValue( message.value.toString() );
+      }
+      return;
+    }
+
+    // option
+    if( classList.contains( "option" ) ) {
+      if(
+        Array.isArray( controller._names ) &&
+        controller._names.includes( message.value )
+      ) {
+        controller.setValue( message.value );
+      } else {
+        console.warn(`ThreeBrain viewer controller [${ message.name }] does not contain option choice: ${ message.value }`);
+      }
+      return;
+    }
+
+    // Number
+    if( classList.contains( "option" ) ) {
+
+      if( typeof message.value !== "number" || isNaN( message.value ) ||
+          !isFinite( message.value ) ) {
+        console.warn(`ThreeBrain viewer controller [${ message.name }] needs a valid (not NaN, Infinity) numerical input.`);
+      } else {
+
+        if(
+          ( controller._min !== undefined && controller._min > message.value ) ||
+          ( controller._max !== undefined && controller._max < message.value )
+        ) {
+          console.warn(`Trying to ThreeBrain viewer controller [${ message.name }]  numerical value that is out of range.`);
+        }
+
+        controller.setValue( message.value );
+      }
+
+      return;
+
+    }
+
+
+    console.warn(`Unimplemented controller type for [${ message.name }].`);
+
   }
 
   _onMouseMove = ( event ) => {
@@ -371,8 +497,9 @@ class ViewerControlCenter extends EventDispatcher {
   updateSelectorOptions() {
     this.updateDataCube2Types();
     // this.set_surface_ctype( true );
-    this._update_canvas();
+    this.canvas.needsUpdate = true;
   }
+
   // update gui controllers
   update(){
 
@@ -399,6 +526,9 @@ class ViewerControlCenter extends EventDispatcher {
   }
 
   fire_change( args, priority = "deferred" ){
+    // FIXME: TODO: fire event within control center to canvas.$el
+    console.warn("fire_change!!! TODO")
+    return;
     this.canvas.dispatch_event( "canvas.controllers.onChange", {
       data: args,
       priority: priority

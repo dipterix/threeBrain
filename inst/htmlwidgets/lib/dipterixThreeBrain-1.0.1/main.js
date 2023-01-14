@@ -62455,7 +62455,7 @@ CONSTANTS.FOLDERS = {
   'electrode-mapping'     : 'Electrode Settings',
   'animation'             : 'Data Visualization',
   'highlight-selection'   : 'Data Visualization',
-  'localization'          : 'Electrode Settings > Localization'
+  'localization'          : 'Electrode Localization'
 };
 
 CONSTANTS.THRESHOLD_OPERATORS = [
@@ -67507,6 +67507,7 @@ class EnhancedGUI extends lil_gui_esm {
       currentFolder = new EnhancedGUI( {
         parent: this, title : folderName
       });
+      currentFolder.close();
     }
 
     if( subTitles.length === 0 ) {
@@ -67686,11 +67687,12 @@ class EnhancedGUI extends lil_gui_esm {
     ];
     const data = (0,utils/* to_dict */.nr)( args );
     keys.forEach((k) => {
-      if( data[k] !== undefined ){
+      const value = data[k];
+      if( value !== undefined ){
         const controller = this.getController( k, "", false );
         if( !controller.isfake ) {
-          console.debug(`Setting ${ k }`);
-          controller.setValue( data[k] );
+          console.debug(`Initialize setting ${ k } -> ${ value }`);
+          controller.setValue( value );
         }
       }
     });
@@ -67716,6 +67718,31 @@ class EnhancedGUI extends lil_gui_esm {
 /* harmony import */ var _ViewerApp_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7849);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(975);
 
+
+
+
+const _enterViewerEvent = {
+  type      : "viewerApp.mouse.enterViewer",
+  immediate : false,
+  muffled   : true
+};
+const _leaveViewerEvent = {
+  type      : "viewerApp.mouse.leaveViewer",
+  immediate : false,
+  muffled   : true
+};
+
+const _contextMenuEvent = {
+  type      : "viewerApp.mouse.contextmenu",
+  immediate : false,
+  muffled   : true
+}
+
+const _mouseUpEvent = {
+  type      : "viewerApp.mouse.mouseup",
+  immediate : true,
+  muffled   : true
+}
 
 
 
@@ -67826,14 +67853,13 @@ class MouseKeyboard extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODUL
     this.mouseLocation = MouseKeyboard.OFF_VIEWER;
   }
 
-
   _onViewerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_VIEWER;
-    this.dispatch( "viewerApp.mouse.enterViewer", null, false );
+    this.dispatch( _enterViewerEvent );
   }
   _onViewerBlurred = () => {
     this.mouseLocation = this.mouseLocation & MouseKeyboard.OFF_VIEWER;
-    this.dispatch( "viewerApp.mouse.leaveViewer", null, false );
+    this.dispatch( _leaveViewerEvent );
   }
   _onControllerFocused = () => {
     this.mouseLocation = this.mouseLocation | MouseKeyboard.ON_CONTROLLER;
@@ -67861,21 +67887,31 @@ class MouseKeyboard extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODUL
   }
   _onMainCanvasContextMenu = () => {
     // this should fire immediately
-    this.dispatch( "viewerApp.mouse.contextmenu", null, true );
+    this.dispatch( _contextMenuEvent );
   }
   _onMainCanvasMouseDown = ( event ) => {
     // this should fire immediately
     this._mouseDownHold = true;
-    this.dispatch( "viewerApp.mouse.mousedown", event, true );
+    this.dispatch({
+      type      : "viewerApp.mouse.mousedown",
+      data      : event,
+      immediate : true,
+      muffled   : true
+    });
   }
   _onMainCanvasMouseUp = () => {
     // this should fire immediately
     this._mouseDownHold = false;
-    this.dispatch( "viewerApp.mouse.mouseup", null, true );
+    this.dispatch( _mouseUpEvent );
   }
   _onMainCanvasClicked = ( event ) => {
     // this should be fired delayed
-    this.dispatch( "viewerApp.mouse.click", event, false );
+    this.dispatch({
+      type      : "viewerApp.mouse.click",
+      data      : event,
+      immediate : false,
+      muffled   : true
+    });
   }
   _onKeydown = ( event ) => {
     // keyCode is deprecated, but I found no better substitution
@@ -67887,7 +67923,12 @@ class MouseKeyboard extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODUL
       }
     }
     event.preventDefault();
-    this.dispatch( "viewerApp.keyboad.keydown", event, true );
+    this.dispatch({
+      type      : "viewerApp.keyboad.keydown",
+      data      : event,
+      immediate : true,
+      muffled   : true
+    });
   }
 
 
@@ -68003,17 +68044,13 @@ class ThrottledEventDispatcher {
 
     if( this._listeners.has( _callbackId ) ) {
       const existingCallback = this._listeners.get( _callbackId );
-      if( this.debug ) {
-        console.debug( `Executing previous listener - ${ _callbackId }` );
-      }
+      this.debugVerbose( `Executing previous listener - ${ _callbackId }` );
       this._listeners.delete( _callbackId );
       if( executePrevious && typeof existingCallback === 'function' ) {
         try { existingCallback(); } catch (e) {}
       }
       this._listeners.set( _callbackId , () => {
-        if( this.debug ) {
-          console.debug( `Re-registering listener - ${ _callbackId }` );
-        }
+        this.debugVerbose( `Re-registering listener - ${ _callbackId }` );
         try {
           this.$wrapper.removeEventListener( type, existingCallback );
         } catch (e) {
@@ -68049,7 +68086,7 @@ class ThrottledEventDispatcher {
     this._listeners.clear();
   }
 
-  dispatch( type, data, immediate = false ){
+  dispatch({ type, data, immediate = false, muffled = false}){
 
     if( typeof(type) !== "string" || type.length === 0 ) {
       throw TypeError( 'ThrottledEventDispatcher.dispatch: Can only dispatch event of none-empty type' );
@@ -68066,6 +68103,7 @@ class ThrottledEventDispatcher {
         // make sure doDispatch only called once
         throttlePause: false,
         data: data,
+        muffled: muffled,
         dispatched: false
       }
       if( !immediate_ ) {
@@ -68074,6 +68112,7 @@ class ThrottledEventDispatcher {
     } else {
       buffer = this._eventBuffers.get( type );
       buffer.data = data;
+      buffer.muffled = muffled;
       buffer.dispatched = false;
       exists = true;
     }
@@ -68082,11 +68121,7 @@ class ThrottledEventDispatcher {
       buffer.dispatched = true;
       buffer.throttlePause = false;
 
-      if( exists ) {
-        try {
-          this._eventBuffers.delete( type );
-        } catch (e) {}
-      }
+      // if( exists ) { try { this._eventBuffers.delete( type ); } catch (e) {} }
 
       const event = new CustomEvent(
         buffer.type,
@@ -68098,7 +68133,9 @@ class ThrottledEventDispatcher {
       );
 
       // Dispatch the event.
-      console.debug(`Dispatching immediate event: ${ buffer.type }`);
+      if( !buffer.muffled ) {
+        this.debugVerbose(`[${ this.constructor.name }] is dispatching an immediate event: ${ buffer.type }`);
+      }
       this.$wrapper.dispatchEvent(event);
 
       return;
@@ -68119,9 +68156,8 @@ class ThrottledEventDispatcher {
       // remove buffer. It's ok if this operation fails
       // buffer.dispatched=true will prevent buffer from being fired again
       // this operation is to release memory
-      try {
-        this._eventBuffers.delete( type );
-      } catch (e) {}
+
+      // try { this._eventBuffers.delete( type ); } catch (e) {}
 
       buffer.throttlePause = false;
       if( buffer.dispatched ) { return; }
@@ -68138,7 +68174,9 @@ class ThrottledEventDispatcher {
       );
 
       // Dispatch the event.
-      console.debug(`Dispatching throttled event: ${ buffer.type }`);
+      if( !buffer.muffled ) {
+        this.debugVerbose(`[${ this.constructor.name }] is dispatching an throttled event: ${ buffer.type }`);
+      }
       this.$wrapper.dispatchEvent(event);
 
     };
@@ -68149,6 +68187,12 @@ class ThrottledEventDispatcher {
 
   availableEventNames() {
     return [ ...this._listeners.keys() ];
+  }
+
+  debugVerbose( message ) {
+    if( this.debug ) {
+      console.debug( message )
+    }
   }
 }
 
@@ -68168,7 +68212,7 @@ class ThrottledEventDispatcher {
 /* harmony import */ var _utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(9898);
 /* harmony import */ var _EnhancedGUI_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6546);
 /* harmony import */ var _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(8959);
-/* harmony import */ var _ViewerCanvas_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4300);
+/* harmony import */ var _ViewerCanvas_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(8997);
 /* harmony import */ var _MouseKeyboard_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(6153);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(975);
 /* harmony import */ var _requestAnimationFrame_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(4305);
@@ -68179,6 +68223,18 @@ class ThrottledEventDispatcher {
 
 
 
+
+
+
+const _updateDataStartEvent = {
+  type      : "viewerApp.updateData.start",
+  immediate : true
+}
+
+const _updateDataEndEvent = {
+  type      : "viewerApp.updateData.end",
+  immediate : true
+}
 
 
 class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6__/* .ThrottledEventDispatcher */ .v {
@@ -68202,7 +68258,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     super( $wrapper );
 
     // Flags
-    this.DEBUG = debug;
+    this.debug = debug;
     this.isViewerApp = true;
     this.controllerClosed = false;
     this.ready = false;
@@ -68288,7 +68344,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
       this.$wrapper,
       width ?? this.$wrapper.clientWidth,
       height ?? this.$wrapper.clientHeight,
-      250, false, cache, this.DEBUG, true );
+      250, false, cache, this.debug, true );
 
     // Add listeners for mouse
     this.mouseKeyboard = new _MouseKeyboard_js__WEBPACK_IMPORTED_MODULE_3__/* .MouseKeyboard */ .q( this );
@@ -68322,9 +68378,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     this.$progress.style.width = `${ progress }%`;
 
     if( message ) {
-      if( this.DEBUG ) {
-        console.debug(`THREEBRAIN (viewer app progress): ${ message }`);
-      }
+      this.debugVerbose(`[ViewerApp.setProgressBar]: ${ message }`);
       this.$informationText.innerHTML = `<small>${ message }</small>`;
     } else {
       this.$informationText.innerHTML = "";
@@ -68361,7 +68415,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
   }
 
   bootstrap( { bootstrapData, reset = false } ) {
-    this.DEBUG = this.DEBUG || bootstrapData.debug;
+    this.debug = this.debug || bootstrapData.debug;
 
     // read configurations
     const path = bootstrapData.settings.cache_folder + bootstrapData.data_filename;
@@ -68383,8 +68437,8 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
      */
     const readerIsObsolete = () => {
       const re = this.__fileReader !== fileReader;
-      if( re && this.DEBUG ) {
-        console.debug( "THREEBRAIN (viewer.render): configuration is obsolete, abandon current process to yield." );
+      if( re ) {
+        this.debugVerbose( "[ViewerApp.bootstrap]: configuration is obsolete, abandon current process to yield." );
       }
       return ( re );
     };
@@ -68452,7 +68506,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
 
   async updateData({ data, reset = false, isObsolete = false }) {
 
-    this.dispatch( "viewerApp.updateData.start", {}, true );
+    this.dispatch( _updateDataStartEvent );
 
     const _isObsolete = ( args ) => {
       if( typeof isObsolete !== 'function' ) { return isObsolete; }
@@ -68460,7 +68514,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     }
     if( _isObsolete( "Updating viewer data" ) ) { return; }
 
-    this.DEBUG = data.settings.debug || false;
+    this.debug = data.settings.debug || false;
 
     // clear canvas
     this.canvas.pause_animation(9999);
@@ -68482,11 +68536,11 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     this.colorMaps = (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__/* .asArray */ ._)( data.settings.color_maps );
 
     // canvas flags
-    this.canvas.DEBUG = this.DEBUG;
+    this.canvas.debug = this.debug;
     this.canvas.mainCamera.needsReset = reset === true;
     // this.shiny.set_token( this.settings.token );
 
-    if( this.DEBUG ) {
+    if( this.debug ) {
       this.enableDebugger();
     }
 
@@ -68566,9 +68620,6 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     await Promise.all( geomPromises );
     if( _isObsolete() ) { return; }
 
-    // this.canvas.finish_init();
-    // this.canvas.dispatch_event( "canvas.finish_init" );
-
     this.setProgressBar({
       progress : 100,
       message : "Finalizing..."
@@ -68603,9 +68654,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     if( this.settings.custom_javascript &&
         this.settings.custom_javascript !== ''){
 
-      if( this.canvas.DEBUG ){
-        console.debug("[threeBrain]: Executing customized js code:\n"+this.settings.custom_javascript);
-      }
+      this.debugVerbose("[ViewerApp.updateData]: Executing customized js code:\n"+this.settings.custom_javascript);
       (( viewerApp ) => {
         try {
           eval( this.settings.custom_javascript );
@@ -68618,7 +68667,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     // Make sure it's hidden though progress will hide it
     this.$informationContainer.style.display = 'none';
 
-    this.dispatch( "viewerApp.updateData.end", {}, true );
+    this.dispatch( _updateDataEndEvent );
 
   }
 
@@ -68674,19 +68723,17 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
 
     this.$controllerContainer.appendChild( this.controllerGUI.domElement );
 
-    // Add listeners
+    // ---- Add Presets --------------------------------------------------------
     const enabledPresets = this.settings.control_presets;
     this.controlCenter = new _ViewerControlCenter_js__WEBPACK_IMPORTED_MODULE_1__/* .ViewerControlCenter */ .Y( this );
-    // ---------------------------- Defaults
+    // ---- Defaults -----------------------------------------------------------
     this.controlCenter.addPreset_background();
-
-    // ---------------------------- Main, side canvas settings is on top
-    // this.controlCenter.addPreset_recorder();
     this.controlCenter.addPreset_resetCamera();
     this.controlCenter.addPreset_setCameraPosition2();
     this.controlCenter.addPreset_compass();
+    // this.controlCenter.addPreset_recorder();
 
-    // ---------------------------- Side cameras
+    // ---- Side canvas --------------------------------------------------------
     if( this.settings.side_camera ){
     //   // this.gui.add_folder('Side Canvas').open();
       this.controlCenter.addPreset_enableSidePanel();
@@ -68695,24 +68742,23 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
       this.controlCenter.addPreset_sideViewElectrodeThreshold();
     }
 
-    // ---- Add Presets --------------------------------------------------------
-    let animationControllerRegistered = false;
-    (0,_utility_asArray_js__WEBPACK_IMPORTED_MODULE_7__/* .asArray */ ._)( enabledPresets ).forEach(( presetName ) => {
+    // ---- Subject volume, surface, and electrodes ----------------------------
+    this.controlCenter.addPreset_subject2();
+    this.controlCenter.addPreset_surface_type2();
+    this.controlCenter.addPreset_hemisphere_material();
+    this.controlCenter.addPreset_surface_color();
+    this.controlCenter.addPreset_map_template();
+    this.controlCenter.addPreset_electrodes();
+    this.controlCenter.addPreset_voxel();
 
-      try {
-        if( presetName === 'animation' ){
-          animationControllerRegistered = true;
-        }
-        this.controlCenter['addPreset_' + presetName]();
-      } catch (e) {
-        if(this.DEBUG){
-          console.warn(`Cannot add preset ${ presetName }`);
-        }
-      }
-    });
-    if( !animationControllerRegistered ){
-      this.controlCenter.addPreset_animation();
+    // ---- Localization -------------------------------------------------------
+    if( enabledPresets.includes( "localization" )) {
+      this.controlCenter.addPreset_localization();
     }
+
+    // ---- Data Visualization -------------------------------------------------
+    this.controlCenter.addPreset_animation();
+    this.controlCenter.addPreset_display_highlights();
 
 
     // The following stuff need to run *after* controller set up
@@ -68723,7 +68769,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
     * this is the line that causes the problem
     */
     this.canvas.mainCamera.setZoom({ zoom : this.settings.start_zoom });
-    this.canvas.set_font_size( this.settings.font_magnification || 1 );
+    this.canvas.setFontSize( this.settings.font_magnification || 1 );
 
     // Compile everything
     // this.canvas.main_renderer.compile( this.canvas.scene, this.canvas.mainCamera );
@@ -68735,7 +68781,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
       if( this.settings.side_display || false ){
         this.canvas.enableSideCanvas();
         // reset so that the size is displayed correctly
-        this._reset_flag = true;
+        // this._reset_flag = true;
       }else{
         this.canvas.disableSideCanvas();
       }
@@ -68795,7 +68841,7 @@ class ViewerApp extends _ThrottledEventDispatcher_js__WEBPACK_IMPORTED_MODULE_6_
 
 /***/ }),
 
-/***/ 4300:
+/***/ 8997:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -68807,79 +68853,182 @@ __webpack_require__.d(__webpack_exports__, {
 
 // EXTERNAL MODULE: ./node_modules/three/build/three.module.js
 var three_module = __webpack_require__(2212);
-// EXTERNAL MODULE: ./src/js/utility/asArray.js
-var asArray = __webpack_require__(9898);
-;// CONCATENATED MODULE: ./src/js/utility/color.js
+;// CONCATENATED MODULE: ./node_modules/three/examples/jsm/libs/stats.module.js
+var Stats = function () {
 
+	var mode = 0;
 
-function asColor( hex, c ) {
+	var container = document.createElement( 'div' );
+	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
+	container.addEventListener( 'click', function ( event ) {
 
-  if( !c || (typeof c !== 'object') || !c.isColor ) {
-    throw TypeError('asColor: c must be a THREE.Color');
-  }
+		event.preventDefault();
+		showPanel( ++ mode % container.children.length );
 
-  if( typeof hex === 'object' && hex ) {
+	}, false );
 
-    // assume hex = { r: ?, g: ?, b: ? }
-    return c.copy( hex );
+	//
 
-  }
+	function addPanel( panel ) {
 
-  if( typeof hex === 'number' ) {
+		container.appendChild( panel.dom );
+		return panel;
 
-    // e.g.: hex = 0xccff99
-    return c.set( hex );
+	}
 
-  }
+	function showPanel( id ) {
 
-  if( typeof hex === 'string' ) {
-    if ( hex.indexOf('#') !== 0 ) {
-        hex = "#" + hex;
-    }
-    if ( hex.length > 7 ) {
-      hex = hex.slice( 0 , 7 );
-    }
-    return c.setStyle( hex );
-  }
+		for ( var i = 0; i < container.children.length; i ++ ) {
 
-  if( Array.isArray( hex ) ) {
-    c.fromArray( hex );
-    if ( hex.some( v => { return v > 1 ; }) ) {
-      c.multiplyScalar( 1/ 255 );
-    }
-    return c;
-  }
+			container.children[ i ].style.display = i === id ? 'block' : 'none';
 
-  throw TypeError('asColor: unknown input type.');
-}
+		}
 
+		mode = id;
 
-function invertColor ( c ) {
+	}
 
-  c.r = 1 - c.r;
-  c.g = 1 - c.g;
-  c.b = 1 - c.b;
+	//
 
-  return c;
+	var beginTime = ( performance || Date ).now(), prevTime = beginTime, frames = 0;
+
+	var fpsPanel = addPanel( new Stats.Panel( 'FPS', '#0ff', '#002' ) );
+	var msPanel = addPanel( new Stats.Panel( 'MS', '#0f0', '#020' ) );
+
+	if ( self.performance && self.performance.memory ) {
+
+		var memPanel = addPanel( new Stats.Panel( 'MB', '#f08', '#201' ) );
+
+	}
+
+	showPanel( 0 );
+
+	return {
+
+		REVISION: 16,
+
+		dom: container,
+
+		addPanel: addPanel,
+		showPanel: showPanel,
+
+		begin: function () {
+
+			beginTime = ( performance || Date ).now();
+
+		},
+
+		end: function () {
+
+			frames ++;
+
+			var time = ( performance || Date ).now();
+
+			msPanel.update( time - beginTime, 200 );
+
+			if ( time >= prevTime + 1000 ) {
+
+				fpsPanel.update( ( frames * 1000 ) / ( time - prevTime ), 100 );
+
+				prevTime = time;
+				frames = 0;
+
+				if ( memPanel ) {
+
+					var memory = performance.memory;
+					memPanel.update( memory.usedJSHeapSize / 1048576, memory.jsHeapSizeLimit / 1048576 );
+
+				}
+
+			}
+
+			return time;
+
+		},
+
+		update: function () {
+
+			beginTime = this.end();
+
+		},
+
+		// Backwards Compatibility
+
+		domElement: container,
+		setMode: showPanel
+
+	};
 
 };
 
-// returns 0 for darkest dark and 1 for whitest white
-function colorLuma ( c ) {
-  // per ITU-R BT.709 ( if color luma < 0.4, then it's too dark?)
+Stats.Panel = function ( name, fg, bg ) {
 
-  // https://contrastchecker.online/color-relative-luminance-calculator
-  const r = c.r <= 0.03928 ? c.r / 12.92 : ((c.r+0.055)/1.055) ^ 2.4;
-  const g = c.g <= 0.03928 ? c.g / 12.92 : ((c.g+0.055)/1.055) ^ 2.4;
-  const b = c.b <= 0.03928 ? c.b / 12.92 : ((c.b+0.055)/1.055) ^ 2.4;
+	var min = Infinity, max = 0, round = Math.round;
+	var PR = round( window.devicePixelRatio || 1 );
 
-  return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-}
+	var WIDTH = 80 * PR, HEIGHT = 48 * PR,
+		TEXT_X = 3 * PR, TEXT_Y = 2 * PR,
+		GRAPH_X = 3 * PR, GRAPH_Y = 15 * PR,
+		GRAPH_WIDTH = 74 * PR, GRAPH_HEIGHT = 30 * PR;
 
+	var canvas = document.createElement( 'canvas' );
+	canvas.width = WIDTH;
+	canvas.height = HEIGHT;
+	canvas.style.cssText = 'width:80px;height:48px';
 
+	var context = canvas.getContext( '2d' );
+	context.font = 'bold ' + ( 9 * PR ) + 'px Helvetica,Arial,sans-serif';
+	context.textBaseline = 'top';
 
-// EXTERNAL MODULE: ./src/js/utils.js
-var utils = __webpack_require__(3658);
+	context.fillStyle = bg;
+	context.fillRect( 0, 0, WIDTH, HEIGHT );
+
+	context.fillStyle = fg;
+	context.fillText( name, TEXT_X, TEXT_Y );
+	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
+
+	context.fillStyle = bg;
+	context.globalAlpha = 0.9;
+	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
+
+	return {
+
+		dom: canvas,
+
+		update: function ( value, maxValue ) {
+
+			min = Math.min( min, value );
+			max = Math.max( max, value );
+
+			context.fillStyle = bg;
+			context.globalAlpha = 1;
+			context.fillRect( 0, 0, WIDTH, GRAPH_Y );
+			context.fillStyle = fg;
+			context.fillText( round( value ) + ' ' + name + ' (' + round( min ) + '-' + round( max ) + ')', TEXT_X, TEXT_Y );
+
+			context.drawImage( canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT );
+
+			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, GRAPH_HEIGHT );
+
+			context.fillStyle = bg;
+			context.globalAlpha = 0.9;
+			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, round( ( 1 - ( value / maxValue ) ) * GRAPH_HEIGHT ) );
+
+		}
+
+	};
+
+};
+
+/* harmony default export */ const stats_module = (Stats);
+
+// EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
+var converter = __webpack_require__(7542);
+// EXTERNAL MODULE: ./node_modules/downloadjs/download.js
+var download = __webpack_require__(3729);
+var download_default = /*#__PURE__*/__webpack_require__.n(download);
+// EXTERNAL MODULE: ./src/js/core/ThrottledEventDispatcher.js
+var ThrottledEventDispatcher = __webpack_require__(5857);
 ;// CONCATENATED MODULE: ./src/js/core/HauntedArcballControls.js
 
 
@@ -69004,19 +69153,6 @@ class HauntedArcballControls extends three_module.EventDispatcher {
   	// force an update at start
   	this.update();
 
-  }
-
-  dispatchEvent( event ) {
-    if ( this.enabled === false || typeof event !== "object" ) return;
-
-    if( event.type == "start" || event.type == "change" ) {
-      this._canvas.needsUpdate = true;
-    } else if ( event.type == "end" ) {
-      this._canvas.pause_animation( 1 );
-      this._canvas.dispatch_event( "canvas.mainCamera.onEnd", this.object.getState() );
-    }
-
-    super.dispatchEvent( event );
   }
 
   handleResize = () => {
@@ -70005,10 +70141,10 @@ class CanvasFileLoader {
   }
 
   _onLoadStart( evt ) {
-    console.debug( 'Loading start!');
+    this.canvas.debugVerbose( 'Loading start!' );
   }
   _onLoad( evt, callback ) {
-    console.debug( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
+    this.canvas.debugVerbose( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
 
     let v;
     switch (evt.currentType) {
@@ -70040,6 +70176,8 @@ class CanvasFileLoader {
 
 
 
+// EXTERNAL MODULE: ./src/js/utils.js
+var utils = __webpack_require__(3658);
 ;// CONCATENATED MODULE: ./src/js/utility/draggable.js
 
 function get_size(el){
@@ -70312,7 +70450,7 @@ class SideCanvas {
       this.zoomLevel = level;
     }
     if( this.zoomLevel > 10 ) { this.zoomLevel = 10; }
-    if( this.zoomLevel < 1 ) { this.zoomLevel = 1; }
+    if( this.zoomLevel < 1.05 ) { this.zoomLevel = 1; }
     const cameraMargin = 128 / this.zoomLevel;
     const maxTranslate = 128 - cameraMargin;
 
@@ -70401,7 +70539,8 @@ class SideCanvas {
       this.zoom( zoomLevel );
     }
     if( crosshair ) {
-      this.setCrosshair({ x : 0, y : 0, z : 0, immediate : false });
+      this.mainCanvas.setSliceCrosshair({ x : 0, y : 0, z : 0, immediate : false });
+      // this.setCrosshair({ x : 0, y : 0, z : 0, immediate : false });
     }
   }
   setDimension({ width, height, offsetX, offsetY } = {}) {
@@ -70456,6 +70595,17 @@ class SideCanvas {
   }
 
   dispose() {
+    this.$header.removeEventListener( "dblclick" , this._onDoubleClick );
+    this.$zoomIn.removeEventListener( "click" , this._onZoomInClicked );
+    this.$zoomIn.removeEventListener( "click" , this._onZoomOutClicked );
+    this.$recenter.removeEventListener( "click" , this._onRecenterClicked );
+    this.$reset.removeEventListener( "click" , this._onResetClicked );
+
+    this.$canvas.removeEventListener( "mousedown" , this._onMouseDown );
+    this.$canvas.removeEventListener( "contextmenu" , this._onContextMenu );
+    this.$canvas.removeEventListener( "mouseup" , this._onMouseUp );
+    this.$canvas.removeEventListener( "mousemove" , this._onMouseMove );
+    this.$canvas.removeEventListener( "mousewheel" , this._onMouseWheel );
     this.renderer.dispose();
   }
 
@@ -70464,27 +70614,6 @@ class SideCanvas {
     this.renderer.setClearColor( color );
     this.$el.style.backgroundColor = color;
   }
-
-  setCrosshair({x, y, z, immediate = true} = {}) {
-    // instead of setting slice instances, set data gui
-    /* const sliceInstance = this.mainCanvas.get_state( "activeSliceInstance" );
-    if( sliceInstance && sliceInstance.isDataCube ) {
-      sliceInstance.setCrosshair({
-        x : sagittalDepth,
-        y : coronalDepth,
-        z : axialDepth
-      });
-    }
-    */
-    this.mainCanvas.dispatch_event(
-      'canvas.drive.setSliceCrosshair',
-      {
-        x : x, y : y, z : z
-      },
-      immediate
-    );
-  }
-
 
 
   pan({ right = 0, up = 0, unit = "css", updateMainCamera = false } = {}) {
@@ -70527,11 +70656,10 @@ class SideCanvas {
     // console.log(`x: ${sagittalDepth}, y: ${coronalDepth}, z: ${axialDepth}`);
 
     // update slice depths
-    this.setCrosshair({
+    this.mainCanvas.setSliceCrosshair({
       x : sagittalDepth,
       y : coronalDepth,
-      z : axialDepth
-    });
+      z : axialDepth, immediate : false });
     // need to update mainCamera
     if( updateMainCamera ) {
       const newMainCameraPosition = new three_module.Vector3()
@@ -70600,10 +70728,6 @@ class SideCanvas {
     this.$header.className = 'THREEBRAIN-SIDE-HEADER';
     this.$header.id = this._container_id + '__' + type + 'header';
     this.$el.appendChild( this.$header );
-    // double-click on header to reset position
-    this.mainCanvas.bind( `${ this.type }_div_header_dblclick`, 'dblclick', (evt) => {
-      this.reset({ zoomLevel : false, position : true, size : true })
-    }, this.$header );
 
     // Add side canvas element
     this.$canvas = document.createElement('canvas');
@@ -70631,11 +70755,6 @@ class SideCanvas {
 		this.$zoomIn.style.top = '23px'; // for header
 		this.$zoomIn.innerText = '+';
 		this.$el.appendChild( this.$zoomIn );
-		this.mainCanvas.bind( `${ this.type }_zoomin_click`, 'click', (e) => {
-		  let newZoomLevel = this.zoomLevel * 1.2;
-		  if( newZoomLevel > 10 ) { newZoomLevel = 10; }
-		  this.zoom( newZoomLevel );
-		}, this.$zoomIn);
 
 		// zoom out tool
     this.$zoomOut = document.createElement('div');
@@ -70643,11 +70762,6 @@ class SideCanvas {
 		this.$zoomOut.style.top = '50px'; // header + $zoomIn
 		this.$zoomOut.innerText = '-';
 		this.$el.appendChild( this.$zoomOut );
-		this.mainCanvas.bind( `${ this.type }_zoomout_click`, 'click', (e) => {
-		  let newZoomLevel = this.zoomLevel / 1.2;
-		  if( newZoomLevel < 1.1 ) { newZoomLevel = 1; }
-		  this.zoom( newZoomLevel );
-		}, this.$zoomOut);
 
 		// toggle pan (translate) tool
 		this.$recenter = document.createElement('div');
@@ -70655,20 +70769,13 @@ class SideCanvas {
 		this.$recenter.style.top = '77px'; // header + $zoomIn + $zoomOut
 		this.$recenter.innerText = 'C';
 		this.$el.appendChild( this.$recenter );
-		this.mainCanvas.bind( `${ this.type }_recenter_click`, 'click', (e) => {
-		  this.zoom();
-		}, this.$recenter);
+
 
 		this.$reset = document.createElement('div');
 		this.$reset.className = 'zoom-tool';
 		this.$reset.style.top = '104px'; // header + $zoomIn + $zoomOut + $recenter
 		this.$reset.innerText = '0';
 		this.$el.appendChild( this.$reset );
-		this.mainCanvas.bind( `${ this.type }_zoom_reset_click`, 'click', (e) => {
-		  this.$canvas.style.top = '0';
-      this.$canvas.style.left = '0';
-		  this.zoom( 1 );
-		}, this.$reset );
 
 		// Add resize anchors to bottom-right
 		this.$resizeWrapper = document.createElement('div');
@@ -70683,43 +70790,6 @@ class SideCanvas {
       this.raiseTop();
     });
 
-    // Make side canvas clickable
-    this.mainCanvas.bind( `${ this.type }_cvs_focused`, 'mousedown', (evt) => {
-      evt.preventDefault();
-      this._focused = true;
-      this._calculateCrosshair( evt );
-    }, this.$canvas );
-    this.$canvas.oncontextmenu = function (evt) {
-      evt.preventDefault();
-    };
-    this.mainCanvas.bind( `${ this.type }_cvs_blur`, 'mouseup', (evt) => {
-      evt.preventDefault();
-      this._focused = false;
-    }, this.$canvas );
-    this.mainCanvas.bind( `${ this.type }_cvs_setCrosshair`, 'mousemove', (evt) => {
-      evt.preventDefault();
-      if( !this._focused ) { return; }
-      this._calculateCrosshair( evt );
-    }, this.$canvas );
-
-    // Make $canvas scrollable, with changing slices
-    this.mainCanvas.bind( `${ this.type }_cvs_mousewheel`, 'mousewheel', (evt) => {
-      evt.preventDefault();
-      if( evt.altKey ){
-        const depthName = this.type + '_depth';
-        const currentDepth = this.mainCanvas.get_state( depthName );
-        if( evt.deltaY > 0 ){
-          this.mainCanvas.set_state( depthName, 1 + currentDepth );
-        }else if( evt.deltaY < 0 ){
-          this.mainCanvas.set_state( depthName, -1 + currentDepth );
-        }
-      }
-      this.setCrosshair({
-        x : sagittalDepth,
-        y : coronalDepth,
-        z : axialDepth
-      });
-    }, this.$canvas );
 
     // Make $el resizable, keep current width and height
     makeResizable( this.$el, true );
@@ -70773,326 +70843,103 @@ class SideCanvas {
     this.camera.updateProjectionMatrix();
     // this.camera.add( this.directionalLight );
 
-    // TODO: main canvas need to add cameras and element
     this.mainCanvas.add_to_scene( this.camera, true );
     this.mainCanvas.add_to_scene( this.directionalLight, true );
     this.mainCanvas.wrapper_canvas.appendChild( this.$el );
 
-    /*
-      this.sideCanvasList[ nm ] = {
-        'container' : div,
-        'canvas'    : cvs,
-        'context'   : cvs.getContext('2d'),
-        'camera'    : camera,
-        'reset'     : reset,
-        'get_zoom_level' : () => { return( zoom_level ) },
-        'set_zoom_level' : set_zoom_level
-      };
-    */
 
+    // ---- Bind events --------------------------------------------------------
+    // double-click on header to reset position
+    this.$header.addEventListener( "dblclick" , this._onDoubleClick );
+    this.$zoomIn.addEventListener( "click" , this._onZoomInClicked );
+    this.$zoomOut.addEventListener( "click" , this._onZoomOutClicked );
+    this.$recenter.addEventListener( "click" , this._onRecenterClicked );
+    this.$reset.addEventListener( "click" , this._onResetClicked );
+
+    this.$canvas.addEventListener( "mousedown" , this._onMouseDown );
+    this.$canvas.addEventListener( "contextmenu" , this._onContextMenu );
+    this.$canvas.addEventListener( "mouseup" , this._onMouseUp );
+    this.$canvas.addEventListener( "mousemove" , this._onMouseMove );
+    this.$canvas.addEventListener( "mousewheel" , this._onMouseWheel );
+  }
+
+  _onResetClicked = () => {
+	  this.$canvas.style.top = '0';
+    this.$canvas.style.left = '0';
+	  this.zoom( 1 );
+	}
+
+  _onMouseDown = ( evt ) => {
+    evt.preventDefault();
+    this._focused = true;
+    this._calculateCrosshair( evt );
+  }
+
+  _onContextMenu = ( evt ) => {
+    evt.preventDefault();
+  }
+
+  _onMouseUp = ( evt ) => {
+    evt.preventDefault();
+    this._focused = false;
+  }
+
+  _onMouseMove = ( evt ) => {
+    if( !this._focused ) { return; }
+    evt.preventDefault();
+    this._calculateCrosshair( evt );
+  }
+
+  _onMouseWheel = ( evt ) => {
+    evt.preventDefault();
+    const depthName = this.type + '_depth';
+    console.log(depthName);
+    let currentDepth = this.mainCanvas.get_state( depthName );
+    if( evt.deltaY > 0 ){
+      currentDepth += 0.5;
+    }else if( evt.deltaY < 0 ){
+      currentDepth -= 0.5;
+    }
+    this.mainCanvas.set_state( depthName, currentDepth );
+
+    switch (this.type) {
+      case 'sagital':
+        this.mainCanvas.setSliceCrosshair({ x : currentDepth })
+        break;
+      case 'coronal':
+        this.mainCanvas.setSliceCrosshair({ y : currentDepth })
+        break;
+      case 'axial':
+        this.mainCanvas.setSliceCrosshair({ z : currentDepth })
+        break;
+      default:
+        // code
+    }
+  }
+
+  _onRecenterClicked = () => {
+    this.zoom();
+  }
+
+  _onZoomOutClicked = () => {
+    let newZoomLevel = this.zoomLevel / 1.2;
+	  this.zoom( newZoomLevel );
+  }
+
+  _onZoomInClicked = () => {
+    let newZoomLevel = this.zoomLevel * 1.2;
+	  this.zoom( newZoomLevel );
+  }
+  _onDoubleClick = () => {
+    this.reset({ zoomLevel : false, position : true, size : true })
   }
 
 }
 
 
-
-;// CONCATENATED MODULE: ./node_modules/three/examples/jsm/libs/stats.module.js
-var Stats = function () {
-
-	var mode = 0;
-
-	var container = document.createElement( 'div' );
-	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
-	container.addEventListener( 'click', function ( event ) {
-
-		event.preventDefault();
-		showPanel( ++ mode % container.children.length );
-
-	}, false );
-
-	//
-
-	function addPanel( panel ) {
-
-		container.appendChild( panel.dom );
-		return panel;
-
-	}
-
-	function showPanel( id ) {
-
-		for ( var i = 0; i < container.children.length; i ++ ) {
-
-			container.children[ i ].style.display = i === id ? 'block' : 'none';
-
-		}
-
-		mode = id;
-
-	}
-
-	//
-
-	var beginTime = ( performance || Date ).now(), prevTime = beginTime, frames = 0;
-
-	var fpsPanel = addPanel( new Stats.Panel( 'FPS', '#0ff', '#002' ) );
-	var msPanel = addPanel( new Stats.Panel( 'MS', '#0f0', '#020' ) );
-
-	if ( self.performance && self.performance.memory ) {
-
-		var memPanel = addPanel( new Stats.Panel( 'MB', '#f08', '#201' ) );
-
-	}
-
-	showPanel( 0 );
-
-	return {
-
-		REVISION: 16,
-
-		dom: container,
-
-		addPanel: addPanel,
-		showPanel: showPanel,
-
-		begin: function () {
-
-			beginTime = ( performance || Date ).now();
-
-		},
-
-		end: function () {
-
-			frames ++;
-
-			var time = ( performance || Date ).now();
-
-			msPanel.update( time - beginTime, 200 );
-
-			if ( time >= prevTime + 1000 ) {
-
-				fpsPanel.update( ( frames * 1000 ) / ( time - prevTime ), 100 );
-
-				prevTime = time;
-				frames = 0;
-
-				if ( memPanel ) {
-
-					var memory = performance.memory;
-					memPanel.update( memory.usedJSHeapSize / 1048576, memory.jsHeapSizeLimit / 1048576 );
-
-				}
-
-			}
-
-			return time;
-
-		},
-
-		update: function () {
-
-			beginTime = this.end();
-
-		},
-
-		// Backwards Compatibility
-
-		domElement: container,
-		setMode: showPanel
-
-	};
-
-};
-
-Stats.Panel = function ( name, fg, bg ) {
-
-	var min = Infinity, max = 0, round = Math.round;
-	var PR = round( window.devicePixelRatio || 1 );
-
-	var WIDTH = 80 * PR, HEIGHT = 48 * PR,
-		TEXT_X = 3 * PR, TEXT_Y = 2 * PR,
-		GRAPH_X = 3 * PR, GRAPH_Y = 15 * PR,
-		GRAPH_WIDTH = 74 * PR, GRAPH_HEIGHT = 30 * PR;
-
-	var canvas = document.createElement( 'canvas' );
-	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
-	canvas.style.cssText = 'width:80px;height:48px';
-
-	var context = canvas.getContext( '2d' );
-	context.font = 'bold ' + ( 9 * PR ) + 'px Helvetica,Arial,sans-serif';
-	context.textBaseline = 'top';
-
-	context.fillStyle = bg;
-	context.fillRect( 0, 0, WIDTH, HEIGHT );
-
-	context.fillStyle = fg;
-	context.fillText( name, TEXT_X, TEXT_Y );
-	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
-
-	context.fillStyle = bg;
-	context.globalAlpha = 0.9;
-	context.fillRect( GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT );
-
-	return {
-
-		dom: canvas,
-
-		update: function ( value, maxValue ) {
-
-			min = Math.min( min, value );
-			max = Math.max( max, value );
-
-			context.fillStyle = bg;
-			context.globalAlpha = 1;
-			context.fillRect( 0, 0, WIDTH, GRAPH_Y );
-			context.fillStyle = fg;
-			context.fillText( round( value ) + ' ' + name + ' (' + round( min ) + '-' + round( max ) + ')', TEXT_X, TEXT_Y );
-
-			context.drawImage( canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT );
-
-			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, GRAPH_HEIGHT );
-
-			context.fillStyle = bg;
-			context.globalAlpha = 0.9;
-			context.fillRect( GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, round( ( 1 - ( value / maxValue ) ) * GRAPH_HEIGHT ) );
-
-		}
-
-	};
-
-};
-
-/* harmony default export */ const stats_module = (Stats);
 
 // EXTERNAL MODULE: ./src/js/core/StorageCache.js
 var StorageCache = __webpack_require__(7123);
-;// CONCATENATED MODULE: ./src/js/core/events.js
-
-
-class CanvasEvent {
-  constructor(el, container_id) {
-    // el must be a DOM element, no check here
-    if( el ) {
-      if(! el instanceof window.HTMLElement ) {
-        throw Error("CanvasEvent(el): el must be an HTMLElement.")
-      }
-      this._el = el;
-    } else {
-      this._el = document.createElement("div");
-    }
-
-    this._dispose_functions = new Map();
-    this._event_buffer = new Map();
-    this._container_id = container_id || this._el.getAttribute( 'data-target' );
-
-    this.throttle = true;
-    this.timeout = 100;
-  }
-
-  bind( name, evtstr, fun, target, options = false ){
-    // this.bind( "event name", "click", (evt) => {...} );
-
-    const _target = target || this._el;
-
-    // Dispose existing function
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      try {
-        _f();
-      } catch (e) {}
-      this._dispose_functions.delete( name );
-    }
-    this._dispose_functions.set( name, () => {
-      console.debug('Calling dispose function ' + name);
-      try {
-        _target.removeEventListener( evtstr , fun );
-      } catch (e) {
-        console.warn('Unable to dispose ' + name);
-      }
-    });
-
-    console.debug(`Registering event ${evtstr} (${name})`);
-    _target.addEventListener( evtstr , fun, options );
-  }
-
-  unbind( name ) {
-    const _f = this._dispose_functions.get( name );
-    if( typeof _f === 'function' ){
-      try {
-        _f();
-      } catch (e) {}
-      this._dispose_functions.delete( name );
-    }
-  }
-
-  dispose() {
-    this._dispose_functions.forEach((_, _name) => {
-      this.unbind(_name);
-    });
-    this._dispose_functions.clear();
-  }
-
-  dispatch_event( type, data, immediate = false ){
-
-    if( typeof(type) !== "string" || type.length === 0 ) {
-      throw TypeError( 'CanvasEvent.dispatch_event: Can only dispatch event with type of none-empty string' );
-    }
-
-    if( !this._event_buffer.has(type) ) {
-      this._event_buffer.set(type, {
-        type: type,
-        throttlePause: false,
-        data: data,
-        dispatched: false
-      });
-    }
-    const evt_buffer = this._event_buffer.get(type);
-    evt_buffer.data = data;
-    evt_buffer.dispatched = false;
-
-    const immediate_ = this.throttle || immediate;
-    if( !immediate && evt_buffer.throttlePause ) {
-      // update data, but hold it
-      return;
-    }
-
-    evt_buffer.throttlePause = true;
-
-    const do_dispatch = () => {
-      evt_buffer.throttlePause = false;
-      if( evt_buffer.dispatched ) { return; }
-
-      // fire event with the newest data
-      const event = new CustomEvent(
-        evt_buffer.type,
-        {
-          container_id: this._container_id,
-          detail: evt_buffer.data
-        }
-      );
-
-      // Dispatch the event.
-      console.debug(`Dispatching event: ${evt_buffer.type} - ${evt_buffer.data}`);
-      this._el.dispatchEvent(event);
-      evt_buffer.dispatched = true;
-    };
-
-    if( immediate ) {
-      do_dispatch();
-    } else {
-      setTimeout(() => { do_dispatch(); }, this.timeout);
-    }
-
-  }
-
-  available_events() {
-    return [...this._dispose_functions.keys()];
-  }
-}
-
-
-
 ;// CONCATENATED MODULE: ./src/js/Math/animations.js
 
 
@@ -71137,6 +70984,94 @@ function generate_animation_default(m, track_data, cmap, animation_clips, mixer)
 
     return(keyframe);
 }
+
+
+
+// EXTERNAL MODULE: ./src/js/ext/text_sprite.js
+var text_sprite = __webpack_require__(1086);
+;// CONCATENATED MODULE: ./src/js/geometry/compass.js
+/* mesh objects that always stays at the corner of canvas */
+
+
+
+
+
+
+class Compass {
+  constructor( camera, control, text = 'RAS' ){
+    this._camera = camera;
+    this._control = control;
+    this._text = text;
+
+    this.container = new three_module.Object3D();
+
+    this._left = new three_module.Vector3();
+    this._down = new three_module.Vector3();
+
+    const color = new three_module.Color();
+    const direction = new three_module.Vector3();
+    const origin = new three_module.Vector3( 0 , 0 , 0 );
+    const rotation = ['rotateZ', null, 'rotateX'];
+
+    for( let ii in text ){
+      // const geom = new CylinderGeometry( 0.5, 0.5, 3, 8 );
+      const _c = [0,0,0];
+      _c[ ii ] = 1;
+      color.fromArray( _c );
+      direction.fromArray( _c );
+      _c[ ii ] = 255;
+
+      // const line = new Mesh( geom, new MeshBasicMaterial({ color: color, side: DoubleSide }) );
+      // if( rotation[ii] ) { line[ rotation[ii] ]( Math.PI / 2 ); }
+
+      const axis = new three_module.ArrowHelper( direction, origin, 6, color.getHex(), 5.9 );
+      const sprite = new text_sprite/* TextSprite */.VW(text[ ii ], 6, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
+      sprite.position.copy( direction ).multiplyScalar( 9 );
+
+      axis.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      sprite.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
+      this.container.add( axis );
+      this.container.add( sprite );
+
+    }
+
+  }
+
+  update(){
+    if( this.container.visible ) {
+
+      const aspRatio = (this._camera.top - this._camera.bottom) / (this._camera.right - this._camera.left);
+      const zoom = 1 / this._camera.zoom;
+
+      this._down.copy( this._camera.position ).sub( this._control.target ).normalize();
+
+      this.container.position.copy( this._camera.position )
+        .sub( this._down.multiplyScalar( 40 ) );
+
+      // calculate shift-left
+      this._left.copy( this._camera.up ).cross( this._down ).normalize()
+        .multiplyScalar( ( this._camera.left + this._camera.right ) / 2 );
+        // .multiplyScalar( ( this._camera.left + 10 * zoom + ( -150 * ( zoom - 1 ) ) ) );
+
+      this._down.copy( this._camera.up ).normalize()
+        .multiplyScalar( ( this._camera.bottom + 10 * zoom + ( -150 * ( zoom - 1 ) ) * aspRatio ) );
+
+      this.container.position.add( this._left ).add( this._down );
+      this.container.scale.set( zoom, zoom, zoom );
+
+    }
+  }
+
+  set_visibility( visible, callback ){
+    this.container.visible = (visible === true);
+    if( typeof callback === 'function' ){
+      callback();
+    }
+  }
+
+}
+
+
 
 
 
@@ -71560,9 +71495,15 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     };
     sliceMeshYZ.userData.instance = this;
     this.sliceYZ = sliceMeshYZ;
+
+
+
+    // set up events
+    this._canvas.$el.addEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
   }
 
   dispose(){
+    this._canvas.$el.removeEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
     this.crosshairLR.geometry.dispose();
     this.crosshairLR.material.dispose();
     this.crosshairPA.geometry.dispose();
@@ -71613,9 +71554,14 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
 
     this._canvas.updateElectrodeVisibilityOnSideCanvas();
 
-    this._canvas.dispatch_event( "canvas.sliceCrosshair.onChange", {
-      position : this.crosshairGroup.position,
-      space: "tkrRAS"
+    // Calculate MNI305 positions
+    const crosshairMNI = this._canvas.getSideCanvasCrosshairMNI305(
+      this.crosshairGroup.position.clone() );
+    const displayText = `${crosshairMNI.x.toFixed(1)}, ${crosshairMNI.y.toFixed(1)}, ${crosshairMNI.z.toFixed(1)}`
+
+    this._canvas.setControllerValue({
+      name : "Intersect MNI305",
+      value: displayText
     });
     // Animate on next refresh
     this._canvas.start_animation( 0 );
@@ -71708,6 +71654,11 @@ class DataCube extends geometry_abstract/* AbstractThreeBrainObject */.j {
     // this.origin.position.set( -cube_center[0], -cube_center[1], -cube_center[2] );
     // this.reset_side_cameras( CONSTANTS.VEC_ORIGIN, Math.max(...cube_half_size) * 2 );
 
+
+  }
+
+  _onSetSliceCrosshair = ( event ) => {
+    this.setCrosshair( event.detail );
   }
 
 }
@@ -75441,94 +75392,32 @@ function gen_linesements(g, canvas){
 
 
 
-// EXTERNAL MODULE: ./src/js/ext/text_sprite.js
-var text_sprite = __webpack_require__(1086);
-;// CONCATENATED MODULE: ./src/js/geometry/compass.js
-/* mesh objects that always stays at the corner of canvas */
+;// CONCATENATED MODULE: ./src/js/core/GeometryFactory.js
 
 
 
 
 
 
-class Compass {
-  constructor( camera, control, text = 'RAS' ){
-    this._camera = camera;
-    this._control = control;
-    this._text = text;
 
-    this.container = new three_module.Object3D();
 
-    this._left = new three_module.Vector3();
-    this._down = new three_module.Vector3();
-
-    const color = new three_module.Color();
-    const direction = new three_module.Vector3();
-    const origin = new three_module.Vector3( 0 , 0 , 0 );
-    const rotation = ['rotateZ', null, 'rotateX'];
-
-    for( let ii in text ){
-      // const geom = new CylinderGeometry( 0.5, 0.5, 3, 8 );
-      const _c = [0,0,0];
-      _c[ ii ] = 1;
-      color.fromArray( _c );
-      direction.fromArray( _c );
-      _c[ ii ] = 255;
-
-      // const line = new Mesh( geom, new MeshBasicMaterial({ color: color, side: DoubleSide }) );
-      // if( rotation[ii] ) { line[ rotation[ii] ]( Math.PI / 2 ); }
-
-      const axis = new three_module.ArrowHelper( direction, origin, 6, color.getHex(), 5.9 );
-      const sprite = new text_sprite/* TextSprite */.VW(text[ ii ], 6, `rgba(${_c[0]}, ${_c[1]}, ${_c[2]}, 1)`);
-      sprite.position.copy( direction ).multiplyScalar( 9 );
-
-      axis.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      sprite.layers.set( constants/* CONSTANTS.LAYER_SYS_MAIN_CAMERA_8 */.t.LAYER_SYS_MAIN_CAMERA_8 );
-      this.container.add( axis );
-      this.container.add( sprite );
-
-    }
-
-  }
-
-  update(){
-    if( this.container.visible ) {
-
-      const aspRatio = (this._camera.top - this._camera.bottom) / (this._camera.right - this._camera.left);
-      const zoom = 1 / this._camera.zoom;
-
-      this._down.copy( this._camera.position ).sub( this._control.target ).normalize();
-
-      this.container.position.copy( this._camera.position )
-        .sub( this._down.multiplyScalar( 40 ) );
-
-      // calculate shift-left
-      this._left.copy( this._camera.up ).cross( this._down ).normalize()
-        .multiplyScalar( ( this._camera.left + this._camera.right ) / 2 );
-        // .multiplyScalar( ( this._camera.left + 10 * zoom + ( -150 * ( zoom - 1 ) ) ) );
-
-      this._down.copy( this._camera.up ).normalize()
-        .multiplyScalar( ( this._camera.bottom + 10 * zoom + ( -150 * ( zoom - 1 ) ) * aspRatio ) );
-
-      this.container.position.add( this._left ).add( this._down );
-      this.container.scale.set( zoom, zoom, zoom );
-
-    }
-  }
-
-  set_visibility( visible, callback ){
-    this.container.visible = (visible === true);
-    if( typeof callback === 'function' ){
-      callback();
-    }
-  }
-
+const GeometryFactory = {
+  'sphere'    : sphere/* gen_sphere */.Lk,
+  'free'      : gen_free,
+  'datacube'  : gen_datacube,
+  'datacube2' : gen_datacube2,
+  'tube'      : gen_tube,
+  'linesegments' : gen_linesements,
+  'blank'     : (g, canvas) => { return(null) }
 }
 
 
 
 
-
+// EXTERNAL MODULE: ./src/js/utility/asArray.js
+var asArray = __webpack_require__(9898);
+// EXTERNAL MODULE: ./src/js/utility/color.js
+var utility_color = __webpack_require__(5284);
 ;// CONCATENATED MODULE: ./src/js/jsm/math/Lut2.js
 
 
@@ -75741,15 +75630,13 @@ function addToColorMapKeywords( color_name, cmap_keys ) {
 
 
 
-// EXTERNAL MODULE: ./node_modules/json-2-csv/lib/converter.js
-var converter = __webpack_require__(7542);
-// EXTERNAL MODULE: ./node_modules/downloadjs/download.js
-var download = __webpack_require__(3729);
-var download_default = /*#__PURE__*/__webpack_require__.n(download);
 ;// CONCATENATED MODULE: ./src/js/core/ViewerCanvas.js
 
 
 
+
+
+// Core
 
 // import { OrthographicTrackballControls } from './OrthographicTrackballControls.js';
 
@@ -75765,6 +75652,7 @@ var download_default = /*#__PURE__*/__webpack_require__.n(download);
 
 
 
+// Utility
 
 
 
@@ -75775,37 +75663,24 @@ var download_default = /*#__PURE__*/__webpack_require__.n(download);
 
 
 
-/* Geometry generator */
-const GEOMETRY_FACTORY = {
-  'sphere'    : sphere/* gen_sphere */.Lk,
-  'free'      : gen_free,
-  'datacube'  : gen_datacube,
-  'datacube2' : gen_datacube2,
-  'tube'      : gen_tube,
-  'linesegments' : gen_linesements,
-  'blank'     : (g, canvas) => { return(null) }
-};
 
-/**
- * entering use | operator, leaving use & operator
- * for example, entering canvas from off canvas (000) will be 001 | 000 = 001
- * then, entering control panel will be 001 | 101 = 101.
- * Leaving controller first, then to side panel will be
- *   (101 & 011) | 011 = 011
- * Or, entering side panel then leave controllers
- *   (101 | 011) & 011 = 011
- * hence the order of operation doesn't matter
-*/
-const MOUSE = {
-  ON_CANVAS       : 0b001,
-  ON_SIDE_CANVAS  : 0b011,
-  ON_CONTROLLER   : 0b101,
-  OFF_CONTROLLER  : 0b011,
-  OFF_SIDE_CANVAS : 0b101,
-  OFF_VIEWER      : 0b000
+
+
+const _mainCameraUpdatedEvent = {
+  type  : "viewerApp.mainCamera.updated",
+  muffled: true
 }
 
-window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
+const _stateDataChangeEvent = {
+  type      : "viewerApp.state.updated",
+  immediate : true
+}
+
+const _subjectStateChangedEvent = {
+  type : "viewerApp.subject.changed"
+}
+
+
 /* ------------------------------------ Layer setups ------------------------------------
   Defines for each camera which layers are visible.
   Protocols are
@@ -75828,22 +75703,22 @@ window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
 const cached_storage = new StorageCache/* StorageCache */.B();
 
 
-class ViewerCanvas {
+class ViewerCanvas extends ThrottledEventDispatcher/* ThrottledEventDispatcher */.v {
 
   // private
 
   // public
 
   constructor(
-    el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
+    el, width, height, side_width = 250, shiny_mode=false, cache = false,
+    debug = false, has_webgl2 = true
   ) {
+
+    super( el );
+
     this.isViewerCanvas = true;
-    if(DEBUG){
-      console.debug('Debug Mode: ON.');
-      this.DEBUG = true;
-    }else{
-      this.DEBUG = false;
-    }
+    this.debug = debug;
+    this.debugVerbose('Debug Mode: ON.');
     if(cache === true){
       this.use_cache = true;
       this.cache = cached_storage;
@@ -75897,9 +75772,6 @@ class ViewerCanvas {
 
     // action event listener functions and dispose flags
     this._disposed = false;
-    this.event_dispatcher = new CanvasEvent(
-      this.main_canvas, this.container_id);
-    // set default values
     this.set_state( 'coronal_depth', 0 );
     this.set_state( 'axial_depth', 0 );
     this.set_state( 'sagittal_depth', 0 );
@@ -76060,7 +75932,7 @@ class ViewerCanvas {
     this.bounding_box.layers.set( constants/* CONSTANTS.LAYER_INVISIBLE_31 */.t.LAYER_INVISIBLE_31 );
 
 
-    this.set_font_size();
+    this.setFontSize();
 
 		// File loader
     this.file_loader = new CanvasFileLoader( this );
@@ -76070,10 +75942,25 @@ class ViewerCanvas {
     this.$el.addEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
     this.$el.addEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown, { capture : true } );
 
+    this.trackball.addEventListener( "start", this._onTrackballChanged );
+    this.trackball.addEventListener( "change", this._onTrackballChanged );
+    this.trackball.addEventListener( "end", this._onTrackballEnded );
+
     // this listener has been moved to controlCenter. Ideally all listeners go there
     // and this canvas is just in charge of passively rendering & updating things
     // this.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
   }
+
+
+  _onTrackballChanged = () => {
+    this.needsUpdate = true;
+  }
+
+  _onTrackballEnded = () => {
+    this.pause_animation( 1 );
+    this.dispatch( _mainCameraUpdatedEvent );
+  }
+
   _activateViewer = () => {
     this.activated = true;
     this.start_animation( 0 );
@@ -76094,7 +75981,7 @@ class ViewerCanvas {
           if( item.object && item.object.isMesh && item.object.userData.construct_params ) {
             const crosshairPosition = item.object.getWorldPosition( new three_module.Vector3() );
             crosshairPosition.centerCrosshair = true;
-            this.dispatch_event( 'canvas.drive.setSliceCrosshair', crosshairPosition );
+            this.setSliceCrosshair( crosshairPosition );
           }
         }
       });
@@ -76138,11 +76025,8 @@ class ViewerCanvas {
 
   // Generic method to add objects
   add_object(g){
-    //
-    if(this.DEBUG){
-      console.debug('Generating geometry '+g.type);
-    }
-    let gen_f = GEOMETRY_FACTORY[g.type],
+    this.debugVerbose('Generating geometry '+g.type);
+    let gen_f = GeometryFactory[ g.type ],
         inst = gen_f(g, this);
 
     if( !inst || typeof(inst) !== 'object' || !inst.object ){
@@ -76220,7 +76104,7 @@ class ViewerCanvas {
       ) { return; }
 
       const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-      console.debug(path);
+      this.debugVerbose(path);
       let v = await this.file_loader.read( path );
       if( v && typeof(v) === "object" ) {
         for(let key in v) {
@@ -76300,7 +76184,7 @@ class ViewerCanvas {
 
   // Debug stats (framerate)
   addNerdStats(){
-    // if DEBUG, add stats information
+    // if debug, add stats information
     if( this.__nerdStatsEnabled ) { return; }
     this.nerdStats = new stats_module();
     this.nerdStats.dom.style.display = 'block';
@@ -76324,7 +76208,7 @@ class ViewerCanvas {
       }
     }
     if( obj.parent ){
-      console.debug( 'removing object - ' + (obj.name || obj.type) );
+      this.debugVerbose( 'removing object - ' + (obj.name || obj.type) );
       obj.parent.remove( obj );
     }
 
@@ -76336,7 +76220,7 @@ class ViewerCanvas {
     if( !obj || typeof obj !== 'object' ) { return; }
     const obj_name = obj.name || obj.type || 'unknown';
     if( !quiet ){
-      console.debug('Disposing - ' + obj_name);
+      this.debugVerbose('Disposing - ' + obj_name);
     }
     if( obj.userData && typeof obj.userData.dispose === 'function' ){
       this._try_dispose( obj.userData, obj.name, quiet );
@@ -76362,17 +76246,21 @@ class ViewerCanvas {
   }
 
   dispose(){
+    super.dispose();
+
     // Remove all objects, listeners, and dispose all
     this._disposed = true;
     this.activated = false;
     this.animParameters.dispose();
 
     // Remove listeners
+    this.trackball.removeEventListener( "start", this._onTrackballChanged );
+    this.trackball.removeEventListener( "change", this._onTrackballChanged );
+    this.trackball.removeEventListener( "end", this._onTrackballEnded );
     this.$el.removeEventListener( 'viewerApp.mouse.enterViewer', this._activateViewer );
     this.$el.removeEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
     this.$el.removeEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown );
     // this.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
-    this.event_dispatcher.dispose();
     this.trackball.enabled = false;
     this.trackball.dispose();
 
@@ -76424,7 +76312,7 @@ class ViewerCanvas {
     this.color_maps.clear();
     // this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
-    console.debug('TODO: Need to dispose animation clips');
+    this.debugVerbose('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
 
     this.group.forEach((g) => {
@@ -76458,11 +76346,26 @@ class ViewerCanvas {
 
 
   /*---- Events -------------------------------------------------------------*/
-  bind( name, evtstr, fun, target, options = false ){
-    this.event_dispatcher.bind(name, evtstr, fun, target, options);
+  setControllerValue ({ name , value , folderName, immediate = true } = {}) {
+    this.dispatch({
+      type : "viewerApp.controller.setValue",
+      data : {
+        name : name,
+        value: value,
+        folderName : folderName
+      },
+      immediate : immediate
+    });
   }
-  dispatch_event( type, data, immediate = false ){
-    this.event_dispatcher.dispatch_event( type, data, immediate );
+
+  setSliceCrosshair({x, y, z, immediate = true} = {}) {
+    this.dispatch({
+      type : "viewerApp.canvas.setSliceCrosshair",
+      data : {
+        x : x, y : y, z : z
+      },
+      immediate : immediate
+    });
   }
 
   // callbacks
@@ -76561,7 +76464,7 @@ class ViewerCanvas {
       gp = this.group.get( group_name );
       // set re
 
-    }else if(this.DEBUG){
+    }else if(this.debug){
       console.error('Cannot find data with name ' + from_geom + ' at group ' + group_hint);
     }
 
@@ -76577,19 +76480,19 @@ class ViewerCanvas {
 
   // Canvas state
   set_state( key, val ) {
-    this.state_data.set(key, val);
-    console.debug(`Canvas state set [${key}]`);
-    this.dispatch_event( "canvas.state.onChange", {
-      key: key,
-      value: val
-    });
+    const oldValue = this.state_data.get( key );
+    if( oldValue !== val ) {
+      this.debugVerbose(`[ViewerCanvas] setting state [${key}]`);
+      this.dispatch( _stateDataChangeEvent );
+      this.state_data.set(key, val);
+    }
   }
   get_state( key, missing = undefined ) {
     return((0,utils/* get_or_default */.jM)( this.state_data, key, missing ));
   }
 
   // Font size magnification
-  set_font_size( magnification = 1 ){
+  setFontSize( magnification = 1 ){
     // font size
     this._lineHeight_normal = Math.round( 24 * this.pixel_ratio[0] * magnification );
     this._lineHeight_small = Math.round( 20 * this.pixel_ratio[0] * magnification );
@@ -76716,7 +76619,7 @@ class ViewerCanvas {
       this.object_chosen = m;
       this._last_object_chosen = m;
       this.highlight( this.object_chosen, false );
-      console.debug('object selected ' + m.name);
+      this.debugVerbose('object selected ' + m.name);
 
 
     }else{
@@ -77172,7 +77075,6 @@ class ViewerCanvas {
 
     this.trackball.update();
     this.compass.update();
-    if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
 
   }
 
@@ -77192,6 +77094,8 @@ class ViewerCanvas {
 
   // Main render function, automatically scheduled
   render(){
+
+    if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
 
     const _width = this.domElement.width;
     const _height = this.domElement.height;
@@ -77984,14 +77888,9 @@ class ViewerCanvas {
     // reset origin to AC
     // this.origin.position.copy( anterior_commissure );
 
-    this.dispatch_event(
-      'switch_subject',
-      {
-        target_subject: target_subject
-      }
-    );
+    this.dispatch( _subjectStateChangedEvent );
 
-    this.start_animation( 0 );
+    this.needsUpdate = true;
 
   }
 
@@ -78061,20 +77960,25 @@ class ViewerCanvas {
 
   switch_slices( target_subject, slice_type = 'T1' ){
 
-    this.state_data.delete( "activeSliceInstance" );
+    const oldActiveSlices = this.get_state("activeSliceInstance")
+    let newActiveSlices;
     //this.ssss
     this.slices.forEach( (vol, subject_code) => {
       for( let volume_name in vol ){
         const m = vol[ volume_name ];
         if( subject_code === target_subject && volume_name === `${slice_type} (${subject_code})`){
           (0,utils/* set_visibility */.K3)( m[0].parent, true );
-          this.set_state( "activeSliceInstance", m[0].userData.instance );
+          newActiveSlices = m[0].userData.instance;
         }else{
           // m[0].parent.visible = false;
           (0,utils/* set_visibility */.K3)( m[0].parent, false );
         }
       }
     });
+
+    if( newActiveSlices !== oldActiveSlices ) {
+      this.set_state( "activeSliceInstance", newActiveSlices );
+    }
 
     this.start_animation( 0 );
   }
@@ -78085,7 +77989,9 @@ class ViewerCanvas {
       let atlas_types = asArray( this.atlases.get(target_subject) );
 
     }*/
-    console.debug(`Setting volume data cube: ${atlas_type} (${target_subject})`);
+
+    const oldDataCube2 = this.get_state( "activeDataCube2Instance" );
+    let newDataCube2;
 
     this.atlases.forEach( (al, subject_code) => {
       for( let atlas_name in al ){
@@ -78093,13 +77999,18 @@ class ViewerCanvas {
         if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
           // m.visible = true;
           (0,utils/* set_visibility */.K3)( m, true );
-          this.set_state( "activeDataCube2Instance", m.userData.instance );
+          newDataCube2 = m.userData.instance;
         }else{
           // m.visible = false;
           (0,utils/* set_visibility */.K3)( m, false );
         }
       }
     });
+
+    if( oldDataCube2 !== newDataCube2 ) {
+      this.debugVerbose(`Setting volume data cube: ${atlas_type} (${target_subject})`);
+      this.set_state( "activeDataCube2Instance", newDataCube2 );
+    }
   }
 
   switch_ct( target_subject, ct_type = 'ct.aligned.t1', ct_threshold = 0.8 ){
@@ -78136,7 +78047,7 @@ class ViewerCanvas {
 
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
-    /* DEBUG code
+    /* debug code
     target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
     pos_targ = new Vector3(),
           pos_orig = new Vector3(),
@@ -78387,11 +78298,11 @@ mapped = false,
   setBackground({ color } = {}) {
     if( color === undefined || color === null ) { return; }
 
-    const c = asColor( color , new three_module.Color() );
-    const backgroundLuma = colorLuma( c );
+    const c = (0,utility_color/* asColor */.Q6)( color , new three_module.Color() );
+    const backgroundLuma = (0,utility_color/* colorLuma */.V0)( c );
     this.background_color = `#${ c.getHexString() }`;
 
-    invertColor( c );
+    (0,utility_color/* invertColor */.qd)( c );
     this.foreground_color = `#${ c.getHexString() }`;
 
     // Set renderer background to be v
@@ -78404,17 +78315,6 @@ mapped = false,
       this.$el.classList.remove( 'dark-viewer' );
     }
 
-    const event = {
-      data: {
-        'background' : this.background_color,
-        'foreground' : this.foreground_color
-      },
-      priority: "deferred"
-    }
-    this.dispatch_event( "canvas.background.onChange", event.data );
-    // for shiny
-    this.dispatch_event( "canvas.controllers.onChange", event );
-
     try {
       this.sideCanvasList.coronal.setBackground( this.background_color );
       this.sideCanvasList.axial.setBackground( this.background_color );
@@ -78423,8 +78323,6 @@ mapped = false,
 
     // force re-render
     this.start_animation(0);
-
-    return event;
   }
   resetCanvas() {
     // Center camera first.
@@ -78519,6 +78417,8 @@ function vector3ToString(v, ifInvalid = "", precision = 2){
 
 
 
+// EXTERNAL MODULE: ./src/js/utility/color.js
+var color = __webpack_require__(5284);
 ;// CONCATENATED MODULE: ./src/js/controls/PresetBackground.js
 
 
@@ -78537,15 +78437,6 @@ function registerPresetBackground( ViewerControlCenter ){
       .onChange((v) => { this.canvas.setBackground({ color : v }); })
       .setValue( initialValue );
 
-    // bind driver
-    this.canvas.bind(
-      "canvasDriveBackgound",
-      "canvas.drive.background",
-      ( event ) => {
-        // { color : 0xfff }
-        controller.setValue( event.detail.color )
-      }
-    );
   }
 
   return( ViewerControlCenter );
@@ -78814,13 +78705,6 @@ function registerPresetMainCamera( ViewerControlCenter ){
       this.canvas.resetCanvas();
     }, { folderName: folderName });
 
-    this.canvas.bind(
-      "canvasDriveResetCamera",
-      "canvas.drive.resetCamera",
-      ( event ) => {
-        this.canvas.resetCanvas();
-      }
-    );
   };
 
   ViewerControlCenter.prototype.initializeCameraPosition = function(){
@@ -78863,15 +78747,6 @@ function registerPresetMainCamera( ViewerControlCenter ){
     });
 
     this.initializeCameraPosition();
-
-    this.canvas.bind(
-      "canvasDriveSetCameraPosition2",
-      "canvas.drive.setCameraPosition2",
-      ( event ) => {
-        // { position : "anterior" }
-        controller.setValue( event.detail.position );
-      }
-    );
 
   }
 
@@ -78933,14 +78808,6 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       })
       .setValue( initialDisplay );
 
-    this.canvas.bind(
-      "canvasDriveEnableSideCanvas",
-      "canvas.drive.enableSideCanvas",
-      ( event ) => {
-        // { enable : true }
-        controller.setValue( event.detail.enable );
-      }
-    );
   };
 
   ViewerControlCenter.prototype.addPreset_resetSidePanel = function(){
@@ -78955,21 +78822,10 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
     const resetController = this.gui.addController(
       'Reset Slice Canvas', resetSidePanels, { folderName: folderName });
 
-    this.canvas.bind(
-      "canvasDriveResetSideCanvas",
-      "canvas.drive.resetSideCanvas",
-      resetSidePanels
-    );
-
     // reset first
     resetSidePanels();
   }
 
-  ViewerControlCenter.prototype.setSlice = function( args ) {
-    const activeSlice = this.canvas.get_state("activeSliceInstance");
-    if( !activeSlice || !activeSlice.isDataCube ) { return; }
-    activeSlice.setCrosshair( args );
-  }
   ViewerControlCenter.prototype.showSlices = function( slices, show = true ) {
     const activeSlice = this.canvas.get_state( "activeSliceInstance" );
     if( !activeSlice || !activeSlice.isDataCube ) { return; }
@@ -78993,72 +78849,26 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       }
       this.fire_change({ 'coronal_depth' : v });
       */
-      this.setSlice({ y : v });
+      this.canvas.setSliceCrosshair({ y : v });
     });
 
     const controllerAxial = this.gui
       .addController('Axial (I - S)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
-        this.setSlice({ z : v });
+        // this.setSlice({ z : v });
+        this.canvas.setSliceCrosshair({ z : v });
       });
 
     const controllerSagittal = this.gui
       .addController('Sagittal (L - R)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
-        this.setSlice({ x : v });
+        // this.setSlice({ x : v });
+        this.canvas.setSliceCrosshair({ x : v });
       });
 
     const controllerCrosshair = this.gui
       .addController( 'Intersect MNI305', "0.00, 0.00, 0.00", { folderName: folderName } )
 
-    this.canvas.bind(
-      "ControllerIntersectionCoordinateNeedsUpdate",
-      "canvas.sliceCrosshair.onChange",
-      ( event ) => {
-        // position should be Vector3. don't change this object
-        // { position: new Vector3(...) }
-        if( event.detail && event.detail.position && event.detail.position.isVector3 ) {
-          const crosshair = this.canvas.getSideCanvasCrosshairMNI305( event.detail.position.clone() );
-          const displayText = `${crosshair.x.toFixed(1)}, ${crosshair.y.toFixed(1)}, ${crosshair.z.toFixed(1)}`
-          controllerCrosshair.object[ controllerCrosshair._name ] = displayText;
-          controllerCrosshair.updateDisplay();
-        }
-      }
-    );
-
-    /*
-    [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c, ii) => {
-
-      this.canvas.bind( `dat_gui_side_controller_${ii}_mousewheel`, 'mousewheel',
-        (evt) => {
-          if( evt.altKey ){
-            evt.preventDefault();
-            const current_val = _c.getValue();
-            _c.setValue( current_val + evt.deltaY );
-          }
-        }, _c.domElement );
-
-    });
-    */
-
-    this.canvas.bind( `canvasDriveSetSliceCrosshair`, 'canvas.drive.setSliceCrosshair',
-      (evt) => {
-        evt.preventDefault();
-        if( typeof evt.detail.x === "number" ) {
-          controllerSagittal.setValue( evt.detail.x );
-        }
-        if( typeof evt.detail.y === "number" ) {
-          controllerCoronal.setValue( evt.detail.y );
-        }
-        if( typeof evt.detail.z === "number" ) {
-          controllerAxial.setValue( evt.detail.z );
-        }
-        if( evt.detail.centerCrosshair ) {
-          this.canvas.sideCanvasList.coronal.zoom();
-          this.canvas.sideCanvasList.sagittal.zoom();
-          this.canvas.sideCanvasList.axial.zoom();
-        }
-      });
 
     const controllerOverlayCoronal = this.gui
       .addController('Overlay Coronal', false, { folderName : folderName })
@@ -79194,19 +79004,6 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       }
     });
 
-    this.canvas.bind( `canvasDriveSetSliceOverlay`, 'canvas.drive.setSliceOverlay',
-      (evt) => {
-        //
-        if( typeof evt.detail.x === "boolean" ) {
-          controllerOverlaySagittal.setValue( evt.detail.x );
-        }
-        if( typeof evt.detail.y === "boolean" ) {
-          controllerOverlayCoronal.setValue( evt.detail.y );
-        }
-        if( typeof evt.detail.z === "boolean" ) {
-          controllerOverlayAxial.setValue( evt.detail.z );
-        }
-      });
   }
 
   ViewerControlCenter.prototype.addPreset_sideViewElectrodeThreshold = function(){
@@ -79866,7 +79663,8 @@ function registerPresetElectrodeAnimation( ViewerControlCenter ){
       // const playbackSpeed = this.ctrlAnimSpeed.getValue() || 1;
 
       if( !cmap ){
-        this.ctrlLegendVisible.setValue(false);
+        this.ctrlLegendVisible.setValue( false );
+        this.ctrlRenderTimestamp.setValue( false );
         if( clipName === '[None]' ){
           this.canvas.electrodes.forEach((_d) => {
             for( let _kk in _d ){
@@ -80246,7 +80044,7 @@ function registerPresetElectrodeAnimation( ViewerControlCenter ){
     this.ctrlLegendVisible.setValue( this.settings.show_legend );
     this.ctrlRenderTimestamp.setValue( this.settings.render_timestamp || false );
     this.ctrlClipName.setValue( initial );
-    this.gui.openFolder( folderName );
+    this.gui.openFolder( folderName, false );
 
   }
 
@@ -81430,7 +81228,7 @@ function register_controls_localization( ViewerControlCenter ){
         position = electrode_from_ct( inst, this.canvas );
         break;
       case "MRI slice":
-        position = electrode_from_slice( scode, this.canvas );
+        position = electrode_from_slice( subjectCode, this.canvas );
         break;
       default:
         return;
@@ -81912,7 +81710,8 @@ function register_controls_localization( ViewerControlCenter ){
     });
 
     // open folder
-    this.gui.openFolder( folderName );
+    this.gui.openFolder( folderName, false );
+    this.gui.openFolder( constants/* CONSTANTS.FOLDERS.atlas */.t.FOLDERS.atlas , false );
 
     this.gui.hideControllers([
       '- tkrRAS', '- MNI305', '- T1 RAS', 'Interpolate Size',
@@ -82008,11 +81807,6 @@ class ViewerControlCenter extends three_module.EventDispatcher {
 
     this.animParameters = this.canvas.animParameters;
 
-    this.canvas.bind( 'update_data_gui_controllers', 'switch_subject',
-      (evt) => {
-        this.update();
-      }, this.canvas.main_canvas );
-
     this._animOnTimeChange = () => {
       // update time controller
       if( this.ctrlAnimTime !== undefined ) {
@@ -82025,6 +81819,10 @@ class ViewerControlCenter extends three_module.EventDispatcher {
     this.canvas.$el.addEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
     this.canvas.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
     this.canvas.$el.addEventListener( "viewerApp.mouse.click" , this._onClicked );
+    this.canvas.$el.addEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
+
+    // dead loop...
+    // this.canvas.$el.addEventListener( "viewerApp.subject.changed", this.updateSelectorOptions );
 
     // other keyboard events
 
@@ -82199,12 +81997,139 @@ class ViewerControlCenter extends three_module.EventDispatcher {
       }
     });
 
+    // Installs driver
+    this.canvas.$el.addEventListener( "viewerApp.controller.setValue" , this._onDriveController );
+
   }
 
   dispose() {
     this.canvas.$el.removeEventListener( "viewerApp.keyboad.keydown" , this._onKeyDown );
     this.canvas.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
     this.canvas.$el.removeEventListener( "viewerApp.mouse.click" , this._onClicked );
+    this.canvas.$el.removeEventListener( "viewerApp.controller.setValue" , this._onDriveController );
+    this.canvas.$el.removeEventListener( "viewerApp.canvas.setSliceCrosshair", this._onSetSliceCrosshair );
+    // this.canvas.$el.removeEventListener( "viewerApp.subject.changed", this.updateSelectorOptions );
+  }
+
+  _onSetSliceCrosshair = ( event ) => {
+    if( typeof event.detail.x === "number" ) {
+      const controller = this.gui.getController( 'Sagittal (L - R)' );
+      if( !controller.isfake ) {
+        controller.object[ 'Sagittal (L - R)' ] = event.detail.x;
+        controller.updateDisplay();
+      }
+    }
+    if( typeof event.detail.y === "number" ) {
+      const controller = this.gui.getController( 'Coronal (P - A)' );
+      if( !controller.isfake ) {
+        controller.object[ 'Coronal (P - A)' ] = event.detail.y;
+        controller.updateDisplay();
+      }
+    }
+    if( typeof event.detail.z === "number" ) {
+      const controller = this.gui.getController( 'Axial (I - S)' );
+      if( !controller.isfake ) {
+        controller.object[ 'Axial (I - S)' ] = event.detail.z;
+        controller.updateDisplay();
+      }
+    }
+  }
+
+  _onDriveController = ( event ) => {
+
+    // should be { name, value, folderName }
+    const message = event.detail;
+    if( typeof message !== "object" || message === null ) { return; }
+
+    if( typeof message.name !== "string" || message.name === "" ) { return; }
+
+    // get controller
+    const controller = this.gui.getController( message.name , message.folderName );
+    if( !controller || controller.isfake ) {
+      console.warn(`Cannot find threeBrain viewer controller: ${ message.name }`);
+      return;
+    }
+
+    if( controller._disabled ) {
+      console.warn(`ThreeBrain viewer controller is disabled: ${ message.name }`);
+      return;
+    }
+
+    // check controller type
+    const classList = controller.domElement.classList;
+
+    // Button
+    if( classList.contains( "function" ) ) {
+      controller.$button.click();
+      return;
+    }
+
+    // Color
+    if( classList.contains( "function" ) ) {
+      controller.setValue(
+        (0,color/* asColor */.Q6)( message.value, new Color() ).getHexString()
+      );
+      return;
+    }
+
+    // Boolean
+    if( classList.contains( "boolean" ) ) {
+      if( message.value ) {
+        controller.setValue( true );
+      } else {
+        controller.setValue( false );
+      }
+      return;
+    }
+
+    // String
+    if( classList.contains( "string" ) ) {
+      if( typeof message.value === "object" ) {
+        controller.setValue( JSON.stringify( message.value ) );
+      } else {
+        controller.setValue( message.value.toString() );
+      }
+      return;
+    }
+
+    // option
+    if( classList.contains( "option" ) ) {
+      if(
+        Array.isArray( controller._names ) &&
+        controller._names.includes( message.value )
+      ) {
+        controller.setValue( message.value );
+      } else {
+        console.warn(`ThreeBrain viewer controller [${ message.name }] does not contain option choice: ${ message.value }`);
+      }
+      return;
+    }
+
+    // Number
+    if( classList.contains( "option" ) ) {
+
+      if( typeof message.value !== "number" || isNaN( message.value ) ||
+          !isFinite( message.value ) ) {
+        console.warn(`ThreeBrain viewer controller [${ message.name }] needs a valid (not NaN, Infinity) numerical input.`);
+      } else {
+
+        if(
+          ( controller._min !== undefined && controller._min > message.value ) ||
+          ( controller._max !== undefined && controller._max < message.value )
+        ) {
+          console.warn(`Trying to ThreeBrain viewer controller [${ message.name }]  numerical value that is out of range.`);
+        }
+
+        controller.setValue( message.value );
+      }
+
+      return;
+
+    }
+
+
+    console.warn(`Unimplemented controller type for [${ message.name }].`);
+
   }
 
   _onMouseMove = ( event ) => {
@@ -82301,8 +82226,9 @@ class ViewerControlCenter extends three_module.EventDispatcher {
   updateSelectorOptions() {
     this.updateDataCube2Types();
     // this.set_surface_ctype( true );
-    this._update_canvas();
+    this.canvas.needsUpdate = true;
   }
+
   // update gui controllers
   update(){
 
@@ -82329,6 +82255,9 @@ class ViewerControlCenter extends three_module.EventDispatcher {
   }
 
   fire_change( args, priority = "deferred" ){
+    // FIXME: TODO: fire event within control center to canvas.$el
+    console.warn("fire_change!!! TODO")
+    return;
     this.canvas.dispatch_event( "canvas.controllers.onChange", {
       data: args,
       priority: priority
@@ -85256,12 +85185,12 @@ class AbstractThreeBrainObject {
       if( layers.length > 1 ){
         layers.forEach((ii) => {
           obj.layers.enable(ii);
-          console.debug( this.name + ' is enabled layer ' + ii );
+          // console.debug( this.name + ' is enabled layer ' + ii );
         });
       }else if(layers.length === 0 || layers[0] > 20){
-        if(this.DEBUG){
-          console.debug( this.name + ' is set invisible.' );
-        }
+        // if(this.debug){
+        //   console.debug( this.name + ' is set invisible.' );
+        // }
         obj.layers.set( _constants_js__WEBPACK_IMPORTED_MODULE_1__/* .CONSTANTS.LAYER_USER_ALL_CAMERA_1 */ .t.LAYER_USER_ALL_CAMERA_1 );
         obj.visible = false;
       }else{
@@ -85319,9 +85248,15 @@ class AbstractThreeBrainObject {
     });
   }
 
+  debugVerbose ( message ) {
+    if( this.debug ) {
+      console.debug(`[${ this.constructor.name }]: ${message}`);
+    }
+  }
+
   finish_init(){
     if( this.object ){
-      console.debug(`Finalizing ${ this.name }`);
+      // console.debug(`Finalizing ${ this.name }`);
       this.set_layer();
       this.object.userData.construct_params = this._params;
 
@@ -85501,7 +85436,7 @@ class Sphere extends _abstract_js__WEBPACK_IMPORTED_MODULE_0__/* .AbstractThreeB
 
   set label(name) {
     this._text_label = `${name}`;
-    console.debug(`Setting label: ${this._text_label}`);
+    // console.debug(`Setting label: ${this._text_label}`);
     this._text_map.draw_text( this._text_label );
   }
 
@@ -87508,6 +87443,86 @@ function asArray(x){
 
 /***/ }),
 
+/***/ 5284:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Q6": () => (/* binding */ asColor),
+/* harmony export */   "qd": () => (/* binding */ invertColor),
+/* harmony export */   "V0": () => (/* binding */ colorLuma)
+/* harmony export */ });
+
+
+function asColor( hex, c ) {
+
+  if( !c || (typeof c !== 'object') || !c.isColor ) {
+    throw TypeError('asColor: c must be a THREE.Color');
+  }
+
+  if( typeof hex === 'object' && hex ) {
+
+    // assume hex = { r: ?, g: ?, b: ? }
+    return c.copy( hex );
+
+  }
+
+  if( typeof hex === 'number' ) {
+
+    // e.g.: hex = 0xccff99
+    return c.set( hex );
+
+  }
+
+  if( typeof hex === 'string' ) {
+    if ( hex.indexOf('#') !== 0 ) {
+        hex = "#" + hex;
+    }
+    if ( hex.length > 7 ) {
+      hex = hex.slice( 0 , 7 );
+    }
+    return c.setStyle( hex );
+  }
+
+  if( Array.isArray( hex ) ) {
+    c.fromArray( hex );
+    if ( hex.some( v => { return v > 1 ; }) ) {
+      c.multiplyScalar( 1/ 255 );
+    }
+    return c;
+  }
+
+  throw TypeError('asColor: unknown input type.');
+}
+
+
+function invertColor ( c ) {
+
+  c.r = 1 - c.r;
+  c.g = 1 - c.g;
+  c.b = 1 - c.b;
+
+  return c;
+
+};
+
+// returns 0 for darkest dark and 1 for whitest white
+function colorLuma ( c ) {
+  // per ITU-R BT.709 ( if color luma < 0.4, then it's too dark?)
+
+  // https://contrastchecker.online/color-relative-luminance-calculator
+  const r = c.r <= 0.03928 ? c.r / 12.92 : ((c.r+0.055)/1.055) ^ 2.4;
+  const g = c.g <= 0.03928 ? c.g / 12.92 : ((c.g+0.055)/1.055) ^ 2.4;
+  const b = c.b <= 0.03928 ? c.b / 12.92 : ((c.b+0.055)/1.055) ^ 2.4;
+
+  return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}
+
+
+
+
+/***/ }),
+
 /***/ 3658:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -88295,7 +88310,7 @@ class ViewerWrapper {
     this.height = height;
     this.shinyMode = shinyMode;
     this.viewerMode = viewerMode;
-    this.DEBUG = false;
+    this.debug = false;
     this.uuid = three_module.MathUtils.generateUUID();
 
     // DOM related
@@ -88388,7 +88403,7 @@ class ViewerWrapper {
       $wrapper : this.$viewerWrapper,
       width : this.width, height : this.height,
       cache : this.cache,
-      debug : this.DEBUG
+      debug : this.debug
     });
 
     this.cacheViewer();
@@ -88415,7 +88430,10 @@ class ViewerWrapper {
       this.cacheViewer();
     }
     if( !this.viewer ) { throw 'THREEBRAIN: Trying to use a cached/existing viewer, but the viewer is nowhere to be found!'; }
-    console.debug('THREEBRAIN: Re-using an existing/cached viewer.');
+    if( this.debug ) {
+      console.debug('[ViewerWrapper.useCachedViewer]: Re-using an existing/cached viewer.');
+    }
+
 
     this.$viewerWrapper = this.viewer.el;
     if( this.viewerMode ) {
@@ -88452,6 +88470,7 @@ class ViewerWrapper {
       bootstrapData : data,
       reset : reset
     };
+    this.debug = data.settings.debug || false;
 
     if( !this.initalized ) {
       if( data.force_render ) {
@@ -88462,8 +88481,7 @@ class ViewerWrapper {
 
     this.render( reset );
 
-    this.DEBUG = data.settings.debug || false;
-    if( this.DEBUG ) {
+    if( this.debug ) {
       window.appWrapper = this;
     }
 

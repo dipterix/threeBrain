@@ -8,11 +8,12 @@ import {
   AnimationClip, AnimationMixer, Clock,
   Mesh, MeshBasicMaterial
 } from 'three';
-import { asArray } from '../utility/asArray.js';
-import { asColor, invertColor, colorLuma } from '../utility/color.js';
-import { get_element_size, get_or_default, as_Matrix4,
-  set_visibility, set_display_mode
-} from '../utils.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { json2csv } from 'json-2-csv';
+import download from 'downloadjs';
+
+// Core
+import { ThrottledEventDispatcher } from './ThrottledEventDispatcher.js';
 // import { OrthographicTrackballControls } from './OrthographicTrackballControls.js';
 import { HauntedArcballControls } from './HauntedArcballControls.js';
 import { HauntedOrthographicCamera } from './HauntedOrthographicCamera.js';
@@ -20,54 +21,42 @@ import { AnimationParameters } from './AnimationParameters.js';
 import { CanvasContext2D } from './context.js';
 import { CanvasFileLoader } from './loaders.js';
 import { SideCanvas } from './SideCanvas.js';
-import Stats from 'three/addons/libs/stats.module.js';
 import { StorageCache } from './StorageCache.js';
 import { CanvasEvent } from './events.js';
 import { CONSTANTS } from '../constants.js';
 import { generate_animation_default } from '../Math/animations.js';
+import { Compass } from '../geometry/compass.js';
+import { GeometryFactory } from './GeometryFactory.js';
+
+// Utility
+import { asArray } from '../utility/asArray.js';
+import { asColor, invertColor, colorLuma } from '../utility/color.js';
+import { get_or_default, as_Matrix4, set_visibility, set_display_mode } from '../utils.js';
+import { Lut, addToColorMapKeywords } from '../jsm/math/Lut2.js';
+
 import { gen_sphere, is_electrode } from '../geometry/sphere.js';
 import { gen_datacube } from '../geometry/datacube.js';
 import { gen_datacube2 } from '../geometry/datacube2.js';
 import { gen_tube } from '../geometry/tube.js';
 import { gen_free } from '../geometry/free.js';
 import { gen_linesements } from '../geometry/line.js';
-import { Compass } from '../geometry/compass.js';
-import { Lut, addToColorMapKeywords } from '../jsm/math/Lut2.js';
-import { json2csv } from 'json-2-csv';
-import download from 'downloadjs';
-import nifti from 'nifti-reader-js';
 
-/* Geometry generator */
-const GEOMETRY_FACTORY = {
-  'sphere'    : gen_sphere,
-  'free'      : gen_free,
-  'datacube'  : gen_datacube,
-  'datacube2' : gen_datacube2,
-  'tube'      : gen_tube,
-  'linesegments' : gen_linesements,
-  'blank'     : (g, canvas) => { return(null) }
-};
 
-/**
- * entering use | operator, leaving use & operator
- * for example, entering canvas from off canvas (000) will be 001 | 000 = 001
- * then, entering control panel will be 001 | 101 = 101.
- * Leaving controller first, then to side panel will be
- *   (101 & 011) | 011 = 011
- * Or, entering side panel then leave controllers
- *   (101 | 011) & 011 = 011
- * hence the order of operation doesn't matter
-*/
-const MOUSE = {
-  ON_CANVAS       : 0b001,
-  ON_SIDE_CANVAS  : 0b011,
-  ON_CONTROLLER   : 0b101,
-  OFF_CONTROLLER  : 0b011,
-  OFF_SIDE_CANVAS : 0b101,
-  OFF_VIEWER      : 0b000
+const _mainCameraUpdatedEvent = {
+  type  : "viewerApp.mainCamera.updated",
+  muffled: true
 }
 
-window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
+const _stateDataChangeEvent = {
+  type      : "viewerApp.state.updated",
+  immediate : true
+}
+
+const _subjectStateChangedEvent = {
+  type : "viewerApp.subject.changed"
+}
+
+
 /* ------------------------------------ Layer setups ------------------------------------
   Defines for each camera which layers are visible.
   Protocols are
@@ -90,22 +79,22 @@ window.threeBrain_GEOMETRY_FACTORY = GEOMETRY_FACTORY;
 const cached_storage = new StorageCache();
 
 
-class ViewerCanvas {
+class ViewerCanvas extends ThrottledEventDispatcher {
 
   // private
 
   // public
 
   constructor(
-    el, width, height, side_width = 250, shiny_mode=false, cache = false, DEBUG = false, has_webgl2 = true
+    el, width, height, side_width = 250, shiny_mode=false, cache = false,
+    debug = false, has_webgl2 = true
   ) {
+
+    super( el );
+
     this.isViewerCanvas = true;
-    if(DEBUG){
-      console.debug('Debug Mode: ON.');
-      this.DEBUG = true;
-    }else{
-      this.DEBUG = false;
-    }
+    this.debug = debug;
+    this.debugVerbose('Debug Mode: ON.');
     if(cache === true){
       this.use_cache = true;
       this.cache = cached_storage;
@@ -159,9 +148,6 @@ class ViewerCanvas {
 
     // action event listener functions and dispose flags
     this._disposed = false;
-    this.event_dispatcher = new CanvasEvent(
-      this.main_canvas, this.container_id);
-    // set default values
     this.set_state( 'coronal_depth', 0 );
     this.set_state( 'axial_depth', 0 );
     this.set_state( 'sagittal_depth', 0 );
@@ -322,7 +308,7 @@ class ViewerCanvas {
     this.bounding_box.layers.set( CONSTANTS.LAYER_INVISIBLE_31 );
 
 
-    this.set_font_size();
+    this.setFontSize();
 
 		// File loader
     this.file_loader = new CanvasFileLoader( this );
@@ -332,10 +318,25 @@ class ViewerCanvas {
     this.$el.addEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
     this.$el.addEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown, { capture : true } );
 
+    this.trackball.addEventListener( "start", this._onTrackballChanged );
+    this.trackball.addEventListener( "change", this._onTrackballChanged );
+    this.trackball.addEventListener( "end", this._onTrackballEnded );
+
     // this listener has been moved to controlCenter. Ideally all listeners go there
     // and this canvas is just in charge of passively rendering & updating things
     // this.$mainCanvas.addEventListener( 'mousemove', this._onMouseMove );
   }
+
+
+  _onTrackballChanged = () => {
+    this.needsUpdate = true;
+  }
+
+  _onTrackballEnded = () => {
+    this.pause_animation( 1 );
+    this.dispatch( _mainCameraUpdatedEvent );
+  }
+
   _activateViewer = () => {
     this.activated = true;
     this.start_animation( 0 );
@@ -356,7 +357,7 @@ class ViewerCanvas {
           if( item.object && item.object.isMesh && item.object.userData.construct_params ) {
             const crosshairPosition = item.object.getWorldPosition( new Vector3() );
             crosshairPosition.centerCrosshair = true;
-            this.dispatch_event( 'canvas.drive.setSliceCrosshair', crosshairPosition );
+            this.setSliceCrosshair( crosshairPosition );
           }
         }
       });
@@ -400,11 +401,8 @@ class ViewerCanvas {
 
   // Generic method to add objects
   add_object(g){
-    //
-    if(this.DEBUG){
-      console.debug('Generating geometry '+g.type);
-    }
-    let gen_f = GEOMETRY_FACTORY[g.type],
+    this.debugVerbose('Generating geometry '+g.type);
+    let gen_f = GeometryFactory[ g.type ],
         inst = gen_f(g, this);
 
     if( !inst || typeof(inst) !== 'object' || !inst.object ){
@@ -482,7 +480,7 @@ class ViewerCanvas {
       ) { return; }
 
       const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-      console.debug(path);
+      this.debugVerbose(path);
       let v = await this.file_loader.read( path );
       if( v && typeof(v) === "object" ) {
         for(let key in v) {
@@ -562,7 +560,7 @@ class ViewerCanvas {
 
   // Debug stats (framerate)
   addNerdStats(){
-    // if DEBUG, add stats information
+    // if debug, add stats information
     if( this.__nerdStatsEnabled ) { return; }
     this.nerdStats = new Stats();
     this.nerdStats.dom.style.display = 'block';
@@ -586,7 +584,7 @@ class ViewerCanvas {
       }
     }
     if( obj.parent ){
-      console.debug( 'removing object - ' + (obj.name || obj.type) );
+      this.debugVerbose( 'removing object - ' + (obj.name || obj.type) );
       obj.parent.remove( obj );
     }
 
@@ -598,7 +596,7 @@ class ViewerCanvas {
     if( !obj || typeof obj !== 'object' ) { return; }
     const obj_name = obj.name || obj.type || 'unknown';
     if( !quiet ){
-      console.debug('Disposing - ' + obj_name);
+      this.debugVerbose('Disposing - ' + obj_name);
     }
     if( obj.userData && typeof obj.userData.dispose === 'function' ){
       this._try_dispose( obj.userData, obj.name, quiet );
@@ -624,17 +622,21 @@ class ViewerCanvas {
   }
 
   dispose(){
+    super.dispose();
+
     // Remove all objects, listeners, and dispose all
     this._disposed = true;
     this.activated = false;
     this.animParameters.dispose();
 
     // Remove listeners
+    this.trackball.removeEventListener( "start", this._onTrackballChanged );
+    this.trackball.removeEventListener( "change", this._onTrackballChanged );
+    this.trackball.removeEventListener( "end", this._onTrackballEnded );
     this.$el.removeEventListener( 'viewerApp.mouse.enterViewer', this._activateViewer );
     this.$el.removeEventListener( 'viewerApp.mouse.leaveViewer', this._deactivateViewer );
     this.$el.removeEventListener( 'viewerApp.mouse.mousedown', this._onMouseDown );
     // this.$mainCanvas.removeEventListener( 'mousemove', this._onMouseMove );
-    this.event_dispatcher.dispose();
     this.trackball.enabled = false;
     this.trackball.dispose();
 
@@ -686,7 +688,7 @@ class ViewerCanvas {
     this.color_maps.clear();
     // this._mouse_click_callbacks['side_viewer_depth'] = undefined;
 
-    console.debug('TODO: Need to dispose animation clips');
+    this.debugVerbose('TODO: Need to dispose animation clips');
     this.animation_clips.clear();
 
     this.group.forEach((g) => {
@@ -720,11 +722,26 @@ class ViewerCanvas {
 
 
   /*---- Events -------------------------------------------------------------*/
-  bind( name, evtstr, fun, target, options = false ){
-    this.event_dispatcher.bind(name, evtstr, fun, target, options);
+  setControllerValue ({ name , value , folderName, immediate = true } = {}) {
+    this.dispatch({
+      type : "viewerApp.controller.setValue",
+      data : {
+        name : name,
+        value: value,
+        folderName : folderName
+      },
+      immediate : immediate
+    });
   }
-  dispatch_event( type, data, immediate = false ){
-    this.event_dispatcher.dispatch_event( type, data, immediate );
+
+  setSliceCrosshair({x, y, z, immediate = true} = {}) {
+    this.dispatch({
+      type : "viewerApp.canvas.setSliceCrosshair",
+      data : {
+        x : x, y : y, z : z
+      },
+      immediate : immediate
+    });
   }
 
   // callbacks
@@ -823,7 +840,7 @@ class ViewerCanvas {
       gp = this.group.get( group_name );
       // set re
 
-    }else if(this.DEBUG){
+    }else if(this.debug){
       console.error('Cannot find data with name ' + from_geom + ' at group ' + group_hint);
     }
 
@@ -839,19 +856,19 @@ class ViewerCanvas {
 
   // Canvas state
   set_state( key, val ) {
-    this.state_data.set(key, val);
-    console.debug(`Canvas state set [${key}]`);
-    this.dispatch_event( "canvas.state.onChange", {
-      key: key,
-      value: val
-    });
+    const oldValue = this.state_data.get( key );
+    if( oldValue !== val ) {
+      this.debugVerbose(`[ViewerCanvas] setting state [${key}]`);
+      this.dispatch( _stateDataChangeEvent );
+      this.state_data.set(key, val);
+    }
   }
   get_state( key, missing = undefined ) {
     return(get_or_default( this.state_data, key, missing ));
   }
 
   // Font size magnification
-  set_font_size( magnification = 1 ){
+  setFontSize( magnification = 1 ){
     // font size
     this._lineHeight_normal = Math.round( 24 * this.pixel_ratio[0] * magnification );
     this._lineHeight_small = Math.round( 20 * this.pixel_ratio[0] * magnification );
@@ -978,7 +995,7 @@ class ViewerCanvas {
       this.object_chosen = m;
       this._last_object_chosen = m;
       this.highlight( this.object_chosen, false );
-      console.debug('object selected ' + m.name);
+      this.debugVerbose('object selected ' + m.name);
 
 
     }else{
@@ -1434,7 +1451,6 @@ class ViewerCanvas {
 
     this.trackball.update();
     this.compass.update();
-    if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
 
   }
 
@@ -1454,6 +1470,8 @@ class ViewerCanvas {
 
   // Main render function, automatically scheduled
   render(){
+
+    if( this.__nerdStatsEnabled ) { this.nerdStats.update(); }
 
     const _width = this.domElement.width;
     const _height = this.domElement.height;
@@ -2246,14 +2264,9 @@ class ViewerCanvas {
     // reset origin to AC
     // this.origin.position.copy( anterior_commissure );
 
-    this.dispatch_event(
-      'switch_subject',
-      {
-        target_subject: target_subject
-      }
-    );
+    this.dispatch( _subjectStateChangedEvent );
 
-    this.start_animation( 0 );
+    this.needsUpdate = true;
 
   }
 
@@ -2323,20 +2336,25 @@ class ViewerCanvas {
 
   switch_slices( target_subject, slice_type = 'T1' ){
 
-    this.state_data.delete( "activeSliceInstance" );
+    const oldActiveSlices = this.get_state("activeSliceInstance")
+    let newActiveSlices;
     //this.ssss
     this.slices.forEach( (vol, subject_code) => {
       for( let volume_name in vol ){
         const m = vol[ volume_name ];
         if( subject_code === target_subject && volume_name === `${slice_type} (${subject_code})`){
           set_visibility( m[0].parent, true );
-          this.set_state( "activeSliceInstance", m[0].userData.instance );
+          newActiveSlices = m[0].userData.instance;
         }else{
           // m[0].parent.visible = false;
           set_visibility( m[0].parent, false );
         }
       }
     });
+
+    if( newActiveSlices !== oldActiveSlices ) {
+      this.set_state( "activeSliceInstance", newActiveSlices );
+    }
 
     this.start_animation( 0 );
   }
@@ -2347,7 +2365,9 @@ class ViewerCanvas {
       let atlas_types = asArray( this.atlases.get(target_subject) );
 
     }*/
-    console.debug(`Setting volume data cube: ${atlas_type} (${target_subject})`);
+
+    const oldDataCube2 = this.get_state( "activeDataCube2Instance" );
+    let newDataCube2;
 
     this.atlases.forEach( (al, subject_code) => {
       for( let atlas_name in al ){
@@ -2355,13 +2375,18 @@ class ViewerCanvas {
         if( subject_code === target_subject && atlas_name === `Atlas - ${atlas_type} (${subject_code})`){
           // m.visible = true;
           set_visibility( m, true );
-          this.set_state( "activeDataCube2Instance", m.userData.instance );
+          newDataCube2 = m.userData.instance;
         }else{
           // m.visible = false;
           set_visibility( m, false );
         }
       }
     });
+
+    if( oldDataCube2 !== newDataCube2 ) {
+      this.debugVerbose(`Setting volume data cube: ${atlas_type} (${target_subject})`);
+      this.set_state( "activeDataCube2Instance", newDataCube2 );
+    }
   }
 
   switch_ct( target_subject, ct_type = 'ct.aligned.t1', ct_threshold = 0.8 ){
@@ -2398,7 +2423,7 @@ class ViewerCanvas {
 
   // Map electrodes
   map_electrodes( target_subject, surface = 'std.141', volume = 'mni305' ){
-    /* DEBUG code
+    /* debug code
     target_subject = 'N27';surface = 'std.141';volume = 'mni305';origin_subject='YAB';
     pos_targ = new Vector3(),
           pos_orig = new Vector3(),
@@ -2666,17 +2691,6 @@ mapped = false,
       this.$el.classList.remove( 'dark-viewer' );
     }
 
-    const event = {
-      data: {
-        'background' : this.background_color,
-        'foreground' : this.foreground_color
-      },
-      priority: "deferred"
-    }
-    this.dispatch_event( "canvas.background.onChange", event.data );
-    // for shiny
-    this.dispatch_event( "canvas.controllers.onChange", event );
-
     try {
       this.sideCanvasList.coronal.setBackground( this.background_color );
       this.sideCanvasList.axial.setBackground( this.background_color );
@@ -2685,8 +2699,6 @@ mapped = false,
 
     // force re-render
     this.start_animation(0);
-
-    return event;
   }
   resetCanvas() {
     // Center camera first.

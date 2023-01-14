@@ -24,14 +24,6 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       })
       .setValue( initialDisplay );
 
-    this.canvas.bind(
-      "canvasDriveEnableSideCanvas",
-      "canvas.drive.enableSideCanvas",
-      ( event ) => {
-        // { enable : true }
-        controller.setValue( event.detail.enable );
-      }
-    );
   };
 
   ViewerControlCenter.prototype.addPreset_resetSidePanel = function(){
@@ -46,21 +38,10 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
     const resetController = this.gui.addController(
       'Reset Slice Canvas', resetSidePanels, { folderName: folderName });
 
-    this.canvas.bind(
-      "canvasDriveResetSideCanvas",
-      "canvas.drive.resetSideCanvas",
-      resetSidePanels
-    );
-
     // reset first
     resetSidePanels();
   }
 
-  ViewerControlCenter.prototype.setSlice = function( args ) {
-    const activeSlice = this.canvas.get_state("activeSliceInstance");
-    if( !activeSlice || !activeSlice.isDataCube ) { return; }
-    activeSlice.setCrosshair( args );
-  }
   ViewerControlCenter.prototype.showSlices = function( slices, show = true ) {
     const activeSlice = this.canvas.get_state( "activeSliceInstance" );
     if( !activeSlice || !activeSlice.isDataCube ) { return; }
@@ -84,72 +65,26 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       }
       this.fire_change({ 'coronal_depth' : v });
       */
-      this.setSlice({ y : v });
+      this.canvas.setSliceCrosshair({ y : v });
     });
 
     const controllerAxial = this.gui
       .addController('Axial (I - S)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
-        this.setSlice({ z : v });
+        // this.setSlice({ z : v });
+        this.canvas.setSliceCrosshair({ z : v });
       });
 
     const controllerSagittal = this.gui
       .addController('Sagittal (L - R)', 0, { folderName : folderName })
       .min(-128).max(128).step(0.1).decimals( 1 ).onChange((v) => {
-        this.setSlice({ x : v });
+        // this.setSlice({ x : v });
+        this.canvas.setSliceCrosshair({ x : v });
       });
 
     const controllerCrosshair = this.gui
       .addController( 'Intersect MNI305', "0.00, 0.00, 0.00", { folderName: folderName } )
 
-    this.canvas.bind(
-      "ControllerIntersectionCoordinateNeedsUpdate",
-      "canvas.sliceCrosshair.onChange",
-      ( event ) => {
-        // position should be Vector3. don't change this object
-        // { position: new Vector3(...) }
-        if( event.detail && event.detail.position && event.detail.position.isVector3 ) {
-          const crosshair = this.canvas.getSideCanvasCrosshairMNI305( event.detail.position.clone() );
-          const displayText = `${crosshair.x.toFixed(1)}, ${crosshair.y.toFixed(1)}, ${crosshair.z.toFixed(1)}`
-          controllerCrosshair.object[ controllerCrosshair._name ] = displayText;
-          controllerCrosshair.updateDisplay();
-        }
-      }
-    );
-
-    /*
-    [ _controller_coronal, _controller_axial, _controller_sagittal ].forEach((_c, ii) => {
-
-      this.canvas.bind( `dat_gui_side_controller_${ii}_mousewheel`, 'mousewheel',
-        (evt) => {
-          if( evt.altKey ){
-            evt.preventDefault();
-            const current_val = _c.getValue();
-            _c.setValue( current_val + evt.deltaY );
-          }
-        }, _c.domElement );
-
-    });
-    */
-
-    this.canvas.bind( `canvasDriveSetSliceCrosshair`, 'canvas.drive.setSliceCrosshair',
-      (evt) => {
-        evt.preventDefault();
-        if( typeof evt.detail.x === "number" ) {
-          controllerSagittal.setValue( evt.detail.x );
-        }
-        if( typeof evt.detail.y === "number" ) {
-          controllerCoronal.setValue( evt.detail.y );
-        }
-        if( typeof evt.detail.z === "number" ) {
-          controllerAxial.setValue( evt.detail.z );
-        }
-        if( evt.detail.centerCrosshair ) {
-          this.canvas.sideCanvasList.coronal.zoom();
-          this.canvas.sideCanvasList.sagittal.zoom();
-          this.canvas.sideCanvasList.axial.zoom();
-        }
-      });
 
     const controllerOverlayCoronal = this.gui
       .addController('Overlay Coronal', false, { folderName : folderName })
@@ -285,19 +220,6 @@ function registerPresetSliceOverlay( ViewerControlCenter ){
       }
     });
 
-    this.canvas.bind( `canvasDriveSetSliceOverlay`, 'canvas.drive.setSliceOverlay',
-      (evt) => {
-        //
-        if( typeof evt.detail.x === "boolean" ) {
-          controllerOverlaySagittal.setValue( evt.detail.x );
-        }
-        if( typeof evt.detail.y === "boolean" ) {
-          controllerOverlayCoronal.setValue( evt.detail.y );
-        }
-        if( typeof evt.detail.z === "boolean" ) {
-          controllerOverlayAxial.setValue( evt.detail.z );
-        }
-      });
   }
 
   ViewerControlCenter.prototype.addPreset_sideViewElectrodeThreshold = function(){

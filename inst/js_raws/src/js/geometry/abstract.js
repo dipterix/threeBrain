@@ -36,12 +36,12 @@ class AbstractThreeBrainObject {
       if( layers.length > 1 ){
         layers.forEach((ii) => {
           obj.layers.enable(ii);
-          console.debug( this.name + ' is enabled layer ' + ii );
+          // console.debug( this.name + ' is enabled layer ' + ii );
         });
       }else if(layers.length === 0 || layers[0] > 20){
-        if(this.DEBUG){
-          console.debug( this.name + ' is set invisible.' );
-        }
+        // if(this.debug){
+        //   console.debug( this.name + ' is set invisible.' );
+        // }
         obj.layers.set( CONSTANTS.LAYER_USER_ALL_CAMERA_1 );
         obj.visible = false;
       }else{
@@ -99,9 +99,15 @@ class AbstractThreeBrainObject {
     });
   }
 
+  debugVerbose ( message ) {
+    if( this.debug ) {
+      console.debug(`[${ this.constructor.name }]: ${message}`);
+    }
+  }
+
   finish_init(){
     if( this.object ){
-      console.debug(`Finalizing ${ this.name }`);
+      // console.debug(`Finalizing ${ this.name }`);
       this.set_layer();
       this.object.userData.construct_params = this._params;
 

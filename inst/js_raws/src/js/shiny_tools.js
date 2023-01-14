@@ -292,7 +292,7 @@ class THREE_BRAIN_SHINY {
   }
 
   handle_font_magnification( cex = 1 ){
-    this.canvas.set_font_size( cex );
+    this.canvas.setFontSize( cex );
     this.canvas.start_animation( 0 );
   }
 
@@ -349,8 +349,8 @@ class THREE_BRAIN_SHINY {
 
   }
 
-  handle_set_plane( args = {x: undefined, y: undefined, z: undefined, centerCrosshair: false} ) {
-    this.canvas.dispatch_event( 'canvas.drive.setSliceCrosshair', args );
+  handle_set_plane( args = {x: undefined, y: undefined, z: undefined} ) {
+    this.canvas.setSliceCrosshair( args );
   }
 
   // FIXME: this handler is Broken
