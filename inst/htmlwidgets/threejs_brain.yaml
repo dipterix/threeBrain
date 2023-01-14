@@ -1,7 +1,7 @@
 dependencies:
   - name: dipterixThreeBrain
-    version: 1.0.1
-    src: htmlwidgets/lib/dipterixThreeBrain-1.0.1
+    version: 1.1.1
+    src: threeBrainJS/dist/
     all_files: yes
     script:
       - main.js
