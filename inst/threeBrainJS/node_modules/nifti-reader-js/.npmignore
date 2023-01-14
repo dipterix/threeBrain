@@ -1,7 +1,0 @@
-.idea/
-.project
-.DS_Store
-/build/
-.jshint*
-node_modules/
-release.sh
