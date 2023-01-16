@@ -147,7 +147,7 @@ class ViewerWrapper {
 
   createViewer( insertViewer = false ) {
     if( this.initialized ) {
-      return this.useCachedViewer();
+      return this.useCachedViewer( insertViewer );
     }
     this.$viewerWrapper = document.createElement('div');
     this.$viewerWrapper.classList.add( 'threejs-brain-canvas' );
@@ -176,6 +176,8 @@ class ViewerWrapper {
     }
     // otherwise no need to resize as the $viewerWrapper is just created, and
     // there is no way the wrapper is added to DOM
+
+    this.$container.dispatchEvent(new CustomEvent( "viewerApp.created", {} ));
   }
 
   useCachedViewer( insertViewer = false ) {

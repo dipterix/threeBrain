@@ -27,12 +27,17 @@ HTMLWidgets.widget({
       width : width, height : height,
       viewerMode : HTMLWidgets.viewerMode
     });
+    let shinyDriver;
 
     return {
       // "find", "renderError", "clearError", "sizing", "name", "type", "initialize", "renderValue", "resize"
 
       renderValue: (v) => {
-        widget.receiveData({ data : v, reset : false })
+        widget.receiveData({ data : v, reset : false });
+
+        if( HTMLWidgets.shinyMode && !shinyDriver ) {
+          window.ssss = new threeBrainJS.Drivers.Shiny( widget.viewer );
+        }
         /*
         widget.values = v;
         if( widget.initalized ){

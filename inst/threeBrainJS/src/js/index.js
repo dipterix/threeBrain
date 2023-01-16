@@ -15,7 +15,11 @@ import { CONSTANTS } from './core/constants.js';
 import { ViewerWrapper } from './core/ViewerWrapper.js';
 import { ViewerApp } from './core/ViewerApp.js';
 import { StorageCache } from './core/StorageCache.js';
+
+// Addons
+import { RShinyDriver } from './drivers/RShinyDriver.js'
 import css from '../css/dipterix.css';
+
 
 /*
 const threeBrainJS = {
@@ -42,4 +46,8 @@ const ExternLibs = {
   ClipboardJS       : ClipboardJS
 };
 
-export { ViewerApp, ViewerWrapper, StorageCache, Constants, ExternLibs };
+const Drivers = {
+  Shiny : RShinyDriver
+}
+
+export { ViewerApp, ViewerWrapper, StorageCache, Constants, Drivers, ExternLibs };

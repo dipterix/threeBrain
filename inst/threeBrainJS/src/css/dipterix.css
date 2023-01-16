@@ -82,7 +82,7 @@
   width: 100%;
 }
 .threejs-control .dg .cr.function .c {
-  display: hidden;
+  display: none;
 }
 
 .threejs-control .dg .property-name {
@@ -153,6 +153,9 @@
   border-left: 2px solid var(--widget-color);
 }
 
+.threejs-control .lil-gui .slider {
+  position: relative;
+}
 
 .threejs-control .dg.main,
 .threejs-control .dg.main *,
@@ -312,7 +315,7 @@
   line-height: 17px;
   font-size: 0.85em;
   text-align: center;
-  width: 2em;
+  width: calc(var(--folder-indent) + 2em);
 }
 
 .threejs-brain-blank-container {

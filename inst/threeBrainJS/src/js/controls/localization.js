@@ -753,7 +753,9 @@ function register_controls_localization( ViewerControlCenter ){
     this.canvas.switch_subject();
 
     if( fireEvents ) {
-      this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+      this.broadcast({
+        data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+      });
     }
   };
 
@@ -779,7 +781,7 @@ function register_controls_localization( ViewerControlCenter ){
 
     if( fireEvents ){
       this.broadcast({
-        "localization_table" : JSON.stringify( this.canvas.electrodes_info() )
+        data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
       });
     }
 
@@ -806,7 +808,7 @@ function register_controls_localization( ViewerControlCenter ){
 
     if( fireEvents ){
       this.broadcast({
-        "localization_table" : JSON.stringify( this.canvas.electrodes_info() )
+        data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
       });
     }
   };
@@ -879,7 +881,9 @@ function register_controls_localization( ViewerControlCenter ){
           refine_electrode = null;
         }
 
-        this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        this.broadcast({
+          data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+        });
 
 
         this._update_canvas();
@@ -891,7 +895,9 @@ function register_controls_localization( ViewerControlCenter ){
           refine_electrode.isLocElectrode ){
         refine_electrode.adjust();
 
-        this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        this.broadcast({
+          data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+        });
 
 
         this._update_canvas();
@@ -904,7 +910,9 @@ function register_controls_localization( ViewerControlCenter ){
 
         refine_electrode.reset_position();
 
-        this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        this.broadcast({
+          data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+        });
 
 
         this._update_canvas();
@@ -916,7 +924,9 @@ function register_controls_localization( ViewerControlCenter ){
         el.adjust();
       });
 
-      this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+      this.broadcast({
+        data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+      });
 
 
       this._update_canvas();
@@ -990,7 +1000,9 @@ function register_controls_localization( ViewerControlCenter ){
           this.canvas.switch_subject();
         }
 
-        this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        this.broadcast({
+          data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+        });
 
 
       },
@@ -1036,7 +1048,9 @@ function register_controls_localization( ViewerControlCenter ){
           this.canvas.switch_subject();
         }
 
-        this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        this.broadcast({
+          data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+        });
 
 
       },
@@ -1138,7 +1152,9 @@ function register_controls_localization( ViewerControlCenter ){
           }
         }
 
-        this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+        this.broadcast({
+          data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+        });
 
 
     });
@@ -1155,7 +1171,9 @@ function register_controls_localization( ViewerControlCenter ){
       refine_electrode.object.position[ axis ] += step;
       refine_electrode.object.userData.construct_params.position[ xyzTo123[ axis ] ] += step;
       refine_electrode.update_line();
-      this.broadcast({ "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) });
+      this.broadcast({
+        data : { "localization_table" : JSON.stringify( this.canvas.electrodes_info() ) }
+      });
 
       this._update_canvas();
     }

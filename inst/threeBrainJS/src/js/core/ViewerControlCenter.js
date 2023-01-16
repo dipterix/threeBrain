@@ -54,8 +54,6 @@ const mouseDoubleClickEvent = { type : "viewerApp.mouse.doubleClick" };
 const keyDownEvent = { type : "viewerApp.keyboad.keydown" };
 const animationFrameUpdateEvent = { type : "viewerApp.animationFrame.update" };
 
-const controllerChangeEvent = { type : "viewerApp.controller.change" };
-
 class ViewerControlCenter extends EventDispatcher {
 
   /**
@@ -338,7 +336,7 @@ class ViewerControlCenter extends EventDispatcher {
     }
 
     // Color
-    if( classList.contains( "function" ) ) {
+    if( classList.contains( "color" ) ) {
       controller.setValue(
         asColor( message.value, new Color() ).getHexString()
       );
@@ -379,7 +377,7 @@ class ViewerControlCenter extends EventDispatcher {
     }
 
     // Number
-    if( classList.contains( "option" ) ) {
+    if( classList.contains( "number" ) ) {
 
       if( typeof message.value !== "number" || isNaN( message.value ) ||
           !isFinite( message.value ) ) {
@@ -560,14 +558,24 @@ class ViewerControlCenter extends EventDispatcher {
     }
   }
 
-  broadcast( data, priority = "deferred" ){
-    if( typeof args === "object" ) {
+  // priority is deferred or event, see shiny
+  // broadcastController: true, false or "auto"; default is "auto", i.e.
+  // when data is undefined, broadcast controller, otherwise broadcast data
+  // only
+  broadcast({ data, priority = "deferred", broadcastController = "auto" } = {}){
+    if( typeof data === "object" ) {
       Object.assign( this.userData , data );
+      this.dispatchEvent({
+        type : "viewerApp.controller.broadcastData",
+        data : data,
+        priority : priority
+      });
+      if( broadcastController !== true) { return; }
     }
-    if( priority !== controllerChangeEvent.priority ) {
-      controllerChangeEvent.priority = priority;
-    }
-    this.dispatchEvent( controllerChangeEvent );
+    this.dispatchEvent({
+      type : "viewerApp.controller.change",
+      priority : priority
+    });
   }
 
 }

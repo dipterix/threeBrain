@@ -1,5 +1,5 @@
 dependencies:
-  - name: dipterixThreeBrain
+  - name: threeBrainJS
     version: 1.1.1
     src: threeBrainJS/dist/
     all_files: yes
