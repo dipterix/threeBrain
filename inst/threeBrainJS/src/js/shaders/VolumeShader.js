@@ -110,7 +110,7 @@ float getDepth( vec3 p ){
   // return (frag2.z / frag2.w / 2.0 + 0.5);
 }
 vec4 sample2( vec3 p ) {
-  vec4 re = texture( cmap, (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5 );
+  vec4 re = texture( cmap, p * scale_inv + 0.5 );
   if( colorChannels == 1 ) {
     // using red channel as the color intensity
     re.a = re.r;
@@ -124,7 +124,7 @@ vec3 getNormal( vec3 p ) {
   vec4 ne;
   vec3 zero3 = vec3(0.0, 0.0, 0.0);
   vec3 normal = zero3;
-  vec3 pos0 = (p - vec3(0.5, -0.5, 0.5)) * scale_inv + 0.5;
+  vec3 pos0 = p * scale_inv + 0.5;
   vec3 pos = pos0;
   vec4 re = texture( cmap, pos0 );
 

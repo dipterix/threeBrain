@@ -44,7 +44,7 @@ out vec4 color;
 void main() {
 // calculate IJK, then sampler position
 
-  vec3 samplerPosition = ((world2IJK * worldPosition).xyz - vec3(1.0, 0.0, 1.0)) / (mapShape - 1.0);
+  vec3 samplerPosition = ((world2IJK * worldPosition).xyz) / (mapShape - 1.0);
   if( any(greaterThan( samplerPosition, vec3(1.0) )) || any( lessThan(samplerPosition, vec3(0.0)) ) ) {
     gl_FragDepth = gl_DepthRange.far;
     color.a = 0.0;

@@ -158,9 +158,9 @@ class MGHImage {
     // is shifted. Also needs to take care of the CRS order (positive vs negative)
     const crsOrder = new Vector4( 1, 1, 1, 0 ).applyMatrix4( this.affine );
     const shift = new Matrix4().set(
-      1, 0, 0, (this.shape.x + crsOrder.x - 1) / 2,
-      0, 1, 0, (this.shape.y + crsOrder.y - 1) / 2 ,
-      0, 0, 1, (this.shape.z + crsOrder.z - 1) / 2,
+      1, 0, 0, (this.shape.x) / 2 - 0.5,
+      0, 1, 0, (this.shape.y) / 2 - 0.5,
+      0, 0, 1, (this.shape.z) / 2 - 0.5,
       0, 0, 0, 1
     );
 
