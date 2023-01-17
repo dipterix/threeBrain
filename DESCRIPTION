@@ -38,6 +38,7 @@ Imports:
     graphics,
     dipsaus,
     xml2,
+    servr,
     shiny (>= 1.2.0),
     digest (>= 0.6.22),
     freesurferformats (>= 0.1.7),
@@ -50,5 +51,6 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    DT
+    DT,
+    htmltools
 VignetteBuilder: knitr

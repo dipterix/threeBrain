@@ -38,7 +38,7 @@ class DataCube extends AbstractThreeBrainObject {
 
     // get cube (volume) data
     if( g.isNiftiCube ) {
-      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
+      const niftiData = canvas.get_data("volume_data", g.name, g.group.group_name);
       let imageMin = Infinity, imageMax = -Infinity;
       niftiData.image.forEach(( v ) => {
         if( imageMin > v ){ imageMin = v; }
@@ -56,7 +56,7 @@ class DataCube extends AbstractThreeBrainObject {
           this.cubeData[ ii ] = 0;
         }
       })
-      this.cubeShape = new Vector3().fromArray( niftiData.shape );
+      this.cubeShape = new Vector3().copy( niftiData.shape );
       const affine = niftiData.affine.clone();
       if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
         affine.copy( subjectData.matrices.Torig )

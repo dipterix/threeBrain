@@ -1,86 +1,5 @@
-import nifti from 'nifti-reader-js';
-import { Matrix4 } from 'three';
-
-class NiftiImage {
-  constructor ( data ) {
-    // parse nifti
-    if (nifti.isCompressed(data)) {
-        data = nifti.decompress(data);
-    }
-
-    this.header = nifti.readHeader(data);
-    const niftiImage = nifti.readImage(this.header, data);
-    if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT8) {
-      this.image = new Int8Array(niftiImage);
-      this.dataIsInt8 = true;
-    } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT16) {
-      this.image = new Int16Array(niftiImage);
-      this.dataIsInt16 = true;
-    } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT32) {
-      this.image = new Int32Array(niftiImage);
-      this.dataIsInt32 = true;
-    } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_FLOAT32) {
-      this.image = new Float32Array(niftiImage);
-      this.dataIsFloat32 = true;
-    } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_FLOAT64) {
-      this.image = new Float64Array(niftiImage);
-      this.dataIsFloat64 = true;
-    } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_UINT8) {
-      this.image = new Uint8Array(niftiImage);
-      this.dataIsUInt8 = true;
-    } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_UINT16) {
-      this.image = new Uint16Array(niftiImage);
-      this.dataIsUInt16 = true;
-    } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_UINT32) {
-      this.image = new Uint32Array(niftiImage);
-      this.dataIsUInt32 = true;
-    } else {
-      console.warn("NiftiImage: Cannot load NIFTI image data: the data type code is unsupported.")
-      this.image = undefined;
-    }
-
-    this.isNiftiImage = true;
-
-    // IJK to RAS
-    this.affine = new Matrix4().set(
-      this.header.affine[0][0],
-      this.header.affine[0][1],
-      this.header.affine[0][2],
-      this.header.affine[0][3],
-      this.header.affine[1][0],
-      this.header.affine[1][1],
-      this.header.affine[1][2],
-      this.header.affine[1][3],
-      this.header.affine[2][0],
-      this.header.affine[2][1],
-      this.header.affine[2][2],
-      this.header.affine[2][3],
-      this.header.affine[3][0],
-      this.header.affine[3][1],
-      this.header.affine[3][2],
-      this.header.affine[3][3]
-    );
-    this.shape = [
-      this.header.dims[1],
-      this.header.dims[2],
-      this.header.dims[3]
-    ];
-
-    // threeBrain uses the volume center as origin, hence the transform
-    // is shifted
-    const shift = new Matrix4().set(
-      1, 0, 0, this.shape[0] / 2,
-      0, 1, 0, this.shape[1] / 2,
-      0, 0, 1, this.shape[2] / 2,
-      0, 0, 0, 1
-    );
-
-    // IJK to scanner RAS (of the image)
-    this.model2RAS = this.affine.clone().multiply( shift );
-
-  }
-
-}
+import { NiftiImage } from '../formats/NIfTIImage.js';
+import { MGHImage } from '../formats/MGHImage.js';
 
 class CanvasFileLoader {
 
@@ -126,8 +45,10 @@ class CanvasFileLoader {
 
   read( url ) {
     const urlLowerCase = url.toLowerCase();
-    if( urlLowerCase.endsWith("nii") || urlLowerCase.endsWith("gz") ) {
+    if( urlLowerCase.endsWith("nii") || urlLowerCase.endsWith("nii.gz") ) {
       return this.readNIFTI( url );
+    } else if ( urlLowerCase.endsWith("mgh") || urlLowerCase.endsWith("mgz") ) {
+      return this.readMGH( url );
     } else {
       return this.readJSON( url );
     }
@@ -142,6 +63,22 @@ class CanvasFileLoader {
           this._ensureIdle(() => {
             this._currentFile = url;
             this._currentType = "nii";
+            this._currentCallback = resolve;
+            this.fileReader.readAsArrayBuffer( blob );
+          });
+        });
+      }
+    });
+  }
+  readMGH( url ) {
+    return new Promise((resolve) => {
+      if( this.cache.check_item( url ) ){
+        resolve( this.cache.get_item( url ) );
+      } else {
+        fetch(url).then( r => r.blob() ).then( blob => {
+          this._ensureIdle(() => {
+            this._currentFile = url;
+            this._currentType = "mgh";
             this._currentCallback = resolve;
             this.fileReader.readAsArrayBuffer( blob );
           });
@@ -180,7 +117,12 @@ class CanvasFileLoader {
         break;
       case 'nii':
         v = {
-          "nifti_data" : new NiftiImage( evt.target.result )
+          "volume_data" : new NiftiImage( evt.target.result )
+        };
+        break;
+      case 'mgh':
+        v = {
+          "volume_data" : new MGHImage( evt.target.result )
         };
         break;
       default:

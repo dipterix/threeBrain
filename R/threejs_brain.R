@@ -402,6 +402,7 @@ threejs_brain <- function(
 
 }
 
+
 #' Shiny Output for threeBrain Widgets
 #' @author Zhengjia Wang
 #' @name threejsBrainOutput

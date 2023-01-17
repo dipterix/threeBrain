@@ -9,12 +9,16 @@ import WebGL from './jsm/capabilities/WebGL.js'
 import * as download from 'downloadjs';
 import { json2csv } from 'json-2-csv';
 import ClipboardJS from 'clipboard';
+import nifti from 'nifti-reader-js';
 
 // Viewer class
 import { CONSTANTS } from './core/constants.js';
 import { ViewerWrapper } from './core/ViewerWrapper.js';
 import { ViewerApp } from './core/ViewerApp.js';
 import { StorageCache } from './core/StorageCache.js';
+
+// Formats
+import { MGHImage } from './formats/MGHImage.js';
 
 // Addons
 import { RShinyDriver } from './drivers/RShinyDriver.js'
@@ -43,11 +47,16 @@ const ExternLibs = {
   WebGL             : WebGL,
   json2csv          : json2csv,
   downloadjs        : download,
-  ClipboardJS       : ClipboardJS
+  ClipboardJS       : ClipboardJS,
+  nifti             : nifti
 };
 
 const Drivers = {
   Shiny : RShinyDriver
-}
+};
 
-export { ViewerApp, ViewerWrapper, StorageCache, Constants, Drivers, ExternLibs };
+const Readers = {
+  MGHImage : MGHImage
+};
+
+export { ViewerApp, ViewerWrapper, StorageCache, Readers, Constants, Drivers, ExternLibs };

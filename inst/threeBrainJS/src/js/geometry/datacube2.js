@@ -356,16 +356,22 @@ class DataCube2 extends AbstractThreeBrainObject {
 
     // Need to check if this is nifticube
     if( g.isNiftiCube2 ) {
-      const niftiData = canvas.get_data("nifti_data", g.name, g.group.group_name);
+      const niftiData = canvas.get_data("volume_data", g.name, g.group.group_name);
       this.voxelData = niftiData.image;
       // width, height, depth of the model (not in world)
-      this.modelShape = new Vector3().fromArray( niftiData.shape );
+      this.modelShape = new Vector3().copy( niftiData.shape );
 
       // Make sure to register the initial transform matrix (from IJK to RAS)
       // original g.trans_mat is nifti RAS to tkrRAS
       // this._transform = g.trans_mat * niftiData.model2RAS
       //   -> new transform from model center to tkrRAS
-      this._transform.multiply( niftiData.model2RAS );
+      if( niftiData.model2tkrRAS && niftiData.model2tkrRAS.isMatrix4 ) {
+        // special:: this is MGH data and transfor is embedded
+        this._transform.copy( niftiData.model2tkrRAS );
+      } else {
+        this._transform.multiply( niftiData.model2RAS );
+      }
+      this._originalData = niftiData;
     } else {
       // g.trans_mat is from model to tkrRAS
       this.voxelData = canvas.get_data('datacube_value_'+g.name, g.name, g.group.group_name);

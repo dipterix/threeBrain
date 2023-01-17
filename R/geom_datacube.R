@@ -136,7 +136,7 @@ NiftiGeom <- R6::R6Class(
         is_new_cache = FALSE,
         is_cache = TRUE
       )
-      group$set_group_data("nifti_data", value = re, is_cached = TRUE)
+      group$set_group_data("volume_data", value = re, is_cached = TRUE)
       self$color_format <- color_format
 
     },
