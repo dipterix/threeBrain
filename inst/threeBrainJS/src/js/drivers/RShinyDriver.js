@@ -1,5 +1,6 @@
-import { Vector3 } from 'three';
+import { Vector3, Color } from 'three';
 import { asArray } from '../utility/asArray.js';
+import { asColor } from '../utility/color.js';
 import { is_electrode } from '../geometry/sphere.js';
 import { CONSTANTS } from '../core/constants.js';
 
@@ -289,7 +290,7 @@ class RShinyDriver {
   }
 
   driveBackground( color ) {
-    const c = asColor( color );
+    const c = asColor( color, new Color() );
     const controller = this.app.controllerGUI.getController('Background Color');
     controller.setValue( color );
     handler_names = [

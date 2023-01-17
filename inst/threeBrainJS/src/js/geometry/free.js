@@ -91,26 +91,48 @@ class FreeMesh extends AbstractThreeBrainObject {
 
   // Primary color (Curv, sulc...)
   _set_primary_color( color_name, update_color = false ){
+    if( update_color ) {
+      this.object.geometry.attributes.color.needsUpdate = true
+    }
 
     let cname = color_name || this._vertex_cname;
 
     // color data is lazy-loaded
     const color_data = this._canvas.get_data(cname, this.misc_name, this.misc_group_name);
-
-    if( !(color_data && Array.isArray(color_data.value)) ){
-      if( update_color ){
-        this._mesh.material.needsUpdate = true;
-      }
-      return;
-    }
-
     const g = this._params;
     const nvertices = this._mesh.geometry.attributes.position.count;
-    if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
-      color_data.range = [-1, 1];
+    let valueRange = [-1, 1];
+    let valueData;
+
+    if( (color_data && Array.isArray(color_data.value)) ){
+
+      if( !Array.isArray(color_data.range) || color_data.range.length < 2 ){
+        color_data.range = [-1, 1];
+      } else {
+        valueRange = color_data.range;
+      }
+
+      valueData = color_data.value;
+
+
+    } else {
+
+      // directly set by lh_primary_vertex_color
+      const prefix = this.hemisphere.toLocaleLowerCase()[0];
+      const vertexValues = this._canvas.get_data(`${ prefix }h_primary_vertex_color`, this.name, this.group_name);
+
+      if( vertexValues && vertexValues.isFreeSurferNodeValues ) {
+
+        valueRange = [ vertexValues.min , vertexValues.max ];
+        valueData = vertexValues._frameData;
+
+      } else {
+        return;
+      }
     }
 
-    let scale = Math.max(color_data.range[1], -color_data.range[0]);
+
+    let scale = Math.max(valueRange[1], -valueRange[0]);
 
     // generate color for each vertices
     const _transform = (v, b = 10 / scale) => {
@@ -119,7 +141,7 @@ class FreeMesh extends AbstractThreeBrainObject {
       return( s / 255 );
     };
 
-    color_data.value.forEach((v, ii) => {
+    valueData.forEach((v, ii) => {
       if( ii >= nvertices ){ return; }
       // Make it lighter using sigmoid function
       let col = _transform(v);
@@ -128,11 +150,6 @@ class FreeMesh extends AbstractThreeBrainObject {
       this._vertex_color[ ii * 4 + 2 ] = col;
       this._vertex_color[ ii * 4 + 3 ] = 1;
     });
-
-    if( update_color ){
-      // update color to geometry
-      this._mesh.material.needsUpdate = true;
-    }
 
   }
 
@@ -406,7 +423,7 @@ class FreeMesh extends AbstractThreeBrainObject {
     this.misc_name = '_misc_' + this.subject_code;
     this.misc_group_name = '_internal_group_data_' + this.subject_code;
     this._vertex_cname = this._canvas.get_data(
-      `default_vertex_${ this.hemisphere[0] }h_${ this.surface_type }`, this.name, this.group_name);
+      `default_vertex_${ this.hemisphere[0] }h_${ this.surface_type }`, this.name, this.group_name) || "sulc";
 
     // STEP 2: data settings
     this._geometry = new BufferGeometry();

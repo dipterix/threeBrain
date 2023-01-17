@@ -21,6 +21,8 @@ import { CanvasFileLoader } from './core/loaders.js';
 // Formats
 import { MGHImage } from './formats/MGHImage.js';
 import { FreeSurferMesh } from './formats/FreeSurferMesh.js';
+import { FreeSurferNodeValues } from './formats/FreeSurferNodeValues.js';
+
 
 // Addons
 import { RShinyDriver } from './drivers/RShinyDriver.js'
@@ -60,6 +62,7 @@ const Drivers = {
 const Readers = {
   FileLoader : CanvasFileLoader,
   FreeSurferMesh : FreeSurferMesh,
+  FreeSurferNodeValues : FreeSurferNodeValues,
   MGHImage : MGHImage
 };
 

@@ -1,6 +1,7 @@
 import { NiftiImage } from '../formats/NIfTIImage.js';
 import { MGHImage } from '../formats/MGHImage.js';
 import { FreeSurferMesh } from '../formats/FreeSurferMesh.js';
+import { FreeSurferNodeValues } from '../formats/FreeSurferNodeValues.js';
 
 
 class CanvasFileLoader {
@@ -30,6 +31,10 @@ class CanvasFileLoader {
       urlLowerCase.endsWith("smoothwm")
     ) {
       item = this.readBinary( url, "fsSurf", itemName );
+    } else if (
+      urlLowerCase.endsWith("sulc") || urlLowerCase.endsWith("curv")
+    ) {
+      item = this.readBinary( url, "fsCurv", itemName );
     } else {
       item = this.readJSON( url );
     }
@@ -119,6 +124,10 @@ class CanvasFileLoader {
         break;
       case 'fsSurf':
         item.data._originalData_ = new FreeSurferMesh( buffer );
+        break;
+      case 'fsCurv':
+        item.data._originalData_ = new FreeSurferNodeValues( buffer );
+        break;
       default:
         // code
     }
