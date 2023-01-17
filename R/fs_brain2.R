@@ -11,9 +11,15 @@
 freesurfer_brain2 <- function(
   fs_subject_folder, subject_name,
   volume_types = 't1', surface_types = 'pial', curvature = 'sulc',
-  atlas_types = 'aparc+aseg',
+  atlas_types = c('aparc+aseg', 'aparc.a2009s+aseg', 'aparc.DKTatlas+aseg'),
   ct_path = NULL, #file.path(fs_subject_folder, 'RAVE', 'coregistration', 'ct2t1.nii.gz'),
   use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE), ...){
+
+  # DIPSAUS DEBUG START
+  # fs_subject_folder = '~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/fs/'
+  # subject_name <- "PAV010"; volume_types = 't1'; surface_types = 'pial'; curvature = 'sulc';
+  # atlas_types = 'aparc+aseg';
+  # ct_path = NULL
 
   mustWork <- TRUE
   atlas_types <- atlas_types[atlas_types %in% c('aparc+aseg', 'aparc.a2009s+aseg', 'aparc.DKTatlas+aseg', 'aseg')]
@@ -119,10 +125,27 @@ freesurfer_brain2 <- function(
     group_volume$subject_code <- subject_name
     cache_volume <- normalizePath(file.path(rave_dir, vol_json))
 
-    geom_brain_t1 <- DataCubeGeom$new(
-      name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
-      dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
-      position = c(0,0,0), cache_file = cache_volume, digest = FALSE)
+    # Make sure T1 is up-to-date
+    t1_mgh_path <- file.path(fs_subject_folder, "mri", fname_t1)
+    if(!identical(fname_t1, "brain.finalsurfs.mgz")) {
+      if(file.exists(file.path(fs_subject_folder, "mri", "brain.finalsurfs.mgz"))) {
+        t1_mgh_path <- file.path(fs_subject_folder, "mri", "brain.finalsurfs.mgz")
+      }
+    }
+
+    if( file.exists(t1_mgh_path) ) {
+      geom_brain_t1 <- VolumeGeom$new(
+        name = sprintf('T1 (%s)', subject_name),
+        path = t1_mgh_path,
+        group = GeomGroup$new(name = sprintf('Volume - T1 (%s)', subject_name))
+      )
+    } else {
+      geom_brain_t1 <- DataCubeGeom$new(
+        name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
+        dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
+        position = c(0,0,0), cache_file = cache_volume, digest = FALSE)
+    }
+
     geom_brain_t1$subject_code <- subject_name
     geom_brain_t1 <- BrainVolume$new(
       subject_code = subject_name, volume_type = 'T1',
@@ -131,6 +154,7 @@ freesurfer_brain2 <- function(
     brain$add_volume( volume = geom_brain_t1 )
   }
 
+  # TODO: remove support as there is dedicated $localize() method
   if( length(ct_path) == 1 && file.exists(ct_path) ){
 
     group_ct <- GeomGroup$new(name = sprintf('Volume - ct.aligned.t1 (%s)', subject_name))
@@ -359,40 +383,54 @@ freesurfer_brain2 <- function(
 
 
   for(atlas_t in atlas_types){
-    # check if cache exists
 
-    has_atlas <- FALSE
-    atlas_t_alt <- stringr::str_replace_all(atlas_t, '[\\W]', '_')
-    atlas_json <- sprintf('%s_%s.json', subject_name, atlas_t_alt)
-    atlas_digest <- rave_cached(paste0(atlas_json, '.digest'))
-    if(atlas_json %in% common$fs_atlas_files){
-      # Atlas is cached and valid (?)
-      atlas_header <- from_json(from_file = atlas_digest)
-      fname_atlas <- atlas_header$source_name
-      Norig <- atlas_header$Norig
-      Torig <- atlas_header$Torig
-      has_atlas <- TRUE
-    }
-
-    geom_atlas <- NULL
-
-    if( has_atlas ){
-      atlas_shape <- atlas_header$shape
-      group_atlas <- GeomGroup$new(name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name))
-      group_atlas$subject_code <- subject_name
-      cache_atlas <- normalizePath(file.path(rave_dir, atlas_json))
-
-      geom_atlas <- DataCubeGeom2$new(
-        name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name), dim = atlas_shape,
-        half_size = c(1,1,1), group = group_atlas, position = c(0,0,0),
-        cache_file = cache_atlas)
-
-      geom_atlas$subject_code <- subject_name
+    # check if fs has mgh/mgz files
+    mgz_path <- file.path(fs_subject_folder, "mri", sprintf("%s.mgz", atlas_t))
+    if( file.exists(mgz_path) ) {
+      nm <- sprintf("Atlas - %s (%s)", atlas_t, subject_name)
+      group <- GeomGroup$new(name = nm)
+      group$subject_code <- subject_name
+      geom <- VolumeGeom2$new(name = nm, path = mgz_path, color_format = "RGBAFormat", trans_mat = NULL)
+      geom$subject_code <- subject_name
       geom_atlas <- BrainAtlas$new(
-        subject_code = subject_name, atlas_type = atlas_t_alt,
-        atlas = geom_atlas, position = c(0, 0, 0 ))
+        subject_code = subject_name, atlas_type = atlas_t,
+        atlas = geom, position = c(0, 0, 0))
+      brain$add_atlas(atlas = geom_atlas)
+    } else {
+      # check if cache exists
+      has_atlas <- FALSE
+      atlas_t_alt <- stringr::str_replace_all(atlas_t, '[\\W]', '_')
+      atlas_json <- sprintf('%s_%s.json', subject_name, atlas_t_alt)
+      atlas_digest <- rave_cached(paste0(atlas_json, '.digest'))
+      if(atlas_json %in% common$fs_atlas_files){
+        # Atlas is cached and valid (?)
+        atlas_header <- from_json(from_file = atlas_digest)
+        fname_atlas <- atlas_header$source_name
+        Norig <- atlas_header$Norig
+        Torig <- atlas_header$Torig
+        has_atlas <- TRUE
+      }
 
-      brain$add_atlas( atlas = geom_atlas )
+      geom_atlas <- NULL
+
+      if( has_atlas ){
+        atlas_shape <- atlas_header$shape
+        group_atlas <- GeomGroup$new(name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name))
+        group_atlas$subject_code <- subject_name
+        cache_atlas <- normalizePath(file.path(rave_dir, atlas_json))
+
+        geom_atlas <- DataCubeGeom2$new(
+          name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name), dim = atlas_shape,
+          half_size = c(1,1,1), group = group_atlas, position = c(0,0,0),
+          cache_file = cache_atlas)
+
+        geom_atlas$subject_code <- subject_name
+        geom_atlas <- BrainAtlas$new(
+          subject_code = subject_name, atlas_type = atlas_t_alt,
+          atlas = geom_atlas, position = c(0, 0, 0 ))
+
+        brain$add_atlas( atlas = geom_atlas )
+      }
     }
   }
 
