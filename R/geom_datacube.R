@@ -110,8 +110,8 @@ DataCubeGeom <- R6::R6Class(
 )
 
 
-NiftiGeom <- R6::R6Class(
-  classname = "NiftiGeom",
+VolumeGeom <- R6::R6Class(
+  classname = "VolumeGeom",
   inherit = AbstractGeom,
   public = list(
     type = 'datacube',
@@ -144,7 +144,7 @@ NiftiGeom <- R6::R6Class(
     to_list = function(){
       re <- super$to_list()
       re$isDataCube <- TRUE
-      re$isNiftiCube <- TRUE
+      re$isVolumeCube <- TRUE
       re$threshold <- self$threshold
       # re$color_format <- self$color_format
       re
@@ -152,7 +152,7 @@ NiftiGeom <- R6::R6Class(
   ),
   active = list(
     is_datacube = function(){ TRUE },
-    is_nifticube = function(){ TRUE }
+    is_volumecube = function(){ TRUE }
   )
 )
 

@@ -343,7 +343,7 @@ class DataCube2 extends AbstractThreeBrainObject {
     this._selectedDataValues = [];
     this._timeSlice = 0;
     // transform before applying trans_mat specified by `g`
-    // only useful for NiftiCube2
+    // only useful for VolumeCube2
     this._transform = new Matrix4().set(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
 
     if( Array.isArray(g.trans_mat) && g.trans_mat.length === 16 ) {
@@ -354,8 +354,8 @@ class DataCube2 extends AbstractThreeBrainObject {
 
     let mesh;
 
-    // Need to check if this is nifticube
-    if( g.isNiftiCube2 ) {
+    // Need to check if this is VolumeCube2
+    if( g.isVolumeCube2 ) {
       const niftiData = canvas.get_data("volume_data", g.name, g.group.group_name);
       this.voxelData = niftiData.image;
       // width, height, depth of the model (not in world)

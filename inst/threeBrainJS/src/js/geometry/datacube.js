@@ -1,7 +1,8 @@
 import { AbstractThreeBrainObject } from './abstract.js';
 import { CONSTANTS } from '../core/constants.js';
 import { to_array, get_or_default } from '../utils.js';
-import { Object3D, LineBasicMaterial, BufferGeometry, Data3DTexture, RedFormat, LinearFilter,
+import { Object3D, LineBasicMaterial, BufferGeometry, Data3DTexture, RedFormat,
+         LinearFilter, NearestFilter,
          UnsignedByteType, RawShaderMaterial, Vector3, DoubleSide, UniformsUtils,
          PlaneGeometry, Mesh, LineSegments } from 'three';
 import { SliceShader } from '../shaders/SliceShader.js';
@@ -37,7 +38,7 @@ class DataCube extends AbstractThreeBrainObject {
     g.disable_trans_mat = true;
 
     // get cube (volume) data
-    if( g.isNiftiCube ) {
+    if( g.isVolumeCube ) {
       const niftiData = canvas.get_data("volume_data", g.name, g.group.group_name);
       let imageMin = Infinity, imageMax = -Infinity;
       niftiData.image.forEach(( v ) => {
@@ -72,8 +73,8 @@ class DataCube extends AbstractThreeBrainObject {
     this.dataTexture = new Data3DTexture(
       this.cubeData, this.cubeShape.x, this.cubeShape.y, this.cubeShape.z
     );
-    this.dataTexture.minFilter = LinearFilter;
-    this.dataTexture.magFilter = LinearFilter;
+    this.dataTexture.minFilter = NearestFilter;
+    this.dataTexture.magFilter = NearestFilter;
     this.dataTexture.format = RedFormat;
     this.dataTexture.type = UnsignedByteType;
     this.dataTexture.unpackAlignment = 1;

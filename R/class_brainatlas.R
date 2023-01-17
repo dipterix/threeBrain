@@ -198,7 +198,7 @@ add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGB
   nm <- sprintf("Atlas - %s (%s)", name, subject)
   group <- GeomGroup$new(name = nm)
   group$subject_code <- subject
-  geom <- NiftiGeom2$new(name = nm, path = path, color_format = color_format, trans_mat = trans_mat)
+  geom <- VolumeGeom2$new(name = nm, path = path, color_format = color_format, trans_mat = trans_mat)
   geom$subject_code <- subject
   obj <- BrainAtlas$new(subject_code = subject, atlas_type = name,
                         atlas = geom, position = c(0, 0, 0))
