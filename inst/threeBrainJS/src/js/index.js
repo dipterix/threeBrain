@@ -16,9 +16,11 @@ import { CONSTANTS } from './core/constants.js';
 import { ViewerWrapper } from './core/ViewerWrapper.js';
 import { ViewerApp } from './core/ViewerApp.js';
 import { StorageCache } from './core/StorageCache.js';
+import { CanvasFileLoader } from './core/loaders.js';
 
 // Formats
 import { MGHImage } from './formats/MGHImage.js';
+import { FreeSurferMesh } from './formats/FreeSurferMesh.js';
 
 // Addons
 import { RShinyDriver } from './drivers/RShinyDriver.js'
@@ -56,6 +58,8 @@ const Drivers = {
 };
 
 const Readers = {
+  FileLoader : CanvasFileLoader,
+  FreeSurferMesh : FreeSurferMesh,
   MGHImage : MGHImage
 };
 

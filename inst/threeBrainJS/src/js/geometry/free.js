@@ -409,14 +409,54 @@ class FreeMesh extends AbstractThreeBrainObject {
       `default_vertex_${ this.hemisphere[0] }h_${ this.surface_type }`, this.name, this.group_name);
 
     // STEP 2: data settings
-    const vertices = this._canvas.get_data('free_vertices_'+this.name, this.name, this.group_name);
-    const faces = this._canvas.get_data('free_faces_'+g.name, this.name, this.group_name);
+    this._geometry = new BufferGeometry();
 
-    // Make sure face index starts from 0
-    const _face_min = min2(faces, 0);
-    if(_face_min !== 0) {
-      sub2(faces, _face_min);
+    const loaderData = this._canvas.get_data('free_vertices_'+this.name, this.name, this.group_name);
+    if( loaderData.isFreeSurferMesh ) {
+
+      this.__nvertices = loaderData.nVertices;
+      this._geometry.setIndex( new BufferAttribute(loaderData.index, 1, false) );
+      this._geometry.setAttribute( 'position', new BufferAttribute(loaderData.position, 3) );
+
+    } else {
+      const vertices = loaderData;
+      const faces = this._canvas.get_data('free_faces_'+g.name, this.name, this.group_name);
+      // Make sure face index starts from 0
+      const _face_min = min2(faces, 0);
+      if(_face_min !== 0) {
+        sub2(faces, _face_min);
+      }
+
+      // construct geometry
+      this.__nvertices = vertices.length;
+      const vertex_positions = new Float32Array( this.__nvertices * 3 ),
+            face_orders = new Uint32Array( faces.length * 3 );
+
+      vertices.forEach((v, ii) => {
+        vertex_positions[ ii * 3 ] = v[0];
+        vertex_positions[ ii * 3 + 1 ] = v[1];
+        vertex_positions[ ii * 3 + 2 ] = v[2];
+      });
+      faces.forEach((v, ii) => {
+        face_orders[ ii * 3 ] = v[0];
+        face_orders[ ii * 3 + 1 ] = v[1];
+        face_orders[ ii * 3 + 2 ] = v[2];
+      });
+
+      this._geometry.setIndex( new BufferAttribute(face_orders, 1, false) );
+      this._geometry.setAttribute( 'position', new BufferAttribute(vertex_positions, 3) );
     }
+
+    this._vertex_color = new Float32Array( this.__nvertices * 4 ).fill(1);
+    this._geometry.setAttribute( 'color', new BufferAttribute( this._vertex_color, 4, true ) );
+
+    // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );
+    // gb.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
+
+    this._geometry.computeVertexNormals();
+    this._geometry.computeBoundingBox();
+    this._geometry.computeBoundingSphere();
+
 
     // STEP 3: mesh settings
     // For volume colors
@@ -465,38 +505,9 @@ class FreeMesh extends AbstractThreeBrainObject {
       )
     };
 
-    this._geometry = new BufferGeometry();
-
-    // construct geometry
-    this.__nvertices = vertices.length;
-    const vertex_positions = new Float32Array( this.__nvertices * 3 ),
-          face_orders = new Uint32Array( faces.length * 3 ),
-          vertex_color = new Float32Array( this.__nvertices * 4 ).fill(1);
-
-    this._vertex_color = vertex_color;
-
-    vertices.forEach((v, ii) => {
-      vertex_positions[ ii * 3 ] = v[0];
-      vertex_positions[ ii * 3 + 1 ] = v[1];
-      vertex_positions[ ii * 3 + 2 ] = v[2];
-    });
-    faces.forEach((v, ii) => {
-      face_orders[ ii * 3 ] = v[0];
-      face_orders[ ii * 3 + 1 ] = v[1];
-      face_orders[ ii * 3 + 2 ] = v[2];
-    });
-
-    this._geometry.setIndex( new BufferAttribute(face_orders, 1) );
-    this._geometry.setAttribute( 'position', new BufferAttribute(vertex_positions, 3) );
-    this._geometry.setAttribute( 'color', new BufferAttribute( vertex_color, 4, true ) );
 
 
-    // gb.setAttribute( 'color', new Float32BufferAttribute( vertex_colors, 3 ) );
-    // gb.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
 
-    this._geometry.computeVertexNormals();
-    this._geometry.computeBoundingBox();
-    this._geometry.computeBoundingSphere();
     //gb.faces = faces;
 
     this._geometry.name = 'geom_free_' + g.name;

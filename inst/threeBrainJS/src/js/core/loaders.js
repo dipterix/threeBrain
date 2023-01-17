@@ -1,5 +1,7 @@
 import { NiftiImage } from '../formats/NIfTIImage.js';
 import { MGHImage } from '../formats/MGHImage.js';
+import { FreeSurferMesh } from '../formats/FreeSurferMesh.js';
+
 
 class CanvasFileLoader {
 
@@ -7,136 +9,131 @@ class CanvasFileLoader {
     this.canvas = canvas;
     this.cache = this.canvas.cache;
     this.use_cache = this.canvas.use_cache;
-    this.fileReader = new FileReader();
-    this._currentFile = "";
-    this._currentType = "json";
-    this._currentCallback = null;
-    this._idle = true;
-
-    this.fileReader.addEventListener("loadstart", e => {
-      this._idle = false;
-      this._onLoadStart(e);
-    });
-    this.fileReader.addEventListener("loadend", e => {
-      // this._idle = true;
-    });
-    this.fileReader.addEventListener("load", e => {
-      e.currentFile = this._currentFile;
-      e.currentType = this._currentType;
-      this._onLoad(e, this._currentCallback);
-      this._idle = true;
-    });
-
+    this.loadingFiles = {};
   }
 
-  _ensureIdle( callback ) {
-    return new Promise((resolve) => {
-      const checkIdle = () => {
-        if( this._idle ) {
-          this._idle  = false;
-          resolve( callback() );
-        } else {
-          setTimeout(checkIdle, 10);
-        }
-      }
-      checkIdle();
-    });
-  }
-
-  read( url ) {
+  read( url, itemName ) {
     const urlLowerCase = url.toLowerCase();
-    if( urlLowerCase.endsWith("nii") || urlLowerCase.endsWith("nii.gz") ) {
-      return this.readNIFTI( url );
-    } else if ( urlLowerCase.endsWith("mgh") || urlLowerCase.endsWith("mgz") ) {
-      return this.readMGH( url );
-    } else {
-      return this.readJSON( url );
+    let item = this.loadingFiles[ url ];
+
+    if( item !== undefined ) {
+      return item;
     }
+
+    if( urlLowerCase.endsWith("nii") || urlLowerCase.endsWith("nii.gz") ) {
+      item = this.readBinary( url, "nii", itemName );
+    } else if ( urlLowerCase.endsWith("mgh") || urlLowerCase.endsWith("mgz") ) {
+      item = this.readBinary( url, "mgh", itemName );
+    } else if (
+      urlLowerCase.endsWith("pial") || urlLowerCase.endsWith("pial.t1") ||
+      urlLowerCase.endsWith("white") || urlLowerCase.endsWith("sphere") ||
+      urlLowerCase.endsWith("smoothwm")
+    ) {
+      item = this.readBinary( url, "fsSurf", itemName );
+    } else {
+      item = this.readJSON( url );
+    }
+    this.loadingFiles[ url ] = item;
+    return item;
   }
 
-  readNIFTI( url ) {
-    return new Promise((resolve) => {
-      if( this.cache.check_item( url ) ){
-        resolve( this.cache.get_item( url ) );
-      } else {
-        fetch(url).then( r => r.blob() ).then( blob => {
-          this._ensureIdle(() => {
-            this._currentFile = url;
-            this._currentType = "nii";
-            this._currentCallback = resolve;
-            this.fileReader.readAsArrayBuffer( blob );
+  readBinary( url, type, itemName ) {
+    const fileReader = new FileReader();
+    fileReader.addEventListener( "loadstart", this._onLoadStart );
+    fileReader.addEventListener( "error", e => { resolve(); })
+
+    return {
+      reader : fileReader,
+      type : type,
+      promise : new Promise((resolve) => {
+        if( this.cache.check_item( url ) ){
+          resolve( this.cache.get_item( url ) );
+        } else {
+          fetch(url).then( r => r.blob() ).then( blob => {
+            fileReader.addEventListener( "load", (e) => {
+              e.currentFile = url;
+              e.currentType = type;
+              e.currentItem = itemName;
+              this._onLoad( e );
+              resolve( e.target.result );
+            });
+            fileReader.readAsArrayBuffer( blob );
           });
-        });
-      }
-    });
-  }
-  readMGH( url ) {
-    return new Promise((resolve) => {
-      if( this.cache.check_item( url ) ){
-        resolve( this.cache.get_item( url ) );
-      } else {
-        fetch(url).then( r => r.blob() ).then( blob => {
-          this._ensureIdle(() => {
-            this._currentFile = url;
-            this._currentType = "mgh";
-            this._currentCallback = resolve;
-            this.fileReader.readAsArrayBuffer( blob );
-          });
-        });
-      }
-    });
+        }
+      })
+    };
   }
   readJSON( url ) {
-    return new Promise((resolve) => {
-      if( this.cache.check_item( url ) ){
-        resolve( this.cache.get_item( url ) );
-      } else {
-        fetch(url).then( r => r.blob() ).then( blob => {
-          this._ensureIdle(() => {
-            this._currentFile = url;
-            this._currentType = "json";
-            this._currentCallback = resolve;
-            this.fileReader.readAsText( blob );
-          })
-        });
-      }
-    });
+    const fileReader = new FileReader();
+
+    return {
+      reader : fileReader,
+      type : "json",
+      promise : new Promise((resolve) => {
+        if( this.cache.check_item( url ) ){
+          resolve( this.cache.get_item( url ) );
+        } else {
+          fetch(url).then( r => r.blob() ).then( blob => {
+
+            fileReader.addEventListener( "loadstart", this._onLoadStart );
+            fileReader.addEventListener( "load", (e) => {
+              e.currentFile = url;
+              e.currentType = "json";
+              this._onLoad( e );
+              resolve( e.target.result );
+            });
+            fileReader.addEventListener( "error", e => { resolve(); })
+            fileReader.readAsText( blob );
+
+          });
+        }
+      })
+    };
 
   }
 
-  _onLoadStart( evt ) {
+  _onLoadStart = ( evt ) => {
     this.canvas.debugVerbose( 'Loading start!' );
   }
-  _onLoad( evt, callback ) {
-    this.canvas.debugVerbose( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
 
-    let v;
-    switch (evt.currentType) {
+  parse( url ) {
+    const item = this.loadingFiles[ url ];
+    if( !item || item.data !== undefined ) {
+      return ;
+    }
+
+    const buffer = item.reader.result,
+          type   = item.type;
+    if( !buffer ) { return; }
+
+    item.data = {};
+    switch ( type ) {
       case 'json':
-        v = JSON.parse( evt.target.result );
+        item.data = JSON.parse( buffer );
         break;
       case 'nii':
-        v = {
-          "volume_data" : new NiftiImage( evt.target.result )
-        };
+        item.data._originalData_ = new NiftiImage( buffer );
         break;
       case 'mgh':
-        v = {
-          "volume_data" : new MGHImage( evt.target.result )
-        };
+        item.data._originalData_ = new MGHImage( buffer );
         break;
+      case 'fsSurf':
+        item.data._originalData_ = new FreeSurferMesh( buffer );
       default:
         // code
     }
+    return item.data;
+  }
+  _onLoad = ( evt, callback ) => {
+    this.canvas.debugVerbose( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
 
-    if( v !== undefined && this.use_cache ) {
-      // store to cache
-      this.cache.set_item( evt.currentFile, v );
+    if( this.use_cache && !this.cache.check_item( evt.currentFile ) ) {
+      this.cache.set_item( evt.currentFile, evt.target.result );
     }
 
-    this.canvas.start_animation(0);
+    // this.canvas.needsUpdate = true;
     if( typeof callback === "function" ) {
-      callback(v);
+      callback( evt.target.result );
     }
   }
 

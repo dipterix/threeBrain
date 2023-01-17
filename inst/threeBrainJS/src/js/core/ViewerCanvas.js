@@ -468,94 +468,100 @@ class ViewerCanvas extends ThrottledEventDispatcher {
 
     const cached_items = asArray( g.cached_items );
 
-    const promises = cached_items.map(async (nm) => {
-      const cache_info = g.group_data[nm];
-
-      // cache_info should be object of paths for the first time. However
-      // if loaded before, the cache_info might be substituted by
-      // the cache values, which do not contain the file information anymore
-      if(
-        !cache_info || typeof(cache_info) !== "object" ||
-        typeof cache_info.file_name !== "string"
-      ) { return; }
-
-      const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-      this.debugVerbose(path);
-      let v = await this.file_loader.read( path );
-      if( v && typeof(v) === "object" ) {
-        for(let key in v) {
-          g.group_data[key] = v[key];
-        }
-      }
-    });
-
-    return new Promise(resolve => {
-      Promise.all(promises).then(async () => {
-
-        // special case, if group name is "__global_data", then set group variable
-        if( g.name === '__global_data' && g.group_data ){
-          for( let _n in g.group_data ){
-            this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
+    const loadGroups = async () => {
+      for( let ii in cached_items ) {
+        const nm = cached_items[ ii ];
+        const cache_info = g.group_data[nm];
+        if(
+          !cache_info || typeof(cache_info) !== "object" ||
+          typeof cache_info.file_name !== "string"
+        ) { continue; }
+        const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
+        this.debugVerbose(path);
+        const item = this.file_loader.read( path, nm );
+        await item.promise;
+        const v = this.file_loader.parse( path );
+        if( v && typeof(v) === "object" ) {
+          for(let key in v) {
+            if( key !== "_originalData_") {
+              g.group_data[key] = v[key];
+            }
           }
-
-          // check if ".subject_codes" is in the name
-          const subject_codes = asArray( this.shared_data.get(".subject_codes") );
-          if( subject_codes.length > 0 ){
-
-            // generate transform matrices
-            subject_codes.forEach((scode) => {
-
-              let subject_data = this.shared_data.get(scode);
-              if( !subject_data ){
-                subject_data = {};
-                this.shared_data.set(scode, subject_data);
-              }
-
-              const Norig = as_Matrix4( subject_data.Norig );
-              const Torig = as_Matrix4( subject_data.Torig );
-              const xfm = as_Matrix4( subject_data.xfm );
-              const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
-              const MNI305_tkrRAS = new Matrix4()
-                .copy(tkrRAS_MNI305).invert();
-              const tkrRAS_Scanner = new Matrix4()
-                .copy(Norig)
-                .multiply(
-                  new Matrix4()
-                    .copy(Torig)
-                    .invert()
-                );
-              subject_data.matrices = {
-                Norig : Norig,
-                Torig : Torig,
-                xfm : xfm,
-                tkrRAS_MNI305 : tkrRAS_MNI305,
-                MNI305_tkrRAS : MNI305_tkrRAS,
-                tkrRAS_Scanner: tkrRAS_Scanner
-              };
-
-            });
-
-          }
-
-          const media_content = this.shared_data.get(".media_content");
-          if( media_content ){
-            for(let video_name in media_content){
-              const content = media_content[video_name];
-              if( !content.is_url ){
-                content.url = cache_folder + g.cache_name + '/' + content.url;
-                content.is_url = true;
-                const blob = await fetch(content.url).then(r => r.blob());
-                content.url = URL.createObjectURL(blob);
+          if ("_originalData_" in v) {
+            if( !(nm in g.group_data) ) {
+              g.group_data[ nm ] = v[ "_originalData_" ];
+            } else {
+              const item = g.group_data[ nm ];
+              if( typeof item === "object" && item !== null && item.is_cache ) {
+                g.group_data[ nm ] = v[ "_originalData_" ];
               }
             }
           }
+        }
+      }
+
+      // special case, if group name is "__global_data", then set group variable
+      if( g.name === '__global_data' && g.group_data ){
+        for( let _n in g.group_data ){
+          this.shared_data.set(_n.substring(15), g.group_data[ _n ]);
+        }
+
+        // check if ".subject_codes" is in the name
+        const subject_codes = asArray( this.shared_data.get(".subject_codes") );
+        if( subject_codes.length > 0 ){
+
+          // generate transform matrices
+          subject_codes.forEach((scode) => {
+
+            let subject_data = this.shared_data.get(scode);
+            if( !subject_data ){
+              subject_data = {};
+              this.shared_data.set(scode, subject_data);
+            }
+
+            const Norig = as_Matrix4( subject_data.Norig );
+            const Torig = as_Matrix4( subject_data.Torig );
+            const xfm = as_Matrix4( subject_data.xfm );
+            const tkrRAS_MNI305 = as_Matrix4( subject_data.vox2vox_MNI305 );
+            const MNI305_tkrRAS = new Matrix4()
+              .copy(tkrRAS_MNI305).invert();
+            const tkrRAS_Scanner = new Matrix4()
+              .copy(Norig)
+              .multiply(
+                new Matrix4()
+                  .copy(Torig)
+                  .invert()
+              );
+            subject_data.matrices = {
+              Norig : Norig,
+              Torig : Torig,
+              xfm : xfm,
+              tkrRAS_MNI305 : tkrRAS_MNI305,
+              MNI305_tkrRAS : MNI305_tkrRAS,
+              tkrRAS_Scanner: tkrRAS_Scanner
+            };
+
+          });
 
         }
 
-        resolve( g.name );
+        const media_content = this.shared_data.get(".media_content");
+        if( media_content ){
+          for(let video_name in media_content){
+            const content = media_content[video_name];
+            if( !content.is_url ){
+              content.url = cache_folder + g.cache_name + '/' + content.url;
+              content.is_url = true;
+              const blob = await fetch(content.url).then(r => r.blob());
+              content.url = URL.createObjectURL(blob);
+            }
+          }
+        }
 
-      });
-    });
+      }
+    }
+
+    return loadGroups();
   }
 
   // Debug stats (framerate)
