@@ -89,7 +89,7 @@ x <- create_voxel_cube(
 
 
 n27_path <- file.path(default_template_directory(), "N27")
-if( dir.exists(n27_path) ) {
+if( interactive() && dir.exists(n27_path) ) {
   brain <- merge_brain()
 
   # or add_voxel_cube(brain, 'example', x$cube)

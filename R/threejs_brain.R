@@ -19,6 +19,7 @@
 #' @param side_width positive integer, side panel size in pixels
 #' @param side_shift integer of length two, side panel shift in pixels (`CSS style`: top, left)
 #' @param side_display logical, show/hide side panels at beginning
+#' @param title viewer title
 #' @param control_panel logical, enable control panels for the widget
 #' @param control_presets characters, presets to be shown in control panels
 #' @param control_display logical, whether to expand/collapse control UI at the beginning
@@ -47,7 +48,7 @@
 #' }
 #'
 #' @examples
-#'
+#' if( interactive() ) {
 #' library(threeBrain)
 #'
 #' # Please use `download_N27` to download N27 Collins template brain
@@ -71,6 +72,7 @@
 #'     show_modal = TRUE
 #'   )
 #'
+#' }
 #' }
 #'
 #' @export

@@ -59,6 +59,8 @@ By default width=`100\%`, and height varies.}
 
 \item{timestamp}{logical, whether to show time-stamp at the beginning}
 
+\item{title}{viewer title}
+
 \item{side_canvas}{logical, enable side cameras to view objects from fixed perspective}
 
 \item{side_zoom}{numerical, if side camera is enabled, zoom-in level, from 1 to 5}
@@ -131,7 +133,7 @@ only use it when you have multiple widgets in one website}
 Create a Threejs Brain and View it in Browsers
 }
 \examples{
-
+if( interactive() ) {
 library(threeBrain)
 
 # Please use `download_N27` to download N27 Collins template brain
@@ -155,6 +157,7 @@ if( dir.exists(n27_path) ) {
     show_modal = TRUE
   )
 
+}
 }
 
 }
