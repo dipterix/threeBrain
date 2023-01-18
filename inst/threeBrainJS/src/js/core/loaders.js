@@ -13,7 +13,7 @@ class CanvasFileLoader {
     this.loadingFiles = {};
   }
 
-  read( url, itemName ) {
+  read( url ) {
     const urlLowerCase = url.toLowerCase();
     let item = this.loadingFiles[ url ];
 
@@ -22,19 +22,19 @@ class CanvasFileLoader {
     }
 
     if( urlLowerCase.endsWith("nii") || urlLowerCase.endsWith("nii.gz") ) {
-      item = this.readBinary( url, "nii", itemName );
+      item = this.readBinary( url, "nii" );
     } else if ( urlLowerCase.endsWith("mgh") || urlLowerCase.endsWith("mgz") ) {
-      item = this.readBinary( url, "mgh", itemName );
+      item = this.readBinary( url, "mgh" );
     } else if (
       urlLowerCase.endsWith("pial") || urlLowerCase.endsWith("pial.t1") ||
       urlLowerCase.endsWith("white") || urlLowerCase.endsWith("sphere") ||
       urlLowerCase.endsWith("smoothwm")
     ) {
-      item = this.readBinary( url, "fsSurf", itemName );
+      item = this.readBinary( url, "fsSurf" );
     } else if (
       urlLowerCase.endsWith("sulc") || urlLowerCase.endsWith("curv")
     ) {
-      item = this.readBinary( url, "fsCurv", itemName );
+      item = this.readBinary( url, "fsCurv" );
     } else {
       item = this.readJSON( url );
     }
@@ -42,7 +42,7 @@ class CanvasFileLoader {
     return item;
   }
 
-  readBinary( url, type, itemName ) {
+  readBinary( url, type ) {
     const fileReader = new FileReader();
     fileReader.addEventListener( "loadstart", this._onLoadStart );
     fileReader.addEventListener( "error", e => { resolve(); })
@@ -58,7 +58,6 @@ class CanvasFileLoader {
             fileReader.addEventListener( "load", (e) => {
               e.currentFile = url;
               e.currentType = type;
-              e.currentItem = itemName;
               this._onLoad( e );
               resolve( e.target.result );
             });
@@ -103,9 +102,8 @@ class CanvasFileLoader {
 
   parse( url ) {
     const item = this.loadingFiles[ url ];
-    if( !item || item.data !== undefined ) {
-      return ;
-    }
+    if( item === undefined ) { return; }
+    if( item.data !== undefined ) { return item.data; }
 
     const buffer = item.reader.result,
           type   = item.type;

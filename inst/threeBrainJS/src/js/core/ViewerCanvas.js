@@ -477,10 +477,14 @@ class ViewerCanvas extends ThrottledEventDispatcher {
           typeof cache_info.file_name !== "string"
         ) { continue; }
         const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
-        this.debugVerbose(path);
-        const item = this.file_loader.read( path, nm );
+        this.debugVerbose(`Loading group [${ g.name }] data: [${ path }]`);
+        const item = this.file_loader.read( path );
         await item.promise;
         const v = this.file_loader.parse( path );
+        console.log({
+          group: g.name,
+          data: v
+        })
         if( v && typeof(v) === "object" ) {
           for(let key in v) {
             if( key !== "_originalData_") {

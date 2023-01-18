@@ -32,7 +32,11 @@ GeomGroup <- R6::R6Class(
     disable_trans_mat = FALSE,
     parent_group = NULL,
     subject_code = NULL,
+    .cache_name = NULL,
     cache_name = function(){
+      if(!is.null(self$.cache_name)) {
+        return(self$.cache_name)
+      }
       stringr::str_replace_all(self$name, '[^a-zA-Z0-9]', '_')
     },
     set_transform = function(mat = NULL){
