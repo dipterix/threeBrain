@@ -150,6 +150,10 @@ class CanvasFileLoader {
       default:
         // code
     }
+    if( item.data ) {
+      delete item.reader;
+      delete item.promise;
+    }
     return item.data;
   }
   _onLoad = ( evt, callback ) => {

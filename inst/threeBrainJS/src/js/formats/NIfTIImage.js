@@ -1,5 +1,8 @@
 import nifti from 'nifti-reader-js';
-import { Vector3, Vector4, Matrix4 } from 'three';
+import {
+  Vector3, Vector4, Matrix4, ByteType, ShortType, IntType,
+  FloatType, UnsignedByteType, UnsignedShortType,
+} from 'three';
 
 class NiftiImage {
   constructor ( data ) {
@@ -12,31 +15,38 @@ class NiftiImage {
     const niftiImage = nifti.readImage(this.header, data);
     if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT8) {
       this.image = new Int8Array(niftiImage);
+      this.imageDataType = ByteType;
       this.dataIsInt8 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT16) {
       this.image = new Int16Array(niftiImage);
+      this.imageDataType = ShortType;
       this.dataIsInt16 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT32) {
       this.image = new Int32Array(niftiImage);
+      this.imageDataType = IntType;
       this.dataIsInt32 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_FLOAT32) {
       this.image = new Float32Array(niftiImage);
+      this.imageDataType = FloatType;
       this.dataIsFloat32 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_FLOAT64) {
+      // we do not support this, need to make transform later
       this.image = new Float64Array(niftiImage);
       this.dataIsFloat64 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_UINT8) {
       this.image = new Uint8Array(niftiImage);
+      this.imageDataType = UnsignedByteType;
       this.dataIsUInt8 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_UINT16) {
       this.image = new Uint16Array(niftiImage);
+      this.imageDataType = UnsignedShortType;
       this.dataIsUInt16 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_UINT32) {
       this.image = new Uint32Array(niftiImage);
+      this.imageDataType = UnsignedIntType;
       this.dataIsUInt32 = true;
     } else {
       console.warn("NiftiImage: Cannot load NIFTI image data: the data type code is unsupported.")
-      this.image = undefined;
     }
 
     this.isNiftiImage = true;

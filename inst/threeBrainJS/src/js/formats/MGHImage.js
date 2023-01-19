@@ -1,6 +1,6 @@
 import nifti from 'nifti-reader-js';
 import { decompressSync } from 'fflate';
-import { Vector3, Vector4, Matrix4 } from 'three';
+import { Vector3, Vector4, Matrix4, ShortType, IntType, FloatType, UnsignedByteType } from 'three';
 
 class MGHImage {
   constructor ( data ) {
@@ -124,27 +124,30 @@ class MGHImage {
     const imageDataBuf = raw.slice(this.header.vox_offset, this.header.vox_offset + nBytes);
 
     const dataReader = new DataView( imageDataBuf );
-    this.dataReader = dataReader;
     if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT16) {
       this.image = new Int16Array( nElements );
       for( let ii = 0 ; ii < nElements ; ii++ ) {
         this.image[ ii ] = dataReader.getInt16(ii * 2, isLittleEndian);
       }
+      this.imageDataType = ShortType;
       this.dataIsInt16 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_INT32) {
       this.image = new Int32Array( nElements );
       for( let ii = 0 ; ii < nElements ; ii++ ) {
         this.image[ ii ] = dataReader.getInt32(ii * 4, isLittleEndian);
       }
+      this.imageDataType = IntType;
       this.dataIsInt32 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_FLOAT32) {
       this.image = new Float32Array( nElements );
       for( let ii = 0 ; ii < nElements ; ii++ ) {
         this.image[ ii ] = dataReader.getFloat32(ii * 4, isLittleEndian);
       }
+      this.imageDataType = FloatType;
       this.dataIsFloat32 = true;
     } else if (this.header.datatypeCode === nifti.NIFTI1.TYPE_UINT8) {
       this.image = new Uint8Array( imageDataBuf );
+      this.imageDataType = UnsignedByteType;
       this.dataIsUInt8 = true;
     }
 
@@ -178,7 +181,6 @@ class MGHImage {
     this.header = NaN;
     this.ijk2tkrRAS = NaN;
     this.affine = NaN;
-    this.dataReader = NaN;
     this.image = NaN;
 
     this.shape = NaN;

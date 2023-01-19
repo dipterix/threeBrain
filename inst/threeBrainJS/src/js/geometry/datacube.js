@@ -36,27 +36,35 @@ class DataCube extends AbstractThreeBrainObject {
 
     // Shader will take care of it
     g.disable_trans_mat = true;
+    let dataTextureType = UnsignedByteType;
 
     // get cube (volume) data
     if( g.isVolumeCube ) {
       const niftiData = canvas.get_data("volume_data", g.name, g.group.group_name);
-      let imageMin = Infinity, imageMax = -Infinity;
-      niftiData.image.forEach(( v ) => {
-        if( imageMin > v ){ imageMin = v; }
-        if( imageMax < v ){ imageMax = v; }
-      })
-      this.cubeData = new Uint8Array( niftiData.image.length );
-      const slope = 255 / (imageMax - imageMin),
-            intercept = 255 - imageMax * slope,
-            threshold = g.threshold || 0;
-      niftiData.image.forEach(( v, ii ) => {
-        const d = v * slope + intercept;
-        if( d > threshold ) {
-          this.cubeData[ ii ] = d;
-        } else {
-          this.cubeData[ ii ] = 0;
-        }
-      })
+
+      if( niftiData.imageDataType === undefined ) {
+        // float64 array, not supported
+        let imageMin = Infinity, imageMax = -Infinity;
+        niftiData.image.forEach(( v ) => {
+          if( imageMin > v ){ imageMin = v; }
+          if( imageMax < v ){ imageMax = v; }
+        })
+        this.cubeData = new Uint8Array( niftiData.image.length );
+        const slope = 255 / (imageMax - imageMin),
+              intercept = 255 - imageMax * slope,
+              threshold = g.threshold || 0;
+        niftiData.image.forEach(( v, ii ) => {
+          const d = v * slope + intercept;
+          if( d > threshold ) {
+            this.cubeData[ ii ] = d;
+          } else {
+            this.cubeData[ ii ] = 0;
+          }
+        })
+      } else {
+        this.cubeData = niftiData.image;
+        dataTextureType = niftiData.imageDataType;
+      }
       this.cubeShape = new Vector3().copy( niftiData.shape );
       const affine = niftiData.affine.clone();
       if( subjectData && typeof subjectData === "object" && subjectData.matrices ) {
@@ -76,7 +84,7 @@ class DataCube extends AbstractThreeBrainObject {
     this.dataTexture.minFilter = NearestFilter;
     this.dataTexture.magFilter = NearestFilter;
     this.dataTexture.format = RedFormat;
-    this.dataTexture.type = UnsignedByteType;
+    this.dataTexture.type = dataTextureType;
     this.dataTexture.unpackAlignment = 1;
     this.dataTexture.needsUpdate = true;
 
