@@ -510,6 +510,7 @@ class ViewerApp extends ThrottledEventDispatcher {
     this.controlCenter = new ViewerControlCenter( this );
     // ---- Defaults -----------------------------------------------------------
     this.controlCenter.addPreset_background();
+    this.controlCenter.addPreset_recorder();
     this.controlCenter.addPreset_resetCamera();
     this.controlCenter.addPreset_setCameraPosition2();
     this.controlCenter.addPreset_compass();

@@ -4,11 +4,11 @@ import { PDFContext } from '../core/context.js';
 
 // 2. Record Videos
 
-function register_controls_record( ViewerControlCenter ){
+function registerPresetRecorder( ViewerControlCenter ){
 
-  ViewerControlCenter.prototype.c_recorder = function(){
+  ViewerControlCenter.prototype.addPreset_recorder = function(){
     const folder_name = CONSTANTS.FOLDERS[ 'video-recorder' ];
-    this.gui.add_item('Record (Chrome-only)', false, {folder_name: folder_name })
+    this.gui.addController('Record', false, {folder_name: folder_name })
       .onChange((v) =>{
 
         if(v){
@@ -16,12 +16,27 @@ function register_controls_record( ViewerControlCenter ){
           if( this.canvas.capturer ){
             this.canvas.capturer.dispose();
           }
+
+          const videoFormats = {};
+          videoFormats[ "video/mp4" ] = "mp4";   // safari
+          videoFormats[ "video/webm;codecs=vp8" ] = "webm"; // firefox
+          videoFormats[ "video/webm" ] = "webm";  // default
+          let format, mimeType;
+          for( mimeType in videoFormats ) {
+            format = videoFormats[ mimeType ];
+            if( MediaRecorder.isTypeSupported( mimeType ) ) {
+              break;
+            }
+          }
+
+
           this.canvas.capturer = new CCanvasRecorder({
             canvas: this.canvas.domElement,
             // FPS = 25
-            framerate: 25,
+            framerate: 60,
             // Capture as webm
-            format: 'webm',
+            format: format,
+            mimeType: mimeType,
             // workersPath: 'lib/',
             // verbose results?
             verbose: true,
@@ -50,11 +65,11 @@ function register_controls_record( ViewerControlCenter ){
 
       });
 
-    this.gui.add_item('Screenshot', () => {
+    this.gui.addController('Screenshot', () => {
 
       const _d = new Date().toJSON();
       // const doc = this.canvas.mapToPDF();
-      const results = this.canvas.inc_time(),
+      const results = this.canvas.incrementTime(),
             _width = this.canvas.domElement.width,
             _height = this.canvas.domElement.height;
       const pdf_wrapper = new PDFContext( this.canvas.domElement );
@@ -67,20 +82,20 @@ function register_controls_record( ViewerControlCenter ){
       pdf_wrapper.draw_image( this.canvas.main_renderer.domElement, 0, 0, _width, _height );
 
       // Draw timestamp on the bottom right corner
-      this.canvas._draw_ani( results, 0, 0, _width, _height, pdf_wrapper );
+      // this.canvas._draw_ani( results, 0, 0, _width, _height, pdf_wrapper );
 
       // Draw focused target information on the top right corner
-      this.canvas._draw_focused_info( results, 0, 0, _width, _height, pdf_wrapper, true );
+      // this.canvas._draw_focused_info( results, 0, 0, _width, _height, pdf_wrapper, true );
 
       // Draw legend on the right side
-      this.canvas._draw_legend( results, 0, 0, _width, _height, pdf_wrapper );
+      // this.canvas._draw_legend( results, 0, 0, _width, _height, pdf_wrapper );
 
-      try {
-        this.canvas._draw_video( results, _width, _height, pdf_wrapper );
-      } catch (e) {}
+      // try {
+      //   this.canvas._draw_video( results, _width, _height, pdf_wrapper );
+      // } catch (e) {}
 
 
-      pdf_wrapper.context.save(`[rave-brain] ${_d}.pdf`);
+      pdf_wrapper.context.save(`[threeBrain] ${_d}.pdf`);
     }, {folder_name: folder_name });
 
   };
@@ -89,4 +104,4 @@ function register_controls_record( ViewerControlCenter ){
 
 }
 
-export { register_controls_record };
+export { registerPresetRecorder };

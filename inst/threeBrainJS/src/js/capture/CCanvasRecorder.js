@@ -10,8 +10,8 @@ import * as download from 'downloadjs';
 class CCanvasRecorder extends CCFrameEncoder{
   constructor( settings ){
     super( settings );
-  	this.extension = '.webm';
-  	this.mimeType = 'video/webm;codecs=h264,vp9,opus';
+  	this.extension = "." + (settings.format || 'webm');
+  	this.mimeType = settings.mimeType || 'video/webm;codecs=vp8';
   	this.baseFilename = this.filename;
     this.framerate = settings.framerate;
   	this.chunks = [];

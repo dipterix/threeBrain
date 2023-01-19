@@ -9,7 +9,7 @@ import { asColor } from '../utility/color.js';
 import { registerPresetBackground } from '../controls/PresetBackground.js';
 
 // 2. Record Videos
-import { register_controls_record } from '../controls/record.js';
+import { registerPresetRecorder } from '../controls/PresetRecorder.js';
 
 // 3. Reset Camera
 // 4. Camera Position
@@ -581,7 +581,7 @@ class ViewerControlCenter extends EventDispatcher {
 }
 
 ViewerControlCenter = registerPresetBackground( ViewerControlCenter );
-ViewerControlCenter = register_controls_record( ViewerControlCenter );
+ViewerControlCenter = registerPresetRecorder( ViewerControlCenter );
 ViewerControlCenter = registerPresetMainCamera( ViewerControlCenter );
 ViewerControlCenter = registerPresetCoordinateCompass( ViewerControlCenter );
 ViewerControlCenter = registerPresetSliceOverlay( ViewerControlCenter );
