@@ -111,7 +111,7 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 }
 
 #' @export
-fsBrain <- function(
+threeBrain <- function(
     fs_path, subject_code, surface_types = "pial",
     atlas_types = c("aparc+aseg", "aparc.a2009s+aseg", "aparc.DKTatlas+aseg"),
     ...

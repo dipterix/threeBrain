@@ -308,7 +308,7 @@
   font-family: inherit;
   font-weight: bold;
   text-shadow: none;
-  padding: 0 3px;
+  /* padding: 0 3px; */
   -webkit-border-radius: 0.2em;
   border-radius: 0.2em;
   z-index: 1;

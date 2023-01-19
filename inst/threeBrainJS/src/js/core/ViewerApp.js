@@ -609,7 +609,9 @@ class ViewerApp extends ThrottledEventDispatcher {
     // needs to incrementTime after update so chosen object information can be up to date
     this.canvas.incrementTime();
 
-    this.controlCenter.update();
+    if( this.controlCenter ) {
+      this.controlCenter.update();
+    }
 
     if( this.canvas.needsUpdate ){
   		this.canvas.render();

@@ -6,11 +6,32 @@ import { FreeSurferNodeValues } from '../formats/FreeSurferNodeValues.js';
 
 class CanvasFileLoader {
 
-  constructor( canvas ) {
+  constructor( canvas, useCache = true ) {
     this.canvas = canvas;
     this.cache = this.canvas.cache;
-    this.use_cache = this.canvas.use_cache;
+    this.useCache = this.canvas.use_cache && useCache;
     this.loadingFiles = {};
+  }
+
+  dispose() {
+    for( let url in this.loadingFiles ) {
+      const item = this.loadingFiles[ url ];
+      if(
+        typeof item === "object" &&
+        typeof item.data === "object"
+      ) {
+        if(
+          typeof item.data._originalData_ === "object" &&
+          item.data._originalData_ !== null &&
+          typeof item.data._originalData_.dispose === "function"
+        ) {
+          item.data._originalData_.dispose();
+          delete item.data._originalData_;
+        }
+        delete item.data;
+      }
+      delete this.loadingFiles[ url ];
+    }
   }
 
   read( url ) {
@@ -134,7 +155,7 @@ class CanvasFileLoader {
   _onLoad = ( evt, callback ) => {
     this.canvas.debugVerbose( `File ${evt.currentFile} (type: ${evt.currentType}) has been loaded. Parsing the blobs...` );
 
-    if( this.use_cache && !this.cache.check_item( evt.currentFile ) ) {
+    if( this.useCache && !this.cache.check_item( evt.currentFile ) ) {
       this.cache.set_item( evt.currentFile, evt.target.result );
     }
 

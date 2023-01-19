@@ -55,6 +55,11 @@ class FreeSurferNodeValues {
     return this._frameData
   }
 
+  dispose() {
+    this.vertexData = NaN;
+    this._frameData = NaN;
+  }
+
 }
 
 

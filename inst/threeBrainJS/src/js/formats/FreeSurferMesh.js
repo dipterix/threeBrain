@@ -42,6 +42,11 @@ class FreeSurferMesh {
 
   }
 
+  dispose() {
+    this.position = NaN;
+    this.index = NaN;
+  }
+
 }
 
 

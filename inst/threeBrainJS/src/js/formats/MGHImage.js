@@ -173,6 +173,20 @@ class MGHImage {
 
   }
 
+  dispose() {
+    this._MGHHeader = NaN;
+    this.header = NaN;
+    this.ijk2tkrRAS = NaN;
+    this.affine = NaN;
+    this.dataReader = NaN;
+    this.image = NaN;
+
+    this.shape = NaN;
+    this.ijkIndexOrder = NaN;
+    this.model2RAS = NaN;
+    this.model2tkrRAS = NaN;
+  }
+
 }
 
 

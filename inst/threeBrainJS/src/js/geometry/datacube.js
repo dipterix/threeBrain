@@ -94,6 +94,7 @@ class DataCube extends AbstractThreeBrainObject {
     } );
     this.sliceMaterial = sliceMaterial;
     const sliceGeometryXY = new PlaneGeometry( 256, 256 );
+    this.sliceGeometryXY = sliceGeometryXY;
     const sliceMeshXY = new Mesh( sliceGeometryXY, sliceMaterial );
     sliceMeshXY.renderOrder = -1;
     sliceMeshXY.position.copy( CONSTANTS.VEC_ORIGIN );
@@ -101,6 +102,7 @@ class DataCube extends AbstractThreeBrainObject {
 
 
     const sliceGeometryXZ = new PlaneGeometry( 256, 256 );
+    this.sliceGeometryXZ = sliceGeometryXZ;
     const sliceMeshXZ = new Mesh( sliceGeometryXZ, sliceMaterial );
     sliceMeshXZ.rotateX( Math.PI / 2 );
     sliceMeshXZ.renderOrder = -1;
@@ -108,6 +110,7 @@ class DataCube extends AbstractThreeBrainObject {
     sliceMeshXZ.name = 'mesh_datacube__coronal_' + g.name;
 
     const sliceGeometryYZ = new PlaneGeometry( 256, 256 );
+    this.sliceGeometryYZ = sliceGeometryYZ;
     const sliceMeshYZ = new Mesh( sliceGeometryYZ, sliceMaterial );
     sliceMeshYZ.rotateY( Math.PI / 2 ).rotateZ( Math.PI / 2 );
     sliceMeshYZ.renderOrder = -1;

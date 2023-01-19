@@ -83,6 +83,15 @@ class NiftiImage {
 
   }
 
+  dispose () {
+    this.header = NaN;
+    this.image = NaN;
+    this.affine = NaN;
+    this.shape = NaN
+    this.ijkIndexOrder = NaN;
+    this.model2RAS = NaN
+  }
+
 }
 
 export { NiftiImage }

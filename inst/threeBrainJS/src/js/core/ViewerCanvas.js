@@ -311,7 +311,7 @@ class ViewerCanvas extends ThrottledEventDispatcher {
     this.setFontSize();
 
 		// File loader
-    this.file_loader = new CanvasFileLoader( this );
+    this.fileLoader = new CanvasFileLoader( this, false );
 
     this.activated = false;
     this.$el.addEventListener( 'viewerApp.mouse.enterViewer', this._activateViewer );
@@ -478,9 +478,9 @@ class ViewerCanvas extends ThrottledEventDispatcher {
         ) { continue; }
         const path = cache_folder + g.cache_name + '/' + cache_info.file_name;
         this.debugVerbose(`Loading group [${ g.name }] data: [${ path }]`);
-        const item = this.file_loader.read( path );
+        const item = this.fileLoader.read( path );
         await item.promise;
-        const v = this.file_loader.parse( path );
+        const v = this.fileLoader.parse( path );
         console.log({
           group: g.name,
           data: v
@@ -650,19 +650,14 @@ class ViewerCanvas extends ThrottledEventDispatcher {
     this.trackball.enabled = false;
     this.trackball.dispose();
 
-    // Remove customized objects
-    this.clear_all();
-
     // Remove the rest objects in the scene
     this.remove_object( this.scene );
 
-    // Call dispose method
-    this.threebrain_instances.forEach((el) => {
-      el.dispose();
-    });
+    // Remove customized objects
+    this.clear_all();
 
     // dispose scene
-    this.scene.dispose();
+    // this.scene.dispose();
     this.scene = null;
 
     // Remove el
@@ -687,6 +682,7 @@ class ViewerCanvas extends ThrottledEventDispatcher {
     this.title = undefined;
 
     this.subject_codes.length = 0;
+    this.fileLoader.dispose();
     this.electrodes.clear();
     this.slices.clear();
     this.ct_scan.clear();
@@ -712,6 +708,10 @@ class ViewerCanvas extends ThrottledEventDispatcher {
       // this.scene.remove( m );
     });
     this.mesh.clear();
+    // Call dispose method
+    this.threebrain_instances.forEach((el) => {
+      el.dispose();
+    });
     this.threebrain_instances.clear();
     this.group.clear();
 
