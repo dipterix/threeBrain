@@ -110,13 +110,28 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
   return( header )
 }
 
+#' @title Create a brain object
+#' @param path path to 'FreeSurfer' directory, or 'RAVE' subject directory
+#' containing 'FreeSurfer' files, or simply a 'RAVE' subject
+#' @param subject_code subject code, characters
+#' @param surface_types surface types to load; default is \code{'pial'},
+#' other common types are \code{'white'}, \code{'smoothwm'}
+#' @param atlas_types brain atlas to load; default is \code{'aparc+aseg'},
+#' other choices are \code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'},
+#' depending on the atlas files in \code{'fs/mri'} folder
+#' @param template_subject template subject to refer to; used for group
+#' template mapping
+#' @param ... reserved for future use
 #' @export
 threeBrain <- function(
-    fs_path, subject_code, surface_types = "pial",
-    atlas_types = c("aparc+aseg", "aparc.a2009s+aseg", "aparc.DKTatlas+aseg"),
-    ...
+    path, subject_code, surface_types = "pial",
+    atlas_types = "aparc+aseg",
+    ...,
+    template_subject = unname(getOption('threeBrain.template_subject', 'N27'))
 ) {
   # No SUMA 141 brain for default option
+
+  fs_path <- path
 
   # DIPSAUS DEBUG START
   # fs_path <- "/Users/dipterix/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/fs"
@@ -161,7 +176,22 @@ threeBrain <- function(
   atlas_types <- atlas_types[atlas_exists]
   path_atlas <- path_atlas[atlas_exists]
 
-  # TODO: check if this is legacy subject
+  # check if this is legacy subject
+  if( file.path(fs_path, 'RAVE') ) {
+    brain <- freesurfer_brain2(
+      fs_subject_folder = fs_path,
+      subject_name = subject_code,
+      surface_types = surface_types,
+      atlas_types = atlas_types,
+      template_subject = template_subject,
+      ...
+    )
+    if(!is.null(brain) && (
+      length(brain$volume_types) || length(brain$surface_types)
+    )) {
+      return( brain )
+    }
+  }
 
   # --------- Step 1: Find transforms (xfm, Norig, Torig) ----------------------
   # xfm
@@ -239,7 +269,6 @@ threeBrain <- function(
     "white.H" = "white.preaparc.H"
   )
 
-  template_subject <- unname(getOption('threeBrain.template_subject', 'N27'))
   surface_types <- unique(c('pial', surface_types))
 
   # look for sulc file
