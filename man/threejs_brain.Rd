@@ -12,6 +12,7 @@ threejs_brain(
   background = "#FFFFFF",
   cex = 1,
   timestamp = TRUE,
+  title = "",
   side_canvas = FALSE,
   side_zoom = 1,
   side_width = 250,
@@ -23,7 +24,6 @@ threejs_brain(
   camera_center = c(0, 0, 0),
   camera_pos = c(500, 0, 0),
   start_zoom = 1,
-  coords = NULL,
   symmetric = 0,
   default_colormap = "Value",
   palettes = NULL,
@@ -59,6 +59,8 @@ By default width=`100\%`, and height varies.}
 
 \item{timestamp}{logical, whether to show time-stamp at the beginning}
 
+\item{title}{viewer title}
+
 \item{side_canvas}{logical, enable side cameras to view objects from fixed perspective}
 
 \item{side_zoom}{numerical, if side camera is enabled, zoom-in level, from 1 to 5}
@@ -80,8 +82,6 @@ By default width=`100\%`, and height varies.}
 \item{camera_pos}{XYZ position of camera itself, default (0, 0, 500)}
 
 \item{start_zoom}{numerical, positive number indicating camera zoom level}
-
-\item{coords}{\code{NULL} to hide coordinates or numeric vector of three.}
 
 \item{symmetric}{numerical, default 0, color center will be mapped to this value}
 
@@ -133,7 +133,7 @@ only use it when you have multiple widgets in one website}
 Create a Threejs Brain and View it in Browsers
 }
 \examples{
-
+if( interactive() ) {
 library(threeBrain)
 
 # Please use `download_N27` to download N27 Collins template brain
@@ -157,6 +157,7 @@ if( dir.exists(n27_path) ) {
     show_modal = TRUE
   )
 
+}
 }
 
 }

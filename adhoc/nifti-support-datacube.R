@@ -1,9 +1,9 @@
 require(dipsaus)
 require(threeBrain)
 brain <- raveio::rave_brain('devel/PAV010')
-geom_brain_t1 <- threeBrain:::NiftiGeom$new(
+geom_brain_t1 <- threeBrain:::VolumeGeom$new(
   name = sprintf('T1 (%s)', brain$subject_code),
-  path = '~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/derivative/MRI_RAW.nii',
+  path = '~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/fs/mri/brain.finalsurfs.mgz',
   group = GeomGroup$new(name = sprintf('Volume - T1 (%s)', brain$subject_code))
 )
 geom_brain_t1$threshold <- 4

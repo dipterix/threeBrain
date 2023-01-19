@@ -20,7 +20,7 @@ freesurfer_brain2(
   volume_types = "t1",
   surface_types = "pial",
   curvature = "sulc",
-  atlas_types = "aparc+aseg",
+  atlas_types = c("aparc+aseg", "aparc.a2009s+aseg", "aparc.DKTatlas+aseg"),
   ct_path = NULL,
   use_cache = TRUE,
   use_141 = getOption("threeBrain.use141", TRUE),

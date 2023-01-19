@@ -1,0 +1,368 @@
+
+.threejs-brain-container {
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+}
+
+.threejs-brain-container button,
+.threejs-brain-container select {
+    text-transform: none;
+}
+
+.threejs-brain-container button,
+.threejs-brain-container input,
+.threejs-brain-container optgroup,
+.threejs-brain-container select,
+.threejs-brain-container textarea {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.hidden {
+  display: none!important;
+}
+
+#webglmessage {
+  position: absolute;
+}
+
+.threejs-control .dg .c,
+.threejs-control .dg button,
+.threejs-control .dg input,
+.threejs-control .dg optgroup,
+.threejs-control .dg select,
+.threejs-control .dg textarea {
+  line-height: normal;
+}
+
+.html-widget.threejs-brain-container {
+  display: flex;
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+.html-widget.threejs-brain-container>.threejs-brain-canvas {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+
+.threejs-control {
+  position: relative;
+  float: right;
+  max-width: 300px;
+  margin-bottom: -100%;
+  width: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 10;
+  /* pointer-events: none; */
+}
+
+.threejs-control .dg .c select{
+  color: cornflowerblue;
+}
+.threejs-control .dg {
+  font: 11px monospace, 'Lucida Grande', sans-serif;
+  position: relative;
+}
+
+.threejs-control .dg .cr.color .property-name {
+  overflow-y: hidden;
+}
+
+.threejs-control .dg .cr.function .property-name {
+  width: 100%;
+}
+.threejs-control .dg .cr.function .c {
+  display: none;
+}
+
+.threejs-control .dg .property-name {
+    text-overflow: clip;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    /* overflow-x: scroll; */
+    white-space: nowrap;
+    /* hide scrollbar */
+    padding-bottom: 17px;
+    margin-bottom: -17px;
+}
+
+.threejs-control *{
+  /* pointer-events: auto; */
+}
+
+.threejs-control div.close-button{
+  width:100%!important;
+}
+
+.threejs-control .lil-gui {
+  --font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", monospace;
+  --width: 100%;
+  --background-color: #f6f6f6;
+	--text-color: #3d3d3d;
+	--title-background-color: #efefef;
+	--title-text-color: #3d3d3d;
+	--widget-color: #eaeaea;
+	--hover-color: #f0f0f0;
+	--focus-color: #fafafa;
+	--number-color: #07aacf;
+	--string-color: #8da300;
+}
+
+.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui {
+	--background-color: #32405e;
+	--text-color: #ebe193;
+	--title-background-color: #713154;
+	--title-text-color: #ffffff;
+	--widget-color: #057170;
+	--hover-color: #057170;
+	--focus-color: #b74f88;
+	--number-color: #ddfcff;
+	--string-color: #ffbf00;
+}
+
+.threejs-brain-canvas.dark-viewer .threejs-control .lil-gui .title {
+  background-color: var(--title-background-color);
+}
+
+.threejs-control .lil-gui children {
+  padding-bottom : 1px;
+}
+
+
+.threejs-control .lil-gui.root > .title {
+  text-align: center;
+}
+
+
+.threejs-control .lil-gui.root > .children > .lil-gui > .children {
+  border: none;
+    border-left-color: currentcolor;
+    border-left-style: none;
+    border-left-width: medium;
+  margin-left: calc(var(--folder-indent) + 2em);
+  border-left: 2px solid var(--widget-color);
+}
+
+.threejs-control .lil-gui .slider {
+  position: relative;
+}
+
+.threejs-control .dg.main,
+.threejs-control .dg.main *,
+.threejs-control .dg.main ::after,
+.threejs-control .dg.main ::before{
+  box-sizing: content-box;
+}
+
+.threejs-control .dg.main:hover {
+    opacity: 1;
+}
+
+
+.THREEBRAIN-SIDE-DIVIDER {
+  width: 5px;
+  background-color: black;
+  cursor: col-resize;
+}
+
+.THREEBRAIN-SIDE-DIVIDER::before {
+  content: ' ';
+}
+
+
+.THREEBRAIN-SIDE {
+  position: absolute;
+  height: 250px;
+  width: 250px;
+  margin: 0;
+  padding: 0;
+  min-height: 100px;
+  overflow: hidden;
+  outline: 1px solid #2e2e2e;
+  outline-offset: 0;
+}
+.THREEBRAIN-SIDE-HEADER {
+  position: absolute;
+  z-index: 4;
+  width: 100%;
+  height: 21px;
+  text-align: center;
+  font-size: 12px;
+  padding-top: 2px;
+  background-color: rgb(100,100,100);
+  background-color: rgba(100,100,100,0.5);
+  color: #fff;
+  cursor: move;
+}
+
+.THREEBRAIN-SIDE .zoom-tool {
+  position: absolute;
+  z-index: 9;
+  width: 25px;
+  height: 25px;
+  right: 2px;
+  background-color: rgb(200,200,200);
+  background-color: rgba(200,200,200,0.5);
+  color: #fff;
+  cursor: pointer;
+  line-height: 25px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.THREEBRAIN-SIDE .zoom-tool.pan-active {
+  background-color: rgb(250,200,200);
+  background-color: rgba(250,200,200,0.8);
+}
+
+
+
+
+/**
+* Resizable divs, by Hung Nguyen
+* Use case:
+<div class='resizable'>
+  <div class='resizers'>
+    <div class='resizer top-left'></div>
+    <div class='resizer top-right'></div>
+    <div class='resizer bottom-left'></div>
+    <div class='resizer bottom-right'></div>
+  </div>
+</div>
+*/
+
+
+.resizable {
+  position: absolute;
+}
+
+.resizable .resizers{
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.resizable .resizers .resizer{
+  width: 0;
+  height: 0;
+  /*border-radius: 50%; /*magic to turn square into circle*/
+  background: transparent;
+  /* border: 3px solid #4286f4;*/
+  position: absolute;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid #e2e2e2;
+}
+
+.resizable .resizers .resizer.top-left {
+  left: 0;
+  top: -5px;
+  cursor: nwse-resize; /*resizer cursor*/
+  transform: rotate(-135deg);
+}
+.resizable .resizers .resizer.top-right {
+  right: 0;
+  top: -5px;
+  cursor: nesw-resize;
+  transform: rotate(-45deg);
+}
+.resizable .resizers .resizer.bottom-left {
+  left: 0;
+  bottom: -5px;
+  cursor: nesw-resize;
+  transform: rotate(135deg);
+}
+.resizable .resizers .resizer.bottom-right {
+  right: 0;
+  bottom: -5px;
+  cursor: nwse-resize;
+  transform: rotate(45deg);
+}
+
+
+/* Tooltip text */
+.threejs-control .lil-gui .controller[viewer-tooltip] {
+  position: relative;
+}
+.threejs-control .lil-gui .controller[viewer-tooltip]:before {
+  content: attr(viewer-tooltip);
+  background-color: #f9f9f9;
+  color: #000000;
+  background-color: var(--text-color);
+  color: var(--background-color);
+  position: absolute;
+  white-space: nowrap;
+  transform: translate(-100%, 0);
+  left: calc( var(--folder-indent) / -2.0 );
+  opacity: 0.7;
+  font-family: inherit;
+  font-weight: bold;
+  text-shadow: none;
+  /* padding: 0 3px; */
+  -webkit-border-radius: 0.2em;
+  border-radius: 0.2em;
+  z-index: 1;
+  line-height: 17px;
+  font-size: 0.85em;
+  text-align: center;
+  width: calc(var(--folder-indent) + 2em);
+}
+
+.threejs-brain-blank-container {
+  background-color: #eee;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.threejs-brain-blank-container:hover {
+  background-color: #666;
+}
+.threejs-brain-modal {
+  margin:0 auto;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  font-size: 2em;
+  transition: color 0.3s;
+}
+
+.threejs-brain-blank-container:hover .threejs-brain-modal{
+  color: #eee;
+}
+
+
+.threejs-brain-loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: threejs-brain-loader-spin 2s linear infinite;
+}
+
+.threejs-brain-canvas .threejs-control .threejs-control-progress {
+  position: relative;
+}
+
+.threejs-brain-canvas .threejs-control .threejs-control-progress > span {
+  display: block;
+  height: 2px;
+  background-color: rgba(24, 116, 205, 0.8);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  font-size: x-small;
+  white-space: nowrap;
+  transition: width 2s;
+}
+

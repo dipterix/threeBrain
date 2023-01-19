@@ -59,7 +59,7 @@ g$set_transform(matrix(c(
 ), byrow = TRUE, ncol = 4))
 
 # global position for s2 is 0,10,0
-threejs_brain(s1, s2)
+if( interactive() ) { threejs_brain(s1, s2) }
 
 # Example 2: cache
 

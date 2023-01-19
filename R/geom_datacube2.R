@@ -54,8 +54,8 @@ DataCubeGeom2 <- R6::R6Class(
   )
 )
 
-NiftiGeom2 <- R6::R6Class(
-  classname = "NiftiGeom2",
+VolumeGeom2 <- R6::R6Class(
+  classname = "VolumeGeom2",
   inherit = AbstractGeom,
   public = list(
     type = 'datacube2',
@@ -80,7 +80,7 @@ NiftiGeom2 <- R6::R6Class(
         is_new_cache = FALSE,
         is_cache = TRUE
       )
-      group$set_group_data("nifti_data", value = re, is_cached = TRUE)
+      group$set_group_data("volume_data", value = re, is_cached = TRUE)
       self$color_format <- color_format
 
     },
@@ -90,13 +90,13 @@ NiftiGeom2 <- R6::R6Class(
       re$threshold <- self$threshold
       re$color_format <- self$color_format
       re$isDataCube2 <- self$is_datacube2
-      re$isNiftiCube2 <- self$is_nifticube2
+      re$isVolumeCube2 <- self$is_volumecube2
       re$color_map <- self$color_map
       re
     }
   ),
   active = list(
     is_datacube2 = function(){ TRUE },
-    is_nifticube2 = function(){ TRUE }
+    is_volumecube2 = function(){ TRUE }
   )
 )

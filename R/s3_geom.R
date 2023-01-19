@@ -46,7 +46,7 @@
 #' ), byrow = TRUE, ncol = 4))
 #'
 #' # global position for s2 is 0,10,0
-#' threejs_brain(s1, s2)
+#' if( interactive() ) { threejs_brain(s1, s2) }
 #'
 #' # Example 2: cache
 #'
@@ -95,7 +95,7 @@ create_group <- function(name, position = c(0,0,0), layer = 1){
 #'   v[1:ii] = 1:ii
 #'   geom_sphere(paste0('s', ii), ii, value = v, position = c(11 * ii, 0,0), time_stamp = (1:10)/10)
 #' })
-#' threejs_brain(.list = g)
+#' if( interactive() ) { threejs_brain(.list = g) }
 #' @export
 geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL, value = NULL, time_stamp = NULL){
   SphereGeom$new(name = name, position = position, radius = radius, group = group, value = value, time_stamp = time_stamp, layer = layer)
@@ -144,7 +144,7 @@ geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL
 #'
 #'
 #' # Render
-#' threejs_brain(lh_mesh, rh_mesh)
+#' if( interactive() ) { threejs_brain(lh_mesh, rh_mesh) }
 #'
 #'
 #'

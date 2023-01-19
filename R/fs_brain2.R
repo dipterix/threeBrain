@@ -11,9 +11,15 @@
 freesurfer_brain2 <- function(
   fs_subject_folder, subject_name,
   volume_types = 't1', surface_types = 'pial', curvature = 'sulc',
-  atlas_types = 'aparc+aseg',
+  atlas_types = c('aparc+aseg', 'aparc.a2009s+aseg', 'aparc.DKTatlas+aseg'),
   ct_path = NULL, #file.path(fs_subject_folder, 'RAVE', 'coregistration', 'ct2t1.nii.gz'),
   use_cache = TRUE, use_141 = getOption('threeBrain.use141', TRUE), ...){
+
+  # DIPSAUS DEBUG START
+  # fs_subject_folder = '~/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/fs/'
+  # subject_name <- "PAV010"; volume_types = 't1'; surface_types = 'pial'; curvature = 'sulc';
+  # atlas_types = 'aparc+aseg';
+  # ct_path = NULL
 
   mustWork <- TRUE
   atlas_types <- atlas_types[atlas_types %in% c('aparc+aseg', 'aparc.a2009s+aseg', 'aparc.DKTatlas+aseg', 'aseg')]
@@ -119,10 +125,27 @@ freesurfer_brain2 <- function(
     group_volume$subject_code <- subject_name
     cache_volume <- normalizePath(file.path(rave_dir, vol_json))
 
-    geom_brain_t1 <- DataCubeGeom$new(
-      name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
-      dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
-      position = c(0,0,0), cache_file = cache_volume, digest = FALSE)
+    # Make sure T1 is up-to-date
+    t1_mgh_path <- file.path(fs_subject_folder, "mri", fname_t1)
+    if(!identical(fname_t1, "brain.finalsurfs.mgz")) {
+      if(file.exists(file.path(fs_subject_folder, "mri", "brain.finalsurfs.mgz"))) {
+        t1_mgh_path <- file.path(fs_subject_folder, "mri", "brain.finalsurfs.mgz")
+      }
+    }
+
+    if( file.exists(t1_mgh_path) ) {
+      geom_brain_t1 <- VolumeGeom$new(
+        name = sprintf('T1 (%s)', subject_name),
+        path = t1_mgh_path,
+        group = GeomGroup$new(name = sprintf('Volume - T1 (%s)', subject_name))
+      )
+    } else {
+      geom_brain_t1 <- DataCubeGeom$new(
+        name = sprintf('T1 (%s)', subject_name), value = array(NA, dim = volume_shape),
+        dim = volume_shape, half_size = volume_shape / 2, group = group_volume,
+        position = c(0,0,0), cache_file = cache_volume, digest = FALSE)
+    }
+
     geom_brain_t1$subject_code <- subject_name
     geom_brain_t1 <- BrainVolume$new(
       subject_code = subject_name, volume_type = 'T1',
@@ -131,6 +154,7 @@ freesurfer_brain2 <- function(
     brain$add_volume( volume = geom_brain_t1 )
   }
 
+  # TODO: remove support as there is dedicated $localize() method
   if( length(ct_path) == 1 && file.exists(ct_path) ){
 
     group_ct <- GeomGroup$new(name = sprintf('Volume - ct.aligned.t1 (%s)', subject_name))
@@ -278,71 +302,109 @@ freesurfer_brain2 <- function(
       }
     }
     if( !loaded ){
-      cache_lh <- sprintf('%s_fs_lh_%s.json', subject_name, surf_t)
-      cache_rh <- sprintf('%s_fs_rh_%s.json', subject_name, surf_t)
+      # Use FreeSurfer
 
-      if( all(c(cache_lh, cache_rh) %in% common$fs_surface_files) ){
-        surf_group$set_group_data('surface_format', 'fs')
-        # We can get FreeSurfer brain
-        surf_lh <- FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), cache_file = rave_cached(cache_lh), group = surf_group, layer = 8)
-        surf_rh <- FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
-                               position = c(0,0,0), cache_file = rave_cached(cache_rh), group = surf_group, layer = 8)
-
-        surface <- BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
-                                   left_hemisphere = surf_lh, right_hemisphere = surf_rh)
-        loaded <- TRUE
+      # try to use FreeSurfer's original files
+      left_surf_path_orig <- file.path(fs_subject_folder, "surf", sprintf("lh.%s", surf_t))
+      if( !file.exists(left_surf_path_orig) ) {
+        left_surf_path_orig = file.path(fs_subject_folder, "surf", sprintf("lh.%s.T1", surf_t))
       }
+      right_surf_path_orig <- file.path(fs_subject_folder, "surf", sprintf("rh.%s", surf_t))
+      if( !file.exists(right_surf_path_orig) ) {
+        right_surf_path_orig = file.path(fs_subject_folder, "surf", sprintf("rh.%s.T1", surf_t))
+      }
+      if( file.exists(left_surf_path_orig) && file.exists(right_surf_path_orig) ) {
+        surf_group$set_group_data('surface_format', 'fs')
+        surf_lh <- FreeGeom$new(
+          name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
+          position = c(0,0,0),
+          cache_file = normalizePath(left_surf_path_orig, winslash = "/"),
+          group = surf_group, layer = 8)
+        surf_rh <- FreeGeom$new(
+          name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
+          position = c(0,0,0),
+          cache_file = normalizePath(right_surf_path_orig, winslash = "/"),
+          group = surf_group, layer = 8)
+        surface <- BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
+                                    left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+        loaded <- TRUE
+      } else {
+
+        # use cached
+        cache_lh <- sprintf('%s_fs_lh_%s.json', subject_name, surf_t)
+        cache_rh <- sprintf('%s_fs_rh_%s.json', subject_name, surf_t)
+
+        if( all(c(cache_lh, cache_rh) %in% common$fs_surface_files) ){
+          surf_group$set_group_data('surface_format', 'fs')
+          # We can get FreeSurfer brain
+          surf_lh <- FreeGeom$new(name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surf_t, subject_name),
+                                  position = c(0,0,0), cache_file = rave_cached(cache_lh), group = surf_group, layer = 8)
+          surf_rh <- FreeGeom$new(name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surf_t, subject_name),
+                                  position = c(0,0,0), cache_file = rave_cached(cache_rh), group = surf_group, layer = 8)
+
+          surface <- BrainSurface$new(subject_code = subject_name, surface_type = surf_t, mesh_type = 'fs',
+                                      left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+          loaded <- TRUE
+        }
+      }
+
+
+
 
       # load curvature data
       # pial-outer-smoothed doesn't have sulc as it's calculated based on outer smoothed
       if( surf_t != 'pial-outer-smoothed' ){
 
-        surf_group$set_group_data('curvature', curvature)
+        # check if curvature file exists
+        left_curv_path <- file.path(fs_subject_folder, "surf", sprintf("lh.%s", curvature))
+        right_curv_path <- file.path(fs_subject_folder, "surf", sprintf("rh.%s", curvature))
 
-        curv_lh <- rave_cached(sprintf('%s_fs_lh_%s.json', subject_name, curvature))
-        if( file.exists(curv_lh) ){
-          # curv_lh = normalizePath(curv_lh)
-          # surf_group$set_group_data(
-          #   name = sprintf('Curvature - lh.%s (%s)', curvature, subject_name),
-          #   value = list(
-          #     path = curv_lh,
-          #     absolute_path = curv_lh,
-          #     file_name = filename(curv_lh),
-          #     is_new_cache = FALSE,
-          #     is_cache = TRUE
-          #   ),
-          #   is_cached = TRUE
-          # )
-          vertcolor_name <- sprintf('Curvature - lh.%s (%s)', curvature, subject_name)
-          brain$add_vertex_color(
-            name = vertcolor_name,
-            path = curv_lh
+        if(file.exists(left_curv_path) && file.exists(right_curv_path)) {
+          # use original *h.sulc or *h.curv
+
+          surf_group$set_group_data(
+            "lh_primary_vertex_color", is_cached = TRUE,
+            value = list(
+              path = left_curv_path,
+              absolute_path = normalizePath(left_curv_path, winslash = "/"),
+              file_name = basename(left_curv_path),
+              is_new_cache = FALSE,
+              is_cache = TRUE
+            )
           )
-          surf_group$set_group_data(sprintf('default_vertex_lh_%s', surf_t), vertcolor_name)
+          surf_group$set_group_data(
+            "rh_primary_vertex_color", is_cached = TRUE,
+            value = list(
+              path = right_curv_path,
+              absolute_path = normalizePath(right_curv_path, winslash = "/"),
+              file_name = basename(right_curv_path),
+              is_new_cache = FALSE,
+              is_cache = TRUE
+            )
+          )
+        } else {
+          surf_group$set_group_data('curvature', curvature)
+          curv_lh <- rave_cached(sprintf('%s_fs_lh_%s.json', subject_name, curvature))
+          if( file.exists(curv_lh) ){
+            vertcolor_name <- sprintf('Curvature - lh.%s (%s)', curvature, subject_name)
+            brain$add_vertex_color(
+              name = vertcolor_name,
+              path = curv_lh
+            )
+            surf_group$set_group_data(sprintf('default_vertex_lh_%s', surf_t), vertcolor_name)
+          }
+
+          curv_rh <- rave_cached(sprintf('%s_fs_rh_%s.json', subject_name, curvature))
+          if( file.exists(curv_rh) ){
+            vertcolor_name <- sprintf('Curvature - rh.%s (%s)', curvature, subject_name)
+            brain$add_vertex_color(
+              name = vertcolor_name,
+              path = curv_rh
+            )
+            surf_group$set_group_data(sprintf('default_vertex_rh_%s', surf_t), vertcolor_name)
+          }
         }
 
-        curv_rh <- rave_cached(sprintf('%s_fs_rh_%s.json', subject_name, curvature))
-        if( file.exists(curv_rh) ){
-          # curv_rh = normalizePath(curv_rh)
-          # surf_group$set_group_data(
-          #   name = sprintf('Curvature - rh.%s (%s)', curvature, subject_name),
-          #   value = list(
-          #     path = curv_rh,
-          #     absolute_path = curv_rh,
-          #     file_name = filename(curv_rh),
-          #     is_new_cache = FALSE,
-          #     is_cache = TRUE
-          #   ),
-          #   is_cached = TRUE
-          # )
-          vertcolor_name <- sprintf('Curvature - rh.%s (%s)', curvature, subject_name)
-          brain$add_vertex_color(
-            name = vertcolor_name,
-            path = curv_rh
-          )
-          surf_group$set_group_data(sprintf('default_vertex_rh_%s', surf_t), vertcolor_name)
-        }
       }
 
     }
@@ -359,40 +421,54 @@ freesurfer_brain2 <- function(
 
 
   for(atlas_t in atlas_types){
-    # check if cache exists
 
-    has_atlas <- FALSE
-    atlas_t_alt <- stringr::str_replace_all(atlas_t, '[\\W]', '_')
-    atlas_json <- sprintf('%s_%s.json', subject_name, atlas_t_alt)
-    atlas_digest <- rave_cached(paste0(atlas_json, '.digest'))
-    if(atlas_json %in% common$fs_atlas_files){
-      # Atlas is cached and valid (?)
-      atlas_header <- from_json(from_file = atlas_digest)
-      fname_atlas <- atlas_header$source_name
-      Norig <- atlas_header$Norig
-      Torig <- atlas_header$Torig
-      has_atlas <- TRUE
-    }
-
-    geom_atlas <- NULL
-
-    if( has_atlas ){
-      atlas_shape <- atlas_header$shape
-      group_atlas <- GeomGroup$new(name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name))
-      group_atlas$subject_code <- subject_name
-      cache_atlas <- normalizePath(file.path(rave_dir, atlas_json))
-
-      geom_atlas <- DataCubeGeom2$new(
-        name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name), dim = atlas_shape,
-        half_size = c(1,1,1), group = group_atlas, position = c(0,0,0),
-        cache_file = cache_atlas)
-
-      geom_atlas$subject_code <- subject_name
+    # check if fs has mgh/mgz files
+    mgz_path <- file.path(fs_subject_folder, "mri", sprintf("%s.mgz", atlas_t))
+    if( file.exists(mgz_path) ) {
+      nm <- sprintf("Atlas - %s (%s)", atlas_t, subject_name)
+      group <- GeomGroup$new(name = nm)
+      group$subject_code <- subject_name
+      geom <- VolumeGeom2$new(name = nm, path = mgz_path, color_format = "RGBAFormat", trans_mat = NULL)
+      geom$subject_code <- subject_name
       geom_atlas <- BrainAtlas$new(
-        subject_code = subject_name, atlas_type = atlas_t_alt,
-        atlas = geom_atlas, position = c(0, 0, 0 ))
+        subject_code = subject_name, atlas_type = atlas_t,
+        atlas = geom, position = c(0, 0, 0))
+      brain$add_atlas(atlas = geom_atlas)
+    } else {
+      # check if cache exists
+      has_atlas <- FALSE
+      atlas_t_alt <- stringr::str_replace_all(atlas_t, '[\\W]', '_')
+      atlas_json <- sprintf('%s_%s.json', subject_name, atlas_t_alt)
+      atlas_digest <- rave_cached(paste0(atlas_json, '.digest'))
+      if(atlas_json %in% common$fs_atlas_files){
+        # Atlas is cached and valid (?)
+        atlas_header <- from_json(from_file = atlas_digest)
+        fname_atlas <- atlas_header$source_name
+        Norig <- atlas_header$Norig
+        Torig <- atlas_header$Torig
+        has_atlas <- TRUE
+      }
 
-      brain$add_atlas( atlas = geom_atlas )
+      geom_atlas <- NULL
+
+      if( has_atlas ){
+        atlas_shape <- atlas_header$shape
+        group_atlas <- GeomGroup$new(name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name))
+        group_atlas$subject_code <- subject_name
+        cache_atlas <- normalizePath(file.path(rave_dir, atlas_json))
+
+        geom_atlas <- DataCubeGeom2$new(
+          name = sprintf('Atlas - %s (%s)', atlas_t_alt, subject_name), dim = atlas_shape,
+          half_size = c(1,1,1), group = group_atlas, position = c(0,0,0),
+          cache_file = cache_atlas)
+
+        geom_atlas$subject_code <- subject_name
+        geom_atlas <- BrainAtlas$new(
+          subject_code = subject_name, atlas_type = atlas_t_alt,
+          atlas = geom_atlas, position = c(0, 0, 0 ))
+
+        brain$add_atlas( atlas = geom_atlas )
+      }
     }
   }
 

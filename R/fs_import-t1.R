@@ -30,6 +30,7 @@ import_fs.T1 <- function(subject_name, fs_path, quiet = FALSE, dtype,
   group_volume <- GeomGroup$new(name = sprintf('Volume - T1 (%s)', subject_name))
   group_volume$subject_code <- subject_name
 
+  # TODO: use the actual volume + transform
   volume <- dat$get_data()
   volume <- reorient_volume( volume, Torig )
 

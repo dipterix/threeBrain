@@ -1,9 +1,18 @@
 // Wrap up the whole script within a function
 +(function(){
 })();
-// This is a global cache that is shared across the widgets.
-const global_cache = window.global_cache || new THREEBRAIN_STORAGE();
 
+/**
+ *  threeBrainJS = {
+      ViewerApp : BrainCanvas
+      ViewerWrapper : ViewerWrapper,
+      StorageCache : StorageCache
+    }
+  */
+
+// This is a global cache that is shared across the widgets.
+window.global_cache = window.global_cache || new threeBrainJS.StorageCache();
+window.THREE = threeBrainJS.ExternLibs.THREE;
 
 HTMLWidgets.widget({
 
@@ -11,32 +20,31 @@ HTMLWidgets.widget({
 
   type: "output",
 
-  factory: function(el, width, height) {
+  factory: function( el , width , height) {
 
-    const widget = new BrainWidgetWrapper(el, true);
-
-    if( window.THREEBRAIN ){
-      window.THREEBRAIN.widget = widget;
-    }
-
-    widget.initialize(width, height);
-
-    /*if( widget.initalized && widget.values ) {
-      widget.render( widget.values , true );
-    } else {
-      widget.addModal();
-    }*/
+    const widget = new threeBrainJS.ViewerWrapper({
+      $container : el, cache : global_cache,
+      width : width, height : height,
+      viewerMode : HTMLWidgets.viewerMode
+    });
 
     return {
       // "find", "renderError", "clearError", "sizing", "name", "type", "initialize", "renderValue", "resize"
 
       renderValue: (v) => {
+        widget.receiveData({ data : v, reset : false });
+
+        if( HTMLWidgets.shinyMode && !widget.viewer.shinyDriver ) {
+          widget.viewer.shinyDriver = new threeBrainJS.Drivers.Shiny( widget.viewer );
+        }
+        /*
         widget.values = v;
         if( widget.initalized ){
           widget.render( widget.values, false );
         } else if( v.force_render ){
           widget.el.click();
         }
+        */
       },
 
       resize: (width, height) => {

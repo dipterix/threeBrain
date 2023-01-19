@@ -66,7 +66,7 @@ BrainVolume <- R6::R6Class(
     has_volume = function(){
       if( !is.null(self$object) &&
           R6::is.R6(self$object) &&
-          any(c('DataCubeGeom', 'NiftiGeom') %in% class(self$object))){
+          any(c('DataCubeGeom', 'VolumeGeom') %in% class(self$object))){
         return(TRUE)
       }
 
