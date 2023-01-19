@@ -177,7 +177,7 @@ threeBrain <- function(
   path_atlas <- path_atlas[atlas_exists]
 
   # check if this is legacy subject
-  if( file.path(fs_path, 'RAVE') ) {
+  if( file.exists(file.path(fs_path, 'RAVE', "common.digest")) ) {
     brain <- freesurfer_brain2(
       fs_subject_folder = fs_path,
       subject_name = subject_code,
