@@ -3,7 +3,7 @@
 })();
 
 /**
- *  threeBrainJS = {
+ *  threeBrain = {
       ViewerApp : BrainCanvas
       ViewerWrapper : ViewerWrapper,
       StorageCache : StorageCache
@@ -11,8 +11,8 @@
   */
 
 // This is a global cache that is shared across the widgets.
-window.global_cache = window.global_cache || new threeBrainJS.StorageCache();
-window.THREE = threeBrainJS.ExternLibs.THREE;
+window.global_cache = window.global_cache || new threeBrain.StorageCache();
+window.THREE = threeBrain.ExternLibs.THREE;
 
 HTMLWidgets.widget({
 
@@ -22,7 +22,7 @@ HTMLWidgets.widget({
 
   factory: function( el , width , height) {
 
-    const widget = new threeBrainJS.ViewerWrapper({
+    const widget = new threeBrain.ViewerWrapper({
       $container : el, cache : global_cache,
       width : width, height : height,
       viewerMode : HTMLWidgets.viewerMode
@@ -35,7 +35,7 @@ HTMLWidgets.widget({
         widget.receiveData({ data : v, reset : false });
 
         if( HTMLWidgets.shinyMode && !widget.viewer.shinyDriver ) {
-          widget.viewer.shinyDriver = new threeBrainJS.Drivers.Shiny( widget.viewer );
+          widget.viewer.shinyDriver = new threeBrain.Drivers.Shiny( widget.viewer );
         }
         /*
         widget.values = v;
