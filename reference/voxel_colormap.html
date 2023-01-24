@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.7.9006</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.7.9011</span>
       </span>
     </div>
 
@@ -77,6 +77,7 @@
 <span>  <span class="va">value</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  con <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  auto_rescale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -119,6 +120,11 @@ its length must exceed 1; see 'Details'</p></dd>
 file path can be passed as <code>voxel_colormap</code> into <code><a href="threejs_brain.html">threejs_brain</a></code>.</p></dd>
 
 
+<dt>auto_rescale</dt>
+<dd><p>automatically scale the color according to image values;
+only valid for continuous color maps</p></dd>
+
+
 <dt>...</dt>
 <dd><p>used by continuous color maps, passed to
 <code><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></code></p></dd>
@@ -157,13 +163,14 @@ for valid values.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span> <span class="va">pal</span> <span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;threeBrain Colormap&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Version: 1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Version: 1.1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Geometry Type: volume</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Data Type: continuous</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Transparent: FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   # of keys: 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Min key: 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Max key: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Min Colorkey: 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Max Colorkey: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Auto-rescale ColorKey: no</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Value Range: -10 ~ 10</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ---------------- Get colormap key from a value ------------</span></span></span>
@@ -185,17 +192,18 @@ for valid values.</p>
 <span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span> fileext <span class="op">=</span> <span class="st">'.json'</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">save_colormap</span><span class="op">(</span> <span class="va">pal</span>, <span class="va">f</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">'\n'</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> {"__global_data__.VolumeColorLUT":{"map":{"1":{"ColorID":1,"Label":-10,"R":0,"G":0,"B":255},"2":{"ColorID":2,"Label":0,"R":255,"G":255,"B":255},"3":{"ColorID":3,"Label":10,"R":255,"G":0,"B":0}},"mapAlpha":false,"mapMinColorID":1,"mapMaxColorID":3,"mapValueRange":[-10,10],"mapDataType":"continuous","mapGeomType":"volume","mapVersion":1}}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {"__global_data__.VolumeColorLUT":{"map":{"1":{"ColorID":1,"Label":-10,"R":0,"G":0,"B":255},"2":{"ColorID":2,"Label":0,"R":255,"G":255,"B":255},"3":{"ColorID":3,"Label":10,"R":255,"G":0,"B":0}},"mapAlpha":false,"mapMinColorID":1,"mapMaxColorID":3,"mapValueRange":[-10,10],"mapDataType":"continuous","mapGeomType":"volume","colorIDAutoRescale":false,"mapVersion":1.1}}</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">load_colormap</span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;threeBrain Colormap&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Version: 1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Version: 1.1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Geometry Type: volume</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Data Type: continuous</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Transparent: FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   # of keys: 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Min key: 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Max key: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Min Colorkey: 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Max Colorkey: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Auto-rescale ColorKey: no</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Value Range: -10 ~ 10</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
