@@ -1,3 +1,4 @@
-[submodule "three-brain-js"]
-  path = inst/three-brain-js
-  branch = main
+[submodule "inst/three-brain-js"]
+	path = inst/three-brain
+	url = https://github.com/dipterix/three-brain-js/
+	branch = main
