@@ -119,7 +119,7 @@ MultiBrain2 <- R6::R6Class(
         }
 
         cube <- reorient_volume( ct$get_data(), self$Torig )
-        add_voxel_cube(self, "CT", cube, color_format = "AlphaFormat")
+        add_voxel_cube(self, "CT", cube, color_format = "RedFormat")
 
         key <- seq(0, max(cube))
         cmap <- create_colormap(

@@ -68,7 +68,7 @@ rh_mesh = geom_freemesh(
 
 
 # Render
-threejs_brain(lh_mesh, rh_mesh)
+if( interactive() ) { threejs_brain(lh_mesh, rh_mesh) }
 
 
 

@@ -3,6 +3,7 @@
 \name{voxel_cube}
 \alias{voxel_cube}
 \alias{add_voxel_cube}
+\alias{add_nifti}
 \alias{create_voxel_cube}
 \title{Generate volume data from 'MNI' coordinates}
 \usage{
@@ -12,7 +13,15 @@ add_voxel_cube(
   cube,
   size = c(256, 256, 256),
   trans_mat = NULL,
-  color_format = c("RGBAFormat", "AlphaFormat")
+  color_format = c("RGBAFormat", "RedFormat")
+)
+
+add_nifti(
+  brain,
+  name,
+  path,
+  trans_mat = NULL,
+  color_format = c("RGBAFormat", "RedFormat")
 )
 
 create_voxel_cube(
@@ -32,9 +41,11 @@ create_voxel_cube(
 
 \item{size}{the actual size of the volume, usually dot multiplication of the dimension and voxel size}
 
-\item{trans_mat}{the transform matrix of the volume}
+\item{trans_mat}{the transform matrix of the volume. For \code{add_voxel_cube}, this matrix should be from data cube geometry model center to world (\code{'tkrRAS'}) transform. For \code{add_nifti}, this matrix is the 'Nifti' \code{'RAS'} to world (\code{'tkrRAS'}) transform.}
 
-\item{color_format}{color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'AlphaFormat'}}
+\item{color_format}{color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'RedFormat'}, which saves volume data with single red-channel to save space}
+
+\item{path}{'Nifti' data path}
 
 \item{mni_ras}{'MNI' 'RAS' coordinates, should be a \code{n}-by-3 matrix}
 
@@ -78,7 +89,7 @@ x <- create_voxel_cube(
 
 
 n27_path <- file.path(default_template_directory(), "N27")
-if( dir.exists(n27_path) ) {
+if( interactive() && dir.exists(n27_path) ) {
   brain <- merge_brain()
 
   # or add_voxel_cube(brain, 'example', x$cube)

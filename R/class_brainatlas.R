@@ -67,7 +67,7 @@ BrainAtlas <- R6::R6Class(
     has_atlas = function(){
       if( !is.null(self$object) &&
           R6::is.R6(self$object) &&
-          'DataCubeGeom2' %in% class(self$object)){
+          'datacube2' %in% self$object$type){
         return(TRUE)
       }
 
@@ -87,8 +87,9 @@ BrainAtlas <- R6::R6Class(
 #' @param name the name of voxel cube, only letters, digits and \code{'_'} are allowed; other characters will be replaced by \code{'_'}
 #' @param cube a 3-mode array; see the following example
 #' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size
-#' @param trans_mat the transform matrix of the volume
-#' @param color_format color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'AlphaFormat'}
+#' @param path 'Nifti' data path
+#' @param trans_mat the transform matrix of the volume. For \code{add_voxel_cube}, this matrix should be from data cube geometry model center to world (\code{'tkrRAS'}) transform. For \code{add_nifti}, this matrix is the 'Nifti' \code{'RAS'} to world (\code{'tkrRAS'}) transform.
+#' @param color_format color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'RedFormat'}, which saves volume data with single red-channel to save space
 #'
 #' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
 #' \code{add_voxel_cube} returns the \code{brain} object
@@ -118,7 +119,7 @@ BrainAtlas <- R6::R6Class(
 #'
 #'
 #' n27_path <- file.path(default_template_directory(), "N27")
-#' if( dir.exists(n27_path) ) {
+#' if( interactive() && dir.exists(n27_path) ) {
 #'   brain <- merge_brain()
 #'
 #'   # or add_voxel_cube(brain, 'example', x$cube)
@@ -137,7 +138,7 @@ NULL
 #' @rdname voxel_cube
 #' @export
 add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
-                           trans_mat = NULL, color_format = c("RGBAFormat", "AlphaFormat")){
+                           trans_mat = NULL, color_format = c("RGBAFormat", "RedFormat")){
   stopifnot2(length(size) == 3 && all(size > 0), msg = "add_voxel_cube: `size` must be length of 3 and all positive")
   stopifnot2(is.null(trans_mat) || (
     length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4
@@ -171,6 +172,38 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
 
   brain$add_atlas( atlas = obj )
   invisible(re)
+}
+
+#' @rdname voxel_cube
+#' @export
+add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGBAFormat", "RedFormat")) {
+  # trans_mat is from nifti RAS to tkrRAS
+
+  color_format <- match.arg(color_format)
+  if ("multi-rave-brain" %in% class(brain)) {
+    brain <- brain$template_object
+  }
+  subject <- brain$subject_code
+
+  stopifnot2(is.null(trans_mat) || (
+    length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4
+  ), msg = "add_nifti: `trans_mat` must be either NULL or a 4x4 matrix (from nii RAS to MRI RAS)")
+  if(is.null(trans_mat)) {
+    trans_mat <- diag(rep(1, 4))
+  }
+  # need to add MRI RAS to tkrRAS to trans_mat
+  # trans_mat <- brain$Torig %*% solve(brain$Norig) %*% trans_mat
+
+  # FIXME: change `Atlas` to Volume and make sure we are backward-compatible
+  nm <- sprintf("Atlas - %s (%s)", name, subject)
+  group <- GeomGroup$new(name = nm)
+  group$subject_code <- subject
+  geom <- VolumeGeom2$new(name = nm, path = path, color_format = color_format, trans_mat = trans_mat)
+  geom$subject_code <- subject
+  obj <- BrainAtlas$new(subject_code = subject, atlas_type = name,
+                        atlas = geom, position = c(0, 0, 0))
+  brain$add_atlas(atlas = obj)
+  invisible(brain)
 }
 
 #' @rdname voxel_cube

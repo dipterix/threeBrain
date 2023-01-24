@@ -377,7 +377,7 @@ Brain2 <- R6::R6Class(
     localize = function(
       ct_path,
       transform_matrix = NULL,
-      transform_space = c("resampled", "ijk2ras", "fsl"),
+      transform_space = c("resampled", "ijk2ras", "ras2ras", "fsl"),
       mri_path = NULL,
       col = c("gray80", 'darkgreen'),
       controllers = list(),
@@ -389,6 +389,7 @@ Brain2 <- R6::R6Class(
       control_presets <- c('localization', control_presets)
       controllers[["Highlight Box"]] <- FALSE
 
+      # Backward compatible
       if(missing(ct_path)) {
         if(!missing(coregistered_ct)) {
           ct_path <- coregistered_ct
@@ -397,18 +398,33 @@ Brain2 <- R6::R6Class(
         }
       }
 
-      if(!is.null( ct_path )){
+      # Localize without CT
+      if( is.null(ct_path) ) {
+        # No CT scan, use 3 planes to localize
+        controllers[["Edit Mode"]] %?<-% "MRI slice"
+        controllers[["Overlay Coronal"]] <- TRUE
+        controllers[["Overlay Axial"]] <- TRUE
+        controllers[["Overlay Sagittal"]] <- TRUE
+        controllers[["Left Opacity"]] <- 0.1
+        controllers[["Right Opacity"]] <- 0.1
+        return(self$plot(
+          control_presets = control_presets,
+          controllers = controllers,
+          # custom_javascript = "canvas.controls.noPan=true;",
+          ...
+        ))
+      }
 
-        transform_space <- match.arg(transform_space)
+      # Localize with CT instance object
+      transform_space <- match.arg(transform_space)
 
-        if(!inherits(ct_path, "threeBrain.nii")) {
-          ct <- read_nii2( normalizePath(ct_path, mustWork = TRUE) )
-        } else {
-          ct <- ct_path
-        }
-
+      if( inherits(ct_path, "threeBrain.nii") ) {
+        # CT data has been loaded, use loaded CT
+        ct <- ct_path
         ct_shape <- ct$get_shape()
 
+        # calculate from CT model to tkrRAS:
+        #   from CT geometry model to CT IJK, then to MR RAS, then to tkrRAS
         switch(
           transform_space,
           resampled = {
@@ -427,6 +443,19 @@ Brain2 <- R6::R6Class(
             }
 
             trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix %*% trans_mat
+
+          },
+          ras2ras = {
+            trans_mat <- diag(rep(1, 4))
+            trans_mat[1:3, 4] <- ct_shape / 2
+            if(length(transform_matrix) == 1 && is.character(transform_matrix)) {
+              transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+            }
+            if(length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
+              stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+            }
+            ct_ijk2ras <- ct$get_IJK_to_RAS()$matrix
+            trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix %*% ct_ijk2ras %*% trans_mat
 
           },
           fsl = {
@@ -457,48 +486,99 @@ Brain2 <- R6::R6Class(
         )
 
         add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
-                       trans_mat = trans_mat, color_format = "AlphaFormat")
-
-        key <- seq(0, max(ct$get_range()))
-        cmap <- create_colormap(
-          gtype = 'volume', dtype = 'continuous',
-          key = key, value = key,
-
-          # using AlphaFormat so color map is the color intensity in gray
-          color = c("black", "white")
-        )
-        controllers[["Left Opacity"]] <- 0.4
-        controllers[["Right Opacity"]] <- 0.4
-        controllers[["Voxel Type"]] <- "CT"
-        controllers[["Voxel Display"]] <- "normal"
-        controllers[["Voxel Min"]] <- 3000
-        controllers[["Edit Mode"]] %?<-% "CT/volume"
-        self$plot(
-          control_presets = control_presets,
-          voxel_colormap = cmap,
-          controllers = controllers,
-          # custom_javascript = "canvas.controls.noPan=true;",
-          ...
-        )
+                       trans_mat = trans_mat, color_format = "RedFormat")
       } else {
-        # No CT scan, use 3 planes to localize
-        controllers[["Edit Mode"]] %?<-% "MRI slice"
-        controllers[["Overlay Coronal"]] <- TRUE
-        controllers[["Overlay Axial"]] <- TRUE
-        controllers[["Overlay Sagittal"]] <- TRUE
-        controllers[["Left Opacity"]] <- 0.1
-        controllers[["Right Opacity"]] <- 0.1
-        self$plot(
-          control_presets = control_presets,
-          controllers = controllers,
-          # custom_javascript = "canvas.controls.noPan=true;",
-          ...
+
+        # CT is not loaded, ct_path is a nifti file
+        ct_path <- normalizePath(ct_path, mustWork = TRUE)
+        ct <- read_nii2( ct_path, head_only = TRUE )
+        ct_shape <- ct$get_shape()
+
+        if( transform_space != "resampled" ) {
+          if(length(transform_matrix) == 1 && is.character(transform_matrix)) {
+            transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+          }
+          if(length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
+            stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+          }
+        }
+
+        # Calculate transform from CT RAS to tkrRAS
+        switch(
+          transform_space,
+          resampled = {
+            # from nifti RAS to tkrRAS
+            trans_mat <- self$Torig %*% solve(self$Norig)
+          },
+          ijk2ras = {
+            # assume in CT RAS, we need to show in tkrRAS
+            # transform_matrix is from CT IJK to MR RAS
+            ct_ijk2ras <- ct$get_IJK_to_RAS()$matrix
+            trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix %*% solve(ct_ijk2ras)
+          },
+          ras2ras = {
+            # assume in CT RAS, we need to show in tkrRAS
+            # transform_matrix is from CT RAS to MR RAS
+            trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix
+          },
+          fsl = {
+            # assume in CT RAS, we need to show in tkrRAS
+            # transform_matrix is from CT FSL to MR FSL
+
+            if(!inherits(mri_path, "threeBrain.nii")) {
+              mri <- read_nii2( normalizePath(mri_path, mustWork = TRUE), head_only = TRUE )
+            } else {
+              mri <- mri_path
+            }
+            mri_ijk2fsl <- mri$get_IJK_to_FSL()
+            mri_ijk2ras <- mri$get_IJK_to_RAS()$matrix
+            ct_ijk2fsl <- ct$get_IJK_to_FSL()
+            ct_ijk2ras <- ct$get_IJK_to_RAS()$matrix
+
+            # ct_ijk2fsl: CT IJK to FSL
+            # transform_matrix CT FSL to MRI FSL
+            # solve(mri_ijk2fsl): MRI FSL to MRI IJK
+            # mri_ijk2ras: MRI IJK to RAS
+            trans_mat <- self$Torig %*% solve(self$Norig) %*% mri_ijk2ras %*% solve(mri_ijk2fsl) %*% transform_matrix %*% ct_ijk2fsl %*% solve(ct_ijk2ras)
+          }
         )
+
+        # add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
+        #                trans_mat = trans_mat, color_format = "RedFormat")
+        add_nifti(self, "CT", path = ct_path,
+                  color_format = "RedFormat", trans_mat = trans_mat)
       }
+
+      key <- seq(0, 5000)
+      cmap <- create_colormap(
+        gtype = 'volume', dtype = 'continuous',
+        key = key, value = key,
+
+        # using RedFormat so color map is the color intensity in gray
+        color = c("black", "white"),
+
+        # automatically re-scale the color map
+        auto_rescale = TRUE
+      )
+
+      # Set CT color map
+      self$atlases$CT$object$color_map <- cmap
+      controllers[["Left Opacity"]] <- 0.4
+      controllers[["Right Opacity"]] <- 0.4
+      controllers[["Voxel Type"]] <- "CT"
+      controllers[["Voxel Display"]] <- "normal"
+      controllers[["Voxel Min"]] <- 3000
+      controllers[["Edit Mode"]] %?<-% "CT/volume"
+      self$plot(
+        control_presets = control_presets,
+        controllers = controllers,
+        # custom_javascript = "canvas.controls.noPan=true;",
+        ...
+      )
     },
 
     plot = function( # Elements
-      volumes = TRUE, surfaces = TRUE, atlases = TRUE, start_zoom = 1, cex = 1,
+      volumes = TRUE, surfaces = TRUE, atlases = "aparc_aseg", start_zoom = 1, cex = 1,
       background = '#FFFFFF',
 
       # Layouts

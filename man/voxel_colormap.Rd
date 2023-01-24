@@ -16,6 +16,7 @@ create_colormap(
   value,
   alpha = FALSE,
   con = NULL,
+  auto_rescale = FALSE,
   ...
 )
 
@@ -41,6 +42,9 @@ its length must exceed 1; see 'Details'}
 
 \item{con}{a file path to write results to or to read from. The
 file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.}
+
+\item{auto_rescale}{automatically scale the color according to image values;
+only valid for continuous color maps}
 
 \item{...}{used by continuous color maps, passed to
 \code{\link[grDevices]{colorRampPalette}}}
