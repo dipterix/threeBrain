@@ -578,7 +578,7 @@ Brain2 <- R6::R6Class(
     },
 
     plot = function( # Elements
-      volumes = TRUE, surfaces = TRUE, atlases = "aparc_aseg", start_zoom = 1, cex = 1,
+      volumes = TRUE, surfaces = TRUE, atlases = TRUE, start_zoom = 1, cex = 1,
       background = '#FFFFFF',
 
       # Layouts
