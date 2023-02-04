@@ -1,15 +1,15 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 0.2.7.9012
+Version: 0.2.8.1
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
-    person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("aut")),
+    person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("aut", "res")),
     person("Xiang", "Zhang", email = "xiang.zhang@pennmedicine.upenn.edu", role = c("ctb", "res")),
     person("Brian", "Metzger", email = "Brian.Metzger@bcm.edu", role = c("res")),
     person("Elizabeth", "Nesbitt", email = "Elizabeth.Nesbitt@bcm.edu", role = c("res")),
     person("Meng", "Li", email = "meng@rice.edu", role = c("ths")),
-    person("Michael", "Beauchamp", email = "Michael.Beauchamp@Pennmedicine.upenn.edu", role = c("aut", "dtc"))
+    person("Michael", "Beauchamp", email = "Michael.Beauchamp@Pennmedicine.upenn.edu", role = c("ths", "dtc"))
     )
 Description: A fast, interactive cross-platform, and easy to share 
     'WebGL'-based 3D brain viewer that visualizes 'FreeSurfer' and/or
@@ -49,6 +49,7 @@ Imports:
     gifti (>= 0.7.5),
     oro.nifti (>= 0.9.1)
 Suggests: 
+    Rvcg (>= 0.22.1),
     knitr,
     rmarkdown,
     DT,

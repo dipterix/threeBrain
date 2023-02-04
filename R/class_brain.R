@@ -7,9 +7,12 @@ Brain2 <- R6::R6Class(
   portable = FALSE,
   cloneable = TRUE,
   private = list(
-    .subject_code = ''
+    .subject_code = '',
+    .base_path = NULL,
+    .available_surfaces = NULL
   ),
   public = list(
+
 
     meta = NULL,
 
@@ -64,11 +67,98 @@ Brain2 <- R6::R6Class(
       )
     },
 
-    add_surface = function(surface){
-      stopifnot2( R6::is.R6( surface ) && 'brain-surface' %in% class( surface ),
-                  msg = 'surface must be a brain-surface object')
+    add_surface = function(
+      surface,
+      vertex_color_types = c("sulc", "curv", "thickness", "volume"),
+      template_subject = unname(getOption('threeBrain.template_subject', 'N27'))
+    ){
+      if(!inherits(surface, 'brain-surface')) {
 
-      stopifnot2( surface$has_hemispheres, msg = 'surface miss mesh objects')
+        stopifnot2( is.character(surface), msg = 'surface must be a brain-surface object or character')
+
+        fs_path <- self$base_path
+        if(!isTRUE(file.exists(fs_path))) { return() }
+        subject_code <- private$.subject_code
+
+
+        left_vcolor <- NULL
+        right_vcolor <- NULL
+        has_vcolor <- FALSE
+        if(!endsWith(surface, "outer-smoothed")) {
+          for(vc_type in vertex_color_types) {
+            path_left_vcolor <- file.path(fs_path, "surf", sprintf("lh.%s", vc_type))
+            path_right_vcolor <- file.path(fs_path, "surf", sprintf("rh.%s", vc_type))
+
+            if( file.exists(path_left_vcolor) && file.exists(path_right_vcolor) ) {
+              path_left_vcolor <- normalizePath(path_left_vcolor, winslash = "/")
+              path_right_vcolor <- normalizePath(path_right_vcolor, winslash = "/")
+              left_vcolor <- list(
+                path = path_left_vcolor,
+                absolute_path = path_left_vcolor,
+                file_name = basename(path_left_vcolor),
+                is_new_cache = FALSE,
+                is_cache = TRUE
+              )
+              right_vcolor <- list(
+                path = path_right_vcolor,
+                absolute_path = path_right_vcolor,
+                file_name = basename(path_right_vcolor),
+                is_new_cache = FALSE,
+                is_cache = TRUE
+              )
+              has_vcolor <- TRUE
+              break
+            }
+          }
+        }
+
+        surface_name <- surface
+        if( tolower(surface_name) == "pial.t1" ) {
+          surface_name <- "pial"
+        }
+        available_surfaces_lower <- tolower(private$.available_surfaces)
+        # surface_type might be symlink since fs 7.0 (e.g., pial)
+        surface_type <- c(surface_alternative_types[[surface_name]], surface_name)
+        surface_type <- surface_type[tolower(surface_type) %in% available_surfaces_lower]
+        if(!length(surface_type)) { return() }
+
+        surface_type <- surface_type[[1]]
+
+        path_left <- normalizePath(file.path(fs_path, "surf", sprintf("lh.%s", surface_type)), winslash = "/", mustWork = FALSE)
+        path_right <- normalizePath(file.path(fs_path, "surf", sprintf("rh.%s", surface_type)), winslash = "/", mustWork = FALSE)
+
+        if( !file.exists(path_left) || !file.exists(path_right) ) { return() }
+
+        group <- GeomGroup$new(name = sprintf('Surface - %s (%s)', surface_name, subject_code))
+        group$.cache_name <- sprintf("%s/surf", subject_code)
+        group$set_group_data('template_subject', template_subject)
+        group$set_group_data('surface_type', surface_name)
+        group$set_group_data('subject_code', subject_code)
+        group$set_group_data('surface_format', 'fs')
+
+        if( has_vcolor ) {
+          group$set_group_data( "lh_primary_vertex_color", is_cached = TRUE, value = left_vcolor )
+          group$set_group_data( "rh_primary_vertex_color", is_cached = TRUE, value = right_vcolor )
+        }
+
+        surf_lh <- FreeGeom$new(
+          name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surface_name, subject_code),
+          position = c(0,0,0), cache_file = path_left, group = group, layer = 8
+        )
+        surf_rh <- FreeGeom$new(
+          name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surface_name, subject_code),
+          position = c(0,0,0), cache_file = path_right, group = group, layer = 8
+        )
+        surface <- BrainSurface$new(subject_code = subject_code, surface_type = surface_name, mesh_type = 'fs',
+                                    left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+
+
+      }
+
+      if( !isTRUE(surface$has_hemispheres) ) {
+        warning('surface miss mesh objects')
+        return()
+      }
 
       if( surface$mesh_type == 'std.141' ){
         surface$set_group_position( self$scanner_center )
@@ -129,11 +219,31 @@ Brain2 <- R6::R6Class(
       }
     },
 
-    add_atlas = function(atlas){
-      stopifnot2( R6::is.R6( atlas ) && 'brain-atlas' %in% class( atlas ),
-                  msg = 'atlas must be a brain-atlas object')
+    add_atlas = function(atlas, color_format = c("RGBAFormat", "RedFormat")){
 
-      stopifnot2( atlas$has_atlas, msg = 'atlas miss datacube2 objects')
+      color_format <- match.arg(color_format)
+
+      if(!inherits(atlas, 'brain-atlas')) {
+
+        stopifnot2(is.character(atlas), msg = 'atlas must be a brain-atlas object or valid atlas name from FreeSurfer folder')
+        atlas <- gsub("_", "+", atlas)
+        path_atlases <- file.path( self$base_path, "mri", sprintf("%s.mgz", atlas) )
+        atlas_path <- path_atlases[file.exists(path_atlases)]
+        if(!length(atlas_path)) { return() }
+        atlas_path <- atlas_path[[ 1 ]]
+
+        atlas_instance <- BrainAtlas$new(
+          subject_code = private$.subject_code,
+          atlas_type = atlas,
+          position = c(0, 0, 0),
+          atlas = VolumeGeom2$new(
+            name = sprintf("Atlas - %s (%s)", atlas, subject_code),
+            path = atlas_path, color_format = color_format, trans_mat = NULL
+          )
+        )
+        atlas_instance$group$.cache_name <- sprintf("%s/mri", private$.subject_code)
+        atlas <- atlas_instance
+      }
 
       atlas$set_subject_code( self$subject_code )
       self$atlases[[ atlas$atlas_type ]] <- atlas
@@ -569,6 +679,16 @@ Brain2 <- R6::R6Class(
       controllers[["Voxel Display"]] <- "normal"
       controllers[["Voxel Min"]] <- 3000
       controllers[["Edit Mode"]] %?<-% "CT/volume"
+
+      # Also add other atlases
+      self$add_atlas("aparc+aseg")
+      self$add_atlas("aparc.DKTatlas+aseg")
+      self$add_atlas("aparc.a2009s+aseg")
+      self$add_atlas("aseg")
+
+      # Add other Surfaces
+      self$add_surface("sphere.reg")
+
       self$plot(
         control_presets = control_presets,
         controllers = controllers,
@@ -680,6 +800,34 @@ Brain2 <- R6::R6Class(
       )), names = self$subject_code)
       re$.subject_codes <- self$subject_code
       re
+    },
+    base_path = function(v) {
+      if(missing(v)) {
+        if(length(private$.base_path)) {
+          if(!file.exists(private$.base_path)) {
+            private$.base_path <- character(0L)
+          }
+        }
+        return(private$.base_path)
+      }
+      if(length(v) == 0) {
+        private$.base_path <- character(0L)
+        return(private$.base_path)
+      }
+      if(length(v) != 1 || is.na(v) || !file.exists(v)) {
+        stop("Cannot assign brain$base_path: file path must be length(1) and must exist")
+      }
+      private$.base_path <- normalizePath(v)
+      fs_path <- private$.base_path
+      surface_filenames <- list.files(file.path(fs_path, "surf"), pattern = "^[lr]h\\.", ignore.case = TRUE)
+      available_surfaces <- unique(gsub("^[l|r]h\\.", "", surface_filenames, ignore.case = TRUE))
+      available_surfaces <- available_surfaces[!grepl("^(sulc|thick|volume|jacob|curv|area)", available_surfaces, ignore.case = TRUE)]
+      available_surfaces <- available_surfaces[!grepl("(crv|mgh|curv|labels|label)$", available_surfaces, ignore.case = TRUE)]
+      private$.available_surfaces <- available_surfaces
+      return(private$.base_path)
+    },
+    available_surfaces = function() {
+      private$.available_surfaces
     }
   )
 )
