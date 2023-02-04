@@ -686,8 +686,10 @@ Brain2 <- R6::R6Class(
       self$add_atlas("aparc.a2009s+aseg")
       self$add_atlas("aseg")
 
-      # Add other Surfaces
-      self$add_surface("sphere.reg")
+      # Add other Surfaces for surface mapping
+      if(!is.null(self$add_surface("pial-outer-smoothed"))) {
+        self$add_surface("sphere.reg")
+      }
 
       self$plot(
         control_presets = control_presets,
