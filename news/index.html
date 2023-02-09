@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.7.9012</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.8.6</span>
       </span>
     </div>
 
@@ -64,10 +64,35 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="0.2.8" id="threebrain-028">threeBrain 0.2.8<a class="anchor" aria-label="anchor" href="#threebrain-028"></a></h2>
-<div class="section level3">
-<h3 id="changes-0-2-8">Changes<a class="anchor" aria-label="anchor" href="#changes-0-2-8"></a></h3>
-<ul><li>Peel event dispatcher from the canvas class so the events can be managed separately</li>
+<h2 class="page-header" data-toc-text="0.5.0" id="threebrain-050">threeBrain 0.5.0<a class="anchor" aria-label="anchor" href="#threebrain-050"></a></h2>
+<p>This version contains a major update. There will be one more major update before version <code>1.0.0</code>. Here are some highlights:</p>
+<ul><li>Electrode localization can be done from original <code>CT</code> instead of re-sampled ones</li>
+<li>Completely isolate <code>JavaScript</code> engine from <code>R</code> code. The <code>JavaScript</code> code is available as <code>npm</code> package and is used via sub-module</li>
+<li>Implemented file readers directly from <code>JavaScript</code>, this allows reading files directly in viewer, and no cache is needed</li>
+<li>No home-brew version of <code>threejs</code> is required: standard <code>npm</code> distribution is used</li>
+<li>New controller <code>GUI</code> is implemented</li>
+<li>The viewer can be driven via <code>JavaScript</code> directly via event dispatchers</li>
+</ul><div class="section level3">
+<h3 id="detailed-changes-0-5-0">Detailed Changes<a class="anchor" aria-label="anchor" href="#detailed-changes-0-5-0"></a></h3>
+<ul><li>Added step size in <code>datacube2</code> material uniforms</li>
+<li>Upgraded <code>threejs</code> to <code>r148</code>, and use <code>npm</code> distribution “three”</li>
+<li>Massive code re-factory (variable names, trackball controls, legacy classes…)</li>
+<li>Removed <code>data-GUI</code> and use <code>lil-GUI</code>
+</li>
+<li>Fixed compass (finally…)</li>
+<li>Added title to the viewer</li>
+<li>Reworked the whole message signal system, added <code>ThrottledEventDispatcher.js</code>
+</li>
+<li>Added <code>MouseKeyboard</code> class to track mouse and keyboard events, greatly reduced canvas burden</li>
+<li>Added <code>animParameter</code> object to canvas to keep track of the animation parameters</li>
+<li>reworked shiny drivers</li>
+<li>fixed one-voxel shift issues</li>
+<li>Added format support for <code>nii</code>, <code>mgh/mgz</code>, <code>FreeSurfer</code> surface, <code>FreeSurfer</code> node value binary formats</li>
+<li>Added function <code>threeBrain</code> to allow 3D viewer to run without cache (with fs only)</li>
+<li>Fixed memory leak issues in <code>JavaScript</code> code</li>
+<li>Geometry groups can now change its storage path</li>
+<li>JS is completely independent now (available on <code>npm</code> now)</li>
+<li>Peel event dispatcher from the canvas class so the events can be managed separately</li>
 <li>Hide time-stamps when there is no data/animation available</li>
 <li>Added experimental support to show labels on regular electrodes; currently no depth-test is turned on</li>
 <li>Added <code>GUI</code> support to change electrode label visibility and size</li>
@@ -76,7 +101,7 @@
 <code>handle_resize</code> now put off resizing function when detecting widget size is too small</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-2-8">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-8"></a></h3>
+<h3 id="bug-fixes-0-5-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-5-0"></a></h3>
 <ul><li>Fixing <code>xfm</code> not parsed correctly when the line starts with blank spaces</li>
 <li>Stopped rendering canvas when canvas is too small (less than 10 pixels)</li>
 </ul></div>
@@ -363,7 +388,7 @@
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Zhengjia Wang, John Magnotti, Michael Beauchamp.</p>
+  <p></p><p>Developed by Zhengjia Wang, John Magnotti.</p>
 </div>
 
 <div class="pkgdown">

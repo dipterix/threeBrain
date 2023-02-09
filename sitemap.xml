@@ -70,10 +70,16 @@
     <loc>/reference/default_template_directory.html</loc>
   </url>
   <url>
+    <loc>/reference/fill_surface.html</loc>
+  </url>
+  <url>
     <loc>/reference/freesurfer_brain.html</loc>
   </url>
   <url>
     <loc>/reference/freesurfer_lut.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generate_smooth_envelope.html</loc>
   </url>
   <url>
     <loc>/reference/geom_freemesh.html</loc>
