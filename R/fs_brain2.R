@@ -106,6 +106,7 @@ freesurfer_brain2 <- function(
 
   # Generate brain object to return
   brain <- Brain2$new(subject_code = subject_name, xfm = xfm, Norig = Norig, Torig = Torig)
+  brain$base_path <- fs_subject_folder
   brain$meta$path <- list(
     path_subject = path_subject,
     path_cache = rave_dir,
@@ -307,11 +308,11 @@ freesurfer_brain2 <- function(
       # try to use FreeSurfer's original files
       left_surf_path_orig <- file.path(fs_subject_folder, "surf", sprintf("lh.%s", surf_t))
       if( !file.exists(left_surf_path_orig) ) {
-        left_surf_path_orig = file.path(fs_subject_folder, "surf", sprintf("lh.%s.T1", surf_t))
+        left_surf_path_orig <- file.path(fs_subject_folder, "surf", sprintf("lh.%s.T1", surf_t))
       }
       right_surf_path_orig <- file.path(fs_subject_folder, "surf", sprintf("rh.%s", surf_t))
       if( !file.exists(right_surf_path_orig) ) {
-        right_surf_path_orig = file.path(fs_subject_folder, "surf", sprintf("rh.%s.T1", surf_t))
+        right_surf_path_orig <- file.path(fs_subject_folder, "surf", sprintf("rh.%s.T1", surf_t))
       }
       if( file.exists(left_surf_path_orig) && file.exists(right_surf_path_orig) ) {
         surf_group$set_group_data('surface_format', 'fs')

@@ -1,8 +1,34 @@
-threeBrain 0.2.8
+threeBrain 0.5.0
 =======
 
-## Changes
+This version contains a major update. There will be one more major update before version `1.0.0`. Here are some highlights:
 
+* Electrode localization can be done from original `CT` instead of re-sampled ones
+* Completely isolate `JavaScript` engine from `R` code. The `JavaScript` code is available as `npm` package and is used via sub-module
+* Implemented file readers directly from `JavaScript`, this allows reading files directly in viewer, and no cache is needed
+* No home-brew version of `threejs` is required: standard `npm` distribution is used
+* New controller `GUI` is implemented
+* The viewer can be driven via `JavaScript` directly via event dispatchers
+
+
+## Detailed Changes
+
+* Added step size in `datacube2` material uniforms
+* Upgraded `threejs` to `r148`, and use `npm` distribution "three"
+* Massive code re-factory (variable names, trackball controls, legacy classes...)
+* Removed `data-GUI` and use `lil-GUI`
+* Fixed compass (finally...)
+* Added title to the viewer
+* Reworked the whole message signal system, added `ThrottledEventDispatcher.js`
+* Added `MouseKeyboard` class to track mouse and keyboard events, greatly reduced canvas burden
+* Added `animParameter` object to canvas to keep track of the animation parameters
+* reworked shiny drivers
+* fixed one-voxel shift issues
+* Added format support for `nii`, `mgh/mgz`, `FreeSurfer` surface, `FreeSurfer` node value binary formats
+* Added function `threeBrain` to allow 3D viewer to run without cache (with fs only)
+* Fixed memory leak issues in `JavaScript` code
+* Geometry groups can now change its storage path
+* JS is completely independent now (available on `npm` now)
 * Peel event dispatcher from the canvas class so the events can be managed separately
 * Hide time-stamps when there is no data/animation available
 * Added experimental support to show labels on regular electrodes; currently no depth-test is turned on

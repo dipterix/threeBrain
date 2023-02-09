@@ -13,13 +13,13 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
   if (!is.character(filepath)) {
     stop("Parameter 'filepath' msut be a character string.")
   }
-  header = list()
+  header <- list()
   filepath <- normalizePath(filepath, mustWork = TRUE)
   if (typeof(is_gzipped) == "logical") {
-    is_gz = is_gzipped
+    is_gz <- is_gzipped
   } else if (typeof(is_gzipped) == "character") {
     if (toupper(is_gzipped) == "AUTO") {
-      is_gz = grepl( "mgz$", filepath, ignore.case = TRUE)
+      is_gz <- grepl( "mgz$", filepath, ignore.case = TRUE)
     } else {
       stop("Argument 'is_gzipped' must be 'AUTO' if it is a string.\n")
     }
@@ -27,85 +27,85 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
     stop(sprintf("ERROR: Argument is_gzipped must be logical (TRUE or FALSE) or 'AUTO'.\n"))
   }
   if (is_gz) {
-    fh = gzfile(filepath, "rb")
+    fh <- gzfile(filepath, "rb")
   } else {
-    fh = file(filepath, "rb")
+    fh <- file(filepath, "rb")
   }
   on.exit({ close(fh) })
-  v = readBin(fh, integer(), n = 1, endian = "big")
+  v <- readBin(fh, integer(), n = 1, endian = "big")
   if (v != 1L) {
     stop("File not in MGH/MGZ format.")
   }
-  ndim1 = readBin(fh, integer(), n = 1, size = 4, endian = "big")
-  ndim2 = readBin(fh, integer(), n = 1, size = 4, endian = "big")
-  ndim3 = readBin(fh, integer(), n = 1, size = 4, endian = "big")
-  nframes = readBin(fh, integer(), n = 1, size = 4, endian = "big")
-  dtype = readBin(fh, integer(), n = 1, size = 4, endian = "big")
-  dof = readBin(fh, integer(), n = 1, size = 4, endian = "big")
-  header$dtype = dtype
-  header$dof = dof
-  header$internal = list()
-  unused_header_space_size_left = 256L
-  ras_flag_size = 2L
-  header$ras_good_flag = readBin(fh, integer(), size = ras_flag_size, n = 1, endian = "big")
-  unused_header_space_size_left = unused_header_space_size_left - ras_flag_size
+  ndim1 <- readBin(fh, integer(), n = 1, size = 4, endian = "big")
+  ndim2 <- readBin(fh, integer(), n = 1, size = 4, endian = "big")
+  ndim3 <- readBin(fh, integer(), n = 1, size = 4, endian = "big")
+  nframes <- readBin(fh, integer(), n = 1, size = 4, endian = "big")
+  dtype <- readBin(fh, integer(), n = 1, size = 4, endian = "big")
+  dof <- readBin(fh, integer(), n = 1, size = 4, endian = "big")
+  header$dtype <- dtype
+  header$dof <- dof
+  header$internal <- list()
+  unused_header_space_size_left <- 256L
+  ras_flag_size <- 2L
+  header$ras_good_flag <- readBin(fh, integer(), size = ras_flag_size, n = 1, endian = "big")
+  unused_header_space_size_left <- unused_header_space_size_left - ras_flag_size
   if (header$ras_good_flag == 1L) {
-    delta = readBin(fh, numeric(), n = 3, size = 4, endian = "big")
-    header$internal$xsize = delta[1]
-    header$internal$ysize = delta[2]
-    header$internal$zsize = delta[3]
-    Mdc = readBin(fh, numeric(), n = 9, size = 4, endian = "big")
-    header$internal$x_r = Mdc[1]
-    header$internal$x_a = Mdc[2]
-    header$internal$x_s = Mdc[3]
-    header$internal$y_r = Mdc[4]
-    header$internal$y_a = Mdc[5]
-    header$internal$y_s = Mdc[6]
-    header$internal$z_r = Mdc[7]
-    header$internal$z_a = Mdc[8]
-    header$internal$z_s = Mdc[9]
-    Mdc = matrix(Mdc, nrow = 3, byrow = FALSE)
-    Pxyz_c = readBin(fh, numeric(), n = 3, size = 4, endian = "big")
-    header$internal$c_r = Pxyz_c[1]
-    header$internal$c_a = Pxyz_c[2]
-    header$internal$c_s = Pxyz_c[3]
-    D = diag(delta)
-    Pcrs_c = c(ndim1/2, ndim2/2, ndim3/2)
-    Mdc_scaled = Mdc %*% D
-    Pxyz_0 = Pxyz_c - (Mdc_scaled %*% Pcrs_c)
-    M = matrix(rep(0, 16), nrow = 4)
-    M[1:3, 1:3] = as.matrix(Mdc_scaled)
-    M[4, 1:4] = c(0, 0, 0, 1)
-    M[1:3, 4] = Pxyz_0
-    header$internal$delta = delta
-    header$internal$Pxyz_c = Pxyz_c
-    header$internal$D = D
-    header$internal$Pcrs_c = Pcrs_c
-    header$internal$Pxyz_0 = Pxyz_0
-    header$internal$M = M
-    header$internal$Mdc = Mdc
-    header$internal$width = ndim1
-    header$internal$height = ndim2
-    header$internal$depth = ndim3
-    header$internal$nframes = nframes
-    x_half_length = header$internal$width/2 * header$internal$xsize
-    y_half_length = header$internal$height/2 * header$internal$ysize
-    z_half_length = header$internal$depth/2 * header$internal$zsize
-    header$internal$xstart = -x_half_length
-    header$internal$xend = x_half_length
-    header$internal$ystart = -y_half_length
-    header$internal$yend = y_half_length
-    header$internal$zstart = -z_half_length
-    header$internal$zend = z_half_length
-    xfov = header$internal$xend - header$internal$xstart
-    yfov = header$internal$yend - header$internal$ystart
-    zfov = header$internal$zend - header$internal$zstart
-    header$internal$fov = ifelse(xfov > yfov, ifelse(xfov > zfov, xfov, zfov), ifelse(yfov > zfov, yfov, zfov))
-    header$vox2ras_matrix = as.matrix(M)
-    RAS_space_size = (3 * 4 + 4 * 3 * 4)
-    unused_header_space_size_left = unused_header_space_size_left - RAS_space_size
+    delta <- readBin(fh, numeric(), n = 3, size = 4, endian = "big")
+    header$internal$xsize <- delta[1]
+    header$internal$ysize <- delta[2]
+    header$internal$zsize <- delta[3]
+    Mdc <- readBin(fh, numeric(), n = 9, size = 4, endian = "big")
+    header$internal$x_r <- Mdc[1]
+    header$internal$x_a <- Mdc[2]
+    header$internal$x_s <- Mdc[3]
+    header$internal$y_r <- Mdc[4]
+    header$internal$y_a <- Mdc[5]
+    header$internal$y_s <- Mdc[6]
+    header$internal$z_r <- Mdc[7]
+    header$internal$z_a <- Mdc[8]
+    header$internal$z_s <- Mdc[9]
+    Mdc <- matrix(Mdc, nrow = 3, byrow = FALSE)
+    Pxyz_c <- readBin(fh, numeric(), n = 3, size = 4, endian = "big")
+    header$internal$c_r <- Pxyz_c[1]
+    header$internal$c_a <- Pxyz_c[2]
+    header$internal$c_s <- Pxyz_c[3]
+    D <- diag(delta)
+    Pcrs_c <- c(ndim1/2, ndim2/2, ndim3/2)
+    Mdc_scaled <- Mdc %*% D
+    Pxyz_0 <- Pxyz_c - (Mdc_scaled %*% Pcrs_c)
+    M <- matrix(rep(0, 16), nrow = 4)
+    M[1:3, 1:3] <- as.matrix(Mdc_scaled)
+    M[4, 1:4] <- c(0, 0, 0, 1)
+    M[1:3, 4] <- Pxyz_0
+    header$internal$delta <- delta
+    header$internal$Pxyz_c <- Pxyz_c
+    header$internal$D <- D
+    header$internal$Pcrs_c <- Pcrs_c
+    header$internal$Pxyz_0 <- Pxyz_0
+    header$internal$M <- M
+    header$internal$Mdc <- Mdc
+    header$internal$width <- ndim1
+    header$internal$height <- ndim2
+    header$internal$depth <- ndim3
+    header$internal$nframes <- nframes
+    x_half_length <- header$internal$width/2 * header$internal$xsize
+    y_half_length <- header$internal$height/2 * header$internal$ysize
+    z_half_length <- header$internal$depth/2 * header$internal$zsize
+    header$internal$xstart <- -x_half_length
+    header$internal$xend <- x_half_length
+    header$internal$ystart <- -y_half_length
+    header$internal$yend <- y_half_length
+    header$internal$zstart <- -z_half_length
+    header$internal$zend <- z_half_length
+    xfov <- header$internal$xend - header$internal$xstart
+    yfov <- header$internal$yend - header$internal$ystart
+    zfov <- header$internal$zend - header$internal$zstart
+    header$internal$fov <- ifelse(xfov > yfov, ifelse(xfov > zfov, xfov, zfov), ifelse(yfov > zfov, yfov, zfov))
+    header$vox2ras_matrix <- as.matrix(M)
+    RAS_space_size <- (3 * 4 + 4 * 3 * 4)
+    unused_header_space_size_left <- unused_header_space_size_left - RAS_space_size
   } else {
-    header$internal$slice_direction_name = "unknown"
+    header$internal$slice_direction_name <- "unknown"
   }
   return( header )
 }
@@ -228,11 +228,12 @@ threeBrain <- function(
 
   # Create brain instance
   brain <- Brain2$new(subject_code = subject_code, xfm = xfm, Norig = Norig, Torig = Torig)
+  brain$base_path <- fs_path
 
   # --------- Step 3: Add T1 MRI slices ----------------------------------------
   if(length(path_mri)) {
 
-    group = GeomGroup$new(
+    group <- GeomGroup$new(
       name = sprintf('Volume - T1 (%s)', subject_code)
     )
     group$.cache_name <- sprintf("%s/mri", subject_code)
@@ -263,11 +264,6 @@ threeBrain <- function(
   available_surfaces <- available_surfaces[!grepl("^(sulc|thick|volume|jacob|curv|area)", available_surfaces, ignore.case = TRUE)]
   available_surfaces <- available_surfaces[!grepl("(crv|mgh|curv|labels|label)$", available_surfaces, ignore.case = TRUE)]
   available_surfaces_lower <- tolower(available_surfaces)
-  alt_types <- list(
-    "pial" = "pial.T1",
-    "white.K" = "white.preaparc.K",
-    "white.H" = "white.preaparc.H"
-  )
 
   surface_types <- unique(c('pial', surface_types))
 
@@ -309,7 +305,7 @@ threeBrain <- function(
     }
 
     # surface_type might be symlink since fs 7.0 (e.g., pial)
-    surface_type <- c(alt_types[[surface_name]], surface_name)
+    surface_type <- c(surface_alternative_types[[surface_name]], surface_name)
     surface_type <- surface_type[tolower(surface_type) %in% available_surfaces_lower]
     if(!length(surface_type)) { next }
 
@@ -350,24 +346,8 @@ threeBrain <- function(
   # --------- Step 5: Add Atlas ------------------------------------------------
 
   for( ii in seq_along(atlas_types) ) {
-    # DIPSAUS DEBUG START
-    # ii <- 1
     atlas_type <- atlas_types[[ ii ]]
-    atlas_path <- path_atlas[[ ii ]]
-
-    atlas_instance <- BrainAtlas$new(
-      subject_code = subject_code,
-      atlas_type = atlas_type,
-      position = c(0, 0, 0),
-      atlas = VolumeGeom2$new(
-        name = sprintf("Atlas - %s (%s)", atlas_type, subject_code),
-        path = atlas_path,
-        color_format = "RGBAFormat", trans_mat = NULL
-      )
-    )
-    atlas_instance$group$.cache_name <- sprintf("%s/mri", subject_code)
-    brain$add_atlas(atlas = atlas_instance)
-
+    brain$add_atlas( atlas_type )
   }
 
   return( brain )

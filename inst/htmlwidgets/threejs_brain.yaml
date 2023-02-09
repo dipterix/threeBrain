@@ -1,7 +1,7 @@
 dependencies:
   - name: three-brain
     version: 1.0.0
-    src: three-brain-js/dist/
+    src: threeBrainJS/dist/
     all_files: yes
     script:
       - threebrain.js

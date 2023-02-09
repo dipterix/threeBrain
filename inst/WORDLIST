@@ -11,10 +11,11 @@ FreeSurfer
 GeomGroup
 Gifti
 Github
-JF
+IJK
 JS
 JSON
 MNI
+NIFTI
 NeuroImage
 Nifti
 POSTFIX
@@ -33,7 +34,6 @@ commissure
 csv
 datapath
 doi
-eCoG
 expr
 fs
 gifti
@@ -52,11 +52,9 @@ neuroimage
 nibabel
 nii
 npx
-nrow
 pial
 px
 readgii
-rescale
 rh
 shader
 smoothwm

@@ -185,3 +185,11 @@ MNI305_to_MNI152 <- matrix(
       -0.0429, 1.5496, 1.184, 1)),
   nrow = 4L, byrow = FALSE
 )
+
+
+# FreeSurfer symlinks: e.g. pial.T1 to pial but they are the same thing
+surface_alternative_types <- list(
+  "pial" = "pial.T1",
+  "white.K" = "white.preaparc.K",
+  "white.H" = "white.preaparc.H"
+)
