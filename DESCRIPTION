@@ -37,7 +37,7 @@ Imports:
     grDevices,
     graphics,
     dipsaus,
-    ravetools,
+    ravetools (>= 0.1.0),
     xml2,
     servr,
     shiny (>= 1.2.0),
