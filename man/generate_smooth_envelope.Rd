@@ -5,25 +5,32 @@
 \title{Generate smooth envelope around surface}
 \usage{
 generate_smooth_envelope(
-  filled_volume_path,
-  save_as,
-  inflate = 2,
-  verbose = TRUE
+  surface_path,
+  save_as = NULL,
+  inflate = 3,
+  verbose = TRUE,
+  save_format = c("auto", "bin", "asc", "vtk", "ply", "off", "obj", "gii", "mz3", "byu")
 )
 }
 \arguments{
-\item{filled_volume_path}{path to \code{'mgz'} with filled volume, see
-\code{save_as} in \code{\link{fill_surface}}}
+\item{surface_path}{path to \code{'*h.pial'} surface in the 'FreeSurfer'
+folder, or a 3-dimensional mesh, see
+\code{\link[freesurferformats]{read.fs.surface}}}
 
-\item{save_as}{save final envelope to path}
+\item{save_as}{save final envelope to path, or \code{NULL} for dry-run}
 
 \item{inflate}{number of \code{'voxels'} to inflate before fitting envelope;
 must be a non-negative integer}
 
 \item{verbose}{whether to verbose the progress; default is true}
+
+\item{save_format}{format of saved file when \code{save_as} is not
+\code{NULL}; see \code{format} argument in function
+\code{\link[freesurferformats]{write.fs.surface}}}
 }
 \value{
-Nothing, the result is saved to \code{save_as}
+A 3-dimensional mesh that contains vertices and face indices,
+the result is also saved to \code{save_as} is specified.
 }
 \description{
 Alternative to 'Matlab' version of \code{'pial-outer-smoothed'},
@@ -31,19 +38,31 @@ use this function along with \code{\link{fill_surface}}.
 }
 \examples{
 
-library(threeBrain)
 if(file.exists(file.path(default_template_directory(), "N27"))) {
 
-  lh_pial <- file.path(default_template_directory(),
-                       "N27", "surf", "lh.pial.asc")
-  tmp_volume <- tempfile(fileext = ".mgz")
+  library(threeBrain)
 
-  fill_surface(lh_pial, tmp_volume)
+  fs_path <- file.path(default_template_directory(), "N27")
 
-  save_as <- tempfile(fileext = ".pial-outer-smoothed")
-  generate_smooth_envelope(tmp_volume, save_as)
+  # lh.pial-outer-smoothed
+  lh_pial <- file.path(fs_path, "surf", "lh.pial.asc")
+  save_as <- file.path(fs_path, "surf", "lh.pial-outer-smoothed")
+  generate_smooth_envelope(lh_pial, save_as)
 
-  # see file `save_as` as leptomeningeal approximation
+  # rh.pial-outer-smoothed
+  rh_pial <- file.path(fs_path, "surf", "rh.pial.asc")
+  save_as <- file.path(fs_path, "surf", "rh.pial-outer-smoothed")
+  generate_smooth_envelope(rh_pial, save_as)
+
+  if(interactive()) {
+    brain <- threeBrain(
+      path = fs_path, subject_code = "N27",
+      surface_types = 'pial-outer-smoothed'
+    )
+    brain$plot(controllers = list(
+      "Surface Type" = 'pial-outer-smoothed'
+    ))
+  }
 
 }
 
