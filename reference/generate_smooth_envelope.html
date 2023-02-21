@@ -18,7 +18,7 @@ use this function along with fill_surface."><!-- mathjax --><script src="https:/
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.8.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.8.7</span>
       </span>
     </div>
 
@@ -67,27 +67,29 @@ use this function along with fill_surface."><!-- mathjax --><script src="https:/
 
     <div class="ref-description">
     <p>Alternative to 'Matlab' version of <code>'pial-outer-smoothed'</code>,
-use this function along with <code><a href="fill_surface.html">fill_surface</a></code>.</p>
+use this function along with <code>fill_surface</code>.</p>
     </div>
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">generate_smooth_envelope</span><span class="op">(</span></span>
-<span>  <span class="va">filled_volume_path</span>,</span>
-<span>  <span class="va">save_as</span>,</span>
-<span>  inflate <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="va">surface_path</span>,</span>
+<span>  save_as <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  inflate <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  save_format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"bin"</span>, <span class="st">"asc"</span>, <span class="st">"vtk"</span>, <span class="st">"ply"</span>, <span class="st">"off"</span>, <span class="st">"obj"</span>, <span class="st">"gii"</span>, <span class="st">"mz3"</span>, <span class="st">"byu"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>filled_volume_path</dt>
-<dd><p>path to <code>'mgz'</code> with filled volume, see
-<code>save_as</code> in <code><a href="fill_surface.html">fill_surface</a></code></p></dd>
+    <dl><dt>surface_path</dt>
+<dd><p>path to <code>'*h.pial'</code> surface in the 'FreeSurfer'
+folder, or a 3-dimensional mesh, see
+<code><a href="https://rdrr.io/pkg/freesurferformats/man/read.fs.surface.html" class="external-link">read.fs.surface</a></code></p></dd>
 
 
 <dt>save_as</dt>
-<dd><p>save final envelope to path</p></dd>
+<dd><p>save final envelope to path, or <code>NULL</code> for dry-run</p></dd>
 
 
 <dt>inflate</dt>
@@ -98,32 +100,49 @@ must be a non-negative integer</p></dd>
 <dt>verbose</dt>
 <dd><p>whether to verbose the progress; default is true</p></dd>
 
+
+<dt>save_format</dt>
+<dd><p>format of saved file when <code>save_as</code> is not
+<code>NULL</code>; see <code>format</code> argument in function
+<code><a href="https://rdrr.io/pkg/freesurferformats/man/write.fs.surface.html" class="external-link">write.fs.surface</a></code></p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
     
 
-<p>Nothing, the result is saved to <code>save_as</code></p>
-
-
+<p>A 3-dimensional mesh that contains vertices and face indices,
+the result is also saved to <code>save_as</code> is specified.</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="va">lh_pial</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                       <span class="st">"N27"</span>, <span class="st">"surf"</span>, <span class="st">"lh.pial.asc"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">tmp_volume</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mgz"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="fill_surface.html">fill_surface</a></span><span class="op">(</span><span class="va">lh_pial</span>, <span class="va">tmp_volume</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">fs_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"N27"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="va">save_as</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".pial-outer-smoothed"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu">generate_smooth_envelope</span><span class="op">(</span><span class="va">tmp_volume</span>, <span class="va">save_as</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># lh.pial-outer-smoothed</span></span></span>
+<span class="r-in"><span>  <span class="va">lh_pial</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">fs_path</span>, <span class="st">"surf"</span>, <span class="st">"lh.pial.asc"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">save_as</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">fs_path</span>, <span class="st">"surf"</span>, <span class="st">"lh.pial-outer-smoothed"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">generate_smooth_envelope</span><span class="op">(</span><span class="va">lh_pial</span>, <span class="va">save_as</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># see file `save_as` as leptomeningeal approximation</span></span></span>
+<span class="r-in"><span>  <span class="co"># rh.pial-outer-smoothed</span></span></span>
+<span class="r-in"><span>  <span class="va">rh_pial</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">fs_path</span>, <span class="st">"surf"</span>, <span class="st">"rh.pial.asc"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">save_as</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">fs_path</span>, <span class="st">"surf"</span>, <span class="st">"rh.pial-outer-smoothed"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">generate_smooth_envelope</span><span class="op">(</span><span class="va">rh_pial</span>, <span class="va">save_as</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="threeBrain.html">threeBrain</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      path <span class="op">=</span> <span class="va">fs_path</span>, subject_code <span class="op">=</span> <span class="st">"N27"</span>,</span></span>
+<span class="r-in"><span>      surface_types <span class="op">=</span> <span class="st">'pial-outer-smoothed'</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span>controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="st">"Surface Type"</span> <span class="op">=</span> <span class="st">'pial-outer-smoothed'</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
