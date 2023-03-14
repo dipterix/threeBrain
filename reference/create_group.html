@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.8.14</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.8.15</span>
       </span>
     </div>
 
@@ -150,8 +150,8 @@ brain in a short time.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">template_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">dat</span> <span class="op">=</span> <span class="fu">threeBrain</span><span class="fu">::</span><span class="fu"><a href="read_fs_asc.html">read_fs_asc</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">template_dir</span>, <span class="st">'N27/surf/lh.pial.asc'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dat</span> <span class="op">=</span> <span class="fu">freesurferformats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/freesurferformats/man/read.fs.surface.html" class="external-link">read.fs.surface</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">template_dir</span>, <span class="st">'N27/surf/lh.pial'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">vertex</span> <span class="op">=</span> <span class="va">dat</span><span class="op">$</span><span class="va">vertices</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">face</span> <span class="op">=</span> <span class="va">dat</span><span class="op">$</span><span class="va">faces</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span></span>
