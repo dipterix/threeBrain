@@ -38,31 +38,30 @@ use this function along with \code{\link{fill_surface}}.
 }
 \examples{
 
-if(file.exists(file.path(default_template_directory(), "N27"))) {
+if(interactive() &&
+   file.exists(file.path(default_template_directory(), "N27"))) {
 
-  library(threeBrain)
+library(threeBrain)
 
-  fs_path <- file.path(default_template_directory(), "N27")
+fs_path <- file.path(default_template_directory(), "N27")
 
-  # lh.pial-outer-smoothed
-  lh_pial <- file.path(fs_path, "surf", "lh.pial.asc")
-  save_as <- file.path(fs_path, "surf", "lh.pial-outer-smoothed")
-  generate_smooth_envelope(lh_pial, save_as)
+# lh.pial-outer-smoothed
+lh_pial <- file.path(fs_path, "surf", "lh.pial")
+save_as <- file.path(fs_path, "surf", "lh.pial-outer-smoothed")
+generate_smooth_envelope(lh_pial, save_as)
 
-  # rh.pial-outer-smoothed
-  rh_pial <- file.path(fs_path, "surf", "rh.pial.asc")
-  save_as <- file.path(fs_path, "surf", "rh.pial-outer-smoothed")
-  generate_smooth_envelope(rh_pial, save_as)
+# rh.pial-outer-smoothed
+rh_pial <- file.path(fs_path, "surf", "rh.pial")
+save_as <- file.path(fs_path, "surf", "rh.pial-outer-smoothed")
+generate_smooth_envelope(rh_pial, save_as)
 
-  if(interactive()) {
-    brain <- threeBrain(
-      path = fs_path, subject_code = "N27",
-      surface_types = 'pial-outer-smoothed'
-    )
-    brain$plot(controllers = list(
-      "Surface Type" = 'pial-outer-smoothed'
-    ))
-  }
+brain <- threeBrain(
+  path = fs_path, subject_code = "N27",
+  surface_types = 'pial-outer-smoothed'
+)
+brain$plot(controllers = list(
+  "Surface Type" = 'pial-outer-smoothed'
+))
 
 }
 
