@@ -58,8 +58,8 @@
 #'
 #' template_dir <- default_template_directory()
 #'
-#' dat = threeBrain::read_fs_asc(
-#'   file.path(template_dir, 'N27/surf/lh.pial.asc')
+#' dat = freesurferformats::read.fs.surface(
+#'   file.path(template_dir, 'N27/surf/lh.pial')
 #' )
 #' vertex = dat$vertices[,1:3]
 #' face = dat$faces[,1:3]

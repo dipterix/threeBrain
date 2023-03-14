@@ -140,7 +140,16 @@ threebrain_finalize_installation <- function(upgrade = c('ask', 'always', 'never
   n27 <- file.path(template_dir, 'N27')
 
   has_n27 <- tryCatch({
-    check_freesurfer_path(n27, check_volume = TRUE, check_surface = TRUE)
+    re <- check_freesurfer_path(n27, check_volume = TRUE, check_surface = TRUE)
+    # make sure the pial surface are valid
+    if(re && !file.exists(file.path(n27, "surf", "lh.pial"))) {
+      re <- FALSE
+    }
+    if(re && !file.exists(file.path(n27, "surf", "rh.pial"))) {
+      re <- FALSE
+    }
+
+    re
   }, error = function(e){
     FALSE
   })
