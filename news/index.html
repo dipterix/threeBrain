@@ -64,16 +64,18 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="0.5.0" id="threebrain-050">threeBrain 0.5.0<a class="anchor" aria-label="anchor" href="#threebrain-050"></a></h2>
-<p>This version contains a major update. There will be one more major update before version <code>1.0.0</code>. Here are some highlights:</p>
+<h2 class="page-header" data-toc-text="0.2.9" id="threebrain-029">threeBrain 0.2.9<a class="anchor" aria-label="anchor" href="#threebrain-029"></a></h2>
+<p>This version plans for a major update. Here are some highlights:</p>
 <ul><li>Electrode localization can be done from original <code>CT</code> instead of re-sampled ones</li>
 <li>Completely isolate <code>JavaScript</code> engine from <code>R</code> code. The <code>JavaScript</code> code is available as <code>npm</code> package and is used via sub-module</li>
 <li>Implemented file readers directly from <code>JavaScript</code>, this allows reading files directly in viewer, and no cache is needed</li>
 <li>No home-brew version of <code>threejs</code> is required: standard <code>npm</code> distribution is used</li>
 <li>New controller <code>GUI</code> is implemented</li>
 <li>The viewer can be driven via <code>JavaScript</code> directly via event dispatchers</li>
+<li>Anatomical segmentation map is visible from the side panels; the <code>voxel</code> values are displayed when setting <code>crosshair</code>
+</li>
 </ul><div class="section level3">
-<h3 id="detailed-changes-0-5-0">Detailed Changes<a class="anchor" aria-label="anchor" href="#detailed-changes-0-5-0"></a></h3>
+<h3 id="detailed-changes-0-2-9">Detailed Changes<a class="anchor" aria-label="anchor" href="#detailed-changes-0-2-9"></a></h3>
 <ul><li>Added step size in <code>datacube2</code> material uniforms</li>
 <li>Upgraded <code>threejs</code> to <code>r148</code>, and use <code>npm</code> distribution “three”</li>
 <li>Massive code re-factory (variable names, trackball controls, legacy classes…)</li>
@@ -101,7 +103,7 @@
 <code>handle_resize</code> now put off resizing function when detecting widget size is too small</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-5-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-5-0"></a></h3>
+<h3 id="bug-fixes-0-2-9">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-9"></a></h3>
 <ul><li>Fixing <code>xfm</code> not parsed correctly when the line starts with blank spaces</li>
 <li>Stopped rendering canvas when canvas is too small (less than 10 pixels)</li>
 </ul></div>
