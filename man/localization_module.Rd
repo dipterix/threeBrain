@@ -47,7 +47,8 @@ A list of \code{'ui'} elements, \code{'server'} function, and
 a stand-alone \code{'app'}
 }
 \description{
-Launch a 'shiny' application to localize electrodes
+If 'RAVE' has been installed, please use 'RAVE' modules. This function
+is purely for demonstration purposes.
 }
 \examples{
 
@@ -56,12 +57,10 @@ Launch a 'shiny' application to localize electrodes
 
 # using N27 to localize
 fs_path <- file.path(default_template_directory(), "N27")
-if(dir.exists(fs_path)){
+if(interactive() && dir.exists(fs_path)){
   module <- localization_module("N27", fs_path)
 
-  if(interactive()){
-    print(module$app)
-  }
+  print(module$app)
 }
 
 }

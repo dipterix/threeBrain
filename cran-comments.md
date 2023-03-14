@@ -1,18 +1,9 @@
 # Update logs (for R-cran only)
 
 ## 2023-01-31
-**Version 0.5.0 (current)**
+**Version 0.2.9 (current)**
 
-Next update will be a major update
-
-Self check: 0 errors | 0 warnings | 1 notes
-
-```
-checking installed package size ... NOTE
-  installed size is  5.4Mb
-```
-
-Unable to reduce the engine size.
+Self check: 0 errors | 0 warnings | 0 notes
 
 ## 2022-10-15
 **Version 0.2.7 (passed)**
