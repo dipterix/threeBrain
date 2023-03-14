@@ -47,6 +47,9 @@ download_template_subject <- function(
   cat2(sprintf('Downloading %s brain from\n\t%s\nto\n\t%s', subject_code, url, dir), level = 'INFO')
 
   destzip <- file.path(dir, sprintf('%s_fs.zip', subject_code))
+  if(file.exists(destzip)) {
+    unlink(destzip)
+  }
   utils::download.file(url = url, destfile = destzip, quiet = FALSE, cacheOK = TRUE)
 
   sub_dir <- file.path(dir, subject_code)
