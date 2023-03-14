@@ -1,7 +1,7 @@
-threeBrain 0.5.0
+threeBrain 0.2.9
 =======
 
-This version contains a major update. There will be one more major update before version `1.0.0`. Here are some highlights:
+This version plans for a major update. Here are some highlights:
 
 * Electrode localization can be done from original `CT` instead of re-sampled ones
 * Completely isolate `JavaScript` engine from `R` code. The `JavaScript` code is available as `npm` package and is used via sub-module
@@ -9,6 +9,7 @@ This version contains a major update. There will be one more major update before
 * No home-brew version of `threejs` is required: standard `npm` distribution is used
 * New controller `GUI` is implemented
 * The viewer can be driven via `JavaScript` directly via event dispatchers
+* Anatomical segmentation map is visible from the side panels; the `voxel` values are displayed when setting `crosshair`
 
 
 ## Detailed Changes

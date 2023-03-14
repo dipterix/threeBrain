@@ -1,4 +1,8 @@
 #' Launch a 'shiny' application to localize electrodes
+#' @description
+#' If 'RAVE' has been installed, please use 'RAVE' modules. This function
+#' is purely for demonstration purposes.
+#'
 #' @param subject_code subject code
 #' @param fs_path the subject's 'FreeSurfer' path
 #' @param ct_path the file path of 'CT' scans that have already been aligned
@@ -22,12 +26,10 @@
 #'
 #' # using N27 to localize
 #' fs_path <- file.path(default_template_directory(), "N27")
-#' if(dir.exists(fs_path)){
+#' if(interactive() && dir.exists(fs_path)){
 #'   module <- localization_module("N27", fs_path)
 #'
-#'   if(interactive()){
-#'     print(module$app)
-#'   }
+#'   print(module$app)
 #' }
 #'
 #' @export
