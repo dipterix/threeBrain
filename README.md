@@ -10,10 +10,9 @@
 <!-- badges: end -->
 
 <!-- demo static: start -->
-[<img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />](https://youtu.be/dSxJqBiw3sk)
+<img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />
 
-
-
+<div style = 'text-align:center; font-size: 20px'><a href="https://dipterix.org/threeBrain/" target="_blank">A live demo is live NOW! (Recommended: view it with Chrome)</a></div>
 <!-- demo static: end -->
 
 <!-- demo dynamic: start 
