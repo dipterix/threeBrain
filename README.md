@@ -9,18 +9,7 @@
 
 <!-- badges: end -->
 
-<!-- demo static: start -->
 [<img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />](https://youtu.be/dSxJqBiw3sk)
-
-
-
-<!-- demo static: end -->
-
-<!-- demo dynamic: start 
-
-<iframe width="100%" height="500" src="https://www.youtube.com/embed/dSxJqBiw3sk" title="Yet Another Electrode Localization" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-
-<!-- demo dynamic: end -->
 
 **Key Features**:
 
