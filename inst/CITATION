@@ -1,14 +1,16 @@
-bibentry(bibtype = "Article",
-         title        = "{RAVE}: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data",
-         author       = c(as.person("John F. Magnotti"),
-                          as.person("Zhengjia Wang"),
-                          as.person("Michael S. Beauchamp")),
-         journal      = "NeuroImage",
-         year         = "2020",
-         volume       = "223",
-         pages        = "117341",
-         doi          = "10.1016/j.neuroimage.2020.117341",
-         header       = "To cite ravetools in publications use, please cite the RAVE paper from Beauchamp's lab.",
-         footer       = "Please check https://rave.wiki for more information.",
-         textVersion  = "Magnotti, JF, and Wang, Z, and Beauchamp, MS. RAVE: comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data. NeuroImage, 223, p.117341."
+citHeader("To cite threeBrain in publications use:")
+
+citEntry(
+  entry    = "Article",
+  title    = "{RAVE}: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data",
+  author   = personList(as.person("John F. Magnotti"),
+                                   as.person("Zhengjia Wang"),
+                                   as.person("Michael S. Beauchamp")),
+  journal  = "NeuroImage",
+  year     = "2020",
+  volume   = "223",
+  doi      = "10.1016/j.neuroimage.2020.117341",
+  pages    = "117341",
+  textVersion = "Magnotti, JF, Wang, Z, Beauchamp, MS. RAVE: comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data."
 )
+
