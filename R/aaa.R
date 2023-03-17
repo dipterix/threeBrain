@@ -16,73 +16,7 @@
 #' @importFrom utils compareVersion
 #' @importFrom utils download.file
 #' @importFrom utils unzip
-#'
-#' @importFrom freesurferformats read.fs.curv
-#' @importFrom freesurferformats read.fs.annot
-#' @importFrom freesurferformats read.fs.label
-#' @importFrom freesurferformats read.fs.mgh
-#' @importFrom freesurferformats read.fs.morph
-#' @importFrom freesurferformats read.fs.surface
-#' @importFrom freesurferformats read.fs.volume
-#' @importFrom freesurferformats read.fs.weight
-#' @importFrom freesurferformats read.fs.transform
-#' @importFrom freesurferformats read.nifti1.data
-#' @importFrom freesurferformats read.nifti1.header
-#' @importFrom freesurferformats read.nifti2.data
-#' @importFrom freesurferformats read.nifti2.header
-#' @importFrom freesurferformats write.nifti1
-#' @importFrom freesurferformats write.nifti2
 NULL
-
-# ----- Reexports ------------------------------------------------------------
-
-#' @export
-freesurferformats::read.fs.curv
-
-#' @export
-freesurferformats::read.fs.annot
-
-#' @export
-freesurferformats::read.fs.label
-
-#' @export
-freesurferformats::read.fs.mgh
-
-#' @export
-freesurferformats::read.fs.morph
-
-#' @export
-freesurferformats::read.fs.surface
-
-#' @export
-freesurferformats::read.fs.volume
-
-#' @export
-freesurferformats::read.fs.weight
-
-#' @export
-freesurferformats::read.fs.transform
-
-#' @export
-freesurferformats::read.nifti1.data
-
-#' @export
-freesurferformats::read.nifti1.header
-
-#' @export
-freesurferformats::read.nifti2.data
-
-#' @export
-freesurferformats::read.nifti2.header
-
-#' @export
-freesurferformats::write.nifti1
-
-#' @export
-freesurferformats::write.nifti2
-
-
-# ----- Globals ------------------------------------------------------------
 
 cache_version <- 0.1
 
