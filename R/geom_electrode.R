@@ -17,7 +17,6 @@ ElectrodeGeom <- R6::R6Class(
     surface_type = 'pial',
     hemisphere = NULL,
     vertex_number = -1,
-    anatomical_label = NULL,
     MNI305_position = c(0,0,0),
     sphere_position = c(0,0,0),
     number = NULL,
