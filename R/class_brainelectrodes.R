@@ -105,22 +105,6 @@ BrainElectrodes <- R6::R6Class(
         table$MNI305_z <- 0
       }
 
-      if( all( paste0('Sphere_', c('x','y','z')) %in% names(table) ) ){
-        table$Sphere_x <- as.numeric( table$Sphere_x )
-        table$Sphere_y <- as.numeric( table$Sphere_y )
-        table$Sphere_z <- as.numeric( table$Sphere_z )
-        na_coord <- is.na(table$Sphere_x) | is.na(table$Sphere_y) | is.na(table$Sphere_z)
-        if( any(na_coord) ){
-          table$Sphere_x[ na_coord ] <- 0
-          table$Sphere_y[ na_coord ] <- 0
-          table$Sphere_z[ na_coord ] <- 0
-        }
-      }else{
-        table$Sphere_x <- 0
-        table$Sphere_y <- 0
-        table$Sphere_z <- 0
-      }
-
       if( length(table$SurfaceElectrode) ){
         table$SurfaceElectrode <- stringr::str_to_upper(table$SurfaceElectrode) %in% c('T', 'TRUE')
       }else{
@@ -157,48 +141,25 @@ BrainElectrodes <- R6::R6Class(
       subject_code <- self$subject_code
       for( ii in seq_len(n) ){
         row <- table[ii, ]
-        anatomical_label <- row$FSLabel
         which_side <- row$Hemisphere
-        if(length(which_side) != 1 ||
-           !isTRUE(tolower(which_side) %in% c('left', 'right')) &&
-           length(anatomical_label) && !is.na(anatomical_label)) {
-          label_str <- tolower(anatomical_label)
-          if(
-            startsWith(label_str, "ctx-lh") ||
-            startsWith(label_str, "ctx_lh") ||
-            startsWith(label_str, "left")
-          ) {
-            which_side <- "left"
-          } else if(
-            startsWith(label_str, "ctx-rh") ||
-            startsWith(label_str, "ctx_rh") ||
-            startsWith(label_str, "right")
-          ) {
-            which_side <- "right"
-          }
-        }
         nearest_vertex <- row$VertexNumber
         mni_305 <- c( row$MNI305_x, row$MNI305_y, row$MNI305_z )
-        sphere_xyz <- c( row$Sphere_x, row$Sphere_y, row$Sphere_z )
         if(length(mni_305)!=3){ mni_305 <- c(0,0,0) }
         surf_type <- c(row$SurfaceType, 'pial')[1]
         if( is.na(surf_type) ){ surf_type <- 'NA' }
         radius <- row$Radius
 
 
-        el <- ElectrodeGeom$new(
-          name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
-          position = c(row$Coord_x, row$Coord_y, row$Coord_z),
-          radius = radius, group = self$group)
+        el <- ElectrodeGeom$new(name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
+                                position = c(row$Coord_x, row$Coord_y, row$Coord_z),
+                                radius = radius, group = self$group)
         el$number <- row$Electrode
         el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
         el$hemisphere <- which_side
-        el$anatomical_label <- anatomical_label
         el$surface_type <- surf_type
         el$vertex_number <- nearest_vertex
         el$subject_code <- subject_code
         el$MNI305_position <- mni_305
-        el$sphere_position <- sphere_xyz
         el$set_value( value = as.character(subject_code), name = '[Subject]' )
         self$objects[[ row$Electrode ]] <- el
       }

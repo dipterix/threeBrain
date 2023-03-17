@@ -70,7 +70,7 @@ MultiBrain2 <- R6::R6Class(
         check_freesurfer_path(template_path, autoinstall_template = TRUE)
       }
 
-      # If N27, make sure it's installed
+      # If N27, makesure it's installed
       stopifnot2(check_freesurfer_path(template_path),
                  msg = paste0('Cannot find template subject - ', template_subject,
                               '\nTo install N27 template subject, you can use:\n\n\t',
@@ -79,31 +79,13 @@ MultiBrain2 <- R6::R6Class(
       if( !length( surface_types ) ){
         surface_types <- lapply(self$objects, function(x){ x$surface_types })
         surface_types <- unique(unlist(surface_types))
-      }
-      surface_types <- unique(c('pial', 'pial-outer-smoothed', 'sphere.reg',
-                                unlist( surface_types )))
-
-      # check if pial-outer-smoothed exist
-      lh_envelope <- file.path(template_path, "surf", 'lh.pial-outer-smoothed')
-      rh_envelope <- file.path(template_path, "surf", 'rh.pial-outer-smoothed')
-      if(!file.exists(lh_envelope)) {
-        surface_path <- file.path(template_path, "surf", 'lh.pial')
-        envelope <- generate_smooth_envelope(
-          surface_path = surface_path, save_as = lh_envelope,
-          verbose = TRUE, save_format = "bin"
-        )
-      }
-      if(!file.exists(rh_envelope)) {
-        surface_path <- file.path(template_path, "surf", 'rh.pial')
-        envelope <- generate_smooth_envelope(
-          surface_path = surface_path, save_as = rh_envelope,
-          verbose = TRUE, save_format = "bin"
-        )
+      }else{
+        surface_types <- unique(c('pial', unlist( surface_types )))
       }
 
-      self$template_object <- threeBrain(
-        path = template_path, subject_code = template_subject,
-        surface_types = surface_types, template_subject = template_subject)
+      self$template_object <- freesurfer_brain2(
+        fs_subject_folder = template_path, subject_name = template_subject,
+        surface_types = surface_types, use_cache = use_cache, use_141 = use_141)
     },
 
     add_subject = function(x){
