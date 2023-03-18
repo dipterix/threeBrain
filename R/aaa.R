@@ -157,13 +157,12 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
     cat2('Wrapping up installation...', level = 'INFO')
 
     template_dir <- default_template_directory()
-    import_from_freesurfer(fs_path = file.path(template_dir, 'N27'), subject_name = 'N27')
+
+    template <- merge_brain(template_subject = "N27", template_dir = template_dir, template_surface_types = c('pial', 'smoothwm'))
 
 
     if( show_example ){
-      env <- freesurfer_brain2(fs_subject_folder = file.path(template_dir, 'N27'),
-                              subject_name = 'N27', surface_types = c('pial', 'smoothwm'))
-      plot(env)
+      template$template_object$plot()
     }
 
   }

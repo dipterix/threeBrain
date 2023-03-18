@@ -140,7 +140,7 @@ library(threeBrain)
 n27_path <- file.path(default_template_directory(), "N27")
 if( dir.exists(n27_path) ) {
 
-  brain <- freesurfer_brain2(n27_path, "N27",
+  brain <- threeBrain(path = n27_path, subject_code = "N27",
                              surface_types = c('pial', 'smoothwm'))
   print(brain)
 
@@ -149,7 +149,6 @@ if( dir.exists(n27_path) ) {
     controllers = list(
       'Voxel Type' = 'aparc_aseg',
       'Surface Type' = 'smoothwm',
-      'Surface Color' = 'sync from voxels',
       'Blend Factor' = 1,
       'Right Opacity' = 0.3,
       'Overlay Sagittal' = TRUE

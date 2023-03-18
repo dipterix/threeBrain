@@ -40,6 +40,7 @@ localization_module <- function(
   ..., control_presets = NULL, side_display = FALSE, controllers = list()
 ){
 
+  message("This function is for demonstration purpose. Please check more sophisticated localization integration with RAVE at\n  https://rave.wiki")
   if(!package_installed("DT")){
     stop("Package `DT` is needed to run this module. Please install it by running\n  ",
          "install.packages('DT')")
@@ -50,12 +51,12 @@ localization_module <- function(
   cmap <- load_colormap(fslut_json)
   cmap <- do.call('rbind', lapply(cmap$map, as.data.frame, stringAsFactors = FALSE))
 
-  brain <- freesurfer_brain2(
-    fs_subject_folder = fs_path,
-    subject_name = subject_code,
+  brain <- threeBrain(
+    path = fs_path,
+    subject_code = subject_code,
     surface_types = surfaces,
-    use_141 = use_141,
-    use_cache = TRUE,
+    # use_141 = use_141,
+    # use_cache = TRUE,
     ...
   )
   if(is.null(brain)){
@@ -305,11 +306,7 @@ localization_module <- function(
         tbl$Hemisphere[grepl("(rh)|(Right)", tbl$FSLabel)] <- "right"
         tbl$VertexNumber <- -1
         brain$set_electrodes(tbl)
-        try({
-          tbl <- brain$calculate_template_coordinates(hemisphere = FALSE)
-          utils::write.csv(tbl, save_path)
-        })
-
+        utils::write.csv(tbl, save_path)
         shiny::removeNotification("save_notif", session = session)
         utils::write.csv(tbl, conn, row.names = FALSE)
       }
