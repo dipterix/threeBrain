@@ -197,7 +197,7 @@ threeBrain <- function(
   # xfm
   if( file.exists(path_xfm) ) {
     # only support linear for now
-    xfm_raw <- freesurferformats::read.fs.transform.xfm(path_xfm)
+    xfm_raw <- read_xfm(path_xfm)
     xfm <- xfm_raw$matrix
   } else {
     # The transform
