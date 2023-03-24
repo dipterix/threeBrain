@@ -753,6 +753,110 @@ Brain2 <- R6::R6Class(
         width = width, height = height, debug = debug, token = token,
         browser_external = browser_external, global_data = global_data,
         start_zoom = start_zoom, cex = cex, background = background, ...)
+    },
+
+    render = function(
+      outputId, ..., controllers = list(), show_modal = FALSE,
+      session = shiny::getDefaultReactiveDomain()
+    ) {
+      proxy <- brain_proxy(outputId, session = session)
+
+      user_controllers <- as.list(controllers)
+      controllers <- user_controllers
+      main_camera <- list()
+
+      # get controller and camera information
+      tryCatch({
+        shiny::isolate({
+          main_camera <- as.list(proxy$main_camera)
+          controllers <- as.list(proxy$get_controllers())
+          for(nm in names(user_controllers)) {
+            controllers[[ nm ]] <- user_controllers[[ nm ]]
+          }
+        })
+      }, error = function(...){})
+
+      # remember background
+      background <- controllers[["Background Color"]]
+      if(length(background) != 1) {
+        background <- "#FFFFFF"
+      }
+
+      # remember zoom-level
+      zoom_level <- main_camera$zoom
+      if(length(zoom_level) != 1 || zoom_level <= 0) {
+        zoom_level <- 1
+      }
+
+      # remember camera position
+      position <- as.numeric(unname(unlist(main_camera$position)))
+      up <- as.numeric(unname(unlist(main_camera$up)))
+      if(length(position) != 3 || length(up) != 3 ||
+         all(position == 0) || all(up == 0) ||
+         any(is.na(position)) || any(is.na(up))) {
+        position <- c(0, 0, 500)
+        up <- c(0, 1, 0)
+      } else {
+        position <- position / sqrt(sum(position^2)) * 500
+        up <- up / sqrt(sum(up^2))
+      }
+
+      # remember variable names
+      dnames <- names(self$electrodes$value_table)
+      dnames <- dnames[!dnames %in% c("Project", "Subject", "Electrode", "Time", "Label")]
+      dname <- controllers[["Display Data"]]
+      if(length(dname) != 1 || !dname %in% dnames) {
+        dname <- NULL
+        if(length(dnames)) {
+          dname <- dnames[[1]]
+        }
+      }
+
+      # set variable name and reset range if inconsistent
+      if(!identical(controllers[["Display Data"]], dname) && length(dname)) {
+        controllers[["Display Data"]] <- dname
+        controllers[["Display Range"]] <- ""
+      }
+
+      # remember side panel options
+      if(!isTRUE(controllers[["Show Panels"]])) {
+        controllers[["Show Panels"]] <- FALSE
+      }
+
+      self$plot(
+        show_modal = show_modal,
+        background = background,
+        controllers = controllers,
+        start_zoom = zoom_level,
+        # send signals to update parameters such as camera, zoom-level...
+        custom_javascript = sprintf(
+          '
+          // Remove the focus box
+          if( canvas.focus_box ) {
+            canvas.focus_box.visible = false;
+          }
+
+          // set camera
+          canvas.main_camera.position.set( %f , %f , %f );
+          canvas.main_camera.up.set( %f , %f , %f );
+          canvas.main_camera.updateProjectionMatrix();
+
+          // Let shiny know the viewer is ready
+          if( canvas.shiny_mode ) {
+            Shiny.setInputValue("%s", "%f");
+          }
+
+          // Force render one frame (update the canvas)
+          canvas.needsUpdate = true;
+          ',
+          position[[1]], position[[2]], position[[3]],
+          up[[1]], up[[2]], up[[3]],
+          session$ns( outputId ),
+          Sys.time()
+        ),
+        ...
+      )
+
     }
 
   ),
