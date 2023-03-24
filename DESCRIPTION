@@ -30,7 +30,8 @@ Encoding: UTF-8
 RoxygenNote: 7.2.3
 Roxygen: list(r6 = FALSE)
 Language: en-US
-URL: https://dipterix.org/threeBrain/ https://github.com/dipterix/threeBrain
+URL: https://dipterix.org/threeBrain/,
+    https://github.com/dipterix/threeBrain
 BugReports: https://github.com/dipterix/threeBrain/issues
 Imports:
     utils,
