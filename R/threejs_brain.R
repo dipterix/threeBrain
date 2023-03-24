@@ -450,7 +450,6 @@ renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
 #' @export
 save_brain <- function(widget, directory, filename = 'index.html', assetpath = 'lib/', datapath = 'lib/threebrain_data-0/', title = '3D Viewer', as_zip = FALSE){
   dir_create(directory)
-  cat2('Generating 3D Viewer...')
 
   # Need to save json data to datapath. Must be a relative path
   dir_create(file.path(directory, datapath))
@@ -514,11 +513,83 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
       './lib', filename, 'linux.sh', 'mac.command', 'windows.bat', 'launch.zip',
       'simple_server.py'))
   }
+
+  index <- file.path(directory, filename)
+
+
+  s <- paste(readLines(index), collapse = '\n')
+  s <- stringr::str_replace_all(s, '\\n', '')
+
+  m <- stringr::str_match(s, '<head(.*?)</head>')
+  if(length(m)){
+    m <- m[1,2]
+    css <- unlist(stringr::str_extract_all(m, '<link[^>]*>'))
+    js <- unlist(stringr::str_extract_all(m, '<script[^>]*></script>'))
+  }else{
+    css <- NULL
+    js <- NULL
+  }
+
+  json <- stringr::str_match(s, '<script type="application/json" data-for=[^>]*>(.*)</script>')
+  if(length(json)){
+    json <- json[1,2]
+  }else{
+    json <- NULL
+  }
+
+  # content <- list(
+  #   css = css, js = js,
+  #   body = paste(
+  #     sep = "\n", collapse = "\n",
+  #     c(
+  #       '<div class="htmlwidget_container">\n\t<div id="{{ YOUR-WIDGET-ID }}" style="width:{{ shiny::validateCssUnit(height) }};height:{{ shiny::validateCssUnit(height) }};" class="threejs_brain html-widget">\n\t</div>\n</div>'
+  #     )
+  #   ),
+  #   footer = paste(
+  #     sep = "\n", collapse = "\n",
+  #     c(
+  #       '<script type="application/json" data-for="{{ YOUR-WIDGET-ID }}">',
+  #       json,
+  #       '</script>'
+  #     )
+  #   )
+  # )
+
+  as_shiny <- function(outputId, width = "100%", height = "100vh") {
+    f <- tempfile()
+    on.exit(unlink(f))
+    writeLines(c(
+      paste0(
+        '<div class="htmlwidget_container">\n\t<div id="',
+        outputId,
+        '" style="width:',
+        shiny::validateCssUnit(width),
+        ';height:',
+        shiny::validateCssUnit(height),
+        ';" class="threejs_brain html-widget">\n\t</div>\n</div>\n'
+      ),
+      paste0(
+        '<script type="application/json" data-for="',
+        outputId, '">',
+        json,
+        '</script>'
+      )
+    ), con = f, sep = "\n")
+    shiny::tagList(
+      shiny::singleton(shiny::HTML(c(css, js))),
+      shiny::includeHTML(f)
+    )
+  }
+
+
+
+
   return(structure(list(
     directory = directory,
-    index = file.path(directory, filename),
+    index = index,
     zipfile = file.path(directory, 'compressed.zip'),
-    has_zip = as_zip
+    has_zip = as_zip,
+    as_shiny = as_shiny
   ), class = 'threeBrain_saved'))
 
 }
