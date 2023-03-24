@@ -4,131 +4,142 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="threeBrain">
 <title>Data Visualization (Electrodes) • threeBrain</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
-<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Data Visualization (Electrodes)">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Data Visualization (Electrodes)">
 <meta property="og:description" content="threeBrain">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
-<body data-spy="scroll" data-target="#toc">
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <div class="container template-article">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">threeBrain</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.9.1</span>
-      </span>
-    </div>
+    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    
+    <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="../reference/index.html">Reference</a>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.9.2</small>
+
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="../articles/A-getting-started.html">Getting Started</a>
-    </li>
-    <li>
-      <a href="../articles/B-electrode-localization.html">Electrode Localization</a>
-    </li>
-    <li>
-      <a href="../articles/C-data-visualization.html">Data Visualization (Electrodes)</a>
-    </li>
-  </ul>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
-</li>
-      </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/dipterix/threeBrain/" class="external-link">
-    <span class="fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
-</div>
-<!--/.nav-collapse -->
+<li class="active nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/A-getting-started.html">Getting Started</a>
+    <a class="dropdown-item" href="../articles/B-electrode-localization.html">Electrode Localization</a>
+    <a class="dropdown-item" href="../articles/C-data-visualization.html">Data Visualization (Electrodes)</a>
   </div>
-<!--/.container -->
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../news/index.html">Changelog</a>
+</li>
+      </ul>
+<form class="form-inline my-2 my-lg-0" role="search">
+        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
+</form>
+
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/dipterix/threeBrain/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
-<!--/.navbar -->
 
-      
+    
+  </div>
+</nav><div class="container template-article">
 
-      </header><script src="C-data-visualization_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
-  <div class="col-md-9 contents">
-    <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Data Visualization (Electrodes)</h1>
+
+
+
+<div class="row">
+  <main id="main" class="col-md-9"><div class="page-header">
+      <img src="" class="logo" alt=""><h1>Data Visualization (Electrodes)</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/dipterix/threeBrain/blob/HEAD/vignettes/C-data-visualization.Rmd" class="external-link"><code>vignettes/C-data-visualization.Rmd</code></a></small>
-      <div class="hidden name"><code>C-data-visualization.Rmd</code></div>
-
+      <div class="d-none name"><code>C-data-visualization.Rmd</code></div>
     </div>
 
     
     
-<p>This article uses <code>N27</code> sample files mentioned by the previous vignettes. If you are using this example, please execute the following R code to set up. Alternatively, you can substitute variables <code>subject_code</code> and <code>subject_path</code> accordingly.</p>
+<p>This article uses <code>N27</code> sample files mentioned by the
+previous vignettes. If you are using this example, please execute the
+following R code to set up. Alternatively, you can substitute variables
+<code>subject_code</code> and <code>subject_path</code> accordingly.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/" class="external-link">threeBrain</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span></span>
 <span><span class="va">subject_code</span> <span class="op">&lt;-</span> <span class="st">"N27"</span></span>
 <span><span class="va">subject_path</span> <span class="op">&lt;-</span> <span class="st">"~/Downloads/N27"</span></span>
 <span><span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="va">subject_code</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="add-electrodes">Add Electrodes<a class="anchor" aria-label="anchor" href="#add-electrodes"></a>
 </h2>
-<p>To add electrodes to the brain object, you need a electrode table with least 5 columns: <code>Subject</code>, <code>Coord_x</code>, <code>Coord_y</code>, <code>Coord_z</code>, <code>Label</code>. The column names are case-sensitive.</p>
+<p>To add electrodes to the brain object, you need a electrode table
+with least 5 columns: <code>Subject</code>, <code>Coord_x</code>,
+<code>Coord_y</code>, <code>Coord_z</code>, <code>Label</code>. The
+column names are case-sensitive.</p>
 <div class="figure">
 <img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-09.png" style="width:80.0%" alt=""><p class="caption">Electrode table - example</p>
 </div>
-<p>If you have performed electrode localization (see the previous article) and exported the electrode table, the exported table can be used here once <code>Electrode</code> is filled out.</p>
-<p>For demonstration purposes, this <a href="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/vignettes/electrodes.csv" class="external-link">electrode table</a> will be used. Please download this file and place it at <code>~/Downloads/N27/electrodes.csv</code></p>
+<p>If you have performed electrode localization (see the previous
+article) and exported the electrode table, the exported table can be
+used here once <code>Electrode</code> is filled out.</p>
+<p>For demonstration purposes, this <a href="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/vignettes/electrodes.csv" class="external-link">electrode
+table</a> will be used. Please download this file and place it at
+<code>~/Downloads/N27/electrodes.csv</code></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">electrode_table</span> <span class="op">&lt;-</span> <span class="va">`~/Downloads/N27/electrodes.csv`</span></span>
 <span><span class="va">brain</span><span class="op">$</span><span class="fu">set_electrodes</span><span class="op">(</span><span class="va">electrode_table</span><span class="op">)</span></span>
 <span><span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-10.png" style="width:100.0%" alt=""><p class="caption">Click on one of the electrodes, the information (label, ‘MNI’ coordinates) will be displayed at top.</p>
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-10.png" style="width:100.0%" alt=""><p class="caption">Click on one of the electrodes, the information
+(label, ‘MNI’ coordinates) will be displayed at top.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="add-electrode-values">Add Electrode Values<a class="anchor" aria-label="anchor" href="#add-electrode-values"></a>
 </h2>
-<p>In iEEG study, various of analyses can be performed on the electrodes. The analysis results are different, including</p>
+<p>In iEEG study, various of analyses can be performed on the
+electrodes. The analysis results are different, including</p>
 <ul>
 <li>functional data such as mean-response over time</li>
 <li>continuous data like p-values, z-scores</li>
 <li>categorical data such as cluster labels</li>
 </ul>
-<p><code>threeBrain</code> can visualize them all with two lines and one data table.</p>
+<p><code>threeBrain</code> can visualize them all with two lines and one
+data table.</p>
 <p>First, let’s take a look To start, generate a table as follows:</p>
 <table class="table">
+<colgroup>
+<col width="12%">
+<col width="12%">
+<col width="15%">
+<col width="7%">
+<col width="15%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">Project</th>
 <th align="left">Subject</th>
@@ -232,35 +243,66 @@
 </tr>
 </tbody>
 </table>
-<p>The column names are case-sensitive, and should only contain letters, digits and <code>_</code>.</p>
+<p>The column names are case-sensitive, and should only contain letters,
+digits and <code>_</code>.</p>
 <ul>
 <li>
-<code>Project</code>: (optional) the project name that this experiment belongs to</li>
+<code>Project</code>: (optional) the project name that this
+experiment belongs to</li>
 <li>
-<code>Subject</code>: (mandatory) the subject code; must be consistent with the brain subject code</li>
+<code>Subject</code>: (mandatory) the subject code; must be
+consistent with the brain subject code</li>
 <li>
-<code>Electrode</code>: (mandatory) integers of electrode channel number; correspond to the <code>Electrode</code> column in the electrode table</li>
+<code>Electrode</code>: (mandatory) integers of electrode channel
+number; correspond to the <code>Electrode</code> column in the electrode
+table</li>
 <li>
 <code>Time</code> (optional) numerical time in seconds</li>
-<li>Value columns (such as <code>sine_wave</code>, <code>p_value</code>, <code>z_score</code>, and <code>cluster</code>): values of the electrodes</li>
+<li>Value columns (such as <code>sine_wave</code>, <code>p_value</code>,
+<code>z_score</code>, and <code>cluster</code>): values of the
+electrodes</li>
 </ul>
-<p>Download sample value table from <a href="https://github.com/dipterix/threeBrain-sample/blob/master/vignettes/values.csv" class="external-link">here</a> and save it to <code>~/Downloads/N27/values.csv</code></p>
+<p>Download sample value table from <a href="https://github.com/dipterix/threeBrain-sample/blob/master/vignettes/values.csv" class="external-link">here</a>
+and save it to <code>~/Downloads/N27/values.csv</code></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">electrode_table</span> <span class="op">&lt;-</span> <span class="va">`~/Downloads/N27/electrodes.csv`</span></span>
 <span><span class="va">value_table</span> <span class="op">&lt;-</span> <span class="va">`~/Downloads/N27/values.csv`</span></span>
 <span><span class="va">brain</span><span class="op">$</span><span class="fu">set_electrodes</span><span class="op">(</span><span class="va">electrode_table</span><span class="op">)</span></span>
 <span><span class="va">brain</span><span class="op">$</span><span class="fu">set_electrode_values</span><span class="op">(</span><span class="va">value_table</span><span class="op">)</span></span>
 <span><span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Open <code>Data Visualization</code> panel, change <code>Display Data</code> or use keyboard shortcut <code>d</code> (make sure the mouse is hovering on the brain) to switch to desired variables.</p>
+<p>Open <code>Data Visualization</code> panel, change
+<code>Display Data</code> or use keyboard shortcut <code>d</code> (make
+sure the mouse is hovering on the brain) to switch to desired
+variables.</p>
 <div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-11.png" style="width:100.0%" alt=""><p class="caption">Electrode data visualization. For continuous data, the value range is automatically detected using the maximum absolute values. The color palette goes from blue to white to red with linear transition. For discrete data, the color palette uses R’s default palette.</p>
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-11.png" style="width:100.0%" alt=""><p class="caption">Electrode data visualization. For continuous data,
+the value range is automatically detected using the maximum absolute
+values. The color palette goes from blue to white to red with linear
+transition. For discrete data, the color palette uses R’s default
+palette.</p>
 </div>
-<p>The <code>sine_wave</code> is time series. You can see the animation by toggling <code>Play/Pause</code> option in the <code>Data Visualization</code> panel.</p>
+<p>The <code>sine_wave</code> is time series. You can see the animation
+by toggling <code>Play/Pause</code> option in the
+<code>Data Visualization</code> panel.</p>
 <div class="section level3">
 <h3 id="change-color-palette">Change Color Palette<a class="anchor" aria-label="anchor" href="#change-color-palette"></a>
 </h3>
-<p>In the example above, the p-value legend shows the range is from <code>-0.5</code> to <code>0.5</code>. This is because <code>threeBrain</code> viewer’s default palette is symmetric around zero, and the range is decided by the maximum absolute number. However, the actual p-value should range from <code>0</code> to <code>1</code>, and we might be particularly interested in <code>$p \leq 0.05$</code>. This means both the color palette and value range need to be corrected.</p>
-<p>In the following code, <code>value_ranges</code> is a named list of such value ranges. <code>"p_value"=c(0,1)</code> suggests that the <code>p_value</code> variable should range from 0 to 1. All other variables adopt the default ranges. <code>palettes</code> is a named list of color palettes. In this specific case, variable <code>pal</code> is a vector of 64 colors. <code>colorRampPalette</code> is a base-R function to interpolate colors. Please use <code><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">help("colorRampPalette")</a></code> to see the documentation.</p>
+<p>In the example above, the p-value legend shows the range is from
+<code>-0.5</code> to <code>0.5</code>. This is because
+<code>threeBrain</code> viewer’s default palette is symmetric around
+zero, and the range is decided by the maximum absolute number. However,
+the actual p-value should range from <code>0</code> to <code>1</code>,
+and we might be particularly interested in <code>$p \leq 0.05$</code>.
+This means both the color palette and value range need to be
+corrected.</p>
+<p>In the following code, <code>value_ranges</code> is a named list of
+such value ranges. <code>"p_value"=c(0,1)</code> suggests that the
+<code>p_value</code> variable should range from 0 to 1. All other
+variables adopt the default ranges. <code>palettes</code> is a named
+list of color palettes. In this specific case, variable <code>pal</code>
+is a vector of 64 colors. <code>colorRampPalette</code> is a base-R
+function to interpolate colors. Please use
+<code><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">help("colorRampPalette")</a></code> to see the documentation.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pal</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"#FFC6C6"</span><span class="op">)</span><span class="op">)</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span>,</span>
@@ -271,46 +313,49 @@
 <span>  palettes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="st">"p_value"</span> <span class="op">=</span> <span class="va">pal</span> <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png" style="width:50.0%" alt=""><p class="caption">Adjusted p-value palette: the value range is from 0 to 1; the color transition is non-linear, with <span class="math inline">\(p&lt;0.05\)</span> rendered as deep red, and large p-values rendered as light reds</p>
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png" style="width:50.0%" alt=""><p class="caption">Adjusted p-value palette: the value range is from 0
+to 1; the color transition is non-linear, with <span class="math inline">\(p&lt;0.05\)</span> rendered as deep red, and large
+p-values rendered as light reds</p>
 </div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="map-electrode-values-to-the-surface">Map Electrode Values to the Surface<a class="anchor" aria-label="anchor" href="#map-electrode-values-to-the-surface"></a>
 </h2>
-<p><code>threeBrain</code> provides value mapping that allows electrode values to be displayed on the surfaces. To enable this feature, open <code>Surface Settings</code> panel, and click on <code>Surface Color</code>, switch to <code>sync from electrodes</code>, or simply use keyboard shortcut <code>k</code> (make sure the mouse is hovering over the brain) to change.</p>
-<p>You can also hide the electrodes by switching the electrode <code>Visibility</code> to <code>hidden</code> in the <code>Electrodes</code> panel to only show the mapped results.</p>
+<p><code>threeBrain</code> provides value mapping that allows electrode
+values to be displayed on the surfaces. To enable this feature, open
+<code>Surface Settings</code> panel, and click on
+<code>Surface Color</code>, switch to <code>sync from electrodes</code>,
+or simply use keyboard shortcut <code>k</code> (make sure the mouse is
+hovering over the brain) to change.</p>
+<p>You can also hide the electrodes by switching the electrode
+<code>Visibility</code> to <code>hidden</code> in the
+<code>Electrodes</code> panel to only show the mapped results.</p>
 <div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png" style="width:80.0%" alt=""><p class="caption">Electrode values (p-value) mapped on to the pial surface. Left: electrodes are visible; Right: electrodes are hidden.</p>
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png" style="width:80.0%" alt=""><p class="caption">Electrode values (p-value) mapped on to the pial
+surface. Left: electrodes are visible; Right: electrodes are hidden.</p>
 </div>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
-
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
 
-      <footer><div class="copyright">
+    <footer><div class="pkgdown-footer-left">
   <p></p>
 <p>Developed by Zhengjia Wang, John Magnotti.</p>
 </div>
 
-<div class="pkgdown">
+<div class="pkgdown-footer-right">
   <p></p>
 <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
   
-
 
   
 

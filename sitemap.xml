@@ -1,159 +1,159 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/404.html</loc>
+    <loc>https://dipterix.org/threeBrain/404.html</loc>
   </url>
   <url>
-    <loc>/LICENSE-text.html</loc>
+    <loc>https://dipterix.org/threeBrain/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>/articles/A-getting-started.html</loc>
+    <loc>https://dipterix.org/threeBrain/articles/A-getting-started.html</loc>
   </url>
   <url>
-    <loc>/articles/B-electrode-localization.html</loc>
+    <loc>https://dipterix.org/threeBrain/articles/B-electrode-localization.html</loc>
   </url>
   <url>
-    <loc>/articles/C-data-visualization.html</loc>
+    <loc>https://dipterix.org/threeBrain/articles/C-data-visualization.html</loc>
   </url>
   <url>
-    <loc>/articles/index.html</loc>
+    <loc>https://dipterix.org/threeBrain/articles/index.html</loc>
   </url>
   <url>
-    <loc>/authors.html</loc>
+    <loc>https://dipterix.org/threeBrain/authors.html</loc>
   </url>
   <url>
-    <loc>/index.html</loc>
+    <loc>https://dipterix.org/threeBrain/index.html</loc>
   </url>
   <url>
-    <loc>/news/index.html</loc>
+    <loc>https://dipterix.org/threeBrain/news/index.html</loc>
   </url>
   <url>
-    <loc>/reference/AbstractGeom.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/AbstractGeom.html</loc>
   </url>
   <url>
-    <loc>/reference/BlankGeom.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/BlankGeom.html</loc>
   </url>
   <url>
-    <loc>/reference/DataCubeGeom.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/DataCubeGeom.html</loc>
   </url>
   <url>
-    <loc>/reference/DataCubeGeom2.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/DataCubeGeom2.html</loc>
   </url>
   <url>
-    <loc>/reference/FreeGeom.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/FreeGeom.html</loc>
   </url>
   <url>
-    <loc>/reference/GeomGroup.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/GeomGroup.html</loc>
   </url>
   <url>
-    <loc>/reference/LineSegmentsGeom.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/LineSegmentsGeom.html</loc>
   </url>
   <url>
-    <loc>/reference/SphereGeom.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/SphereGeom.html</loc>
   </url>
   <url>
-    <loc>/reference/TubeGeom.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/TubeGeom.html</loc>
   </url>
   <url>
-    <loc>/reference/brain_proxy.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/brain_proxy.html</loc>
   </url>
   <url>
-    <loc>/reference/brain_setup.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/brain_setup.html</loc>
   </url>
   <url>
-    <loc>/reference/check_freesurfer_path.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/check_freesurfer_path.html</loc>
   </url>
   <url>
-    <loc>/reference/create_group.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/create_group.html</loc>
   </url>
   <url>
-    <loc>/reference/default_template_directory.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/default_template_directory.html</loc>
   </url>
   <url>
-    <loc>/reference/freesurfer_brain.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/freesurfer_brain.html</loc>
   </url>
   <url>
-    <loc>/reference/freesurfer_lut.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/freesurfer_lut.html</loc>
   </url>
   <url>
-    <loc>/reference/generate_smooth_envelope.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/generate_smooth_envelope.html</loc>
   </url>
   <url>
-    <loc>/reference/geom_freemesh.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/geom_freemesh.html</loc>
   </url>
   <url>
-    <loc>/reference/geom_sphere.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/geom_sphere.html</loc>
   </url>
   <url>
-    <loc>/reference/get_digest_header.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/get_digest_header.html</loc>
   </url>
   <url>
-    <loc>/reference/import-fs-suma.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/import-fs-suma.html</loc>
   </url>
   <url>
-    <loc>/reference/import_from_freesurfer.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/import_from_freesurfer.html</loc>
   </url>
   <url>
-    <loc>/reference/index.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/localization_module.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/localization_module.html</loc>
   </url>
   <url>
-    <loc>/reference/merge_brain.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/merge_brain.html</loc>
   </url>
   <url>
-    <loc>/reference/read_fs_asc.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/read_fs_asc.html</loc>
   </url>
   <url>
-    <loc>/reference/read_fs_labels.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/read_fs_labels.html</loc>
   </url>
   <url>
-    <loc>/reference/read_fs_m3z.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/read_fs_m3z.html</loc>
   </url>
   <url>
-    <loc>/reference/read_fs_mgh_mgz.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/read_fs_mgh_mgz.html</loc>
   </url>
   <url>
-    <loc>/reference/read_gii2.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/read_gii2.html</loc>
   </url>
   <url>
-    <loc>/reference/read_mgz.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/read_mgz.html</loc>
   </url>
   <url>
-    <loc>/reference/reexports.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/reexports.html</loc>
   </url>
   <url>
-    <loc>/reference/renderBrain.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/renderBrain.html</loc>
   </url>
   <url>
-    <loc>/reference/reorient_volume.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/reorient_volume.html</loc>
   </url>
   <url>
-    <loc>/reference/save_brain.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/save_brain.html</loc>
   </url>
   <url>
-    <loc>/reference/template_subject.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/template_subject.html</loc>
   </url>
   <url>
-    <loc>/reference/threeBrain.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/threeBrain.html</loc>
   </url>
   <url>
-    <loc>/reference/threejsBrainOutput.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/threejsBrainOutput.html</loc>
   </url>
   <url>
-    <loc>/reference/threejs_brain.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/threejs_brain.html</loc>
   </url>
   <url>
-    <loc>/reference/video_content.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/video_content.html</loc>
   </url>
   <url>
-    <loc>/reference/voxel_colormap.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/voxel_colormap.html</loc>
   </url>
   <url>
-    <loc>/reference/voxel_cube.html</loc>
+    <loc>https://dipterix.org/threeBrain/reference/voxel_cube.html</loc>
   </url>
   <url>
-    <loc>/shortcuts.html</loc>
+    <loc>https://dipterix.org/threeBrain/shortcuts.html</loc>
   </url>
 </urlset>
