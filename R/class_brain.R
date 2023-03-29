@@ -759,6 +759,9 @@ Brain2 <- R6::R6Class(
       outputId, ..., controllers = list(), show_modal = FALSE,
       session = shiny::getDefaultReactiveDomain()
     ) {
+      if(!is.environment(session)) {
+        session <- shiny::MockShinySession$new()
+      }
       proxy <- brain_proxy(outputId, session = session)
 
       user_controllers <- as.list(controllers)
@@ -837,13 +840,13 @@ Brain2 <- R6::R6Class(
           }
 
           // set camera
-          canvas.main_camera.position.set( %f , %f , %f );
-          canvas.main_camera.up.set( %f , %f , %f );
-          canvas.main_camera.updateProjectionMatrix();
+          canvas.mainCamera.position.set( %f , %f , %f );
+          canvas.mainCamera.up.set( %f , %f , %f );
+          canvas.mainCamera.updateProjectionMatrix();
 
           // Let shiny know the viewer is ready
-          if( canvas.shiny_mode ) {
-            Shiny.setInputValue("%s", "%f");
+          if( window.Shiny ) {
+            window.Shiny.setInputValue("%s", "%f");
           }
 
           // Force render one frame (update the canvas)
