@@ -71,6 +71,13 @@ ViewerProxy <- R6::R6Class(
       private$set_value('background', col2hexStr(col))
     },
 
+    set_title = function( title ) {
+      if(missing(title) || length(title) == 0) {
+        title <- ""
+      }
+      private$set_value('title', paste(format(title), collapse = ""))
+    },
+
     set_zoom_level = function( zoom ){
       stopifnot2(zoom > 0, msg = 'zoom level must be strictly positive')
       private$set_value('zoom_level', zoom)
