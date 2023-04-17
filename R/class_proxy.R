@@ -143,6 +143,10 @@ ViewerProxy <- R6::R6Class(
       private$set_value( "clear_localization", isTRUE(update_shiny) )
     },
 
+    set_incoming_localization_hemisphere = function( hemisphere ) {
+      private$set_value( "set_incoming_localization_hemisphere", paste(hemisphere, collapse = "") )
+    },
+
     set_values = function( name, target_object, data_type,
                            value, palette = rainbow(64), symmetric = FALSE,
                            time = ifelse(length(value)==1, 0, stop('time must match length with value')),
