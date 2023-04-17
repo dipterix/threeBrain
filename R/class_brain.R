@@ -509,7 +509,7 @@ Brain2 <- R6::R6Class(
       }
 
       # Localize without CT
-      if( is.null(ct_path) ) {
+      if( !length(ct_path) ) {
         # No CT scan, use 3 planes to localize
         controllers[["Edit Mode"]] %?<-% "MRI slice"
         controllers[["Overlay Coronal"]] <- TRUE
