@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.9.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,8 +25,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/A-getting-started.html">Getting Started</a>
-    <a class="dropdown-item" href="../articles/B-electrode-localization.html">Electrode Localization</a>
-    <a class="dropdown-item" href="../articles/C-data-visualization.html">Data Visualization (Electrodes)</a>
+    <a class="dropdown-item" href="../articles/B-data-visualization.html">Data Visualization (Electrodes)</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -52,6 +51,19 @@
       <small>Source: <a href="https://github.com/dipterix/threeBrain/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.0" id="threebrain-100---egypt">threeBrain 1.0.0 - Egypt<a class="anchor" aria-label="anchor" href="#threebrain-100---egypt"></a></h2>
+<p>This version is a major update.</p>
+<ul><li>Created <code><a href="../reference/threeBrain.html">threeBrain::threeBrain</a></code> as the formal way to create brain objects</li>
+<li>Updated <code>JavaScript</code> engine to <code>v150</code>
+</li>
+<li>Allow getting <code>HTML</code> tags from saved widget so the widget can be used from <code>Jupyter</code> notebook</li>
+<li>Added <code>$render</code> method to remember viewer states</li>
+<li>Allowing set title via proxy driver</li>
+<li>Added citation information</li>
+<li>Fixed hemisphere issue in localization when electrodes are closer to opposite hemispheres</li>
+<li>Added electrode registration from anatomical slice cross-hair</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.9" id="threebrain-029">threeBrain 0.2.9<a class="anchor" aria-label="anchor" href="#threebrain-029"></a></h2><p class="text-muted">CRAN release: 2023-03-14</p>
 <p>This version plans for a major update. Here are some highlights:</p>
@@ -311,7 +323,7 @@
 <li>Added alternative methods to read <code>.nii</code> files, <code>nibabel</code> is now optional</li>
 <li>Customized color palettes and value range for better visualizations with outliers</li>
 <li>Only requires <code>T1.mgz</code> or <code>brainmask</code> of <code>brain.finalsurf</code> is not found. This allows users only run <code>FreeSurfer</code> to the first stage, which only takes around 8 to 10 minutes instead of 6 hours.</li>
-<li>Fully compatible with <code>htmlwidgets</code> in <code>shiny</code> mode. When calling <code>threejsBrainOutput</code> under <code><a href="https://shiny.rstudio.com/reference/shiny/latest/renderUI.html" class="external-link">shiny::renderUI</a></code>, the <code>DOM</code> element might get reset by <code>shiny</code>, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn’t reset correctly. A cache is created and now is reusing the canvas.</li>
+<li>Fully compatible with <code>htmlwidgets</code> in <code>shiny</code> mode. When calling <code>threejsBrainOutput</code> under <code><a href="https://rdrr.io/pkg/shiny/man/renderUI.html" class="external-link">shiny::renderUI</a></code>, the <code>DOM</code> element might get reset by <code>shiny</code>, causing a new 3D viewer created. This might consume more resource, causing memory leaks and even conflict context renderings. Also event listeners couldn’t reset correctly. A cache is created and now is reusing the canvas.</li>
 </ul><div class="section level4">
 <h4 id="improvements-0-1-4">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-1-4"></a></h4>
 <ul><li>More flexible directory requirement</li>

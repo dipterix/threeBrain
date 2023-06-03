@@ -3,9 +3,8 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   A-getting-started: A-getting-started.html
-  B-electrode-localization: B-electrode-localization.html
-  C-data-visualization: C-data-visualization.html
-last_built: 2023-04-20T20:00Z
+  B-data-visualization: B-data-visualization.html
+last_built: 2023-06-03T22:30Z
 urls:
   reference: https://dipterix.org/threeBrain/reference
   article: https://dipterix.org/threeBrain/articles
