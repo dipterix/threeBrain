@@ -27,7 +27,7 @@
 * Uses modern browsers, easy to **embed** and **share**
 * Displays MRI, surfaces, and electrodes in the same canvas
 * **Maps multiple subjects** on template brains using `AFNI/SUMA` (standard 141) or `MNI-305` locations
-* **Electrode localization** in 3 approaches
+* **Electrode localization**
 * Volume rendering and surface/electrode **animation**
 * Integration with interactive `R-shiny` framework
 
@@ -145,7 +145,7 @@ The viewer will be in `N27` template, and electrodes of these two subjects can b
 
 ## F. Electrode Localization (`YAEL`)
 
-`YAEL`: "Yet Another Electrode Localization" is a module that has been integrated into [RAVE (R Analysis and Visualization of iEEG)](https://openwetware.org/wiki/RAVE). The paper will come out soon. Please contact RAVE team on how to localize electrodes.
+`YAEL`: "Yet Another Electrode Localizer" is a module that has been integrated into [RAVE (R Analysis and Visualization of iEEG)](https://openwetware.org/wiki/RAVE). The paper will come out soon. Please contact RAVE team on how to localize electrodes.
 
 [Here is a `sfN` poster](https://www.dropbox.com/s/st0cw1aro4kmo2e/2022-poster-sfN-Zhengjia-RAVE_poster-07Nov22.pdf?dl=0)
 

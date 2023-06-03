@@ -1,3 +1,17 @@
+threeBrain 1.0.0 - Egypt
+=======
+
+This version is a major update.
+
+* Created `threeBrain::threeBrain` as the formal way to create brain objects
+* Updated `JavaScript` engine to `v150`
+* Allow getting `HTML` tags from saved widget so the widget can be used from `Jupyter` notebook
+* Added `$render` method to remember viewer states
+* Allowing set title via proxy driver
+* Added citation information
+* Fixed hemisphere issue in localization when electrodes are closer to opposite hemispheres
+* Added electrode registration from anatomical slice cross-hair
+
 threeBrain 0.2.9
 =======
 
