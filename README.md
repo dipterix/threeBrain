@@ -39,7 +39,7 @@
 
 ## A. Installation
 
-1. [`R`](https://cran.r-project.org/) and [`RStudio Desktop (Free Version)`](https://www.rstudio.com/products/rstudio/download/)
+1. [`R`](https://cran.r-project.org/) and [`RStudio Desktop (Free Version)`](https://posit.co/download/rstudio-desktop/)
 2. Open `RStudio`, enter from its console:
 ```r
 install.packages("threeBrain")
