@@ -223,7 +223,7 @@
 /**
  * lil-gui
  * https://lil-gui.georgealways.com
- * @version 0.17.0
+ * @version 0.18.2
  * @author George Michael Brower
  * @license MIT
  */
