@@ -227,7 +227,11 @@ Brain2 <- R6::R6Class(
 
         stopifnot2(is.character(atlas), msg = 'atlas must be a brain-atlas object or valid atlas name from FreeSurfer folder')
         atlas <- gsub("_", "+", atlas)
-        path_atlases <- file.path( self$base_path, "mri", sprintf("%s.mgz", atlas) )
+        path_atlases <- file.path( self$base_path, "mri", as.vector(rbind(
+          sprintf("%s.mgz", atlas),
+          sprintf("%s.nii.gz", atlas),
+          sprintf("%s.nii", atlas)
+        )) )
         atlas_path <- path_atlases[file.exists(path_atlases)]
         if(!length(atlas_path)) { return() }
         atlas_path <- atlas_path[[ 1 ]]

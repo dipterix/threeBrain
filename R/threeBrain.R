@@ -163,7 +163,14 @@ threeBrain <- function(
   if(!fs_path_exists) { return() }
 
   # 3D slices MRI overlay + Norig + Torig
-  path_mri <- file.path(fs_path, "mri", c("brain.finalsurfs.mgz", "brainmask.mgz", "brainmask.auto.mgz", "T1.mgz"))
+  allowed_mri_prefix <- c("brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
+                          "brainmask", "brainmask.auto", "T1")
+
+  path_mri <- file.path(fs_path, "mri", as.vector(rbind(
+    sprintf("%s.mgz", allowed_mri_prefix),
+    sprintf("%s.nii.gz", allowed_mri_prefix),
+    sprintf("%s.nii", allowed_mri_prefix)
+  )))
   path_mri <- path_mri[file.exists(path_mri)]
   if(length(path_mri)){ path_mri <- path_mri[[1]] }
 
@@ -171,10 +178,25 @@ threeBrain <- function(
   path_xfm <- file.path(fs_path, "mri", "transforms", "talairach.xfm")
 
   # atlas
-  path_atlas <- file.path(fs_path, "mri", sprintf("%s.mgz", atlas_types))
-  atlas_exists <- file.exists(path_atlas)
-  atlas_types <- atlas_types[atlas_exists]
-  path_atlas <- path_atlas[atlas_exists]
+  atlases <- lapply(atlas_types, function(atype) {
+    path_atlas <- file.path(fs_path, "mri", as.vector(rbind(
+      sprintf("%s.mgz", atype),
+      sprintf("%s.nii.gz", atype),
+      sprintf("%s.nii", atype)
+    )))
+    path_atlas <- path_atlas[file.exists(path_atlas)]
+    if(!length(path_atlas)) { return(NULL) }
+    return(c(atype, path_atlas[[1]]))
+  })
+  atlases <- atlases[!vapply(atlases, is.null, FALSE)]
+  if(!length(atlases)) {
+    atlas_types <- character(0L)
+    path_atlas <- character(0L)
+  } else {
+    atlases <- do.call(rbind, atlases)
+    atlas_types <- atlases[, 1]
+    path_atlas <- atlases[, 2]
+  }
 
   # check if this is legacy subject
   if( file.exists(file.path(fs_path, 'RAVE', "common.digest")) ) {
@@ -216,15 +238,29 @@ threeBrain <- function(
   } else {
     mgz_files <- mgz_files[[1]]
   }
-  volume_header <- read_fs_mgh_header( mgz_files )
 
-  # Norig: IJK to scanner-RAS
-  Norig <- volume_header$vox2ras_matrix
+  if( endsWith(tolower(mgz_files), "mgz") ) {
+    volume_header <- read_fs_mgh_header( mgz_files )
 
-  # Torig: IJK to tkr-RAS
-  Torig <- Norig[1:4, 1:3]
-  Torig <- cbind(Torig, -Torig %*% volume_header$internal$Pcrs_c)
-  Torig[4, 4] <- 1
+    # Norig: IJK to scanner-RAS
+    Norig <- volume_header$vox2ras_matrix
+
+    # Torig: IJK to tkr-RAS
+    Torig <- Norig[1:4, 1:3]
+    Torig <- cbind(Torig, -Torig %*% volume_header$internal$Pcrs_c)
+    Torig[4, 4] <- 1
+  } else {
+    volume_header <- read_nii2(mgz_files, head_only = TRUE)
+
+    # Norig: IJK to scanner-RAS
+    Norig <- volume_header$get_IJK_to_RAS()$matrix
+
+    # Torig: IJK to tkr-RAS
+    Torig <- Norig[1:4, 1:3]
+    Torig <- cbind(Torig, -Torig %*% volume_header$get_shape() / 2)
+    Torig[4, 4] <- 1
+  }
+
 
   # Create brain instance
   brain <- Brain2$new(subject_code = subject_code, xfm = xfm, Norig = Norig, Torig = Torig)
