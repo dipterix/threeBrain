@@ -684,6 +684,13 @@ Brain2 <- R6::R6Class(
       controllers[["Voxel Min"]] <- 3000
       controllers[["Edit Mode"]] %?<-% "CT/volume"
 
+      # check if surface exists
+      if(!length(self$surfaces)) {
+        controllers[["Overlay Coronal"]] %?<-% TRUE
+        controllers[["Overlay Axial"]] %?<-% TRUE
+        controllers[["Overlay Sagittal"]] %?<-% TRUE
+      }
+
       # Also add other atlases
       self$add_atlas("aparc+aseg")
       self$add_atlas("aparc.DKTatlas+aseg")
@@ -744,8 +751,13 @@ Brain2 <- R6::R6Class(
         side_display <- FALSE
       }
 
-      # # check if curvature files exist
-      # global_files =
+      # check if surface exists
+      if(!length(self$surfaces)) {
+        controllers <- as.list(controllers)
+        controllers[["Overlay Coronal"]] %?<-% TRUE
+        controllers[["Overlay Axial"]] %?<-% TRUE
+        controllers[["Overlay Sagittal"]] %?<-% TRUE
+      }
 
       threejs_brain(
         .list = geoms,
