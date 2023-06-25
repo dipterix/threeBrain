@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9002</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,6 +64,7 @@
 <span>  <span class="va">cube</span>,</span>
 <span>  size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">256</span>, <span class="fl">256</span>, <span class="fl">256</span><span class="op">)</span>,</span>
 <span>  trans_mat <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  trans_space_from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model"</span>, <span class="st">"scannerRAS"</span><span class="op">)</span>,</span>
 <span>  color_format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RGBAFormat"</span>, <span class="st">"RedFormat"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -72,7 +73,8 @@
 <span>  <span class="va">name</span>,</span>
 <span>  <span class="va">path</span>,</span>
 <span>  trans_mat <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  color_format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RGBAFormat"</span>, <span class="st">"RedFormat"</span><span class="op">)</span></span>
+<span>  color_format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RGBAFormat"</span>, <span class="st">"RedFormat"</span><span class="op">)</span>,</span>
+<span>  trans_space_from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model"</span>, <span class="st">"scannerRAS"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">create_voxel_cube</span><span class="op">(</span></span>
@@ -104,6 +106,10 @@
 
 <dt>trans_mat</dt>
 <dd><p>the transform matrix of the volume. For <code>add_voxel_cube</code>, this matrix should be from data cube geometry model center to world (<code>'tkrRAS'</code>) transform. For <code>add_nifti</code>, this matrix is the 'Nifti' <code>'RAS'</code> to world (<code>'tkrRAS'</code>) transform.</p></dd>
+
+
+<dt>trans_space_from</dt>
+<dd><p>where does <code>trans_mat</code> transform begin; default is from object <code>'model'</code> space; alternative space is <code>'scannerRAS'</code>, meaning the matrix only transform volume cube from its own <code>'scannerRAS'</code> to the world space.</p></dd>
 
 
 <dt>color_format</dt>
