@@ -213,11 +213,12 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
       code <- sform_code
     } else {
       # method 2
-      mat <- diag(c(nii@pixdim[seq(2,4)], 1))
-      mat[3, ] <- mat[3, ] * nii@pixdim[[1]]
-      mat[1, 4] <- nii@qoffset_x
-      mat[2, 4] <- nii@qoffset_y
-      mat[3, 4] <- nii@qoffset_z
+      # mat <- diag(c(nii@pixdim[seq(2,4)], 1))
+      # mat[3, ] <- mat[3, ] * nii@pixdim[[1]]
+      # mat[1, 4] <- nii@qoffset_x
+      # mat[2, 4] <- nii@qoffset_y
+      # mat[3, 4] <- nii@qoffset_z
+      mat <- oro.nifti::qform(nii)
       code <- qform_code
     }
 
