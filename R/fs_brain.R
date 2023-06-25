@@ -404,8 +404,9 @@ freesurfer_brain <- function(fs_subject_folder, subject_name,
 #' @return logical whether the directory is valid or, if \code{return_path} is true,
 #' return `FreeSurfer` path
 #' @export
-check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = FALSE,
-                                  return_path = FALSE, check_volume = FALSE, check_surface = FALSE){
+check_freesurfer_path <- function(
+    fs_subject_folder, autoinstall_template = FALSE,
+    return_path = FALSE, check_volume = FALSE, check_surface = FALSE){
   pass_test <- FALSE
   if( dir.exists(fs_subject_folder) ){
 
@@ -429,9 +430,7 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = FALS
 
     if( !check_volume && !check_surface ){
       # check if surf dir exists
-      if( dir.exists(file.path(path_subject, 'surf')) ){
-        pass_test <- TRUE
-      }
+      pass_test <- TRUE
     }
     if( !pass_test && check_volume ){
       if( any(file.exists(c(path_t1, path_brain_finalsurf, path_brain_automask, path_brain_mask))) && file.exists(path_xform) ){
@@ -459,7 +458,7 @@ check_freesurfer_path <- function(fs_subject_folder, autoinstall_template = FALS
   if( pass_test ){
     dir_create(file.path(path_subject, 'mri', 'transforms'))
     dir_create(file.path(path_subject, 'surf'))
-    dir_create(file.path(path_subject, 'SUMA'))
+    # dir_create(file.path(path_subject, 'SUMA'))
     dir_create(file.path(path_subject, 'RAVE'))
     if( return_path ){ return( path_subject ) } else { return(TRUE) }
   }

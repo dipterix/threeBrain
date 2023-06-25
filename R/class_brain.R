@@ -219,9 +219,11 @@ Brain2 <- R6::R6Class(
       }
     },
 
-    add_atlas = function(atlas, color_format = c("RGBAFormat", "RedFormat")){
+    add_atlas = function(atlas, color_format = c("RGBAFormat", "RedFormat"),
+                         trans_space_from = c("model", "scannerRAS")){
 
       color_format <- match.arg(color_format)
+      trans_space_from <- match.arg(trans_space_from)
 
       if(!inherits(atlas, 'brain-atlas')) {
 
@@ -236,14 +238,16 @@ Brain2 <- R6::R6Class(
         if(!length(atlas_path)) { return() }
         atlas_path <- atlas_path[[ 1 ]]
 
+        atlas_geom <- VolumeGeom2$new(
+          name = sprintf("Atlas - %s (%s)", atlas, subject_code),
+          path = atlas_path, color_format = color_format, trans_mat = NULL
+        )
+        atlas_geom$trans_space_from <- trans_space_from
         atlas_instance <- BrainAtlas$new(
           subject_code = private$.subject_code,
           atlas_type = atlas,
           position = c(0, 0, 0),
-          atlas = VolumeGeom2$new(
-            name = sprintf("Atlas - %s (%s)", atlas, subject_code),
-            path = atlas_path, color_format = color_format, trans_mat = NULL
-          )
+          atlas = atlas_geom
         )
         atlas_instance$group$.cache_name <- sprintf("%s/mri", private$.subject_code)
         atlas <- atlas_instance
@@ -660,7 +664,8 @@ Brain2 <- R6::R6Class(
         # add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
         #                trans_mat = trans_mat, color_format = "RedFormat")
         add_nifti(self, "CT", path = ct_path,
-                  color_format = "RedFormat", trans_mat = trans_mat)
+                  color_format = "RedFormat", trans_mat = trans_mat,
+                  trans_space_from = "scannerRAS")
       }
 
       key <- seq(0, 5000)

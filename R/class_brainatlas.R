@@ -89,6 +89,7 @@ BrainAtlas <- R6::R6Class(
 #' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size
 #' @param path 'Nifti' data path
 #' @param trans_mat the transform matrix of the volume. For \code{add_voxel_cube}, this matrix should be from data cube geometry model center to world (\code{'tkrRAS'}) transform. For \code{add_nifti}, this matrix is the 'Nifti' \code{'RAS'} to world (\code{'tkrRAS'}) transform.
+#' @param trans_space_from where does \code{trans_mat} transform begin; default is from object \code{'model'} space; alternative space is \code{'scannerRAS'}, meaning the matrix only transform volume cube from its own \code{'scannerRAS'} to the world space.
 #' @param color_format color format for the internal texture. Default is 4-channel \code{'RGBAFormat'}; alternative choice is \code{'RedFormat'}, which saves volume data with single red-channel to save space
 #'
 #' @returns \code{create_voxel_cube} returns a list of cube data and other informations;
@@ -138,12 +139,14 @@ NULL
 #' @rdname voxel_cube
 #' @export
 add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
-                           trans_mat = NULL, color_format = c("RGBAFormat", "RedFormat")){
+                           trans_mat = NULL, trans_space_from = c("model", "scannerRAS"),
+                           color_format = c("RGBAFormat", "RedFormat")){
   stopifnot2(length(size) == 3 && all(size > 0), msg = "add_voxel_cube: `size` must be length of 3 and all positive")
   stopifnot2(is.null(trans_mat) || (
     length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4
   ), msg = "add_voxel_cube: `trans_mat` must be either NULL or a 4x4 matrix")
   color_format <- match.arg(color_format)
+  trans_space_from <- match.arg(trans_space_from)
 
   re <- brain
   if("multi-rave-brain" %in% class(brain)){
@@ -165,6 +168,7 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
     position = c(0,0,0), value = cube,
     trans_mat = trans_mat, color_format = color_format)
   geom$subject_code <- subject
+  geom$trans_space_from <- trans_space_from
 
   obj <- BrainAtlas$new(
     subject_code = subject, atlas_type = name,
@@ -176,10 +180,12 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
 
 #' @rdname voxel_cube
 #' @export
-add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGBAFormat", "RedFormat")) {
+add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGBAFormat", "RedFormat"), trans_space_from = c("model", "scannerRAS")) {
   # trans_mat is from nifti RAS to tkrRAS
 
   color_format <- match.arg(color_format)
+  trans_space_from <- match.arg(trans_space_from)
+
   if ("multi-rave-brain" %in% class(brain)) {
     brain <- brain$template_object
   }
@@ -199,6 +205,7 @@ add_nifti <- function(brain, name, path, trans_mat = NULL, color_format = c("RGB
   group <- GeomGroup$new(name = nm)
   group$subject_code <- subject
   geom <- VolumeGeom2$new(name = nm, path = path, color_format = color_format, trans_mat = trans_mat)
+  geom$trans_space_from <- trans_space_from
   geom$subject_code <- subject
   obj <- BrainAtlas$new(subject_code = subject, atlas_type = name,
                         atlas = geom, position = c(0, 0, 0))

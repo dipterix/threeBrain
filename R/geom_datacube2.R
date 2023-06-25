@@ -14,6 +14,11 @@ DataCubeGeom2 <- R6::R6Class(
     threshold = 0.6,
     color_format = "RGBAFormat",
     color_map = NULL,
+
+    # if trans_mat is specified, the matrix transfers `trans_space_from` to tkrRAS
+    # default is to "model, alternatively `scannerRAS`
+    trans_space_from = "model",
+
     initialize = function(name, value, dim = dim(value),
                           half_size = c(128,128,128),
                           group = GeomGroup$new(name = 'default'),
@@ -46,6 +51,7 @@ DataCubeGeom2 <- R6::R6Class(
       re$color_format <- self$color_format
       re$color_map <- self$color_map
       re$isDataCube2 <- self$is_datacube2
+      re$trans_space_from <- self$trans_space_from
       re
     }
   ),
@@ -63,6 +69,7 @@ VolumeGeom2 <- R6::R6Class(
     threshold = 0.6,
     color_format = "RGBAFormat",
     color_map = NULL,
+    trans_space_from = "model",
     initialize = function(
       name, path, group = GeomGroup$new(name = 'default'), layer = 8,
       color_format = c("RGBAFormat", "RedFormat"), ...){
@@ -92,6 +99,7 @@ VolumeGeom2 <- R6::R6Class(
       re$isDataCube2 <- self$is_datacube2
       re$isVolumeCube2 <- self$is_volumecube2
       re$color_map <- self$color_map
+      re$trans_space_from <- self$trans_space_from
       re
     }
   ),
