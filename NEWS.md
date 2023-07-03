@@ -1,3 +1,14 @@
+threeBrain 1.0.1
+=======
+
+* Updated controller library to have reasonable input focus
+* Allow `MRI` slices to be `NIfTI` format
+* Set slices to be visible by default when the surface is not available
+* Fixed transform for `datacube2`
+* Fixed `qform` when reading `NIfTI` files
+* Fixed `auto-refine` functions in electrode localization
+* Removed clipboard auto-copy and auto-paste functions since they conflict with other viewers; instead users can use controllers to copy and paste state
+
 threeBrain 1.0.0 - Egypt
 =======
 
