@@ -36,7 +36,7 @@ freesurfer_lut <- local({
           "palettes", "datacube2", "FreeSurferColorLUT.json", package = 'threeBrain'))
       }
 
-      re <- cmap$map[key + 1]
+      re <- cmap$map[as.character(key)]
 
       if( label_only ){
         re <- sapply(re, function(x){
@@ -45,8 +45,15 @@ freesurfer_lut <- local({
         })
       }
       re
-    }
+    },
 
+    get_map = function() {
+      if(is.null(cmap)){
+        cmap <<- load_colormap(system.file(
+          "palettes", "datacube2", "FreeSurferColorLUT.json", package = 'threeBrain'))
+      }
+      cmap
+    }
 
   )
 
