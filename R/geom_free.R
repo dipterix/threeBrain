@@ -21,6 +21,8 @@ FreeGeom <- R6::R6Class(
     hemisphere = NULL,
     surface_type = NULL,
 
+    subcortical_info = NULL,
+
     set_value = function(value, colormap, time_stamp = 0, key = colormap$get_key(value)){
       self$value <- as.integer(key)
       self$time_stamp <- time_stamp
@@ -131,6 +133,7 @@ FreeGeom <- R6::R6Class(
       re <- super$to_list()
       re$hemisphere <- self$hemisphere
       re$surface_type <- self$surface_type
+      re$subcortical_info <- self$subcortical_info
       return( re )
     }
   )

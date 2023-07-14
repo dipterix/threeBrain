@@ -134,10 +134,12 @@ threeBrain <- function(
   fs_path <- path
 
   # DIPSAUS DEBUG START
-  # fs_path <- "/Users/dipterix/Dropbox (PENN Neurotrauma)/RAVE/Samples/raw/PAV010/rave-imaging/fs"
-  # subject_code <- "PAV010"
-  # surface_types <- c("pial", "smoothwm", "white")
+  # fs_path <- "/Users/dipterix/Dropbox (PennNeurosurgery)/BeauchampLabAtPenn/Electrode_Localization_Paper/Code/N27"
+  # subject_code <- "N27"
+  # surface_types <- c("pial", "amygdala", "ctx-insula", c(18,54,1035,2035,1026,1002,1023,1010,2026,2002,202,
+  #                     3,2010,1012,1014,1027,1032,2012,2014,2027,2032))
   # atlas_types <- c("aparc+aseg", "aparc.a2009s+aseg", "aparc.DKTatlas+aseg")
+  # template_subject = "N27"
 
   # --------- Step 0: Locate freesurfer folder ---------------------------------
   fs_path_exists <- FALSE
@@ -198,6 +200,7 @@ threeBrain <- function(
     path_atlas <- atlases[, 2]
   }
 
+  surface_types <- as.character(surface_types)
   # check if this is legacy subject
   if( file.exists(file.path(fs_path, 'RAVE', "common.digest")) ) {
     brain <- freesurfer_brain2(
@@ -295,7 +298,23 @@ threeBrain <- function(
   }
 
   # --------- Step 4: Add Surfaces ---------------------------------------------
-  surface_filenames <- list.files(file.path(fs_path, "surf"), pattern = "^[lr]h\\.", ignore.case = TRUE)
+  surf_path <- file.path(fs_path, "surf")
+  subcortical_path <- file.path(fs_path, "surf", "subcortical")
+  if("subcortical" %in% surface_types) {
+    subcortical_surfaces <- list.files(
+      subcortical_path,
+      pattern = "lh\\.",
+      all.files = FALSE,
+      full.names = FALSE,
+      recursive = FALSE,
+      ignore.case = TRUE,
+      include.dirs = FALSE
+    )
+    subcortical_surfaces <- gsub("(^lh\\.|-[0-9]{0,}$)", "", subcortical_surfaces)
+    surface_types <- c(surface_types, subcortical_surfaces)
+  }
+
+  surface_filenames <- list.files(surf_path, pattern = "^[lr]h\\.", ignore.case = TRUE)
   available_surfaces <- unique(gsub("^[l|r]h\\.", "", surface_filenames, ignore.case = TRUE))
   available_surfaces <- available_surfaces[!grepl("^(sulc|thick|volume|jacob|curv|area)", available_surfaces, ignore.case = TRUE)]
   available_surfaces <- available_surfaces[!grepl("(crv|mgh|curv|labels|label)$", available_surfaces, ignore.case = TRUE)]
@@ -309,8 +328,8 @@ threeBrain <- function(
   right_vcolor <- NULL
   has_vcolor <- FALSE
   for(vc_type in vertex_color_types) {
-    path_left_vcolor <- file.path(fs_path, "surf", sprintf("lh.%s", vc_type))
-    path_right_vcolor <- file.path(fs_path, "surf", sprintf("rh.%s", vc_type))
+    path_left_vcolor <- file.path(surf_path, sprintf("lh.%s", vc_type))
+    path_right_vcolor <- file.path(surf_path, sprintf("rh.%s", vc_type))
 
     if( file.exists(path_left_vcolor) && file.exists(path_right_vcolor) ) {
       path_left_vcolor <- normalizePath(path_left_vcolor, winslash = "/")
@@ -334,6 +353,7 @@ threeBrain <- function(
     }
   }
 
+
   for(surface_name in surface_types) {
 
     if( tolower(surface_name) == "pial.t1" ) {
@@ -342,27 +362,48 @@ threeBrain <- function(
 
     # surface_type might be symlink since fs 7.0 (e.g., pial)
     surface_type <- c(surface_alternative_types[[surface_name]], surface_name)
-    surface_type <- surface_type[tolower(surface_type) %in% available_surfaces_lower]
-    if(!length(surface_type)) { next }
+    surface_type <- c(surface_type[tolower(surface_type) %in% available_surfaces_lower], surface_name)
 
     surface_type <- surface_type[[1]]
 
-    path_left <- normalizePath(file.path(fs_path, "surf", sprintf("lh.%s", surface_type)), winslash = "/", mustWork = FALSE)
-    path_right <- normalizePath(file.path(fs_path, "surf", sprintf("rh.%s", surface_type)), winslash = "/", mustWork = FALSE)
+    subcortical <- FALSE
+    path_left <- normalizePath(file.path(surf_path, sprintf("lh.%s", surface_type)),
+                               winslash = "/", mustWork = FALSE)
+    path_right <- normalizePath(file.path(surf_path, sprintf("rh.%s", surface_type)),
+                                winslash = "/", mustWork = FALSE)
 
-    if( !file.exists(path_left) || !file.exists(path_right) ) { next }
+    if( !file.exists(path_left) || !file.exists(path_right) ) {
+
+      surface_type <- as_subcortical_label(surface_type, remove_hemisphere = TRUE)
+      subcortical_files <- list.files(
+        subcortical_path,
+        pattern = sprintf("^[lr]h\\.%s-[0-9]+$", surface_type),
+        all.files = FALSE,
+        full.names = FALSE,
+        recursive = FALSE,
+        ignore.case = TRUE,
+        include.dirs = FALSE
+      )
+      if(length(subcortical_files) != 2) { next }
+
+      path_left <- normalizePath(
+        file.path(subcortical_path, subcortical_files[startsWith(subcortical_files, "l")]),
+        winslash = "/",
+        mustWork = FALSE
+      )
+      path_right <- normalizePath(
+        file.path(subcortical_path, subcortical_files[startsWith(subcortical_files, "r")]),
+        winslash = "/",
+        mustWork = FALSE
+      )
+      subcortical <- TRUE
+    }
 
     group <- GeomGroup$new(name = sprintf('Surface - %s (%s)', surface_name, subject_code))
-    group$.cache_name <- sprintf("%s/surf", subject_code)
     group$set_group_data('template_subject', template_subject)
     group$set_group_data('surface_type', surface_name)
     group$set_group_data('subject_code', subject_code)
     group$set_group_data('surface_format', 'fs')
-
-    if( has_vcolor ) {
-      group$set_group_data( "lh_primary_vertex_color", is_cached = TRUE, value = left_vcolor )
-      group$set_group_data( "rh_primary_vertex_color", is_cached = TRUE, value = right_vcolor )
-    }
 
     surf_lh <- FreeGeom$new(
       name = sprintf('FreeSurfer Left Hemisphere - %s (%s)', surface_name, subject_code),
@@ -372,6 +413,43 @@ threeBrain <- function(
       name = sprintf('FreeSurfer Right Hemisphere - %s (%s)', surface_name, subject_code),
       position = c(0,0,0), cache_file = path_right, group = group, layer = 8
     )
+
+    if( subcortical ) {
+      group$.cache_name <- sprintf("%s/subcortical", subject_code)
+
+      subcortical_key <- as.integer(gsub(".*-([0-9]+)[/]{0,}$", "\\1", path_left))
+      subcortical_info <- freesurfer_lut$from_key(subcortical_key, label_only = FALSE)[[1]]
+      surf_lh$subcortical_info <- list(
+        ColorID = subcortical_info$ColorID,
+        Label = subcortical_info$Label,
+        Color = rgb(
+          red = subcortical_info$R,
+          green = subcortical_info$G,
+          blue = subcortical_info$B,
+          maxColorValue = 255
+        )
+      )
+
+      subcortical_key <- as.integer(gsub(".*-([0-9]+)[/]{0,}$", "\\1", path_right))
+      subcortical_info <- freesurfer_lut$from_key(subcortical_key, label_only = FALSE)[[1]]
+      surf_rh$subcortical_info <- list(
+        ColorID = subcortical_info$ColorID,
+        Label = subcortical_info$Label,
+        Color = rgb(
+          red = subcortical_info$R,
+          green = subcortical_info$G,
+          blue = subcortical_info$B,
+          maxColorValue = 255
+        )
+      )
+    } else {
+      group$.cache_name <- sprintf("%s/surf", subject_code)
+      if( has_vcolor ) {
+        group$set_group_data( "lh_primary_vertex_color", is_cached = TRUE, value = left_vcolor )
+        group$set_group_data( "rh_primary_vertex_color", is_cached = TRUE, value = right_vcolor )
+      }
+    }
+
     surface <- BrainSurface$new(subject_code = subject_code, surface_type = surface_name, mesh_type = 'fs',
                                 left_hemisphere = surf_lh, right_hemisphere = surf_rh)
 
