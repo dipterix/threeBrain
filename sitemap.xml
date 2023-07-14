@@ -76,6 +76,9 @@
     <loc>https://dipterix.org/threeBrain/reference/generate_smooth_envelope.html</loc>
   </url>
   <url>
+    <loc>https://dipterix.org/threeBrain/reference/generate_subcortical_surface.html</loc>
+  </url>
+  <url>
     <loc>https://dipterix.org/threeBrain/reference/geom_freemesh.html</loc>
   </url>
   <url>
@@ -83,6 +86,9 @@
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/get_digest_header.html</loc>
+  </url>
+  <url>
+    <loc>https://dipterix.org/threeBrain/reference/get_ijk2ras.html</loc>
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/import-fs-suma.html</loc>
