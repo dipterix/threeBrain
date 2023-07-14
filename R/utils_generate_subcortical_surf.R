@@ -58,7 +58,7 @@ read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FA
     Torig <- cbind(Torig, -Torig %*% header$internal$Pcrs_c)
     Torig[4, 4] <- 1
   } else {
-    volume <- read_nii2(file, head_only = head_only)
+    volume <- read_nii2(file, head_only = header_only)
     if( !header_only ) {
       data <- volume$get_data()
     }
