@@ -216,7 +216,7 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 
   # get label
   if(length(label) != 1 || is.na(label) || !nzchar(trimws(label))) {
-    label <- freesurfer_lut$from_key(index)
+    label <- as_subcortical_label(index, remove_hemisphere = FALSE)
   } else {
     label <- trimws(label)
   }
