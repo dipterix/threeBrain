@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9003</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,8 @@
 <span>  surface_types <span class="op">=</span> <span class="st">"pial"</span>,</span>
 <span>  atlas_types <span class="op">=</span> <span class="st">"aparc+aseg"</span>,</span>
 <span>  <span class="va">...</span>,</span>
-<span>  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  backward_compatible <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.compatible"</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -97,6 +98,10 @@ depending on the atlas files in <code>'fs/mri'</code> folder</p></dd>
 <dt>template_subject</dt>
 <dd><p>template subject to refer to; used for group
 template mapping</p></dd>
+
+
+<dt>backward_compatible</dt>
+<dd><p>whether to support old format; default is false</p></dd>
 
 </dl></div>
 
