@@ -10,7 +10,8 @@ threeBrain(
   surface_types = "pial",
   atlas_types = "aparc+aseg",
   ...,
-  template_subject = unname(getOption("threeBrain.template_subject", "N27"))
+  template_subject = unname(getOption("threeBrain.template_subject", "N27")),
+  backward_compatible = getOption("threeBrain.compatible", FALSE)
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ depending on the atlas files in \code{'fs/mri'} folder}
 
 \item{template_subject}{template subject to refer to; used for group
 template mapping}
+
+\item{backward_compatible}{whether to support old format; default is false}
 }
 \description{
 Create a brain object

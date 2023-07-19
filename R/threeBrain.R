@@ -121,13 +121,15 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' depending on the atlas files in \code{'fs/mri'} folder
 #' @param template_subject template subject to refer to; used for group
 #' template mapping
+#' @param backward_compatible whether to support old format; default is false
 #' @param ... reserved for future use
 #' @export
 threeBrain <- function(
     path, subject_code, surface_types = "pial",
     atlas_types = "aparc+aseg",
     ...,
-    template_subject = unname(getOption('threeBrain.template_subject', 'N27'))
+    template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
+    backward_compatible = getOption("threeBrain.compatible", FALSE)
 ) {
   # No SUMA 141 brain for default option
 
@@ -202,7 +204,7 @@ threeBrain <- function(
 
   surface_types <- as.character(surface_types)
   # check if this is legacy subject
-  if( file.exists(file.path(fs_path, 'RAVE', "common.digest")) ) {
+  if( backward_compatible && file.exists(file.path(fs_path, 'RAVE', "common.digest")) ) {
     brain <- freesurfer_brain2(
       fs_subject_folder = fs_path,
       subject_name = subject_code,
@@ -375,6 +377,9 @@ threeBrain <- function(
     if( !file.exists(path_left) || !file.exists(path_right) ) {
 
       surface_type <- as_subcortical_label(surface_type, remove_hemisphere = TRUE)
+      if(is.na(surface_type)) {
+        next
+      }
       subcortical_files <- list.files(
         subcortical_path,
         pattern = sprintf("^[lr]h\\.%s-[0-9]+$", surface_type),

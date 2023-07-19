@@ -169,7 +169,7 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
 as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
   x <- vapply(as.character(x), function(k) {
     if(grepl("^[0-9]+$", k)) {
-      return(freesurfer_lut$from_key(k, label_only = TRUE))
+      return(as.character(freesurfer_lut$from_key(k, label_only = TRUE)))
     } else {
       return(k)
     }
@@ -178,11 +178,11 @@ as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
   x <- tolower(x)
 
   if( remove_hemisphere ) {
-    x <- gsub("^ctx[_-][lr]h", "ctx", x)
+    x <- gsub("^(ctx|wm)[_-][lr]h", "\\1", x)
     x <- gsub("^(left|right)[_-]", "", x)
   } else {
-    x <- gsub("^ctx[_-]lh", "lh.ctx", x)
-    x <- gsub("^ctx[_-]rh", "rh.ctx", x)
+    x <- gsub("^(ctx|wm)[_-]lh", "lh.\\1", x)
+    x <- gsub("^(ctx|wm)[_-]rh", "rh.\\1", x)
     x <- gsub("^left[_-]", "lh.", x)
     x <- gsub("^right[_-]", "rh.", x)
   }
