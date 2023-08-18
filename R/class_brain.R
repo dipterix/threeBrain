@@ -676,6 +676,8 @@ Brain2 <- R6::R6Class(
         # using RedFormat so color map is the color intensity in gray
         color = c("black", "white"),
 
+        bias = 0.2,
+
         # automatically re-scale the color map
         auto_rescale = TRUE
       )

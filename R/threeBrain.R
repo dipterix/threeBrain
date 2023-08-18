@@ -389,18 +389,23 @@ threeBrain <- function(
         ignore.case = TRUE,
         include.dirs = FALSE
       )
-      if(length(subcortical_files) != 2) { next }
+      if(length(subcortical_files) == 0) { next }
 
-      path_left <- normalizePath(
-        file.path(subcortical_path, subcortical_files[startsWith(subcortical_files, "l")]),
-        winslash = "/",
-        mustWork = FALSE
-      )
-      path_right <- normalizePath(
-        file.path(subcortical_path, subcortical_files[startsWith(subcortical_files, "r")]),
-        winslash = "/",
-        mustWork = FALSE
-      )
+      fname_left <- subcortical_files[startsWith(subcortical_files, "l")]
+      if(!length(fname_left)) {
+        fname_left <- system.file("sample_data", "simple_mesh", package = "threeBrain")
+      } else {
+        fname_left <- file.path(subcortical_path, fname_left[[1]])
+      }
+      path_left <- normalizePath( fname_left, winslash = "/", mustWork = FALSE )
+
+      fname_right <- subcortical_files[startsWith(subcortical_files, "r")]
+      if(!length(fname_right)) {
+        fname_right <- system.file("sample_data", "simple_mesh", package = "threeBrain")
+      } else {
+        fname_right <- file.path(subcortical_path, fname_right[[1]])
+      }
+      path_right <- normalizePath( fname_right, winslash = "/", mustWork = FALSE )
       subcortical <- TRUE
     }
 
