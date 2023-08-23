@@ -506,6 +506,7 @@ Brain2 <- R6::R6Class(
     ){
       control_presets <- c('localization', control_presets)
       controllers[["Highlight Box"]] <- FALSE
+      controllers[["Outlines"]] %?<-% "on"
 
       # Backward compatible
       if(missing(ct_path)) {

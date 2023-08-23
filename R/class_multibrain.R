@@ -128,6 +128,7 @@ MultiBrain2 <- R6::R6Class(
       control_presets <- c('localization', control_presets)
       controllers[["Edit Mode"]] <- "CT/volume"
       controllers[["Highlight Box"]] <- FALSE
+      controllers[["Outlines"]] %?<-% "on"
 
       if(!missing( coregistered_ct )){
         if(!inherits(coregistered_ct, "threeBrain.nii")) {
