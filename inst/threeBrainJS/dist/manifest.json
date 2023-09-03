@@ -1,10 +1,4 @@
 {
   "main.js": "/threebrain.js",
-  "120.threebrain.js": "/120.threebrain.js",
-  "856.threebrain.js": "/856.threebrain.js",
-  "392.threebrain.js": "/392.threebrain.js",
-  "threebrain.js.map": "/threebrain.js.map",
-  "120.threebrain.js.map": "/120.threebrain.js.map",
-  "856.threebrain.js.map": "/856.threebrain.js.map",
-  "392.threebrain.js.map": "/392.threebrain.js.map"
+  "threebrain.js.map": "/threebrain.js.map"
 }

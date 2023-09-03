@@ -1,7 +1,7 @@
 # DIPSAUS DEBUG START
 n27_path <- "/Users/dipterix/Dropbox (PennNeurosurgery)/BeauchampLabAtPenn/Electrode_Localization_Paper/Code/N27"
 atlas_idx <- c(17,18,53,1021,1023,1027,1034,1035,2001,2005,2027)
-atlad_idx2 <- NULL #c(17,53,1001,1015,1030,2001,2015,2030)
+atlad_idx2 <- c(17,53,1001,1015,1030,2001,2015,2030)
 brain <- raveio::rave_brain("YAEL/N27", surfaces = atlad_idx2)
 
 electrodes <- brain$electrodes$raw_table
@@ -35,7 +35,13 @@ palettes = list(
   Response = ravebuiltins::get_heatmap_palette('PinkWhiteGreen')
 )
 brain$plot(
-  palettes = palettes
+  palettes = palettes,
+  controllers = list(
+    'Display Data' = "LabelPrefix",
+    'Subcortical Surface' = "right",
+    'Right Opacity' = 0.1,
+    'Voxel Type' = "aparc_aseg"
+  )
 )
 # B|D|H|
 
