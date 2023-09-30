@@ -1,7 +1,7 @@
 Package: threeBrain
 Type: Package
 Title: 3D Brain Visualization
-Version: 1.0.1.9009
+Version: 1.0.1.9011
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("aut", "res")),

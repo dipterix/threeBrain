@@ -28,7 +28,14 @@ NULL
 #
 #
 
-
+#' Read volume file in \code{'MGH'} or \code{'Nifti'} formats
+#' @param file file path
+#' @param format the file format
+#' @param header_only whether only read headers; default is false
+#' @returns A list of volume data and transform matrices; if
+#' \code{header_only=TRUE}, then volume data will be substituted by the
+#' header.
+#' @export
 read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FALSE) {
   format <- match.arg(format)
   if(format == "auto") {
