@@ -53,6 +53,9 @@ must be positive integer; default is \code{NA} (automatically determined)}
 
 \item{...}{additional arguments passing into \code{\link[graphics]{image}}}
 }
+\value{
+Nothing
+}
 \description{
 Plot slices of volume
 }

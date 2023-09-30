@@ -18,6 +18,7 @@
 #' @param zlim image plot value range, default is identical to \code{normalize}
 #' @param main image titles
 #' @param ... additional arguments passing into \code{\link[graphics]{image}}
+#' @returns Nothing
 #' @export
 plot_slices <- function(
     volume, transform = NULL, positions = NULL, zoom = 1, pixel_width = 0.5,
