@@ -118,8 +118,14 @@ plot_slices <- function(
   }
   nc <- min(max(round(nc), 1), npts)
   nr <- ceiling(npts / nc)
+  lmat <- matrix(seq_len(nr * nc), ncol = nc, byrow = FALSE)
+  lmat <- t(apply(lmat, 1, function(l) {
+    l <- (l - 1) * 4
+    as.vector(rbind(l + 1, l + 2, l + 3, l + 4))
+  }))
+  dim(lmat) <- c(nr, nc * 4)
   graphics::layout(
-    matrix(seq_len(nr * nc * 4), ncol = 4 * nc, byrow = TRUE),
+    lmat,
     widths = rep(c(graphics::lcm(0.8), 1, 1, 1), times = nc)
   )
   graphics::par(
