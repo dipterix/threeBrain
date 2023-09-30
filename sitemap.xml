@@ -106,6 +106,9 @@
     <loc>https://dipterix.org/threeBrain/reference/merge_brain.html</loc>
   </url>
   <url>
+    <loc>https://dipterix.org/threeBrain/reference/plot_slices.html</loc>
+  </url>
+  <url>
     <loc>https://dipterix.org/threeBrain/reference/read_fs_asc.html</loc>
   </url>
   <url>
@@ -122,6 +125,9 @@
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/read_mgz.html</loc>
+  </url>
+  <url>
+    <loc>https://dipterix.org/threeBrain/reference/read_volume.html</loc>
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/reexports.html</loc>
