@@ -213,4 +213,5 @@ plot_slices <- function(
     NULL
   })
 
+  invisible()
 }
