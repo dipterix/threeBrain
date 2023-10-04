@@ -494,10 +494,19 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
   cmd_folders <- system.file("commands/", package = "threeBrain")
   fnames <- list.files(cmd_folders, all.files = FALSE, full.names = FALSE, recursive = FALSE)
   for(f in fnames){
-    sh_file <- file.path(directory, f)
-    file.copy(file.path(cmd_folders, f), sh_file)
-    if(!(get_os() == "windows" || endsWith(f, "zip") || endsWith(f, "txt"))){
-      system(sprintf('chmod a+x "%s"', normalizePath(sh_file)), wait = FALSE)
+    src_file <- file.path(cmd_folders, f)
+    if( f %in% c("server_rds_mac") ) {
+      rdata <- readRDS(src_file)
+      sh_file <- file.path(directory, gsub("server_rds", "server", f))
+      writeBin(rdata, con = sh_file, size = 1L)
+    } else {
+      sh_file <- file.path(directory, f)
+      file.copy(src_file, sh_file)
+    }
+    if(!(endsWith(f, "zip") || endsWith(f, "txt"))){
+      sh_file <- normalizePath(sh_file)
+      Sys.chmod(sh_file, mode = "0755")
+      # system(sprintf('chmod a+x "%s"', sh_file), wait = FALSE)
     }
   }
 
@@ -511,6 +520,7 @@ save_brain <- function(widget, directory, filename = 'index.html', assetpath = '
     zipfile <- 'compressed.zip'
     utils::zip(zipfile, files = c(
       './lib', filename, 'linux.sh', 'mac.command', 'windows.bat', 'launch.zip',
+      "server_mac",
       'simple_server.py'))
   }
 
