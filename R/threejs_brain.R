@@ -504,28 +504,34 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
     conn <- file(path, "w+")
     writeLines(pre, conn)
 
-    for(data_file in data_files) {
+    DATAURI_MAX <- floor(65529 / 73 * 54) #72 / 4 * 3
+    lapply(data_files, function(data_file) {
       data_abspath <- file.path(datapath_root, data_file)
 
       data_file <- gsub("[\\\\/]+", "/", x = data_file)
       data_file <- gsub("^[/]+", "", data_file)
-
-      finfo <- file.size(data_abspath)
-      raws <- readBin(con = data_abspath, what = "raw", n = finfo)
       if(endsWith(data_file, "json")) {
-        datauri_type <- 'data:text/plain;base64,'
+        datauri_type <- 'application/json'
       } else {
-        datauri_type <- 'data:application/octet-stream;base64,'
+        datauri_type <- 'application/octet-stream'
       }
-      writeLines(c(
-        sprintf("<script type='text/plain;charset=UTF-8' data-for='#%s'>", data_file),
-        paste0(
-          datauri_type,
-          jsonlite::base64_enc(input = raws)
-        ),
-        "</script>"
-      ), conn)
-    }
+
+      fsize0 <- file.size(data_abspath)
+      fsize <- fsize0
+      fin <- file(data_abspath, open = "rb")
+      ii <- 0
+      while(fsize > 0) {
+        raws <- readBin(con = fin, what = "raw", n = min(fsize, DATAURI_MAX))
+        writeLines(c(
+          sprintf("<script type='text/plain;charset=UTF-8' data-for='#%s' data-partition='%d' data-type='%s' data-size='%.0f' data-start='%.0f' data-parition-size='%.0f'>", data_file, ii, datauri_type, fsize0, fsize0 - fsize, length(raws)),
+          jsonlite::base64_enc(input = raws),
+          "</script>"
+        ), conn)
+        fsize <- fsize - length(raws)
+        ii <- ii + 1
+      }
+      close(fin)
+    })
 
     writeLines(post, conn)
     close(conn)
