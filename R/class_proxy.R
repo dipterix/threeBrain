@@ -406,6 +406,58 @@ ViewerProxy <- R6::R6Class(
 
     sync = function(){
       private$get_value('sync', '')
+    },
+
+    acpc_alignment = function() {
+      data <- private$get_value('acpc_realign', list())
+      if(!length(data) || !is.list(data)) { return(data) }
+      acpc <- data$acpc
+      Torig <- matrix(unlist(data$transforms$Torig), byrow = FALSE, nrow = 4)
+      Norig <- matrix(unlist(data$transforms$Norig), byrow = FALSE, nrow = 4)
+
+      tkr2scanner <- Norig %*% solve(Torig)
+
+      ac <- c(0, 0, 0)
+      ac_set <- FALSE
+      if(isTRUE(acpc$acSet)) {
+        ac <- (tkr2scanner %*% c(unlist(acpc$ac), 1))[seq_len(3)]
+        ac_set <- TRUE
+      }
+      pc <- c(0, -1, 0)
+      pc_set <- FALSE
+      if(isTRUE(acpc$pcSet)) {
+        pc <- (tkr2scanner %*% c(unlist(acpc$pc), 1))[seq_len(3)]
+        pc_set <- TRUE
+      }
+      x_axis <- (tkr2scanner %*% c(unlist(acpc$xAxis), 0))[seq_len(3)]
+      if(all(x_axis == 0)) {
+        x_axis <- c(1, 0, 0)
+      } else {
+        x_axis <- x_axis / norm(x_axis, type = "2")
+      }
+      y_axis <- ac - pc
+      if(all(y_axis == 0)) {
+        y_axis <- c(0, 1, 0)
+        pc <- ac - y_axis
+      } else {
+        y_axis <- y_axis / norm(y_axis, type = "2")
+      }
+      z_axis <- cross_prod(x_axis, y_axis)
+      z_axis <- z_axis / norm(z_axis, type = "2")
+
+      # acpc_in_ras %*% c(0,0,0,1) -> ac
+      acpc_in_ras <- rbind(cbind(x_axis, y_axis, z_axis, ac), c(0, 0, 0, 1))
+      dimnames(acpc_in_ras) <- NULL
+      ras2acpc <- solve(acpc_in_ras)
+
+      list(
+        space = "scannerRAS",
+        ac = ac,
+        ac_set = ac_set,
+        pc = pc,
+        pc_set = pc_set,
+        ras2acpc = ras2acpc
+      )
     }
 
   )
