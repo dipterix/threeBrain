@@ -736,11 +736,13 @@ Brain2 <- R6::R6Class(
 
       value_ranges = val_ranges, controllers = list(),
 
-      width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE, ... ){
+      width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE,
+      additional_geoms = NULL, ... ){
 
 
       # collect volume information
       geoms <- self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE, atlases = atlases )
+      geoms <- c(geoms, additional_geoms)
 
       is_r6 <- vapply(geoms, function(x){ 'AbstractGeom' %in% class(x) }, FALSE)
       geoms <- geoms[is_r6]
