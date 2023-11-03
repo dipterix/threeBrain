@@ -41,6 +41,7 @@ Imports:
     ravetools,
     xml2,
     servr,
+    png,
     shiny (>= 1.2.0),
     digest (>= 0.6.22),
     freesurferformats (>= 0.1.7),

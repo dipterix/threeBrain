@@ -32,6 +32,8 @@
 #' @importFrom freesurferformats read.nifti2.header
 #' @importFrom freesurferformats write.nifti1
 #' @importFrom freesurferformats write.nifti2
+#'
+#' @importFrom png writePNG
 NULL
 
 # ----- Reexports ------------------------------------------------------------
@@ -258,3 +260,5 @@ surface_alternative_types <- list(
   "white.K" = "white.preaparc.K",
   "white.H" = "white.preaparc.H"
 )
+
+TRANSFORM_SPACES <- c("tkr", "scanner", "mni152", "mni305")
