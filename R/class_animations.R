@@ -229,10 +229,14 @@ ColorMap <- R6::R6Class(
 
       # Threejs Lut works best with 2^x number of colors
       ncols <- max(16 , 2^ceiling(log2(self$n_colors)) )
-      colors <- grDevices::colorRampPalette(self$colors)(ncols)
       if( self$value_type == 'continuous' ){
+        colors <- grDevices::colorRampPalette(self$colors)(ncols)
         color_keys <- seq( self$value_range[1], self$value_range[2], length.out = ncols )
       }else{
+        colors <- grDevices::colorRampPalette(self$colors)( self$n_colors )
+        if(length(colors) < ncols) {
+          colors <- c(colors, rep("#000000", ncols - length(colors)))
+        }
         color_keys <- seq_len( ncols )
       }
 
