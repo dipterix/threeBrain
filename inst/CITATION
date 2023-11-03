@@ -1,4 +1,21 @@
 bibentry(bibtype = "Article",
+         title        = "{YAEL}: Your Advanced Electrode Localizer",
+         author       = c(as.person("Zhengjia Wang"),
+                          as.person("John F. Magnotti"),
+                          as.person("Xiang Zhang"),
+                          as.person("Michael S. Beauchamp")),
+         journal      = "Eneuro",
+         year         = "2023",
+         volume       = "10",
+         number       = "10",
+         publisher    = "Society for Neuroscience",
+         doi          = "10.1523/ENEURO.0328-23.2023",
+         header       = "To cite electrode localization (YAEL) in publications use, please cite the YAEL paper from Beauchamp's lab.",
+         footer       = "Please check https://yael.wiki for more information.",
+         textVersion  = "Wang, Z., Magnotti, J. F., Zhang, X., & Beauchamp, M. S. (2023). YAEL: Your Advanced Electrode Localizer. Eneuro, 10(10)."
+)
+
+bibentry(bibtype = "Article",
          title        = "{RAVE}: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data",
          author       = c(as.person("John F. Magnotti"),
                           as.person("Zhengjia Wang"),
@@ -8,7 +25,7 @@ bibentry(bibtype = "Article",
          volume       = "223",
          pages        = "117341",
          doi          = "10.1016/j.neuroimage.2020.117341",
-         header       = "To cite ravetools in publications use, please cite the RAVE paper from Beauchamp's lab.",
+         header       = "To cite the 3D viewer in publications use, please cite the RAVE paper from Beauchamp's lab.",
          footer       = "Please check https://rave.wiki for more information.",
-         textVersion  = "Magnotti, JF, and Wang, Z, and Beauchamp, MS. RAVE: comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data. NeuroImage, 223, p.117341."
+         textVersion  = "Magnotti, J. F., Wang, Z., & Beauchamp, M. S. (2020). RAVE: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data. NeuroImage, 223, 117341."
 )
