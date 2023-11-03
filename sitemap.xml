@@ -49,6 +49,9 @@
     <loc>https://dipterix.org/threeBrain/reference/SphereGeom.html</loc>
   </url>
   <url>
+    <loc>https://dipterix.org/threeBrain/reference/SpriteGeom.html</loc>
+  </url>
+  <url>
     <loc>https://dipterix.org/threeBrain/reference/TubeGeom.html</loc>
   </url>
   <url>
@@ -58,10 +61,16 @@
     <loc>https://dipterix.org/threeBrain/reference/brain_setup.html</loc>
   </url>
   <url>
+    <loc>https://dipterix.org/threeBrain/reference/calculate_rotation.html</loc>
+  </url>
+  <url>
     <loc>https://dipterix.org/threeBrain/reference/check_freesurfer_path.html</loc>
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/create_group.html</loc>
+  </url>
+  <url>
+    <loc>https://dipterix.org/threeBrain/reference/cross_prod.html</loc>
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/default_template_directory.html</loc>
@@ -104,6 +113,9 @@
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/merge_brain.html</loc>
+  </url>
+  <url>
+    <loc>https://dipterix.org/threeBrain/reference/new_electrode_prototype.html</loc>
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/plot_slices.html</loc>
