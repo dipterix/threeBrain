@@ -275,12 +275,13 @@ Brain2 <- R6::R6Class(
       )
     },
 
-    set_electrodes = function(electrodes){
+    set_electrodes = function(electrodes, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"), ...){
+      coord_sys <- match.arg(coord_sys)
       if( R6::is.R6(electrodes) && 'brain-electrodes' %in% class(electrodes)){
         self$electrodes <- electrodes
-        self$electrodes$set_subject_code( self$subject_code )
+        self$electrodes$set_brain( self )
       }else{
-        self$electrodes$set_electrodes( electrodes )
+        self$electrodes$set_electrodes( electrodes, coord_sys = coord_sys, ... )
       }
     },
 

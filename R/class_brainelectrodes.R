@@ -1,7 +1,31 @@
+identity4 <- diag(1.0, nrow = 4, ncol = 4)
+
 BrainElectrodes <- R6::R6Class(
   classname = 'brain-electrodes',
   portable = TRUE,
   cloneable = FALSE,
+
+  active = list(
+    Norig = function() {
+      if(inherits(self$brain, "rave-brain")) {
+        return( self$brain$Norig )
+      }
+      identity4
+    },
+    Torig = function() {
+      if(inherits(self$brain, "rave-brain")) {
+        return( self$brain$Torig )
+      }
+      identity4
+    },
+    xfm = function() {
+      if(inherits(self$brain, "rave-brain")) {
+        return( self$brain$xfm )
+      }
+      identity4
+    }
+  ),
+
   public = list(
 
     subject_code = NULL,
@@ -18,6 +42,17 @@ BrainElectrodes <- R6::R6Class(
 
     # electrode group
     group = NULL,
+
+    brain = NULL,
+
+    set_brain = function( brain ) {
+      if(inherits(brain, "rave-brain")) {
+        self$brain <- brain
+        self$set_subject_code( brain$subject_code )
+      } else if(is.character(brain)) {
+        self$set_subject_code( brain )
+      }
+    },
 
     set_subject_code = function( subject_code ){
       if( !is.null(self$group) ){
@@ -47,7 +82,46 @@ BrainElectrodes <- R6::R6Class(
       })
     },
 
-    set_electrodes = function(table_or_path){
+    get_transform_to_tkrRAS = function( from = c("tkrRAS", "scannerRAS", "MNI305", "MNI152") ) {
+      from <- match.arg(from)
+      m <- switch(
+        from,
+        "tkrRAS" = { diag(1.0, nrow = 4L, ncol = 4L) },
+        "scannerRAS" = {
+          self$Torig %*% solve(self$Norig)
+        },
+        "MNI305" = {
+          self$Torig %*% solve(self$xfm %*% self$Norig)
+        },
+        "MNI152" = {
+          self$Torig %*% solve(MNI305_to_MNI152 %*% self$xfm %*% self$Norig)
+        }
+      )
+      m
+    },
+
+    apply_transform_points = function(positions,
+                                      from = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
+                                      to = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")) {
+      from <- match.arg(from)
+      to <- match.arg(to)
+      positions <- as.matrix(positions)[, seq_len(3), drop = FALSE]
+      dimnames(positions) <- NULL
+      if( from == to ) { return(positions) }
+
+      # calculate matrix from `from` to `tkrRAS`
+      tkr_to_from <- solve(self$get_transform_to_tkrRAS(from = from))
+      to_to_tkr <- self$get_transform_to_tkrRAS(from = to)
+      to_to_from <- tkr_to_from %*% to_to_tkr
+
+      # from_to_to %*% t(cbind(positions, 1))
+      positions <- cbind(positions, 1) %*% to_to_from
+      return(positions[, seq_len(3), drop = FALSE])
+    },
+
+    set_electrodes = function(table_or_path, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
+                              position_names = c("x", "y", "z")){
+      coord_sys <- match.arg(coord_sys)
       if( is.null(table_or_path) ){
         return(invisible())
       }
@@ -62,8 +136,9 @@ BrainElectrodes <- R6::R6Class(
         table <- table_or_path
       }
 
-      stopifnot2(all(c('Electrode', 'Coord_x', 'Coord_y', 'Coord_z') %in% names(table)),
-                 msg = 'electrode table must contains Electrode (integer), Coord_x,Coord_y,Coord_z in FreeSurfer RAS coordinates')
+      table_colnames <- names(table)
+      stopifnot2("Electrode" %in% table_colnames,
+                 msg = "Electrode table must contains column `Electrode` (case-sensitive, values are channels in integers)")
 
       table$Electrode <- as.integer(table$Electrode)
       table <- table[!is.na(table$Electrode), ]
@@ -72,16 +147,52 @@ BrainElectrodes <- R6::R6Class(
       if( n == 0 ){
         return(invisible())
       }
-
       # auto generate label
       if( !length(table$Label) ){
         table$Label <- sprintf('NoLabel-%d', seq_len(n))
       }
 
-      # Check coordinates
-      table$Coord_x <- as.numeric( table$Coord_x )
-      table$Coord_y <- as.numeric( table$Coord_y )
-      table$Coord_z <- as.numeric( table$Coord_z )
+
+      # check if the columns are explicitly specified in the table, for e.g.,
+      # if coord_sysis tkrRAS, and `Coord_x` (x,y,z) are in the table columns,
+      # then coord_sys arguments is ignored, and xyz will be obtained through Coord_xyz
+      explicit <- FALSE
+      xyz_names <- position_names
+      if(coord_sys == "tkrRAS" && all(c('Coord_x', 'Coord_y', 'Coord_z') %in% table_colnames)) {
+        explicit <- TRUE
+        xyz_names <- c('Coord_x', 'Coord_y', 'Coord_z')
+      }
+      if(!explicit && coord_sys == "scannerRAS" &&
+         all(c('T1R', 'T1A', 'T1S') %in% table_colnames)) {
+        explicit <- TRUE
+        xyz_names <- c('T1R', 'T1A', 'T1S')
+      }
+      if(!explicit && coord_sys == "MNI305" &&
+         all(c('MNI305_x', 'MNI305_y', 'MNI305_z') %in% table_colnames)) {
+        explicit <- TRUE
+        xyz_names <- c('MNI305_x', 'MNI305_y', 'MNI305_z')
+      }
+      if(!explicit && coord_sys == "MNI152" &&
+         all(c('MNI152_x', 'MNI152_y', 'MNI152_z') %in% table_colnames)) {
+        explicit <- TRUE
+        xyz_names <- c('MNI152_x', 'MNI152_y', 'MNI152_z')
+      }
+      if(!explicit && !all(xyz_names %in% table_colnames)) {
+        stop("Cannot infer electrode coordinates from the electrode table. Please specify `x`, `y`, `z` columns and the corresponding coordinate system.")
+      }
+
+      # Calculate tkrRAS
+      if(all(c('Coord_x', 'Coord_y', 'Coord_z') %in% table_colnames)) {
+        # Check coordinates
+        table$Coord_x <- as.numeric( table$Coord_x )
+        table$Coord_y <- as.numeric( table$Coord_y )
+        table$Coord_z <- as.numeric( table$Coord_z )
+      } else {
+        ras <- self$apply_transform_points(table[, xyz_names], from = coord_sys, to = "tkrRAS")
+        table$Coord_x <- ras[, 1]
+        table$Coord_y <- ras[, 2]
+        table$Coord_z <- ras[, 3]
+      }
       na_coord <- is.na(table$Coord_x) | is.na(table$Coord_y) | is.na(table$Coord_z)
       if( any(na_coord) ){
         table$Coord_x[ na_coord ] <- 0
@@ -89,17 +200,38 @@ BrainElectrodes <- R6::R6Class(
         table$Coord_z[ na_coord ] <- 0
       }
 
-      if( all( paste0('MNI305_', c('x','y','z')) %in% names(table) ) ){
-        table$MNI305_x <- as.numeric( table$MNI305_x )
-        table$MNI305_y <- as.numeric( table$MNI305_y )
-        table$MNI305_z <- as.numeric( table$MNI305_z )
+      # Calculate MNI305 for template brain
+      has_mni305 <- FALSE
+      if( coord_sys == "MNI305" || all( c('MNI305_x', 'MNI305_y', 'MNI305_z') %in% table_colnames ) ) {
+        if( coord_sys == "MNI305" ) {
+          xyz_names2 <- xyz_names
+        } else {
+          xyz_names2 <- c('MNI305_x', 'MNI305_y', 'MNI305_z')
+        }
+        table$MNI305_x <- as.numeric( table[[ xyz_names2[[1]] ]] )
+        table$MNI305_y <- as.numeric( table[[ xyz_names2[[2]] ]] )
+        table$MNI305_z <- as.numeric( table[[ xyz_names2[[3]] ]] )
+        has_mni305 <- TRUE
+      } else if( coord_sys == "MNI152" || all( c('MNI152_x', 'MNI152_y', 'MNI152_z') %in% table_colnames ) ) {
+        if( coord_sys == "MNI152" ) {
+          ras <- self$apply_transform_points(table[, xyz_names], from = coord_sys, to = "MNI305")
+        } else {
+          ras <- as.matrix(table[, c('MNI152_x', 'MNI152_y', 'MNI152_z')])
+        }
+        table$MNI305_x <- as.numeric( ras[, 1] )
+        table$MNI305_y <- as.numeric( ras[, 2] )
+        table$MNI305_z <- as.numeric( ras[, 3] )
+        has_mni305 <- TRUE
+      }
+
+      if( has_mni305 ) {
         na_coord <- is.na(table$MNI305_x) | is.na(table$MNI305_y) | is.na(table$MNI305_z)
         if( any(na_coord) ){
           table$MNI305_x[ na_coord ] <- 0
           table$MNI305_y[ na_coord ] <- 0
           table$MNI305_z[ na_coord ] <- 0
         }
-      }else{
+      } else {
         table$MNI305_x <- 0
         table$MNI305_y <- 0
         table$MNI305_z <- 0
