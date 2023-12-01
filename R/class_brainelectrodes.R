@@ -110,13 +110,102 @@ BrainElectrodes <- R6::R6Class(
       if( from == to ) { return(positions) }
 
       # calculate matrix from `from` to `tkrRAS`
-      tkr_to_from <- solve(self$get_transform_to_tkrRAS(from = from))
-      to_to_tkr <- self$get_transform_to_tkrRAS(from = to)
-      to_to_from <- tkr_to_from %*% to_to_tkr
+      from_to_tkr <- self$get_transform_to_tkrRAS(from = from)
+      tkr_to_to <- solve(self$get_transform_to_tkrRAS(from = to))
+      from_to_to <- tkr_to_to %*% from_to_tkr
 
       # from_to_to %*% t(cbind(positions, 1))
-      positions <- cbind(positions, 1) %*% to_to_from
+      positions <- cbind(positions, 1) %*% t(from_to_to)
       return(positions[, seq_len(3), drop = FALSE])
+    },
+
+    get_atlas_labels = function(atlas, radius = 1, lut = NULL) {
+      # DIPSAUS DEBUG START
+      # self <- raveio::rave_brain("demo/DemoSubject")$electrodes
+      # atlas <- "~/rave_data/raw_dir/DemoSubject/rave-imaging/fs/mri/aparc.a2009s+aseg.mgz"
+      # lut = NULL
+
+      if(!is.data.frame(self$raw_table)) {
+        return(NULL)
+      }
+
+      if(!inherits(atlas, "threeBrain.volume")) {
+        atlas <- read_volume(atlas)
+      }
+      if(is.null(lut)) {
+        lut <- load_colormap(system.file(
+          "palettes", "datacube2", "FreeSurferColorLUT.json",
+          package = 'threeBrain'))
+      }
+
+      sub_tbl <- as.matrix(self$raw_table[, c("Coord_x", "Coord_y", "Coord_z")])
+      dist <- rowSums(sub_tbl^2)
+      valids <- !is.na(dist) & dist > 0
+      scanner_ras <- self$apply_transform_points(sub_tbl, from = "tkrRAS", to = "scannerRAS")
+      ras_to_ijk <- solve(atlas$Norig)
+      ijk <- round((ras_to_ijk %*% rbind(t(scanner_ras), 1))[seq_len(3), , drop = FALSE])
+
+      atlas_shape <- dim(atlas$data)[seq_len(3)]
+      atlas_cumprod <- cumprod(c(1, atlas_shape))
+      atlas_n <- atlas_cumprod[[4]]
+      atlas_cumprod <- atlas_cumprod[seq_len(3)]
+
+      lut_keys <- names(lut$map)
+      if(radius >= 1) {
+        deltas <- as.matrix(expand.grid(
+          seq.int(-radius, radius),
+          seq.int(-radius, radius),
+          seq.int(-radius, radius)
+        ))
+        deltas <- colSums(t(deltas) * atlas_cumprod)
+      } else {
+        deltas <- 0
+      }
+
+      unknown_labels <- data.frame(
+        Label1 = "Unknown",
+        Count1 = 0,
+        Label2 = "Unknown",
+        Count2 = 0,
+        Label3 = "Unknown",
+        Count3 = 0,
+        Label4 = "Unknown",
+        Count4 = 0
+      )
+
+      labels <- lapply(seq_len(ncol(ijk)), function(ii) {
+        if(!valids[[ii]]) {
+          return(unknown_labels)
+        }
+        ijk0 <- sum(ijk[, ii] * atlas_cumprod)
+        if(is.na(ijk0) || ijk0 <= 0 || ijk0 > atlas_n) {
+          return(unknown_labels)
+        }
+        idx <- atlas$data[ijk0 + deltas]
+        idx <- as.character(idx[!is.na(idx) & idx != 0])
+        if(!length(idx)) {
+          return(unknown_labels)
+        }
+        idx_tbl <- table(idx)
+        idx_uni <- names(idx_tbl)
+        o <- order(idx_tbl, decreasing = TRUE)
+        idx_uni <- c(idx_uni[o], "0", "0", "0", "0")[seq_len(4)]
+        idx_tbl <- unname(c(idx_tbl[o], 0, 0, 0, 0)[seq_len(4)])
+
+        labels <- sapply(lut$map[idx_uni], "[[", "Label")
+        data.frame(
+          Label1 = labels[[1]],
+          Count1 = idx_tbl[[1]],
+          Label2 = labels[[2]],
+          Count2 = idx_tbl[[2]],
+          Label3 = labels[[3]],
+          Count3 = idx_tbl[[3]],
+          Label4 = labels[[4]],
+          Count4 = idx_tbl[[4]]
+        )
+      })
+      return(do.call("rbind", labels))
+
     },
 
     set_electrodes = function(table_or_path, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),

@@ -58,6 +58,7 @@ Brain2 <- R6::R6Class(
       self$volumes <- list()
       self$surfaces <- list()
       self$electrodes <- BrainElectrodes$new(subject_code = subject_code)
+      self$electrodes$set_brain( self )
       self$meta <- list()
 
       # TODO: put all brain global data (transform etc...) here
