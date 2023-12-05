@@ -143,6 +143,8 @@ BrainElectrodes <- R6::R6Class(
       valids <- !is.na(dist) & dist > 0
       scanner_ras <- self$apply_transform_points(sub_tbl, from = "tkrRAS", to = "scannerRAS")
       ras_to_ijk <- solve(atlas$Norig)
+
+      # IJK starts from 0, 0, 0
       ijk <- round((ras_to_ijk %*% rbind(t(scanner_ras), 1))[seq_len(3), , drop = FALSE])
 
       atlas_shape <- dim(atlas$data)[seq_len(3)]
@@ -177,7 +179,7 @@ BrainElectrodes <- R6::R6Class(
         if(!valids[[ii]]) {
           return(unknown_labels)
         }
-        ijk0 <- sum(ijk[, ii] * atlas_cumprod)
+        ijk0 <- sum(ijk[, ii] * atlas_cumprod) + 1
         if(is.na(ijk0) || ijk0 <= 0 || ijk0 > atlas_n) {
           return(unknown_labels)
         }

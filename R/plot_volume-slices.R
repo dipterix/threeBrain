@@ -176,7 +176,7 @@ plot_slices <- function(
 
     # Axial
     # translate x transform_inv x translate^-1 x Norig
-    IJK <- round(world2ijk[c(1, 2, 3), ] %*% (transform_inv %*% pos + pos_pt))
+    IJK <- round(world2ijk[c(1, 2, 3), ] %*% (transform_inv %*% pos + pos_pt)) + 1L
     sel <- IJK[1,] > shape[[1]] | IJK[2,] > shape[[2]] | IJK[3,] > shape[[3]]
     IJK[,sel] <- NA
     IJK[IJK < 1] <- NA
@@ -190,7 +190,7 @@ plot_slices <- function(
     panel_last( ii, 1 )
 
     # Sagittal
-    IJK <- round(world2ijk[c(1, 2, 3), ] %*% (pos[c(3,1,2,4), , drop = FALSE] + pos_pt))
+    IJK <- round(world2ijk[c(1, 2, 3), ] %*% (pos[c(3,1,2,4), , drop = FALSE] + pos_pt)) + 1L
     sel <- IJK[1,] > shape[[1]] | IJK[2,] > shape[[2]] | IJK[3,] > shape[[3]]
     IJK[,sel] <- NA
     IJK[IJK < 1] <- NA
@@ -204,7 +204,7 @@ plot_slices <- function(
     panel_last( ii, 2 )
 
     # Coronal
-    IJK <- round(world2ijk[c(1, 2, 3), ] %*% (pos[c(1,3,2,4), , drop = FALSE] + pos_pt))
+    IJK <- round(world2ijk[c(1, 2, 3), ] %*% (pos[c(1,3,2,4), , drop = FALSE] + pos_pt)) + 1L
     sel <- IJK[1,] > shape[[1]] | IJK[2,] > shape[[2]] | IJK[3,] > shape[[3]]
     IJK[,sel] <- NA
     IJK[IJK < 1] <- NA
