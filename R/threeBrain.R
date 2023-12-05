@@ -167,13 +167,16 @@ threeBrain <- function(
   if(!fs_path_exists) { return() }
 
   # 3D slices MRI overlay + Norig + Torig
-  allowed_mri_prefix <- c("brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
-                          "brainmask", "brainmask.auto", "T1")
+  allowed_mri_prefix <- c(
+    "rave_slices",
+    "brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
+    "brainmask", "brainmask.auto", "T1"
+  )
 
   path_mri <- file.path(fs_path, "mri", as.vector(rbind(
-    sprintf("%s.mgz", allowed_mri_prefix),
     sprintf("%s.nii.gz", allowed_mri_prefix),
-    sprintf("%s.nii", allowed_mri_prefix)
+    sprintf("%s.nii", allowed_mri_prefix),
+    sprintf("%s.mgz", allowed_mri_prefix)
   )))
   path_mri <- path_mri[file.exists(path_mri)]
   if(length(path_mri)){ path_mri <- path_mri[[1]] }
