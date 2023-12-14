@@ -226,9 +226,23 @@ available_templates <- function() {
     }
   })
 
+  # As of 2022-05-09
+  default_list <- list(
+    bert = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/bert.zip",
+    cvs_avg35 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35.zip",
+    cvs_avg35_inMNI152 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35_inMNI152.zip",
+    fsaverage = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage.zip",
+    fsaverage_sym = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage_sym.zip",
+    `N27-complete` = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27-complete.zip",
+    N27 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip"
+  )
+
   res <- tryCatch({
     utils::download.file(url, destfile = tf, quiet = TRUE)
-    res <- jsonlite::read_json(tf)[[1]]
+    releases <- jsonlite::read_json(tf)
+    res <- releases[vapply(releases, function(rel) {
+      isTRUE(rel$tag_name == "1.0.0")
+    }, FALSE)][[1]]
     res <- lapply(res$assets, function(asset){
       list(
         subject_name = gsub("\\..*", "", asset$name),
@@ -240,19 +254,16 @@ available_templates <- function() {
     urls <- lapply(res, FUN = '[[', 'download_url')
 
     names(urls) <- scodes
-    urls
+    urls <- as.list(urls)
+    nms <- names(default_list)
+    nms <- nms[!nms %in% names(urls)]
+    if(length(nms)) {
+      urls[nms] <- default_list[nms]
+    }
 
+    urls
   }, error = function(e){
-    # As of 2022-05-09
-    list(
-      bert = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/bert.zip",
-      cvs_avg35 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35.zip",
-      cvs_avg35_inMNI152 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35_inMNI152.zip",
-      fsaverage = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage.zip",
-      fsaverage_sym = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage_sym.zip",
-      `N27-complete` = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27-complete.zip",
-      N27 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip"
-    )
+    default_list
   })
 
   return(res)
