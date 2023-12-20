@@ -193,7 +193,7 @@ plot_slices <- function(
     adjust_plt(reset = TRUE)
     graphics::plot.new()
     if(title_position == "top") {
-      graphics::mtext(side = 1, line = 0, text = main[[ii]], las = 0)
+      graphics::mtext(side = 1, line = -1, text = main[[ii]], las = 0)
     } else {
       graphics::mtext(side = 4, line = -1.5, text = main[[ii]], las = 0)
     }
