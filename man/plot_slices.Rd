@@ -15,6 +15,7 @@ plot_slices(
   zclip = NULL,
   zlim = normalize,
   main = "",
+  title_position = c("left", "top"),
   fun = NULL,
   nc = NA,
   ...
@@ -44,6 +45,8 @@ range will be clipped into this range}
 \item{zlim}{image plot value range, default is identical to \code{normalize}}
 
 \item{main}{image titles}
+
+\item{title_position}{title position; choices are \code{"left"} or \code{"top"}}
 
 \item{fun}{function with two arguments that will be executed after each
 image is drawn; can be used to draw cross-hairs or annotate each image}

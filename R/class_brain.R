@@ -888,6 +888,113 @@ Brain2 <- R6::R6Class(
         ...
       )
 
+    },
+
+    plot_electrodes_on_slices = function(
+      electrodes_to_plot = "all", volume = NULL, elec_table = NULL,
+      zoom = 1, electrode_color = "green", electrode_size = 2, ...,
+      decoration = function(i, j) {
+        graphics::points(0, 0, pch = 20, col = electrode_color,
+                         cex = electrode_size)
+      },
+      save_to = NULL, one_plot = is.null(save_to), width = 12, height = 4) {
+      # DIPSAUS DEBUG START
+      # self <- raveio::rave_brain('demo/DemoSubject')
+      # private <- self$private
+
+      # Load electrode table
+      if(!is.data.frame(elec_table)) {
+        elec_table <- self$electrodes$raw_table
+      }
+
+      if(!is.data.frame(elec_table) || !nrow(elec_table)) {
+        stop("Electrode table not specified")
+      }
+      tkr_ras <- as.matrix(elec_table[, c("Coord_x", "Coord_y", "Coord_z")])
+      invalids <- rowSums(tkr_ras^2) == 0
+      if(all(invalids)) {
+        stop("All electrodes are invalid. Cannot plot slices.")
+      }
+
+      if(is.character(electrodes_to_plot)) {
+        electrodes_to_plot <- elec_table$Electrode
+      }
+      plot_idx <- elec_table$Electrode %in% electrodes_to_plot & !invalids
+      if(!any(plot_idx)) {
+        stop("All specified electrodes to plot are invalid. Please double-check input `electrodes_to_plot`")
+      }
+      plot_idx <- which(plot_idx)
+
+      # transform electrode from tkrRAS (fs coord_sys) to scanner ras (T1 scanner)
+      scanner_ras <- self$electrodes$apply_transform_points(
+        tkr_ras,
+        from = "tkrRAS",
+        to = "scannerRAS"
+      )
+      scanner_ras[invalids, ] <- 0
+
+
+
+      # load up volume and adjust brightness
+      adjust_brightness <- TRUE
+      if(is.null(volume)) {
+        volume <- self$volumes$T1$object$group$group_data$volume_data$absolute_path
+        adjust_brightness <- FALSE
+      }
+      if(!inherits(volume, "threeBrain.volume")) {
+        volume <- read_volume(volume)
+      }
+      if( adjust_brightness ) {
+        qt <- quantile(volume$data, c(0, 0.95), na.rm = TRUE)
+        volume$data[] <- (volume$data - qt[[1]]) / (qt[[2]] - qt[[1]]) * 255
+        volume$data[volume$data > 255] <- 255
+      }
+
+      # img_height <- 480
+      # png(filename = file.path(subject$imaging_path, "snapshots%03d.png"), width = 3*img_height, height = img_height, bg = "black")
+
+      if(length(save_to) == 1 && isTRUE(is.character(save_to))) {
+        if(endsWith(tolower(save_to), "png")) {
+          save_to <- sprintf("%s-%%04.png",
+                             gsub("[%0-9d]{0,}\\.png$", replacement = "",
+                                  save_to, ignore.case = TRUE))
+          grDevices::png(filename = save_to, width = width * 72,
+                         height = height * 72, bg = "black")
+        } else {
+          save_to <- sprintf("%s.pdf",
+                             gsub("\\.pdf", "", save_to, ignore.case = TRUE))
+          grDevices::pdf(save_to, width = width, height = height,
+                         useDingbats = FALSE, onefile = TRUE,
+                         title = "RAVE Slice Plots", bg = "black")
+        }
+        on.exit({ grDevices::dev.off() })
+      }
+
+      if( one_plot ) {
+        plot_idx <- list(plot_idx)
+      }
+      progress <- dipsaus::progress2("Plotting slices",
+                                     max = length(plot_idx) + 1,
+                                     shiny_auto_close = TRUE)
+      for(ii in plot_idx) {
+        progress$inc(detail = sprintf("Generating graphs for electrode %s", dipsaus::deparse_svec(ii)))
+        plot_slices(
+          volume,
+          positions = scanner_ras[ii,],
+          main = sprintf('%s (Ch=%.0f,ScanRAS=%.1f,%.1f,%.1f)',
+                         elec_table$Label[ii],
+                         elec_table$Electrode[ii],
+                         scanner_ras[ii, 1],
+                         scanner_ras[ii, 2],
+                         scanner_ras[ii, 3]),
+          pixel_width = 1,
+          zoom = zoom,
+          fun = decoration,
+          ...
+        )
+      }
+      progress$inc(detail = "Closing graphic device")
+      # dev.off()
     }
 
   ),

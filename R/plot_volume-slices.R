@@ -17,13 +17,15 @@
 #' (no normalize) or a numeric vector of length two
 #' @param zlim image plot value range, default is identical to \code{normalize}
 #' @param main image titles
+#' @param title_position title position; choices are \code{"left"} or \code{"top"}
 #' @param ... additional arguments passing into \code{\link[graphics]{image}}
 #' @returns Nothing
 #' @export
 plot_slices <- function(
     volume, transform = NULL, positions = NULL, zoom = 1, pixel_width = 0.5,
     col = c("black", "white"), normalize = NULL, zclip = NULL,
-    zlim = normalize, main = "", fun = NULL, nc = NA, ...) {
+    zlim = normalize, main = "", title_position = c("left", "top"),
+    fun = NULL, nc = NA, ...) {
   # DIPSAUS DEBUG START
   # volume <- "~/rave_data/raw_dir/YAB/rave-imaging/fs/mri/brain.finalsurfs.mgz"
   # list2env(list(transform = NULL, positions = NULL, zoom = 1, pixel_width = 0.5,
@@ -33,6 +35,9 @@ plot_slices <- function(
   # fun <- NULL
   # positions = rnorm(12)
   # nc <- 1
+  # title_position <- "top"
+
+  title_position <- match.arg(title_position)
 
   if( is.character(volume) ) {
     volume <- read_volume(volume)
@@ -118,16 +123,31 @@ plot_slices <- function(
   }
   nc <- min(max(round(nc), 1), npts)
   nr <- ceiling(npts / nc)
-  lmat <- matrix(seq_len(nr * nc), ncol = nc, byrow = FALSE)
-  lmat <- t(apply(lmat, 1, function(l) {
-    l <- (l - 1) * 4
-    as.vector(rbind(l + 1, l + 2, l + 3, l + 4))
-  }))
-  dim(lmat) <- c(nr, nc * 4)
-  graphics::layout(
-    lmat,
-    widths = rep(c(graphics::lcm(0.8), 1, 1, 1), times = nc)
-  )
+  if( title_position == "left") {
+    lmat <- matrix(seq_len(nr * nc), ncol = nc, byrow = FALSE)
+    lmat <- t(apply(lmat, 1, function(l) {
+      l <- (l - 1) * 4
+      as.vector(rbind(l + 1, l + 2, l + 3, l + 4))
+    }))
+    dim(lmat) <- c(nr, nc * 4)
+    graphics::layout(
+      lmat,
+      widths = rep(c(graphics::lcm(0.8), 1, 1, 1), times = nc)
+    )
+  } else {
+    lmat <- matrix(seq_len(nr * nc), ncol = nc, byrow = TRUE)
+    lmat <- apply(lmat, 2, function(l) {
+      l <- (l - 1) * 4
+      c(rep(l + 1, each = 3), t(outer(l, c(2,3,4), FUN = "+")))
+    })
+    dim(lmat) <- c(nr * 3, nc * 2)
+    lmat <- t(lmat)
+    graphics::layout(
+      lmat,
+      heights = rep(c(graphics::lcm(0.8), 1), times = nc)
+    )
+  }
+
   graphics::par(
     bg = pal[[1]],
     fg = pal[[length(pal)]],
@@ -172,7 +192,11 @@ plot_slices <- function(
 
     adjust_plt(reset = TRUE)
     graphics::plot.new()
-    graphics::mtext(side = 4, line = -1.5, text = main[[ii]], las = 0)
+    if(title_position == "top") {
+      graphics::mtext(side = 1, line = 0, text = main[[ii]], las = 0)
+    } else {
+      graphics::mtext(side = 4, line = -1.5, text = main[[ii]], las = 0)
+    }
 
     # Axial
     # translate x transform_inv x translate^-1 x Norig
