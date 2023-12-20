@@ -892,7 +892,8 @@ Brain2 <- R6::R6Class(
 
     plot_electrodes_on_slices = function(
       electrodes_to_plot = "all", volume = NULL, elec_table = NULL,
-      zoom = 1, electrode_color = "green", electrode_size = 2, ...,
+      zoom = 1, adjust_brightness = NA,
+      electrode_color = "green", electrode_size = 2, ...,
       decoration = function(i, j) {
         graphics::points(0, 0, pch = 20, col = electrode_color,
                          cex = electrode_size)
@@ -936,13 +937,18 @@ Brain2 <- R6::R6Class(
 
 
       # load up volume and adjust brightness
-      adjust_brightness <- TRUE
+
       if(is.null(volume)) {
         volume <- self$volumes$T1$object$group$group_data$volume_data$absolute_path
-        adjust_brightness <- FALSE
+        if(is.na(adjust_brightness)) {
+          adjust_brightness <- FALSE
+        }
       }
       if(!inherits(volume, "threeBrain.volume")) {
         volume <- read_volume(volume)
+      }
+      if(is.na(adjust_brightness)) {
+        adjust_brightness <- TRUE
       }
       if( adjust_brightness ) {
         qt <- quantile(volume$data, c(0, 0.95), na.rm = TRUE)
