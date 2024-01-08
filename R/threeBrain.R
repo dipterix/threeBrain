@@ -172,6 +172,10 @@ threeBrain <- function(
     "brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
     "brainmask", "brainmask.auto", "T1"
   )
+  allowed_fsmri_prefix <- c(
+    "brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
+    "brainmask", "brainmask.auto", "T1"
+  )
 
   path_mri <- file.path(fs_path, "mri", as.vector(rbind(
     sprintf("%s.nii.gz", allowed_mri_prefix),
@@ -180,6 +184,13 @@ threeBrain <- function(
   )))
   path_mri <- path_mri[file.exists(path_mri)]
   if(length(path_mri)){ path_mri <- path_mri[[1]] }
+  path_fsmri <- file.path(fs_path, "mri", as.vector(rbind(
+    sprintf("%s.nii.gz", allowed_fsmri_prefix),
+    sprintf("%s.nii", allowed_fsmri_prefix),
+    sprintf("%s.mgz", allowed_fsmri_prefix)
+  )))
+  path_fsmri <- path_fsmri[file.exists(path_fsmri)]
+  if(length(path_fsmri)){ path_fsmri <- path_fsmri[[1]] }
 
   # xfm
   path_xfm <- file.path(fs_path, "mri", "transforms", "talairach.xfm")
@@ -235,7 +246,7 @@ threeBrain <- function(
   }
 
   # Norig, Torig
-  mgz_files <- c(path_mri, path_atlas)
+  mgz_files <- c(path_fsmri, path_atlas)
   if(!length(mgz_files)) {
     mgz_files <- list.files(
       file.path(fs_path, "mri"), pattern = "\\.mg(z|h)$", all.files = FALSE,
