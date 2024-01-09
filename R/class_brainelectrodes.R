@@ -165,12 +165,19 @@ BrainElectrodes <- R6::R6Class(
       }
 
       unknown_labels <- data.frame(
+        Key1 = 0,
         Label1 = "Unknown",
         Count1 = 0,
+
+        Key2 = 0,
         Label2 = "Unknown",
         Count2 = 0,
+
+        Key3 = 0,
         Label3 = "Unknown",
         Count3 = 0,
+
+        Key4 = 0,
         Label4 = "Unknown",
         Count4 = 0
       )
@@ -194,14 +201,29 @@ BrainElectrodes <- R6::R6Class(
         idx_uni <- c(idx_uni[o], "0", "0", "0", "0")[seq_len(4)]
         idx_tbl <- unname(c(idx_tbl[o], 0, 0, 0, 0)[seq_len(4)])
 
-        labels <- sapply(lut$map[idx_uni], "[[", "Label")
+        # labels <- sapply(lut$map[idx_uni], "[[", "Label")
+        labels <- sapply(idx_uni, function(id) {
+          li <- lut$map[[as.character(id)]]
+          if(is.list(li) && is.character(li$Label)) {
+            return( li$Label[[1]] )
+          } else {
+            return( "NA-Label" )
+          }
+        })
         data.frame(
+          Key1 = idx_uni[[1]],
           Label1 = labels[[1]],
           Count1 = idx_tbl[[1]],
+
+          Key2 = idx_uni[[2]],
           Label2 = labels[[2]],
           Count2 = idx_tbl[[2]],
+
+          Key3 = idx_uni[[3]],
           Label3 = labels[[3]],
           Count3 = idx_tbl[[3]],
+
+          Key4 = idx_uni[[4]],
           Label4 = labels[[4]],
           Count4 = idx_tbl[[4]]
         )
