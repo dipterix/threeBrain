@@ -449,6 +449,21 @@ BrainElectrodes <- R6::R6Class(
       }
     },
 
+    fix_electrode_color = function(number, color, names = NULL, inclusive = TRUE) {
+      names <- as.character(names)
+      inclusive <- as.logical(inclusive)[[1]]
+      el <- self$objects[[ number ]]
+      if(!is.null(el)) {
+        el$fixed_color <- list(
+          color[[1]],
+          names,
+          inclusive
+        )
+        return(TRUE)
+      }
+      return(FALSE)
+    },
+
     # function to set values to electrodes
     set_values = function(table_or_path){
       if( missing(table_or_path) ){
