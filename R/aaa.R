@@ -262,3 +262,18 @@ surface_alternative_types <- list(
 )
 
 TRANSFORM_SPACES <- c("tkr", "scanner", "mni152", "mni305")
+
+
+col2hexStr <- function(col, alpha = NULL, prefix = '#', ...){
+  if(is.null(alpha)){
+    alpha <- 1
+    transparent <- FALSE
+  }else{
+    transparent <- TRUE
+  }
+  re <- grDevices::adjustcolor(col, alpha.f = alpha)
+  if(!transparent){
+    re <- substr(re, start = 1L, stop = 7L)
+  }
+  gsub('^[^0-9A-F]*', prefix, re)
+}
