@@ -2,11 +2,10 @@
 
 <!-- badges: start -->
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/threeBrain)](https://cran.r-project.org/package=threeBrain)
-[![license](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![R-CMD-check](https://github.com/dipterix/threeBrain/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dipterix/threeBrain/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![DOI](https://raw.githubusercontent.com/dipterix/threeBrain/master/inst/doi.svg)](https://doi.org/10.1016/j.neuroimage.2020.117341)
-
+[![DOI-RAVE](https://raw.githubusercontent.com/dipterix/threeBrain/master/inst/doi.svg)](https://doi.org/10.1016/j.neuroimage.2020.117341)
+[![DOI-YAEL](https://img.shields.io/badge/DOI-10.1523%2FENEURO.0328--23.2023-blue?link=https%3A%2F%2Fdoi.org%2F10.1523%2FENEURO.0328-23.2023)](https://doi.org/10.1523/ENEURO.0328-23.2023)
 <!-- badges: end -->
 
 <!-- demo static: start -->
@@ -42,7 +41,7 @@
 1. [`R`](https://cran.r-project.org/) and [`RStudio Desktop (Free Version)`](https://posit.co/download/rstudio-desktop/)
 2. Open `RStudio`, enter from its console:
 ```r
-install.packages("threeBrain")
+install.packages("threeBrain", repos = "https://rave-ieeg.r-universe.dev")
 ```
 If you want to install `dev` version from *Github*, then use:
 ```r
@@ -82,7 +81,7 @@ x <- freesurfer_brain2( fs_subject_folder = n27_path,
 ```
 2. Visualize
 ```r
-plot(x)       # alternatively, you can use `n27$plot()`
+plot(x)       # alternatively, you can use x$plot()`
 ```
 
 ## C. Subject Setup
@@ -145,33 +144,43 @@ The viewer will be in `N27` template, and electrodes of these two subjects can b
 
 ## F. Electrode Localization (`YAEL`)
 
-`YAEL`: "Yet Another Electrode Localizer" is a module that has been integrated into [RAVE (R Analysis and Visualization of iEEG)](https://openwetware.org/wiki/RAVE). The paper will come out soon. Please contact RAVE team on how to localize electrodes.
+[YAEL ("Your Advanced Electrode Localizer)](https://doi.org/10.1523/ENEURO.0328-23.2023) has been integrated into [RAVE (R Analysis and Visualization of iEEG)](https://openwetware.org/wiki/RAVE). Please check our website https://yael.wiki
 
 [Here is a `sfN` poster](https://www.dropbox.com/s/st0cw1aro4kmo2e/2022-poster-sfN-Zhengjia-RAVE_poster-07Nov22.pdf?dl=0)
 
 
 ## Citation
 
-To cite threeBrain in publications use:
+To cite `threeBrain` in publications use:
 
-> Magnotti, J. F., Wang, Z., & Beauchamp, M. S. (2020). RAVE: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data. *NeuroImage, 223*, 117341.
+* Wang, Z., Magnotti, J. F., Zhang, X., & Beauchamp, M. S. (2023). YAEL: Your Advanced Electrode Localizer. Eneuro, 10(10).
+* Magnotti, J. F., Wang, Z., & Beauchamp, M. S. (2020). RAVE: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data. NeuroImage, 223, 117341.
 
 A BibTeX entry for LaTeX users:
 
 ```
-  @Article{,
-    title = {{RAVE}: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data},
-    author = {John F. Magnotti and Zhengjia Wang and Michael S. Beauchamp},
-    journal = {NeuroImage},
-    year = {2020},
-    volume = {223},
-    doi = {10.1016/j.neuroimage.2020.117341},
-    pages = {117341},
-  }
+@Article{,
+  title = {{YAEL}: Your Advanced Electrode Localizer},
+  author = {Zhengjia Wang and John F. Magnotti and Xiang Zhang and Michael S. Beauchamp},
+  journal = {Eneuro},
+  year = {2023},
+  volume = {10},
+  number = {10},
+  publisher = {Society for Neuroscience},
+  doi = {10.1523/ENEURO.0328-23.2023},
+}
+@Article{,
+  title = {{RAVE}: Comprehensive open-source software for reproducible analysis and visualization of intracranial EEG data},
+  author = {John F. Magnotti and Zhengjia Wang and Michael S. Beauchamp},
+  journal = {NeuroImage},
+  year = {2020},
+  volume = {223},
+  doi = {10.1016/j.neuroimage.2020.117341},
+  pages = {117341},
+}
 ```
 
 ## License
 
-This package as a whole is licensed under GPL-3.0. The front-end viewer does not contain GNU components.
+The front-end viewer (JavaScript) and its components are licensed under MPL-2.0 free open-source license. This package (including the R code and viewer) as a whole is licensed under free open-source GPL-3.0. Please check `LICENSE` file for details.
 
-Explanation: The viewer is considered "data" and might not be abide by GPL-3.0 license. However, certain software scripts are linked by the viewers. These software scripts use quite permissive license. Please check `LICENSE` file for details.
