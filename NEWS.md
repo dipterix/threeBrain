@@ -1,3 +1,46 @@
+threeBrain 1.0.2
+=======
+
+* Removed a `shader` loop that accidentally used dynamic variable for looping, which may crash on `Windows` in certain situations
+* Updated `README.md`
+* Composer effects are removed
+* Added default color to electrodes (JavaScript) to fix the localization electrode color not set correctly issues
+* Added `z-index` base to the side canvas layer (`div`)
+* Removed additional unused parameters from material call
+* Used new material type to make brain more realistic
+* New background color is implemented
+* `Trackball` uses width instead of height of the viewer as the `Arcball` radius; mouse positions is calculated whenever mouse-down event is triggered (allowing more accurate track-ball calculation in `Shiny` applications)
+* Made `col2hexstr` internal function
+* Added a new electrode visibility mode, allowing to show contacts with no values but passing the threshold
+* Added `brain$electrodes$fix_electrode_color` to fix the electrode colors under given data names (to display `DBS` electrodes, for example)
+* Made `controller.load` more robust against errors
+* Fixed the depth issue in `TextSprite`
+* Some default controller values have changed to make more sense
+* Outline render effect is removed; electrode outlines are implemented directly in the `shader`
+* Updated `three.js` to `v160` with light model improved
+* Added `rave_slices.nii` to allowed `MRI` prefix in `FreeSurfer` folder with highest priority, such that this image will be treated as default volume to load in side canvas (default is still `brain.finalsurfs.mgz`)
+* Allow `MRI` to change brightness dynamically in viewer
+* Ensure that `voxels` index from zeros
+* Added `brain$get_atlas_labels` to guess the atlas labels from given masks or atlas files
+* Allowed to spatially transform electrodes to desired coordinate system
+* Updated citation
+* The standalone viewer does not require static server anymore: everything is self-contained (require `pandoc`, which comes with `RStudio`)
+* Changed mechanism on animation color map generator (so the color is more accurate for discrete variables)
+* Added `png` to dependence
+* Added support for `AC-PC` alignment, available in `RAVE` - `YAEL` module
+* Allow `brain` to plot with additional customized geometries
+* Added `plot_slides` to plot `MRI` centered at each electrode contact for slide-to-slide visualization
+* Added Line-of-Sight view mode for side canvas; can be enabled using shortcut `m` (previous shortcut to change the material type is changed to `shift+M`)
+* Fixed `CT` in `JavaScript` when the `sform` and `qform` are different (have different code)
+* Allowed to specify the spacing for interpolation and extrapolation for unequally spaced electrodes
+* Added electrode outlines
+* `YAEL` paper is finally out
+* Fixed incorrect sub-cortical labels
+* Deprecated old format (no cache is needed anymore)
+* Made electrodes opaque on main but transparent in side canvas
+* Let controllers check if the variable is valid before set to avoid invalid viewer state during initialization
+* Added `get_ijk2ras` to get `Norig` and `Torig` matrix
+
 threeBrain 1.0.1
 =======
 

@@ -1,9 +1,22 @@
 # Update logs (for R-cran only)
 
-## 2023-07-03
-**Version 1.0.1 (current)**
+## 2024-02-06
+**Version 1.0.2 (current)**
 
-Self check: 0 errors | 0 warnings | 0 notes
+Self check: 0 errors | 0 warnings | 1 note
+
+```
+❯ checking installed package size ... NOTE
+    installed size is  5.4Mb
+    sub-directories of 1Mb or more:
+      R              2.0Mb
+      threeBrainJS   1.8Mb
+```
+
+I (tried, but) can't reduce the size anymore from `JavaScript` engine and package functions.
+
+## 2023-07-03
+**Version 1.0.1 (passed)**
 
 ## 2023-06-03
 **Version 1.0.0 (passed)**
@@ -22,13 +35,6 @@ Self check: 0 errors | 0 warnings | 0 notes
 
 ## 2021-12-02
 **Version 0.2.4 (passed)**
-
-Starting from this version, the package size will be greater than `5Mb`, which will trigger the check note. However, I can't reduce the size since most are from the `JavaScript` engine.
-
-```
-checking installed package size ... NOTE
-  installed size is  5.3Mb
-```
 
 ## 2021-10-13
 **Version 0.2.3 (passed)**

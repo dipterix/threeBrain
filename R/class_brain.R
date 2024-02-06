@@ -893,7 +893,8 @@ Brain2 <- R6::R6Class(
     plot_electrodes_on_slices = function(
       electrodes_to_plot = "all", volume = NULL, elec_table = NULL,
       zoom = 1, adjust_brightness = NA,
-      electrode_color = "green", electrode_size = 2, ...,
+      electrode_color = "green", electrode_size = 2,
+      verbose = TRUE, ...,
       decoration = function(i, j) {
         graphics::points(0, 0, pch = 20, col = electrode_color,
                          cex = electrode_size)
@@ -981,7 +982,7 @@ Brain2 <- R6::R6Class(
       }
       progress <- dipsaus::progress2("Plotting slices",
                                      max = length(plot_idx) + 1,
-                                     shiny_auto_close = TRUE)
+                                     shiny_auto_close = TRUE, quiet = !verbose)
       for(ii in plot_idx) {
         progress$inc(detail = sprintf("Generating graphs for electrode %s", dipsaus::deparse_svec(ii)))
         plot_slices(

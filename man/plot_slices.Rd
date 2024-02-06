@@ -18,6 +18,7 @@ plot_slices(
   title_position = c("left", "top"),
   fun = NULL,
   nc = NA,
+  which = NULL,
   ...
 )
 }
@@ -53,6 +54,10 @@ image is drawn; can be used to draw cross-hairs or annotate each image}
 
 \item{nc}{number of "columns" in the plot when there are too many positions,
 must be positive integer; default is \code{NA} (automatically determined)}
+
+\item{which}{which plane to plot; default is \code{NULL}, which will trigger
+new plots and add titles; set to \code{1} for 'Axial' plane, \code{2} for
+'Sagittal', and \code{3} for 'Coronal'.}
 
 \item{...}{additional arguments passing into \code{\link[graphics]{image}}}
 }

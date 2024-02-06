@@ -1,11 +1,13 @@
 AFNI
 AbstractGeom
+Affine
 BRIK
 CMD
 CRS
 DICOM
 DOI
 ECoG
+Eneuro
 FREESURFER
 FreeSurfer
 GeomGroup
@@ -15,6 +17,7 @@ JS
 JSON
 Localizer
 MNI
+MPL
 NIFTI
 NeuroImage
 Nifti
@@ -28,6 +31,7 @@ Threejs
 UI
 WebGL
 XYZ
+YAEL
 asc
 autorecon
 commissure
@@ -52,6 +56,7 @@ neuroimage
 nibabel
 nii
 npx
+parcellation
 pial
 px
 readgii
