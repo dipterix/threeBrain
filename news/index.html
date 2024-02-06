@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9108</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9109</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,53 @@
       <small>Source: <a href="https://github.com/dipterix/threeBrain/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.2" id="threebrain-102">threeBrain 1.0.2<a class="anchor" aria-label="anchor" href="#threebrain-102"></a></h2>
+<ul><li>Removed a <code>shader</code> loop that accidentally used dynamic variable for looping, which may crash on <code>Windows</code> in certain situations</li>
+<li>Updated <code>README.md</code>
+</li>
+<li>Composer effects are removed</li>
+<li>Added default color to electrodes (JavaScript) to fix the localization electrode color not set correctly issues</li>
+<li>Added <code>z-index</code> base to the side canvas layer (<code>div</code>)</li>
+<li>Removed additional unused parameters from material call</li>
+<li>Used new material type to make brain more realistic</li>
+<li>New background color is implemented</li>
+<li>
+<code>Trackball</code> uses width instead of height of the viewer as the <code>Arcball</code> radius; mouse positions is calculated whenever mouse-down event is triggered (allowing more accurate track-ball calculation in <code>Shiny</code> applications)</li>
+<li>Made <code>col2hexstr</code> internal function</li>
+<li>Added a new electrode visibility mode, allowing to show contacts with no values but passing the threshold</li>
+<li>Added <code>brain$electrodes$fix_electrode_color</code> to fix the electrode colors under given data names (to display <code>DBS</code> electrodes, for example)</li>
+<li>Made <code>controller.load</code> more robust against errors</li>
+<li>Fixed the depth issue in <code>TextSprite</code>
+</li>
+<li>Some default controller values have changed to make more sense</li>
+<li>Outline render effect is removed; electrode outlines are implemented directly in the <code>shader</code>
+</li>
+<li>Updated <code>three.js</code> to <code>v160</code> with light model improved</li>
+<li>Added <code>rave_slices.nii</code> to allowed <code>MRI</code> prefix in <code>FreeSurfer</code> folder with highest priority, such that this image will be treated as default volume to load in side canvas (default is still <code>brain.finalsurfs.mgz</code>)</li>
+<li>Allow <code>MRI</code> to change brightness dynamically in viewer</li>
+<li>Ensure that <code>voxels</code> index from zeros</li>
+<li>Added <code>brain$get_atlas_labels</code> to guess the atlas labels from given masks or atlas files</li>
+<li>Allowed to spatially transform electrodes to desired coordinate system</li>
+<li>Updated citation</li>
+<li>The standalone viewer does not require static server anymore: everything is self-contained (require <code>pandoc</code>, which comes with <code>RStudio</code>)</li>
+<li>Changed mechanism on animation color map generator (so the color is more accurate for discrete variables)</li>
+<li>Added <code>png</code> to dependence</li>
+<li>Added support for <code>AC-PC</code> alignment, available in <code>RAVE</code> - <code>YAEL</code> module</li>
+<li>Allow <code>brain</code> to plot with additional customized geometries</li>
+<li>Added <code>plot_slides</code> to plot <code>MRI</code> centered at each electrode contact for slide-to-slide visualization</li>
+<li>Added Line-of-Sight view mode for side canvas; can be enabled using shortcut <code>m</code> (previous shortcut to change the material type is changed to <code>shift+M</code>)</li>
+<li>Fixed <code>CT</code> in <code>JavaScript</code> when the <code>sform</code> and <code>qform</code> are different (have different code)</li>
+<li>Allowed to specify the spacing for interpolation and extrapolation for unequally spaced electrodes</li>
+<li>Added electrode outlines</li>
+<li>
+<code>YAEL</code> paper is finally out</li>
+<li>Fixed incorrect sub-cortical labels</li>
+<li>Deprecated old format (no cache is needed anymore)</li>
+<li>Made electrodes opaque on main but transparent in side canvas</li>
+<li>Let controllers check if the variable is valid before set to avoid invalid viewer state during initialization</li>
+<li>Added <code>get_ijk2ras</code> to get <code>Norig</code> and <code>Torig</code> matrix</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.1" id="threebrain-101">threeBrain 1.0.1<a class="anchor" aria-label="anchor" href="#threebrain-101"></a></h2><p class="text-muted">CRAN release: 2023-07-03</p>
 <ul><li>Updated controller library to have reasonable input focus</li>
