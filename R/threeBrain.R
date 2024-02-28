@@ -128,6 +128,7 @@ threeBrain <- function(
     path, subject_code, surface_types = "pial",
     atlas_types = "aparc+aseg",
     ...,
+    load_geometries = TRUE,
     template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
     backward_compatible = getOption("threeBrain.compatible", FALSE)
 ) {
@@ -282,8 +283,10 @@ threeBrain <- function(
 
 
   # Create brain instance
-  brain <- Brain2$new(subject_code = subject_code, xfm = xfm, Norig = Norig, Torig = Torig)
-  brain$base_path <- fs_path
+  brain <- Brain2$new(
+    subject_code = subject_code, xfm = xfm, Norig = Norig, Torig = Torig,
+    base_path = fs_path, load_geometries = load_geometries
+  )
 
   # --------- Step 3: Add T1 MRI slices ----------------------------------------
   if(length(path_mri)) {

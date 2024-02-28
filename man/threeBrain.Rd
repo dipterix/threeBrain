@@ -10,6 +10,7 @@ threeBrain(
   surface_types = "pial",
   atlas_types = "aparc+aseg",
   ...,
+  load_geometries = TRUE,
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
   backward_compatible = getOption("threeBrain.compatible", FALSE)
 )

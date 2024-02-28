@@ -16,10 +16,13 @@ KeyFrame <- R6::R6Class(
     target = '.material.color',
 
     initialize = function(name, time, value, dtype = 'continuous', target = '.material.color', ...){
+      value <- unname(value)
 
       if( dtype == 'continuous' ){
         private$.dtype <- 'continuous'
-        value <- as.numeric(value)
+        if( !is.list(value) ) {
+          value <- as.numeric(value)
+        }
         sel <- !is.na(value)
         time <- time[ sel ]
         value <- value[ sel ]
@@ -28,8 +31,27 @@ KeyFrame <- R6::R6Class(
         private$.dtype <- 'discrete'
 
         # If is factor, then do not remake factor as we need to keep the levels
-        if(!is.factor(value)){
-          value <- factor(value, ...)
+        if( is.list(value) ) {
+          if(length(value)) {
+
+            # get levels
+            lv <- lapply(unname(value), function(v) {
+              if(is.factor(v)) {
+                return(levels(v))
+              }
+              unique(as.character(unlist(v)))
+            })
+            lv <- sort(unique(unlist(lv)))
+            lv <- lv[!is.na(lv)]
+
+            value <- lapply(unname(value), function(v) {
+              factor(as.character(v), levels = lv)
+            })
+          }
+        } else {
+          if(!is.factor(value)){
+            value <- factor(value, levels = as.character(sort(unique(value), decreasing = FALSE)))
+          }
         }
       }
 
@@ -61,7 +83,7 @@ KeyFrame <- R6::R6Class(
 
       json_cache(path = path, data = structure(list(self$to_list()), names = name), ...)
       if(self$is_continuous){
-        private$.values <- range(private$.values)
+        private$.values <- range(unlist(private$.values))
       }else{
         private$.values <- unique(private$.values)
       }
@@ -82,10 +104,14 @@ KeyFrame <- R6::R6Class(
       return(rg)
     },
     value_range = function(){
-      if( self$is_continuous ){ range(private$.values) }else{ NULL }
+      if( self$is_continuous ){ range(unlist(private$.values), na.rm = TRUE) }else{ NULL }
     },
     value_names = function(){
-      if( !self$is_continuous ){ levels(private$.values) }else{ NULL }
+      if( self$is_continuous ) { return(NULL) }
+      if(is.list(private$.values) && length(private$.values) >= 1) {
+        return( levels(private$.values[[1]]) )
+      }
+      return(levels(private$.values))
     }
   )
 )
@@ -154,7 +180,7 @@ ColorMap <- R6::R6Class(
     hard_range = numeric(0),
     value_names = NULL,
     n_colors = 64,
-    colors = c('navyblue', '#e2e2e2', 'red'),
+    colors = DEFAULT_COLOR_CONTINUOUS,
 
     initialize = function(name, ..., .list = NULL, symmetric = NULL, alias = NULL){
 
@@ -197,10 +223,10 @@ ColorMap <- R6::R6Class(
 
       if( length(self$value_names) ){
         self$value_type <- 'discrete'
-        self$colors <- grDevices::palette()
+        self$colors <- DEFAULT_COLOR_DISCRETE
       }else{
         self$value_type <- 'continuous'
-        self$colors <- c('navyblue', '#e2e2e2', 'red')
+        self$colors <- DEFAULT_COLOR_CONTINUOUS
       }
 
       self$set_colors()
@@ -218,10 +244,9 @@ ColorMap <- R6::R6Class(
         # discrete, ncolors must equals to number of colors must equal to value_names
         self$n_colors <- length( self$value_names )
         if( self$n_colors > length(colors) ){
-          self$colors <- grDevices::colorRampPalette(colors)(self$n_colors)
-        }else{
-          self$colors <- colors[seq_len(self$n_colors)]
+          colors <- rep(colors, ceiling(self$n_colors / length(colors)))
         }
+        self$colors <- colors[seq_len(self$n_colors)]
       }
     },
 
@@ -231,9 +256,13 @@ ColorMap <- R6::R6Class(
       ncols <- max(16 , 2^ceiling(log2(self$n_colors)) )
       if( self$value_type == 'continuous' ){
         colors <- grDevices::colorRampPalette(self$colors)(ncols)
-        color_keys <- seq( self$value_range[1], self$value_range[2], length.out = ncols )
+        value_range <- self$value_range
+        if(!all(is.finite(value_range))) {
+          value_range <- c(-1, 1)
+        }
+        color_keys <- seq( value_range[1], value_range[2], length.out = ncols )
       }else{
-        colors <- grDevices::colorRampPalette(self$colors)( self$n_colors )
+        colors <- col2hexStr(self$colors)
         if(length(colors) < ncols) {
           colors <- c(colors, rep("#000000", ncols - length(colors)))
         }
