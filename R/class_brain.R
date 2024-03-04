@@ -40,7 +40,7 @@ Brain2 <- R6::R6Class(
     Norig = diag(rep(1, 4)),
     Torig = diag(rep(1, 4)),
 
-    initialize = function(subject_code, xfm, Norig, Torig, base_path = NULL, load_geometries = FALSE){
+    initialize = function(subject_code, xfm, Norig, Torig, base_path = NULL){
       stopifnot2( length(xfm) == 16 && length(dim(xfm)) == 2 && sum(dim(xfm)) == 8,
                   msg = 'xfm must be 4x4 matrix')
       stopifnot2( length(Norig) == 16 && length(dim(Norig)) == 2 && sum(dim(Norig)) == 8,
@@ -70,9 +70,6 @@ Brain2 <- R6::R6Class(
       if(length(base_path) == 1 && !is.na(base_path) && is.character(base_path) &&
          file.exists(base_path)) {
         self$base_path <- base_path
-        if( load_geometries ) {
-          self$electrodes$load_geometries()
-        }
       }
     },
 

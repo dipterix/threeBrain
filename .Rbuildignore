@@ -23,6 +23,7 @@
 ^inst/threeBrainJS/package
 ^inst/threeBrainJS/webpack
 ^inst/threeBrainJS/\.npmignore$
+^inst/prototypes/.*\.R$
 ^build\.sh$
 ^CRAN-RELEASE$
 ^\.travis\.yml$

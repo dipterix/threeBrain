@@ -663,6 +663,35 @@ ElectrodePrototype <- R6::R6Class(
   )
 )
 
+#' @title Create or load new electrode prototype from existing configurations
+#' @param base_prototype base prototype, this can be a string of prototype type
+#' (see \code{\link{list_electrode_prototypes}}), path to the prototype
+#' configuration file, configuration in 'json' format, or an electrode prototype
+#' instance
+#' @param modifier internally used
+#' @returns An electrode prototype instance
+#'
+#' @examples
+#'
+#'
+#' available_prototypes <- list_electrode_prototypes()
+#' if("Precision33x31" %in% names(available_prototypes)) {
+#'
+#'   # Load by type name
+#'   new_electrode_prototype("Precision33x31")
+#'
+#'   # load by path
+#'   path <- available_prototypes[["Precision33x31"]]
+#'   new_electrode_prototype(path)
+#'
+#'   # load by json string
+#'   json <- readLines(path)
+#'   new_electrode_prototype(json)
+#'
+#' }
+#'
+#'
+#'
 #' @export
 new_electrode_prototype <- function(
     base_prototype, modifier = NULL) {
@@ -734,6 +763,19 @@ prototype_search_paths <- function() {
 }
 
 
+#' @title List all electrode prototypes
+#' @description
+#' List all built-in and user-customized electrode prototypes. User paths
+#' will be searched first, if multiple prototype configuration files are found
+#' for the same type.
+#' @returns A named list, names are the prototype types and values are the
+#' prototype configuration paths.
+#'
+#' @examples
+#'
+#' list_electrode_prototypes()
+#'
+#'
 #' @export
 list_electrode_prototypes <- function() {
   re <- list()

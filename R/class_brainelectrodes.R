@@ -22,7 +22,7 @@ guess_hemisphere <- function(which_side, anatomical_label) {
   which_side
 }
 
-normalize_electrode_table <- function(table, position_names = c("x", "y", "z"), coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")) {
+normalize_electrode_table <- function(table, self, position_names = c("x", "y", "z"), coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")) {
   coord_sys <- match.arg(coord_sys)
   table_colnames <- names(table)
   stopifnot2("Electrode" %in% table_colnames,
@@ -262,24 +262,6 @@ BrainElectrodes <- R6::R6Class(
       self$group <- GeomGroup$new(name = sprintf('Electrodes (%s)', subject_code), position = c(0,0,0))
       self$set_subject_code( subject_code )
       self$geometries <- list()
-    },
-
-    load_geometries = function() {
-      if( !inherits(self$brain, "rave-brain") ) { return(invisible()) }
-      rave_path <- file.path(self$brain$base_path, "RAVE", "geometry")
-      if(length(rave_path) != 1 || is.na(rave_path) || !file.exists(rave_path)) { return(invisible()) }
-      config_files <- list.files(rave_path, pattern = "\\.json", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
-      if(!length(config_files)) { return(invisible()) }
-      config_names <- gsub("\\.json", "", config_files, ignore.case = TRUE)
-      config_names <- toupper(config_names)
-      self$geometries <- structure(
-        names = toupper(config_names),
-        lapply(seq_along(config_names), function(ii) {
-          proto <- new_electrode_prototype(base_prototype = file.path(rave_path, config_files[[ii]]))
-          proto$name <- config_names[[ii]]
-          proto
-        })
-      )
     },
 
     add_geometry = function( label_prefix, prototype_name, cache_ok = TRUE, native_ok = TRUE ) {
@@ -530,7 +512,7 @@ BrainElectrodes <- R6::R6Class(
         self$raw_table_path <- NULL
         table <- table_or_path
       }
-      table <- normalize_electrode_table(table, position_names = position_names, coord_sys = coord_sys)
+      table <- normalize_electrode_table(table, self, position_names = position_names, coord_sys = coord_sys)
       self$raw_table <- table
 
       # DIPSAUS DEBUG START
