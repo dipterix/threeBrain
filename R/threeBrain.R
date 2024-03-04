@@ -128,7 +128,7 @@ threeBrain <- function(
     path, subject_code, surface_types = "pial",
     atlas_types = "aparc+aseg",
     ...,
-    load_geometries = TRUE,
+    load_geometries = FALSE,
     template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
     backward_compatible = getOption("threeBrain.compatible", FALSE)
 ) {

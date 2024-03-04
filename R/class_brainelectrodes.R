@@ -41,6 +41,10 @@ normalize_electrode_table <- function(table, position_names = c("x", "y", "z"), 
     table$Label <- sprintf('NoLabel-%d', seq_len(n))
   }
 
+  if(!"LabelPrefix" %in% table_colnames) {
+    table$LabelPrefix <- gsub("[ 0-9_-]+$", "", table$Label)
+  }
+
   # check if the columns are explicitly specified in the table, for e.g.,
   # if coord_sysis tkrRAS, and `Coord_x` (x,y,z) are in the table columns,
   # then coord_sys arguments is ignored, and xyz will be obtained through Coord_xyz
@@ -165,18 +169,20 @@ normalize_electrode_table <- function(table, position_names = c("x", "y", "z"), 
   table$VertexNumber[ is.na(table$VertexNumber) ] <- -1
 
   # geometry
-  if( length(table$Geometry) ) {
-    geom <- as.character(table$Geometry)
+  if( length(table$Prototype) ) {
+    geom <- as.character(table$Prototype)
     geom[is.na(geom)] <- ""
-    table$Geometry <- geom
+    table$Prototype <- geom
 
-    if(!length(table$ChannelOrder)) {
+    if(!length(table$ContactOrder) && any(nzchar( geom ))) {
 
-      table <- do.call("rbind", lapply(split(table, table$Geometry), function(sub) {
-        sub$ChannelOrder <- order(sub$Electrode)
+      table <- do.call("rbind", lapply(split(table, paste(table$Prototype, table$LabelPrefix)), function(sub) {
+        sub$ContactOrder <- order(sub$Electrode)
         sub
       }))
     }
+  } else {
+    table$Prototype <- ""
   }
 
   if( !length(table$Hemisphere) ){
@@ -274,6 +280,73 @@ BrainElectrodes <- R6::R6Class(
           proto
         })
       )
+    },
+
+    add_geometry = function( label_prefix, prototype_name, cache_ok = TRUE, native_ok = TRUE ) {
+
+      if( native_ok ) {
+        cache_ok <- FALSE
+      }
+      label_prefix <- trimws(label_prefix)
+      prototype_name <- trimws(prototype_name)
+
+      if( length(label_prefix) != 1 || is.na(label_prefix) || !is.character(label_prefix) || label_prefix == "" ) { return() }
+      if( length(prototype_name) != 1 || is.na(prototype_name) || !is.character(prototype_name) || prototype_name == "" ) { return() }
+
+      name <- sprintf("%s_%s", prototype_name, label_prefix)
+      name_upper <- toupper(name)
+      prototype_name_upper <- toupper(prototype_name)
+      if(inherits(self$geometries[[ name_upper ]], "ElectrodePrototype")) {
+        return( self$geometries[[ name_upper ]] )
+      }
+      if( native_ok && inherits(self$brain, "rave-brain") ) {
+        native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
+      } else {
+        native_path <- NULL
+      }
+
+      if(length(native_path) == 1 && dir.exists(native_path)) {
+        config_files <- list.files(native_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+        config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
+        config_names <- toupper(config_names)
+        idx <- which(config_names == name_upper)
+        if( length(idx) ) {
+          idx <- idx[[1]]
+          tryCatch({
+            proto <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
+            proto$name <- name_upper
+            proto$type <- prototype_name
+            self$geometries[[ name_upper ]] <- proto
+            if( cache_ok ) {
+              return(proto)
+            }
+          }, error = function(e) {
+            warning(e)
+          })
+        }
+      }
+      # find from prototypes and/or recache
+      search_paths <- prototype_search_paths()
+
+      for(search_path in search_paths) {
+        config_files <- list.files(search_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+        config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
+        config_names <- toupper(config_names)
+        idx <- which(config_names == prototype_name_upper)
+        if( length(idx) ) {
+          idx <- idx[[1]]
+          proto <- new_electrode_prototype(base_prototype = file.path(search_path, config_files[[ idx ]]))
+          proto$name <- name_upper
+          proto$type <- prototype_name
+          self$geometries[[ name_upper ]] <- proto
+          if( length(native_path) == 1 ) {
+            dir.create(native_path, showWarnings = FALSE, recursive = TRUE)
+            proto$as_json(flattern = TRUE, to_file = file.path(native_path, name_upper))
+          }
+          return(proto)
+        }
+      }
+      return(NULL)
     },
 
     apply_electrodes = function(fun, check_valid = TRUE){
@@ -460,6 +533,15 @@ BrainElectrodes <- R6::R6Class(
       table <- normalize_electrode_table(table, position_names = position_names, coord_sys = coord_sys)
       self$raw_table <- table
 
+      # DIPSAUS DEBUG START
+      # brain <- raveio::rave_brain("demo/DemoSubject")
+      # self <- brain$electrodes
+      # label_prefix <- "G"
+      # row = list(Prototype = "Precision33x31")
+      # table <- brain$electrodes$raw_table
+      # table$Prototype <- "Precision33x31"
+      # table <- normalize_electrode_table(table)
+
       if(!is.data.frame(table)) { return() }
       n <- nrow(table)
 
@@ -468,11 +550,19 @@ BrainElectrodes <- R6::R6Class(
 
       subject_code <- self$subject_code
 
-      for( ii in seq_len(n) ){
-        row <- table[ii, ]
+      # load electrode prototypes
+      electrode_geometry_names <- apply(unique(cbind(table$LabelPrefix, table$Prototype)), 1, function(x) {
+        proto <- self$add_geometry( label_prefix = x[[1]], prototype_name = x[[2]] )
+        if(is.null(proto)) { return("") }
+        proto$name
+      })
+      table_geom_names <- toupper(sprintf("%s_%s", table$Prototype, table$LabelPrefix))
+      table_geom_names[!table_geom_names %in% electrode_geometry_names] <- ""
+
+
+      add_single_contact <- function(row) {
         anatomical_label <- row$FSLabel
         which_side <- guess_hemisphere(row$Hemisphere, anatomical_label)
-
         nearest_vertex <- row$VertexNumber
         mni_305 <- c( row$MNI305_x, row$MNI305_y, row$MNI305_z )
         sphere_xyz <- c( row$Sphere_x, row$Sphere_y, row$Sphere_z )
@@ -480,53 +570,85 @@ BrainElectrodes <- R6::R6Class(
         surf_type <- c(row$SurfaceType, 'pial')[1]
         if( is.na(surf_type) ){ surf_type <- 'NA' }
         radius <- row$Radius
+        label_prefix <- row$LabelPrefix
 
-        # obtain geometry
-        geometry <- NULL
-        if(length(row$Geometry) == 1) {
-          geometry <- self$geometries[[toupper(row$Geometry)]]
-        }
-        if(is.null(geometry)) {
-          el <- ElectrodeGeom$new(
-            name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
-            position = c(row$Coord_x, row$Coord_y, row$Coord_z),
-            radius = radius, group = self$group, subtype = "SphereGeometry")
-          el$number <- row$Electrode
-          el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
-          el$MNI305_position <- mni_305
-          el$sphere_position <- sphere_xyz
-          el$vertex_number <- nearest_vertex
-        } else {
-          containing_els <- table$Electrode[table$Geometry == row$Geometry]
-          min_el <- min(containing_els)
-          if( min_el == row$Electrode ) {
-            label_prefix <- row$LabelPrefix
-            if(!length(label_prefix)) {
-              label_prefix <- gsub("[0-9]+$", "", row$Label)
-            }
-            electrode_numbers <- dipsaus::deparse_svec(containing_els)
-
-            el <- ElectrodeGeom$new(
-              name = sprintf('%s, %s - %s', subject_code, electrode_numbers, label_prefix),
-              position = c(row$Coord_x, row$Coord_y, row$Coord_z),
-              radius = radius, group = self$group, subtype = "CustomGeometry", prototype = geometry)
-            el$number <- electrode_numbers
-            el$is_surface_electrode <- FALSE
-            el$vertex_number <- -1
-            el$MNI305_position <- c(0, 0, 0)
-          } else {
-            self$objects[[ row$Electrode ]] <- self$objects[[ min_el ]]
-            next
-          }
-        }
-
+        el <- ElectrodeGeom$new(
+          name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
+          position = c(row$Coord_x, row$Coord_y, row$Coord_z),
+          radius = radius, group = self$group, subtype = "SphereGeometry")
+        el$number <- row$Electrode
+        el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
+        el$MNI305_position <- mni_305
+        el$sphere_position <- sphere_xyz
+        el$vertex_number <- nearest_vertex
         el$hemisphere <- which_side
         el$anatomical_label <- anatomical_label
         el$surface_type <- surf_type
         el$subject_code <- subject_code
         el$set_value( value = as.character(subject_code), name = '[Subject]' )
         self$objects[[ row$Electrode ]] <- el
+        return()
       }
+
+      add_electrode <- function(sub, proto) {
+        # n_channels <- proto$n_channels
+        # channels <- rep(NA_integer_, n_channels)
+        # if(length(sub$ContactOrder) && is.numeric(sub$ContactOrder)) {
+        #   corder <- as.integer(sub$ContactOrder)
+        # } else {
+        #   corder <- order(sub$Electrode)
+        # }
+        # nsel <- (!is.na(corder) & corder >= 1 & corder <= n_channels)
+        # channels[ corder[nsel] ] <- sub$Electrode[nsel]
+        #
+        # if(all(is.na(channels))) { return() }
+        # proto$set_channel_map(channel_numbers = channels)
+        proto$set_contact_channels(sub$Electrode, sub$ContactOrder)
+        if(all(is.na(proto$channel_numbers))) { return() }
+
+        first_contact <- min(sub$Electrode)
+        electrode_numbers <- dipsaus::deparse_svec(sub$Electrode)
+        el <- ElectrodeGeom$new(
+          name = sprintf('%s, %d - %s', subject_code, first_contact, sub$LabelPrefix[[1]]),
+          position = c(999, 999, 999), # this will be ignored
+          radius = 1, group = self$group, subtype = "CustomGeometry", prototype = proto)
+        el$number <- electrode_numbers
+        el$is_surface_electrode <- FALSE
+        el$vertex_number <- -1
+        el$MNI305_position <- c(0, 0, 0)
+        el$vertex_number <- -1
+
+        hemi <- tolower(sub$Hemisphere)
+        hemi <- hemi[hemi %in% c("left", "right")]
+        if(length(hemi)) {
+          if(sum(hemi == "left") * 2 >= length(hemi)) {
+            el$hemisphere <- "left"
+          } else {
+            el$hemisphere <- "right"
+          }
+        }
+
+        if(length(sub$FSLabel)) {
+          count <- table(sub$FSLabel)
+          el$anatomical_label <- names(count)[which.max(count)][[1]]
+        }
+        el$surface_type <- c(sub$SurfaceType, 'pial')[1]
+        el$subject_code <- subject_code
+        el$set_value( value = as.character(subject_code), name = '[Subject]' )
+        self$objects[[ first_contact ]] <- el
+        return()
+      }
+
+      lapply(split(table, table_geom_names), function(sub) {
+        proto <- self$add_geometry( label_prefix = sub$LabelPrefix[[1]], prototype_name = sub$Prototype[[1]] )
+        if(is.null(proto) || all(proto$transform == diag(1, 4))) {
+          lapply(seq_len(nrow(sub)), function(ii) {
+            add_single_contact(sub[ii, ])
+          })
+        } else {
+          add_electrode(sub, proto)
+        }
+      })
       invisible(self)
     },
 

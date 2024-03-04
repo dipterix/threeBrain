@@ -5,7 +5,8 @@ tbl <- brain$electrodes$raw_table
 row <- tbl[1,]
 row$Electrode = 4
 tbl <- rbind(tbl, row)
-tbl$Geometry <- c("", "", "", "Precision33X31_G")
+tbl$LabelPrefix <- "G"
+tbl$Geometry <- c("", "", "", "Precision33X31")
 brain$set_electrodes(tbl)
 electrode <- brain$electrodes$objects[[4]]
 # electrode$prototype$set_contact_center(new_electrode_prototype("Precision33x31")$.__enclos_env__$private$.contact_center)
@@ -66,8 +67,8 @@ electrode$prototype$preview_3d()
 electrode$keyframes$LabelPrefix$value_names
 electrode$keyframes$LabelPrefix$.__enclos_env__$private$.values
 
-c <- ColorMap$new(name = "LabelPrefix", .list = dipsaus::drop_nulls(brain$electrodes$objects))
-c$value_names
+# c <- ColorMap$new(name = "LabelPrefix", .list = dipsaus::drop_nulls(brain$electrodes$objects))
+# c$value_names
 brain$plot(
   debug = TRUE,
   controllers = list(

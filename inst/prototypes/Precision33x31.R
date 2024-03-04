@@ -88,8 +88,14 @@ position_transform <- function(pos) {
   t((t(pos) - c(16, 15)) / c(32, 30) * c(13, 12.1))
 }
 
+lines_real_coord <- position_transform(lines)
+which(lines_real_coord[,2] == max(lines_real_coord[,2]))
+lines_real_coord[c(5,6), 2] <- 10.95
+lines_real_coord[c(4,7), 2] <- 7.9
+
 config <- list(
-  name = "PrecisionArray",
+  type = "Precision33x31",
+  name = "",
 
   # number of vertices and face indices
   n = c(28L, 15L),
@@ -102,7 +108,7 @@ config <- list(
 
   transform = diag(1, 4L),
 
-  position = t(rbind(cbind(position_transform(lines), 0.01), cbind(position_transform(lines), -0.01))),
+  position = t(rbind(cbind(lines_real_coord, 0.01), cbind(lines_real_coord, -0.01))),
 
   index = c(
     as.vector(t(index)),
@@ -126,11 +132,15 @@ config <- list(
   contact_center = t(cbind(position_transform(cbind(channel_info$x, channel_info$y)), 0)),
 
   # row matrix
-  model_control_points = matrix(nrow = 3, byrow = FALSE,
-                                as.vector(rbind(t(position_transform(anchors[c(5,2,1),c("x", "y")])), 0)))
+  model_control_points = cbind(
+    c(-6.59, 7.93, 0),
+    c(0, 10.35, 0),
+    c(6.59, 7.93, 0)
+  )
 )
 
-proto <- threeBrain:::ElectrodePrototype$new()$from_list(config)
+proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config)
+proto$validate()
 
 a <- invisible(proto$get_texture(seq_len(proto$n_channels), plot = TRUE))
 

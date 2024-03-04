@@ -130,10 +130,26 @@ ViewerProxy <- R6::R6Class(
       ))
     },
 
+    set_matrix_world = function( name, m44 ) {
+      if(length(m44) != 16) {
+        stop("brain_proxy$set_matrix_world: `m44` must be a 4x4 matrix")
+      }
+      if(is.matrix(m44)) {
+        m44 <- as.vector(t(m44))
+      }
+      private$set_value('set_matrix_world', list(
+        instanceName = name,
+        matrix = m44,
+        byrow = TRUE
+      ))
+    },
+
     add_localization_electrode = function(params, update_shiny = TRUE){
       params <- as.list(params)
-      if(length(c(params$Coord_x,params$Coord_y,params$Coord_z)) != 3){
-        stop("`add_localization_electrode` must contains valid `Coord_x, Coord_y, Coord_z` (tkrRAS)")
+      if(!isTRUE(params$is_prototype)) {
+        if(length(c(params$Coord_x,params$Coord_y,params$Coord_z)) != 3){
+          stop("`add_localization_electrode` must contains valid `Coord_x, Coord_y, Coord_z` (tkrRAS)")
+        }
       }
       params$update_shiny <- isTRUE(update_shiny)
       private$set_value('add_localization_electrode', params)

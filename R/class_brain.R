@@ -40,7 +40,7 @@ Brain2 <- R6::R6Class(
     Norig = diag(rep(1, 4)),
     Torig = diag(rep(1, 4)),
 
-    initialize = function(subject_code, xfm, Norig, Torig, base_path = NULL, load_geometries = TRUE){
+    initialize = function(subject_code, xfm, Norig, Torig, base_path = NULL, load_geometries = FALSE){
       stopifnot2( length(xfm) == 16 && length(dim(xfm)) == 2 && sum(dim(xfm)) == 8,
                   msg = 'xfm must be 4x4 matrix')
       stopifnot2( length(Norig) == 16 && length(dim(Norig)) == 2 && sum(dim(Norig)) == 8,

@@ -73,28 +73,46 @@ ElectrodePrototype <- R6::R6Class(
     .transform = NULL,
     .model_control_points = NULL,
     .world_control_points = NULL,
+    .type = character(),
 
     # for preview use
     id = NULL
   ),
   public = list(
-    name = NULL,
+    name = character(),
     fix_outline = TRUE,
     .last_texture = NULL,
-    initialize = function( n_vertices = 4 ) {
+    initialize = function( type, n_vertices = 4 ) {
+      self$type <- type
       n_vertices <- as.integer(n_vertices)
       stopifnot2(isTRUE(n_vertices > 3), msg = "Number of vertices must be greater than 3.")
       private$.n_vertices <- n_vertices
       # innitialize
-      private$.transform <- ravetools::new_matrix4()
+      private$.transform <- diag(1, 4)
       private$.position <- array(0, c(3L, n_vertices))
       private$.texture_size <- c(1L, 1L)
       private$.model_control_points <- numeric(0L)
+      private$.world_control_points <- numeric(0L)
       private$id <- sprintf("threeBrain-electrode-proto-%s", rand_string(10))
     },
 
-    set_transform = function( m44 ) {
-      private$.transform$copy( ravetools::as_matrix4( m44 ) )
+    copy = function( other ) {
+      self$from_list( other$as_list(flattern = TRUE) )
+    },
+
+    set_transform = function( m44, byrow = FALSE ) {
+      stopifnot2(is.numeric(m44) && !anyNA(m44), msg = "Transform must be a 4x4 numeric matrix with no NA")
+      if(is.matrix(m44)) {
+        dm <- dim(m44)
+        stopifnot2(dm[[2]] == 4L, msg = "Transform must be a 4x4 matrix")
+        stopifnot2(dm[[1]] %in% c(3L, 4L), msg = "Transform must be a 4x4 matrix")
+        if(dm[[1]] == 3L) {
+          m44 <- rbind(m44, c(0,0,0,1))
+        }
+      } else {
+        m44 <- matrix(as.vector(m44), nrow = 4, ncol = 4, byrow = byrow)
+      }
+      private$.transform <- m44
     },
 
     set_model_control_points = function( x, y, z ) {
@@ -106,6 +124,10 @@ ElectrodePrototype <- R6::R6Class(
         stop("The matrix rank of the control points must be at least 2 (you need at least 3 points that are not on the same line) to calculate the transform in 3D.")
       }
       private$.model_control_points <- pos
+    },
+
+    reset_world_control_points = function() {
+      private$.world_control_points <- numeric(0L)
     },
 
     set_transform_from_points = function( x, y, z ) {
@@ -238,12 +260,14 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     set_channel_map = function(channel_map, center_positions, channel_numbers) {
-      if(!is.null(channel_map)) {
-        channel_map <- as_row_matrix(channel_map, nr = 4, storage_mode = "integer")
-        channel_map[ is.na(channel_map) | channel_map < 1 | channel_map > private$.texture_size ] <- NA
+      if(!missing(channel_map)) {
+        if(!is.null(channel_map)) {
+          channel_map <- as_row_matrix(channel_map, nr = 4, storage_mode = "integer")
+          channel_map[ is.na(channel_map) | channel_map < 1 | channel_map > private$.texture_size ] <- NA
+        }
+        self$.last_texture <- NULL
+        private$.channel_map <- channel_map
       }
-      self$.last_texture <- NULL
-      private$.channel_map <- channel_map
 
       n_channels <- self$n_channels
       if( missing(center_positions) ) {
@@ -270,11 +294,73 @@ ElectrodePrototype <- R6::R6Class(
       }
       if(length(channel_numbers)) {
         channel_numbers <- as.integer(channel_numbers)
+        if(length(channel_numbers) < n_channels ) {
+          channel_numbers <- c( channel_numbers, rep(NA_integer_, n_channels - length(channel_numbers)) )
+        } else if( length(channel_numbers) > n_channels ) {
+          channel_numbers <- channel_numbers[seq_len(n_channels)]
+        }
+        channel_numbers[ is.na(channel_numbers) | channel_numbers < 1 | channel_numbers > n_channels ] <- NA_integer_
         private$.channel_numbers <- channel_numbers
       } else {
         private$.channel_numbers <- NULL
       }
 
+      # if(isFALSE(update_transform)) { return(self) }
+      # if( !length(private$.contact_center) || ncol(private$.contact_center) < 3 ){ return(self) }
+      # if( !length(private$.channel_numbers) || sum(!is.na(private$.channel_numbers)) < 3 ) { return(self) }
+      # if(is.na(update_transform)) {
+      #   if(!all(self$transform == diag(1L, 4))) { return(self) }
+      # }
+      #
+
+    },
+
+
+    set_contact_channels = function(channel_numbers, contact_orders) {
+      if(!length(channel_numbers)) {
+        private$.channel_numbers <- NULL
+        return(invisible(self))
+      }
+      if(missing(contact_orders) || !length(contact_orders)) {
+        contact_orders <- seq_along(channel_numbers)
+      } else {
+        contact_orders <- as.integer(contact_orders)
+      }
+      n_channels <- self$n_channels
+      sel <- !is.na(contact_orders) & contact_orders > 0 & contact_orders <= n_channels
+      contact_orders <- contact_orders[sel]
+      channel_numbers <- channel_numbers[sel]
+      cnum <- rep(NA_integer_, n_channels)
+      if(length(channel_numbers)) {
+        cnum[contact_orders] <- channel_numbers
+      }
+      private$.channel_numbers <- cnum
+      return(invisible(self))
+    },
+
+    get_contact_positions = function( channels, apply_transform = TRUE ) {
+      cpos <- private$.contact_center
+      if(!length(cpos)) { return(NULL) }
+      if(!missing(channels)) {
+        if(!length(channels)) { return(matrix(numeric(0L), ncol = 3)) }
+        cnum <- private$.channel_numbers
+        if(!length(cnum)) {
+          cnum <- seq_len(self$n_channels)
+        }
+        cpos <- sapply(channels, function(ch) {
+          if( is.na(ch) ) { return(c(NA_real_, NA_real_, NA_real_)) }
+          sel <- which(!is.na(cnum) & cnum == ch)
+          if( length(sel) ) {
+            return(cpos[, sel[[1]]])
+          } else {
+            return(c(NA_real_, NA_real_, NA_real_))
+          }
+        })
+      }
+      if( apply_transform ) {
+        cpos <- self$transform %*% rbind(cpos, 1)
+      }
+      return(t(cpos[seq_len(3), , drop = FALSE]))
     },
 
     as_mesh3d = function( apply_transform = TRUE, with_texture = TRUE, ... ) {
@@ -345,7 +431,7 @@ ElectrodePrototype <- R6::R6Class(
       re
     },
 
-    preview_texture = function(..., axes = FALSE, xlab = "", ylab = "", col = NULL) {
+    preview_texture = function(..., axes = FALSE, xlab = "", ylab = "", col = NULL, sub = NULL) {
       if(is.null(self$.last_texture)) {
         stop("Please run electrode$get_texture first.")
       }
@@ -368,11 +454,15 @@ ElectrodePrototype <- R6::R6Class(
         x <- re[seq(dim[[1]], 1), , drop = FALSE]
       }
 
+      if(is.null(sub)) {
+        sub <- sprintf("Prototype: %s", self$type)
+      }
+
       graphics::image(
         x = seq_len(dim[[1]]) - 0.5,
         y = seq_len(dim[[2]]) - 0.5,
         z = x, asp = asp, axes = axes,
-        xlab = xlab, ylab = ylab, col = col, ...)
+        xlab = xlab, ylab = ylab, col = col, sub = sub, ...)
       graphics::segments(
         y0 = c(0, 0, dim[[2]], dim[[2]]),
         y1 = c(dim[[1]], 0, dim[[2]], 0),
@@ -395,6 +485,7 @@ ElectrodePrototype <- R6::R6Class(
           ravetools::rgl_call("shade3d", sphere, col = "green")
           ravetools::rgl_call("text3d", pos, texts = sprintf("Marker_%d", ii),
                               cex = max(0.5, min(radius * 4, 1)), pos = 1, depth_test = "always")
+          ravetools::rgl_call("title3d", main = sprintf("Prototype: %s", self$type), floating = TRUE)
         })
       })
     },
@@ -429,6 +520,7 @@ ElectrodePrototype <- R6::R6Class(
         contact_center <- private$.contact_center
       }
       list(
+        type = self$type,
         name = self$name,
         geometry = "CustomGeometry",
         n = c(ncol(private$.position), ncol(self$index)),
@@ -450,6 +542,7 @@ ElectrodePrototype <- R6::R6Class(
       n_vertices <- as.integer(li$n[[1]])
       stopifnot2(n_vertices > 3, msg = "Invalid number of vertices (must > 3)")
       self$.last_texture <- NULL
+      self$type <- li$type
       private$.n_vertices <- n_vertices
       self$fix_outline <- isTRUE(as.logical(li$fix_outline))
       self$set_transform(li$transform)
@@ -493,10 +586,26 @@ ElectrodePrototype <- R6::R6Class(
         li <- from_json(txt = json)
       }
       self$from_list(li)
+    },
+
+    validate = function() {
+      if(length(self$type) != 1 || !nzchar(self$type)) {
+        stop("Electrode prototype `type` shouldn't be empty.")
+      }
+      if(!is.matrix(private$.model_control_points) || nrow(private$.model_control_points) < 3L ) {
+        warning("Electrode prototype control points (model) must be a matrix with at least 3 points. Please use `set_model_control_points` to set them")
+      }
+      invisible()
     }
 
   ),
   active = list(
+    type = function(v) {
+      if(!missing(v)) {
+        private$.type <- toupper(v)
+      }
+      private$.type
+    },
     n_vertices = function() {
       private$.n_vertices
     },
@@ -506,6 +615,12 @@ ElectrodePrototype <- R6::R6Class(
       } else {
         return(ncol(private$.channel_map))
       }
+    },
+    channel_numbers = function() {
+      if(length(private$.channel_numbers)) {
+        return(private$.channel_numbers)
+      }
+      return(seq_len(self$n_channels))
     },
     position = function(v) {
       if(!missing(v)) {
@@ -519,7 +634,32 @@ ElectrodePrototype <- R6::R6Class(
     normal = function() { private$.normal },
     texture_size = function() { private$.texture_size },
     channel_map = function() { private$.channel_map },
-    transform = function() { private$.transform[] }
+    transform = function() { private$.transform },
+    control_points = function() {
+      if( !length(private$.model_control_points) ) { return(NULL) }
+      mcp <- private$.model_control_points
+      tcp <- private$.world_control_points
+      n <- nrow(mcp)
+      if(length(tcp) && is.matrix(tcp)) {
+        if( nrow(tcp) < n ) {
+          tcp_ <- array(NA_real_, c(n, 3L))
+          tcp_[seq_len(nrow(tcp)), ] <- tcp
+        } else {
+          tcp_ <- tcp[seq_len(n), , drop = FALSE]
+        }
+      } else {
+        tcp_ <- array(NA_real_, c(n, 3L))
+      }
+
+      data.frame(
+        model_x = mcp[, 1],
+        model_y = mcp[, 2],
+        model_z = mcp[, 3],
+        tkr_R = tcp_[, 1],
+        tkr_A = tcp_[, 2],
+        tkr_S = tcp_[, 3]
+      )
+    }
   )
 )
 
@@ -527,25 +667,31 @@ ElectrodePrototype <- R6::R6Class(
 new_electrode_prototype <- function(
     base_prototype, modifier = NULL) {
 
-  prototype <- ElectrodePrototype$new()
+  prototype <- ElectrodePrototype$new("")
   if(inherits(base_prototype, "ElectrodePrototype")) {
-    prototype <- base_prototype
+    prototype$copy( base_prototype )
   } else if (is.list(base_prototype)) {
     prototype$from_list(base_prototype)
   } else if(is.character(base_prototype)) {
-    f <- file.path(system.file("prototypes", package = "threeBrain"), sprintf("%s.json", base_prototype))
+    plist <- list_electrode_prototypes()
+    f <- plist[[ base_prototype ]]
     if(length(f) == 1 && file.exists(f)) {
       prototype$from_json(json = f, is_file = TRUE)
     } else {
       if(file.exists(base_prototype)) {
         prototype$from_json(json = base_prototype, is_file = TRUE)
       } else {
-        prototype$from_json(json = base_prototype, is_file = FALSE)
+        tryCatch({
+          prototype$from_json(json = base_prototype, is_file = FALSE)
+        }, error = function(e) {
+          stop("Invalid `base_prototype`; must be instance of one of the followings: `ElectrodePrototype`, json file path, json string, or builtin shape names")
+        })
       }
     }
   } else {
     stop("Invalid `base_prototype`; must be instance of one of the followings: `ElectrodePrototype`, json file path, json string, or builtin shape names")
   }
+  prototype$validate()
 
   if(is.list(modifier)) {
 
@@ -572,120 +718,45 @@ new_electrode_prototype <- function(
   prototype
 
 }
-#
-# self <- ElectrodeGeometry$new(n_vertices = nrow(config$vertex))
-# self$set_position(config$vertex[, 1:3])
-# self$set_uv(config$vertex[, 4:5])
-# self$set_normal(config$vertex[, 6:8])
-# self$set_texture_size(c(20,20))
-# self$set_channel_map(config$channel_map)
-# self$set_index(config$index)
-#
-# self$as_json()
-#
-# self$preview_3d()
-# self$get_texture(1:256, plot = TRUE)
-#
-# self$.__enclos_env__$private$.position[1:2,] <- self$.__enclos_env__$private$.position[1:2,] / 2.5
-# self$as_list()
 
-# self <- ElectrodeGeometry$new(
-#   position = config$vertex[, 1:3],
-#   index = config$face,
-#   uv = config$vertex[, 4:5],
-#   texture_size = config$texture_size,
-#   channel_map = config$channel_map, index_start = 1
-# )
-# self$n_channels
-# self$get_texture(1:256, plot = TRUE)
-#
-# list(
-#   geometry = "CustomGeometry",
-#   vertex = data.frame(
-#     x = c(2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, -2.5, -2.5, -2.5, -2.5, -2.5, -2.5, -2.5, -2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, -2.5, 2.5, 2.5, -2.5, 2.5, -2.5),
-#     y = c(2.5, 2.5, 2.5, 2.5, -2.5, -2.5, -2.5, -2.5, 2.5, 2.5, 2.5, 2.5, -2.5, -2.5, -2.5, -2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, -2.5, -2.5, -2.5, -2.5, -2.5, -2.5, -2.5, -2.5, 2.5, 2.5, -2.5, -2.5, 2.5, 2.5, -2.5, -2.5),
-#     z = c(0.15, 0.05, -0.05, -0.15, 0.15, 0.05, -0.05, -0.15, -0.15, -0.05, 0.05, 0.15, -0.15, -0.05, 0.05, 0.15, -0.15, -0.15, -0.05, -0.05, 0.05, 0.05, 0.15, 0.15, 0.15, 0.15, 0.05, 0.05, -0.05, -0.05, -0.15, -0.15, 0.15, 0.15, 0.15, 0.15, -0.15, -0.15, -0.15, -0.15),
-#     u = c(0, -1, -1, 0, 0, -1, -1, 0, 1, 2, 2, 1, 1, 2, 2, 1, 1, 0, 2, -1,
-#           2, -1, 1, 0, 1, 0, 2, -1, 2, -1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1),
-#     v = c(1, 2, 2, 1, 0, -1, -1, 0, 1, 2, 2, 1, 0, -1, -1, 0, 1, 1, 2, 2,
-#           2, 2, 1, 1, 0, 0, -1, -1, -1, -1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0),
-#     normal_x = c(1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-#     normal_y = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-#     normal_z = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1)
-#   ),
-#   index = as.integer(c(0, 4, 1, 4, 5, 1, 1, 5, 2, 5, 6, 2, 2, 6, 3, 6, 7, 3, 8, 12, 9, 12, 13, 9, 9, 13, 10, 13, 14, 10, 10, 14, 11, 14, 15, 11, 16, 18, 17, 18, 19, 17, 18, 20, 19, 20, 21, 19, 20, 22, 21, 22, 23, 21, 24, 26, 25, 26, 27, 25, 26, 28, 27, 28, 29, 27, 28, 30, 29, 30, 31, 29, 32, 34, 33, 34, 35, 33, 36, 38, 37, 38, 39, 37)) + 1L,
-#   texture_size = c(20L, 20L),
-#   channel_map = data.frame(
-#     row = c(
-#       3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-#       14, 15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-#       15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-#       16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-#       17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-#       18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-#       3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 3, 4,
-#       5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 3, 4, 5, 6,
-#       7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 3, 4, 5, 6, 7, 8,
-#       9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10,
-#       11, 12, 13, 14, 15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-#       12, 13, 14, 15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-#       13, 14, 15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-#       14, 15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-#       15, 16, 17, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-#       16, 17, 18),
-#     column = c(
-#       3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-#       3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5,
-#       5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6,
-#       6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-#       7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9,
-#       9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10,
-#       10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
-#       11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12,
-#       12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13,
-#       13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 14, 14,
-#       14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15, 15, 15, 15,
-#       15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 16, 16, 16, 16,
-#       16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17,
-#       17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 18, 18, 18, 18,
-#       18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18)
-#   ),
-#   transform = diag(1, 4),
-#   index_start = 1L
-#
-# ) -> config
-#
-# list(
-#   geometry = "BoxGeometry",
-#   width = 5,
-#   height = 5
-# )
-#
-# library(gifti)
-# outdir <- tempdir()
-# gii_files = download_gifti_data(outdir = outdir)
-#
-# a <- readgii(gii_files[[3]])
-#
-# gii_list = lapply(gii_files, readgii)
-# surf_files = grep("white[.]surf[.]gii", gii_files, value = TRUE)
-# surfs = lapply(surf_files, surf_triangles)
-#
-# col_file = grep("white[.]shape[.]gii", gii_files, value = TRUE)
-# cdata = readgii(col_file)
-# cdata = cdata$data$shape
-# mypal = grDevices::colorRampPalette(colors = c("blue", "black", "red"))
-# n = 4
-#
-#
-# breaks = quantile(cdata)
-# ints = cut(cdata, include.lowest = TRUE, breaks = breaks)
-# ints = as.integer(ints)
-# stopifnot(!any(is.na(ints)))
-# cols = mypal(n)[ints]
-# cols = cols[surfs[[1]]$triangle]
-#
-# rgl::rgl.open()
-# rgl::rgl.triangles(surfs[[1]]$pointset, color = cols)
-# rgl::play3d(rgl::spin3d(), duration = 5)
-# ?gifti::write_gifti()
+
+prototype_search_paths <- function() {
+  paths <- file.path(
+    c(
+      '~/rave_data/others/three_brain',
+      default_template_directory(),
+      system.file(package = 'threeBrain')
+    ),
+    "prototypes"
+  )
+  paths <- paths[dir.exists(paths)]
+  paths
+}
+
+
+#' @export
+list_electrode_prototypes <- function() {
+  re <- list()
+
+  root_paths <- rev(prototype_search_paths())
+  root_paths <- root_paths[dir.exists(root_paths)]
+
+  if(!length(root_paths)) { return(re) }
+
+  root_paths <- normalizePath(root_paths, mustWork = FALSE)
+  root_paths <- unique(root_paths)
+
+  lapply(root_paths, function(path) {
+    fnames <- list.files(path, pattern = "\\.json$", ignore.case = TRUE,
+                         include.dirs = FALSE, full.names = FALSE,
+                         all.files = FALSE, recursive = FALSE)
+
+    if(length(fnames)) {
+      pnames <- gsub("\\.json$", "", fnames, ignore.case = TRUE)
+      re[ pnames ] <<- file.path(path, fnames)
+    }
+  })
+  re
+}
+
+
