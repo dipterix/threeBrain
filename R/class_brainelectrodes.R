@@ -621,7 +621,7 @@ BrainElectrodes <- R6::R6Class(
 
       lapply(split(table, table_geom_names), function(sub) {
         proto <- self$add_geometry( label_prefix = sub$LabelPrefix[[1]], prototype_name = sub$Prototype[[1]] )
-        if(is.null(proto) || all(proto$transform == diag(1, 4))) {
+        if(is.null(proto)) {
           lapply(seq_len(nrow(sub)), function(ii) {
             add_single_contact(sub[ii, ])
           })
@@ -649,8 +649,16 @@ BrainElectrodes <- R6::R6Class(
 
     # function to set values to electrodes
     set_values = function(table_or_path){
+      # DIPSAUS DEBUG START
+      # brain <- raveio::rave_brain("YAEL/PrecisionDemo")
+      # self <- brain$electrodes
+      # table_or_path <- brain$electrodes$raw_table
+      # table <- table_or_path
       if( missing(table_or_path) ){
         table <- self$value_table
+        if(!is.data.frame(table)) {
+          table <- self$raw_table
+        }
       }else{
         stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
                    msg = 'table_or_path must be either data.frame or path to a csv file')
@@ -697,6 +705,8 @@ BrainElectrodes <- R6::R6Class(
 
       var_names <- var_names[ !var_names %in% c('Electrode', 'Time', 'Note') ]
 
+      if(!length(var_names)) { return(invisible())}
+
       # Check values
       for( vn in var_names ){
         if( !is.list(table[[vn]]) && !is.numeric(table[[vn]]) && !is.factor(table[[vn]]) ){
@@ -704,17 +714,73 @@ BrainElectrodes <- R6::R6Class(
         }
       }
 
+      has_time <- "Time" %in% names(table)
+
       self$apply_electrodes(function(el, ii){
-        # set values
-        sub <- table[table$Electrode == ii, ]
-        lapply(var_names, function(vn){
-          # if no subset, then remove keyframes, else set keyframes
-          el$set_value(value = sub[[vn]], time_stamp = sub$Time,
-                       name = vn, target = '.material.color')
-          if( length(sub$Note) && is.character(sub$Note) ){
-            el$custom_info <- sub$Note
+        if( inherits(el$prototype, "ElectrodePrototype") ) {
+          channels <- el$prototype$channel_numbers
+          base_table <- data.frame( Electrode = channels )
+
+          sub <- table[table$Electrode %in% channels, ]
+          if(has_time) {
+            split_table <- split(sub, sub$Time)
+          } else {
+            split_table <- list(sub)
           }
-        })
+
+          vtable <- dipsaus::fastmap2()
+          lapply(var_names, function(nm) {
+            vtable[[nm]] <- list(time = numeric(0L), values = list())
+            NULL
+          })
+
+          lapply(split_table, function(split_item) {
+            split_values <- merge(base_table, split_item, all.x = TRUE, all.y = FALSE, by = "Electrode", sort = FALSE)
+            od <- vapply(channels, function(ch) {
+              if( is.na(ch) ) { return(NA_integer_) }
+              idx <- which(split_values$Electrode == ch)
+              if(length(idx)) { return(idx[[1]])}
+              return(NA_integer_)
+            }, NA_integer_)
+            split_values <- split_values[od, ]
+
+            if( has_time ) {
+              time <- split_item$Time[[1]]
+            } else {
+              time <- 0
+            }
+            lapply(var_names, function(nm) {
+              v <- split_values[[nm]]
+              if(!all(is.na(v))) {
+                n <- length(vtable[[nm]]$time)
+                vtable[[nm]]$time[[n + 1]] <- time
+                vtable[[nm]]$values[[n + 1]] <- v
+              }
+              NULL
+            })
+            NULL
+          })
+
+          lapply(var_names, function(nm) {
+            item <- vtable[[nm]]
+            if( length(item$time) ) {
+              el$set_value(value = item$values, time_stamp = item$time, name = nm)
+            }
+            NULL
+          })
+
+        } else {
+          # set values
+          sub <- table[table$Electrode == ii, ]
+          lapply(var_names, function(vn){
+            # if no subset, then remove keyframes, else set keyframes
+            el$set_value(value = sub[[vn]], time_stamp = sub$Time, channels = sub$Electrode,
+                         name = vn, target = '.material.color')
+            if( length(sub$Note) && is.character(sub$Note) ){
+              el$custom_info <- sub$Note
+            }
+          })
+        }
         NULL
       })
 
