@@ -33,6 +33,7 @@
 #' @param controllers list to override the settings, for example \code{proxy$get_controllers()}
 #' @param browser_external logical, use system default browser (default) or builtin one.
 #' @param global_data,global_files internally use, mainly to store orientation matrices and files.
+#' @param qrcode 'URL' to show in the 'QR' code; can be a character string or a named list of \code{'url'} and \code{'text'} (hyper-reference text)
 #' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications
 #' @param widget_id character, internally used as unique identifiers for widgets;
 #' only use it when you have multiple widgets in one website
@@ -105,6 +106,9 @@ threejs_brain <- function(
   widget_id = 'threebrain_data', tmp_dirname = NULL,
   debug = FALSE, token = NULL, controllers = list(),
   browser_external = TRUE, global_data = list(), global_files = list(),
+
+  # QRCode
+  qrcode = NULL,
 
   # customized js code
   custom_javascript = NULL,
@@ -364,6 +368,7 @@ threejs_brain <- function(
     show_inactive_electrodes = isTRUE(show_inactive_electrodes),
     side_display = side_display,
     control_display = control_display,
+    qrcode = qrcode,
     custom_javascript = custom_javascript
   )
 

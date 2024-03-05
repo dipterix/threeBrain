@@ -266,7 +266,7 @@ BrainElectrodes <- R6::R6Class(
 
     add_geometry = function( label_prefix, prototype_name, cache_ok = TRUE, native_ok = TRUE ) {
 
-      if( native_ok ) {
+      if( !native_ok ) {
         cache_ok <- FALSE
       }
       label_prefix <- trimws(label_prefix)
@@ -278,16 +278,16 @@ BrainElectrodes <- R6::R6Class(
       name <- sprintf("%s_%s", prototype_name, label_prefix)
       name_upper <- toupper(name)
       prototype_name_upper <- toupper(prototype_name)
-      if(inherits(self$geometries[[ name_upper ]], "ElectrodePrototype")) {
+      if(cache_ok && inherits(self$geometries[[ name_upper ]], "ElectrodePrototype")) {
         return( self$geometries[[ name_upper ]] )
       }
-      if( native_ok && inherits(self$brain, "rave-brain") ) {
+      if( inherits(self$brain, "rave-brain") ) {
         native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
       } else {
         native_path <- NULL
       }
 
-      if(length(native_path) == 1 && dir.exists(native_path)) {
+      if(native_ok && length(native_path) == 1 && dir.exists(native_path)) {
         config_files <- list.files(native_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
         config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
         config_names <- toupper(config_names)
@@ -299,9 +299,7 @@ BrainElectrodes <- R6::R6Class(
             proto$name <- name_upper
             proto$type <- prototype_name
             self$geometries[[ name_upper ]] <- proto
-            if( cache_ok ) {
-              return(proto)
-            }
+            return(proto)
           }, error = function(e) {
             warning(e)
           })
@@ -323,7 +321,7 @@ BrainElectrodes <- R6::R6Class(
           self$geometries[[ name_upper ]] <- proto
           if( length(native_path) == 1 ) {
             dir.create(native_path, showWarnings = FALSE, recursive = TRUE)
-            proto$as_json(flattern = TRUE, to_file = file.path(native_path, name_upper))
+            proto$as_json(flattern = TRUE, to_file = file.path(native_path, sprintf("%s.json", name_upper)))
           }
           return(proto)
         }
