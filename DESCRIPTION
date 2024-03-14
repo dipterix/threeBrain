@@ -1,7 +1,7 @@
 Package: threeBrain
 Type: Package
-Title: 3D Brain Visualization
-Version: 1.0.1.9109
+Title: Your Advanced 3D Brain Visualization
+Version: 1.0.1.9110
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("aut", "res")),
@@ -18,13 +18,13 @@ Description: A fast, interactive cross-platform, and easy to share
     a web browser with 'WebGL2' support (for example, 'Chrome', 'Firefox', 
     'Safari'), and can be inserted into any websites. The 'R-shiny' 
     support allows the 3D viewer to be dynamically generated from reactive user 
-    inputs. This feature has been fully adopted by 'RAVE' 
+    inputs. Please check the publication by Wang, Magnoti, Zhang,
+    and Beauchamp (2023, <doi:10.1523/ENEURO.0328-23.2023>) for electrode 
+    localization. This viewer has been fully adopted by 'RAVE' 
     <https://openwetware.org/wiki/RAVE>, an interactive toolbox to 
-    analyze 'iEEG' data. Documentation about 'threeBrain' is provided
-    by <https://dipterix.org/threeBrain/> and several vignettes included 
-    in this package. To cite the package, please check our 'NeuroImage' paper 
-    by Magnotti, Wang, and Beauchamp (2020, <doi:10.1016/j.neuroimage.2020.117341>),
-    or see 'citation("threeBrain")' for details.
+    analyze 'iEEG' data by Magnotti, Wang, and Beauchamp (2020, 
+    <doi:10.1016/j.neuroimage.2020.117341>). Please check 
+    'citation("threeBrain")' for details.
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.3.1
@@ -38,7 +38,6 @@ Imports:
     grDevices,
     graphics,
     dipsaus,
-    ravetools,
     xml2,
     servr,
     png,
@@ -55,5 +54,6 @@ Suggests:
     knitr,
     rmarkdown,
     DT,
+    ravetools,
     htmltools
 VignetteBuilder: knitr
