@@ -230,6 +230,7 @@ BrainElectrodes <- R6::R6Class(
 
     # A list that stores electrodes
     objects = NULL,
+    objects2 = NULL,
 
     # a list storing values
     value_table = NULL,
@@ -495,8 +496,9 @@ BrainElectrodes <- R6::R6Class(
     },
 
     set_electrodes = function(table_or_path, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
-                              position_names = c("x", "y", "z")){
+                              position_names = c("x", "y", "z"), priority = c("prototype", "sphere", "both")){
       coord_sys <- match.arg(coord_sys)
+      priority <- match.arg(priority)
       if( is.null(table_or_path) ){
         return(invisible())
       }
@@ -527,6 +529,7 @@ BrainElectrodes <- R6::R6Class(
 
       # Generate objects
       self$objects <- list()
+      self$objects2 <- list()
 
       subject_code <- self$subject_code
 
@@ -540,7 +543,7 @@ BrainElectrodes <- R6::R6Class(
       table_geom_names[!table_geom_names %in% electrode_geometry_names] <- ""
 
 
-      add_single_contact <- function(row) {
+      add_single_contact <- function(row, proto = NULL) {
         anatomical_label <- row$FSLabel
         which_side <- guess_hemisphere(row$Hemisphere, anatomical_label)
         nearest_vertex <- row$VertexNumber
@@ -555,7 +558,7 @@ BrainElectrodes <- R6::R6Class(
         el <- ElectrodeGeom$new(
           name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
           position = c(row$Coord_x, row$Coord_y, row$Coord_z),
-          radius = radius, group = self$group, subtype = "SphereGeometry")
+          radius = radius, group = self$group, subtype = "SphereGeometry", prototype = proto)
         el$number <- row$Electrode
         el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
         el$MNI305_position <- mni_305
@@ -583,39 +586,50 @@ BrainElectrodes <- R6::R6Class(
         #
         # if(all(is.na(channels))) { return() }
         # proto$set_channel_map(channel_numbers = channels)
-        proto$set_contact_channels(sub$Electrode, sub$ContactOrder)
-        if(all(is.na(proto$channel_numbers))) { return() }
 
-        first_contact <- min(sub$Electrode)
-        electrode_numbers <- dipsaus::deparse_svec(sub$Electrode)
-        el <- ElectrodeGeom$new(
-          name = sprintf('%s, %d - %s', subject_code, first_contact, sub$LabelPrefix[[1]]),
-          position = c(999, 999, 999), # this will be ignored
-          radius = 1, group = self$group, subtype = "CustomGeometry", prototype = proto)
-        el$number <- electrode_numbers
-        el$is_surface_electrode <- FALSE
-        el$vertex_number <- -1
-        el$MNI305_position <- c(0, 0, 0)
-        el$vertex_number <- -1
+        if( priority %in% c("prototype", "both") ) {
+          proto$set_contact_channels(sub$Electrode, sub$ContactOrder)
+          if(all(is.na(proto$channel_numbers))) { return() }
 
-        hemi <- tolower(sub$Hemisphere)
-        hemi <- hemi[hemi %in% c("left", "right")]
-        if(length(hemi)) {
-          if(sum(hemi == "left") * 2 >= length(hemi)) {
-            el$hemisphere <- "left"
-          } else {
-            el$hemisphere <- "right"
+          first_contact <- min(sub$Electrode)
+          electrode_numbers <- dipsaus::deparse_svec(sub$Electrode)
+          el <- ElectrodeGeom$new(
+            name = sprintf('%s, (%d) - %s', subject_code, nrow(sub), sub$LabelPrefix[[1]]),
+            position = c(999, 999, 999), # this will be ignored
+            radius = 1, group = self$group, subtype = "CustomGeometry", prototype = proto)
+          el$number <- electrode_numbers
+          el$is_surface_electrode <- FALSE
+          el$vertex_number <- -1
+          el$MNI305_position <- c(0, 0, 0)
+          el$vertex_number <- -1
+
+          hemi <- tolower(sub$Hemisphere)
+          hemi <- hemi[hemi %in% c("left", "right")]
+          if(length(hemi)) {
+            if(sum(hemi == "left") * 2 >= length(hemi)) {
+              el$hemisphere <- "left"
+            } else {
+              el$hemisphere <- "right"
+            }
+          }
+
+          if(length(sub$FSLabel)) {
+            count <- table(sub$FSLabel)
+            el$anatomical_label <- names(count)[which.max(count)][[1]]
+          }
+          el$surface_type <- c(sub$SurfaceType, 'pial')[1]
+          el$subject_code <- subject_code
+          el$set_value( value = as.character(subject_code), name = '[Subject]' )
+          self$objects2[[ length(self$objects2) + 1 ]] <- el
+        } else {
+          proto <- NULL
+        }
+
+        if( priority %in% c("sphere", "both")) {
+          for(ii in seq_len(nrow(sub))) {
+            add_single_contact(sub[ii, ], proto)
           }
         }
-
-        if(length(sub$FSLabel)) {
-          count <- table(sub$FSLabel)
-          el$anatomical_label <- names(count)[which.max(count)][[1]]
-        }
-        el$surface_type <- c(sub$SurfaceType, 'pial')[1]
-        el$subject_code <- subject_code
-        el$set_value( value = as.character(subject_code), name = '[Subject]' )
-        self$objects[[ first_contact ]] <- el
         return()
       }
 
@@ -717,70 +731,71 @@ BrainElectrodes <- R6::R6Class(
       has_time <- "Time" %in% names(table)
 
       self$apply_electrodes(function(el, ii){
-        if( inherits(el$prototype, "ElectrodePrototype") ) {
-          channels <- el$prototype$channel_numbers
-          base_table <- data.frame( Electrode = channels )
-
-          sub <- table[table$Electrode %in% channels, ]
-          if(has_time) {
-            split_table <- split(sub, sub$Time)
-          } else {
-            split_table <- list(sub)
+        # set values
+        sub <- table[table$Electrode == ii, ]
+        lapply(var_names, function(vn){
+          # if no subset, then remove keyframes, else set keyframes
+          el$set_value(value = sub[[vn]], time_stamp = sub$Time, channels = sub$Electrode,
+                       name = vn, target = '.material.color')
+          if( length(sub$Note) && is.character(sub$Note) ){
+            el$custom_info <- sub$Note
           }
+        })
+        NULL
+      })
 
-          vtable <- dipsaus::fastmap2()
-          lapply(var_names, function(nm) {
-            vtable[[nm]] <- list(time = numeric(0L), values = list())
-            NULL
-          })
+      lapply(seq_along(self$objects2), function(ii) {
+        el = self$objects2[[ii]]
+        channels <- el$prototype$channel_numbers
+        base_table <- data.frame( Electrode = channels )
 
-          lapply(split_table, function(split_item) {
-            split_values <- merge(base_table, split_item, all.x = TRUE, all.y = FALSE, by = "Electrode", sort = FALSE)
-            od <- vapply(channels, function(ch) {
-              if( is.na(ch) ) { return(NA_integer_) }
-              idx <- which(split_values$Electrode == ch)
-              if(length(idx)) { return(idx[[1]])}
-              return(NA_integer_)
-            }, NA_integer_)
-            split_values <- split_values[od, ]
-
-            if( has_time ) {
-              time <- split_item$Time[[1]]
-            } else {
-              time <- 0
-            }
-            lapply(var_names, function(nm) {
-              v <- split_values[[nm]]
-              if(!all(is.na(v))) {
-                n <- length(vtable[[nm]]$time)
-                vtable[[nm]]$time[[n + 1]] <- time
-                vtable[[nm]]$values[[n + 1]] <- v
-              }
-              NULL
-            })
-            NULL
-          })
-
-          lapply(var_names, function(nm) {
-            item <- vtable[[nm]]
-            if( length(item$time) ) {
-              el$set_value(value = item$values, time_stamp = item$time, name = nm)
-            }
-            NULL
-          })
-
+        sub <- table[table$Electrode %in% channels, ]
+        if(has_time) {
+          split_table <- split(sub, sub$Time)
         } else {
-          # set values
-          sub <- table[table$Electrode == ii, ]
-          lapply(var_names, function(vn){
-            # if no subset, then remove keyframes, else set keyframes
-            el$set_value(value = sub[[vn]], time_stamp = sub$Time, channels = sub$Electrode,
-                         name = vn, target = '.material.color')
-            if( length(sub$Note) && is.character(sub$Note) ){
-              el$custom_info <- sub$Note
-            }
-          })
+          split_table <- list(sub)
         }
+
+        vtable <- dipsaus::fastmap2()
+        lapply(var_names, function(nm) {
+          vtable[[nm]] <- list(time = numeric(0L), values = list())
+          NULL
+        })
+
+        lapply(split_table, function(split_item) {
+          split_values <- merge(base_table, split_item, all.x = TRUE, all.y = FALSE, by = "Electrode", sort = FALSE)
+          od <- vapply(channels, function(ch) {
+            if( is.na(ch) ) { return(NA_integer_) }
+            idx <- which(split_values$Electrode == ch)
+            if(length(idx)) { return(idx[[1]])}
+            return(NA_integer_)
+          }, NA_integer_)
+          split_values <- split_values[od, ]
+
+          if( has_time ) {
+            time <- split_item$Time[[1]]
+          } else {
+            time <- 0
+          }
+          lapply(var_names, function(nm) {
+            v <- split_values[[nm]]
+            if(!all(is.na(v))) {
+              n <- length(vtable[[nm]]$time)
+              vtable[[nm]]$time[[n + 1]] <- time
+              vtable[[nm]]$values[[n + 1]] <- v
+            }
+            NULL
+          })
+          NULL
+        })
+
+        lapply(var_names, function(nm) {
+          item <- vtable[[nm]]
+          if( length(item$time) ) {
+            el$set_value(value = item$values, time_stamp = item$time, name = nm)
+          }
+          NULL
+        })
         NULL
       })
 

@@ -289,13 +289,18 @@ Brain2 <- R6::R6Class(
       )
     },
 
-    set_electrodes = function(electrodes, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"), ...){
+    set_electrodes = function(electrodes, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"), ...,
+                              priority = c("prototype", "sphere", "both")){
       coord_sys <- match.arg(coord_sys)
+      priority <- match.arg(priority)
+      if( missing(electrodes) ) {
+        electrodes <- self$electrodes$raw_table
+      }
       if( R6::is.R6(electrodes) && 'brain-electrodes' %in% class(electrodes)){
         self$electrodes <- electrodes
         self$electrodes$set_brain( self )
       }else{
-        self$electrodes$set_electrodes( electrodes, coord_sys = coord_sys, ... )
+        self$electrodes$set_electrodes( electrodes, coord_sys = coord_sys, priority = priority, ... )
       }
     },
 
@@ -453,7 +458,7 @@ Brain2 <- R6::R6Class(
 
       if( isTRUE(electrodes) && !is.null(self$electrodes) ){
         # self$electrodes$set_values()
-        geoms <- c(geoms, unique(unlist(self$electrodes$objects)))
+        geoms <- c(geoms, unique(unlist(self$electrodes$objects)), unique(unlist(self$electrodes$objects2)))
       }
 
       geoms <- c(geoms, self$misc)

@@ -58,14 +58,19 @@ ElectrodeGeom <- R6::R6Class(
       self$subtype <- subtype
 
       self$radius <- radius
-      if( subtype == "CustomGeometry" ) {
-        if( inherits(prototype, "ElectrodePrototype") ) {
-          self$prototype <- prototype
-        } else {
-          stop("`prototype` must be provided for custom electrode geometry")
+      if( inherits(prototype, "ElectrodePrototype") ) {
+        self$prototype <- prototype
+        if(length(self$prototype$name) != 1) {
+          self$prototype$name <- rand_string(6)
+        }
+        group_key <- sprintf("prototype_%s", self$prototype$name)
+        if( !group_key %in% names(self$group$group_data) ) {
+          self$group$set_group_data(
+            group_key,
+            self$prototype$as_list(flattern = TRUE)
+          )
         }
       }
-
 
       # self$set_value(
       #   value = get2('value', other_args, ifnotfound = NULL),
@@ -97,11 +102,6 @@ ElectrodeGeom <- R6::R6Class(
       }
 
       if(!is.null(self$prototype)) {
-        if(length(self$prototype$name) != 1) {
-          self$prototype$name <- rand_string(6)
-        }
-        self$group$set_group_data(sprintf("prototype_%s", self$prototype$name),
-                                  self$prototype$as_list(flattern = TRUE))
         prototype <- self$prototype$name
       } else {
         prototype <- NULL
