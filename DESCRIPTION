@@ -57,3 +57,5 @@ Suggests:
     ravetools,
     htmltools
 VignetteBuilder: knitr
+Remotes:
+    dipterix/ravetools
