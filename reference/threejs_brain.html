@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9109</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9200</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,6 +97,7 @@
 <span>  browser_external <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  global_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  global_files <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  qrcode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  custom_javascript <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  show_modal <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -236,6 +237,10 @@ only use it when you have multiple widgets in one website</p></dd>
 
 <dt>global_data, global_files</dt>
 <dd><p>internally use, mainly to store orientation matrices and files.</p></dd>
+
+
+<dt>qrcode</dt>
+<dd><p>'URL' to show in the 'QR' code; can be a character string or a named list of <code>'url'</code> and <code>'text'</code> (hyper-reference text)</p></dd>
 
 
 <dt>custom_javascript</dt>

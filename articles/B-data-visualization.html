@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9109</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9200</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,8 +97,8 @@ following R code to set up. Alternatively, you can substitute variables
 with least 5 columns: <code>Subject</code>, <code>Coord_x</code>,
 <code>Coord_y</code>, <code>Coord_z</code>, <code>Label</code>. The
 column names are case-sensitive.</p>
-<div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-09.png" style="width:80.0%" alt=""><p class="caption">Electrode table - example</p>
+<div class="float">
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-09.png" style="width:80.0%" alt="Electrode table - example"><div class="figcaption">Electrode table - example</div>
 </div>
 <p>If you have performed electrode localization (see the previous
 article) and exported the electrode table, the exported table can be
@@ -110,9 +110,9 @@ table</a> will be used. Please download this file and place it at
 <code class="sourceCode R"><span><span class="va">electrode_table</span> <span class="op">&lt;-</span> <span class="va">`~/Downloads/N27/electrodes.csv`</span></span>
 <span><span class="va">brain</span><span class="op">$</span><span class="fu">set_electrodes</span><span class="op">(</span><span class="va">electrode_table</span><span class="op">)</span></span>
 <span><span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-10.png" style="width:100.0%" alt=""><p class="caption">Click on one of the electrodes, the information
-(label, ‘MNI’ coordinates) will be displayed at top.</p>
+<div class="float">
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-10.png" style="width:100.0%" alt="Click on one of the electrodes, the information (label, ‘MNI’ coordinates) will be displayed at top."><div class="figcaption">Click on one of the electrodes, the information
+(label, ‘MNI’ coordinates) will be displayed at top.</div>
 </div>
 </div>
 <div class="section level2">
@@ -273,12 +273,12 @@ and save it to <code>~/Downloads/N27/values.csv</code></p>
 <code>Display Data</code> or use keyboard shortcut <code>d</code> (make
 sure the mouse is hovering on the brain) to switch to desired
 variables.</p>
-<div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-11.png" style="width:100.0%" alt=""><p class="caption">Electrode data visualization. For continuous data,
-the value range is automatically detected using the maximum absolute
-values. The color palette goes from blue to white to red with linear
-transition. For discrete data, the color palette uses R’s default
-palette.</p>
+<div class="float">
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-11.png" style="width:100.0%" alt="Electrode data visualization. For continuous data, the value range is automatically detected using the maximum absolute values. The color palette goes from blue to white to red with linear transition. For discrete data, the color palette uses R’s default palette."><div class="figcaption">Electrode data visualization. For continuous
+data, the value range is automatically detected using the maximum
+absolute values. The color palette goes from blue to white to red with
+linear transition. For discrete data, the color palette uses R’s default
+palette.</div>
 </div>
 <p>The <code>sine_wave</code> is time series. You can see the animation
 by toggling <code>Play/Pause</code> option in the
@@ -311,10 +311,10 @@ function to interpolate colors. Please use
 <span>  value_ranges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="st">"p_value"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">)</span>, </span>
 <span>  palettes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="st">"p_value"</span> <span class="op">=</span> <span class="va">pal</span> <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png" style="width:50.0%" alt=""><p class="caption">Adjusted p-value palette: the value range is from 0
-to 1; the color transition is non-linear, with <span class="math inline">\(p&lt;0.05\)</span> rendered as deep red, and large
-p-values rendered as light reds</p>
+<div class="float">
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png" style="width:50.0%" alt="Adjusted p-value palette: the value range is from 0 to 1; the color transition is non-linear, with p&lt;0.05 rendered as deep red, and large p-values rendered as light reds"><div class="figcaption">Adjusted p-value palette: the value range is
+from 0 to 1; the color transition is non-linear, with <span class="math inline">\(p&lt;0.05\)</span> rendered as deep red, and large
+p-values rendered as light reds</div>
 </div>
 </div>
 </div>
@@ -330,9 +330,10 @@ hovering over the brain) to change.</p>
 <p>You can also hide the electrodes by switching the electrode
 <code>Visibility</code> to <code>hidden</code> in the
 <code>Electrodes</code> panel to only show the mapped results.</p>
-<div class="figure">
-<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png" style="width:80.0%" alt=""><p class="caption">Electrode values (p-value) mapped on to the pial
-surface. Left: electrodes are visible; Right: electrodes are hidden.</p>
+<div class="float">
+<img src="https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-13.png" style="width:80.0%" alt="Electrode values (p-value) mapped on to the pial surface. Left: electrodes are visible; Right: electrodes are hidden."><div class="figcaption">Electrode values (p-value) mapped on to the pial
+surface. Left: electrodes are visible; Right: electrodes are
+hidden.</div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
