@@ -34,7 +34,7 @@ the result is also saved to \code{save_as} is specified.
 }
 \description{
 Alternative to 'Matlab' version of \code{'pial-outer-smoothed'},
-use this function along with \code{\link{fill_surface}}.
+use this function along with \code{\link[ravetools]{fill_surface}}.
 }
 \examples{
 

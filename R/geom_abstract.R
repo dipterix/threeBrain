@@ -210,18 +210,18 @@ AbstractGeom <- R6::R6Class(
           time_stamp <- 0
         }
       }
+
       is_na <- is.na(value)
-      if(all(is_na)){
+      if (all(is_na)) {
         self$keyframes[[name]] <- NULL
         return(invisible())
-      }else{
+      } else {
         value <- value[!is_na]
         time_stamp <- time_stamp[!is_na]
       }
 
-
       kf <- KeyFrame$new(name = name, value = value, time = time_stamp,
-                        dtype = ifelse( isTRUE(is.numeric(value)), 'continuous', 'discrete'),
+                        dtype = ifelse( isTRUE(is.numeric(unlist(value))), 'continuous', 'discrete'),
                         target = '.material.color', ...)
 
       self$keyframes[[name]] <- kf

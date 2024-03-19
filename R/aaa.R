@@ -88,6 +88,24 @@ freesurferformats::write.nifti2
 
 cache_version <- 0.1
 
+DEFAULT_COLOR_DISCRETE <- c(
+  # default RAVE colors
+  "orange", "dodgerblue3", "darkgreen", "orangered", "brown", "purple3",
+
+  # polychrome
+  "#5A5156", "#E4E1E3", "#F6222E", "#FE00FA", "#16FF32", "#3283FE",
+  "#FEAF16", "#B00068", "#1CFFCE", "#90AD1C", "#2ED9FF", "#DEA0FD",
+  "#AA0DFE", "#F8A19F", "#325A9B", "#C4451C", "#1C8356", "#85660D",
+  "#B10DA1", "#FBE426", "#1CBE4F", "#FA0087", "#FC1CBF", "#F7E1A0",
+  "#C075A6", "#782AB6", "#AAF400", "#BDCDFF", "#822E1C", "#B5EFB5",
+  "#7ED7D1", "#1C7F93", "#D85FF7", "#683B79", "#66B0FF", "#3B00FB"
+)
+
+DEFAULT_COLOR_CONTINUOUS <- c(
+  "#053061", "#2166ac", "#4393c3", "#92c5de", "#d1e5f0",
+  "#ffffff", "#fddbc7", "#f4a582", "#d6604d", "#b2182b", "#67001f"
+)
+
 #' @title Setup Package, Install Environment
 #' @author Zhengjia Wang
 #' @param continued logical, there are two phases of setting up environment. You

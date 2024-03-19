@@ -1,14 +1,29 @@
+
+
 # electrodes
 ElectrodeGeom <- R6::R6Class(
   classname = 'ElectrodeGeom',
-  inherit = SphereGeom,
+  inherit = AbstractGeom,
   public = list(
+
+    type = 'electrode',
 
     # Is subcortical electrode?
     is_surface_electrode = FALSE,
 
     # Do you want to map to the template electrode? for initialization-only
     use_template = FALSE,
+
+    # ---- Shape-related properties --------------------------------------------
+    # e.g. "SphereGeometry"
+    subtype = "SphereGeometry",
+
+    # Sphere object radius
+    radius = 5.0,
+
+    # CustomGeometry
+    prototype = NULL,
+
 
     # ------------ for cortical electrodes only ------------
 
@@ -32,6 +47,39 @@ ElectrodeGeom <- R6::R6Class(
     # Not yet implemented
 
     # ------------ G ------------
+    initialize = function(
+      name, position = c(0,0,0),
+      subtype = c("SphereGeometry", "CustomGeometry"),
+      radius = 5, prototype = NULL, ...
+    ){
+      subtype <- match.arg(subtype)
+      super$initialize(name, position = position, ...)
+
+      self$subtype <- subtype
+
+      self$radius <- radius
+      if( inherits(prototype, "ElectrodePrototype") ) {
+        self$prototype <- prototype
+        if(length(self$prototype$name) != 1) {
+          self$prototype$name <- rand_string(6)
+        }
+        group_key <- sprintf("prototype_%s", self$prototype$name)
+        if( !group_key %in% names(self$group$group_data) ) {
+          self$group$set_group_data(
+            group_key,
+            self$prototype$as_list(flattern = TRUE)
+          )
+        }
+      }
+
+      # self$set_value(
+      #   value = get2('value', other_args, ifnotfound = NULL),
+      #   time_stamp = get2('time_stamp', other_args, ifnotfound = NULL),
+      #   name = get2('name', other_args, ifnotfound = 'default')
+      # )
+
+    },
+
     to_list = function(){
       fixed_color <- self$fixed_color
       if( !length( fixed_color ) ) {
@@ -52,9 +100,18 @@ ElectrodeGeom <- R6::R6Class(
           inclusive = FALSE
         )
       }
+
+      if(!is.null(self$prototype)) {
+        prototype <- self$prototype$name
+      } else {
+        prototype <- NULL
+      }
       re <- c(
         super$to_list(),
         list(
+          subtype = self$subtype,
+          radius = self$radius,
+          prototype_name = prototype,
           is_electrode = TRUE,
           is_surface_electrode = self$is_surface_electrode,
           use_template = self$use_template,

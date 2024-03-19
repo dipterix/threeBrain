@@ -1,4 +1,4 @@
-ElectrodePrototype <- R6::R6Class(
+ElectrodePrototypeOld <- R6::R6Class(
   classname = "ElectrodePrototype",
   private = list(
     control_points = NULL,
@@ -205,7 +205,7 @@ ElectrodePrototype <- R6::R6Class(
 #' @param contacts a list of electrode positions; see example
 #' @examples
 #'
-#' proto <- new_electrode_prototype(
+#' proto <- new_electrode_prototype_old(
 #'   prefix = "sDEA-2mm-",
 #'   geom_control_points = c(0, 1.2, 10.2, 10.201, -3, -2, -0.1),
 #'   geom_control_diameters = c(0, 0.2, 0.2, 1.1, 1.1, 1.5, 1.5),
@@ -260,8 +260,9 @@ ElectrodePrototype <- R6::R6Class(
 #'   brain$plot(additional_geoms = list(geom))
 #' }
 #'
-#' @export
-new_electrode_prototype <- function(
+#' @noRd
+NULL
+new_electrode_prototype_old <- function(
     prefix = "", min_length = 0,
     geom_control_points = NULL,
     geom_control_diameters = NULL,
@@ -272,7 +273,7 @@ new_electrode_prototype <- function(
     stop("Electrode shaft minimal length must be non-negative.")
   }
 
-  proto <- ElectrodePrototype$new(prefix = prefix)
+  proto <- ElectrodePrototypeOld$new(prefix = prefix)
   proto$min_length <- min_length
 
   if(length(geom_control_points) != length(geom_control_diameters)) {

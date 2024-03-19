@@ -282,8 +282,13 @@ threeBrain <- function(
 
 
   # Create brain instance
-  brain <- Brain2$new(subject_code = subject_code, xfm = xfm, Norig = Norig, Torig = Torig)
-  brain$base_path <- fs_path
+  brain <- Brain2$new(
+    subject_code = subject_code,
+    xfm = xfm,
+    Norig = Norig,
+    Torig = Torig,
+    base_path = fs_path
+  )
 
   # --------- Step 3: Add T1 MRI slices ----------------------------------------
   if(length(path_mri)) {

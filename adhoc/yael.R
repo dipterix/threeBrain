@@ -2,6 +2,8 @@
 n27_path <- "/Users/dipterix/Dropbox (PennNeurosurgery)/BeauchampLabAtPenn/Electrode_Localization_Paper/Code/N27"
 atlas_idx <- c(17,18,53,1021,1023,1027,1034,1035,2001,2005,2027)
 atlad_idx2 <- c(17,53,1001,1015,1030,2001,2015,2030)
+
+
 brain <- raveio::rave_brain("YAEL/N27", surfaces = atlad_idx2)
 
 electrodes <- brain$electrodes$raw_table
@@ -37,11 +39,22 @@ palettes = list(
 brain$plot(
   palettes = palettes,
   controllers = list(
+    "Background Color" = "#000000",
     'Display Data' = "LabelPrefix",
     'Subcortical Surface' = "right",
-    'Right Opacity' = 0.1,
-    'Voxel Type' = "aparc_aseg"
-  )
+    'Right Opacity' = 0.2,
+    # 'Voxel Type' = "aparc_aseg",
+    "Sagittal (L - R)" = -25,
+    "Overlay Axial" = TRUE
+  ),
+  qrcode = list(text = "", url = "https://dipterix.org/assets/3dviewer/demos/simple-demo.html"),
+  title = "Make with RAVE - https://rave.wiki",
+  custom_javascript = '
+controlCenter.gui.openFolder("Default");
+const ctrl = controlCenter.gui.getController("Paste to Set State");
+ctrl.setValue(\'{"isThreeBrainControllerData":true,"controllerData":{"controllers":{},"folders":{"Default":{"controllers":{"Background Color":"#000000","Camera Position":"[free rotate]","Display Coordinates":true,"Record":false,"Paste to Set State":""},"folders":{}},"Volume Settings":{"controllers":{"Show Panels":true,"Slice Brightness":0,"Slice Mode":"canonical","Coronal (P - A)":0,"Axial (I - S)":-30,"Sagittal (L - R)":-25,"Intersect MNI305":"-23.7, -19.7, -11.7","Overlay Coronal":false,"Overlay Axial":true,"Overlay Sagittal":false,"Render Distance":0.4,"Voxel Type":"aparc_aseg","Voxel Display":"hidden","Voxel Opacity":0,"Voxel Min":-100000,"Voxel Max":100000,"Voxel Label":""},"folders":{}},"Surface Settings":{"controllers":{"Surface Material":"MeshPhysicalMaterial","Surface Type":"pial","Left Hemisphere":"normal","Right Hemisphere":"normal","Left Opacity":1,"Right Opacity":1,"Left Mesh Clipping":1,"Right Mesh Clipping":0.1,"Subcortical Surface":"right","Sub-Left Opacity":1,"Sub-Right Opacity":1,"Surface Color":"none","Blend Factor":1,"Sigma":1,"Decay":0.6,"Range Limit":5},"folders":{}},"Electrode Settings":{"controllers":{"Subject":"N27","Map Electrodes":false,"Surface Mapping":"sphere.reg","Volume Mapping":"mni305","Visibility":"all visible","Outlines":"auto","Text Scale":1.5,"Text Visibility":false},"folders":{}},"Data Visualization":{"controllers":{"Display Data":"LabelPrefix","Display Range":"","Threshold Data":"[None]","Threshold Range":"","Threshold Method":"|v| >= T1","Additional Data":"[None]","Play/Pause":false,"Speed":1,"Time":0,"Video Mode":"muted","Show Legend":true,"Show Time":true,"Highlight Box":true,"Info Text":true},"folders":{}}}},"sliceCrosshair":{"tkrRAS":"-23.70, -19.74, -11.67","scannerRAS":"-23.20, -37.24, 6.83","mni305RAS":"-22.64, -37.94, 5.29","mni152RAS":"-22.25, -36.77, 7.10"},"cameraState":{"target":{"x":-0.5699806213378906,"y":0.38562774658203125,"z":-3.507568359375},"up":{"x":0.0236866337490742,"y":0.5619081670291239,"z":0.8268604206319259},"position":{"x":9.869996858575208,"y":-411.7104766895651,"z":280.4828625050687},"zoom":1.1227083224406342}}\');
+',
+  debug = FALSE
 )
 # B|D|H|
 

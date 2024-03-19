@@ -43,6 +43,7 @@ threejs_brain(
   browser_external = TRUE,
   global_data = list(),
   global_files = list(),
+  qrcode = NULL,
   custom_javascript = NULL,
   show_modal = "auto"
 )
@@ -115,6 +116,8 @@ only use it when you have multiple widgets in one website}
 \item{browser_external}{logical, use system default browser (default) or builtin one.}
 
 \item{global_data, global_files}{internally use, mainly to store orientation matrices and files.}
+
+\item{qrcode}{'URL' to show in the 'QR' code; can be a character string or a named list of \code{'url'} and \code{'text'} (hyper-reference text)}
 
 \item{custom_javascript}{customized temporary 'JavaScript' code that runs after ready state; available 'JavaScript' variables are:
 \describe{

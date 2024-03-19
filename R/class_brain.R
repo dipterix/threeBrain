@@ -40,7 +40,7 @@ Brain2 <- R6::R6Class(
     Norig = diag(rep(1, 4)),
     Torig = diag(rep(1, 4)),
 
-    initialize = function(subject_code, xfm, Norig, Torig){
+    initialize = function(subject_code, xfm, Norig, Torig, base_path = NULL){
       stopifnot2( length(xfm) == 16 && length(dim(xfm)) == 2 && sum(dim(xfm)) == 8,
                   msg = 'xfm must be 4x4 matrix')
       stopifnot2( length(Norig) == 16 && length(dim(Norig)) == 2 && sum(dim(Norig)) == 8,
@@ -66,6 +66,11 @@ Brain2 <- R6::R6Class(
         group = GeomGroup$new(name = sprintf('_internal_group_data_%s', subject_code)),
         name = sprintf('_misc_%s', subject_code)
       )
+
+      if(length(base_path) == 1 && !is.na(base_path) && is.character(base_path) &&
+         file.exists(base_path)) {
+        self$base_path <- base_path
+      }
     },
 
     add_surface = function(
@@ -229,14 +234,22 @@ Brain2 <- R6::R6Class(
       if(!inherits(atlas, 'brain-atlas')) {
 
         stopifnot2(is.character(atlas), msg = 'atlas must be a brain-atlas object or valid atlas name from FreeSurfer folder')
-        atlas <- gsub("_", "+", atlas)
         path_atlases <- file.path( self$base_path, "mri", as.vector(rbind(
           sprintf("%s.mgz", atlas),
           sprintf("%s.nii.gz", atlas),
           sprintf("%s.nii", atlas)
         )) )
         atlas_path <- path_atlases[file.exists(path_atlases)]
-        if(!length(atlas_path)) { return() }
+        if(!length(atlas_path)) {
+          atlas <- gsub("_", "+", atlas)
+          path_atlases <- file.path( self$base_path, "mri", as.vector(rbind(
+            sprintf("%s.mgz", atlas),
+            sprintf("%s.nii.gz", atlas),
+            sprintf("%s.nii", atlas)
+          )) )
+          atlas_path <- path_atlases[file.exists(path_atlases)]
+          if(!length(atlas_path)) { return() }
+        }
         atlas_path <- atlas_path[[ 1 ]]
 
         atlas_geom <- VolumeGeom2$new(
@@ -276,13 +289,18 @@ Brain2 <- R6::R6Class(
       )
     },
 
-    set_electrodes = function(electrodes, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"), ...){
+    set_electrodes = function(electrodes, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"), ...,
+                              priority = c("prototype", "sphere", "both")){
       coord_sys <- match.arg(coord_sys)
+      priority <- match.arg(priority)
+      if( missing(electrodes) ) {
+        electrodes <- self$electrodes$raw_table
+      }
       if( R6::is.R6(electrodes) && 'brain-electrodes' %in% class(electrodes)){
         self$electrodes <- electrodes
         self$electrodes$set_brain( self )
       }else{
-        self$electrodes$set_electrodes( electrodes, coord_sys = coord_sys, ... )
+        self$electrodes$set_electrodes( electrodes, coord_sys = coord_sys, priority = priority, ... )
       }
     },
 
@@ -440,7 +458,7 @@ Brain2 <- R6::R6Class(
 
       if( isTRUE(electrodes) && !is.null(self$electrodes) ){
         # self$electrodes$set_values()
-        geoms <- c(geoms, self$electrodes$objects)
+        geoms <- c(geoms, unique(unlist(self$electrodes$objects)), unique(unlist(self$electrodes$objects2)))
       }
 
       geoms <- c(geoms, self$misc)
