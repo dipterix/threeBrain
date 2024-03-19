@@ -70,6 +70,7 @@ ElectrodePrototype <- R6::R6Class(
     .channel_map = NULL,
     .channel_numbers = NULL,
     .contact_center = NULL,
+    .contact_sizes = NULL,
     .transform = NULL,
     .model_control_points = NULL,
     .world_control_points = NULL,
@@ -315,6 +316,28 @@ ElectrodePrototype <- R6::R6Class(
 
     },
 
+    set_contact_sizes = function( sizes ) {
+      if(!is.numeric(sizes)) {
+        warning("Contact sizes must be numeric (mm).")
+        return(invisible(self))
+      }
+      sizes <- as.numeric(sizes)
+      if(!length(sizes)) {
+        private$.contact_sizes <- NULL
+        return(invisible(self))
+      }
+      n_channels <- self$n_channels
+      if(length(sizes) == 1) {
+        private$.contact_sizes <- rep(sizes, n_channels)
+        return(invisible(self))
+      }
+      if(length(sizes) != n_channels) {
+        stop("Number of contact sizes not matches with the number of channels")
+      }
+      private$.contact_sizes <- as.vector(sizes)
+      return(invisible(self))
+    },
+
 
     set_contact_channels = function(channel_numbers, contact_orders) {
       if(!length(channel_numbers)) {
@@ -490,6 +513,10 @@ ElectrodePrototype <- R6::R6Class(
       })
     },
 
+    to_list = function(...) {
+      self$as_list(...)
+    },
+
     as_list = function(flattern = FALSE) {
       model_control_points <- private$.model_control_points
       if(is.matrix(model_control_points)) {
@@ -534,6 +561,7 @@ ElectrodePrototype <- R6::R6Class(
         channel_map = channel_map,
         channel_numbers = as.vector(private$.channel_numbers),
         contact_center = contact_center,
+        contact_sizes = self$contact_sizes,
         model_control_points = model_control_points,
         world_control_points = world_control_points
       )
@@ -552,6 +580,7 @@ ElectrodePrototype <- R6::R6Class(
       self$set_normal(li$normal)
       self$set_texture_size(li$texture_size)
       self$set_channel_map(li$channel_map, li$contact_center, li$channel_numbers)
+      self$set_contact_sizes(li$contact_sizes)
       if(length(li$model_control_points)) {
         mcp <- matrix(data = li$model_control_points, nrow = 3L, dimnames = NULL)
         self$set_model_control_points(x = mcp[1, ], y = mcp[2, ], z = mcp[3, ])
@@ -621,6 +650,10 @@ ElectrodePrototype <- R6::R6Class(
         return(private$.channel_numbers)
       }
       return(seq_len(self$n_channels))
+    },
+    contact_sizes = function() {
+      if(!length(private$.contact_sizes)) { return(rep(0.1, self$n_channels))}
+      return(private$.contact_sizes)
     },
     position = function(v) {
       if(!missing(v)) {

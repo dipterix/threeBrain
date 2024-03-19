@@ -1,6 +1,6 @@
 #' @title Generate smooth envelope around surface
 #' @description Alternative to 'Matlab' version of \code{'pial-outer-smoothed'},
-#' use this function along with \code{\link{fill_surface}}.
+#' use this function along with \code{\link[ravetools]{fill_surface}}.
 #' @param surface_path path to \code{'*h.pial'} surface in the 'FreeSurfer'
 #' folder, or a 3-dimensional mesh, see
 #' \code{\link[freesurferformats]{read.fs.surface}}

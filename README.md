@@ -182,5 +182,5 @@ A BibTeX entry for LaTeX users:
 
 ## License
 
-The front-end viewer (JavaScript) and its components are licensed under MPL-2.0 free open-source license. This package (including the R code and viewer) as a whole is licensed under free open-source GPL-3.0. Please check `LICENSE` file for details.
+The front-end viewer (JavaScript) is licensed under MPL-2.0 free open-source license. Using the generated viewers or incorporating the existing viewers as a whole into your own work "as-is" is permissive. 
 

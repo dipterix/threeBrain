@@ -588,10 +588,20 @@ BrainElectrodes <- R6::R6Class(
         # proto$set_channel_map(channel_numbers = channels)
 
         if( priority %in% c("prototype", "both") ) {
-          proto$set_contact_channels(sub$Electrode, sub$ContactOrder)
+          contact_order <- sub$ContactOrder
+
+          proto$set_contact_channels(sub$Electrode, contact_order)
           if(all(is.na(proto$channel_numbers))) { return() }
 
-          first_contact <- min(sub$Electrode)
+          contact_positions <- proto$get_contact_positions(apply_transform = TRUE)
+          sel <- !is.na(contact_order) & contact_order >= 1 & contact_order <= proto$n_channels
+          contact_order <- contact_order[sel]
+          contact_positions[contact_order, 1] <- sub$Coord_x[sel]
+          contact_positions[contact_order, 2] <- sub$Coord_y[sel]
+          contact_positions[contact_order, 3] <- sub$Coord_z[sel]
+          contact_positions <- solve(proto$transform) %*% t(cbind(contact_positions, 1))
+          proto$set_channel_map(center_positions = contact_positions[seq_len(3), , drop = FALSE])
+
           electrode_numbers <- dipsaus::deparse_svec(sub$Electrode)
           el <- ElectrodeGeom$new(
             name = sprintf('%s, (%d) - %s', subject_code, nrow(sub), sub$LabelPrefix[[1]]),
@@ -619,6 +629,7 @@ BrainElectrodes <- R6::R6Class(
           }
           el$surface_type <- c(sub$SurfaceType, 'pial')[1]
           el$subject_code <- subject_code
+
           el$set_value( value = as.character(subject_code), name = '[Subject]' )
           self$objects2[[ length(self$objects2) + 1 ]] <- el
         } else {

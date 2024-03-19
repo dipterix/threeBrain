@@ -130,6 +130,7 @@ config <- list(
   ),
 
   contact_center = t(cbind(position_transform(cbind(channel_info$x, channel_info$y)), 0)),
+  contact_sizes = ifelse(channel_info$diameter > 51, 0.25, 0.1),
 
   # row matrix
   model_control_points = cbind(
@@ -153,3 +154,6 @@ proto$preview_3d()
 
 # proto$as_json("inst/prototypes/Precision33x31.json")
 
+# geom <- threeBrain:::ElectrodePrototype$new("")$from_json("~/rave_data/raw_dir/Precision002/rave-imaging/fs/RAVE/geometry/PRECISION33X31_G.json")
+# geom$set_contact_sizes(ifelse(channel_info$diameter > 51, 0.25, 0.1))
+# geom$as_json(flattern = TRUE, to_file = "~/rave_data/raw_dir/Precision002/rave-imaging/fs/RAVE/geometry/PRECISION33X31_G.json")
