@@ -359,6 +359,7 @@ threejs_brain <- function(
     render_timestamp = isTRUE(timestamp),
     control_presets = control_presets,
     cache_folder = paste0(lib_path, widget_id, '-0/'),
+    worker_script = paste0(lib_path, "three-brain-1.0.0/threebrain-worker.js"),
     lib_path = lib_path,
     default_controllers = controllers,
     debug = debug,

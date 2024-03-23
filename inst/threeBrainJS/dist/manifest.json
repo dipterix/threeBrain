@@ -1,4 +1,6 @@
 {
-  "main.js": "/threebrain.js",
-  "threebrain.js.map": "/threebrain.js.map"
+  "main.js": "/threebrain-main.js",
+  "worker.js": "/threebrain-worker.js",
+  "threebrain-main.js.map": "/threebrain-main.js.map",
+  "threebrain-worker.js.map": "/threebrain-worker.js.map"
 }

@@ -4,5 +4,5 @@ dependencies:
     src: threeBrainJS/dist/
     all_files: yes
     script:
-      - threebrain.js
+      - threebrain-main.js
 

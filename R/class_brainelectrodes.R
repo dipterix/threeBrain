@@ -330,6 +330,46 @@ BrainElectrodes <- R6::R6Class(
       return(NULL)
     },
 
+    remote_geometry = function( label_prefix, prototype_name, delete = FALSE ) {
+      prototype_name <- trimws(prototype_name)
+
+      if( length(prototype_name) != 1 || is.na(prototype_name) || !is.character(prototype_name) || prototype_name == "" ) { return() }
+      if(missing(label_prefix)) {
+        label_prefix <- self$raw_table$LabelPrefix
+      }
+      if(!length(label_prefix)) { return(invisible()) }
+      if(length(label_prefix) > 1) {
+        lapply(label_prefix, function(p) {
+          self$remote_geometry(p, prototype_name = prototype_name, delete = delete)
+        })
+        return(invisible())
+      }
+      if( is.na(label_prefix) || !is.character(label_prefix) || label_prefix == "" ) { return() }
+      label_prefix <- trimws(label_prefix)
+
+      name <- sprintf("%s_%s", prototype_name, label_prefix)
+      name_upper <- toupper(name)
+
+      self$geometries[[ name_upper ]] <- NULL
+
+      if( !delete ) { return(invisible()) }
+      if( !inherits(self$brain, "rave-brain") ) { return(invisible()) }
+      native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
+      if(length(native_path) != 1 || !dir.exists(native_path)) {
+        return(invisible())
+      }
+      config_files <- list.files(native_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+      config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
+      config_names <- toupper(config_names)
+      idx <- which(config_names == name_upper)
+      if( !length(idx) ) { return(invisible()) }
+      for(id in idx) {
+        f <- file.path(native_path, config_files[[ id ]])
+        unlink(f)
+      }
+      return(invisible())
+    },
+
     apply_electrodes = function(fun, check_valid = TRUE){
       n_elec <- length(self$objects)
       if(!n_elec){
