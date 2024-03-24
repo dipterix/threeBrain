@@ -74,6 +74,7 @@ ElectrodePrototype <- R6::R6Class(
     .transform = NULL,
     .model_control_points = NULL,
     .world_control_points = NULL,
+    .fix_control_index = NULL,
     .type = character(),
 
     # for preview use
@@ -98,10 +99,10 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     copy = function( other ) {
-      self$from_list( other$as_list(flattern = TRUE) )
+      self$from_list( other$as_list() )
     },
 
-    set_transform = function( m44, byrow = FALSE ) {
+    set_transform = function( m44, byrow = TRUE ) {
       stopifnot2(is.numeric(m44) && !anyNA(m44), msg = "Transform must be a 4x4 numeric matrix with no NA")
       if(is.matrix(m44)) {
         dm <- dim(m44)
@@ -116,7 +117,7 @@ ElectrodePrototype <- R6::R6Class(
       private$.transform <- m44
     },
 
-    set_model_control_points = function( x, y, z ) {
+    set_model_control_points = function( x, y, z, fixed_point = NULL ) {
       pos <- cbind(x, y, z)
       pos <- unique(pos)
       stopifnot2(nrow(pos) >= 3, msg = "Needs at least 3 unique control points")
@@ -124,7 +125,14 @@ ElectrodePrototype <- R6::R6Class(
       if( sum(abs(svd$d > 1e-5)) < 1 ) {
         stop("The matrix rank of the control points must be at least 2 (you need at least 3 points that are not on the same line) to calculate the transform in 3D.")
       }
+      if(length(fixed_point)) {
+        fixed_point <- as.integer(fixed_point[[1]])
+        if( fixed_point < 1 || fixed_point > nrow(pos) ) {
+          stop("`fixed_point` must be an integer or `NULL`")
+        }
+      }
       private$.model_control_points <- pos
+      private$.fix_control_index <- fixed_point
     },
 
     reset_world_control_points = function() {
@@ -151,6 +159,21 @@ ElectrodePrototype <- R6::R6Class(
       t_cp <- cbind(x, y, z)
 
       sel <- which(rowSums(is.na(t_cp)) == 0)
+
+      if(length(private$.fix_control_index)) {
+        idx <- private$.fix_control_index[[1]]
+        if(!sel[[ idx ]]) {
+          m_fixed <- NULL
+          t_fixed <- NULL
+        } else {
+          m_fixed <- m_cp[idx, , drop = TRUE]
+          t_fixed <- t_cp[idx, , drop = TRUE]
+        }
+      } else {
+        m_fixed <- NULL
+        t_fixed <- NULL
+      }
+
       sel <- sel[sel <= nrow(m_cp)]
 
       m_cp <- m_cp[sel, , drop = FALSE]
@@ -162,7 +185,7 @@ ElectrodePrototype <- R6::R6Class(
       n <- min(nm, nt)
 
       stopifnot2(
-        n >= 3,
+        n >= 2,
         msg = "Please specify at least 3 control points to calculate the rigid transform"
       )
 
@@ -214,8 +237,19 @@ ElectrodePrototype <- R6::R6Class(
       # m44[seq_len(3), seq_len(3)] <- m33
 
       if( !all(is.finite(m44)) ) {
-        stop("Cannot calculate the transform from control points. Please make sure the rank of control points is at least 2.")
+        if( n >= 3 ) {
+          stop("Cannot calculate the transform from control points. Please make sure the rank of control points is at least 2.")
+        } else {
+          warning("Cannot calculate rotation matrix. More control points are needed.")
+          return()
+        }
       }
+
+      if( length(m_fixed) ) {
+        m44[1:3, 4] <- 0
+        m44[1:3, 4] <- t_fixed - (m44 %*% c(m_fixed, 1))[1:3]
+      }
+
       private$.world_control_points <- t_cp
       self$set_transform( m44 )
     },
@@ -514,10 +548,10 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     to_list = function(...) {
-      self$as_list(...)
+      self$as_list()
     },
 
-    as_list = function(flattern = FALSE) {
+    as_list = function(...) {
       model_control_points <- private$.model_control_points
       if(is.matrix(model_control_points)) {
         model_control_points <- t(model_control_points)
@@ -527,43 +561,25 @@ ElectrodePrototype <- R6::R6Class(
         world_control_points <- t(world_control_points)
       }
 
-      if( flattern ) {
-        position <- as.vector(private$.position)
-        index <- as.vector(private$.index)
-        uv <- as.vector(private$.uv)
-        normal <- as.vector(private$.normal)
-        channel_map <- as.vector(private$.channel_map)
-        transform <- as.vector(t(self$transform))
-        model_control_points <- as.vector(model_control_points)
-        world_control_points <- as.vector(world_control_points)
-        contact_center <- as.vector(private$.contact_center)
-      } else {
-        position <- private$.position
-        index <- private$.index
-        uv <- private$.uv
-        normal <- private$.normal
-        channel_map <- private$.channel_map
-        transform <- self$transform
-        contact_center <- private$.contact_center
-      }
       list(
         type = self$type,
         name = self$name,
         geometry = "CustomGeometry",
         n = c(ncol(private$.position), ncol(self$index)),
         fix_outline = self$fix_outline,
-        transform = transform,
-        position = position,
-        index = index,
-        uv = uv,
-        normal = normal,
+        transform = as.vector(t(self$transform)),
+        position = as.vector(private$.position),
+        index = as.vector(private$.index),
+        uv = as.vector(private$.uv),
+        normal = as.vector(private$.normal),
         texture_size = self$texture_size,
-        channel_map = channel_map,
+        channel_map = as.vector(private$.channel_map),
         channel_numbers = as.vector(private$.channel_numbers),
-        contact_center = contact_center,
+        contact_center = as.vector(private$.contact_center),
         contact_sizes = self$contact_sizes,
-        model_control_points = model_control_points,
-        world_control_points = world_control_points
+        model_control_points = as.vector(model_control_points),
+        world_control_points = as.vector(world_control_points),
+        fix_control_index = private$.fix_control_index
       )
     },
     from_list = function(li) {
@@ -573,7 +589,6 @@ ElectrodePrototype <- R6::R6Class(
       self$type <- li$type
       private$.n_vertices <- n_vertices
       self$fix_outline <- isTRUE(as.logical(li$fix_outline))
-      self$set_transform(li$transform)
       self$set_position(li$position)
       self$set_index(li$index)
       self$set_uv(li$uv)
@@ -583,7 +598,10 @@ ElectrodePrototype <- R6::R6Class(
       self$set_contact_sizes(li$contact_sizes)
       if(length(li$model_control_points)) {
         mcp <- matrix(data = li$model_control_points, nrow = 3L, dimnames = NULL)
-        self$set_model_control_points(x = mcp[1, ], y = mcp[2, ], z = mcp[3, ])
+        self$set_model_control_points(
+          x = mcp[1, ], y = mcp[2, ], z = mcp[3, ],
+          fixed_point = li$fix_control_index
+        )
       }
       if(length(li$world_control_points) >= 9) {
         tcp <- matrix(data = li$world_control_points, nrow = 3L, dimnames = NULL)
@@ -593,14 +611,11 @@ ElectrodePrototype <- R6::R6Class(
           warning(e)
         })
       }
+      self$set_transform(li$transform)
       self
     },
-    as_json = function(to_file = NULL, flattern = TRUE) {
-      li <- self$as_list(flattern = flattern)
-      # all matrices are col-major except for transform
-      if(!flattern) {
-        li$transform <- t(li$transform)
-      }
+    as_json = function(to_file = NULL, ...) {
+      li <- self$as_list()
       json <- to_json(li, matrix = "rowmajor", auto_unbox = TRUE, to_file = to_file)
       if(is.null(to_file)) {
         return(json)
@@ -609,10 +624,11 @@ ElectrodePrototype <- R6::R6Class(
       }
     },
     from_json = function(json, is_file = FALSE) {
+      threeBrain <- asNamespace("threeBrain")
       if( is_file ) {
-        li <- from_json(from_file = json)
+        li <- threeBrain$from_json(from_file = json)
       } else {
-        li <- from_json(txt = json)
+        li <- threeBrain$from_json(txt = json)
       }
       self$from_list(li)
     },

@@ -2,7 +2,9 @@
 # -1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,3
 # 0.8
 
-seeg_prototype <- function(center_position, widths, radius = 0.5, segments = 1, channel_order = seq_along(center_position)) {
+seeg_prototype <- function(
+    center_position, widths, radius = 0.5, segments = 1,
+    channel_order = seq_along(center_position), fix_contact = 1) {
 
   # DIPSAUS DEBUG START
   # center_position <- 0.75 + c(3.5 * 1:16)
@@ -43,7 +45,7 @@ seeg_prototype <- function(center_position, widths, radius = 0.5, segments = 1, 
   y <- sin((seq_len(width_segments) - 1) * 2 * pi / width_segments)
 
   uw <- 0.5 / width_segments
-  uvu <- 1 / width_segments * (seq_len(width_segments) - 1) + uw
+  uvu <- 1 / (width_segments - 1) * (seq_len(width_segments) - 1)
 
   positions_n_uv <- apply(pr, 1L, function(zr) {
     z <- zr[[1]]
@@ -58,7 +60,7 @@ seeg_prototype <- function(center_position, widths, radius = 0.5, segments = 1, 
 
   position <- positions_n_uv[1:3, ]
   uv <- positions_n_uv[4:5, ]
-  uv[, nverts + 1 - seq_len(width_segments * 2)] <- 2
+  uv[, nverts + 1 - seq_len(width_segments)] <- 2
 
   # construct face index
   side_cover <- sapply(seq_len(width_segments), function(ii) {
@@ -75,10 +77,13 @@ seeg_prototype <- function(center_position, widths, radius = 0.5, segments = 1, 
   })
   index <- c(as.vector(side_cover), as.vector(height_index))
 
-  texture_size <- c(4, 128)
+  texture_size <- c(4, 256)
   uv_start <- (center_position - widths / 2) / max_p
-  uv_end <- widths / max_p
-  channel_map <- rbind(1, texture_size[[2]] * uv_start, 4, uv_end * texture_size[[2]])
+  uv_end <- (center_position + widths / 2) / max_p
+
+  texture_start <- floor(texture_size[[2]] * uv_start) + 1L
+  texture_end <- ceiling(texture_size[[2]] * uv_end) + 1L
+  channel_map <- rbind(1, texture_start, 4, texture_end - texture_start)
 
   config <- list(
     type = "sEEG-16",
@@ -109,7 +114,8 @@ seeg_prototype <- function(center_position, widths, radius = 0.5, segments = 1, 
     contact_sizes = rep(radius0, npos),
 
     # row matrix
-    model_control_points = rbind(0, 0, center_position)
+    model_control_points = rbind(0, 0, center_position),
+    fix_control_index = fix_contact
   )
 
   proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config)
@@ -119,13 +125,18 @@ seeg_prototype <- function(center_position, widths, radius = 0.5, segments = 1, 
 }
 
 proto <- seeg_prototype(
-  center_position = 1 + c(3.5 * 1:16),
+  center_position = 1 + c(3.5 * 0:15),
   widths = 2,
   radius = 0.5
 )
+a <- proto$get_texture(seq_len(proto$n_channels), plot = TRUE)
 
 proto$as_json(to_file = "inst/prototypes/sEEG-16.json", flattern = TRUE)
 
 # a <- invisible(proto$get_texture(seq_len(proto$n_channels), plot = TRUE))
 #
 # proto$preview_3d()
+mesh <- proto$as_mesh3d()
+ravetools::rgl_view({
+  ravetools::rgl_call("shade3d", mesh)
+})
