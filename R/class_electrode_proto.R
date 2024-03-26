@@ -120,10 +120,10 @@ ElectrodePrototype <- R6::R6Class(
     set_model_control_points = function( x, y, z, fixed_point = NULL ) {
       pos <- cbind(x, y, z)
       pos <- unique(pos)
-      stopifnot2(nrow(pos) >= 2L, msg = "Needs at least 3 unique control points")
+      stopifnot2(nrow(pos) >= 2L, msg = "Needs at least 2 unique control points")
       svd <- svd(crossprod(pos))
       if( sum(abs(svd$d > 1e-5)) < 1 ) {
-        stop("The matrix rank of the control points must be at least 2 (you need at least 3 points that are not on the same line) to calculate the transform in 3D.")
+        stop("The matrix rank of the control points must be at least 2 (you need at least 2 points that are not identical) to calculate the transforms.")
       }
       if(length(fixed_point)) {
         fixed_point <- as.integer(fixed_point[[1]])
@@ -186,7 +186,7 @@ ElectrodePrototype <- R6::R6Class(
 
       stopifnot2(
         n >= 2,
-        msg = "Please specify at least 3 control points to calculate the rigid transform"
+        msg = "Please specify at least 2 or 3 control points to calculate the rigid transform"
       )
 
       m44 <- register_points_rigid(m_cp = m_cp, t_cp = t_cp)
@@ -294,7 +294,7 @@ ElectrodePrototype <- R6::R6Class(
       private$.texture_size <- texture_size
     },
 
-    set_channel_map = function(channel_map, center_positions, channel_numbers) {
+    set_channel_map = function(channel_map, center_positions) {
       if(!missing(channel_map)) {
         if(!is.null(channel_map)) {
           channel_map <- as_row_matrix(channel_map, nr = 4, storage_mode = "integer")
@@ -321,33 +321,10 @@ ElectrodePrototype <- R6::R6Class(
       } else {
         private$.contact_center <- NULL
       }
-      if(missing(channel_numbers)) {
-        channel_numbers <- private$.channel_numbers
-        if(length(channel_numbers) != n_channels) {
-          channel_numbers <- NULL
-        }
-      }
-      if(length(channel_numbers)) {
-        channel_numbers <- as.integer(channel_numbers)
-        if(length(channel_numbers) < n_channels ) {
-          channel_numbers <- c( channel_numbers, rep(NA_integer_, n_channels - length(channel_numbers)) )
-        } else if( length(channel_numbers) > n_channels ) {
-          channel_numbers <- channel_numbers[seq_len(n_channels)]
-        }
-        channel_numbers[ is.na(channel_numbers) | channel_numbers < 1 | channel_numbers > n_channels ] <- NA_integer_
-        private$.channel_numbers <- channel_numbers
-      } else {
+      channel_numbers <- private$.channel_numbers
+      if(length(channel_numbers) != n_channels) {
         private$.channel_numbers <- NULL
       }
-
-      # if(isFALSE(update_transform)) { return(self) }
-      # if( !length(private$.contact_center) || ncol(private$.contact_center) < 3 ){ return(self) }
-      # if( !length(private$.channel_numbers) || sum(!is.na(private$.channel_numbers)) < 3 ) { return(self) }
-      # if(is.na(update_transform)) {
-      #   if(!all(self$transform == diag(1L, 4))) { return(self) }
-      # }
-      #
-
     },
 
     set_contact_sizes = function( sizes ) {
@@ -594,7 +571,8 @@ ElectrodePrototype <- R6::R6Class(
       self$set_uv(li$uv)
       self$set_normal(li$normal)
       self$set_texture_size(li$texture_size)
-      self$set_channel_map(li$channel_map, li$contact_center, li$channel_numbers)
+      self$set_channel_map(li$channel_map, li$contact_center)
+      self$set_contact_channels(li$channel_numbers)
       self$set_contact_sizes(li$contact_sizes)
       if(length(li$model_control_points)) {
         mcp <- matrix(data = li$model_control_points, nrow = 3L, dimnames = NULL)
@@ -603,7 +581,7 @@ ElectrodePrototype <- R6::R6Class(
           fixed_point = li$fix_control_index
         )
       }
-      if(length(li$world_control_points) >= 9) {
+      if(length(li$world_control_points) >= 6) {
         tcp <- matrix(data = li$world_control_points, nrow = 3L, dimnames = NULL)
         tryCatch({
           self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ])
@@ -637,8 +615,8 @@ ElectrodePrototype <- R6::R6Class(
       if(length(self$type) != 1 || !nzchar(self$type)) {
         stop("Electrode prototype `type` shouldn't be empty.")
       }
-      if(!is.matrix(private$.model_control_points) || nrow(private$.model_control_points) < 3L ) {
-        warning("Electrode prototype control points (model) must be a matrix with at least 3 points. Please use `set_model_control_points` to set them")
+      if(!is.matrix(private$.model_control_points) || nrow(private$.model_control_points) < 2L ) {
+        warning("Electrode prototype control points (model) must be a matrix with at least 2-3 points. Please use `set_model_control_points` to set them")
       }
       invisible()
     }
