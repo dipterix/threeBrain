@@ -120,7 +120,7 @@ ElectrodePrototype <- R6::R6Class(
     set_model_control_points = function( x, y, z, fixed_point = NULL ) {
       pos <- cbind(x, y, z)
       pos <- unique(pos)
-      stopifnot2(nrow(pos) >= 3, msg = "Needs at least 3 unique control points")
+      stopifnot2(nrow(pos) >= 2L, msg = "Needs at least 3 unique control points")
       svd <- svd(crossprod(pos))
       if( sum(abs(svd$d > 1e-5)) < 1 ) {
         stop("The matrix rank of the control points must be at least 2 (you need at least 3 points that are not on the same line) to calculate the transform in 3D.")

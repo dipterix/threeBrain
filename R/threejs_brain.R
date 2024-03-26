@@ -37,6 +37,7 @@
 #' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications
 #' @param widget_id character, internally used as unique identifiers for widgets;
 #' only use it when you have multiple widgets in one website
+#' @param enable_cache whether to enable cache, useful when rendering the viewers repeatedly in shiny applications
 #' @param custom_javascript customized temporary 'JavaScript' code that runs after ready state; available 'JavaScript' variables are:
 #' \describe{
 #' \item{\code{'groups'}}{input information about each group}
@@ -104,7 +105,7 @@ threejs_brain <- function(
 
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
-  debug = FALSE, token = NULL, controllers = list(),
+  debug = FALSE, enable_cache = FALSE, token = NULL, controllers = list(),
   browser_external = TRUE, global_data = list(), global_files = list(),
 
   # QRCode
@@ -363,6 +364,7 @@ threejs_brain <- function(
     lib_path = lib_path,
     default_controllers = controllers,
     debug = debug,
+    enable_cache = enable_cache,
     background = background,
     # has_animation = v_count > 1,
     token = token,

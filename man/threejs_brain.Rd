@@ -38,6 +38,7 @@ threejs_brain(
   widget_id = "threebrain_data",
   tmp_dirname = NULL,
   debug = FALSE,
+  enable_cache = FALSE,
   token = NULL,
   controllers = list(),
   browser_external = TRUE,
@@ -108,6 +109,8 @@ only use it when you have multiple widgets in one website}
 \item{tmp_dirname}{character path, internally used, where to store temporary files}
 
 \item{debug}{logical, internally used for debugging}
+
+\item{enable_cache}{whether to enable cache, useful when rendering the viewers repeatedly in shiny applications}
 
 \item{token}{unique character, internally used to identify widgets in JS localStorage}
 

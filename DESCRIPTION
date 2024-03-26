@@ -18,7 +18,7 @@ Description: A fast, interactive cross-platform, and easy to share
     a web browser with 'WebGL2' support (for example, 'Chrome', 'Firefox', 
     'Safari'), and can be inserted into any websites. The 'R-shiny' 
     support allows the 3D viewer to be dynamically generated from reactive user 
-    inputs. Please check the publication by Wang, Magnoti, Zhang,
+    inputs. Please check the publication by Wang, Magnotti, Zhang,
     and Beauchamp (2023, <doi:10.1523/ENEURO.0328-23.2023>) for electrode 
     localization. This viewer has been fully adopted by 'RAVE' 
     <https://openwetware.org/wiki/RAVE>, an interactive toolbox to 
