@@ -282,6 +282,25 @@ BrainElectrodes <- R6::R6Class(
       if(cache_ok && inherits(self$geometries[[ name_upper ]], "ElectrodePrototype")) {
         return( self$geometries[[ name_upper ]] )
       }
+
+      # load from prototypes
+      search_paths <- prototype_search_paths()
+      proto <- NULL
+      for(search_path in search_paths) {
+        config_files <- list.files(search_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+        config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
+        config_names <- toupper(config_names)
+        idx <- which(config_names == prototype_name_upper)
+        if( length(idx) ) {
+          idx <- idx[[1]]
+          proto <- new_electrode_prototype(base_prototype = file.path(search_path, config_files[[ idx ]]))
+          proto$name <- name_upper
+          proto$type <- prototype_name
+          self$geometries[[ name_upper ]] <- proto
+          break
+        }
+      }
+
       if( inherits(self$brain, "rave-brain") ) {
         native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
       } else {
@@ -296,38 +315,24 @@ BrainElectrodes <- R6::R6Class(
         if( length(idx) ) {
           idx <- idx[[1]]
           tryCatch({
-            proto <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
-            proto$name <- name_upper
-            proto$type <- prototype_name
-            self$geometries[[ name_upper ]] <- proto
-            return(proto)
+            if(is.null(proto)) {
+              proto <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
+              proto$name <- name_upper
+              proto$type <- prototype_name
+            } else {
+              proto_native <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
+              proto$name <- name_upper
+              proto$type <- prototype_name
+              proto$update_from( proto_native )
+            }
+
           }, error = function(e) {
             warning(e)
           })
         }
       }
-      # find from prototypes and/or recache
-      search_paths <- prototype_search_paths()
 
-      for(search_path in search_paths) {
-        config_files <- list.files(search_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
-        config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
-        config_names <- toupper(config_names)
-        idx <- which(config_names == prototype_name_upper)
-        if( length(idx) ) {
-          idx <- idx[[1]]
-          proto <- new_electrode_prototype(base_prototype = file.path(search_path, config_files[[ idx ]]))
-          proto$name <- name_upper
-          proto$type <- prototype_name
-          self$geometries[[ name_upper ]] <- proto
-          if( length(native_path) == 1 ) {
-            dir.create(native_path, showWarnings = FALSE, recursive = TRUE)
-            proto$as_json(flattern = TRUE, to_file = file.path(native_path, sprintf("%s.json", name_upper)))
-          }
-          return(proto)
-        }
-      }
-      return(NULL)
+      return(proto)
     },
 
     remote_geometry = function( label_prefix, prototype_name, delete = FALSE ) {

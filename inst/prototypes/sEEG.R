@@ -130,7 +130,10 @@ seeg_prototype <- function(
 
     # row matrix
     model_control_points = rbind(0, 0, center_position),
-    fix_control_index = fix_contact
+    model_control_point_orders = seq_along(center_position),
+    fix_control_index = fix_contact,
+
+    model_direction = c(0, 0, 1)
   )
 
   proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config)
@@ -144,6 +147,7 @@ proto <- seeg_prototype(
   widths = 2,
   radius = 0.5
 )
+
 a <- proto$get_texture(seq_len(proto$n_channels), plot = TRUE)
 
 proto$as_json(to_file = "inst/prototypes/sEEG-16.json", flattern = TRUE)

@@ -73,8 +73,12 @@ ElectrodePrototype <- R6::R6Class(
     .contact_sizes = NULL,
     .transform = NULL,
     .model_control_points = NULL,
+    .model_control_point_orders = NULL,
     .world_control_points = NULL,
     .fix_control_index = NULL,
+
+    # either direction of the electrode or the normal if 2D
+    .model_direction = NULL,
     .type = character(),
 
     # for preview use
@@ -117,7 +121,7 @@ ElectrodePrototype <- R6::R6Class(
       private$.transform <- m44
     },
 
-    set_model_control_points = function( x, y, z, fixed_point = NULL ) {
+    set_model_control_points = function( x, y, z, fixed_point = NULL, order = NULL ) {
       pos <- cbind(x, y, z)
       pos <- unique(pos)
       stopifnot2(nrow(pos) >= 2L, msg = "Needs at least 2 unique control points")
@@ -125,13 +129,19 @@ ElectrodePrototype <- R6::R6Class(
       if( sum(abs(svd$d > 1e-5)) < 1 ) {
         stop("The matrix rank of the control points must be at least 2 (you need at least 2 points that are not identical) to calculate the transforms.")
       }
+      npos <- nrow(pos)
       if(length(fixed_point)) {
         fixed_point <- as.integer(fixed_point[[1]])
-        if( fixed_point < 1 || fixed_point > nrow(pos) ) {
+        if( fixed_point < 1 || fixed_point > npos ) {
           stop("`fixed_point` must be an integer or `NULL`")
         }
       }
+      order <- as.integer(order)
+      if(length(order) > 0) {
+        stopifnot2(length(order) == npos, msg = "`set_model_control_points`: `order` must be integers and/or NAs with size of control points.")
+      }
       private$.model_control_points <- pos
+      private$.model_control_point_orders <- order
       private$.fix_control_index <- fixed_point
     },
 
@@ -349,7 +359,6 @@ ElectrodePrototype <- R6::R6Class(
       return(invisible(self))
     },
 
-
     set_contact_channels = function(channel_numbers, contact_orders) {
       if(!length(channel_numbers)) {
         private$.channel_numbers <- NULL
@@ -373,27 +382,49 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     get_contact_positions = function( channels, apply_transform = TRUE ) {
+      # DIPSAUS DEBUG START
+      # brain <- raveio::rave_brain("devel/mni152_b")
+      # self = brain$electrodes$geometries$`SEEG-16_R_NAC`
+      # private <- self$.__enclos_env__$private
+      # apply_transform <- TRUE
       cpos <- private$.contact_center
       if(!length(cpos)) { return(NULL) }
-      if(!missing(channels)) {
-        if(!length(channels)) { return(matrix(numeric(0L), ncol = 3)) }
-        cnum <- private$.channel_numbers
-        if(!length(cnum)) {
-          cnum <- seq_len(self$n_channels)
+      if(missing(channels)) {
+        channels <- private$.channel_numbers
+        if(!length(channels)) {
+          channels <- seq_len(self$n_channels)
         }
-        cpos <- sapply(channels, function(ch) {
-          if( is.na(ch) ) { return(c(NA_real_, NA_real_, NA_real_)) }
-          sel <- which(!is.na(cnum) & cnum == ch)
-          if( length(sel) ) {
-            return(cpos[, sel[[1]]])
-          } else {
-            return(c(NA_real_, NA_real_, NA_real_))
-          }
-        })
       }
+      if(!length(channels)) { return(matrix(numeric(0L), ncol = 3)) }
+
       if( apply_transform ) {
         cpos <- self$transform %*% rbind(cpos, 1)
       }
+
+      cnum <- private$.channel_numbers
+      cpos <- sapply(channels, function(ch) {
+        if( is.na(ch) ) { return(c(NA_real_, NA_real_, NA_real_)) }
+        sel <- which(!is.na(cnum) & cnum == ch)
+        if( length(sel) ) {
+          sel <- sel[[1]]
+
+          # sel2 control point is a contact
+          if( apply_transform && length(private$.model_control_point_orders) > 0 ) {
+            sel2 <- which( private$.model_control_point_orders == sel )
+            if( length(sel2) ) {
+              sel2 <- sel2[[1]]
+              # Need to check if we do have such control point
+              if( length(private$.world_control_points) >= sel2 * 3 ) {
+                return( private$.world_control_points[sel2, ] )
+              }
+            }
+          }
+
+          return( cpos[1:3, sel[[1]]] )
+        } else {
+          return(c(NA_real_, NA_real_, NA_real_))
+        }
+      })
       return(t(cpos[seq_len(3), , drop = FALSE]))
     },
 
@@ -555,8 +586,10 @@ ElectrodePrototype <- R6::R6Class(
         contact_center = as.vector(private$.contact_center),
         contact_sizes = self$contact_sizes,
         model_control_points = as.vector(model_control_points),
+        model_control_point_orders = private$.model_control_point_orders,
         world_control_points = as.vector(world_control_points),
-        fix_control_index = private$.fix_control_index
+        fix_control_index = private$.fix_control_index,
+        model_direction = self$model_direction
       )
     },
     from_list = function(li) {
@@ -578,7 +611,8 @@ ElectrodePrototype <- R6::R6Class(
         mcp <- matrix(data = li$model_control_points, nrow = 3L, dimnames = NULL)
         self$set_model_control_points(
           x = mcp[1, ], y = mcp[2, ], z = mcp[3, ],
-          fixed_point = li$fix_control_index
+          fixed_point = li$fix_control_index,
+          order = li$model_control_point_orders
         )
       }
       if(length(li$world_control_points) >= 6) {
@@ -589,6 +623,7 @@ ElectrodePrototype <- R6::R6Class(
           warning(e)
         })
       }
+      self$model_direction <- li$model_direction
       self$set_transform(li$transform)
       self
     },
@@ -609,6 +644,32 @@ ElectrodePrototype <- R6::R6Class(
         li <- threeBrain$from_json(txt = json)
       }
       self$from_list(li)
+    },
+
+    update_from = function( other ) {
+      if(inherits(other, "ElectrodePrototype")) {
+        other <- other$as_list()
+      } else {
+        other <- as.list(other)
+      }
+
+      n_channels <- self$n_channels
+      if(length(other$channel_numbers) == n_channels) {
+        self$set_contact_channels( other$channel_numbers )
+      } else {
+        warning(sprintf("The number of electrode contacts [%s] mismatches with prototype [%s]",
+                        length(other$channel_numbers), n_channels))
+      }
+      if(length(other$world_control_points) >= 6) {
+        tcp <- matrix(data = other$world_control_points, nrow = 3L, dimnames = NULL)
+        tryCatch({
+          self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ])
+        }, error = function(e) {
+          warning(e)
+        })
+      }
+      self$set_transform(other$transform)
+      invisible(self)
     },
 
     validate = function() {
@@ -648,6 +709,27 @@ ElectrodePrototype <- R6::R6Class(
     contact_sizes = function() {
       if(!length(private$.contact_sizes)) { return(rep(0.1, self$n_channels))}
       return(private$.contact_sizes)
+    },
+    model_direction = function( dir ) {
+      if(!missing(dir)) {
+        if(is.null(dir)) {
+          private$.model_direction <- c(0, 0, 0)
+        } else {
+          dir <- as.double(dir[])
+          if(length(dir) != 3L || anyNA(dir)) {
+            stop("Electrode direction/normal must have length of 3 and cannot contain NA")
+          }
+          if(sum(dir^2) > 0) {
+            # normalize
+            dir <- dir / sqrt(sum(dir^2))
+          }
+          private$.model_direction <- dir
+        }
+      }
+      if(length(private$.model_direction) != 3) {
+        private$.model_direction <- c(0, 0, 0)
+      }
+      private$.model_direction
     },
     position = function(v) {
       if(!missing(v)) {
