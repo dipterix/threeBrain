@@ -12,6 +12,7 @@ seeg_prototype <- function(
   # radius = 0.5
   # segments = 1
   # channel_order = seq_along(center_position)
+  # fix_contact <- 1
   width_segments <- 12
 
   npos <- length(center_position)
@@ -30,22 +31,22 @@ seeg_prototype <- function(
   max_e <- 200
   radius0 <- radius
   paths <- c(
-    radius * (1 - cos(pi / 8 * (seq_len(5) - 1))),
+    radius * (1 - cos(pi / 8 * seq_len(4))),
     center_position, max_p, max_p + 0.01,
     max_e
   )
   radius <- c(
-    radius * sin(pi / 8 * (seq_len(5) - 1)),
+    radius * sin(pi / 8 * seq_len(4)),
     rep(radius, npos + 3)
   )
   pr <- cbind(paths, radius)
   n_layers <- length(paths)
 
-  x <- cos((seq_len(width_segments) - 1) * 2 * pi / width_segments)
-  y <- sin((seq_len(width_segments) - 1) * 2 * pi / width_segments)
+  x <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
+  y <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
 
-  uvu <- 1 / (width_segments - 1) * (seq_len(width_segments) - 1)
-  uvu[[1]] <- 0.0001
+  uvu <- 1 / (width_segments) * (seq_len(width_segments + 1) - 1)
+  # uvu[[1]] <- 0.0001
 
   positions_n_uv <- apply(pr, 1L, function(zr) {
     z <- zr[[1]]
@@ -57,7 +58,7 @@ seeg_prototype <- function(
     rbind(x * r, y * r, z, uvu, z / max_p)
   })
 
-  nverts <- length(paths) * width_segments
+  nverts <- length(paths) * ( width_segments + 1 )
   dim(positions_n_uv) <- c(5, nverts)
   positions_n_uv <- cbind(c(0,0,0,0,0), positions_n_uv, c(0, 0, max_e, 2, 2))
   nverts <- nverts + 2
@@ -68,18 +69,18 @@ seeg_prototype <- function(
   uv <- positions_n_uv[4:5, ]
 
   # construct face index
-  side_cover <- sapply(seq_len(width_segments), function(ii) {
-    jj <- ifelse(ii == width_segments, 1, ii + 1)
+  side_cover <- sapply(seq_len(width_segments + 1), function(ii) {
+    jj <- ifelse(ii > width_segments, 1, ii + 1)
     c(ii, 0, jj)
   })
   side_cover <- as.vector(side_cover)
 
-  height_index_base <- sapply(seq_len(width_segments), function(ii) {
-    jj <- ifelse(ii == width_segments, 1, ii + 1)
-    c(ii, jj, ii + width_segments, jj, jj + width_segments, ii + width_segments)
+  height_index_base <- sapply(seq_len(width_segments + 1), function(ii) {
+    jj <- ifelse(ii > width_segments, 1, ii + 1)
+    c(ii, jj, ii + width_segments + 1, jj, jj + width_segments + 1, ii + width_segments + 1)
   })
   height_index <- sapply(seq_len(n_layers - 1), function(layer) {
-    height_index_base + (layer - 1) * width_segments
+    height_index_base + (layer - 1) * ( width_segments + 1 )
   })
   index <- c(side_cover, as.vector(height_index), nverts - side_cover - 1L)
 
@@ -91,12 +92,12 @@ seeg_prototype <- function(
   texture_end <- ceiling(texture_size[[2]] * uv_end) + 1L
   channel_map <- rbind(1, texture_start, 4, texture_end - texture_start)
 
-  mesh <- ravetools::vcg_update_normals(
-    list(
-      vb = position,
-      it = index + 1L
-    )
-  )
+  # mesh <- ravetools::vcg_update_normals(
+  #   list(
+  #     vb = position,
+  #     it = index + 1L
+  #   )
+  # )
 
   config <- list(
     type = "sEEG-16",
@@ -117,7 +118,7 @@ seeg_prototype <- function(
 
     index = index,
 
-    normal = mesh$normals[1:3, , drop = FALSE],
+    normal = NULL, #mesh$normals[1:3, , drop = FALSE],
 
     uv = uv,
 
@@ -155,8 +156,8 @@ proto$as_json(to_file = "inst/prototypes/sEEG-16.json", flattern = TRUE)
 # a <- invisible(proto$get_texture(seq_len(proto$n_channels), plot = TRUE))
 #
 # proto$preview_3d()
-mesh <- proto$as_mesh3d()
-mesh$vb[3,] <- mesh$vb[3,] / 50
+mesh2 <- proto$as_mesh3d()
+mesh2$vb[3,] <- mesh2$vb[3,] / 50
 ravetools::rgl_view({
   ravetools::rgl_call("wire3d", mesh, col = "red")
 })
