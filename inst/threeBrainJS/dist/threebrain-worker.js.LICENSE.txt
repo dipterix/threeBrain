@@ -1,33 +1,25 @@
+/* @license
+Papa Parse
+v5.4.1
+https://github.com/mholt/PapaParse
+License: MIT
+*/
+
 /*!
- * clipboard.js v2.0.11
- * https://clipboardjs.com/
+ * The buffer module from node.js, for the browser.
  *
- * Licensed MIT © Zeno Rocha
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
  */
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
+/*! http://mths.be/fromcodepoint v0.1.0 by @mathias */
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
  * @license
  * Copyright 2010-2023 Three.js Authors
  * SPDX-License-Identifier: MIT
- */
-
-/**
- * @license MIT
- * doc-path <https://github.com/mrodrig/doc-path>
- * Copyright (c) 2015-present, Michael Rodrigues.
  */
