@@ -25,7 +25,14 @@ for the same type.
 }
 \examples{
 
-list_electrode_prototypes()
+availables <- list_electrode_prototypes()
+if( "sEEG-16" \%in\% names(availables) ) {
+  proto <- load_prototype( "sEEG-16" )
+
+  print(proto, details = FALSE)
+}
+
+
 
 
 }

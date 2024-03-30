@@ -19,8 +19,8 @@
 #' @param main image titles
 #' @param title_position title position; choices are \code{"left"} or \code{"top"}
 #' @param which which plane to plot; default is \code{NULL}, which will trigger
-#' new plots and add titles; set to \code{1} for 'Axial' plane, \code{2} for
-#' 'Sagittal', and \code{3} for 'Coronal'.
+#' new plots and add titles; set to \code{1} for \code{'Axial'} plane,
+#' \code{2} for \code{'Sagittal'}, and \code{3} for \code{'Coronal'}.
 #' @param ... additional arguments passing into \code{\link[graphics]{image}}
 #' @returns Nothing
 #' @export

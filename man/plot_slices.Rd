@@ -56,8 +56,8 @@ image is drawn; can be used to draw cross-hairs or annotate each image}
 must be positive integer; default is \code{NA} (automatically determined)}
 
 \item{which}{which plane to plot; default is \code{NULL}, which will trigger
-new plots and add titles; set to \code{1} for 'Axial' plane, \code{2} for
-'Sagittal', and \code{3} for 'Coronal'.}
+new plots and add titles; set to \code{1} for \code{'Axial'} plane,
+\code{2} for \code{'Sagittal'}, and \code{3} for \code{'Coronal'}.}
 
 \item{...}{additional arguments passing into \code{\link[graphics]{image}}}
 }

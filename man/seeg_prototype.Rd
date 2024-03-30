@@ -72,7 +72,7 @@ proto <- seeg_prototype(
   dry_run = TRUE
 )
 
-proto
+print(proto, details = FALSE)
 
 
 }
