@@ -134,6 +134,7 @@ seeg_prototype <- function(
     model_control_point_orders = seq_along(center_position),
     fix_control_index = fix_contact,
 
+    # model_up = c(0, 1, 0),
     model_direction = c(0, 0, 1)
   )
 

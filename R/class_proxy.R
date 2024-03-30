@@ -398,6 +398,11 @@ ViewerProxy <- R6::R6Class(
       tbl
     },
 
+    localization_add_quaternion = function() {
+      private$ensure_session()
+      private$get_value('localization_addQuaternion', list())
+    },
+
     mouse_event_double_click = function(){
       private$get_value('mouse_dblclicked', list())
     },

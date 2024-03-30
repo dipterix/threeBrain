@@ -56,6 +56,15 @@ register_points_rigid <- function(m_cp, t_cp) {
 
 }
 
+normalize_vector3 <- function(v) {
+  if(length(v) != 3) { return(c(0, 0, 0))}
+  l <- sqrt(sum(v^2))
+  if( !is.finite(l) || l == 0 ) {
+    return(c(0, 0, 0))
+  }
+  return( v / l )
+}
+
 
 
 ElectrodePrototype <- R6::R6Class(
@@ -79,6 +88,11 @@ ElectrodePrototype <- R6::R6Class(
 
     # either direction of the electrode or the normal if 2D
     .model_direction = NULL,
+
+    # used for rank-1 electrodes (e.g. DBS) to calculate transform
+    # For example, DBS electrode has segment that faces anterior anyway
+    .model_up = NULL,
+    .world_up = NULL,
     .type = character(),
 
     # for preview use
@@ -149,17 +163,12 @@ ElectrodePrototype <- R6::R6Class(
       private$.world_control_points <- numeric(0L)
     },
 
-    set_transform_from_points = function( x, y, z ) {
+    set_transform_from_points = function( x, y, z, up = NULL ) {
       # DIPSAUS DEBUG START
-      # self <- new_electrode_prototype(
-      #   base_prototype = "BoxGeometry",
-      #   modifier = list(
-      #     texture_size = c(20, 20),
-      #     transform = diag(c(10,10,1,1)),
-      #     channel_map = expand.grid(1:5, 1:5)
-      #   )
-      # )
+      # brain <- raveio::rave_brain("devel/mni152_b")
+      # self <- brain$electrodes$geometries$`SEEG-16_R_NAC`
       # private <- self$.__enclos_env__$private
+      # t_cp <- private$.world_control_points
 
       m_cp <- private$.model_control_points
       if(!is.matrix(m_cp)) {
@@ -199,52 +208,12 @@ ElectrodePrototype <- R6::R6Class(
         msg = "Please specify at least 2 or 3 control points to calculate the rigid transform"
       )
 
-      m44 <- register_points_rigid(m_cp = m_cp, t_cp = t_cp)
+      if( is.null(m_fixed) || is.null(t_fixed) ) {
+        m_fixed <- colMeans( m_cp )
+        t_fixed <- colMeans( t_cp )
+      }
 
-      # # rotation
-      # # linear regression, (normalized_coords) %*% m33 = points
-      # xtx <- crossprod(normalized_coords)
-      # if(abs(det(xtx)) < 1e-6) {
-      #   # linearity
-      #   svd <- svd(normalized_coords)
-      #   # normalized_coords == svd$u %*% diag(svd$d) %*% t(svd$v)
-      #   svd$d[abs(svd$d) < 1e-6] <- NA
-      #   # [1,]    0    0   -1    0
-      #   # [2,]   -5    0    0    0
-      #   # [3,]    0   40    0    0
-      #   # [4,]    0    0    0    1
-      #
-      #   # m33 <- t(svd$v %*% diag(1 / svd$d) %*% t(svd$u) %*% points)
-      #   m33 <- t((t(svd$u) %*% points) / svd$d)
-      #
-      #   sel <- is.na(colSums(m33))
-      #   if(any(sel)) {
-      #     sub <- m33[, !sel]
-      #     v <- ravetools::new_vector3()
-      #     v$from_array(sub[, 1])$cross(sub[, 2])$normalize()
-      #     v <- v[]
-      #     m33[,sel] <- v
-      #
-      #     # make sure the transform does not change hand
-      #     if(det(m33) * det(svd$v) < 0) {
-      #       m33[,sel] <- -v
-      #     }
-      #   }
-      #
-      #   m33 <- m33 %*% t(svd$v)
-      # } else {
-      #   m33 <- solve(xtx) %*% crossprod(normalized_coords, points)
-      #   m33 <- t(m33)
-      # }
-      #
-      # if(rigid) {
-      #   m33 <- t(apply(m33, 1L, function(x) {
-      #     x / sqrt(sum(x^2))
-      #   }))
-      # }
-      #
-      # m44 <- diag(1, 4)
-      # m44[seq_len(3), seq_len(3)] <- m33
+      m44 <- register_points_rigid(m_cp = m_cp, t_cp = t_cp)
 
       if( !all(is.finite(m44)) ) {
         if( n >= 3 ) {
@@ -260,7 +229,43 @@ ElectrodePrototype <- R6::R6Class(
         m44[1:3, 4] <- t_fixed - (m44 %*% c(m_fixed, 1))[1:3]
       }
 
+      # check rank of the model
+      qr_decomp <- qr(m_cp)
+
+      if(length(up) != 3) {
+        up <- private$.world_up
+      }
+      up <- normalize_vector3( up )
+      if(
+        n >= 1 && qr_decomp$rank == 1 && sum(up^2) > 0.5 &&
+        sum((self$model_up) ^ 2) > 0.5 && sum((self$model_direction) ^ 2) > 0.5
+      ) {
+        # We want  m44 (model_up, 0.0) = up ( or close to )
+        model_z <- normalize_vector3( self$model_direction )
+        model_x <- normalize_vector3( cross_prod(self$model_up, model_z) )
+        model_y <- normalize_vector3( cross_prod(model_z, model_x) )
+
+        target_z <- normalize_vector3( ( m44 %*% c(model_z, 0) )[1:3] )
+        target_x <- normalize_vector3( cross_prod(up, target_z) )
+        target_y <- normalize_vector3( cross_prod(target_z, target_x) )
+
+        t_basis <- cbind(target_x, target_y, target_z)
+        m_basis <- cbind(model_x, model_y, model_z)
+
+        # r33 x m_basis = t_basis
+        m_qr <- qr( m_basis )
+        t_qr <- qr( t_basis )
+        if( m_qr$rank == 3 && t_qr$rank == 3 ) {
+          # no linearity
+          r33 <- t_basis %*% solve( m_basis )
+          m44[1:3, 1:3] <- r33
+          m44[1:3, 4] <- 0
+          m44[1:3, 4] <- t_fixed - (m44 %*% c(m_fixed, 1))[1:3]
+        }
+      }
+
       private$.world_control_points <- t_cp
+      private$.world_up <- up
       self$set_transform( m44 )
     },
 
@@ -589,7 +594,9 @@ ElectrodePrototype <- R6::R6Class(
         model_control_point_orders = private$.model_control_point_orders,
         world_control_points = as.vector(world_control_points),
         fix_control_index = private$.fix_control_index,
-        model_direction = self$model_direction
+        model_direction = self$model_direction,
+        model_up = self$model_up,
+        world_up = private$.world_up
       )
     },
     from_list = function(li) {
@@ -615,15 +622,16 @@ ElectrodePrototype <- R6::R6Class(
           order = li$model_control_point_orders
         )
       }
+      self$model_direction <- li$model_direction
+      self$model_up <- li$model_up
       if(length(li$world_control_points) >= 6) {
         tcp <- matrix(data = li$world_control_points, nrow = 3L, dimnames = NULL)
         tryCatch({
-          self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ])
+          self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ], up = li$world_up)
         }, error = function(e) {
           warning(e)
         })
       }
-      self$model_direction <- li$model_direction
       self$set_transform(li$transform)
       self
     },
@@ -663,7 +671,7 @@ ElectrodePrototype <- R6::R6Class(
       if(length(other$world_control_points) >= 6) {
         tcp <- matrix(data = other$world_control_points, nrow = 3L, dimnames = NULL)
         tryCatch({
-          self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ])
+          self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ], up = other$world_up)
         }, error = function(e) {
           warning(e)
         })
@@ -730,6 +738,27 @@ ElectrodePrototype <- R6::R6Class(
         private$.model_direction <- c(0, 0, 0)
       }
       private$.model_direction
+    },
+    model_up = function( dir ) {
+      if(!missing(dir)) {
+        if(is.null(dir)) {
+          private$.model_up <- c(0, 0, 0)
+        } else {
+          dir <- as.double(dir[])
+          if(length(dir) != 3L || anyNA(dir)) {
+            stop("Electrode `up` direction must have length of 3 and cannot contain NA")
+          }
+          if(sum(dir^2) > 0) {
+            # normalize
+            dir <- dir / sqrt(sum(dir^2))
+          }
+          private$.model_up <- dir
+        }
+      }
+      if(length(private$.model_up) != 3) {
+        private$.model_up <- c(0, 0, 0)
+      }
+      private$.model_up
     },
     position = function(v) {
       if(!missing(v)) {
