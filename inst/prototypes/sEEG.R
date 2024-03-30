@@ -1,171 +1,117 @@
-# 0.0,0.0,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,1.5,2.0,30.0
-# -1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,3
-# 0.8
+# Spec file: https://www.severnhealthcare.com/images/documents/ad-tech/AD-TECHCatalogue-2015.pdf
 
-seeg_prototype <- function(
-    center_position, widths, radius = 0.5, segments = 1,
-    channel_order = seq_along(center_position), fix_contact = 1) {
+# DIPSAUS DEBUG START
+# idx <- seq_len(proto$n_channels)
+# pal <- threeBrain:::DEFAULT_COLOR_DISCRETE
+# invisible(proto$get_texture(as.character(idx), plot = TRUE))
+# legend("right", legend = sprintf("ch%d", idx), bty = "n", cex = 0.7,
+#        fill = pal)
 
-  # DIPSAUS DEBUG START
-  # center_position <- 0.75 + c(3.5 * 1:16)
-  # widths <- 1.5
-  # radius = 0.5
-  # segments = 1
-  # channel_order = seq_along(center_position)
-  # fix_contact <- 1
-  width_segments <- 12
 
-  npos <- length(center_position)
-  if(length(widths) == 1) {
-    widths <- rep(widths, npos)
-  }
-  if(length(segments) == 1) {
-    segments <- rep(segments, npos)
-  }
-  stopifnot(npos == length(widths))
-  stopifnot(npos == length(segments))
-  stopifnot(npos == length(channel_order))
+# ---- AdTech-sEEG-SD??R-SP05X-000 ---------------------------------------------
 
-  # widthSegment = 12, heightSegment = ?
-  max_p <- max(center_position + widths / 2)
-  max_e <- 200
-  radius0 <- radius
-  paths <- c(
-    radius * (1 - cos(pi / 8 * seq_len(4))),
-    center_position, max_p, max_p + 0.01,
-    max_e
+probe_head <- 2
+width <- 2.41
+contact_spacing <- 5
+overall_length <- 400
+diameter <- 1.12
+
+for( n_contacts in c(4, 6, 8, 10, 12) ) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  proto <- seeg_prototype(
+    type = sprintf("AdTech-sEEG-SD%02dR-SP05X-000", n_contacts),
+    description = c(
+      sprintf("AdTech sEEG - %d contacts", n_contacts),
+      "Contact length   : 2.41 mm",
+      "Central spacing  : 5    mm",
+      "Tip size         : 2    mm",
+      "Diameter         : 1.12 mm"
+    ),
+    center_position = contacts,
+    contact_widths = width,
+    diameter = diameter,
+    overall_length = overall_length
   )
-  radius <- c(
-    radius * sin(pi / 8 * seq_len(4)),
-    rep(radius, npos + 3)
-  )
-  pr <- cbind(paths, radius)
-  n_layers <- length(paths)
-
-  x <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
-  y <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
-
-  uvu <- 1 / (width_segments) * (seq_len(width_segments + 1) - 1)
-  # uvu[[1]] <- 0.0001
-
-  positions_n_uv <- apply(pr, 1L, function(zr) {
-    z <- zr[[1]]
-    r <- zr[[2]]
-
-    if( z == 0 ) {
-      x <- 0.0001
-    }
-    rbind(x * r, y * r, z, uvu, z / max_p)
-  })
-
-  nverts <- length(paths) * ( width_segments + 1 )
-  dim(positions_n_uv) <- c(5, nverts)
-  positions_n_uv <- cbind(c(0,0,0,0,0), positions_n_uv, c(0, 0, max_e, 2, 2))
-  nverts <- nverts + 2
-
-  positions_n_uv[c(4,5), nverts + 1 - seq_len(width_segments * 2 + 1)] <- 2
-
-  position <- positions_n_uv[1:3, ]
-  uv <- positions_n_uv[4:5, ]
-
-  # construct face index
-  side_cover <- sapply(seq_len(width_segments + 1), function(ii) {
-    jj <- ifelse(ii > width_segments, 1, ii + 1)
-    c(ii, 0, jj)
-  })
-  side_cover <- as.vector(side_cover)
-
-  height_index_base <- sapply(seq_len(width_segments + 1), function(ii) {
-    jj <- ifelse(ii > width_segments, 1, ii + 1)
-    c(ii, jj, ii + width_segments + 1, jj, jj + width_segments + 1, ii + width_segments + 1)
-  })
-  height_index <- sapply(seq_len(n_layers - 1), function(layer) {
-    height_index_base + (layer - 1) * ( width_segments + 1 )
-  })
-  index <- c(side_cover, as.vector(height_index), nverts - side_cover - 1L)
-
-  texture_size <- c(4, 256)
-  uv_start <- (center_position - widths / 2) / max_p
-  uv_end <- (center_position + widths / 2) / max_p
-
-  texture_start <- floor(texture_size[[2]] * uv_start) + 1L
-  texture_end <- ceiling(texture_size[[2]] * uv_end) + 1L
-  channel_map <- rbind(1, texture_start, 4, texture_end - texture_start)
-
-  # mesh <- ravetools::vcg_update_normals(
-  #   list(
-  #     vb = position,
-  #     it = index + 1L
-  #   )
-  # )
-
-  config <- list(
-    type = "sEEG-16",
-    name = "sEEG with 16 contacts (prototype)",
-
-    # number of vertices and face indices
-    n = c(nverts, length(index) - 1L),
-
-    # internal geometry name
-    geometry = "CustomGeometry",
-
-    # whether using UV mapping to derive outlines rather than interactively determine the outlines
-    fix_outline = TRUE,
-
-    transform = diag(1, 4L),
-
-    position = position,
-
-    index = index,
-
-    normal = NULL, #mesh$normals[1:3, , drop = FALSE],
-
-    uv = uv,
-
-    texture_size = texture_size,
-
-    channel_map = channel_map,
-
-    contact_center = rbind(0, 0, center_position),
-    contact_sizes = rep(radius0, npos),
-
-    # row matrix
-    model_control_points = rbind(0, 0, center_position),
-    model_control_point_orders = seq_along(center_position),
-    fix_control_index = fix_contact,
-
-    # model_up = c(0, 1, 0),
-    model_direction = c(0, 0, 1)
-  )
-
-  proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config)
-  proto$validate()
-
-  proto
 }
 
-proto <- seeg_prototype(
-  center_position = 1 + c(3.5 * 0:15),
-  widths = 2,
-  radius = 0.5
-)
+# ---- AdTech-sEEG-SD??R-SP10X-000 ---------------------------------------------
 
-a <- proto$get_texture(seq_len(proto$n_channels), plot = TRUE)
+probe_head <- 2
+width <- 2.41
+contact_spacing <- 10
+overall_length <- 400
+diameter <- 1.12
 
-proto$as_json(to_file = "inst/prototypes/sEEG-16.json", flattern = TRUE)
+for( n_contacts in c(4, 6, 8, 10) ) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  proto <- seeg_prototype(
+    type = sprintf("AdTech-sEEG-SD%02dR-SP10X-000", n_contacts),
+    description = c(
+      sprintf("AdTech sEEG - %d contacts", n_contacts),
+      "Contact length   : 2.41 mm",
+      "Central spacing  : 10   mm",
+      "Tip size         : 2    mm",
+      "Diameter         : 1.12 mm"
+    ),
+    center_position = contacts,
+    contact_widths = width,
+    diameter = diameter,
+    overall_length = overall_length
+  )
+}
 
-# a <- invisible(proto$get_texture(seq_len(proto$n_channels), plot = TRUE))
-#
-# proto$preview_3d()
-mesh2 <- proto$as_mesh3d()
-mesh2$vb[3,] <- mesh2$vb[3,] / 50
-ravetools::rgl_view({
-  ravetools::rgl_call("wire3d", mesh, col = "red")
-})
+# ---- AdTech-sEEG-SD??R-AP58X-000 ---------------------------------------------
 
+probe_head <- 2
+width <- 1.32
+contact_spacing <- 2.2
+overall_length <- 300
+diameter <- 1.12
 
+for( n_contacts in c(4, 6, 8) ) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  proto <- seeg_prototype(
+    type = sprintf("AdTech-sEEG-SD%02dR-AP58X-000", n_contacts),
+    description = c(
+      sprintf("AdTech sEEG - %d contacts", n_contacts),
+      sprintf("Contact length   : %.2f mm", width),
+      sprintf("Central spacing  : %.2f mm", contact_spacing),
+      sprintf("Tip size         : %.2f mm", probe_head),
+      sprintf("Diameter         : %.2f mm", diameter)
+    ),
+    center_position = contacts,
+    contact_widths = width,
+    diameter = diameter,
+    overall_length = overall_length
+  )
+}
 
-brain <- raveio::rave_brain("devel/mni152_b")
-brain$electrodes$remote_geometry(prototype_name = "sEEG-16", delete = TRUE)
-brain <- raveio::rave_brain("devel/mni152_b")
-brain$plot(debug=TRUE)
+# ---- AdTech-sEEG-RD??R-SP??X-000 ---------------------------------------------
+
+probe_head <- 2
+width <- 2.29
+overall_length <- 300
+diameter <- 0.86
+
+mat <- cbind(6, 8, 8, 10, 10, 10, 10, 10, 10,
+             5, 4, 5, 3,  4,  5,  6,  7,  8)
+
+invisible(apply(mat, 1L, function(x) {
+  n_contacts <- x[[1]]
+  contact_spacing <- x[[2]]
+  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  proto <- seeg_prototype(
+    type = sprintf("AdTech-sEEG-RD%02dR-SP%02dX-000", n_contacts, contact_spacing),
+    description = c(
+      sprintf("AdTech sEEG - %d contacts", n_contacts),
+      sprintf("Contact length   : %.2f mm", width),
+      sprintf("Central spacing  : %.2f mm", contact_spacing),
+      sprintf("Tip size         : %.2f mm", probe_head),
+      sprintf("Diameter         : %.2f mm", diameter)
+    ),
+    center_position = contacts,
+    contact_widths = width,
+    diameter = diameter,
+    overall_length = overall_length
+  )
+}))

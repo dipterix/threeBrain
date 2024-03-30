@@ -546,6 +546,7 @@ Brain2 <- R6::R6Class(
         controllers[["Overlay Sagittal"]] <- TRUE
         controllers[["Left Opacity"]] <- 0.1
         controllers[["Right Opacity"]] <- 0.1
+        controllers[["Electrode Shape"]] <- "prototype+sphere"
         return(self$plot(
           control_presets = control_presets,
           controllers = controllers,
@@ -711,6 +712,7 @@ Brain2 <- R6::R6Class(
       controllers[["Voxel Display"]] <- "normal"
       controllers[["Voxel Min"]] <- 3000
       controllers[["Edit Mode"]] %?<-% "CT/volume"
+      controllers[["Electrode Shape"]] %?<-% "prototype+sphere"
 
       # check if surface exists
       if(!length(self$surfaces)) {

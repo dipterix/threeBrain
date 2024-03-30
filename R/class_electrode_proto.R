@@ -97,9 +97,11 @@ ElectrodePrototype <- R6::R6Class(
 
     # for preview use
     id = NULL
+
   ),
   public = list(
     name = character(),
+    description = "No description",
     fix_outline = TRUE,
     .last_texture = NULL,
     initialize = function( type, n_vertices = 4 ) {
@@ -577,6 +579,7 @@ ElectrodePrototype <- R6::R6Class(
       list(
         type = self$type,
         name = self$name,
+        description = self$description,
         geometry = "CustomGeometry",
         n = c(ncol(private$.position), ncol(self$index)),
         fix_outline = self$fix_outline,
@@ -633,6 +636,9 @@ ElectrodePrototype <- R6::R6Class(
         })
       }
       self$set_transform(li$transform)
+      tryCatch({
+        self$description <- li$description
+      }, error = function(e){})
       self
     },
     as_json = function(to_file = NULL, ...) {
@@ -688,6 +694,83 @@ ElectrodePrototype <- R6::R6Class(
         warning("Electrode prototype control points (model) must be a matrix with at least 2-3 points. Please use `set_model_control_points` to set them")
       }
       invisible()
+    },
+
+    format = function(...) {
+      self$as_json()
+    },
+
+    print = function(..., details = TRUE) {
+      n_mcp <- length(private$.model_control_points) / 3
+      n_anchors <- 0
+      if(length(private$.model_control_point_orders)) {
+        n_anchors <- sum(is.na( private$.model_control_point_orders ))
+      }
+      if(sum((self$model_direction) ^ 2) > 0) {
+        dir <- self$transform %*% c(self$model_direction, 0.0)
+        euler_axis <- paste(sprintf("%.1f", dir[1:3]), collapse = ", ")
+      } else {
+        euler_axis <- "None"
+      }
+      pos <- paste(sprintf("%.1f", self$transform[1:3, 4]), collapse = ", ")
+      mat <- apply(format(self$transform, ...), 1L, function(x) {
+        sprintf("      [%s]", paste(x, collapse = "\t"))
+      })
+      cat(
+        sep = "",
+        "<Electrode Geometry Prototype>\n",
+        sprintf("  Type        : %s\n", self$type),
+        sprintf("  Description : %s\n", self$description),
+        sprintf("  Channels    : %d\n", self$n_channels),
+        sprintf("  Anchors     : %d contacts, %d non-contacts\n", n_mcp - n_anchors, n_anchors)
+      )
+      if( details ) {
+        cat(
+          sep = "",
+          sprintf("  Mesh info   : %d vertices, %d triangle faces\n",
+                  private$.n_vertices, length(private$.index) / 3),
+          sprintf("  Euler axis  : [%s]\n", euler_axis),
+          sprintf("  Position    : [%s]\n", pos),
+          "  Matrix      : (model to tk-registered RAS)\n",
+          paste(mat, collapse = "\n"), "\n"
+        )
+      }
+      invisible(self)
+    },
+
+    save_as_default = function( force = FALSE ) {
+      existing_protos <- list_electrode_prototypes()
+      type <- toupper(self$type)
+      path <- existing_protos[[ type ]]
+
+      root_path <- prototype_search_paths()[[1]]
+      target_path <- file.path(root_path, sprintf("%s.json", type))
+
+      if(length(path) == 1 && file.exists(path)) {
+        if( force ) {
+          if( file.exists(target_path) ) {
+            file.rename(target_path, paste0(
+              target_path,
+              strftime(Sys.time(), format = ".%y%m%d_%H%M%S.bkup")
+            ))
+          }
+        } else {
+          warning(
+            "Electrode geometry prototype [",
+            type,
+            "] already exists at\n  -> ",
+            existing_protos[[type]],
+            "\nThis function should be used only if you want to create/edit electrode prototypes. \n",
+            "If you just want to load a geometry prototype, please use\n",
+            "  -> threeBrain::load_prototype('", type, "')\n",
+            "Please consider renaming `type` or overwrite by calling `prototype$save_as_default(force = TRUE)`"
+          )
+          return()
+        }
+      }
+
+      self$as_json(to_file = target_path)
+      invisible(normalizePath(target_path))
     }
 
   ),
@@ -901,17 +984,27 @@ prototype_search_paths <- function() {
 }
 
 
-#' @title List all electrode prototypes
+#' @title List or load all electrode prototypes
 #' @description
 #' List all built-in and user-customized electrode prototypes. User paths
 #' will be searched first, if multiple prototype configuration files are found
 #' for the same type.
-#' @returns A named list, names are the prototype types and values are the
-#' prototype configuration paths.
+#' @param type electrode type, character
+#' @returns \code{list_electrode_prototypes} returns a named list, names are
+#' the prototype types and values are the prototype configuration paths;
+#' \code{load_prototype} returns the prototype instance if \code{type} exists,
+#' or throw an error.
 #'
 #' @examples
 #'
-#' list_electrode_prototypes()
+#' availables <- list_electrode_prototypes()
+#' if( "sEEG-16" %in% names(availables) ) {
+#'   proto <- load_prototype( "sEEG-16" )
+#'
+#'   print(proto, details = FALSE)
+#' }
+#'
+#'
 #'
 #'
 #' @export
@@ -933,10 +1026,20 @@ list_electrode_prototypes <- function() {
 
     if(length(fnames)) {
       pnames <- gsub("\\.json$", "", fnames, ignore.case = TRUE)
+      pnames <- toupper(pnames)
       re[ pnames ] <<- file.path(path, fnames)
     }
   })
   re
 }
 
+#' @rdname list_electrode_prototypes
+#' @export
+load_prototype <- function( type ) {
+  li <- list_electrode_prototypes()
+  path <- li[[ toupper(type) ]]
+  if(!length(path)) { stop("No such electrode geometry prototype: ", type) }
+  prototype <- ElectrodePrototype$new("")
+  prototype$from_json(json = path, is_file = TRUE)
+}
 
