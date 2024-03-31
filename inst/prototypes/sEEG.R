@@ -8,7 +8,7 @@
 #        fill = pal)
 
 
-# ---- AdTech-sEEG-SD??R-SP05X-000 ---------------------------------------------
+# ---- sEEG-AdTech-SD??R-SP05X-000 ---------------------------------------------
 
 probe_head <- 2
 width <- 2.41
@@ -19,7 +19,7 @@ diameter <- 1.12
 for( n_contacts in c(4, 6, 8, 10, 12) ) {
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
   proto <- seeg_prototype(
-    type = sprintf("AdTech-sEEG-SD%02dR-SP05X-000", n_contacts),
+    type = sprintf("sEEG-AdTech-SD%02dR-SP05X-000", n_contacts),
     description = c(
       sprintf("AdTech sEEG - %d contacts", n_contacts),
       "Contact length   : 2.41 mm",
@@ -34,7 +34,7 @@ for( n_contacts in c(4, 6, 8, 10, 12) ) {
   )
 }
 
-# ---- AdTech-sEEG-SD??R-SP10X-000 ---------------------------------------------
+# ---- sEEG-AdTech-SD??R-SP10X-000 ---------------------------------------------
 
 probe_head <- 2
 width <- 2.41
@@ -45,7 +45,7 @@ diameter <- 1.12
 for( n_contacts in c(4, 6, 8, 10) ) {
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
   proto <- seeg_prototype(
-    type = sprintf("AdTech-sEEG-SD%02dR-SP10X-000", n_contacts),
+    type = sprintf("sEEG-AdTech-SD%02dR-SP10X-000", n_contacts),
     description = c(
       sprintf("AdTech sEEG - %d contacts", n_contacts),
       "Contact length   : 2.41 mm",
@@ -60,7 +60,7 @@ for( n_contacts in c(4, 6, 8, 10) ) {
   )
 }
 
-# ---- AdTech-sEEG-SD??R-AP58X-000 ---------------------------------------------
+# ---- sEEG-AdTech-SD??R-AP58X-000 ---------------------------------------------
 
 probe_head <- 2
 width <- 1.32
@@ -71,7 +71,7 @@ diameter <- 1.12
 for( n_contacts in c(4, 6, 8) ) {
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
   proto <- seeg_prototype(
-    type = sprintf("AdTech-sEEG-SD%02dR-AP58X-000", n_contacts),
+    type = sprintf("sEEG-AdTech-SD%02dR-AP58X-000", n_contacts),
     description = c(
       sprintf("AdTech sEEG - %d contacts", n_contacts),
       sprintf("Contact length   : %.2f mm", width),
@@ -86,7 +86,7 @@ for( n_contacts in c(4, 6, 8) ) {
   )
 }
 
-# ---- AdTech-sEEG-RD??R-SP??X-000 ---------------------------------------------
+# ---- sEEG-AdTech-RD??R-SP??X-000 ---------------------------------------------
 
 probe_head <- 2
 width <- 2.29
@@ -101,7 +101,7 @@ invisible(apply(mat, 1L, function(x) {
   contact_spacing <- x[[2]]
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
   proto <- seeg_prototype(
-    type = sprintf("AdTech-sEEG-RD%02dR-SP%02dX-000", n_contacts, contact_spacing),
+    type = sprintf("sEEG-AdTech-RD%02dR-SP%02dX-000", n_contacts, contact_spacing),
     description = c(
       sprintf("AdTech sEEG - %d contacts", n_contacts),
       sprintf("Contact length   : %.2f mm", width),
