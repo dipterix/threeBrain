@@ -113,7 +113,7 @@ threejs_brain <- function(
 
   # customized js code
   custom_javascript = NULL,
-  show_modal = "auto"
+  show_modal = "auto", embed = FALSE
 
 ){
   if(isTRUE(show_modal == 'auto')){
@@ -394,7 +394,7 @@ threejs_brain <- function(
 
   writeLines(to_json2(x), path)
 
-  htmlwidgets::createWidget(
+  widget <- htmlwidgets::createWidget(
     name = 'threejs_brain', x = list(
       data_filename = data_filename,
       settings = settings,
@@ -408,6 +408,11 @@ threejs_brain <- function(
       viewer.fill = TRUE,
       padding = '0px',
     ), dependencies = dependencies)
+
+  if( isTRUE(embed) ) {
+    class(widget) <- c(class(widget), "threejs_embed")
+  }
+  widget
 
 }
 
@@ -457,12 +462,16 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   # Backward compatible:
   # old: directory is specified, path = directory/filename
   # new: path is specified directory
+  args <- list(...)
   if(missing(path)) {
-    args <- list(...)
     path <- file.path(c(args$directory, ".")[[1]], c(args$filename, 'index.html')[[1]])
   } else if ( !grepl(pattern = "\\.htm[l]{0,1}$", path, ignore.case = TRUE) ){
     path <- sprintf("%s.html", path)
   }
+
+  widget$width <- args$width
+  widget$height <- args$height
+
   # set up working directory
   wdir <- dir_create(tempfile())
   on.exit({ unlink(wdir, recursive = TRUE) })
