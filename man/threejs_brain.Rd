@@ -46,7 +46,8 @@ threejs_brain(
   global_files = list(),
   qrcode = NULL,
   custom_javascript = NULL,
-  show_modal = "auto"
+  show_modal = "auto",
+  embed = FALSE
 )
 }
 \arguments{
@@ -112,11 +113,11 @@ only use it when you have multiple widgets in one website}
 
 \item{enable_cache}{whether to enable cache, useful when rendering the viewers repeatedly in shiny applications}
 
-\item{token}{unique character, internally used to identify widgets in JS localStorage}
+\item{token}{unique character, internally used to identify widgets in 'JavaScript' \code{'localStorage'}}
 
 \item{controllers}{list to override the settings, for example \code{proxy$get_controllers()}}
 
-\item{browser_external}{logical, use system default browser (default) or builtin one.}
+\item{browser_external}{logical, use system default browser (default) or built-in one.}
 
 \item{global_data, global_files}{internally use, mainly to store orientation matrices and files.}
 
@@ -133,7 +134,9 @@ only use it when you have multiple widgets in one website}
 \item{\code{'presets'}}{preset \code{'gui'} methods}
 }}
 
-\item{show_modal}{logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications}
+\item{show_modal}{logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have \code{'WebGL'} support; only used in shiny applications}
+
+\item{embed}{whether to try embedding the viewer in current run-time; default is false (will launch default web browser); set to true if running in \code{'rmarkdown'} or \code{'quarto'}, or to see the viewer in \code{'RStudio'} default panel.}
 }
 \description{
 Create a Threejs Brain and View it in Browsers

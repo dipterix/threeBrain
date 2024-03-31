@@ -105,7 +105,7 @@ print.threejs_brain <- function (x, ..., embed = NA, viewer = getOption("viewer"
   tmp_dir <- tempdir(check = TRUE)
 
   if(is.na(embed)) {
-    embed <- inherits(x, "threejs_embed") || isTRUE(getOption('knitr.in.progress'))
+    embed <- !inherits(x, "suppress_viewer")
   }
 
   if( embed ) {

@@ -28,16 +28,17 @@
 #' @param start_zoom numerical, positive number indicating camera zoom level
 #' @param symmetric numerical, default 0, color center will be mapped to this value
 #' @param tmp_dirname character path, internally used, where to store temporary files
-#' @param token unique character, internally used to identify widgets in JS localStorage
+#' @param token unique character, internally used to identify widgets in 'JavaScript' \code{'localStorage'}
 #' @param debug logical, internally used for debugging
 #' @param controllers list to override the settings, for example \code{proxy$get_controllers()}
-#' @param browser_external logical, use system default browser (default) or builtin one.
+#' @param browser_external logical, use system default browser (default) or built-in one.
 #' @param global_data,global_files internally use, mainly to store orientation matrices and files.
 #' @param qrcode 'URL' to show in the 'QR' code; can be a character string or a named list of \code{'url'} and \code{'text'} (hyper-reference text)
-#' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications
+#' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have \code{'WebGL'} support; only used in shiny applications
 #' @param widget_id character, internally used as unique identifiers for widgets;
 #' only use it when you have multiple widgets in one website
 #' @param enable_cache whether to enable cache, useful when rendering the viewers repeatedly in shiny applications
+#' @param embed whether to try embedding the viewer in current run-time; default is false (will launch default web browser); set to true if running in \code{'rmarkdown'} or \code{'quarto'}, or to see the viewer in \code{'RStudio'} default panel.
 #' @param custom_javascript customized temporary 'JavaScript' code that runs after ready state; available 'JavaScript' variables are:
 #' \describe{
 #' \item{\code{'groups'}}{input information about each group}
@@ -394,7 +395,7 @@ threejs_brain <- function(
 
   writeLines(to_json2(x), path)
 
-  widget <- htmlwidgets::createWidget(
+  htmlwidgets::createWidget(
     name = 'threejs_brain', x = list(
       data_filename = data_filename,
       settings = settings,
@@ -404,16 +405,10 @@ threejs_brain <- function(
       browser.external = browser_external,
       defaultHeight = '100vh',
       viewer.paneHeight = 500,
-      viewer.suppress = TRUE,
+      viewer.suppress = !isTRUE(embed),
       viewer.fill = TRUE,
       padding = '0px',
     ), dependencies = dependencies)
-
-  if( isTRUE(embed) ) {
-    class(widget) <- c(class(widget), "threejs_embed")
-  }
-  widget
-
 }
 
 
