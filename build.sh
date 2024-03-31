@@ -31,3 +31,7 @@ if [[ "$USE_DIPSAUS" != "1" ]]; then
   source_file=$(Rscript -e "cat(devtools::build(vignettes = FALSE, manual = FALSE, path = './adhoc/', quiet = TRUE))")
   R CMD INSTALL --preclean --no-multiarch --with-keep.source "$source_file"
 fi
+
+LAST_RELEASE=$(grep "SHA: " "CRAN-SUBMISSION")
+echo "## Changes since last CRAN release" > CHANGELOG.md
+git log ${LAST_RELEASE:5}..HEAD --no-merges --graph --pretty=format:'%C(auto)%h%d%Creset %C(cyan)(%ci)%Creset %C(green)%cn:%Creset %s' >> CHANGELOG.md

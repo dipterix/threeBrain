@@ -35,3 +35,4 @@
 ^ui\.R$
 ^_rs_job\.R$
 ^CRAN-SUBMISSION$
+^CHANGELOG\.md$
