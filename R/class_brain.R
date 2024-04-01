@@ -546,7 +546,6 @@ Brain2 <- R6::R6Class(
         controllers[["Overlay Sagittal"]] <- TRUE
         controllers[["Left Opacity"]] <- 0.1
         controllers[["Right Opacity"]] <- 0.1
-        controllers[["Electrode Shape"]] <- "prototype+sphere"
         return(self$plot(
           control_presets = control_presets,
           controllers = controllers,
