@@ -3,8 +3,10 @@ threeBrain 1.1.0
 
 ## To-do:
 
-* Use `RGBAFormat` for drag-and-drop volumes, and allow to change volume colors
+* Allow to set a volume to a simple color
 * Implement default color on electrode prototypes
+* Drag & drop atlas images cannot show on side canvas when the file name does not follow a specific regular expression. This constraint should be removed
+* Improve `dispose` function such that the object can be disposed completely (from `CPU` and `GPU` memories)
 
 ## Major Changes
 

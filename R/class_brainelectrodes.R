@@ -702,7 +702,24 @@ BrainElectrodes <- R6::R6Class(
       invisible(self)
     },
 
+    #| @params number integer number of electrode contact (channel)
+    #| @params color length of one or more indicating the color(s) of the
+    #| electrode; when there are multiple and \code{inclusive} is true, then
+    #| the first color will be the default
+    #| @params names names of the variables
+    #|
     fix_electrode_color = function(number, color, names = NULL, inclusive = TRUE) {
+
+      # number <- as.integer(number)
+      # if( !is.finite(number) || number <= 0 ) { return() }
+      #
+      # fixed_colors <- as.list(self$group$get_data("fixed_colors"))
+      # fixed_colors[[number]] <- list(
+      #   color[[1]],
+      #   names,
+      #   inclusive
+      # )
+
       names <- as.character(names)
       inclusive <- as.logical(inclusive)[[1]]
       el <- self$objects[[ number ]]

@@ -34,4 +34,4 @@ fi
 
 LAST_RELEASE=$(grep "SHA: " "CRAN-SUBMISSION")
 echo "## Changes since last CRAN release" > CHANGELOG.md
-git log ${LAST_RELEASE:5}..HEAD --no-merges --graph --pretty=format:'%C(auto)`%h%d`%Creset: %s %C(cyan)(by `*%cn*`)%Creset' >> CHANGELOG.md
+git log ${LAST_RELEASE:5}..HEAD --no-merges --graph --pretty=format:'%C(auto)`%h%d`%Creset %C(cyan)[_`%cn`_]%Creset: %s' >> CHANGELOG.md
