@@ -1,0 +1,100 @@
+## Changes since last CRAN release
+* `e1dfba0f (HEAD -> dragndrop)` [_`dipterix`_]: Color look-up table can be set with arbitrary single color (in `HexString`, indicating that all values should be rendered with such color; Drag & Drop volumes can change to single colors
+* `c04d7783` [_`dipterix`_]: Remembers to state when switching volumes (`datacube2`)
+* `d7cab685 (origin/dragndrop)` [_`dipterix`_]: Allowed prototype contact colors to be fixed; Prototype control points displays channel information (provided control points are channels) Added color (`randomColor`, `testColorString`) and file-name utility functions; Soft removed `addColorCoat` and using `ElectrodeMaterial`, this results in massive code improvement in electrode instance; Allow to set default electrode colors if a contact is not rendered with values nor fixed color; Fixed `NamedLut` color error when a value range is zero; Prototype electrode click information displays the channel number; Fixed `RShinyDriver` issue when object does not have construction parameters (using `getThreeBrainInstance` instead);
+* `1ed4b5b4` [_`dipterix`_]: Scrolling on side canvas is faster now
+* `b4cd7dbf` [_`dipterix`_]: Drag & drop file names is sanitized to avoid displaying issues; Electrode contacts (`instancedMesh`) are now click-able; Dispose is cleaner now, it also fires events; Added `makeClickable` and `removeClickable` to replace previous `add_clickable` function; Renamed `register_object` to `registerToMap`; Fixed `UV` mapping issue in sphere electrode geometry; Better ways to sanitize `datacube`;
+* `e0437d6c` [_`dipterix`_]: Improved `datacube` overlay texture, including using `clamp-to-border` instead `clamp-to-edge`; Fixed `shader` issue when transparency is set to negative (treated as 1)
+* `7a196ff4` [_`dipterix`_]: Ray-casting electrode prototypes with `instancedMesh` now works under `contact-only` mode; Show electrode prototype with contacts by default
+* `28f3af8d` [_`dipterix`_]: Changed drag & drop default color mode; changing global opacity also affects the `Voxel Opacity` under volume settings; `AbstractThreeBrainObject` now inherits `EventDispatcher` (from `three`) so events can be registered to instances directly; Color changes to `datacube2` will notify the underlay `datacube` via event dispatcher; For each color keyword added, a reversed version is also registered; Fixed discrete volume treated as continuous map when overlaid
+* `5f068018` [_`dipterix`_]: Added color modes for uploaded images; using `NIfTI` headers to get calculated color intensities before applying heuristic approach; removed `normalize` method (replaced by `getNormalizedImage`) from `NiftiImage` and `MGHImage`
+* `bb1e6150` [_`dipterix`_]: Using script to generate change log automatically from Git commits
+* `1eea71c6` [_`dipterix`_]: Added news
+* `6f3ceefe` [_`dipterix`_]: bump version
+* `a9d0c8f6` [_`dipterix`_]: rename electrode prototypes: (type-company-version.json)
+* `bb3adf85` [_`dipterix`_]: minor fix
+* `01ed4695` [_`dipterix`_]: Added campass to side cameras when slice mode is not canonical; dragndrop changes folders; removed UV for sphere electrodes; added model-up for segmented electrodes shaft; fixed a bug when slice instance is missing but controller tries to set overlay; voxel threshold is async now; changed default to some controller; added broadcast() to more controllers; atlas number will be displayed so users don't need to search for lut; added global debug flag; js source map is hidden so browser won't complain about missing map;
+* `fa4fe3f6` [_`dipterix`_]: viewer can be seen in quarto/rmarkdown/knitr now
+* `e7cdff72` [_`dipterix`_]: added default prototypes
+* `60f0dddd` [_`dipterix`_]: added functions to create seeg prototypes
+* `2096eb4c` [_`dipterix`_]: added electrode "up", allowing electrode to rotate along direction
+* `6a53d729` [_`dipterix`_]: dnd surface granted with USER_ALL_SIDE_CAMERA_4; implemented slice overlay; splited render distance into Frustum near and far; added model2vox to datacube and datacube2; no more timeout for workers; fixed sEEG-16 UV mapping
+* `0c466378` [_`dipterix`_]: dynamic async workers; support dnd gii and colormap; added snap-to-electrode mode; dnd surface infer space from filename (BIDS); no voxel matching for subcortical surfaces;
+* `d64ae335` [_`dipterix`_]: added support for electrode directions; prototypes are loaded from system by default to allow updating certain params
+* `a9275a43` [_`dipterix`_]: fixed prototype channel number not set when set from list
+* `3dc98c5e` [_`dipterix`_]: added options to enable/disable cache; used better file loader with options to use js workers
+* `0ef6c1c3` [_`dipterix`_]: fixed UV issues in prototype
+* `2c1f30e4` [_`dipterix`_]: allow contact to be fixed (anchor); reduced number of control points to 2; removed `flattern=FALSE` for prototypes; fixed prototype transform issue
+* `4351cc4b` [_`dipterix`_]: default surface colors
+* `ad4b4299` [_`dipterix`_]: Implemented drag N drop
+* `7fe52479 (origin/master, origin/HEAD, master)` [_`dipterix`_]: added remotes
+* `b53c0725 (origin/custom-electrode-geom, custom-electrode-geom)` [_`dipterix`_]: using instancedMesh to represent electrode contacts when prototype is used
+* `4cacfd41` [_`dipterix`_]: Multi-representation of electrode
+* `e3bb38c0` [_`dipterix`_]: added mapToTemplate back
+* `d5416c4e` [_`dipterix`_]: early stop when webgl2 is unavailable
+* `4b71dee7` [_`dipterix`_]: no render if webgl2 is disabled
+* `fa11027f` [_`dipterix`_]: Fixing win again
+* `fe2cc379` [_`dipterix`_]: recompile
+* `2313b0a5` [_`dipterix`_]: changed pial surface material depthwrite when transparent
+* `cf2f1905` [_`dipterix`_]: fixed the electrode values when prototype is used
+* `88e10f8d` [_`dipterix`_]: js fix
+* `a6d61c23` [_`dipterix`_]: Added support for QRCode; using flags instead of function to hard update contact positions (may not ready)
+* `f77c8ee0` [_`dipterix`_]: docs, always docs
+* `b498b613` [_`dipterix`_]: avoid auto-load geometries; added type string to prototype; added set_matrix_world to set transform of an object
+* `6e91dba8` [_`dipterix`_]: added custom electrode shape support
+* `fe5f2c84` [_`dipterix`_]: added news; cran-comments; allowed plot_slices to be additive
+* `ca56af1b (origin/win-fix, win-fix)` [_`dipterix`_]: fixing the crash issue on windows
+* `ba3f975b` [_`dipterix`_]: removed shader cache in surface shader (may cause window crash
+* `8904130d` [_`dipterix`_]: updated readme
+* `48ea5ea6` [_`dipterix`_]: adjust the implementation of background color and arcball radius; removed additional unsed params from material call; added zindex base to side canvas; added defaultColor to electrodes; fixed localization electrodes color not set correctly issues; completely removed composer effects
+* `9785b05d` [_`dipterix`_]: trackball uses longer side instead of shorter side as arc radius; mouse position in the canvas is caluclated every mouse down instead of every resizing
+* `85bffcbf` [_`dipterix`_]: internalize col2hexstr
+* `9a5d74ad` [_`dipterix`_]: Added brain$electrodes$fix_electrode_color to fix contacts to a color for given clip names; added electrode visibility mode: use threshold only to show contacts that pass threhsold but have no values
+* `467eac5d` [_`dipterix`_]: more robust controller.load
+* `34727c80` [_`dipterix`_]: textsprite depth fix
+* `c4365bad` [_`dipterix`_]: changed default controllers
+* `78acc14a` [_`dipterix`_]: upgraded threejs to v160 with significant light fix + removed outline pass (using clearcoat instead)
+* `56f0e000` [_`dipterix`_]: atlas label also returns atlas IDs
+* `f0712167` [_`dipterix`_]: if user name rave_slices under fs folder, use it to display T1 slices
+* `b28a22f5` [_`dipterix`_]: auto adjust T1 brightness when ploting slices
+* `28767b24` [_`dipterix`_]: adjust title position
+* `77a28c2f` [_`dipterix`_]: Added plot_slices to brain class
+* `58c66337` [_`dipterix`_]: mesh clipping
+* `c6f90fee` [_`dipterix`_]: Fixed download template subject URL query
+* `e4092702` [_`dipterix`_]: dev bump
+* `10524a4c` [_`dipterix`_]: Added default rave_slices in case users want to choose their own slices in the 3D viewer
+* `a4cac580` [_`dipterix`_]: Allow slices to change gamma
+* `ff842861` [_`dipterix`_]: make voxel IJK starting from 0
+* `c139b53c` [_`dipterix`_]: Fixed brain electrode mapping; added atlas guesser
+* `16defcdb` [_`dipterix`_]: Added space transform for electrodes class; set controllers (setFromDictionary) uses try-catch clauses now
+* `176e7746` [_`dipterix`_]: Partition datauri so the datauri size does not exceed 65529
+* `21e12b51` [_`dipterix`_]: bump version
+* `a12128c4` [_`dipterix`_]: updated citation
+* `06a99127` [_`dipterix`_]: truly standalone viewer
+* `a5746ca2` [_`dipterix`_]: animation uses new cmap
+* `af2d2c76` [_`dipterix`_]: added png to dep
+* `bb773fcb` [_`dipterix`_]: Added ACPC alignment, new tubegeom for customized electrode types
+* `1b37825a` [_`dipterix`_]: allows additional geoms to viewer in brain$plot
+* `75e77aec` [_`dipterix`_]: using new mac command
+* `14f53797` [_`dipterix`_]: plot_slices is column-major
+* `0d43840d` [_`dipterix`_]: minor patch
+* `3503ee49` [_`dipterix`_]: minor patch
+* `19a0c0bc` [_`dipterix`_]: line-of-sight view (js) and plot_slices (R)
+* `d019c899` [_`dipterix`_]: bump version
+* `b121553a` [_`dipterix`_]: Fixing CT matrix in js when s/qforms are inconsistent (the coregistration matrix in sform and original matrix in qform)
+* `aea5c03f` [_`dipterix`_]: improved way of calc spacing offsets
+* `8be639fa` [_`dipterix`_]: Fixed bugs on interpolation with spacing
+* `74a871e7` [_`dipterix`_]: specify spacing for inter/extrapolation; removed old interpolation logic; added distanceRatio to prevent large shift (auto adjust)
+* `73685b8a` [_`dipterix`_]: localization: Outlines are on
+* `1da0aa4f` [_`dipterix`_]: Update to match the yael paper
+* `60b014c3` [_`dipterix`_]: fixing incorrect subcortical label
+* `1c98fa37` [_`dipterix`_]: Disabled old format; as_subcortical_label generates correct wm labels
+* `a909a73f` [_`dipterix`_]: let electrodes to be opaque on main but transparent on side canvas
+* `3591520e` [_`dipterix`_]: added initialization condition
+* `0d538d85` [_`dipterix`_]: Let subcortical surfaces to display by default
+* `258a7cda` [_`dipterix`_]: added get_ijk2ras to get Norig (sform) and Torig (tkr)
+* `289153c2` [_`dipterix`_]: minor bug fix and bump
+* `a48ca697` [_`dipterix`_]: using pial surface center as trackball center
+* `1c44190d` [_`dipterix`_]: added support for showing subcortical surfaces; fixed depth issues when showing electrodes in side viewers
+* `bb0fb968` [_`dipterix`_]: fixed freesurfer_lut
+* `bd75f4e8` [_`dipterix`_]: Dithering the datacube2 to make rendering "smooth"; added `target` arg to pre_render so pre_render also applies to side canvas

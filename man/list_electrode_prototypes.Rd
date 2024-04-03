@@ -2,13 +2,21 @@
 % Please edit documentation in R/class_electrode_proto.R
 \name{list_electrode_prototypes}
 \alias{list_electrode_prototypes}
-\title{List all electrode prototypes}
+\alias{load_prototype}
+\title{List or load all electrode prototypes}
 \usage{
 list_electrode_prototypes()
+
+load_prototype(type)
+}
+\arguments{
+\item{type}{electrode type, character}
 }
 \value{
-A named list, names are the prototype types and values are the
-prototype configuration paths.
+\code{list_electrode_prototypes} returns a named list, names are
+the prototype types and values are the prototype configuration paths;
+\code{load_prototype} returns the prototype instance if \code{type} exists,
+or throw an error.
 }
 \description{
 List all built-in and user-customized electrode prototypes. User paths
@@ -17,7 +25,14 @@ for the same type.
 }
 \examples{
 
-list_electrode_prototypes()
+availables <- list_electrode_prototypes()
+if( "sEEG-16" \%in\% names(availables) ) {
+  proto <- load_prototype( "sEEG-16" )
+
+  print(proto, details = FALSE)
+}
+
+
 
 
 }

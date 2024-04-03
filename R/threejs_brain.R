@@ -28,15 +28,17 @@
 #' @param start_zoom numerical, positive number indicating camera zoom level
 #' @param symmetric numerical, default 0, color center will be mapped to this value
 #' @param tmp_dirname character path, internally used, where to store temporary files
-#' @param token unique character, internally used to identify widgets in JS localStorage
+#' @param token unique character, internally used to identify widgets in 'JavaScript' \code{'localStorage'}
 #' @param debug logical, internally used for debugging
 #' @param controllers list to override the settings, for example \code{proxy$get_controllers()}
-#' @param browser_external logical, use system default browser (default) or builtin one.
+#' @param browser_external logical, use system default browser (default) or built-in one.
 #' @param global_data,global_files internally use, mainly to store orientation matrices and files.
 #' @param qrcode 'URL' to show in the 'QR' code; can be a character string or a named list of \code{'url'} and \code{'text'} (hyper-reference text)
-#' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have 'WebGL' support; only used in shiny applications
+#' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have \code{'WebGL'} support; only used in shiny applications
 #' @param widget_id character, internally used as unique identifiers for widgets;
 #' only use it when you have multiple widgets in one website
+#' @param enable_cache whether to enable cache, useful when rendering the viewers repeatedly in shiny applications
+#' @param embed whether to try embedding the viewer in current run-time; default is false (will launch default web browser); set to true if running in \code{'rmarkdown'} or \code{'quarto'}, or to see the viewer in \code{'RStudio'} default panel.
 #' @param custom_javascript customized temporary 'JavaScript' code that runs after ready state; available 'JavaScript' variables are:
 #' \describe{
 #' \item{\code{'groups'}}{input information about each group}
@@ -104,7 +106,7 @@ threejs_brain <- function(
 
   # Builds, additional data, etc (misc)
   widget_id = 'threebrain_data', tmp_dirname = NULL,
-  debug = FALSE, token = NULL, controllers = list(),
+  debug = FALSE, enable_cache = FALSE, token = NULL, controllers = list(),
   browser_external = TRUE, global_data = list(), global_files = list(),
 
   # QRCode
@@ -112,7 +114,7 @@ threejs_brain <- function(
 
   # customized js code
   custom_javascript = NULL,
-  show_modal = "auto"
+  show_modal = "auto", embed = FALSE
 
 ){
   if(isTRUE(show_modal == 'auto')){
@@ -359,9 +361,11 @@ threejs_brain <- function(
     render_timestamp = isTRUE(timestamp),
     control_presets = control_presets,
     cache_folder = paste0(lib_path, widget_id, '-0/'),
+    worker_script = paste0(lib_path, "three-brain-1.0.0/threebrain-worker.js"),
     lib_path = lib_path,
     default_controllers = controllers,
     debug = debug,
+    enable_cache = enable_cache,
     background = background,
     # has_animation = v_count > 1,
     token = token,
@@ -401,11 +405,10 @@ threejs_brain <- function(
       browser.external = browser_external,
       defaultHeight = '100vh',
       viewer.paneHeight = 500,
-      viewer.suppress = TRUE,
+      viewer.suppress = !isTRUE(embed),
       viewer.fill = TRUE,
       padding = '0px',
     ), dependencies = dependencies)
-
 }
 
 
@@ -454,12 +457,16 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   # Backward compatible:
   # old: directory is specified, path = directory/filename
   # new: path is specified directory
+  args <- list(...)
   if(missing(path)) {
-    args <- list(...)
     path <- file.path(c(args$directory, ".")[[1]], c(args$filename, 'index.html')[[1]])
   } else if ( !grepl(pattern = "\\.htm[l]{0,1}$", path, ignore.case = TRUE) ){
     path <- sprintf("%s.html", path)
   }
+
+  widget$width <- args$width
+  widget$height <- args$height
+
   # set up working directory
   wdir <- dir_create(tempfile())
   on.exit({ unlink(wdir, recursive = TRUE) })

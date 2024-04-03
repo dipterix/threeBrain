@@ -34,6 +34,8 @@
 #' @importFrom freesurferformats write.nifti2
 #'
 #' @importFrom png writePNG
+#'
+#' @importFrom knitr knit_print
 NULL
 
 # ----- Reexports ------------------------------------------------------------

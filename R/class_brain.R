@@ -711,6 +711,7 @@ Brain2 <- R6::R6Class(
       controllers[["Voxel Display"]] <- "normal"
       controllers[["Voxel Min"]] <- 3000
       controllers[["Edit Mode"]] %?<-% "CT/volume"
+      controllers[["Electrode Shape"]] %?<-% "prototype+sphere"
 
       # check if surface exists
       if(!length(self$surfaces)) {

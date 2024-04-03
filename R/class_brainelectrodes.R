@@ -282,6 +282,25 @@ BrainElectrodes <- R6::R6Class(
       if(cache_ok && inherits(self$geometries[[ name_upper ]], "ElectrodePrototype")) {
         return( self$geometries[[ name_upper ]] )
       }
+
+      # load from prototypes
+      search_paths <- prototype_search_paths()
+      proto <- NULL
+      for(search_path in search_paths) {
+        config_files <- list.files(search_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+        config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
+        config_names <- toupper(config_names)
+        idx <- which(config_names == prototype_name_upper)
+        if( length(idx) ) {
+          idx <- idx[[1]]
+          proto <- new_electrode_prototype(base_prototype = file.path(search_path, config_files[[ idx ]]))
+          proto$name <- name_upper
+          proto$type <- prototype_name
+          self$geometries[[ name_upper ]] <- proto
+          break
+        }
+      }
+
       if( inherits(self$brain, "rave-brain") ) {
         native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
       } else {
@@ -296,38 +315,64 @@ BrainElectrodes <- R6::R6Class(
         if( length(idx) ) {
           idx <- idx[[1]]
           tryCatch({
-            proto <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
-            proto$name <- name_upper
-            proto$type <- prototype_name
-            self$geometries[[ name_upper ]] <- proto
-            return(proto)
+            if(is.null(proto)) {
+              proto <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
+              proto$name <- name_upper
+              proto$type <- prototype_name
+            } else {
+              proto_native <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
+              proto$name <- name_upper
+              proto$type <- prototype_name
+              proto$update_from( proto_native )
+            }
+
           }, error = function(e) {
             warning(e)
           })
         }
       }
-      # find from prototypes and/or recache
-      search_paths <- prototype_search_paths()
 
-      for(search_path in search_paths) {
-        config_files <- list.files(search_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
-        config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
-        config_names <- toupper(config_names)
-        idx <- which(config_names == prototype_name_upper)
-        if( length(idx) ) {
-          idx <- idx[[1]]
-          proto <- new_electrode_prototype(base_prototype = file.path(search_path, config_files[[ idx ]]))
-          proto$name <- name_upper
-          proto$type <- prototype_name
-          self$geometries[[ name_upper ]] <- proto
-          if( length(native_path) == 1 ) {
-            dir.create(native_path, showWarnings = FALSE, recursive = TRUE)
-            proto$as_json(flattern = TRUE, to_file = file.path(native_path, sprintf("%s.json", name_upper)))
-          }
-          return(proto)
-        }
+      return(proto)
+    },
+
+    remote_geometry = function( label_prefix, prototype_name, delete = FALSE ) {
+      prototype_name <- trimws(prototype_name)
+
+      if( length(prototype_name) != 1 || is.na(prototype_name) || !is.character(prototype_name) || prototype_name == "" ) { return() }
+      if(missing(label_prefix)) {
+        label_prefix <- self$raw_table$LabelPrefix
       }
-      return(NULL)
+      if(!length(label_prefix)) { return(invisible()) }
+      if(length(label_prefix) > 1) {
+        lapply(label_prefix, function(p) {
+          self$remote_geometry(p, prototype_name = prototype_name, delete = delete)
+        })
+        return(invisible())
+      }
+      if( is.na(label_prefix) || !is.character(label_prefix) || label_prefix == "" ) { return() }
+      label_prefix <- trimws(label_prefix)
+
+      name <- sprintf("%s_%s", prototype_name, label_prefix)
+      name_upper <- toupper(name)
+
+      self$geometries[[ name_upper ]] <- NULL
+
+      if( !delete ) { return(invisible()) }
+      if( !inherits(self$brain, "rave-brain") ) { return(invisible()) }
+      native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
+      if(length(native_path) != 1 || !dir.exists(native_path)) {
+        return(invisible())
+      }
+      config_files <- list.files(native_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+      config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
+      config_names <- toupper(config_names)
+      idx <- which(config_names == name_upper)
+      if( !length(idx) ) { return(invisible()) }
+      for(id in idx) {
+        f <- file.path(native_path, config_files[[ id ]])
+        unlink(f)
+      }
+      return(invisible())
     },
 
     apply_electrodes = function(fun, check_valid = TRUE){
@@ -657,19 +702,58 @@ BrainElectrodes <- R6::R6Class(
       invisible(self)
     },
 
+    #| @params number integer number of electrode contact (channel)
+    #| @params color length of one or more indicating the color(s) of the
+    #| electrode; when there are multiple and \code{inclusive} is true, then
+    #| the first color will be the default
+    #| @params inclusive if true, then all names will be affected (even for
+    #| names not listed, they will be rendered as \code{color[[1]]}); for
+    #| \code{inclusive=false} (exclusive), then only \code{names} will
+    #| be fixed
+    #|
     fix_electrode_color = function(number, color, names = NULL, inclusive = TRUE) {
-      names <- as.character(names)
-      inclusive <- as.logical(inclusive)[[1]]
-      el <- self$objects[[ number ]]
-      if(!is.null(el)) {
-        el$fixed_color <- list(
-          color[[1]],
-          names,
-          inclusive
+
+      number <- as.integer(number)
+      if( !is.finite(number) || number <= 0 ) { return() }
+
+      fixed_colors <- as.list(self$group$get_data("fixed_colors"))
+      if(!length(color)) {
+        fixed_colors[[as.character(number)]] <- NA
+      } else {
+
+        color_settings <- list(
+          default = color[[1]],
+          inclusive = inclusive,
+          maps = list()
         )
-        return(TRUE)
+        n_names <- length(names)
+        if(length(color) != n_names && n_names > 0) {
+          color <- rep(color, ceiling(n_names / length(color)))
+          color <- color[seq_len(n_names)]
+          color_settings$maps <- structure(as.list(color), names = names)
+        }
+        fixed_colors[[as.character(number)]] <- color_settings
       }
-      return(FALSE)
+
+      self$group$set_group_data(
+        name = "fixed_colors",
+        value = fixed_colors,
+        is_cached = FALSE,
+        cache_if_not_exists = FALSE
+      )
+
+      # names <- as.character(names)
+      # inclusive <- as.logical(inclusive)[[1]]
+      # el <- self$objects[[ number ]]
+      # if(!is.null(el)) {
+      #   el$fixed_color <- list(
+      #     color[[1]],
+      #     names,
+      #     inclusive
+      #   )
+      #   return(TRUE)
+      # }
+      # return(FALSE)
     },
 
     # function to set values to electrodes

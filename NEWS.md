@@ -1,3 +1,121 @@
+# `TODO` list:
+
+* Drag & drop atlas images cannot show on side canvas when the file name does not follow a specific regular expression. This constraint should be removed
+* Improve `dispose` function such that the object can be disposed completely (from `CPU` and `GPU` memories)
+
+# Change Log
+
+threeBrain 1.1.0
+=======
+
+## Major Changes
+
+* `threejs` engine is upgraded to `v160`; added support for `NIfTI` and `GIfTI` images
+* Allowed data to be embedded with viewer as `dataURI`. This results in a truly standalone viewer: no extra engine required, only web-browser is needed.
+* Added electrode geometry prototype, allowing users to see the electrode rather than using spheres, useful for electrodes with super micro contacts or electrodes with segmented contact like `DBS`
+* Added support for showing (cortical or sub-cortical) `ROI` surfaces
+* Implemented drag-and-drop feature to drop arbitrary volume (`nii,mgz`) or surface (`fs,gii`) files to the viewer. The surface coordinate system is inferred from file name following `BIDS` convention. The surface color can be set via a color-map (`csv`) or in the file name
+* Implemented slice (in side viewer) overlay
+* Users can control side camera `frustums` (near and far) separately
+* Implemented worker system so the viewer can run truly parallel code in the background
+* Added `snap-to-electrode` and `line-of-sight` mode in addition to canonical anatomical slices. 
+  * Under `line-of-sight` mode, the underlay image will be sliced dynamically with a plane orthogonal to the line of sight; two other (orthogonal) planes parallel to the line of sight
+  * Under `snap-to-electrode`, the volume slices will be snapped to electrode direction (only available when electrode prototype is used and electrode direction defined). The other two planes will dynamically slice the `MRI`
+* Users can localize an electrode probe by clicking on the target location, then entry location
+* Added an option to add `QR` code to the viewer, allowing people to link to the publication
+* Loading progress is more informative now
+* Implemented `plot_slices` to allow plotting `MRI` slices for each contact in canonical order
+* Users can set default colors to electrodes via `brain$electrodes$fix_electrode_color`
+* Users can override underlay images by placing `rave_slices.nii[.gz]` under the `mri/` in `FreeSurfer` folder
+* File/Data loaders use `JavaScript` workers now (can be disabled with `enable_cache=TRUE`)
+* Added mesh clipping to see depth electrodes without compromising color
+* Implemented volume clipping
+* Added new mode for `ACPC` alignment
+* Added `target` flag so objects can be rendered differently on main canvas versus side canvas
+
+
+## Minor changes
+
+* Electrode prototype names follow `type-company-version.json` format
+* Added compass object to side cameras when slice mode is not canonical
+* Remove `UV` mapping on sphere electrodes
+* Added model up direction to electrodes to assist calculating Euler axis and angles
+* Volume, atlas threshold is asynchronous now
+* Changed default values of some controller
+* Added `broadcast()` to more controllers;
+* Atlas key number is displayed so users no longer need to search for look-up table
+* Added debug flag with keyboard shortcuts
+* Viewer finally compiles with `quarto/rmarkdown`
+* Implemented functions to create `sEEG` electrodes
+* Slices does not write to depth buffer when rendered in side canvas, so electrode contacts are not blocked
+* Allowed anchor to be fixed when localizing with electrode prototype
+* Using `instancedMesh` to render actual electrode spheres when prototype is used and users choose to see the actual contact locations
+* Implemented `mapToTemplate` for electrode prototypes
+* `Pial` surface does not write to depth buffer when it's super transparent
+* Added drivers to set object transform matrix
+* Adjust the implementation of background color and `arcball` radius
+* Removed composer effects, using `shaders` to render electrode outline
+* Trackball uses longer side of the canvas instead of shorter side as radius
+* Added electrode visibility mode: use `threshold-only` to show contacts that pass threshold even no display value is given
+* Overlay brightness can be adjusted via controller
+* Adjusted title position
+* Updated `CITATION`
+* New color map is used for electrodes to be consistent with `RAVE` color
+* Allow adding additional geometries in `brain$plot`
+* Improved spacing for interpolation and extrapolation (electrode localization); removed old interpolation logic; added `distanceRatio` to prevent large shift (auto adjust)
+* Electrodes are opaque on main but transparent on side canvas
+* Using `pial` surface center as trackball center
+* Dithering the `datacube2` to make rendering more natural on main canvas
+* By default set `MRI` slices visible when surfaces are missing
+* Drag & drop file names is sanitized to avoid displaying issues
+* Electrode contacts (`instancedMesh`) are now click-able
+* `dispose` is cleaner now, it also fires events
+* Added `makeClickable` and `removeClickable` to replace previous `add_clickable` function
+* Renamed `register_object` to `registerToMap`
+* Better ways to sanitize `datacube`
+* Improved `datacube` overlay texture, including using `clamp-to-border` instead `clamp-to-edge`
+* Ray-casting electrode prototypes with `instancedMesh` now works under `contact-only` mode
+* Show electrode prototype with contacts by default
+* Added color modes for uploaded images
+* removed `normalize` method (replaced by `getNormalizedImage`) from `NiftiImage` and `MGHImage`
+* Using script to generate change log automatically from Git commits
+* Scrolling on side canvas is faster now
+* Allowed prototype contact colors to be fixed
+* Prototype control points displays channel information (provided control points are channels) Added color (`randomColor`, `testColorString`) and file-name utility functions
+* Soft removed `addColorCoat` and using `ElectrodeMaterial`, this results in massive code improvement in electrode instance
+* Allow to set default electrode colors if a contact is not rendered with values nor fixed color
+* Scrolling on side canvas is faster now
+* Color look-up table can be set with arbitrary single color (in `HexString`, indicating that all values should be rendered with such color; Drag & Drop volumes can change to single colors
+* Remembers the state when switching volumes (`datacube2`)
+
+
+## Bug fixes
+
+* Fixed `NamedLut` color error when a value range is zero
+* Prototype electrode click information displays the channel number
+* Fixed `RShinyDriver` issue when object does not have construction parameters (using `getThreeBrainInstance` instead)
+* Avoid rendering volume data to sub-cortical `ROI`
+* Fixed UV issues in electrode geometry prototypes
+* Fixed a bug when slice instance is missing but controller tries to set overlay
+* `JavaScript` map is hidden when compiled so browsers will not complain about missing maps
+* Significantly reduced the chances of viewer crash under R shiny applications
+* Fixed a `shader` crash issue on `Windows`
+* `WebGL2` is the hard requirement now; users will be notified if this requirement is not met
+* Mouse position in the canvas is calculated every mouse down instead of every resizing to fix the control issues when page is scrolled in shiny app
+* Fixed `controller.load` to handle invalid set controller request
+* Fixed `textsprite` depth issues
+* Fixed light under new engine
+* Fixed visualization of volume cubes when using `NIfTI` files 
+* Fixed volume transforms when `sform` and `qform` are inconsistent in `NIfTI`
+* Fixed a bug in interpolation with spacing
+* fixed incorrect `ROI` label
+* `as_subcortical_label` generates correct white-matter labels
+* Fixed `freesurfer_lut`
+* Fixed `auto-adjust` feature (electrode localization)
+* Fixed `UV` mapping issue in sphere electrode geometry
+* Fixed `shader` issue when transparency is set to negative (treated as 1)
+* Using `NIfTI` headers to get calculated color intensities before applying heuristic approach
+
 threeBrain 1.0.2
 =======
 
