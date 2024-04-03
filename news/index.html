@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1.9200</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,136 @@
       <small>Source: <a href="https://github.com/dipterix/threeBrain/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="threebrain-110">threeBrain 1.1.0<a class="anchor" aria-label="anchor" href="#threebrain-110"></a></h2>
+<div class="section level3">
+<h3 id="major-changes-1-1-0">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-1-1-0"></a></h3>
+<ul><li>
+<code>threejs</code> engine is upgraded to <code>v160</code>; added support for <code>NIfTI</code> and <code>GIfTI</code> images</li>
+<li>Allowed data to be embedded with viewer as <code>dataURI</code>. This results in a truly standalone viewer: no extra engine required, only web-browser is needed.</li>
+<li>Added electrode geometry prototype, allowing users to see the electrode rather than using spheres, useful for electrodes with super micro contacts or electrodes with segmented contact like <code>DBS</code>
+</li>
+<li>Added support for showing (cortical or sub-cortical) <code>ROI</code> surfaces</li>
+<li>Implemented drag-and-drop feature to drop arbitrary volume (<code>nii,mgz</code>) or surface (<code>fs,gii</code>) files to the viewer. The surface coordinate system is inferred from file name following <code>BIDS</code> convention. The surface color can be set via a color-map (<code>csv</code>) or in the file name</li>
+<li>Implemented slice (in side viewer) overlay</li>
+<li>Users can control side camera <code>frustums</code> (near and far) separately</li>
+<li>Implemented worker system so the viewer can run truly parallel code in the background</li>
+<li>Added <code>snap-to-electrode</code> and <code>line-of-sight</code> mode in addition to canonical anatomical slices.
+<ul><li>Under <code>line-of-sight</code> mode, the underlay image will be sliced dynamically with a plane orthogonal to the line of sight; two other (orthogonal) planes parallel to the line of sight</li>
+<li>Under <code>snap-to-electrode</code>, the volume slices will be snapped to electrode direction (only available when electrode prototype is used and electrode direction defined). The other two planes will dynamically slice the <code>MRI</code>
+</li>
+</ul></li>
+<li>Users can localize an electrode probe by clicking on the target location, then entry location</li>
+<li>Added an option to add <code>QR</code> code to the viewer, allowing people to link to the publication</li>
+<li>Loading progress is more informative now</li>
+<li>Implemented <code>plot_slices</code> to allow plotting <code>MRI</code> slices for each contact in canonical order</li>
+<li>Users can set default colors to electrodes via <code>brain$electrodes$fix_electrode_color</code>
+</li>
+<li>Users can override underlay images by placing <code>rave_slices.nii[.gz]</code> under the <code>mri/</code> in <code>FreeSurfer</code> folder</li>
+<li>File/Data loaders use <code>JavaScript</code> workers now (can be disabled with <code>enable_cache=TRUE</code>)</li>
+<li>Added mesh clipping to see depth electrodes without compromising color</li>
+<li>Implemented volume clipping</li>
+<li>Added new mode for <code>ACPC</code> alignment</li>
+<li>Added <code>target</code> flag so objects can be rendered differently on main canvas versus side canvas</li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-changes-1-1-0">Minor changes<a class="anchor" aria-label="anchor" href="#minor-changes-1-1-0"></a></h3>
+<ul><li>Electrode prototype names follow <code>type-company-version.json</code> format</li>
+<li>Added compass object to side cameras when slice mode is not canonical</li>
+<li>Remove <code>UV</code> mapping on sphere electrodes</li>
+<li>Added model up direction to electrodes to assist calculating Euler axis and angles</li>
+<li>Volume, atlas threshold is asynchronous now</li>
+<li>Changed default values of some controller</li>
+<li>Added <code>broadcast()</code> to more controllers;</li>
+<li>Atlas key number is displayed so users no longer need to search for look-up table</li>
+<li>Added debug flag with keyboard shortcuts</li>
+<li>Viewer finally compiles with <code>quarto/rmarkdown</code>
+</li>
+<li>Implemented functions to create <code>sEEG</code> electrodes</li>
+<li>Slices does not write to depth buffer when rendered in side canvas, so electrode contacts are not blocked</li>
+<li>Allowed anchor to be fixed when localizing with electrode prototype</li>
+<li>Using <code>instancedMesh</code> to render actual electrode spheres when prototype is used and users choose to see the actual contact locations</li>
+<li>Implemented <code>mapToTemplate</code> for electrode prototypes</li>
+<li>
+<code>Pial</code> surface does not write to depth buffer when it’s super transparent</li>
+<li>Added drivers to set object transform matrix</li>
+<li>Adjust the implementation of background color and <code>arcball</code> radius</li>
+<li>Removed composer effects, using <code>shaders</code> to render electrode outline</li>
+<li>Trackball uses longer side of the canvas instead of shorter side as radius</li>
+<li>Added electrode visibility mode: use <code>threshold-only</code> to show contacts that pass threshold even no display value is given</li>
+<li>Overlay brightness can be adjusted via controller</li>
+<li>Adjusted title position</li>
+<li>Updated <code>CITATION</code>
+</li>
+<li>New color map is used for electrodes to be consistent with <code>RAVE</code> color</li>
+<li>Allow adding additional geometries in <code>brain$plot</code>
+</li>
+<li>Improved spacing for interpolation and extrapolation (electrode localization); removed old interpolation logic; added <code>distanceRatio</code> to prevent large shift (auto adjust)</li>
+<li>Electrodes are opaque on main but transparent on side canvas</li>
+<li>Using <code>pial</code> surface center as trackball center</li>
+<li>Dithering the <code>datacube2</code> to make rendering more natural on main canvas</li>
+<li>By default set <code>MRI</code> slices visible when surfaces are missing</li>
+<li>Drag &amp; drop file names is sanitized to avoid displaying issues</li>
+<li>Electrode contacts (<code>instancedMesh</code>) are now click-able</li>
+<li>
+<code>dispose</code> is cleaner now, it also fires events</li>
+<li>Added <code>makeClickable</code> and <code>removeClickable</code> to replace previous <code>add_clickable</code> function</li>
+<li>Renamed <code>register_object</code> to <code>registerToMap</code>
+</li>
+<li>Better ways to sanitize <code>datacube</code>
+</li>
+<li>Improved <code>datacube</code> overlay texture, including using <code>clamp-to-border</code> instead <code>clamp-to-edge</code>
+</li>
+<li>Ray-casting electrode prototypes with <code>instancedMesh</code> now works under <code>contact-only</code> mode</li>
+<li>Show electrode prototype with contacts by default</li>
+<li>Added color modes for uploaded images</li>
+<li>removed <code>normalize</code> method (replaced by <code>getNormalizedImage</code>) from <code>NiftiImage</code> and <code>MGHImage</code>
+</li>
+<li>Using script to generate change log automatically from Git commits</li>
+<li>Scrolling on side canvas is faster now</li>
+<li>Allowed prototype contact colors to be fixed</li>
+<li>Prototype control points displays channel information (provided control points are channels) Added color (<code>randomColor</code>, <code>testColorString</code>) and file-name utility functions</li>
+<li>Soft removed <code>addColorCoat</code> and using <code>ElectrodeMaterial</code>, this results in massive code improvement in electrode instance</li>
+<li>Allow to set default electrode colors if a contact is not rendered with values nor fixed color</li>
+<li>Scrolling on side canvas is faster now</li>
+<li>Color look-up table can be set with arbitrary single color (in <code>HexString</code>, indicating that all values should be rendered with such color; Drag &amp; Drop volumes can change to single colors</li>
+<li>Remembers the state when switching volumes (<code>datacube2</code>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0"></a></h3>
+<ul><li>Fixed <code>NamedLut</code> color error when a value range is zero</li>
+<li>Prototype electrode click information displays the channel number</li>
+<li>Fixed <code>RShinyDriver</code> issue when object does not have construction parameters (using <code>getThreeBrainInstance</code> instead)</li>
+<li>Avoid rendering volume data to sub-cortical <code>ROI</code>
+</li>
+<li>Fixed UV issues in electrode geometry prototypes</li>
+<li>Fixed a bug when slice instance is missing but controller tries to set overlay</li>
+<li>
+<code>JavaScript</code> map is hidden when compiled so browsers will not complain about missing maps</li>
+<li>Significantly reduced the chances of viewer crash under R shiny applications</li>
+<li>Fixed a <code>shader</code> crash issue on <code>Windows</code>
+</li>
+<li>
+<code>WebGL2</code> is the hard requirement now; users will be notified if this requirement is not met</li>
+<li>Mouse position in the canvas is calculated every mouse down instead of every resizing to fix the control issues when page is scrolled in shiny app</li>
+<li>Fixed <code>controller.load</code> to handle invalid set controller request</li>
+<li>Fixed <code>textsprite</code> depth issues</li>
+<li>Fixed light under new engine</li>
+<li>Fixed visualization of volume cubes when using <code>NIfTI</code> files</li>
+<li>Fixed volume transforms when <code>sform</code> and <code>qform</code> are inconsistent in <code>NIfTI</code>
+</li>
+<li>Fixed a bug in interpolation with spacing</li>
+<li>fixed incorrect <code>ROI</code> label</li>
+<li>
+<code>as_subcortical_label</code> generates correct white-matter labels</li>
+<li>Fixed <code>freesurfer_lut</code>
+</li>
+<li>Fixed <code>auto-adjust</code> feature (electrode localization)</li>
+<li>Fixed <code>UV</code> mapping issue in sphere electrode geometry</li>
+<li>Fixed <code>shader</code> issue when transparency is set to negative (treated as 1)</li>
+<li>Using <code>NIfTI</code> headers to get calculated color intensities before applying heuristic approach</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.2" id="threebrain-102">threeBrain 1.0.2<a class="anchor" aria-label="anchor" href="#threebrain-102"></a></h2>
 <ul><li>Removed a <code>shader</code> loop that accidentally used dynamic variable for looping, which may crash on <code>Windows</code> in certain situations</li>

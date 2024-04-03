@@ -4,6 +4,9 @@
     <loc>https://dipterix.org/threeBrain/404.html</loc>
   </url>
   <url>
+    <loc>https://dipterix.org/threeBrain/CHANGELOG.html</loc>
+  </url>
+  <url>
     <loc>https://dipterix.org/threeBrain/LICENSE-text.html</loc>
   </url>
   <url>
@@ -155,6 +158,9 @@
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/save_brain.html</loc>
+  </url>
+  <url>
+    <loc>https://dipterix.org/threeBrain/reference/seeg_prototype.html</loc>
   </url>
   <url>
     <loc>https://dipterix.org/threeBrain/reference/template_subject.html</loc>
