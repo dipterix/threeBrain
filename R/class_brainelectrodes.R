@@ -706,32 +706,54 @@ BrainElectrodes <- R6::R6Class(
     #| @params color length of one or more indicating the color(s) of the
     #| electrode; when there are multiple and \code{inclusive} is true, then
     #| the first color will be the default
-    #| @params names names of the variables
+    #| @params inclusive if true, then all names will be affected (even for
+    #| names not listed, they will be rendered as \code{color[[1]]}); for
+    #| \code{inclusive=false} (exclusive), then only \code{names} will
+    #| be fixed
     #|
     fix_electrode_color = function(number, color, names = NULL, inclusive = TRUE) {
 
-      # number <- as.integer(number)
-      # if( !is.finite(number) || number <= 0 ) { return() }
-      #
-      # fixed_colors <- as.list(self$group$get_data("fixed_colors"))
-      # fixed_colors[[number]] <- list(
-      #   color[[1]],
-      #   names,
-      #   inclusive
-      # )
+      number <- as.integer(number)
+      if( !is.finite(number) || number <= 0 ) { return() }
 
-      names <- as.character(names)
-      inclusive <- as.logical(inclusive)[[1]]
-      el <- self$objects[[ number ]]
-      if(!is.null(el)) {
-        el$fixed_color <- list(
-          color[[1]],
-          names,
-          inclusive
+      fixed_colors <- as.list(self$group$get_data("fixed_colors"))
+      if(!length(color)) {
+        fixed_colors[[as.character(number)]] <- NA
+      } else {
+
+        color_settings <- list(
+          default = color[[1]],
+          inclusive = inclusive,
+          maps = list()
         )
-        return(TRUE)
+        n_names <- length(names)
+        if(length(color) != n_names && n_names > 0) {
+          color <- rep(color, ceiling(n_names / length(color)))
+          color <- color[seq_len(n_names)]
+          color_settings$maps <- structure(as.list(color), names = names)
+        }
+        fixed_colors[[as.character(number)]] <- color_settings
       }
-      return(FALSE)
+
+      self$group$set_group_data(
+        name = "fixed_colors",
+        value = fixed_colors,
+        is_cached = FALSE,
+        cache_if_not_exists = FALSE
+      )
+
+      # names <- as.character(names)
+      # inclusive <- as.logical(inclusive)[[1]]
+      # el <- self$objects[[ number ]]
+      # if(!is.null(el)) {
+      #   el$fixed_color <- list(
+      #     color[[1]],
+      #     names,
+      #     inclusive
+      #   )
+      #   return(TRUE)
+      # }
+      # return(FALSE)
     },
 
     # function to set values to electrodes

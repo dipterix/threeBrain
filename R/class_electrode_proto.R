@@ -860,6 +860,7 @@ ElectrodePrototype <- R6::R6Class(
       if( !length(private$.model_control_points) ) { return(NULL) }
       mcp <- private$.model_control_points
       tcp <- private$.world_control_points
+
       n <- nrow(mcp)
       if(length(tcp) && is.matrix(tcp)) {
         if( nrow(tcp) < n ) {
@@ -872,13 +873,25 @@ ElectrodePrototype <- R6::R6Class(
         tcp_ <- array(NA_real_, c(n, 3L))
       }
 
+      # TODO add column contact order
+      # channel_numbers <- self$channel_numbers
+      # if( length(order) != n)
+      order <- private$.model_control_point_orders
+      channels <- NA
+      tryCatch({
+        if(length(order) == n) {
+          channels <- self$channel_numbers[ order ]
+        }
+      }, error = function(e) {})
+
       data.frame(
         model_x = mcp[, 1],
         model_y = mcp[, 2],
         model_z = mcp[, 3],
         tkr_R = tcp_[, 1],
         tkr_A = tcp_[, 2],
-        tkr_S = tcp_[, 3]
+        tkr_S = tcp_[, 3],
+        Channel = channels
       )
     }
   )
