@@ -1,12 +1,12 @@
-threeBrain 1.1.0
-=======
+# `TODO` list:
 
-## To-do:
-
-* Allow to set a volume to a simple color
-* Implement default color on electrode prototypes
 * Drag & drop atlas images cannot show on side canvas when the file name does not follow a specific regular expression. This constraint should be removed
 * Improve `dispose` function such that the object can be disposed completely (from `CPU` and `GPU` memories)
+
+# Change Log
+
+threeBrain 1.1.0
+=======
 
 ## Major Changes
 
@@ -67,9 +67,33 @@ threeBrain 1.1.0
 * Using `pial` surface center as trackball center
 * Dithering the `datacube2` to make rendering more natural on main canvas
 * By default set `MRI` slices visible when surfaces are missing
+* Drag & drop file names is sanitized to avoid displaying issues
+* Electrode contacts (`instancedMesh`) are now click-able
+* `dispose` is cleaner now, it also fires events
+* Added `makeClickable` and `removeClickable` to replace previous `add_clickable` function
+* Renamed `register_object` to `registerToMap`
+* Better ways to sanitize `datacube`
+* Improved `datacube` overlay texture, including using `clamp-to-border` instead `clamp-to-edge`
+* Ray-casting electrode prototypes with `instancedMesh` now works under `contact-only` mode
+* Show electrode prototype with contacts by default
+* Added color modes for uploaded images
+* removed `normalize` method (replaced by `getNormalizedImage`) from `NiftiImage` and `MGHImage`
+* Using script to generate change log automatically from Git commits
+* Scrolling on side canvas is faster now
+* Allowed prototype contact colors to be fixed
+* Prototype control points displays channel information (provided control points are channels) Added color (`randomColor`, `testColorString`) and file-name utility functions
+* Soft removed `addColorCoat` and using `ElectrodeMaterial`, this results in massive code improvement in electrode instance
+* Allow to set default electrode colors if a contact is not rendered with values nor fixed color
+* Scrolling on side canvas is faster now
+* Color look-up table can be set with arbitrary single color (in `HexString`, indicating that all values should be rendered with such color; Drag & Drop volumes can change to single colors
+* Remembers the state when switching volumes (`datacube2`)
+
 
 ## Bug fixes
 
+* Fixed `NamedLut` color error when a value range is zero
+* Prototype electrode click information displays the channel number
+* Fixed `RShinyDriver` issue when object does not have construction parameters (using `getThreeBrainInstance` instead)
 * Avoid rendering volume data to sub-cortical `ROI`
 * Fixed UV issues in electrode geometry prototypes
 * Fixed a bug when slice instance is missing but controller tries to set overlay
@@ -88,6 +112,9 @@ threeBrain 1.1.0
 * `as_subcortical_label` generates correct white-matter labels
 * Fixed `freesurfer_lut`
 * Fixed `auto-adjust` feature (electrode localization)
+* Fixed `UV` mapping issue in sphere electrode geometry
+* Fixed `shader` issue when transparency is set to negative (treated as 1)
+* Using `NIfTI` headers to get calculated color intensities before applying heuristic approach
 
 threeBrain 1.0.2
 =======
