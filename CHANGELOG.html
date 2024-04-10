@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,11 +54,17 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>e1dfba0f (HEAD -&gt; dragndrop)</code> [<em><code>dipterix</code></em>]: Color look-up table can be set with arbitrary single color (in <code>HexString</code>, indicating that all values should be rendered with such color; Drag &amp; Drop volumes can change to single colors</li>
+<code>bedd7e38 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Fixed name parsing for surface file when <code>space</code> keyword is provided</li>
+<li>
+<code>01836188</code> [<em><code>dipterix</code></em>]: Added <code>volume_to_surf</code> to generate <code>3D</code> triangular mesh surfaces from volume data</li>
+<li>
+<code>8a3a03e0 (origin/dragndrop, dragndrop)</code> [<em><code>dipterix</code></em>]: Fixed <code>Github</code> action script with system dependecies added</li>
+<li>
+<code>aae29b28</code> [<em><code>dipterix</code></em>]: Color look-up table can be set with arbitrary single color (in <code>HexString</code>, indicating that all values should be rendered with such color; Drag &amp; Drop volumes can change to single colors</li>
 <li>
 <code>c04d7783</code> [<em><code>dipterix</code></em>]: Remembers to state when switching volumes (<code>datacube2</code>)</li>
 <li>
-<code>d7cab685 (origin/dragndrop)</code> [<em><code>dipterix</code></em>]: Allowed prototype contact colors to be fixed; Prototype control points displays channel information (provided control points are channels) Added color (<code>randomColor</code>, <code>testColorString</code>) and file-name utility functions; Soft removed <code>addColorCoat</code> and using <code>ElectrodeMaterial</code>, this results in massive code improvement in electrode instance; Allow to set default electrode colors if a contact is not rendered with values nor fixed color; Fixed <code>NamedLut</code> color error when a value range is zero; Prototype electrode click information displays the channel number; Fixed <code>RShinyDriver</code> issue when object does not have construction parameters (using <code>getThreeBrainInstance</code> instead);</li>
+<code>d7cab685</code> [<em><code>dipterix</code></em>]: Allowed prototype contact colors to be fixed; Prototype control points displays channel information (provided control points are channels) Added color (<code>randomColor</code>, <code>testColorString</code>) and file-name utility functions; Soft removed <code>addColorCoat</code> and using <code>ElectrodeMaterial</code>, this results in massive code improvement in electrode instance; Allow to set default electrode colors if a contact is not rendered with values nor fixed color; Fixed <code>NamedLut</code> color error when a value range is zero; Prototype electrode click information displays the channel number; Fixed <code>RShinyDriver</code> issue when object does not have construction parameters (using <code>getThreeBrainInstance</code> instead);</li>
 <li>
 <code>1ed4b5b4</code> [<em><code>dipterix</code></em>]: Scrolling on side canvas is faster now</li>
 <li>
@@ -111,7 +117,7 @@
 <li>
 <code>ad4b4299</code> [<em><code>dipterix</code></em>]: Implemented drag N drop</li>
 <li>
-<code>7fe52479 (origin/master, origin/HEAD, master)</code> [<em><code>dipterix</code></em>]: added remotes</li>
+<code>7fe52479</code> [<em><code>dipterix</code></em>]: added remotes</li>
 <li>
 <code>b53c0725 (origin/custom-electrode-geom, custom-electrode-geom)</code> [<em><code>dipterix</code></em>]: using instancedMesh to represent electrode contacts when prototype is used</li>
 <li>
