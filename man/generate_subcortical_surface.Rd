@@ -36,5 +36,5 @@ generate_subcortical_surface(
 A surface mesh, containing 'atlas' index, label, surface nodes and face indices.
 }
 \description{
-Approximate 'sub-cortical' surfaces from 'parcellation'
+Superseded by \code{\link{volume_to_surf}}. Please do not use this function.
 }

@@ -197,6 +197,9 @@ as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
 }
 
 #' @title Approximate 'sub-cortical' surfaces from 'parcellation'
+#' @description
+#' Superseded by \code{\link{volume_to_surf}}. Please do not use this function.
+#'
 #' @param atlas path to imaging 'parcellation', can be \code{'nii'} or \code{'mgz'} formats
 #' @param save_prefix parent folder to save the resulting surface
 #' @param index 'parcellation' index, see 'FreeSurfer' look-up table
@@ -266,6 +269,111 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 
   invisible(mesh)
 }
+
+
+
+#' @title Generate surface file from \code{'nii'} or \code{'mgz'} volume files
+#' @seealso \code{\link{read_volume}}, \code{\link[ravetools]{vcg_isosurface}},
+#' \code{\link[ravetools]{vcg_smooth_implicit}}
+#'
+#' @param volume_path path to the volume file
+#' @param save_to where to save the surface file; default is \code{NA} (no save).
+#' @param format The format of the file if \code{save_to} is a valid path,
+#' choices include
+#' \describe{
+#' \item{\code{'auto'}}{Default, supports \code{'FreeSurfer'} binary format and
+#'        \code{'ASCII'} text format, based on file name suffix}
+#' \item{\code{'bin'}}{\code{'FreeSurfer'} binary format}
+#' \item{\code{'asc'}}{\code{'ASCII'} text format}
+#' \item{\code{'ply'}}{'Stanford' \code{'PLY'} format}
+#' \item{\code{'off'}}{Object file format}
+#' \item{\code{'obj'}}{\code{'Wavefront'} object format}
+#' \item{\code{'gii'}}{\code{'GIfTI'} format. Please avoid using \code{'gii.gz'} as the file suffix}
+#' \item{\code{'mz3'}}{\code{'Surf-Ice'} format}
+#' \item{\code{'byu'}}{\code{'BYU'} mesh format}
+#' \item{\code{'vtk'}}{Legacy \code{'VTK'} format}
+#' }
+#' \code{'gii'}, otherwise \code{'FreeSurfer'} format. Please do not use
+#' \code{'gii.gz'} suffix.
+#' @param lambda \code{'Laplacian'} smooth, the higher the smoother
+#' @param degree \code{'Laplacian'} degree; default is \code{2}
+#' @param threshold_lb lower threshold of the volume (to create mask); default is \code{0.5}
+#' @param threshold_ub upper threshold of the volume; default is \code{NA} (no upper bound)
+#' @returns Triangle \code{'rgl'} mesh (vertex positions in native \code{'RAS'}). If \code{save_to} is a valid path, then the mesh will be saved to this location.
+#' @examples
+#'
+#' library(threeBrain)
+#' N27_path <- file.path(default_template_directory(), "N27")
+#' if(dir.exists(N27_path)) {
+#'   aseg <- file.path(N27_path, "mri", "aparc+aseg.mgz")
+#'
+#'   # generate surface for left-hemisphere insula
+#'   mesh <- volume_to_surf(aseg, threshold_lb = 1034,
+#'                          threshold_ub = 1036)
+#'
+#'   if(interactive()) {
+#'     ravetools::rgl_view({
+#'       ravetools::rgl_call("shade3d", mesh, color = "yellow")
+#'     })
+#'   }
+#' }
+#'
+#'
+#' @export
+volume_to_surf <- function(
+    volume_path, save_to = NA,
+    lambda = 0.2, degree = 2, threshold_lb = 0.5, threshold_ub = NA,
+    format = "auto") {
+  # volume_path = '~/rave_data/raw_dir/testtest2/rave-imaging/atlases/AHEAD Atlas (Alkemade 2020)/lh/GPe_prob.nii.gz'
+
+  if(length(save_to) != 1 || is.na(save_to) || !nzchar(save_to)) {
+    save_to <- NA
+  }
+
+  volume <- read_volume(volume_path)
+  vol_dim <- dim(volume$data)
+  if(length(vol_dim) < 3) {
+    vol_dim <- c(vol_dim, 1, 1, 1)[seq_len(3)]
+  } else if (length(vol_dim) > 3) {
+    vol_dim <- vol_dim[seq_len(3)]
+    volume$data <- array(volume$data[seq_len(prod(vol_dim))], dim = vol_dim)
+  }
+
+  # Mesh
+  mesh <- ravetools::vcg_isosurface(
+    volume = volume$data,
+    threshold_lb = threshold_lb,
+    threshold_ub = threshold_ub,
+    vox_to_ras = volume$Norig
+  )
+
+  # smooth
+  mesh <- ravetools::vcg_smooth_implicit(
+    mesh,
+    lambda = lambda,
+    use_mass_matrix = TRUE,
+    fix_border = TRUE,
+    use_cot_weight = FALSE,
+    degree = degree
+  )
+  mesh <- ravetools::vcg_update_normals(mesh)
+
+  # ravetools::rgl_view({
+  #   ravetools::rgl_call("shade3d", mesh, col = 'red')
+  # })
+
+  if(!is.na(save_to)) {
+    freesurferformats::write.fs.surface(
+      filepath = save_to,
+      vertex_coords = t(mesh$vb[1:3, , drop = FALSE]),
+      faces = t(mesh$it[1:3, , drop = FALSE]),
+      format = format
+    )
+  }
+  mesh
+
+}
+
 
 
 # idx <- unique(as.vector(atlas$data))
