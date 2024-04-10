@@ -1,7 +1,10 @@
 ## Changes since last CRAN release
-* `e1dfba0f (HEAD -> dragndrop)` [_`dipterix`_]: Color look-up table can be set with arbitrary single color (in `HexString`, indicating that all values should be rendered with such color; Drag & Drop volumes can change to single colors
+* `bedd7e38 (HEAD -> master)` [_`dipterix`_]: Fixed name parsing for surface file when `space` keyword is provided
+* `01836188` [_`dipterix`_]: Added `volume_to_surf` to generate `3D` triangular mesh surfaces from volume data
+* `8a3a03e0 (origin/dragndrop, dragndrop)` [_`dipterix`_]: Fixed `Github` action script with system dependecies added
+* `aae29b28` [_`dipterix`_]: Color look-up table can be set with arbitrary single color (in `HexString`, indicating that all values should be rendered with such color; Drag & Drop volumes can change to single colors
 * `c04d7783` [_`dipterix`_]: Remembers to state when switching volumes (`datacube2`)
-* `d7cab685 (origin/dragndrop)` [_`dipterix`_]: Allowed prototype contact colors to be fixed; Prototype control points displays channel information (provided control points are channels) Added color (`randomColor`, `testColorString`) and file-name utility functions; Soft removed `addColorCoat` and using `ElectrodeMaterial`, this results in massive code improvement in electrode instance; Allow to set default electrode colors if a contact is not rendered with values nor fixed color; Fixed `NamedLut` color error when a value range is zero; Prototype electrode click information displays the channel number; Fixed `RShinyDriver` issue when object does not have construction parameters (using `getThreeBrainInstance` instead);
+* `d7cab685` [_`dipterix`_]: Allowed prototype contact colors to be fixed; Prototype control points displays channel information (provided control points are channels) Added color (`randomColor`, `testColorString`) and file-name utility functions; Soft removed `addColorCoat` and using `ElectrodeMaterial`, this results in massive code improvement in electrode instance; Allow to set default electrode colors if a contact is not rendered with values nor fixed color; Fixed `NamedLut` color error when a value range is zero; Prototype electrode click information displays the channel number; Fixed `RShinyDriver` issue when object does not have construction parameters (using `getThreeBrainInstance` instead);
 * `1ed4b5b4` [_`dipterix`_]: Scrolling on side canvas is faster now
 * `b4cd7dbf` [_`dipterix`_]: Drag & drop file names is sanitized to avoid displaying issues; Electrode contacts (`instancedMesh`) are now click-able; Dispose is cleaner now, it also fires events; Added `makeClickable` and `removeClickable` to replace previous `add_clickable` function; Renamed `register_object` to `registerToMap`; Fixed `UV` mapping issue in sphere electrode geometry; Better ways to sanitize `datacube`;
 * `e0437d6c` [_`dipterix`_]: Improved `datacube` overlay texture, including using `clamp-to-border` instead `clamp-to-edge`; Fixed `shader` issue when transparency is set to negative (treated as 1)
@@ -27,7 +30,7 @@
 * `2c1f30e4` [_`dipterix`_]: allow contact to be fixed (anchor); reduced number of control points to 2; removed `flattern=FALSE` for prototypes; fixed prototype transform issue
 * `4351cc4b` [_`dipterix`_]: default surface colors
 * `ad4b4299` [_`dipterix`_]: Implemented drag N drop
-* `7fe52479 (origin/master, origin/HEAD, master)` [_`dipterix`_]: added remotes
+* `7fe52479` [_`dipterix`_]: added remotes
 * `b53c0725 (origin/custom-electrode-geom, custom-electrode-geom)` [_`dipterix`_]: using instancedMesh to represent electrode contacts when prototype is used
 * `4cacfd41` [_`dipterix`_]: Multi-representation of electrode
 * `e3bb38c0` [_`dipterix`_]: added mapToTemplate back
