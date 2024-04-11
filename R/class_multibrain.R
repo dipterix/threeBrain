@@ -182,6 +182,8 @@ MultiBrain2 <- R6::R6Class(
       optionals = list(), debug = FALSE, token = NULL, browser_external = TRUE, ...
     ){
 
+      controllers <- as.list(controllers)
+      controllers[["Subject"]] <- self$template_object$subject_code
 
       geoms <- self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
 
