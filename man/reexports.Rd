@@ -9,6 +9,7 @@
 \alias{read.fs.mgh}
 \alias{read.fs.morph}
 \alias{read.fs.surface}
+\alias{write.fs.surface}
 \alias{read.fs.volume}
 \alias{read.fs.weight}
 \alias{read.fs.transform}
@@ -25,6 +26,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{freesurferformats}{\code{\link[freesurferformats]{read.fs.annot}}, \code{\link[freesurferformats]{read.fs.curv}}, \code{\link[freesurferformats]{read.fs.label}}, \code{\link[freesurferformats]{read.fs.mgh}}, \code{\link[freesurferformats]{read.fs.morph}}, \code{\link[freesurferformats]{read.fs.surface}}, \code{\link[freesurferformats]{read.fs.transform}}, \code{\link[freesurferformats]{read.fs.volume}}, \code{\link[freesurferformats]{read.fs.weight}}, \code{\link[freesurferformats]{read.nifti1.data}}, \code{\link[freesurferformats]{read.nifti1.header}}, \code{\link[freesurferformats]{read.nifti2.data}}, \code{\link[freesurferformats]{read.nifti2.header}}, \code{\link[freesurferformats]{write.nifti1}}, \code{\link[freesurferformats]{write.nifti2}}}
+  \item{freesurferformats}{\code{\link[freesurferformats]{read.fs.annot}}, \code{\link[freesurferformats]{read.fs.curv}}, \code{\link[freesurferformats]{read.fs.label}}, \code{\link[freesurferformats]{read.fs.mgh}}, \code{\link[freesurferformats]{read.fs.morph}}, \code{\link[freesurferformats]{read.fs.surface}}, \code{\link[freesurferformats]{read.fs.transform}}, \code{\link[freesurferformats]{read.fs.volume}}, \code{\link[freesurferformats]{read.fs.weight}}, \code{\link[freesurferformats]{read.nifti1.data}}, \code{\link[freesurferformats]{read.nifti1.header}}, \code{\link[freesurferformats]{read.nifti2.data}}, \code{\link[freesurferformats]{read.nifti2.header}}, \code{\link[freesurferformats]{write.fs.surface}}, \code{\link[freesurferformats]{write.nifti1}}, \code{\link[freesurferformats]{write.nifti2}}}
 }}
 

@@ -23,6 +23,7 @@
 #' @importFrom freesurferformats read.fs.mgh
 #' @importFrom freesurferformats read.fs.morph
 #' @importFrom freesurferformats read.fs.surface
+#' @importFrom freesurferformats write.fs.surface
 #' @importFrom freesurferformats read.fs.volume
 #' @importFrom freesurferformats read.fs.weight
 #' @importFrom freesurferformats read.fs.transform
@@ -57,6 +58,9 @@ freesurferformats::read.fs.morph
 
 #' @export
 freesurferformats::read.fs.surface
+
+#' @export
+freesurferformats::write.fs.surface
 
 #' @export
 freesurferformats::read.fs.volume
