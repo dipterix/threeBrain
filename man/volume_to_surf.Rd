@@ -5,7 +5,7 @@
 \title{Generate surface file from \code{'nii'} or \code{'mgz'} volume files}
 \usage{
 volume_to_surf(
-  volume_path,
+  volume,
   save_to = NA,
   lambda = 0.2,
   degree = 2,
@@ -15,7 +15,7 @@ volume_to_surf(
 )
 }
 \arguments{
-\item{volume_path}{path to the volume file}
+\item{volume}{path to the volume file, or object from \code{\link{read_volume}}.}
 
 \item{save_to}{where to save the surface file; default is \code{NA} (no save).}
 

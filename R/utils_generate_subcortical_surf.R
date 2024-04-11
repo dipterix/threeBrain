@@ -276,7 +276,7 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 #' @seealso \code{\link{read_volume}}, \code{\link[ravetools]{vcg_isosurface}},
 #' \code{\link[ravetools]{vcg_smooth_implicit}}
 #'
-#' @param volume_path path to the volume file
+#' @param volume path to the volume file, or object from \code{\link{read_volume}}.
 #' @param save_to where to save the surface file; default is \code{NA} (no save).
 #' @param format The format of the file if \code{save_to} is a valid path,
 #' choices include
@@ -321,16 +321,18 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 #'
 #' @export
 volume_to_surf <- function(
-    volume_path, save_to = NA,
+    volume, save_to = NA,
     lambda = 0.2, degree = 2, threshold_lb = 0.5, threshold_ub = NA,
     format = "auto") {
-  # volume_path = '~/rave_data/raw_dir/testtest2/rave-imaging/atlases/AHEAD Atlas (Alkemade 2020)/lh/GPe_prob.nii.gz'
+  # volume = '~/rave_data/raw_dir/testtest2/rave-imaging/atlases/AHEAD Atlas (Alkemade 2020)/lh/GPe_prob.nii.gz'
 
   if(length(save_to) != 1 || is.na(save_to) || !nzchar(save_to)) {
     save_to <- NA
   }
 
-  volume <- read_volume(volume_path)
+  if(is.character(volume)) {
+    volume <- read_volume(volume)
+  }
   vol_dim <- dim(volume$data)
   if(length(vol_dim) < 3) {
     vol_dim <- c(vol_dim, 1, 1, 1)[seq_len(3)]

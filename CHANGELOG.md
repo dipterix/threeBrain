@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `fdc5c859 (HEAD -> master)` [_`dipterix`_]: Fixed subject code not set issue when visualizing with template brain; Fixed atlas list not updated when brain is loaded; Fixed controller not set because the `value` variable is undefined; `Voxel Label` input is remembered.
-* `4d0f2a23 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed name parsing for surface file when `space` keyword is provided
+* `2f902746 (HEAD -> master)` [_`dipterix`_]: `volume_to_surf` can take objects (from `read_volume`) as input
+* `c1e25e3a (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed subject code not set issue when visualizing with template brain; Fixed atlas list not updated when brain is loaded; Fixed controller not set because the `value` variable is undefined; `Voxel Label` input is remembered.
+* `4d0f2a23` [_`dipterix`_]: Fixed name parsing for surface file when `space` keyword is provided
 * `01836188` [_`dipterix`_]: Added `volume_to_surf` to generate `3D` triangular mesh surfaces from volume data
 * `8a3a03e0 (origin/dragndrop, dragndrop)` [_`dipterix`_]: Fixed `Github` action script with system dependecies added
 * `aae29b28` [_`dipterix`_]: Color look-up table can be set with arbitrary single color (in `HexString`, indicating that all values should be rendered with such color; Drag & Drop volumes can change to single colors
