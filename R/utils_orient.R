@@ -96,3 +96,75 @@ calculate_rotation <- function(vec_from, vec_to) {
   )
 }
 
+#' Conform imaging data in \code{'FreeSurfer'} way
+#' @description
+#' Reproduces conform algorithm used by \code{'FreeSurfer'} to conform
+#' \code{'NIfTI'} and \code{'MGH'} images.
+#' @param x path to the image file
+#' @param save_to path where the conformed image will be saved, must ends with
+#' \code{'.mgz'}
+#' @param dim positive integers of length three, the conformed dimension;
+#' by default 'FreeSurfer' conform images to \code{1mm} volume cube with
+#' \code{256x256x256} dimension
+#' @returns Nothing; the result will be save to \code{save_to}
+#' @export
+conform_volume <- function(x, save_to, dim = c(256, 256, 256)) {
+  # DIPSAUS DEBUG START
+  # x <- "~/rave_data/raw_dir/PAV035/rave-imaging/inputs/MRI/MRI_RAW.nii.gz"
+  # dim = c(256, 256, 256)
+  dim <- as.integer(dim)
+  stopifnot2(dir.exists(dirname(save_to)), msg = sprintf("Parent directory of `save_to` does not exists: %s", paste(save_to, collapse = "")))
+  stopifnot2(length(dim) == 3L && all(dim > 1), msg = "conform_nifti: `dim` must be positive integers of length 3")
+
+  # read in volume
+  if(is.character(x)) { x <- read_volume(x, header_only = FALSE) }
+
+  # current dimension
+  old_dim <- dim(x$data)[1:3]
+
+  # center RAS: scan corner position relative to volume corner (FreeSurfer starts from corner)
+  cras <- x$Norig %*% solve(x$Torig)
+
+  # new orientation
+  new_rot <- matrix(
+    nrow = 4L, byrow = TRUE,
+    c(
+      -1, 0, 0, 0,
+      0, 0, 1, 0,
+      0, -1, 0, 0,
+      0, 0, 0, 1
+    )
+  )
+  new_Torig <- new_rot
+  new_Torig[1:3, 4] <- c(dim[[1]], -dim[[3]], dim[[2]]) / 2
+
+  new_Norig <- cras %*% new_Torig
+
+  idx <- t(cbind(as.matrix(expand.grid(
+    seq.int(0L, dim[[1]] - 1L),
+    seq.int(0L, dim[[2]] - 1L),
+    seq.int(0L, dim[[3]] - 1L)
+  )), 1L))
+
+  # new vox index -> scan RAS -> old vox index
+  old_idx <- round( (solve(x$Norig) %*% new_Norig) %*% idx )[1:3, , drop = FALSE]
+  storage.mode(old_idx) <- "integer"
+  old_idx[old_idx < 0L] <- NA_integer_
+  old_idx[1L, old_idx[1L, ] >= old_dim[[1L]] ] <- NA_integer_
+  old_idx[2L, old_idx[2L, ] >= old_dim[[2L]] ] <- NA_integer_
+  old_idx[3L, old_idx[3L, ] >= old_dim[[3L]] ] <- NA_integer_
+
+  old_idx <- colSums(old_idx * c(1L, old_dim[[1]], old_dim[[1]] * old_dim[[2]])) + 1L
+  old_idx[is.na(old_idx)] <- 1
+  new_data <- x$data[old_idx]
+
+  dim(new_data) <- dim
+
+  freesurferformats::write.fs.mgh(
+    filepath = save_to,
+    data = new_data,
+    vox2ras_matrix = new_Norig,
+    mr_params = c(2200.0, 0.0, 0.0, 0.0, 256.0)
+  )
+}
+
