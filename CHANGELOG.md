@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `4428cbf2 (HEAD -> master)` [_`dipterix`_]: Drag and drop feature supports `STL` format now; Color map is remembered regardless of the file extension
-* `d6de9e10 (origin/master, origin/HEAD)` [_`dipterix`_]: Added `conform_volume` to conform images that simulate `FreeSurfer` conform algorithm
+* `e3c54181 (HEAD -> master)` [_`dipterix`_]: Fixed right-click not settings crosshairs correctly on template brain
+* `8ccd7706 (origin/master, origin/HEAD)` [_`dipterix`_]: Drag and drop feature supports `STL` format now; Color map is remembered regardless of the file extension
+* `d6de9e10` [_`dipterix`_]: Added `conform_volume` to conform images that simulate `FreeSurfer` conform algorithm
 * `40d10a3b` [_`dipterix`_]: Exported `write.fs.surface`
 * `8f356c31` [_`dipterix`_]: `volume_to_surf` can take objects (from `read_volume`) as input
 * `c1e25e3a` [_`dipterix`_]: Fixed subject code not set issue when visualizing with template brain; Fixed atlas list not updated when brain is loaded; Fixed controller not set because the `value` variable is undefined; `Voxel Label` input is remembered.
