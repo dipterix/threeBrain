@@ -6,6 +6,7 @@
 \usage{
 plot_slices(
   volume,
+  overlays = NULL,
   transform = NULL,
   positions = NULL,
   zoom = 1,
@@ -13,6 +14,7 @@ plot_slices(
   col = c("black", "white"),
   normalize = NULL,
   zclip = NULL,
+  overlay_alpha = 0.3,
   zlim = normalize,
   main = "",
   title_position = c("left", "top"),
@@ -23,7 +25,12 @@ plot_slices(
 )
 }
 \arguments{
-\item{volume}{path to volume}
+\item{volume}{path to volume (underlay)}
+
+\item{overlays}{images to overlay on top of the underlay, can be either
+a vector of paths to the overlay volume images, or a sequence of named lists.
+Each list item has \code{'volume'} (path to the volume) and \code{'color'}
+(color of the overlay)}
 
 \item{transform}{rotation of the volume in scanner \code{'RAS'} space}
 
@@ -42,6 +49,8 @@ one pixel is 0.5 millimeters wide}
 
 \item{zclip}{clip image densities; if specified, values outside of this
 range will be clipped into this range}
+
+\item{overlay_alpha}{transparency of the overlay; default is 0.3}
 
 \item{zlim}{image plot value range, default is identical to \code{normalize}}
 

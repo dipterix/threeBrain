@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `e3c54181 (HEAD -> master)` [_`dipterix`_]: Fixed right-click not settings crosshairs correctly on template brain
-* `8ccd7706 (origin/master, origin/HEAD)` [_`dipterix`_]: Drag and drop feature supports `STL` format now; Color map is remembered regardless of the file extension
+* `e66ea42d (HEAD -> master)` [_`dipterix`_]: `plot_slices` allows overlay images
+* `5ad19c55 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed right-click not settings crosshairs correctly on template brain
+* `8ccd7706` [_`dipterix`_]: Drag and drop feature supports `STL` format now; Color map is remembered regardless of the file extension
 * `d6de9e10` [_`dipterix`_]: Added `conform_volume` to conform images that simulate `FreeSurfer` conform algorithm
 * `40d10a3b` [_`dipterix`_]: Exported `write.fs.surface`
 * `8f356c31` [_`dipterix`_]: `volume_to_surf` can take objects (from `read_volume`) as input

@@ -910,7 +910,12 @@ Brain2 <- R6::R6Class(
     },
 
     plot_electrodes_on_slices = function(
-      electrodes_to_plot = "all", volume = NULL, elec_table = NULL,
+      electrodes_to_plot = "all",
+      volume = NULL,
+      overlays = NULL,
+      overlay_colors = DEFAULT_COLOR_DISCRETE,
+      overlay_alpha = 0.3,
+      elec_table = NULL,
       zoom = 1, adjust_brightness = NA,
       electrode_color = "green", electrode_size = 2,
       verbose = TRUE, ...,
@@ -976,6 +981,24 @@ Brain2 <- R6::R6Class(
         volume$data[volume$data > 255] <- 255
       }
 
+      if( length(overlays) ) {
+        if(length(overlay_colors) < length(overlays)) {
+          overlay_colors <- rep(overlay_colors, ceiling(length(overlays) / length(overlay_colors)))
+        }
+        overlays <- lapply(seq_along(overlays), function(ii) {
+          overlay_img <- overlays[[ii]]
+          if(is.character(overlay_img)) {
+            overlay_img <- read_volume(overlay_img)
+          }
+          list(
+            volume = overlay_img,
+            color = overlay_colors[[ii]]
+          )
+        })
+      } else {
+        overlays <- NULL
+      }
+
       # img_height <- 480
       # png(filename = file.path(subject$imaging_path, "snapshots%03d.png"), width = 3*img_height, height = img_height, bg = "black")
 
@@ -1006,6 +1029,8 @@ Brain2 <- R6::R6Class(
         progress$inc(detail = sprintf("Generating graphs for electrode %s", dipsaus::deparse_svec(ii)))
         plot_slices(
           volume,
+          overlays = overlays,
+          overlay_alpha = overlay_alpha,
           positions = scanner_ras[ii,],
           main = sprintf('%s (Ch=%.0f,ScanRAS=%.1f,%.1f,%.1f)',
                          elec_table$Label[ii],

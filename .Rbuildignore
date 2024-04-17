@@ -8,7 +8,8 @@
 ^cran-comments\.md$
 ^shortcuts\.md$
 ^README\.md$
-^adhoc/
+^adhoc
+.ipynb_checkpoints
 .git
 .Rprofile
 .Rhistory

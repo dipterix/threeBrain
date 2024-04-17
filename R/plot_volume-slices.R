@@ -1,5 +1,10 @@
 #' Plot slices of volume
-#' @param volume path to volume
+#' @param volume path to volume (underlay)
+#' @param overlays images to overlay on top of the underlay, can be either
+#' a vector of paths to the overlay volume images, or a sequence of named lists.
+#' Each list item has \code{'volume'} (path to the volume) and \code{'color'}
+#' (color of the overlay)
+#' @param overlay_alpha transparency of the overlay; default is 0.3
 #' @param transform rotation of the volume in scanner \code{'RAS'} space
 #' @param positions vector of length 3 or matrix of 3 columns, the \code{'RAS'}
 #' position of cross-hairs
@@ -25,8 +30,8 @@
 #' @returns Nothing
 #' @export
 plot_slices <- function(
-    volume, transform = NULL, positions = NULL, zoom = 1, pixel_width = 0.5,
-    col = c("black", "white"), normalize = NULL, zclip = NULL,
+    volume, overlays = NULL, transform = NULL, positions = NULL, zoom = 1, pixel_width = 0.5,
+    col = c("black", "white"), normalize = NULL, zclip = NULL, overlay_alpha = 0.3,
     zlim = normalize, main = "", title_position = c("left", "top"),
     fun = NULL, nc = NA, which = NULL, ...) {
   # DIPSAUS DEBUG START
@@ -39,6 +44,15 @@ plot_slices <- function(
   # positions = rnorm(12)
   # nc <- 1
   # title_position <- "top"
+  # overlays <- "~/rave_data/raw_dir/YAB/rave-imaging/fs/mri/aseg.mgz"
+  #
+  # # test with overlays
+  # brain <- raveio::rave_brain("YAEL/AnonSEEG")
+  # root_path <- "/Users/dipterix/Library/CloudStorage/Box-Box/RAVEExternal/YAEL-Andrew-Stanford/rave_data/raw_dir/AnonSEEG/rave-imaging/atlases/OCD Response Tract Atlas (Li 2020)/mixed/"
+  # pixel_width <- 1
+  # volume <- file.path(brain$base_path, "mri", "T1.mgz")
+  # overlays <- list.files(root_path, pattern = "\\.nii.gz$", full.names = TRUE)
+  # overlay_alpha <- 0.3
 
   title_position <- match.arg(title_position)
 
@@ -48,6 +62,38 @@ plot_slices <- function(
   if(!inherits(volume, "threeBrain.volume")) {
     stop("`volume` must be character or threeBrain.volume")
   }
+
+  overlays <- lapply(seq_along(overlays), function(ii) {
+    item <- overlays[[ ii ]]
+    default_color <- col2hexStr(DEFAULT_COLOR_DISCRETE[[(ii - 1L) %% length(DEFAULT_COLOR_DISCRETE) + 1L]], alpha = overlay_alpha)
+    if(is.character(item)) {
+      ovol <- read_volume(item)
+      return(list(
+        volume = ovol,
+        color = default_color,
+        world2ijk = solve(ovol$Norig)
+      ))
+    }
+    if(!is.list(item)) { return(NULL) }
+    if(inherits(item, "threeBrain.volume")) {
+      return(list(
+        volume = item,
+        color = default_color,
+        world2ijk = solve(item$Norig)
+      ))
+    }
+    if(!"volume" %in% names(item)) {
+      return(NULL)
+    }
+    if(length(item$color) != 1) {
+      item$color <- default_color
+    } else {
+      item$color <- col2hexStr(item$color, alpha = overlay_alpha)
+    }
+    item$world2ijk <- solve(item$volume$Norig)
+    return( item )
+  })
+
   if(is.null(transform)) {
     transform <- diag(1, 4)
   } else {
@@ -113,8 +159,11 @@ plot_slices <- function(
   more_args$zlim <- zlim
   more_args$useRaster <- TRUE
   more_args$main <- ''
+  more_args$xlab <- ""
+  more_args$ylab <- ""
   more_args$x <- x
   more_args$y <- x
+  default_add <- isTRUE(more_args$add)
   # more_args$add <- FALSE
 
   oldpar <- graphics::par(no.readonly = TRUE)
@@ -193,6 +242,37 @@ plot_slices <- function(
     panel_last <- function(...) {}
   }
 
+  # create template positions to calculate world positions
+  # pre-apply inverse of the rotation to template position
+  wpos_axial <- transform_inv %*% pos  # varying RA, S=0 -> axial
+  wpos_sagittal <- transform_inv %*% pos[c(3,1,2,4), , drop = FALSE] # varying AS, R=0 -> sagittal
+  wpos_coronal <- transform_inv %*% pos[c(1,3,2,4), , drop = FALSE] # varying RS, A=0 -> coronal
+
+  get_ijk <- function(point_position, which_slice, world2ijk, volume_data) {
+    wpos <- switch(
+      which_slice,
+      "axial" = { wpos_axial + point_position },
+      "sagittal" = { wpos_sagittal + point_position },
+      "coronal" = { wpos_coronal + point_position },
+      { stop("Invalid slice type") }
+    )
+    # world to voxel index
+    IJK <- round( world2ijk[c(1, 2, 3), ] %*% wpos )
+
+    # Remove invalid indices
+    shape <- dim(volume_data)
+    cumshape <- cumprod(c(1, shape))[seq_len(3)]
+    sel <- IJK[1,] >= shape[[1]] | IJK[2,] >= shape[[2]] | IJK[3,] >= shape[[3]]
+    IJK[, sel] <- NA
+    IJK[!is.na(IJK) & IJK < 0] <- NA
+
+    # actual indices
+    idx <- cumshape %*% IJK + 1L
+    slice <- volume_data[idx]
+    dim(slice) <- c(nx, nx)
+    slice
+  }
+
   lapply(seq_len(npts), function(ii) {
 
     pos_pt <- c(positions[ii, ], 0)
@@ -211,51 +291,84 @@ plot_slices <- function(
     if(!length(which) || 1 %in% which) {
       # Axial
       # translate x transform_inv x translate^-1 x Norig
-      IJK <- round(world2ijk[c(1, 2, 3), ] %*% (transform_inv %*% pos + pos_pt)) + 1L
-      sel <- IJK[1,] > shape[[1]] | IJK[2,] > shape[[2]] | IJK[3,] > shape[[3]]
-      IJK[,sel] <- NA
-      IJK[IJK < 1] <- NA
-      idx <- t(IJK - 1) %*% cumshape + 1
-      slice <- nu(volume$data[idx])
 
-      dim(slice) <- c(nx, nx)
-      more_args$z <- slice
+      underlay <- get_ijk(pos_pt, which_slice = "axial", world2ijk = world2ijk, volume$data)
+      more_args$add <- default_add
+      more_args$col <- pal
+      more_args$z <- nu(underlay)
       adjust_plt()
       do.call(graphics::image, more_args)
+
+      more_args$z <- NULL
+      more_args$add <- TRUE
+      lapply(overlays, function(item) {
+        if(!is.list(item)) { return() }
+        overlay <- get_ijk(point_position = pos_pt, which_slice = "axial", world2ijk = item$world2ijk, volume_data = item$volume$data)
+        invalids <- is.na(overlay) | overlay < 0.5
+        if(!all(invalids)) {
+          overlay[invalids] <- NA
+          more_args$col <- item$color
+          more_args$z <- overlay
+          do.call(graphics::image, more_args)
+        }
+      })
+
       panel_last( ii, 1 )
     }
 
 
     if(!length(which) || 2 %in% which) {
       # Sagittal
-      IJK <- round(world2ijk[c(1, 2, 3), ] %*% (pos[c(3,1,2,4), , drop = FALSE] + pos_pt)) + 1L
-      sel <- IJK[1,] > shape[[1]] | IJK[2,] > shape[[2]] | IJK[3,] > shape[[3]]
-      IJK[,sel] <- NA
-      IJK[IJK < 1] <- NA
-      idx <- t(IJK - 1) %*% cumshape + 1
-      slice <- nu(volume$data[idx])
-
-      dim(slice) <- c(nx, nx)
-      more_args$z <- slice
+      underlay <- get_ijk(pos_pt, which_slice = "sagittal", world2ijk = world2ijk, volume$data)
+      more_args$add <- default_add
+      more_args$col <- pal
+      more_args$z <- nu(underlay)
       adjust_plt()
       do.call(graphics::image, more_args)
-      panel_last( ii, 2 )
+
+      more_args$z <- NULL
+      more_args$add <- TRUE
+      lapply(overlays, function(item) {
+        if(!is.list(item)) { return() }
+        overlay <- get_ijk(pos_pt, which_slice = "sagittal", world2ijk = item$world2ijk, item$volume$data)
+        invalids <- is.na(overlay) | overlay < 0.5
+        if(!all(invalids)) {
+          overlay[invalids] <- NA
+          overlay_color <- item$color
+          more_args$col <- overlay_color
+          more_args$z <- overlay
+          do.call(graphics::image, more_args)
+        }
+      })
+
+      panel_last( ii, 1 )
     }
 
     if(!length(which) || 3 %in% which) {
       # Coronal
-      IJK <- round(world2ijk[c(1, 2, 3), ] %*% (pos[c(1,3,2,4), , drop = FALSE] + pos_pt)) + 1L
-      sel <- IJK[1,] > shape[[1]] | IJK[2,] > shape[[2]] | IJK[3,] > shape[[3]]
-      IJK[,sel] <- NA
-      IJK[IJK < 1] <- NA
-      idx <- t(IJK - 1) %*% cumshape + 1
-      slice <- nu(volume$data[idx])
-
-      dim(slice) <- c(nx, nx)
-      more_args$z <- slice
+      underlay <- get_ijk(pos_pt, which_slice = "coronal", world2ijk = world2ijk, volume$data)
+      more_args$add <- default_add
+      more_args$col <- pal
+      more_args$z <- nu(underlay)
       adjust_plt()
       do.call(graphics::image, more_args)
-      panel_last( ii, 3 )
+
+      more_args$z <- NULL
+      more_args$add <- TRUE
+      lapply(overlays, function(item) {
+        if(!is.list(item)) { return() }
+        overlay <- get_ijk(pos_pt, which_slice = "coronal", world2ijk = item$world2ijk, item$volume$data)
+        invalids <- is.na(overlay) | overlay < 0.5
+        if(!all(invalids)) {
+          overlay[invalids] <- NA
+          overlay_color <- item$color
+          more_args$col <- overlay_color
+          more_args$z <- overlay
+          do.call(graphics::image, more_args)
+        }
+      })
+
+      panel_last( ii, 1 )
     }
 
     NULL
