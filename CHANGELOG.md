@@ -1,6 +1,8 @@
 ## Changes since last CRAN release
-* `e66ea42d (HEAD -> master)` [_`dipterix`_]: `plot_slices` allows overlay images
-* `5ad19c55 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed right-click not settings crosshairs correctly on template brain
+* `73d06d31 (HEAD -> master)` [_`dipterix`_]: Supported drag and drop curvature files for `pial` with built-in color map
+* `31b7f388` [_`dipterix`_]: Skip smooth step when `lambda` is non-positive
+* `8b814e08 (origin/master, origin/HEAD)` [_`dipterix`_]: `plot_slices` allows overlay images
+* `5ad19c55` [_`dipterix`_]: Fixed right-click not settings crosshairs correctly on template brain
 * `8ccd7706` [_`dipterix`_]: Drag and drop feature supports `STL` format now; Color map is remembered regardless of the file extension
 * `d6de9e10` [_`dipterix`_]: Added `conform_volume` to conform images that simulate `FreeSurfer` conform algorithm
 * `40d10a3b` [_`dipterix`_]: Exported `write.fs.surface`
