@@ -350,14 +350,16 @@ volume_to_surf <- function(
   )
 
   # smooth
-  mesh <- ravetools::vcg_smooth_implicit(
-    mesh,
-    lambda = lambda,
-    use_mass_matrix = TRUE,
-    fix_border = TRUE,
-    use_cot_weight = FALSE,
-    degree = degree
-  )
+  if( isTRUE( lambda > 0 ) ) {
+    mesh <- ravetools::vcg_smooth_implicit(
+      mesh,
+      lambda = lambda,
+      use_mass_matrix = TRUE,
+      fix_border = TRUE,
+      use_cot_weight = FALSE,
+      degree = degree
+    )
+  }
   mesh <- ravetools::vcg_update_normals(mesh)
 
   # ravetools::rgl_view({
