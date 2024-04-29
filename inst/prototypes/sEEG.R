@@ -32,6 +32,7 @@ for( n_contacts in c(4, 6, 8, 10, 12) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
+    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
     overwrite = TRUE
   )
 }
@@ -60,6 +61,7 @@ for( n_contacts in c(4, 6, 8, 10) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
+    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
     overwrite = TRUE
   )
 }
@@ -88,6 +90,7 @@ for( n_contacts in c(4, 6, 8) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
+    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
     overwrite = TRUE
   )
 }
@@ -120,6 +123,7 @@ invisible(apply(mat, 1L, function(x) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
+    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
     overwrite = TRUE
   )
 }))

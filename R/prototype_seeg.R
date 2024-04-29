@@ -17,6 +17,8 @@
 #' @param dry_run whether not to save the prototype configurations
 #' @param overwrite whether to overwrite existing configuration file; default
 #' is false, which throws a warning when duplicated
+#' @param default_interpolation default interpolation string for electrode
+#' localization
 #' @returns A electrode shaft geometry prototype; the configuration file is
 #' saved to 'RAVE' 3rd-party repository.
 #'
@@ -54,7 +56,9 @@ seeg_prototype <- function(
     center_position, contact_widths, diameter = 1.0,
     channel_order = seq_along(center_position),
     fix_contact = 1, overall_length = 200,
-    description = NULL, dry_run = FALSE, overwrite = FALSE) {
+    description = NULL, dry_run = FALSE,
+    default_interpolation = NULL,
+    overwrite = FALSE) {
 
   # DIPSAUS DEBUG START
   # center_position <- 0.75 + c(3.5 * 1:16)
@@ -66,6 +70,13 @@ seeg_prototype <- function(
   # overall_length <- 200
   # description <- NULL
   # type <- "sEEG-16"
+
+  if( length(default_interpolation) != 1 || is.na(default_interpolation) ) {
+    default_interpolation <- NULL
+  } else {
+    default_interpolation <- as.character(default_interpolation)
+  }
+
   segments <- 1
   width_segments <- 12
   radius <- diameter / 2.0
@@ -215,7 +226,9 @@ seeg_prototype <- function(
     fix_control_index = fix_contact,
 
     # model_up = c(0, 1, 0),
-    model_direction = c(0, 0, 1)
+    model_direction = c(0, 0, 1),
+
+    default_interpolation = default_interpolation
   )
 
   proto <- ElectrodePrototype$new("")$from_list(config)

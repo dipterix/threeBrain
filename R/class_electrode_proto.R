@@ -102,6 +102,7 @@ ElectrodePrototype <- R6::R6Class(
   public = list(
     name = character(),
     description = "No description",
+    default_interpolation = NULL,
     fix_outline = TRUE,
     .last_texture = NULL,
     initialize = function( type, n_vertices = 4 ) {
@@ -599,7 +600,8 @@ ElectrodePrototype <- R6::R6Class(
         fix_control_index = private$.fix_control_index,
         model_direction = self$model_direction,
         model_up = self$model_up,
-        world_up = private$.world_up
+        world_up = private$.world_up,
+        default_interpolation = self$default_interpolation
       )
     },
     from_list = function(li) {
@@ -639,6 +641,8 @@ ElectrodePrototype <- R6::R6Class(
       tryCatch({
         self$description <- li$description
       }, error = function(e){})
+
+      self$default_interpolation <- li$default_interpolation
       self
     },
     as_json = function(to_file = NULL, ...) {
