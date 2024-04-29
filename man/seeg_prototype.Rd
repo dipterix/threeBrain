@@ -13,7 +13,8 @@ seeg_prototype(
   fix_contact = 1,
   overall_length = 200,
   description = NULL,
-  dry_run = FALSE
+  dry_run = FALSE,
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -38,6 +39,9 @@ localization, default is \code{1} (inner-most target contact)}
 \item{description}{prototype description}
 
 \item{dry_run}{whether not to save the prototype configurations}
+
+\item{overwrite}{whether to overwrite existing configuration file; default
+is false, which throws a warning when duplicated}
 }
 \value{
 A electrode shaft geometry prototype; the configuration file is

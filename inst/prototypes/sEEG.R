@@ -18,6 +18,7 @@ diameter <- 1.12
 
 for( n_contacts in c(4, 6, 8, 10, 12) ) {
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-SD%02dR-SP05X-000", n_contacts),
     description = c(
@@ -30,7 +31,8 @@ for( n_contacts in c(4, 6, 8, 10, 12) ) {
     center_position = contacts,
     contact_widths = width,
     diameter = diameter,
-    overall_length = overall_length
+    overall_length = overall_length,
+    overwrite = TRUE
   )
 }
 
@@ -44,6 +46,7 @@ diameter <- 1.12
 
 for( n_contacts in c(4, 6, 8, 10) ) {
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-SD%02dR-SP10X-000", n_contacts),
     description = c(
@@ -56,7 +59,8 @@ for( n_contacts in c(4, 6, 8, 10) ) {
     center_position = contacts,
     contact_widths = width,
     diameter = diameter,
-    overall_length = overall_length
+    overall_length = overall_length,
+    overwrite = TRUE
   )
 }
 
@@ -70,6 +74,7 @@ diameter <- 1.12
 
 for( n_contacts in c(4, 6, 8) ) {
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-SD%02dR-AP58X-000", n_contacts),
     description = c(
@@ -82,7 +87,8 @@ for( n_contacts in c(4, 6, 8) ) {
     center_position = contacts,
     contact_widths = width,
     diameter = diameter,
-    overall_length = overall_length
+    overall_length = overall_length,
+    overwrite = TRUE
   )
 }
 
@@ -100,6 +106,7 @@ invisible(apply(mat, 1L, function(x) {
   n_contacts <- x[[1]]
   contact_spacing <- x[[2]]
   contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-RD%02dR-SP%02dX-000", n_contacts, contact_spacing),
     description = c(
@@ -112,6 +119,7 @@ invisible(apply(mat, 1L, function(x) {
     center_position = contacts,
     contact_widths = width,
     diameter = diameter,
-    overall_length = overall_length
+    overall_length = overall_length,
+    overwrite = TRUE
   )
 }))

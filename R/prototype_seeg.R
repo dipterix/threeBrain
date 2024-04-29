@@ -15,6 +15,8 @@
 #' @param overall_length probe length, default is \code{200}
 #' @param description prototype description
 #' @param dry_run whether not to save the prototype configurations
+#' @param overwrite whether to overwrite existing configuration file; default
+#' is false, which throws a warning when duplicated
 #' @returns A electrode shaft geometry prototype; the configuration file is
 #' saved to 'RAVE' 3rd-party repository.
 #'
@@ -52,7 +54,7 @@ seeg_prototype <- function(
     center_position, contact_widths, diameter = 1.0,
     channel_order = seq_along(center_position),
     fix_contact = 1, overall_length = 200,
-    description = NULL, dry_run = FALSE) {
+    description = NULL, dry_run = FALSE, overwrite = FALSE) {
 
   # DIPSAUS DEBUG START
   # center_position <- 0.75 + c(3.5 * 1:16)
@@ -79,6 +81,7 @@ seeg_prototype <- function(
   stopifnot(npos == length(widths))
   stopifnot(npos == length(segments))
   stopifnot(npos == length(channel_order))
+  contact_widths0 <- widths / 2
 
   if(!length(description)) {
     if(length(center_position) > 1) {
@@ -204,7 +207,7 @@ seeg_prototype <- function(
     channel_map = channel_map,
 
     contact_center = rbind(0, 0, center_position),
-    contact_sizes = rep(radius0, npos),
+    contact_sizes = contact_widths0,
 
     # row matrix
     model_control_points = rbind(0, 0, center_position),
@@ -219,7 +222,15 @@ seeg_prototype <- function(
   proto$validate()
 
   if(!dry_run) {
-    proto$save_as_default( force = FALSE )
+    tryCatch({
+      proto$save_as_default( force = overwrite )
+    }, warning = function(e) {
+      if(!overwrite) {
+        warning("Electrode prototype already exists. Please use `overwrite = TRUE` to overwrite.")
+      } else {
+        warning(e)
+      }
+    })
   }
 
   proto
