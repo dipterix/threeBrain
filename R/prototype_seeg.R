@@ -227,6 +227,7 @@ seeg_prototype <- function(
 
     # model_up = c(0, 1, 0),
     model_direction = c(0, 0, 1),
+    model_rigid = FALSE,
 
     default_interpolation = default_interpolation
   )

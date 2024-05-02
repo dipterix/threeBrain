@@ -104,6 +104,9 @@ ElectrodePrototype <- R6::R6Class(
     description = "No description",
     default_interpolation = NULL,
     fix_outline = TRUE,
+
+    model_rigid = TRUE,
+
     .last_texture = NULL,
     initialize = function( type, n_vertices = 4 ) {
       self$type <- type
@@ -599,6 +602,7 @@ ElectrodePrototype <- R6::R6Class(
         world_control_points = as.vector(world_control_points),
         fix_control_index = private$.fix_control_index,
         model_direction = self$model_direction,
+        model_rigid = self$model_rigid,
         model_up = self$model_up,
         world_up = private$.world_up,
         default_interpolation = self$default_interpolation
@@ -643,6 +647,7 @@ ElectrodePrototype <- R6::R6Class(
       }, error = function(e){})
 
       self$default_interpolation <- li$default_interpolation
+      self$model_rigid <- !isFALSE(li$model_rigid)
       self
     },
     as_json = function(to_file = NULL, ...) {

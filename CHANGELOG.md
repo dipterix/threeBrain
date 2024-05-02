@@ -1,6 +1,8 @@
 ## Changes since last CRAN release
-* `735a5c33 (HEAD -> master)` [_`dipterix`_]: Added default interpolation string for `sEEG` electrodes
-* `ff9997df (origin/master, origin/HEAD)` [_`dipterix`_]: Changed `sEEG` contact radius from shaft radius to half of the contact widths, increasing visibility
+* `9ed9d446 (HEAD -> master)` [_`dipterix`_]: Added `model_rigid=FALSE` to allow electrode morph (trajectory)
+* `ce375985` [_`dipterix`_]: Underlay image is not needed
+* `29141273 (origin/master, origin/HEAD)` [_`dipterix`_]: Added default interpolation string for `sEEG` electrodes
+* `ff9997df` [_`dipterix`_]: Changed `sEEG` contact radius from shaft radius to half of the contact widths, increasing visibility
 * `1397eade` [_`dipterix`_]: Disabled user-selection event in `CSS` for zoom-tools (side canvas)
 * `6993bab0` [_`dipterix`_]: Supported drag and drop curvature files for `pial` with built-in color map
 * `31b7f388` [_`dipterix`_]: Skip smooth step when `lambda` is non-positive
