@@ -258,26 +258,19 @@ threeBrain <- function(
     mgz_files <- mgz_files[[1]]
   }
 
-  if( endsWith(tolower(mgz_files), "mgz") ) {
-    volume_header <- read_fs_mgh_header( mgz_files )
-
+  if(length(mgz_files)) {
+    volume_header <- read_volume(mgz_files, header_only = TRUE)
     # Norig: IJK to scanner-RAS
-    Norig <- volume_header$vox2ras_matrix
+    Norig <- volume_header$Norig
 
     # Torig: IJK to tkr-RAS
-    Torig <- Norig[1:4, 1:3]
-    Torig <- cbind(Torig, -Torig %*% volume_header$internal$Pcrs_c)
-    Torig[4, 4] <- 1
+    Torig <- volume_header$Torig
   } else {
-    volume_header <- read_nii2(mgz_files, head_only = TRUE)
-
-    # Norig: IJK to scanner-RAS
-    Norig <- volume_header$get_IJK_to_RAS()$matrix
-
-    # Torig: IJK to tkr-RAS
-    Torig <- Norig[1:4, 1:3]
-    Torig <- cbind(Torig, -Torig %*% volume_header$get_shape() / 2)
-    Torig[4, 4] <- 1
+    # No volume file, use default
+    Norig <- structure(c(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 128, -128,
+                         128, 1), dim = c(4L, 4L))
+    Torig <- structure(c(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 128, -128,
+                         128, 1), dim = c(4L, 4L))
   }
 
 
