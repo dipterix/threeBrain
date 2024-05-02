@@ -1,8 +1,9 @@
 ## Changes since last CRAN release
-* `090cc112 (HEAD -> master)` [_`dipterix`_]: Added `DIXI` (`AM`, `BM, `CM`) electrode specifications
+* `c087e9a1 (HEAD -> master)` [_`dipterix`_]: Added contact order to display when electrode is clicked
+* `33d7c9b3 (origin/master, origin/HEAD)` [_`dipterix`_]: Added `DIXI` (`AM`, `BM, `CM`) electrode specifications
 * `a2d6fb53` [_`dipterix`_]: Added brightness and contrast adjustment with keyboard shortcut
 * `2c636b26` [_`dipterix`_]: Added option to set crosshair gap
-* `8137d32a (origin/master, origin/HEAD)` [_`dipterix`_]: Added `model_rigid=FALSE` to allow electrode morph (trajectory)
+* `8137d32a` [_`dipterix`_]: Added `model_rigid=FALSE` to allow electrode morph (trajectory)
 * `ce375985` [_`dipterix`_]: Underlay image is not needed
 * `29141273` [_`dipterix`_]: Added default interpolation string for `sEEG` electrodes
 * `ff9997df` [_`dipterix`_]: Changed `sEEG` contact radius from shaft radius to half of the contact widths, increasing visibility
