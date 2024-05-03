@@ -41,11 +41,11 @@ In the following context, I will use `~/Downloads/N27` as an example
 
 ## Generate Viewer Object
 
-```{r setup}
+```{r setup, eval=FALSE}
 library(threeBrain)
 subject_code <- "N27"
 subject_path <- "~/Downloads/N27"
-brain <- freesurfer_brain2(subject_path, subject_code)
+brain <- threeBrain(subject_path, subject_code)
 print(brain)
 #> Subject - N27 
 #> Transforms:
@@ -93,7 +93,7 @@ If this is the first time, it might take a while to import and generate cache fi
 
 Visualizing the viewer is simply just one line.
 
-```{r}
+```{r, eval=FALSE}
 brain$plot()
 ```
 
@@ -126,8 +126,8 @@ The atlas type can be selected from `aparc+aseg`, `aparc.a2009s+aseg`, `aparc.DK
 
 The following example loads `pial` and `smoothwm`, with `aseg` as atlas. The viewer shows 'Coronal' plane, smoothed white matter, 'Ventricle', and 'Cerebellum' all together in one scene.
 
-```{r}
-brain <- freesurfer_brain2(
+```{r, eval=FALSE}
+brain <- threeBrain(
   subject_path, subject_code, 
   surface_types = c('pial', 'smoothwm'), 
   atlas_types = 'aseg')
