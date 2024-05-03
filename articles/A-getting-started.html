@@ -116,7 +116,7 @@ an example</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dipterix.org/threeBrain/">threeBrain</a></span><span class="op">)</span></span>
 <span><span class="va">subject_code</span> <span class="op">&lt;-</span> <span class="st">"N27"</span></span>
 <span><span class="va">subject_path</span> <span class="op">&lt;-</span> <span class="st">"~/Downloads/N27"</span></span>
-<span><span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="va">subject_code</span><span class="op">)</span></span>
+<span><span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/threeBrain.html">threeBrain</a></span><span class="op">(</span><span class="va">subject_path</span>, <span class="va">subject_code</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">brain</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Subject - N27 </span></span>
 <span><span class="co">#&gt; Transforms:</span></span>
@@ -229,7 +229,7 @@ corresponding file exists in <code>mri/</code>. For example,
 ‘Coronal’ plane, smoothed white matter, ‘Ventricle’, and ‘Cerebellum’
 all together in one scene.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/freesurfer_brain.html">freesurfer_brain2</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/threeBrain.html">threeBrain</a></span><span class="op">(</span></span>
 <span>  <span class="va">subject_path</span>, <span class="va">subject_code</span>, </span>
 <span>  surface_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'pial'</span>, <span class="st">'smoothwm'</span><span class="op">)</span>, </span>
 <span>  atlas_types <span class="op">=</span> <span class="st">'aseg'</span><span class="op">)</span></span>
