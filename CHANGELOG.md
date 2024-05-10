@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `e671fae5 (HEAD -> master)` [_`dipterix`_]: Fixing the vertex shader output not read by fragment shader issue
-* `82b23f63 (origin/master, origin/HEAD)` [_`dipterix`_]: Drop-in feature support color-map for volume and surfaces
+* `1b2bb563 (HEAD -> master)` [_`dipterix`_]: Typo fix in `SliceShader`
+* `40d60f02 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixing the vertex shader output not read by fragment shader issue
+* `82b23f63` [_`dipterix`_]: Drop-in feature support color-map for volume and surfaces
 * `0dfb0531` [_`dipterix`_]: Fixing `readme` and vignettes
 * `b28c0643` [_`dipterix`_]: Added contact order to display when electrode is clicked
 * `33d7c9b3` [_`dipterix`_]: Added `DIXI` (`AM`, `BM, `CM`) electrode specifications
