@@ -1,6 +1,9 @@
 ## Changes since last CRAN release
-* `c087e9a1 (HEAD -> master)` [_`dipterix`_]: Added contact order to display when electrode is clicked
-* `33d7c9b3 (origin/master, origin/HEAD)` [_`dipterix`_]: Added `DIXI` (`AM`, `BM, `CM`) electrode specifications
+* `e671fae5 (HEAD -> master)` [_`dipterix`_]: Fixing the vertex shader output not read by fragment shader issue
+* `82b23f63 (origin/master, origin/HEAD)` [_`dipterix`_]: Drop-in feature support color-map for volume and surfaces
+* `0dfb0531` [_`dipterix`_]: Fixing `readme` and vignettes
+* `b28c0643` [_`dipterix`_]: Added contact order to display when electrode is clicked
+* `33d7c9b3` [_`dipterix`_]: Added `DIXI` (`AM`, `BM, `CM`) electrode specifications
 * `a2d6fb53` [_`dipterix`_]: Added brightness and contrast adjustment with keyboard shortcut
 * `2c636b26` [_`dipterix`_]: Added option to set crosshair gap
 * `8137d32a` [_`dipterix`_]: Added `model_rigid=FALSE` to allow electrode morph (trajectory)
