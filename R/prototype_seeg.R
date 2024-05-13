@@ -201,7 +201,7 @@ seeg_prototype <- function(
     geometry = "CustomGeometry",
 
     # whether using UV mapping to derive outlines rather than interactively determine the outlines
-    fix_outline = TRUE,
+    fix_outline = FALSE,
 
     transform = diag(1, 4L),
 
