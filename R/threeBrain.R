@@ -137,6 +137,7 @@ threeBrain <- function(
 
   # DIPSAUS DEBUG START
   # fs_path <- "/Users/dipterix/Dropbox (PennNeurosurgery)/BeauchampLabAtPenn/Electrode_Localization_Paper/Code/N27"
+  # fs_path <- "~/rave_data/raw_dir/Sean/rave-imaging/fs/"
   # subject_code <- "N27"
   # surface_types <- c("pial", "amygdala", "ctx-insula", c(18,54,1035,2035,1026,1002,1023,1010,2026,2002,202,
   #                     3,2010,1012,1014,1027,1032,2012,2014,2027,2032))
@@ -382,9 +383,40 @@ threeBrain <- function(
 
     subcortical <- FALSE
     path_left <- normalizePath(file.path(surf_path, sprintf("lh.%s", surface_type)),
-                               winslash = "/", mustWork = FALSE)
+                               winslash = "/",
+                               mustWork = FALSE)
     path_right <- normalizePath(file.path(surf_path, sprintf("rh.%s", surface_type)),
-                                winslash = "/", mustWork = FALSE)
+                                winslash = "/",
+                                mustWork = FALSE)
+
+    if(
+      surface_type == "pial" &&
+      (!file.exists(path_left) || !file.exists(path_right))
+    ) {
+      path_left_gii <- normalizePath(file.path(surf_path, sprintf("lh.%s.gii", surface_type)),
+                                     winslash = "/",
+                                     mustWork = FALSE)
+      path_right_gii <- normalizePath(file.path(surf_path, sprintf("rh.%s.gii", surface_type)),
+                                      winslash = "/",
+                                      mustWork = FALSE)
+
+      if( file.exists(path_left_gii) && file.exists(path_right_gii) ) {
+        pial_mesh <- freesurferformats::read.fs.surface.gii(path_left_gii)
+        freesurferformats::write.fs.surface(
+          filepath = path_left,
+          vertex_coords = pial_mesh$vertices,
+          faces = pial_mesh$faces + 1L,
+          format = "bin"
+        )
+        pial_mesh <- freesurferformats::read.fs.surface.gii(path_right_gii)
+        freesurferformats::write.fs.surface(
+          filepath = path_right,
+          vertex_coords = pial_mesh$vertices,
+          faces = pial_mesh$faces + 1L,
+          format = "bin"
+        )
+      }
+    }
 
     if( !file.exists(path_left) || !file.exists(path_right) ) {
 
