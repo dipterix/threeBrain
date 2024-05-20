@@ -1,8 +1,8 @@
 ## Changes since last CRAN release
-* `d5e4480c (HEAD -> master)` [_`dipterix`_]: Added logo to control panel to advertise the project
+* `9b76fa41 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added logo to control panel to advertise the project
 * `226994ba` [_`dipterix`_]: Added export `GLTF` binary format; Separate `3D` and `2D` canvas;
 * `e556d025` [_`dipterix`_]: Converts `*h.pial.gii` to `FreeSurfer` format when the files are missing
-* `8d8c36dc (origin/master, origin/HEAD)` [_`dipterix`_]: Allow electrode depth test to be disabled (always-depth) on contact and/or outlines
+* `8d8c36dc` [_`dipterix`_]: Allow electrode depth test to be disabled (always-depth) on contact and/or outlines
 * `558564ec` [_`dipterix`_]: Typo fix in `SliceShader`
 * `40d60f02` [_`dipterix`_]: Fixing the vertex shader output not read by fragment shader issue
 * `82b23f63` [_`dipterix`_]: Drop-in feature support color-map for volume and surfaces
