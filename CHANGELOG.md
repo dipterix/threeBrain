@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `9b76fa41 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added logo to control panel to advertise the project
+* `7b7a327b (HEAD -> master)` [_`dipterix`_]: Changed logo message
+* `1e70580a (origin/master, origin/HEAD)` [_`dipterix`_]: Using better `RAVE` logo and fixed style issues; Changed shortcut `p` to toggling the visibility and `shift+p` to switching surface types
+* `9b76fa41` [_`dipterix`_]: Added logo to control panel to advertise the project
 * `226994ba` [_`dipterix`_]: Added export `GLTF` binary format; Separate `3D` and `2D` canvas;
 * `e556d025` [_`dipterix`_]: Converts `*h.pial.gii` to `FreeSurfer` format when the files are missing
 * `8d8c36dc` [_`dipterix`_]: Allow electrode depth test to be disabled (always-depth) on contact and/or outlines
