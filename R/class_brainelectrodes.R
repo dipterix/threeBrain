@@ -711,7 +711,7 @@ BrainElectrodes <- R6::R6Class(
     #| \code{inclusive=false} (exclusive), then only \code{names} will
     #| be fixed
     #|
-    fix_electrode_color = function(number, color, names = NULL, inclusive = TRUE) {
+    fix_electrode_color = function(number, color, names = NULL, inclusive = FALSE) {
 
       number <- as.integer(number)
       if( !is.finite(number) || number <= 0 ) { return() }
@@ -727,11 +727,15 @@ BrainElectrodes <- R6::R6Class(
           maps = list()
         )
         n_names <- length(names)
-        if(length(color) != n_names && n_names > 0) {
+        if(length(color) != n_names) {
+          if( n_names == 0 ) {
+            names <- "[None]"
+            n_names <- 1
+          }
           color <- rep(color, ceiling(n_names / length(color)))
           color <- color[seq_len(n_names)]
-          color_settings$maps <- structure(as.list(color), names = names)
         }
+        color_settings$maps <- structure(as.list(color), names = names)
         fixed_colors[[as.character(number)]] <- color_settings
       }
 
