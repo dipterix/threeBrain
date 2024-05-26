@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `9db50120 (HEAD -> master)` [_`dipterix`_]: `fix_electrode_color` is exclusive by default; fixed color fixing issue for naive sphere electrodes
-* `1dea870f (origin/master, origin/HEAD)` [_`dipterix`_]: Changed logo message
+* `96c9d673 (HEAD -> master)` [_`dipterix`_]: Exporting `GLTF` is wrapped with try-catch
+* `963859ed (origin/master, origin/HEAD)` [_`dipterix`_]: `fix_electrode_color` is exclusive by default; fixed color fixing issue for naive sphere electrodes
+* `1dea870f` [_`dipterix`_]: Changed logo message
 * `1e70580a` [_`dipterix`_]: Using better `RAVE` logo and fixed style issues; Changed shortcut `p` to toggling the visibility and `shift+p` to switching surface types
 * `9b76fa41` [_`dipterix`_]: Added logo to control panel to advertise the project
 * `226994ba` [_`dipterix`_]: Added export `GLTF` binary format; Separate `3D` and `2D` canvas;
