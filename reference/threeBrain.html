@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9018</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0.9019</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
 <span>  <span class="va">path</span>,</span>
 <span>  <span class="va">subject_code</span>,</span>
 <span>  surface_types <span class="op">=</span> <span class="st">"pial"</span>,</span>
-<span>  atlas_types <span class="op">=</span> <span class="st">"aparc+aseg"</span>,</span>
+<span>  <span class="va">atlas_types</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  backward_compatible <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.compatible"</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -86,7 +86,8 @@ other common types are <code>'white'</code>, <code>'smoothwm'</code></p></dd>
 
 
 <dt>atlas_types</dt>
-<dd><p>brain atlas to load; default is <code>'aparc+aseg'</code>,
+<dd><p>brain atlas to load; default is <code>'wmparc'</code>,
+or if not exists, <code>'aparc+aseg'</code>,
 other choices are <code>'aparc.a2009s+aseg'</code>, <code>'aparc.DKTatlas+aseg'</code>,
 depending on the atlas files in <code>'fs/mri'</code> folder</p></dd>
 
