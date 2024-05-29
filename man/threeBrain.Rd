@@ -8,7 +8,7 @@ threeBrain(
   path,
   subject_code,
   surface_types = "pial",
-  atlas_types = "aparc+aseg",
+  atlas_types,
   ...,
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
   backward_compatible = getOption("threeBrain.compatible", FALSE)
@@ -23,7 +23,8 @@ containing 'FreeSurfer' files, or simply a 'RAVE' subject}
 \item{surface_types}{surface types to load; default is \code{'pial'},
 other common types are \code{'white'}, \code{'smoothwm'}}
 
-\item{atlas_types}{brain atlas to load; default is \code{'aparc+aseg'},
+\item{atlas_types}{brain atlas to load; default is \code{'wmparc'},
+or if not exists, \code{'aparc+aseg'},
 other choices are \code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'},
 depending on the atlas files in \code{'fs/mri'} folder}
 

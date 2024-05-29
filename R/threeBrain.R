@@ -116,7 +116,8 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' @param subject_code subject code, characters
 #' @param surface_types surface types to load; default is \code{'pial'},
 #' other common types are \code{'white'}, \code{'smoothwm'}
-#' @param atlas_types brain atlas to load; default is \code{'aparc+aseg'},
+#' @param atlas_types brain atlas to load; default is \code{'wmparc'},
+#' or if not exists, \code{'aparc+aseg'},
 #' other choices are \code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'},
 #' depending on the atlas files in \code{'fs/mri'} folder
 #' @param template_subject template subject to refer to; used for group
@@ -126,7 +127,7 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' @export
 threeBrain <- function(
     path, subject_code, surface_types = "pial",
-    atlas_types = "aparc+aseg",
+    atlas_types,
     ...,
     template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
     backward_compatible = getOption("threeBrain.compatible", FALSE)
@@ -134,6 +135,12 @@ threeBrain <- function(
   # No SUMA 141 brain for default option
 
   fs_path <- path
+
+  first_atlas_only <- FALSE
+  if(missing(atlas_types)) {
+    atlas_types <- c('wmparc', 'aparc+aseg')
+    first_atlas_only <- TRUE
+  }
 
   # DIPSAUS DEBUG START
   # fs_path <- "/Users/dipterix/Dropbox (PennNeurosurgery)/BeauchampLabAtPenn/Electrode_Localization_Paper/Code/N27"
@@ -515,7 +522,10 @@ threeBrain <- function(
 
   for( ii in seq_along(atlas_types) ) {
     atlas_type <- atlas_types[[ ii ]]
-    brain$add_atlas( atlas_type )
+    atlas <- brain$add_atlas( atlas_type )
+    if( first_atlas_only && !is.null(atlas) ) {
+      break
+    }
   }
 
   return( brain )

@@ -270,6 +270,8 @@ Brain2 <- R6::R6Class(
       atlas$set_subject_code( self$subject_code )
       self$atlases[[ atlas$atlas_type ]] <- atlas
 
+      return(atlas)
+
     },
 
     # special: must be cached path
