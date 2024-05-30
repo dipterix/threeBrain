@@ -1,7 +1,8 @@
 ## Changes since last CRAN release
-* `453cdfe2 (HEAD -> master)` [_`dipterix`_]: Supported `ISO` surface generation from voxels
+* `f2170170 (HEAD -> master)` [_`dipterix`_]: Fixed `fix_electrode_color` bug
+* `62567274 (origin/master, origin/HEAD)` [_`dipterix`_]: Supported `ISO` surface generation from voxels
 * `a6295c2c` [_`dipterix`_]: Added white-matter segmentation as default atlas if user has this file
-* `cd8e15e8 (origin/master, origin/HEAD)` [_`dipterix`_]: Exporting `GLTF` is wrapped with try-catch
+* `cd8e15e8` [_`dipterix`_]: Exporting `GLTF` is wrapped with try-catch
 * `963859ed` [_`dipterix`_]: `fix_electrode_color` is exclusive by default; fixed color fixing issue for naive sphere electrodes
 * `1dea870f` [_`dipterix`_]: Changed logo message
 * `1e70580a` [_`dipterix`_]: Using better `RAVE` logo and fixed style issues; Changed shortcut `p` to toggling the visibility and `shift+p` to switching surface types
