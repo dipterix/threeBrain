@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `f2170170 (HEAD -> master)` [_`dipterix`_]: Fixed `fix_electrode_color` bug
-* `62567274 (origin/master, origin/HEAD)` [_`dipterix`_]: Supported `ISO` surface generation from voxels
+* `a4f02e0e (HEAD -> master)` [_`dipterix`_]: Allow masks to be added to `T1`; Added `D99v2` for monkey brain; Added demo code; Export `GLTF` for `datacube2`
+* `9268886f (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed `fix_electrode_color` bug
+* `62567274` [_`dipterix`_]: Supported `ISO` surface generation from voxels
 * `a6295c2c` [_`dipterix`_]: Added white-matter segmentation as default atlas if user has this file
 * `cd8e15e8` [_`dipterix`_]: Exporting `GLTF` is wrapped with try-catch
 * `963859ed` [_`dipterix`_]: `fix_electrode_color` is exclusive by default; fixed color fixing issue for naive sphere electrodes

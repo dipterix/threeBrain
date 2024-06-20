@@ -120,15 +120,16 @@ VolumeGeom <- R6::R6Class(
     color_format = "RedFormat",
     color_map = NULL,
     initialize = function(
-    name, path, group = GeomGroup$new(name = 'default'), layer = 13,
-    color_format = c("RedFormat", "RGBAFormat"), ...){
+      name, path, mask = NULL,
+      group = GeomGroup$new(name = 'default'), layer = 13,
+      color_format = c("RedFormat", "RGBAFormat"), ...){
 
       color_format <- match.arg(color_format)
       abspath <- normalizePath(path, mustWork = TRUE)
       super$initialize(name, position = c(0, 0, 0), layer = layer, ...)
       self$group <- group
 
-      re <- list(
+      volume_data <- list(
         path = path,
         absolute_path = abspath,
         file_name = filename(abspath),
@@ -136,8 +137,20 @@ VolumeGeom <- R6::R6Class(
         is_new_cache = FALSE,
         is_cache = TRUE
       )
-      group$set_group_data("volume_data", value = re, is_cached = TRUE)
+      group$set_group_data("volume_data", value = volume_data, is_cached = TRUE)
       self$color_format <- color_format
+
+      if(length(mask) == 1 && !is.na(mask) && file.exists(mask)) {
+        volume_mask <- list(
+          path = mask,
+          absolute_path = normalizePath(mask, mustWork = TRUE),
+          file_name = filename(mask),
+          is_nifti = TRUE,
+          is_new_cache = FALSE,
+          is_cache = TRUE
+        )
+        group$set_group_data("volume_mask", value = volume_mask, is_cached = TRUE)
+      }
 
     },
 

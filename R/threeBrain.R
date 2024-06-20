@@ -184,6 +184,9 @@ threeBrain <- function(
     "brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
     "brainmask", "brainmask.auto", "T1"
   )
+  allowed_mri_mask_prefix <- c(
+    "brainmask", "brainmask.auto"
+  )
 
   path_mri <- file.path(fs_path, "mri", as.vector(rbind(
     sprintf("%s.nii.gz", allowed_mri_prefix),
@@ -192,6 +195,7 @@ threeBrain <- function(
   )))
   path_mri <- path_mri[file.exists(path_mri)]
   if(length(path_mri)){ path_mri <- path_mri[[1]] }
+
   path_fsmri <- file.path(fs_path, "mri", as.vector(rbind(
     sprintf("%s.nii.gz", allowed_fsmri_prefix),
     sprintf("%s.nii", allowed_fsmri_prefix),
@@ -199,6 +203,14 @@ threeBrain <- function(
   )))
   path_fsmri <- path_fsmri[file.exists(path_fsmri)]
   if(length(path_fsmri)){ path_fsmri <- path_fsmri[[1]] }
+
+  path_mask <- file.path(fs_path, "mri", as.vector(rbind(
+    sprintf("%s.nii.gz", allowed_mri_mask_prefix),
+    sprintf("%s.nii", allowed_mri_mask_prefix),
+    sprintf("%s.mgz", allowed_mri_mask_prefix)
+  )))
+  path_mask <- path_mask[file.exists(path_mask)]
+  if(length(path_mask)){ path_mask <- path_mask[[1]] }
 
   # xfm
   path_xfm <- file.path(fs_path, "mri", "transforms", "talairach.xfm")
@@ -309,6 +321,7 @@ threeBrain <- function(
       volume = VolumeGeom$new(
         name = sprintf('T1 (%s)', subject_code),
         path = normalizePath(path_mri, winslash = "/"),
+        mask = normalizePath(path_mask, winslash = "/"),
 
         # JS engine requires a group
         group = group
