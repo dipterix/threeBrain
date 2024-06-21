@@ -130,6 +130,15 @@ ViewerProxy <- R6::R6Class(
       ))
     },
 
+    set_electrode_palette = function(colors, variable) {
+      colors <- col2hexStr(colors)
+      stopifnot2(length(colors) > 0, msg = "`colors` must not be empty")
+      private$set_value('set_electrode_palette', list(
+        colors = colors,
+        name = variable
+      ))
+    },
+
     set_cex = function( cex = 1 ){
       stopifnot2(cex > 0, msg = 'cex must be positive')
       private$set_value('font_magnification', cex)
