@@ -1,7 +1,8 @@
 ## Changes since last CRAN release
-* `cad106e9 (HEAD -> master)` [_`dipterix`_]: Allow `shiny` app to change current color map via proxy
+* `8572db05 (HEAD -> master)` [_`dipterix`_]: Allow users to hide crosshairs
+* `05836f94 (origin/master, origin/HEAD)` [_`dipterix`_]: Allow `shiny` app to change current color map via proxy
 * `fbca42f4` [_`dipterix`_]: Allows drag-drop electrode color files; Added `set_electrode_data` to brain proxy class, allowing `shiny` applications to change the electrode data, set color palettes, and set value ranges in the same call
-* `a14cd3f5 (origin/master, origin/HEAD)` [_`dipterix`_]: Allow masks to be added to `T1`; Added `D99v2` for monkey brain; Added demo code; Export `GLTF` for `datacube2`
+* `a14cd3f5` [_`dipterix`_]: Allow masks to be added to `T1`; Added `D99v2` for monkey brain; Added demo code; Export `GLTF` for `datacube2`
 * `9268886f` [_`dipterix`_]: Fixed `fix_electrode_color` bug
 * `62567274` [_`dipterix`_]: Supported `ISO` surface generation from voxels
 * `a6295c2c` [_`dipterix`_]: Added white-matter segmentation as default atlas if user has this file
