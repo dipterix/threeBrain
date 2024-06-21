@@ -116,6 +116,20 @@ ViewerProxy <- R6::R6Class(
       ))
     },
 
+    set_electrode_data = function(data, palettes = NULL, value_ranges = NULL, clear_first = FALSE, update_display = TRUE) {
+      stopifnot2(
+        is.data.frame(data),
+        msg = "brain_proxy$set_electrode_data(data, ...): `data` must be a data.frame."
+      )
+      private$set_value('set_electrode_data', list(
+        data = data,
+        palettes = as.list(palettes),
+        valueRanges = as.list(value_ranges),
+        clearFirst = clear_first,
+        updateDisplay = update_display
+      ))
+    },
+
     set_cex = function( cex = 1 ){
       stopifnot2(cex > 0, msg = 'cex must be positive')
       private$set_value('font_magnification', cex)
