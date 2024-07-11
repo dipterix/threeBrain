@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `7198a191 (HEAD -> master)` [_`dipterix`_]: Allow users to drag and drop value tables
-* `10ac71ad (origin/master, origin/HEAD)` [_`dipterix`_]: Allow users to hide crosshairs
+* `ef1e293d (HEAD -> master)` [_`dipterix`_]: Plotting slices have correct margins with partial plot
+* `4bd0352c (origin/master, origin/HEAD)` [_`dipterix`_]: Allow users to drag and drop value tables
+* `10ac71ad` [_`dipterix`_]: Allow users to hide crosshairs
 * `05836f94` [_`dipterix`_]: Allow `shiny` app to change current color map via proxy
 * `fbca42f4` [_`dipterix`_]: Allows drag-drop electrode color files; Added `set_electrode_data` to brain proxy class, allowing `shiny` applications to change the electrode data, set color palettes, and set value ranges in the same call
 * `a14cd3f5` [_`dipterix`_]: Allow masks to be added to `T1`; Added `D99v2` for monkey brain; Added demo code; Export `GLTF` for `datacube2`

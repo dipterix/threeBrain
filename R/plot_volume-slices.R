@@ -63,6 +63,34 @@ plot_slices <- function(
     stop("`volume` must be character or threeBrain.volume")
   }
 
+  pal <- grDevices::colorRampPalette(col)(256)
+
+  more_args <- list(...)
+  more_args$axes <- FALSE
+  more_args$asp <- 1
+  more_args$col <- pal
+  more_args$zlim <- zlim
+  more_args$useRaster <- TRUE
+  more_args$main <- ''
+  more_args$xlab <- ""
+  more_args$ylab <- ""
+  default_add <- isTRUE(more_args$add)
+  # more_args$add <- FALSE
+
+  canvas_ratio <- 3
+  n_plots <- 3
+  if( default_add ) {
+    # assuming length(which) == 1 and you want to add to plot
+    canvas_ratio <- 1
+    n_plots <- 1
+  } else {
+    if(length(which) > 0) {
+      canvas_ratio <- 1
+      n_plots <- length(which)
+    }
+  }
+
+
   overlays <- lapply(seq_along(overlays), function(ii) {
     item <- overlays[[ ii ]]
     default_color <- col2hexStr(DEFAULT_COLOR_DISCRETE[[(ii - 1L) %% length(DEFAULT_COLOR_DISCRETE) + 1L]], alpha = overlay_alpha)
@@ -145,36 +173,28 @@ plot_slices <- function(
     main <- ""
   }
   main <- rep(main, ceiling(npts / length(main)))
-  pal <- grDevices::colorRampPalette(col)(256)
 
   x <- seq(-127.5, 127.5, by = abs(pixel_width * zoom)) / zoom
   nx <- length(x)
 
-  pos <- rbind(t(as.matrix(expand.grid(x, x, KEEP.OUT.ATTRS = FALSE))), 0, 1)
-
-  more_args <- list(...)
-  more_args$axes <- FALSE
-  more_args$asp <- 1
-  more_args$col <- pal
-  more_args$zlim <- zlim
-  more_args$useRaster <- TRUE
-  more_args$main <- ''
-  more_args$xlab <- ""
-  more_args$ylab <- ""
   more_args$x <- x
   more_args$y <- x
-  default_add <- isTRUE(more_args$add)
-  # more_args$add <- FALSE
+
+  pos <- rbind(t(as.matrix(expand.grid(x, x, KEEP.OUT.ATTRS = FALSE))), 0, 1)
 
   oldpar <- graphics::par(no.readonly = TRUE)
 
   if(!length(nc) || is.na(nc[[1]])) {
-    nc <- grDevices::n2mfrow(npts, asp = 1/3)[[2]]
+    nc <- grDevices::n2mfrow(npts, asp = 1/n_plots)[[2]]
   } else {
     nc <- nc[[1]]
   }
   nc <- min(max(round(nc), 1), npts)
   nr <- ceiling(npts / nc)
+
+  padding_left <- 0
+  padding_top <- 0
+
   if(!length(which)) {
     if( title_position == "left") {
       lmat <- matrix(seq_len(nr * nc), ncol = nc, byrow = FALSE)
@@ -187,6 +207,7 @@ plot_slices <- function(
         lmat,
         widths = rep(c(graphics::lcm(0.8), 1, 1, 1), times = nc)
       )
+      padding_left <- 0.8
     } else {
       lmat <- matrix(seq_len(nr * nc), ncol = nc, byrow = TRUE)
       lmat <- apply(lmat, 2, function(l) {
@@ -199,6 +220,7 @@ plot_slices <- function(
         lmat,
         heights = rep(c(graphics::lcm(0.8), 1), times = nc)
       )
+      padding_top <- 0.8
     }
 
     graphics::par(
@@ -211,10 +233,9 @@ plot_slices <- function(
     on.exit({ do.call(graphics::par, oldpar) })
   }
 
-
   # Calculate plt
   pin <- graphics::par("din")
-  pin[[1]] <- (pin[[1]] - 0.8 / 2.54) / nc / 3
+  pin[[1]] <- (pin[[1]] - padding_left / 2.54) / nc / canvas_ratio
   pin[[2]] <- pin[[2]] / nr
   if(pin[[1]] > pin[[2]]) {
     ratio <- pin[[2]] / pin[[1]]

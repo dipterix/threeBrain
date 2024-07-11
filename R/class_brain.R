@@ -925,6 +925,7 @@ Brain2 <- R6::R6Class(
         graphics::points(0, 0, pch = 20, col = electrode_color,
                          cex = electrode_size)
       },
+      device_init = NULL,
       save_to = NULL, one_plot = is.null(save_to), width = 12, height = 4) {
       # DIPSAUS DEBUG START
       # self <- raveio::rave_brain('demo/DemoSubject')
@@ -1006,7 +1007,7 @@ Brain2 <- R6::R6Class(
 
       if(length(save_to) == 1 && isTRUE(is.character(save_to))) {
         if(endsWith(tolower(save_to), "png")) {
-          save_to <- sprintf("%s-%%04.png",
+          save_to <- sprintf("%s-%%04d.png",
                              gsub("[%0-9d]{0,}\\.png$", replacement = "",
                                   save_to, ignore.case = TRUE))
           grDevices::png(filename = save_to, width = width * 72,
@@ -1019,7 +1020,13 @@ Brain2 <- R6::R6Class(
                          title = "RAVE Slice Plots", bg = "black")
         }
         on.exit({ grDevices::dev.off() })
+
       }
+      if(is.function(device_init)) {
+        device_init()
+      }
+
+
 
       if( one_plot ) {
         plot_idx <- list(plot_idx)
