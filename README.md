@@ -9,7 +9,7 @@
 <!-- badges: end -->
 
 <!-- demo static: start -->
-[<img src="https://github.com/dipterix/threeBrain/blob/master/docs/demo.gif?raw=true" width="100%" />](https://youtu.be/dSxJqBiw3sk)
+[<img src="https://github.com/dipterix/threeBrain/blob/master/adhoc/demo.gif?raw=true" width="100%" />](https://youtu.be/dSxJqBiw3sk)
 
 
 
