@@ -77,6 +77,7 @@ ElectrodePrototype <- R6::R6Class(
     .normal = NULL,
     .texture_size = NULL,
     .channel_map = NULL,
+    .marker_map = NULL,
     .channel_numbers = NULL,
     .contact_center = NULL,
     .contact_sizes = NULL,
@@ -106,6 +107,7 @@ ElectrodePrototype <- R6::R6Class(
     fix_outline = TRUE,
 
     model_rigid = TRUE,
+    viewer_options = list(),
 
     .last_texture = NULL,
     initialize = function( type, n_vertices = 4 ) {
@@ -124,6 +126,10 @@ ElectrodePrototype <- R6::R6Class(
 
     copy = function( other ) {
       self$from_list( other$as_list() )
+    },
+
+    set_viewer_options = function(opt) {
+      self$viewer_options <- as.list(opt)
     },
 
     set_transform = function( m44, byrow = TRUE ) {
@@ -348,6 +354,17 @@ ElectrodePrototype <- R6::R6Class(
       }
     },
 
+    set_marker_map = function(marker_map) {
+      # only for visualization purposes
+      if(!missing(marker_map)) {
+        if(!is.null(marker_map)) {
+          marker_map <- as_row_matrix(marker_map, nr = 4, storage_mode = "integer")
+          marker_map[ is.na(marker_map) | marker_map < 1 | marker_map > private$.texture_size ] <- NA
+        }
+        private$.marker_map <- marker_map
+      }
+    },
+
     set_contact_sizes = function( sizes ) {
       if(!is.numeric(sizes)) {
         warning("Contact sizes must be numeric (mm).")
@@ -479,14 +496,31 @@ ElectrodePrototype <- R6::R6Class(
         re <- array(value, dim = dim)
       } else {
         re <- array(NA, dim = dim)
+
+        # ensure markers
+        if(!is.null(private$.marker_map)) {
+          n_iters <- ncol(private$.marker_map)
+          for(ii in seq_len(n_iters)) {
+            map <- private$.marker_map[, ii]
+            if(!anyNA(map)) {
+              i <- (map[[1]] - 1) + seq_len(map[[3]])
+              i[i > dim[[1]]] <- i[i > dim[[1]]] - dim[[1]]
+              j <- (map[[2]] - 1) + seq_len(map[[4]])
+              j[j > dim[[2]]] <- j[j > dim[[2]]] - dim[[2]]
+              re[ i, j ] <- 0
+            }
+          }
+        }
+
         n_channels <- ncol(private$.channel_map)
         for(ii in seq_len(n_channels)) {
           map <- private$.channel_map[, ii]
           if(!anyNA(map)) {
-            re[
-              (map[[1]] - 1) + seq_len(map[[3]]),
-              (map[[2]] - 1) + seq_len(map[[4]])
-            ] <- value[[ii]]
+            i <- (map[[1]] - 1) + seq_len(map[[3]])
+            i[i > dim[[1]]] <- i[i > dim[[1]]] - dim[[1]]
+            j <- (map[[2]] - 1) + seq_len(map[[4]])
+            j[j > dim[[2]]] <- j[j > dim[[2]]] - dim[[2]]
+            re[ i, j ] <- value[[ii]]
           }
         }
         # idx <- private$.channel_map[1, ] + dim[[1]] * (private$.channel_map[2, ] - 1L)
@@ -495,10 +529,11 @@ ElectrodePrototype <- R6::R6Class(
         #   re[idx[idx_valid]] <- value[idx_valid]
         # }
       }
+
       if(is.factor(value)) {
-        attr(re, "levels") <- levels(value)
+        attr(re, "levels") <- unique(c(levels(value), "0"))
       } else if(is.character(value)) {
-        attr(re, "levels") <- sort(unique(unlist(value)))
+        attr(re, "levels") <- unique(c(sort(unique(unlist(value))), "0"))
       }
       self$.last_texture <- re
       if(plot) {
@@ -594,6 +629,7 @@ ElectrodePrototype <- R6::R6Class(
         normal = as.vector(private$.normal),
         texture_size = self$texture_size,
         channel_map = as.vector(private$.channel_map),
+        marker_map = as.vector(private$.marker_map),
         channel_numbers = as.vector(private$.channel_numbers),
         contact_center = as.vector(private$.contact_center),
         contact_sizes = self$contact_sizes,
@@ -605,7 +641,8 @@ ElectrodePrototype <- R6::R6Class(
         model_rigid = self$model_rigid,
         model_up = self$model_up,
         world_up = private$.world_up,
-        default_interpolation = self$default_interpolation
+        default_interpolation = self$default_interpolation,
+        viewer_options = self$viewer_options
       )
     },
     from_list = function(li) {
@@ -621,6 +658,7 @@ ElectrodePrototype <- R6::R6Class(
       self$set_normal(li$normal)
       self$set_texture_size(li$texture_size)
       self$set_channel_map(li$channel_map, li$contact_center)
+      self$set_marker_map(li$marker_map)
       self$set_contact_channels(li$channel_numbers)
       self$set_contact_sizes(li$contact_sizes)
       if(length(li$model_control_points)) {
@@ -648,6 +686,7 @@ ElectrodePrototype <- R6::R6Class(
 
       self$default_interpolation <- li$default_interpolation
       self$model_rigid <- !isFALSE(li$model_rigid)
+      self$set_viewer_options(li$viewer_options)
       self
     },
     as_json = function(to_file = NULL, ...) {
@@ -864,6 +903,7 @@ ElectrodePrototype <- R6::R6Class(
     normal = function() { private$.normal },
     texture_size = function() { private$.texture_size },
     channel_map = function() { private$.channel_map },
+    # marker_map = function() { private$.marker_map },
     transform = function() { private$.transform },
     control_points = function() {
       if( !length(private$.model_control_points) ) { return(NULL) }

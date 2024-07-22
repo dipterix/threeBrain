@@ -15,6 +15,7 @@ seeg_prototype(
   description = NULL,
   dry_run = FALSE,
   default_interpolation = NULL,
+  viewer_options = NULL,
   overwrite = FALSE
 )
 }
@@ -43,6 +44,10 @@ localization, default is \code{1} (inner-most target contact)}
 
 \item{default_interpolation}{default interpolation string for electrode
 localization}
+
+\item{viewer_options}{list of viewer options; this should be a list of
+key-value pairs where the keys are the controller names and values are the
+corresponding values when users switch to localizing the electrode group}
 
 \item{overwrite}{whether to overwrite existing configuration file; default
 is false, which throws a warning when duplicated}

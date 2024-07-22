@@ -19,6 +19,9 @@
 #' is false, which throws a warning when duplicated
 #' @param default_interpolation default interpolation string for electrode
 #' localization
+#' @param viewer_options list of viewer options; this should be a list of
+#' key-value pairs where the keys are the controller names and values are the
+#' corresponding values when users switch to localizing the electrode group
 #' @returns A electrode shaft geometry prototype; the configuration file is
 #' saved to 'RAVE' 3rd-party repository.
 #'
@@ -58,6 +61,7 @@ seeg_prototype <- function(
     fix_contact = 1, overall_length = 200,
     description = NULL, dry_run = FALSE,
     default_interpolation = NULL,
+    viewer_options = NULL,
     overwrite = FALSE) {
 
   # DIPSAUS DEBUG START
@@ -229,7 +233,9 @@ seeg_prototype <- function(
     model_direction = c(0, 0, 1),
     model_rigid = FALSE,
 
-    default_interpolation = default_interpolation
+    default_interpolation = default_interpolation,
+
+    viewer_options = as.list(viewer_options)
   )
 
   proto <- ElectrodePrototype$new("")$from_list(config)

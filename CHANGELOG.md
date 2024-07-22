@@ -1,6 +1,13 @@
 ## Changes since last CRAN release
-* `ef1e293d (HEAD -> master)` [_`dipterix`_]: Plotting slices have correct margins with partial plot
-* `4bd0352c (origin/master, origin/HEAD)` [_`dipterix`_]: Allow users to drag and drop value tables
+* `12970a6b (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed the `GLTF` not showing inner-most contact issue
+* `c8522cd7` [_`dipterix`_]: Removed `devel` version of `ravetools` from check
+* `11bb99e8` [_`dipterix`_]: Update `Github` action check script
+* `cbeac8bc` [_`dipterix`_]: Added rhub check
+* `b302dd71` [_`dipterix`_]: minor change
+* `02880b44` [_`dipterix`_]: Ready for a CRAN release
+* `9efec0cb` [_`dipterix`_]: Removed `doc` folder
+* `bae88ccb` [_`dipterix`_]: Plotting slices have correct margins with partial plot
+* `4bd0352c` [_`dipterix`_]: Allow users to drag and drop value tables
 * `10ac71ad` [_`dipterix`_]: Allow users to hide crosshairs
 * `05836f94` [_`dipterix`_]: Allow `shiny` app to change current color map via proxy
 * `fbca42f4` [_`dipterix`_]: Allows drag-drop electrode color files; Added `set_electrode_data` to brain proxy class, allowing `shiny` applications to change the electrode data, set color palettes, and set value ranges in the same call
