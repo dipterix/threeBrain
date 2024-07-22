@@ -1,5 +1,8 @@
 ## Changes since last CRAN release
-* `12970a6b (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed the `GLTF` not showing inner-most contact issue
+* `249626d4 (HEAD -> master)` [_`dipterix`_]: Prototype `set_transform_from_points` now tries to set rotation from transform `Euler` angle when the prototype guided marker is 1-ranked (electrode strip, `DBS` electrodes)
+* `7529aa91` [_`dipterix`_]: Allowed electrode prototype to display markers; added viewer options for localization
+* `b35e7dc1` [_`dipterix`_]: Changed electrode direction helper to be displayed inside of crosshair group; Allowed side panel to be displayed with atlas column-row-slice; Added controller to display symmetric continuous color map for volumes
+* `12970a6b (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed the `GLTF` not showing inner-most contact issue
 * `c8522cd7` [_`dipterix`_]: Removed `devel` version of `ravetools` from check
 * `11bb99e8` [_`dipterix`_]: Update `Github` action check script
 * `cbeac8bc` [_`dipterix`_]: Added rhub check

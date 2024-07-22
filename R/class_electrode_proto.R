@@ -236,13 +236,53 @@ ElectrodePrototype <- R6::R6Class(
         }
       }
 
+      # check rank of the model
+      qr_decomp <- qr(m_cp)
+
+      if( qr_decomp$rank == 1 && sum((self$model_direction) ^ 2) > 0.5 ) {
+        # we need to account for rotations along `self$model_direction`
+        model_z <- normalize_vector3( self$model_direction )
+        model_x <- normalize_vector3( cross_prod(self$model_up, model_z) )
+        model_y <- normalize_vector3( cross_prod(model_z, model_x) )
+        basis <- cbind(model_x, model_y, model_z)
+        m33 <- solve(m44[1:3, 1:3]) %*% self$transform[1:3, 1:3] %*% solve(basis)
+        m33[m33 < -1] <- -1
+        m33[m33 > 1] <- 1
+
+        # rotation: euler angle from ZYX order
+        a_y <- asin( - m33[3, 1] )
+
+        if ( abs( a_y ) < 0.9999999 ) {
+
+          a_x = atan2( m33[3, 2], m33[3, 3] );
+          a_z = atan2( m33[2, 1], m33[1, 1] );
+
+        } else {
+
+          a_x = 0;
+          a_z = atan2( - m33[1, 2], m33[2, 2] );
+
+        }
+
+        euler_z <- matrix(
+          nrow = 3, byrow = TRUE,
+          c(
+            cos( a_z ), - sin( a_z ), 0,
+            sin( a_z ), cos( a_z ),   0,
+            0, 0, 1
+          )
+        )
+
+
+        m33 <- m44[1:3, 1:3] %*% euler_z %*% basis
+        m44[1:3, 1:3] <- m33
+
+      }
+
       if( length(m_fixed) ) {
         m44[1:3, 4] <- 0
         m44[1:3, 4] <- t_fixed - (m44 %*% c(m_fixed, 1))[1:3]
       }
-
-      # check rank of the model
-      qr_decomp <- qr(m_cp)
 
       if(length(up) != 3) {
         up <- private$.world_up
@@ -671,9 +711,11 @@ ElectrodePrototype <- R6::R6Class(
       }
       self$model_direction <- li$model_direction
       self$model_up <- li$model_up
+
       if(length(li$world_control_points) >= 6) {
         tcp <- matrix(data = li$world_control_points, nrow = 3L, dimnames = NULL)
         tryCatch({
+          self$set_transform(li$transform)
           self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ], up = li$world_up)
         }, error = function(e) {
           warning(e)
@@ -725,6 +767,7 @@ ElectrodePrototype <- R6::R6Class(
       if(length(other$world_control_points) >= 6) {
         tcp <- matrix(data = other$world_control_points, nrow = 3L, dimnames = NULL)
         tryCatch({
+          self$set_transform(other$transform)
           self$set_transform_from_points(x = tcp[1, ], y = tcp[2, ], z = tcp[3, ], up = other$world_up)
         }, error = function(e) {
           warning(e)
