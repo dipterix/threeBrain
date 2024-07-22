@@ -106,7 +106,8 @@ register_get_key <- function(re){
 #' @export
 create_colormap <- function(
   gtype = c('surface', 'volume'), dtype = c('continuous', 'discrete'),
-  key, color, value, alpha = FALSE, con = NULL, auto_rescale = FALSE, ...
+  key, color, value, alpha = FALSE, con = NULL,
+  auto_rescale = FALSE, ...
 ) {
   gtype <- match.arg(gtype)
   dtype <- match.arg(dtype)
