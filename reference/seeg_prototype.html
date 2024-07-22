@@ -58,6 +58,7 @@ load_prototype to load existing prototype"></head><body>
 <span>  description <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dry_run <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  default_interpolation <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  viewer_options <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -109,6 +110,12 @@ localization, default is <code>1</code> (inner-most target contact)</p></dd>
 <dt id="arg-default-interpolation">default_interpolation<a class="anchor" aria-label="anchor" href="#arg-default-interpolation"></a></dt>
 <dd><p>default interpolation string for electrode
 localization</p></dd>
+
+
+<dt id="arg-viewer-options">viewer_options<a class="anchor" aria-label="anchor" href="#arg-viewer-options"></a></dt>
+<dd><p>list of viewer options; this should be a list of
+key-value pairs where the keys are the controller names and values are the
+corresponding values when users switch to localizing the electrode group</p></dd>
 
 
 <dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
