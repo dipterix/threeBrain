@@ -239,7 +239,10 @@ ElectrodePrototype <- R6::R6Class(
       # check rank of the model
       qr_decomp <- qr(m_cp)
 
-      if( qr_decomp$rank == 1 && sum((self$model_direction) ^ 2) > 0.5 ) {
+      if(
+        qr_decomp$rank == 1 &&
+        sum(cross_prod(self$model_direction, self$model_up) ^ 2) > 0.5
+      ) {
         # we need to account for rotations along `self$model_direction`
         model_z <- normalize_vector3( self$model_direction )
         model_x <- normalize_vector3( cross_prod(self$model_up, model_z) )

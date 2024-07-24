@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `18df6e14 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Bump `dev` version
+* `8a7d56e6 (HEAD -> master)` [_`dipterix`_]: Fixed a singular matrix bug when the electrode prototype `up` vector is zero or is parallel with the model direction
+* `dd16370a (origin/master, origin/HEAD)` [_`dipterix`_]: Allowed the surface mapped electrodes to be snapped to the surface if the surface world matrix is not identity; Force the inflated brain to have offset positions
+* `18df6e14` [_`dipterix`_]: Bump `dev` version
 * `074adfb1` [_`dipterix`_]: Added `DBS` electrode prototype `BSC-DB-2202`
 * `00ba2111` [_`dipterix`_]: Prototype `set_transform_from_points` now tries to set rotation from transform `Euler` angle when the prototype guided marker is 1-ranked (electrode strip, `DBS` electrodes)
 * `7529aa91` [_`dipterix`_]: Allowed electrode prototype to display markers; added viewer options for localization
