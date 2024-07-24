@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `edb2162f (HEAD -> master)` [_`dipterix`_]: Added `DBS` electrode prototype `BSC-DB-2202`
-* `00ba2111 (origin/master, origin/HEAD)` [_`dipterix`_]: Prototype `set_transform_from_points` now tries to set rotation from transform `Euler` angle when the prototype guided marker is 1-ranked (electrode strip, `DBS` electrodes)
+* `18df6e14 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Bump `dev` version
+* `074adfb1` [_`dipterix`_]: Added `DBS` electrode prototype `BSC-DB-2202`
+* `00ba2111` [_`dipterix`_]: Prototype `set_transform_from_points` now tries to set rotation from transform `Euler` angle when the prototype guided marker is 1-ranked (electrode strip, `DBS` electrodes)
 * `7529aa91` [_`dipterix`_]: Allowed electrode prototype to display markers; added viewer options for localization
 * `b35e7dc1` [_`dipterix`_]: Changed electrode direction helper to be displayed inside of crosshair group; Allowed side panel to be displayed with atlas column-row-slice; Added controller to display symmetric continuous color map for volumes
 * `12970a6b` [_`dipterix`_]: Fixed the `GLTF` not showing inner-most contact issue

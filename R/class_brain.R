@@ -158,6 +158,11 @@ Brain2 <- R6::R6Class(
         surface <- BrainSurface$new(subject_code = subject_code, surface_type = surface_name, mesh_type = 'fs',
                                     left_hemisphere = surf_lh, right_hemisphere = surf_rh)
 
+        if( startsWith(surface_name, "inflated") ) {
+          surf_lh$position <- c(-45, 0, 0)
+          surf_rh$position <- c(45, 0, 0)
+        }
+
 
       }
 
