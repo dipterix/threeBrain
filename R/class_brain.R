@@ -158,12 +158,14 @@ Brain2 <- R6::R6Class(
         surface <- BrainSurface$new(subject_code = subject_code, surface_type = surface_name, mesh_type = 'fs',
                                     left_hemisphere = surf_lh, right_hemisphere = surf_rh)
 
-        if( startsWith(surface_name, "inflated") ) {
-          surf_lh$position <- c(-45, 0, 0)
-          surf_rh$position <- c(45, 0, 0)
-        }
+      }
 
-
+      if( startsWith(surface$surface_type, "inflated") ) {
+        surface$left_hemisphere$position <- c(-50, 0, 0)
+        surface$right_hemisphere$position <- c(50, 0, 0)
+      } else if ( startsWith(surface$surface_type, "sphere") ) {
+        surface$left_hemisphere$position <- c(-128, 0, 0)
+        surface$right_hemisphere$position <- c(128, 0, 0)
       }
 
       if( !isTRUE(surface$has_hemispheres) ) {
@@ -173,16 +175,6 @@ Brain2 <- R6::R6Class(
 
       if( surface$mesh_type == 'std.141' ){
         surface$set_group_position( self$scanner_center )
-
-        offset_x <- switch (
-          surface$surface_type,
-          'inflated' = { offset_x <- 50 },
-          'sphere' = { offset_x <- 128 },
-          { 0 }
-        )
-        surface$left_hemisphere$position <- c(-offset_x, 0, 0)
-        surface$right_hemisphere$position <- c(offset_x, 0, 0)
-
       }else if( surface$mesh_type == 'fs' ){
         surface$set_group_position( 0, 0, 0 )
       }
