@@ -1,6 +1,13 @@
 ## Changes since last CRAN release
-* `8a7d56e6 (HEAD -> master)` [_`dipterix`_]: Fixed a singular matrix bug when the electrode prototype `up` vector is zero or is parallel with the model direction
-* `dd16370a (origin/master, origin/HEAD)` [_`dipterix`_]: Allowed the surface mapped electrodes to be snapped to the surface if the surface world matrix is not identity; Force the inflated brain to have offset positions
+* `72e4487f (HEAD -> master)` [_`dipterix`_]: Added internal test code for depth mapping
+* `d0f93db6` [_`dipterix`_]: Surface mapping has been implemented for depth electrodes, with dynamic offset threshold
+* `8f9ab813` [_`dipterix`_]: `surface_offset` has been added to electrode field
+* `b9ef710d` [_`dipterix`_]: `cvs_avg35_inMNI152` has the correct `talXFM` (scanner to `MNI305`) now
+* `bb328b96` [_`dipterix`_]: Added `load_mesh` to surface object so users can load surface mesh for computation in `R`; Added internal `calculate_distances` to compute the distances from a point to its projection to a list of mesh
+* `02165822` [_`dipterix`_]: `DistanceShifted` in electrode table is taken into account and will be passed to electrode instances
+* `f703c24b` [_`dipterix`_]: Inflated surfaces have offset by default
+* `988fd65e (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed a singular matrix bug when the electrode prototype `up` vector is zero or is parallel with the model direction
+* `dd16370a` [_`dipterix`_]: Allowed the surface mapped electrodes to be snapped to the surface if the surface world matrix is not identity; Force the inflated brain to have offset positions
 * `18df6e14` [_`dipterix`_]: Bump `dev` version
 * `074adfb1` [_`dipterix`_]: Added `DBS` electrode prototype `BSC-DB-2202`
 * `00ba2111` [_`dipterix`_]: Prototype `set_transform_from_points` now tries to set rotation from transform `Euler` angle when the prototype guided marker is 1-ranked (electrode strip, `DBS` electrodes)
