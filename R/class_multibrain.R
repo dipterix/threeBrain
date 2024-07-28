@@ -104,6 +104,16 @@ MultiBrain2 <- R6::R6Class(
       self$template_object <- threeBrain(
         path = template_path, subject_code = template_subject,
         surface_types = surface_types, template_subject = template_subject)
+
+      # special treatments
+      if( isTRUE(template_subject %in% "cvs_avg35_inMNI152") ) {
+        # cvs_avg35_inMNI152 should sit in MNI152 space. However,
+        # it seems cvs_avg35_inMNI152 is not MNI152 aligned,
+        # possibly using non standard file or template c (c is different than
+        # a/b)
+        self$template_object$xfm <- solve(MNI305_to_MNI152)
+      }
+
     },
 
     add_subject = function(x){
