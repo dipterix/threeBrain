@@ -10,6 +10,7 @@ ElectrodeGeom <- R6::R6Class(
 
     # Is subcortical electrode?
     is_surface_electrode = FALSE,
+    surface_offset = 0.0,
 
     # Do you want to map to the template electrode? for initialization-only
     use_template = FALSE,
@@ -123,7 +124,8 @@ ElectrodeGeom <- R6::R6Class(
           sub_cortical = !self$is_surface_electrode,
           search_geoms = self$hemisphere,
           number = c(self$number, NA)[[1]],
-          fixed_color = fixed_color
+          fixed_color = fixed_color,
+          surface_offset = self$surface_offset
         )
       )
       return( re )
