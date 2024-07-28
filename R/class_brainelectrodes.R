@@ -594,6 +594,7 @@ BrainElectrodes <- R6::R6Class(
         nearest_vertex <- row$VertexNumber
         mni_305 <- c( row$MNI305_x, row$MNI305_y, row$MNI305_z )
         sphere_xyz <- c( row$Sphere_x, row$Sphere_y, row$Sphere_z )
+        tkr_ras <- c(row$Coord_x, row$Coord_y, row$Coord_z)
         if(length(mni_305)!=3){ mni_305 <- c(0,0,0) }
         surf_type <- c(row$SurfaceType, 'pial')[1]
         if( is.na(surf_type) ){ surf_type <- 'NA' }
@@ -602,7 +603,7 @@ BrainElectrodes <- R6::R6Class(
 
         el <- ElectrodeGeom$new(
           name = sprintf('%s, %d - %s', subject_code, row$Electrode, row$Label),
-          position = c(row$Coord_x, row$Coord_y, row$Coord_z),
+          position = tkr_ras,
           radius = radius, group = self$group, subtype = "SphereGeometry", prototype = proto)
         el$number <- row$Electrode
         el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
@@ -614,6 +615,18 @@ BrainElectrodes <- R6::R6Class(
         el$surface_type <- surf_type
         el$subject_code <- subject_code
         el$set_value( value = as.character(subject_code), name = '[Subject]' )
+
+        if( length(row$DistanceShifted) == 1 && is.numeric(row$DistanceShifted) ) {
+          el$surface_offset <- row$DistanceShifted
+        } else {
+          tkr_orig <- c(row$OrigCoord_x, row$OrigCoord_y, row$OrigCoord_z)
+          if( length(tkr_orig) == 3 ) {
+            el$surface_offset <- sqrt(sum((tkr_orig - tkr_ras)^2))
+          } else {
+            el$surface_offset <- 0
+          }
+        }
+
         self$objects[[ row$Electrode ]] <- el
         return()
       }
@@ -676,6 +689,21 @@ BrainElectrodes <- R6::R6Class(
           el$subject_code <- subject_code
 
           el$set_value( value = as.character(subject_code), name = '[Subject]' )
+
+
+          # if( length(sub$DistanceShifted) > 0 && is.numeric(sub$DistanceShifted) ) {
+          #   el$surface_offset <- sub$DistanceShifted[sel]
+          # } else {
+          #   tkr_orig <- cbind(sub$OrigCoord_x, sub$OrigCoord_y, sub$OrigCoord_z)
+          #   if( length(tkr_orig) == 3 * nrow(sub) ) {
+          #     tkr_orig <- tkr_orig[sel, , drop = FALSE]
+          #     tkr_ras <- cbind(sub$Coord_x[sel], sub$Coord_y[sel], sub$Coord_z[sel])
+          #     el$surface_offset <- sqrt(rowSums((tkr_orig - tkr_ras)^2))
+          #   } else {
+          #     el$surface_offset <- rep(0, sum(sel))
+          #   }
+          # }
+
           self$objects2[[ length(self$objects2) + 1 ]] <- el
         } else {
           proto <- NULL
