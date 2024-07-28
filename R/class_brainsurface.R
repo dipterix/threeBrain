@@ -97,6 +97,19 @@ BrainSurface <- R6::R6Class(
       }
 
       invisible( self )
+    },
+
+    load_mesh = function(hemisphere = c("left", "right")) {
+      hemisphere <- match.arg(hemisphere)
+      if(startsWith(hemisphere, "l")) {
+        hemisphere <- "Left"
+      } else {
+        hemisphere <- "Right"
+      }
+      freesurferformats::read.fs.surface(self$group$group_data[[sprintf(
+        "free_vertices_FreeSurfer %s Hemisphere - %s (%s)",
+        hemisphere, self$surface_type, self$subject_code
+      )]]$absolute_path)
     }
 
   ),
@@ -119,3 +132,39 @@ BrainSurface <- R6::R6Class(
   )
 )
 
+
+calculate_distances <- function(positions, mesh_list) {
+  # mesh_left <- pial_left
+  # positions <- c(0,0,0)
+
+  if(!is.matrix(positions)) {
+    positions <- matrix(positions, ncol = 3, nrow = 1)
+  }
+
+  structure(
+    names = names(mesh_list),
+    lapply(mesh_list, function(mesh) {
+      if(is.null(mesh)) { return(NULL) }
+
+      re <- apply(positions, 1, function(pos) {
+        if(sum(pos^2) == 0) { return(c(NA, NA)) }
+        dist_sq <- colSums((t(mesh$vertices) - pos)^2)
+        idx <- which.min(dist_sq)
+        c(idx, dist_sq[[ idx ]])
+      })
+
+      index <- re[1, ]
+      sel <- is.na(index)
+      index[sel] <- 1
+      vert <- mesh$vertices[index, , drop = FALSE]
+
+      vert[sel, ] <- NA
+
+      list(
+        position = vert,
+        distance = re[2, ],
+        index = re[1, ]
+      )
+    })
+  )
+}
