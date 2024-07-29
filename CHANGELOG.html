@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,9 +40,23 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>8a7d56e6 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Fixed a singular matrix bug when the electrode prototype <code>up</code> vector is zero or is parallel with the model direction</li>
+<code>72e4487f (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Added internal test code for depth mapping</li>
 <li>
-<code>dd16370a (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Allowed the surface mapped electrodes to be snapped to the surface if the surface world matrix is not identity; Force the inflated brain to have offset positions</li>
+<code>d0f93db6</code> [<em><code>dipterix</code></em>]: Surface mapping has been implemented for depth electrodes, with dynamic offset threshold</li>
+<li>
+<code>8f9ab813</code> [<em><code>dipterix</code></em>]: <code>surface_offset</code> has been added to electrode field</li>
+<li>
+<code>b9ef710d</code> [<em><code>dipterix</code></em>]: <code>cvs_avg35_inMNI152</code> has the correct <code>talXFM</code> (scanner to <code>MNI305</code>) now</li>
+<li>
+<code>bb328b96</code> [<em><code>dipterix</code></em>]: Added <code>load_mesh</code> to surface object so users can load surface mesh for computation in <code>R</code>; Added internal <code>calculate_distances</code> to compute the distances from a point to its projection to a list of mesh</li>
+<li>
+<code>02165822</code> [<em><code>dipterix</code></em>]: <code>DistanceShifted</code> in electrode table is taken into account and will be passed to electrode instances</li>
+<li>
+<code>f703c24b</code> [<em><code>dipterix</code></em>]: Inflated surfaces have offset by default</li>
+<li>
+<code>988fd65e (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Fixed a singular matrix bug when the electrode prototype <code>up</code> vector is zero or is parallel with the model direction</li>
+<li>
+<code>dd16370a</code> [<em><code>dipterix</code></em>]: Allowed the surface mapped electrodes to be snapped to the surface if the surface world matrix is not identity; Force the inflated brain to have offset positions</li>
 <li>
 <code>18df6e14</code> [<em><code>dipterix</code></em>]: Bump <code>dev</code> version</li>
 <li>
