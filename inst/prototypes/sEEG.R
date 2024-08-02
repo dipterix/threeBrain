@@ -247,3 +247,34 @@ for( n_contacts in c(15, 18) ) {
     overwrite = TRUE
   )
 }
+
+# ---- BostonScientific DBS-BSC-DB-2201 electrode ------------
+probe_head <- 1.5 # Not sure about this one
+width <- 1.5
+contact_spacing <- 2
+overall_length <- 400
+diameter <- 1.3
+n_contacts <- 8
+
+contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
+
+proto <- seeg_prototype(
+  type = "DBS-BSC-DB-2201",
+  description = c(
+    "Boston Scientific DB-2201 (8 contacts)",
+    "Contact length   : 1.5 mm",
+    "Central spacing  : 2   mm",
+    "Tip size         : 1.5 mm(*)",
+    "Diameter         : 1.3 mm"
+  ),
+  center_position = contacts,
+  contact_widths = width,
+  diameter = diameter,
+  overall_length = overall_length,
+  default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+  overwrite = TRUE
+)
+
+proto$model_rigid <- TRUE
+proto$save_as_default(force = TRUE)
