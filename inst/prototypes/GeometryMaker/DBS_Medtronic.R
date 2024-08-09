@@ -68,41 +68,41 @@ description <- paste(c(
 
 
 # ---- Sensight BM33015 (1-3-3-1), 1.5mm size with 1.5 edge-to-edge spacing ----
-
-# marker information
-markers <- data.frame(
-  width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 0.5, 0.5, 0.5,     0.5, 0.5, 0.5, 0.5),
-
-  # The distance between tip to the edge of the contact is around 1mm?
-  # 1mm, the 2nd row is around 1+1.5+0.5=3, ...
-  distance_to_tip = 1 + c(
-    0,   3,   3,   3,   6,   6,   6,   9,           15.5,16,16.5,17,        18,18.5,19,19.5),
-  # counter-clockwise from proximal end
-  angle_start = c(
-    0,  20, 140, 260,  20, 140, 260,   0,           150, 165, 180, 195,     30,30,30,30),
-  angle_end = c(
-    360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45,60,75,90),
-  is_contact = c(
-    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
-  # order = 1 will be fixed, 0 ignored
-  anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0,0,0,0,                0,0,0,0)
-)
-
-overall_length <- 420 # 420 mm
-
-# Lead diameters mm
-diameter <- 1.36
-
-type <- "DBS-Medtronic-BM33015"
-description <- paste(c(
-  "Medtronic Sensight BM33015 (8 contacts)",
-  "Design           : 1-3-3-1",
-  "Contact length   : 1.5  mm",
-  "Contact spacing  : 1.5  mm",
-  "Tip size         : 1.0  mm*",
-  sprintf("Diameter         : %.2f mm", diameter)
-), collapse = "\n      ")
-cat(description)
+#
+# # marker information
+# markers <- data.frame(
+#   width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 0.5, 0.5, 0.5,     0.5, 0.5, 0.5, 0.5),
+#
+#   # The distance between tip to the edge of the contact is around 1mm?
+#   # 1mm, the 2nd row is around 1+1.5+0.5=3, ...
+#   distance_to_tip = 1 + c(
+#     0,   3,   3,   3,   6,   6,   6,   9,           15.5,16,16.5,17,        18,18.5,19,19.5),
+#   # counter-clockwise from proximal end
+#   angle_start = c(
+#     0,  20, 140, 260,  20, 140, 260,   0,           150, 165, 180, 195,     30,30,30,30),
+#   angle_end = c(
+#     360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45,60,75,90),
+#   is_contact = c(
+#     TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+#   # order = 1 will be fixed, 0 ignored
+#   anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0,0,0,0,                0,0,0,0)
+# )
+#
+# overall_length <- 420 # 420 mm
+#
+# # Lead diameters mm
+# diameter <- 1.36
+#
+# type <- "DBS-Medtronic-BM33015"
+# description <- paste(c(
+#   "Medtronic Sensight BM33015 (8 contacts)",
+#   "Design           : 1-3-3-1",
+#   "Contact length   : 1.5  mm",
+#   "Contact spacing  : 1.5  mm",
+#   "Tip size         : 1.0  mm*",
+#   sprintf("Diameter         : %.2f mm", diameter)
+# ), collapse = "\n      ")
+# cat(description)
 
 # ---- Start creating mesh ---------------------------------------------------
 

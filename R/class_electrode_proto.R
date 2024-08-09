@@ -31,7 +31,7 @@ register_points_rigid <- function(m_cp, t_cp) {
   t_v <- svd$v
   m_v <- svd$u
 
-  if( det(m_v) * det(m_v) < 0 ) {
+  if( det(t_v) * det(m_v) < 0 ) {
     # need to change hands because the eigenvalue is 0 and U/V may change hands
     t_v[,3] <- -t_v[,3]
   }
