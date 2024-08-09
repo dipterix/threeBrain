@@ -1,28 +1,60 @@
+# ---- specs ----
+
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7502302/
+# https://trajectoryguide.greydongilmore.com/static/medtronic_sensight_B33005_B33015_manual_2021.pdf
+
+# The lead has electrodes on the distal end; the proximal end fits into an 8-
+#   conductor connector.
+
+# The Model B33005 lead has narrow (0.5 mm) electrode spacing, or the
+# spacing between each level of electrodes (Figure 1).
+# The Model B33015 lead has wide (1.5 mm) electrode spacing, or the
+# spacing between each level of electrodes (Figure 2).
+
+# Electrode levels are numbered as 0, 1, 2, 3. Electrodes 0 and 3 are full
+# annular electrodes. The six electrodes at levels 1 and 2 consist of
+# electrode segments. When viewed from the proximal end of the lead,
+# the electrode segments are alphabetically ordered counterclockwise,
+# and identified as 1a, 1b, and 1c, and 2a, 2b, and 2c (Figure 3).
+
+# Expected lifetime           5 years
+# Conductor resistance        b,c Maximum 100 Ω for all lengths
+# Length                      33 cm, 42 cm
+# Lead diameter               1.36 mm
+# Shape Straight
+# Distal end                  8 electrodes
+# Electrode shape             Cylindrical
+# Distal tip distance         1.0 mm
+# Proximal end 8 contacts,    in-line
+# Lead contact spacing        2.2 mm
+# Stylet handle length        4.6 mm
 
 # ---- Sensight BM33005 (1-3-3-1), 1.5mm size with 0.5 edge-to-edge spacing ----
 
 # marker information
 markers <- data.frame(
-  width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 2.0),
+  width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 0.5, 0.5, 0.5,     0.5, 0.5, 0.5, 0.5),
 
   # The distance between tip to the edge of the contact is around 1mm?
   # 1mm, the 2nd row is around 1+1.5+0.5=3, ...
   distance_to_tip = 1 + c(
-      0,   2,   2,   2,   4,   4,   4,   6,  13),
+                                                    # dis                   # Proximal marker
+      0,   2,   2,   2,   4,   4,   4,   6,         10.5,11,11.5,12,        13,13.5,14,14.5),
+  # counter-clockwise from proximal end
   angle_start = c(
-      0,  20, 140, 260,  20, 140, 260,   0,  45),
+      0,  20, 260, 140,  20, 260, 140,   0,         270, 270, 270, 270,     85,60,45,30),
   angle_end = c(
-    360, 100, 220, 340, 100, 220, 340,   0,  75),
-  is_contact = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
+    360, 100, 340, 220, 100, 340, 220,   0,         330, 315, 300, 285,     90,90,90,90),
+  is_contact = c(
+    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE),
   # order = 1 will be fixed, 0 ignored
-  anchor_order = c(1, 0, 0, 0, 0, 0, 0, 0, 2)
+  anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0,0,0,0,                0,0,0,0)
 )
 
-overall_length <- 450 # 450 mm
+overall_length <- 420 # 420 mm
 
 # Lead diameters mm
-diameter <- 1.27
+diameter <- 1.36
 
 type <- "DBS-Medtronic-BM33005"
 description <- paste(c(
@@ -39,25 +71,27 @@ description <- paste(c(
 
 # marker information
 markers <- data.frame(
-  width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 2.0),
+  width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 0.5, 0.5, 0.5,     0.5, 0.5, 0.5, 0.5),
 
   # The distance between tip to the edge of the contact is around 1mm?
   # 1mm, the 2nd row is around 1+1.5+0.5=3, ...
   distance_to_tip = 1 + c(
-    0,   3,   3,   3,   6,   6,   6,   9,  16),
+    0,   3,   3,   3,   6,   6,   6,   9,           15.5,16,16.5,17,        18,18.5,19,19.5),
+  # counter-clockwise from proximal end
   angle_start = c(
-    0,  20, 140, 260,  20, 140, 260,   0,  45),
+    0,  20, 260, 140,  20, 260, 140,   0,           270, 270, 270, 270,     85,60,45,30),
   angle_end = c(
-    360, 100, 220, 340, 100, 220, 340,   0,  75),
-  is_contact = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
+    360, 100, 340, 220, 100, 340, 220,   0,         330, 315, 300, 285,     90,90,90,90),
+  is_contact = c(
+    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
   # order = 1 will be fixed, 0 ignored
-  anchor_order = c(1, 0, 0, 0, 0, 0, 0, 0, 2)
+  anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0,0,0,0,                0,0,0,0)
 )
 
-overall_length <- 450 # 450 mm
+overall_length <- 420 # 420 mm
 
 # Lead diameters mm
-diameter <- 1.27
+diameter <- 1.36
 
 type <- "DBS-Medtronic-BM33015"
 description <- paste(c(
@@ -160,7 +194,7 @@ positions <- rbind(0, cbind(pos_x, pos_y, pos_z), c(0, 0, overall_length))
 n_pos <- nrow(positions)
 # ---- UV --------------------------------------------------------------------
 disc_u <- seq(0, width_segments) / width_segments
-contact_tail_to_tip <- z_paths[[length(z_paths)]]
+contact_tail_to_tip <- z_paths[[length(z_paths)]] + max(z_resolution * 2, 0.5)
 z_v <- c(z_paths[-1] / contact_tail_to_tip, 2)
 
 uv <- rbind(

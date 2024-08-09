@@ -8,8 +8,9 @@
 markers <- data.frame(
   width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 1.5, 0.5),
   distance_to_tip = c(0, 2, 2, 2, 4, 4, 4, 6, 10, 10.5, 12),
-  angle_start = c(0, 20, 140, 260, 20, 140, 260, 0, 0, 30, 0),
-  angle_end = c(360, 100, 220, 340, 100, 220, 340, 0, 0, 90, 0),
+  # counter-clockwise from proximal end
+  angle_start = c(0, 20, 260, 140, 20, 260, 140, 0, 0, 30, 0),
+  angle_end = c(360, 100, 340, 220, 100, 340, 220, 0, 0, 90, 0),
   is_contact = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE),
   # order = 1 will be fixed, 0 ignored
   anchor_order = c(1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0)
