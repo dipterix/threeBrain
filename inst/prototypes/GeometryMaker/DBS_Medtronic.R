@@ -42,9 +42,9 @@ markers <- data.frame(
       0,   2,   2,   2,   4,   4,   4,   6,         10.5,11,11.5,12,        13,13.5,14,14.5),
   # counter-clockwise from proximal end
   angle_start = c(
-      0,  20, 260, 140,  20, 260, 140,   0,         270, 270, 270, 270,     85,60,45,30),
+      0,  20, 140, 260,  20, 140, 260,   0,         150, 165, 180, 195,     30,30,30,30),
   angle_end = c(
-    360, 100, 340, 220, 100, 340, 220,   0,         330, 315, 300, 285,     90,90,90,90),
+    360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45,60,75,90),
   is_contact = c(
     TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE),
   # order = 1 will be fixed, 0 ignored
@@ -79,9 +79,9 @@ markers <- data.frame(
     0,   3,   3,   3,   6,   6,   6,   9,           15.5,16,16.5,17,        18,18.5,19,19.5),
   # counter-clockwise from proximal end
   angle_start = c(
-    0,  20, 260, 140,  20, 260, 140,   0,           270, 270, 270, 270,     85,60,45,30),
+    0,  20, 140, 260,  20, 140, 260,   0,           150, 165, 180, 195,     30,30,30,30),
   angle_end = c(
-    360, 100, 340, 220, 100, 340, 220,   0,         330, 315, 300, 285,     90,90,90,90),
+    360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45,60,75,90),
   is_contact = c(
     TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
   # order = 1 will be fixed, 0 ignored
@@ -107,7 +107,7 @@ cat(description)
 # ---- Start creating mesh ---------------------------------------------------
 
 up_direction <- c(
-  sin( pi / 3 ), cos( pi / 3 ), 0
+  cos( pi / 3 ), sin( pi / 3 ), 0
 )
 
 # constants or fixed values
@@ -120,8 +120,8 @@ if(sum(up_direction^2) > 0) {
 
 # ---- Construct position ----------------------------------------------------
 # disc shape (first point points to anterior)
-x0 <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
-y0 <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
+x0 <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
+y0 <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
 
 # plot(x0, y0, pch = 20, asp = 1, xlab = "Left <---> Right", ylab = "P <---> A")
 # text(x0* 0.9, y0 * 0.9, labels = seq_along(x0) - 1, cex = 0.5)
@@ -271,8 +271,8 @@ contact_info <- lapply(seq_len(nrow(markers)), function(row_ii) {
     } else {
       w <- 360 - a0 + a1
     }
-    cx <- sin( (a00 + a01) / 360 * pi ) * radius
-    cy <- cos( (a00 + a01) / 360 * pi ) * radius
+    cx <- cos( (a00 + a01) / 360 * pi ) * radius
+    cy <- sin( (a00 + a01) / 360 * pi ) * radius
     r <- min(radius, cw / 2)
   }
 
@@ -374,3 +374,10 @@ proto$preview_3d()
 
 proto$save_as_default(force = TRUE)
 
+
+mesh = proto$as_mesh3d()
+mesh$material$back = "filled"
+self = proto
+ravetools::rgl_view({
+  ravetools::rgl_call("shade3d", mesh)
+})

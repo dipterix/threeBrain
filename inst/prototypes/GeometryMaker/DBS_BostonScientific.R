@@ -9,18 +9,18 @@ markers <- data.frame(
   width = c(1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.5, 1.5, 0.5),
   distance_to_tip = c(0, 2, 2, 2, 4, 4, 4, 6, 10, 10.5, 12),
   # counter-clockwise from proximal end
-  angle_start = c(0, 20, 260, 140, 20, 260, 140, 0, 0, 30, 0),
-  angle_end = c(360, 100, 340, 220, 100, 340, 220, 0, 0, 90, 0),
+  angle_start = c(0, 20, 140, 260, 20, 140, 260, 0, 0, 30, 0),
+  angle_end = c(360, 100, 220, 340, 100, 220, 340, 0, 0, 90, 0),
   is_contact = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE),
   # order = 1 will be fixed, 0 ignored
   anchor_order = c(1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0)
 )
 
-# cx <- sin( (a00 + a01) / 360 * pi ) * radius
-# cy <- cos( (a00 + a01) / 360 * pi ) * radius
+# cx <- cos( (a00 + a01) / 360 * pi ) * radius
+# cy <- sin( (a00 + a01) / 360 * pi ) * radius
 
 up_direction <- c(
-  sin( pi / 3 ), cos( pi / 3 ), 0
+  cos( pi / 3 ), sin( pi / 3 ), 0
 )
 
 overall_length <- 450 # 450 mm
@@ -38,8 +38,8 @@ if(sum(up_direction^2) > 0) {
 
 # ---- Construct position ----------------------------------------------------
 # disc shape (first point points to anterior)
-x0 <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
-y0 <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
+x0 <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
+y0 <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
 
 # plot(x0, y0, pch = 20, asp = 1, xlab = "Left <---> Right", ylab = "P <---> A")
 # text(x0* 0.9, y0 * 0.9, labels = seq_along(x0) - 1, cex = 0.5)
@@ -189,8 +189,8 @@ contact_info <- lapply(seq_len(nrow(markers)), function(row_ii) {
     } else {
       w <- 360 - a0 + a1
     }
-    cx <- sin( (a00 + a01) / 360 * pi ) * radius
-    cy <- cos( (a00 + a01) / 360 * pi ) * radius
+    cx <- cos( (a00 + a01) / 360 * pi ) * radius
+    cy <- sin( (a00 + a01) / 360 * pi ) * radius
     r <- min(radius, cw / 2)
   }
 

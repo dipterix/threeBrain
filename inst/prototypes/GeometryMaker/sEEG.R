@@ -252,12 +252,12 @@ for( n_contacts in c(15, 18) ) {
 probe_head <- 1.5 # Not sure about this one
 width <- 1.5
 contact_spacing <- 2
-overall_length <- 400
+overall_length <- 450
 diameter <- 1.3
 n_contacts <- 8
 
 contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
-overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
+# overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
 
 proto <- seeg_prototype(
   type = "DBS-BSC-DB-2201",
