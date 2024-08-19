@@ -214,6 +214,8 @@ index <- rbind(
   index_cap
 )
 
+index <- index[, c(1, 3, 2)]
+
 # ---- Texture mapping --------------------------------------------------------
 # 360 degrees
 texture_size <- c(360, ceiling(contact_tail_to_tip / z_resolution))

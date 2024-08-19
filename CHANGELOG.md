@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `6bb2ebf7 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: All the `DBS` electrode prototype maker uses natural `cos` for `x` and `sin` for `y`. However, this will cause electrodes to rely on rendering on back side (material)
+* `189fc172 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added `Abbott` segmented electrodes 6170-6173, with segmented electrodes clockwise viewing from proximal end
+* `7e6fc9a8` [_`dipterix`_]: Fixed a bug that may change electrode coordinate hand
+* `6bb2ebf7` [_`dipterix`_]: All the `DBS` electrode prototype maker uses natural `cos` for `x` and `sin` for `y`. However, this will cause electrodes to rely on rendering on back side (material)
 * `007aaa25` [_`dipterix`_]: Added missing prototype
 * `52bec836` [_`dipterix`_]: Fixed `BSC` and `Medtronic` electrode orientation (now is counter-clockwise when viewing from proximal end)
 * `8ce3bdee` [_`dipterix`_]: Added more spacings for `DBS` segmented contacts; added prototypes for `Medtronic` segmented electrodes

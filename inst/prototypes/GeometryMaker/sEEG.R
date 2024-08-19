@@ -278,3 +278,61 @@ proto <- seeg_prototype(
 
 proto$model_rigid <- TRUE
 proto$save_as_default(force = TRUE)
+
+
+# ---- sEEG-NeuroPace-DL-330/344-10/3.5 ---------------------------------------------
+
+# 3.5mm spacing
+probe_head <- 1.1
+width <- 2
+contact_spacing <- 3.5
+overall_length <- 440
+diameter <- 1.27
+n_contacts <- 4
+contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+proto <- seeg_prototype(
+  type = sprintf("sEEG-NeuroPace-DL-330_or_344-%.1f", contact_spacing),
+  description = c(
+    sprintf("NeuroPace sEEG - %d contacts", n_contacts),
+    sprintf("Contact length   : %.1f  mm", width),
+    sprintf("Central spacing  : %.1f  mm", contact_spacing),
+    sprintf("Tip size         : %.1f  mm", probe_head),
+    sprintf("Diameter         : %.2f mm", diameter)
+  ),
+  center_position = contacts,
+  contact_widths = width,
+  diameter = diameter,
+  overall_length = overall_length,
+  default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+  overwrite = TRUE
+)
+proto$model_rigid <- TRUE
+proto$save_as_default(force = TRUE)
+
+
+
+# 10mm spacing
+probe_head <- 1.1
+width <- 2
+contact_spacing <- 10
+overall_length <- 440
+diameter <- 1.27
+n_contacts <- 4
+contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+proto <- seeg_prototype(
+  type = sprintf("sEEG-NeuroPace-DL-330_or_344-%.0f", contact_spacing),
+  description = c(
+    sprintf("NeuroPace sEEG - %d contacts", n_contacts),
+    sprintf("Contact length   : %.1f  mm", width),
+    sprintf("Central spacing  : %.1f  mm", contact_spacing),
+    sprintf("Tip size         : %.1f  mm", probe_head),
+    sprintf("Diameter         : %.2f mm", diameter)
+  ),
+  center_position = contacts,
+  contact_widths = width,
+  diameter = diameter,
+  overall_length = overall_length,
+  default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+  overwrite = TRUE
+)
+
