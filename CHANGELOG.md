@@ -1,5 +1,8 @@
 ## Changes since last CRAN release
-* `189fc172 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added `Abbott` segmented electrodes 6170-6173, with segmented electrodes clockwise viewing from proximal end
+* `31975faa (HEAD -> master)` [_`dipterix`_]: Change `CT` threshold back to positive (3000) when switching from `DBS` leads back to `sEEG` leads.
+* `69a3853c` [_`dipterix`_]: Support drag and drop annot files
+* `ac572325` [_`dipterix`_]: Changed electrode material to display front-side only instead of double side to avoid overlapping contacts visually when spacing is small
+* `189fc172 (origin/master, origin/HEAD)` [_`dipterix`_]: Added `Abbott` segmented electrodes 6170-6173, with segmented electrodes clockwise viewing from proximal end
 * `7e6fc9a8` [_`dipterix`_]: Fixed a bug that may change electrode coordinate hand
 * `6bb2ebf7` [_`dipterix`_]: All the `DBS` electrode prototype maker uses natural `cos` for `x` and `sin` for `y`. However, this will cause electrodes to rely on rendering on back side (material)
 * `007aaa25` [_`dipterix`_]: Added missing prototype
