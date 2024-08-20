@@ -16,6 +16,7 @@
 ^todos\.rmd$
 ^inst/three-brain-js/
 ^inst/prototypes/GeometryMaker
+^inst/prototypes/SpecFiles
 ^inst/threeBrainJS/node_modules
 ^inst/threeBrainJS/old
 ^inst/threeBrainJS/src

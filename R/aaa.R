@@ -96,15 +96,14 @@ cache_version <- 0.1
 
 DEFAULT_COLOR_DISCRETE <- c(
   # default RAVE colors
-  "orange", "dodgerblue3", "darkgreen", "orangered", "brown", "purple3",
+  "#FFA500", "#1874CD", "#006400", "#FF4500", "#A52A2A", "#7D26CD",
 
-  # polychrome
-  "#5A5156", "#E4E1E3", "#F6222E", "#FE00FA", "#16FF32", "#3283FE",
-  "#FEAF16", "#B00068", "#1CFFCE", "#90AD1C", "#2ED9FF", "#DEA0FD",
-  "#AA0DFE", "#F8A19F", "#325A9B", "#C4451C", "#1C8356", "#85660D",
-  "#B10DA1", "#FBE426", "#1CBE4F", "#FA0087", "#FC1CBF", "#F7E1A0",
-  "#C075A6", "#782AB6", "#AAF400", "#BDCDFF", "#822E1C", "#B5EFB5",
-  "#7ED7D1", "#1C7F93", "#D85FF7", "#683B79", "#66B0FF", "#3B00FB"
+  # selected from polychrome
+  "#FE00FA", "#16FF32", "#FBE426", "#B00068", "#1CFFCE", "#90AD1C",
+  "#2ED9FF", "#DEA0FD", "#F8A19F", "#325A9B", "#C4451C", "#1C8356",
+  "#85660D", "#B10DA1", "#1CBE4F", "#F7E1A0", "#C075A6", "#AAF400",
+  "#BDCDFF", "#822E1C", "#B5EFB5", "#7ED7D1", "#1C7F93", "#3B00FB"
+
 )
 
 DEFAULT_COLOR_CONTINUOUS <- c(
@@ -120,80 +119,19 @@ DEFAULT_COLOR_CONTINUOUS <- c(
 #' @param ... ignored
 #' @export
 brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
-  use_python <- FALSE
-  try_conda <- FALSE
-  if( use_python && !continued ){
-    # cat2('Step 1: checking python environment', level = 'INFO')
-    # info = ravepy_info()
-    #
-    # if( any(!info) ){
-    #   cat2('Dependencies missing, checking python version', level = 'INFO')
-    #   re = reticulate::py_config()
-    #   print(re$python_versions)
-    #   if( length(re$python_versions) == 0 ){
-    #     stop('Cannot find Python3 installed. Please download Python3 at\n\n\thttps://www.python.org/downloads/\n\nand then come back.')
-    #   }
-    #   if(!any(
-    #     stringr::str_detect(re$python_versions, 'python3$'),
-    #     stringr::str_detect(re$python_versions, 'py3')
-    #   )){
-    #     stop('Cannot find Python3 installed. Please download Python3 at\n\n\thttps://www.python.org/downloads/\n\nand then come back.')
-    #   }
-    # }
+  cat2('Downloading N27 brain from the Internet.', level = 'INFO')
+  download_N27()
 
-    # # Install RAVEPy
-    # cat2('Step 2: Check whether RAVEPy is installed.', level = 'INFO')
-    # installed = ''
-    # tryCatch({
-    #   installed = ravepy_check(quiet = FALSE)
-    # }, error = function(e){
-    #   cat2('RAVEPy not found')
-    # })
-    #
-    # if( !length(installed) || !installed %in% c('conda', 'virtualenv') ){
-    #   cat2('Configure environment RAVEPy.', level = 'INFO')
-    #   if( try_conda && length( ravepy_find_conda_path(add_to_path = FALSE) ) ){
-    #     ravepy_conda_install()
-    #   }else{
-    #     ravepy_virtualenv_install()
-    #   }
-    # }
-    #
-    # # Try to restart
-    # restarted = FALSE
-    #
-    # if( system.file('', package = 'rstudioapi') != '' ){
-    #   # rstudioapi is installed
-    #   in_rsession = eval(parse(text = 'rstudioapi::isAvailable()'))
-    #   if( in_rsession ){
-    #     # restart
-    #     restarted = TRUE
-    #     eval(parse(text = "rstudioapi::restartSession('threeBrain:::ravepy_info();threeBrain:::cat2(\"Please check if all packages are installed :)\", level = \"INFO\");threeBrain::brain_setup(TRUE, TRUE)')"))
-    #   }
-    # }
+  cat2('Wrapping up installation...', level = 'INFO')
 
-    # if( !restarted ){
-    #   cat2('Please manually restart R. Go to "Session" > "Restart R", \nthen, enter \n\tthreeBrain::brain_setup(TRUE, TRUE)', level = 'WARNING')
-    # }
-  }else{
+  template_dir <- default_template_directory()
 
-    cat2('Downloading N27 brain from the Internet.', level = 'INFO')
-    download_N27()
-
-    cat2('Wrapping up installation...', level = 'INFO')
-
-    template_dir <- default_template_directory()
-
-    template <- merge_brain(template_subject = "N27", template_dir = template_dir, template_surface_types = c('pial', 'smoothwm'))
+  template <- merge_brain(template_subject = "N27", template_dir = template_dir, template_surface_types = c('pial', 'smoothwm'))
 
 
-    if( show_example ){
-      template$template_object$plot()
-    }
-
+  if( show_example ){
+    template$template_object$plot()
   }
-
-
 }
 
 get_os <- function(){
