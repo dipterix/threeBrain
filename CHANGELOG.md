@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `498f62db (HEAD -> master)` [_`dipterix`_]: Changed default color palette for discrete values, removed colors that are too dark or gray
-* `c345aa3a (origin/master, origin/HEAD)` [_`dipterix`_]: Change `CT` threshold back to positive (3000) when switching from `DBS` leads back to `sEEG` leads.
+* `7086b17c (HEAD -> master)` [_`dipterix`_]: Plotting electrodes on slices now takes numerical `adjust_brightness` interpreted as quantile
+* `47a8db0a (origin/master, origin/HEAD)` [_`dipterix`_]: Changed default color palette for discrete values, removed colors that are too dark or gray
+* `c345aa3a` [_`dipterix`_]: Change `CT` threshold back to positive (3000) when switching from `DBS` leads back to `sEEG` leads.
 * `69a3853c` [_`dipterix`_]: Support drag and drop annot files
 * `ac572325` [_`dipterix`_]: Changed electrode material to display front-side only instead of double side to avoid overlapping contacts visually when spacing is small
 * `189fc172` [_`dipterix`_]: Added `Abbott` segmented electrodes 6170-6173, with segmented electrodes clockwise viewing from proximal end

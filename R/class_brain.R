@@ -975,8 +975,11 @@ Brain2 <- R6::R6Class(
       if(is.na(adjust_brightness)) {
         adjust_brightness <- TRUE
       }
-      if( adjust_brightness ) {
-        qt <- quantile(volume$data, c(0, 0.95), na.rm = TRUE)
+      if( isTRUE(adjust_brightness) || isTRUE(adjust_brightness > 0 && adjust_brightness < 1) ) {
+        if(isTRUE(adjust_brightness)) {
+          adjust_brightness <- 0.95
+        }
+        qt <- quantile(volume$data, c(0, adjust_brightness), na.rm = TRUE)
         volume$data[] <- (volume$data - qt[[1]]) / (qt[[2]] - qt[[1]]) * 255
         volume$data[volume$data > 255] <- 255
       }
