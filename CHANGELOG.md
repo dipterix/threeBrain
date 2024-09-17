@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `7dc56332 (HEAD -> master)` [_`dipterix`_]: Fixed the color map for discrete values
-* `fc4f3d0c (origin/master, origin/HEAD)` [_`dipterix`_]: Setting electrode prototype render order to be `-500` so it does not hide behind the transparent surfaces
+* `3b790427 (HEAD -> master)` [_`dipterix`_]: Fixed electrode prototype rendering issue (color) on Windows
+* `eda02a82 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed the color map for discrete values
+* `fc4f3d0c` [_`dipterix`_]: Setting electrode prototype render order to be `-500` so it does not hide behind the transparent surfaces
 * `3854835b` [_`dipterix`_]: Plotting electrodes on slices now takes numerical `adjust_brightness` interpreted as quantile
 * `47a8db0a` [_`dipterix`_]: Changed default color palette for discrete values, removed colors that are too dark or gray
 * `c345aa3a` [_`dipterix`_]: Change `CT` threshold back to positive (3000) when switching from `DBS` leads back to `sEEG` leads.
