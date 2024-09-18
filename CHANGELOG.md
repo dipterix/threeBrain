@@ -1,7 +1,8 @@
 ## Changes since last CRAN release
-* `88445b53 (HEAD -> master)` [_`dipterix`_]: Set maximum render length cut-off for electrode prototypes
+* `3c5eb84c (HEAD -> master)` [_`dipterix`_]: Fixed the depth issue in electrode material shader
+* `583d267e (origin/master, origin/HEAD)` [_`dipterix`_]: Set maximum render length cut-off for electrode prototypes
 * `4037eddb` [_`dipterix`_]: Added model tangent (usually the direction) to electrode shader so outlines are correctly visualized
-* `da148714 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed electrode prototype rendering issue (color) on Windows
+* `da148714` [_`dipterix`_]: Fixed electrode prototype rendering issue (color) on Windows
 * `eda02a82` [_`dipterix`_]: Fixed the color map for discrete values
 * `fc4f3d0c` [_`dipterix`_]: Setting electrode prototype render order to be `-500` so it does not hide behind the transparent surfaces
 * `3854835b` [_`dipterix`_]: Plotting electrodes on slices now takes numerical `adjust_brightness` interpreted as quantile
