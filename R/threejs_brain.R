@@ -474,22 +474,73 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   widget$x$settings$cache_folder <- "#"
 
   # selfcontained = FALSE to save all data information
+  temp_file <- file.path(wdir, "_tmp.html")
   htmlwidgets::saveWidget(
     widget,
-    file = file.path(wdir, "_tmp.html"),
+    file = temp_file,
     selfcontained = FALSE,
     title = title,
     libdir = "_lib"
   )
 
   # Use htmlwidgets to save all js and css to html
-  htmlwidgets::saveWidget(
-    widget,
-    file = file.path(wdir, "_tmp.html"),
-    selfcontained = TRUE,
-    title = title,
-    libdir = "lib"
-  )
+  html_text <- readLines(temp_file)
+
+  # convert <script src=*> to <script>js file contents</script>
+  js_lines <- which(grepl(
+    x = html_text,
+    pattern = '(src=.*js)'
+  ))
+
+  # convert link[rel=stylesheet] to <style>css file contents</style>
+  css_lines <- which(grepl(
+    x = html_text,
+    pattern = '(href=.*css)'
+  ))
+
+  readlines_quiet <- function(path) {
+    suppressWarnings({
+      readLines(path)
+    })
+  }
+
+  # perform self-contained conversion/replacement of JS
+  if(length(js_lines) > 0) {
+    html_text[js_lines] <- lapply(js_lines, function(js_line) {
+      js_file <- sub(x = html_text[js_line],
+                     pattern = '.*src=[":\'](.*\\.js).*',
+                     replacement = "\\1")
+      js_content <- paste0("<script>",
+                           paste0(readlines_quiet(file.path(wdir, js_file)), collapse = "\n"),
+                           "</script>",
+                           collapse = "\n")
+    })
+  }
+
+
+  # perform self-contained conversion/replacement of JS
+  if(length(css_lines) > 0) {
+    html_text[css_lines] <- lapply(css_lines, function(css_line) {
+      css_file <- sub(x=html_text[css_line], pattern='.*href=[":\'](.*\\.css).*', replacement="\\1")
+      css_content <- paste0(
+        "<style>",
+        paste0(readlines_quiet(file.path(wdir,css_file)), collapse="\n"),
+        "</style>",
+        collapse="\n"
+      )
+    })
+  }
+
+  # save self-contained html
+  write(paste0(html_text, collapse = "\n"), file = temp_file)
+
+  # htmlwidgets::saveWidget(
+  #   widget,
+  #   file = file.path(wdir, "_tmp.html"),
+  #   selfcontained = TRUE,
+  #   title = title,
+  #   libdir = "lib"
+  # )
 
   # modify the html so the data is injected as data URI
   index <- file.path(wdir, "_tmp.html")
