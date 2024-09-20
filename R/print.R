@@ -102,42 +102,71 @@ knit_print.threejs_brain <- function(x, ..., options = NULL) {
 #' @export
 print.threejs_brain <- function (x, ..., embed = NA, viewer = getOption("viewer", utils::browseURL)) {
 
-  tmp_dir <- tempdir(check = TRUE)
+  if( identical(get_os(), "emscripten") ) {
+    # this is in WASM, use save_brain
+    digest_string <- dipsaus::digest(x)
+    tmp_file <- file.path(tempdir(check = TRUE), sprintf("threeBrain-wasm-%s.html", digest_string))
+    save_brain(x, tmp_file, as_zip = FALSE)
 
-  if(is.na(embed)) {
-    embed <- !inherits(x, "suppress_viewer")
-  }
+    tmp_file <- normalizePath(tmp_file, mustWork = "/")
 
-  if( embed ) {
-    print(to_html(x), viewer = viewer)
-  } else {
-    # wrap up files as html object
-    html <- htmltools::as.tags(x, standalone = TRUE)
-    # prepare widget
-    www_dir <- file.path(tmp_dir, "threeBrainViewer")
-    if( !dir.exists(www_dir) ) {
-      dir.create(www_dir, showWarnings = FALSE, recursive = FALSE)
-    }
-    index_name <- x$x$data_filename
-    index_name <- gsub("^config", replacement = "index", index_name)
-    index_name <- gsub("json$", "html", index_name)
-    index_html <- file.path(www_dir, index_name)
-
-    htmltools::save_html(html, file = index_html, background = "white", libdir = "lib")
-
-    if(!file.exists(file.path(www_dir, "favicon.ico"))) {
-      file.copy(
-        from = system.file("favicon.ico", package = "threeBrain"),
-        to = file.path(www_dir, "favicon.ico")
+    # You will have this package when running in WebAssembly.
+    webr <- asNamespace("webr")
+    webr$eval_js(
+      paste0(
+        "chan.write({",
+        "  type: 'browse',",
+        "  data: { url: '", tmp_file, "' },",
+        "});"
+        # "chan.write({",
+        # "  type: 'pager',",
+        # "  data: {",
+        # "    path: '", tmp_file, "',",
+        # "    header: '',",
+        # "    title: 'RAVE 3D Viewer', ",
+        # "    deleteFile: true,",
+        # "  },",
+        # "});"
       )
+    )
+
+  } else {
+    tmp_dir <- tempdir(check = TRUE)
+
+    if(is.na(embed)) {
+      embed <- !inherits(x, "suppress_viewer")
     }
 
-    app <- ensure_simple_server( www_dir )
-    url <- gsub("/$", "", app$url)
-    url <- sprintf("%s/%s", url, index_name)
-    utils::browseURL( url )
-  }
+    if( embed ) {
+      print(to_html(x), viewer = viewer)
+    } else {
+      # wrap up files as html object
+      html <- htmltools::as.tags(x, standalone = TRUE)
+      # prepare widget
+      www_dir <- file.path(tmp_dir, "threeBrainViewer")
+      if( !dir.exists(www_dir) ) {
+        dir.create(www_dir, showWarnings = FALSE, recursive = FALSE)
+      }
+      index_name <- x$x$data_filename
+      index_name <- gsub("^config", replacement = "index", index_name)
+      index_name <- gsub("json$", "html", index_name)
+      index_html <- file.path(www_dir, index_name)
 
+      htmltools::save_html(html, file = index_html, background = "white", libdir = "lib")
+
+      if(!file.exists(file.path(www_dir, "favicon.ico"))) {
+        file.copy(
+          from = system.file("favicon.ico", package = "threeBrain"),
+          to = file.path(www_dir, "favicon.ico")
+        )
+      }
+
+      app <- ensure_simple_server( www_dir )
+      url <- gsub("/$", "", app$url)
+      url <- sprintf("%s/%s", url, index_name)
+      utils::browseURL( url )
+    }
+  }
   invisible(x)
 }
 

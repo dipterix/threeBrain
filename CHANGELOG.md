@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `cb5aed88 (HEAD -> master)` [_`dipterix`_]: Avoid using pandoc to save the whole page self-contained
-* `bb7ba967 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed the depth issue in electrode material shader
+* `91141d90 (HEAD -> master)` [_`dipterix`_]: Support `WebAssembly`
+* `b07713dd (origin/master, origin/HEAD)` [_`dipterix`_]: Avoid using pandoc to save the whole page self-contained
+* `bb7ba967` [_`dipterix`_]: Fixed the depth issue in electrode material shader
 * `583d267e` [_`dipterix`_]: Set maximum render length cut-off for electrode prototypes
 * `4037eddb` [_`dipterix`_]: Added model tangent (usually the direction) to electrode shader so outlines are correctly visualized
 * `da148714` [_`dipterix`_]: Fixed electrode prototype rendering issue (color) on Windows

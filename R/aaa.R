@@ -136,17 +136,20 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
 
 get_os <- function(){
   os <- R.version$os
-  if(stringr::str_detect(os, '^darwin')){
+  if(grepl('^darwin', os, ignore.case = TRUE)){
     return('darwin')
   }
-  if(stringr::str_detect(os, '^linux')){
+  if(grepl('^linux', os, ignore.case = TRUE)){
     return('linux')
   }
-  if(stringr::str_detect(os, '^solaris')){
+  if(grepl('^solaris', os, ignore.case = TRUE)){
     return('solaris')
   }
-  if(stringr::str_detect(os, '^win')){
+  if(grepl('^win', os, ignore.case = TRUE)){
     return('windows')
+  }
+  if(grepl("^(emscr|wasm)", os, ignore.case = TRUE)) {
+    return('emscripten')
   }
   return('unknown')
 }
