@@ -1,6 +1,6 @@
 ## Changes since last CRAN release
-* `39d0301e (HEAD -> master)` [_`dipterix`_]: Fixed drifting issue when visualizing via active `voxel` mode; Added direction arrow helper to `DBS` (or electrodes with non-zero model up vectors)
-* `28fe8ae6 (origin/master, origin/HEAD)` [_`dipterix`_]: Support `WebAssembly`
+* `8f62ef5f (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed drifting issue when visualizing via active `voxel` mode; Added direction arrow helper to `DBS` (or electrodes with non-zero model up vectors)
+* `28fe8ae6` [_`dipterix`_]: Support `WebAssembly`
 * `b07713dd` [_`dipterix`_]: Avoid using pandoc to save the whole page self-contained
 * `bb7ba967` [_`dipterix`_]: Fixed the depth issue in electrode material shader
 * `583d267e` [_`dipterix`_]: Set maximum render length cut-off for electrode prototypes
