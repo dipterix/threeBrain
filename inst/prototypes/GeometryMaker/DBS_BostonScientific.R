@@ -278,7 +278,7 @@ config <- list(
   fix_control_index = 1L,
 
   viewer_options = list(
-    "Slice Mode" = "active-voxel",
+    "Slice Mode" = "column-row-slice",
     "Frustum Near" = 0.5,
     "Frustum Far" = 0.5,
     "Voxel Display" = "anat. slices",

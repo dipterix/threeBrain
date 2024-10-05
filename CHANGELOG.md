@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `8f62ef5f (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed drifting issue when visualizing via active `voxel` mode; Added direction arrow helper to `DBS` (or electrodes with non-zero model up vectors)
+* `11c7a6e5 (HEAD -> master)` [_`dipterix`_]: Renamed `active-voxel` to `column-row-slice`
+* `ad4de70a` [_`dipterix`_]: `Voxel` filter is linear now when displayed at side slices only and when the slice mode is not `active-voxel`
+* `8f62ef5f (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed drifting issue when visualizing via active `voxel` mode; Added direction arrow helper to `DBS` (or electrodes with non-zero model up vectors)
 * `28fe8ae6` [_`dipterix`_]: Support `WebAssembly`
 * `b07713dd` [_`dipterix`_]: Avoid using pandoc to save the whole page self-contained
 * `bb7ba967` [_`dipterix`_]: Fixed the depth issue in electrode material shader
