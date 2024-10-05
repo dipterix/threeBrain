@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9020</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9022</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,9 +40,15 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>39d0301e (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Fixed drifting issue when visualizing via active <code>voxel</code> mode; Added direction arrow helper to <code>DBS</code> (or electrodes with non-zero model up vectors)</li>
+<code>11c7a6e5 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Renamed <code>active-voxel</code> to <code>column-row-slice</code>
+</li>
 <li>
-<code>28fe8ae6 (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Support <code>WebAssembly</code>
+<code>ad4de70a</code> [<em><code>dipterix</code></em>]: <code>Voxel</code> filter is linear now when displayed at side slices only and when the slice mode is not <code>active-voxel</code>
+</li>
+<li>
+<code>8f62ef5f (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Fixed drifting issue when visualizing via active <code>voxel</code> mode; Added direction arrow helper to <code>DBS</code> (or electrodes with non-zero model up vectors)</li>
+<li>
+<code>28fe8ae6</code> [<em><code>dipterix</code></em>]: Support <code>WebAssembly</code>
 </li>
 <li>
 <code>b07713dd</code> [<em><code>dipterix</code></em>]: Avoid using pandoc to save the whole page self-contained</li>
