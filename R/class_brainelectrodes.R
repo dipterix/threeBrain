@@ -427,11 +427,96 @@ BrainElectrodes <- R6::R6Class(
       return(positions[, seq_len(3), drop = FALSE])
     },
 
-    get_atlas_labels = function(atlas, radius = 1, lut = NULL) {
+    get_atlas_values = function(atlas, radius = 1.5, ...) {
+      # DIPSAUS DEBUG START
+      # self <- raveio::rave_brain("demo/DemoSubject")$electrodes
+      # atlas <- "~/rave_data/raw_dir/DemoSubject/rave-imaging/fs/mri/aparc.a2009s+aseg.mgz"
+      # radius <- 2
+
+      if(!is.data.frame(self$raw_table)) {
+        return(NULL)
+      }
+
+      if(!inherits(atlas, "threeBrain.volume")) {
+        atlas <- read_volume(atlas)
+      }
+
+      sub_tbl <- as.matrix(self$raw_table[, c("Coord_x", "Coord_y", "Coord_z")])
+      dist <- rowSums(sub_tbl^2)
+      valids <- !is.na(dist) & dist > 0
+      scanner_ras <- self$apply_transform_points(sub_tbl, from = "tkrRAS", to = "scannerRAS")
+      ras_to_ijk <- solve(atlas$Norig)
+
+      # IJK starts from 0, 0, 0
+      ijk <- round((ras_to_ijk %*% rbind(t(scanner_ras), 1))[seq_len(3), , drop = FALSE])
+
+      atlas_shape <- dim(atlas$data)[seq_len(3)]
+      atlas_cumprod <- cumprod(c(1, atlas_shape))
+      atlas_n <- atlas_cumprod[[4]]
+      atlas_cumprod <- atlas_cumprod[seq_len(3)]
+
+      # construct neighboring indices
+      if( radius > 0 ) {
+        # columns of ras_to_ijk are incremental steps along voxel-index space
+        max_index_radius <- max(abs(ras_to_ijk[, 1:3])) * radius
+        # IJK offsets
+        deltas <- t(as.matrix(expand.grid(
+          seq.int(-max_index_radius, max_index_radius),
+          seq.int(-max_index_radius, max_index_radius),
+          seq.int(-max_index_radius, max_index_radius)
+        )))
+        # actual offsets in RAS
+        ras_delta <- atlas$Norig[1:3, 1:3] %*% deltas
+        # distance
+        distance <- sqrt(colSums(ras_delta^2))
+        sel <- distance <= radius
+        distance <- distance[sel]
+        deltas <- deltas[, sel, drop = FALSE]
+        deltas <- colSums(deltas * atlas_cumprod)
+      } else {
+        deltas <- 0
+        distance <- 0
+      }
+
+      voxel_count <- length(distance)
+      sel <- distance == 0
+
+      unknown_labels <- data.frame(
+        CenterValue = NA_real_,
+        MeanValue = NA_real_,
+        VoxelCount = NA_integer_
+      )
+
+      value_rows <- lapply(seq_len(ncol(ijk)), function(ii) {
+        if(!valids[[ii]]) {
+          return(unknown_labels)
+        }
+        ijk0 <- sum(ijk[, ii] * atlas_cumprod) + 1
+        if(is.na(ijk0) || ijk0 <= 0 || ijk0 > atlas_n) {
+          return(unknown_labels)
+        }
+        values <- atlas$data[ijk0 + deltas]
+        center_value <- values[ sel ]
+        values <- values[!is.na(values)]
+        if(!length(values)) {
+          return(unknown_labels)
+        }
+
+        data.frame(
+          CenterValue = center_value,
+          MeanValue = mean(values),
+          VoxelCount = length(values)
+        )
+      })
+      return(do.call("rbind", value_rows))
+    },
+
+    get_atlas_labels = function(atlas, radius = 1.5, lut = NULL) {
       # DIPSAUS DEBUG START
       # self <- raveio::rave_brain("demo/DemoSubject")$electrodes
       # atlas <- "~/rave_data/raw_dir/DemoSubject/rave-imaging/fs/mri/aparc.a2009s+aseg.mgz"
       # lut = NULL
+      # radius <- 2
 
       if(!is.data.frame(self$raw_table)) {
         return(NULL)
@@ -461,15 +546,28 @@ BrainElectrodes <- R6::R6Class(
       atlas_cumprod <- atlas_cumprod[seq_len(3)]
 
       lut_keys <- names(lut$map)
-      if(radius >= 1) {
-        deltas <- as.matrix(expand.grid(
-          seq.int(-radius, radius),
-          seq.int(-radius, radius),
-          seq.int(-radius, radius)
-        ))
-        deltas <- colSums(t(deltas) * atlas_cumprod)
+
+      # construct neighboring indices
+      if( radius > 0 ) {
+        # columns of ras_to_ijk are incremental steps along voxel-index space
+        max_index_radius <- max(abs(ras_to_ijk[, 1:3])) * radius
+        # IJK offsets
+        deltas <- t(as.matrix(expand.grid(
+          seq.int(-max_index_radius, max_index_radius),
+          seq.int(-max_index_radius, max_index_radius),
+          seq.int(-max_index_radius, max_index_radius)
+        )))
+        # actual offsets in RAS
+        ras_delta <- atlas$Norig[1:3, 1:3] %*% deltas
+        # distance
+        distance <- sqrt(colSums(ras_delta^2))
+        sel <- distance <= radius
+        distance <- distance[sel]
+        deltas <- deltas[, sel, drop = FALSE]
+        deltas <- colSums(deltas * atlas_cumprod)
       } else {
         deltas <- 0
+        distance <- 0
       }
 
       unknown_labels <- data.frame(
