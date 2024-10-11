@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9023</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9024</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,9 +40,11 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>7370d864 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Added <code>get_atlas_values</code> for continuous atlases such as binary or probablistic <code>ROI</code>. The radius refers to maximum <code>RAS</code> distance instead of voxel indexing distance, hence more accurate when the atlas volume has imbalanced slice count.</li>
+<code>675c56c5 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Adjust electrode position can be done under volumetric mode to improve user experience; Electrodes with prototype geometries will use the prototype to infer the locations rather than spacial calculation; Added keyboard shortcut for registering from crosshair</li>
 <li>
-<code>161545b2 (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Renamed <code>active-voxel</code> to <code>column-row-slice</code>
+<code>0c3164e0 (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Added <code>get_atlas_values</code> for continuous atlases such as binary or probablistic <code>ROI</code>. The radius refers to maximum <code>RAS</code> distance instead of voxel indexing distance, hence more accurate when the atlas volume has imbalanced slice count.</li>
+<li>
+<code>161545b2</code> [<em><code>dipterix</code></em>]: Renamed <code>active-voxel</code> to <code>column-row-slice</code>
 </li>
 <li>
 <code>ad4de70a</code> [<em><code>dipterix</code></em>]: <code>Voxel</code> filter is linear now when displayed at side slices only and when the slice mode is not <code>active-voxel</code>
