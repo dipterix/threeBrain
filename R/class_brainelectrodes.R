@@ -459,11 +459,12 @@ BrainElectrodes <- R6::R6Class(
       if( radius > 0 ) {
         # columns of ras_to_ijk are incremental steps along voxel-index space
         max_index_radius <- max(abs(ras_to_ijk[, 1:3])) * radius
+        max_radius_int <- ceiling(max_index_radius)
         # IJK offsets
         deltas <- t(as.matrix(expand.grid(
-          seq.int(-max_index_radius, max_index_radius),
-          seq.int(-max_index_radius, max_index_radius),
-          seq.int(-max_index_radius, max_index_radius)
+          seq.int(-max_radius_int, max_radius_int),
+          seq.int(-max_radius_int, max_radius_int),
+          seq.int(-max_radius_int, max_radius_int)
         )))
         # actual offsets in RAS
         ras_delta <- atlas$Norig[1:3, 1:3] %*% deltas
@@ -479,7 +480,6 @@ BrainElectrodes <- R6::R6Class(
       }
 
       voxel_count <- length(distance)
-      sel <- distance == 0
 
       unknown_labels <- data.frame(
         CenterValue = NA_real_,
@@ -496,7 +496,7 @@ BrainElectrodes <- R6::R6Class(
           return(unknown_labels)
         }
         values <- atlas$data[ijk0 + deltas]
-        center_value <- values[ sel ]
+        center_value <- atlas$data[ijk0]
         values <- values[!is.na(values)]
         if(!length(values)) {
           return(unknown_labels)

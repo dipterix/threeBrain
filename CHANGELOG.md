@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `675c56c5 (HEAD -> master)` [_`dipterix`_]: Adjust electrode position can be done under volumetric mode to improve user experience; Electrodes with prototype geometries will use the prototype to infer the locations rather than spacial calculation; Added keyboard shortcut for registering from crosshair
-* `0c3164e0 (origin/master, origin/HEAD)` [_`dipterix`_]: Added `get_atlas_values` for continuous atlases such as binary or probablistic `ROI`. The radius refers to maximum `RAS` distance instead of voxel indexing distance, hence more accurate when the atlas volume has imbalanced slice count.
+* `f9f08bf9 (HEAD -> master)` [_`dipterix`_]: Fixed non-integer search radius issue
+* `8b10f9ee (origin/master, origin/HEAD)` [_`dipterix`_]: Adjust electrode position can be done under volumetric mode to improve user experience; Electrodes with prototype geometries will use the prototype to infer the locations rather than spacial calculation; Added keyboard shortcut for registering from crosshair
+* `0c3164e0` [_`dipterix`_]: Added `get_atlas_values` for continuous atlases such as binary or probablistic `ROI`. The radius refers to maximum `RAS` distance instead of voxel indexing distance, hence more accurate when the atlas volume has imbalanced slice count.
 * `161545b2` [_`dipterix`_]: Renamed `active-voxel` to `column-row-slice`
 * `ad4de70a` [_`dipterix`_]: `Voxel` filter is linear now when displayed at side slices only and when the slice mode is not `active-voxel`
 * `8f62ef5f` [_`dipterix`_]: Fixed drifting issue when visualizing via active `voxel` mode; Added direction arrow helper to `DBS` (or electrodes with non-zero model up vectors)
