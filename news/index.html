@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1.9028</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,104 @@
       <small>Source: <a href="https://github.com/dipterix/threeBrain/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.0" id="threebrain-120">threeBrain 1.2.0<a class="anchor" aria-label="anchor" href="#threebrain-120"></a></h2>
+<ul><li>Fixed shiny callback when electrode contacts are double-clicked</li>
+<li>Fixed contact-switching and highlight box</li>
+<li>Added <code>PMT</code> electrodes</li>
+<li>Fixed non-integer search radius issue</li>
+<li>Adjust electrode position can be done under volume-mode to improve user experience</li>
+<li>Electrodes with prototype geometries will use the prototype to infer the locations rather than spacial calculation</li>
+<li>Added keyboard shortcut for registering from cross-hair</li>
+<li>Added <code>get_atlas_values</code> for continuous atlases such as binary or probabilistic <code>ROI</code>
+</li>
+<li>The radius refers to maximum <code>RAS</code> distance instead of <code>voxel</code> indexing distance, hence more accurate when the atlas volume has imbalanced slice count</li>
+<li>Renamed <code>active-voxel</code> to <code>column-row-slice</code> but still keep the naming for backward compatibility</li>
+<li>
+<code>Voxel</code> filter is linear now when displayed at side slices only and when the slice mode is not <code>active-voxel</code>
+</li>
+<li>Fixed drifting issue when visualizing via active <code>voxel</code> mode</li>
+<li>Added direction arrow helper to <code>DBS</code> (or electrodes with non-zero model up vectors)</li>
+<li>Support <code>WebAssembly</code>
+</li>
+<li>Avoid using <code>pandoc</code> to save the whole page self-contained</li>
+<li>Fixed the depth issue in electrode material shader</li>
+<li>Set maximum render length cut-off for electrode prototypes</li>
+<li>Added model tangent (usually the direction) to electrode shader so outlines are correctly visualized</li>
+<li>Fixed electrode prototype rendering issue (color) on Windows</li>
+<li>Fixed the color map for discrete values</li>
+<li>Setting electrode prototype render order to be <code>-500</code> so it does not hide behind the transparent surfaces</li>
+<li>Plotting electrodes on slices now takes numerical <code>adjust_brightness</code> interpreted as quantile</li>
+<li>Changed default color palette for discrete values, removed colors that are too dark or gray</li>
+<li>Change <code>CT</code> threshold back to positive (3000) when switching from <code>DBS</code> leads back to <code>sEEG</code> leads.</li>
+<li>Support drag and drop annotation files</li>
+<li>Changed electrode material to display front-side only instead of double side to avoid overlapping contacts visually when spacing is small</li>
+<li>Added <code>Abbott</code> segmented electrodes <code>6170-6173</code>, with segmented electrodes clockwise viewing from <code>proximal</code> end</li>
+<li>Fixed a bug that may change electrode coordinate hand</li>
+<li>All the <code>DBS</code> electrode prototype maker uses natural <code>cos</code> for <code>x</code> and <code>sin</code> for <code>y</code>. However, this will cause electrodes to rely on rendering on back side (material)</li>
+<li>Added missing prototype</li>
+<li>Fixed <code>BSC</code> and <code>Medtronic</code> electrode orientation (now is counter-clockwise when viewing from <code>proximal</code> end)</li>
+<li>Added more spacing for <code>DBS</code> segmented contacts</li>
+<li>added prototypes for <code>Medtronic</code> segmented electrodes</li>
+<li>Added <code>BSC-DB</code> electrodes for <code>2202</code> <code>2201</code>
+</li>
+<li>Added internal test code for depth mapping</li>
+<li>Surface mapping has been implemented for depth electrodes, with dynamic offset threshold</li>
+<li>
+<code>surface_offset</code> has been added to electrode field</li>
+<li>
+<code>cvs_avg35_inMNI152</code> has the correct <code>talXFM</code> (scanner to <code>MNI305</code>) now</li>
+<li>Added <code>load_mesh</code> to surface object so users can load surface mesh for computation in <code>R</code>
+</li>
+<li>Added internal <code>calculate_distances</code> to compute the distances from a point to its projection to a list of mesh</li>
+<li>
+<code>DistanceShifted</code> in electrode table is taken into account and will be passed to electrode instances</li>
+<li>Inflated surfaces have offset by default</li>
+<li>Fixed a singular matrix bug when the electrode prototype <code>up</code> vector is zero or is parallel with the model direction</li>
+<li>Allowed the surface mapped electrodes to be snapped to the surface if the surface world matrix is not identity</li>
+<li>Force the inflated brain to have offset positions</li>
+<li>Added <code>DBS</code> electrode prototype <code>BSC-DB-2202</code>
+</li>
+<li>Prototype <code>set_transform_from_points</code> now tries to set rotation from transform <code>Euler</code> angle when the prototype guided marker is 1-ranked (electrode strip, <code>DBS</code> electrodes)</li>
+<li>Allowed electrode prototype to display markers; added viewer options for localization</li>
+<li>Changed electrode direction helper to be displayed inside of cross-hair group</li>
+<li>Allowed side panel to be displayed with atlas column-row-slice</li>
+<li>Added controller to display symmetric continuous color map for volumes</li>
+<li>Fixed the <code>GLTF</code> not showing inner-most contact issue</li>
+<li>Removed <code>devel</code> version of <code>ravetools</code> from check</li>
+<li>Update <code>Github</code> action check script</li>
+<li>Added <code>rhub</code> check</li>
+<li>Plotting slices have correct margins with partial plot</li>
+<li>Allow users to drag and drop value tables</li>
+<li>Allow users to hide cross-hairs</li>
+<li>Allow <code>shiny</code> app to change current color map via proxy</li>
+<li>Allows drag-drop electrode color files</li>
+<li>Added <code>set_electrode_data</code> to brain proxy class, allowing <code>shiny</code> applications to change the electrode data, set color palettes, and set value ranges in the same call</li>
+<li>Allow masks to be added to <code>T1</code>
+</li>
+<li>Added <code>D99v2</code> for monkey brain</li>
+<li>Export <code>GLTF</code> for <code>datacube2</code>
+</li>
+<li>Fixed <code>fix_electrode_color</code> bug</li>
+<li>Supported <code>ISO</code> surface generation from volume</li>
+<li>Added white-matter segmentation as default atlas if user has this file</li>
+<li>Exporting <code>GLTF</code> is wrapped with try-catch</li>
+<li>
+<code>fix_electrode_color</code> is exclusive by default</li>
+<li>fixed color fixing issue for naive sphere electrodes</li>
+<li>Changed logo message</li>
+<li>Using better <code>RAVE</code> logo and fixed style issues</li>
+<li>Changed shortcut <code>p</code> to toggling the visibility and <code>shift+p</code> to switching surface types</li>
+<li>Added logo to control panel to advertise the project</li>
+<li>Added export <code>GLTF</code> binary format</li>
+<li>Separate <code>3D</code> and <code>2D</code> canvas;</li>
+<li>Converts <code>*h.pial.gii</code> to <code>FreeSurfer</code> format when the files are missing</li>
+<li>Allow electrode depth test to be disabled (always-depth) on contact and/or outlines</li>
+<li>Fixing the vertex shader output not read by fragment shader issue</li>
+<li>Drop-in feature support color-map for volume and surfaces</li>
+<li>Added contact order to display when electrode is clicked</li>
+<li>Added <code>DIXI</code> (<code>AM</code>, <code>BM</code>, <code>CM</code>) electrode specifications</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="threebrain-110">threeBrain 1.1.0<a class="anchor" aria-label="anchor" href="#threebrain-110"></a></h2>
 <div class="section level3">
