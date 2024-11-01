@@ -1,7 +1,7 @@
 Package: threeBrain
 Type: Package
 Title: Your Advanced 3D Brain Visualization
-Version: 1.1.1.9028
+Version: 1.2.0
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("ctb", "res")),
@@ -25,7 +25,7 @@ Description: A fast, interactive cross-platform, and easy to share
     analyze 'iEEG' data by Magnotti, Wang, and Beauchamp (2020, 
     <doi:10.1016/j.neuroimage.2020.117341>). Please check 
     'citation("threeBrain")' for details.
-License: MPL-2.0 | file LICENSE
+License: MPL-2.0
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 Roxygen: list(r6 = FALSE)

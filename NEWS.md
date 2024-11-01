@@ -1,9 +1,91 @@
-# `TODO` list:
-
-* Drag & drop atlas images cannot show on side canvas when the file name does not follow a specific regular expression. This constraint should be removed
-* Improve `dispose` function such that the object can be disposed completely (from `CPU` and `GPU` memories)
-
 # Change Log
+
+threeBrain 1.2.0
+=======
+
+* Fixed shiny callback when electrode contacts are double-clicked
+* Fixed contact-switching and highlight box
+* Added `PMT` electrodes
+* Fixed non-integer search radius issue
+* Adjust electrode position can be done under volume-mode to improve user experience
+* Electrodes with prototype geometries will use the prototype to infer the locations rather than spacial calculation
+* Added keyboard shortcut for registering from cross-hair
+* Added `get_atlas_values` for continuous atlases such as binary or probabilistic `ROI`
+* The radius refers to maximum `RAS` distance instead of `voxel` indexing distance, hence more accurate when the atlas volume has imbalanced slice count
+* Renamed `active-voxel` to `column-row-slice` but still keep the naming for backward compatibility
+* `Voxel` filter is linear now when displayed at side slices only and when the slice mode is not `active-voxel`
+* Fixed drifting issue when visualizing via active `voxel` mode
+* Added direction arrow helper to `DBS` (or electrodes with non-zero model up vectors)
+* Support `WebAssembly`
+* Avoid using `pandoc` to save the whole page self-contained
+* Fixed the depth issue in electrode material shader
+* Set maximum render length cut-off for electrode prototypes
+* Added model tangent (usually the direction) to electrode shader so outlines are correctly visualized
+* Fixed electrode prototype rendering issue (color) on Windows
+* Fixed the color map for discrete values
+* Setting electrode prototype render order to be `-500` so it does not hide behind the transparent surfaces
+* Plotting electrodes on slices now takes numerical `adjust_brightness` interpreted as quantile
+* Changed default color palette for discrete values, removed colors that are too dark or gray
+* Change `CT` threshold back to positive (3000) when switching from `DBS` leads back to `sEEG` leads.
+* Support drag and drop annotation files
+* Changed electrode material to display front-side only instead of double side to avoid overlapping contacts visually when spacing is small
+* Added `Abbott` segmented electrodes `6170-6173`, with segmented electrodes clockwise viewing from `proximal` end
+* Fixed a bug that may change electrode coordinate hand
+* All the `DBS` electrode prototype maker uses natural `cos` for `x` and `sin` for `y`. However, this will cause electrodes to rely on rendering on back side (material)
+* Added missing prototype
+* Fixed `BSC` and `Medtronic` electrode orientation (now is counter-clockwise when viewing from `proximal` end)
+* Added more spacing for `DBS` segmented contacts
+* added prototypes for `Medtronic` segmented electrodes
+* Added `BSC-DB` electrodes for `2202` `2201`
+* Added internal test code for depth mapping
+* Surface mapping has been implemented for depth electrodes, with dynamic offset threshold
+* `surface_offset` has been added to electrode field
+* `cvs_avg35_inMNI152` has the correct `talXFM` (scanner to `MNI305`) now
+* Added `load_mesh` to surface object so users can load surface mesh for computation in `R`
+* Added internal `calculate_distances` to compute the distances from a point to its projection to a list of mesh
+* `DistanceShifted` in electrode table is taken into account and will be passed to electrode instances
+* Inflated surfaces have offset by default
+* Fixed a singular matrix bug when the electrode prototype `up` vector is zero or is parallel with the model direction
+* Allowed the surface mapped electrodes to be snapped to the surface if the surface world matrix is not identity
+* Force the inflated brain to have offset positions
+* Added `DBS` electrode prototype `BSC-DB-2202`
+* Prototype `set_transform_from_points` now tries to set rotation from transform `Euler` angle when the prototype guided marker is 1-ranked (electrode strip, `DBS` electrodes)
+* Allowed electrode prototype to display markers; added viewer options for localization
+* Changed electrode direction helper to be displayed inside of cross-hair group
+* Allowed side panel to be displayed with atlas column-row-slice
+* Added controller to display symmetric continuous color map for volumes
+* Fixed the `GLTF` not showing inner-most contact issue
+* Removed `devel` version of `ravetools` from check
+* Update `Github` action check script
+* Added `rhub` check
+* Plotting slices have correct margins with partial plot
+* Allow users to drag and drop value tables
+* Allow users to hide cross-hairs
+* Allow `shiny` app to change current color map via proxy
+* Allows drag-drop electrode color files
+* Added `set_electrode_data` to brain proxy class, allowing `shiny` applications to change the electrode data, set color palettes, and set value ranges in the same call
+* Allow masks to be added to `T1`
+* Added `D99v2` for monkey brain
+* Export `GLTF` for `datacube2`
+* Fixed `fix_electrode_color` bug
+* Supported `ISO` surface generation from volume
+* Added white-matter segmentation as default atlas if user has this file
+* Exporting `GLTF` is wrapped with try-catch
+* `fix_electrode_color` is exclusive by default
+* fixed color fixing issue for naive sphere electrodes
+* Changed logo message
+* Using better `RAVE` logo and fixed style issues
+* Changed shortcut `p` to toggling the visibility and `shift+p` to switching surface types
+* Added logo to control panel to advertise the project
+* Added export `GLTF` binary format
+* Separate `3D` and `2D` canvas;
+* Converts `*h.pial.gii` to `FreeSurfer` format when the files are missing
+* Allow electrode depth test to be disabled (always-depth) on contact and/or outlines
+* Fixing the vertex shader output not read by fragment shader issue
+* Drop-in feature support color-map for volume and surfaces
+* Added contact order to display when electrode is clicked
+* Added `DIXI` (`AM`, `BM`, `CM`) electrode specifications
+
 
 threeBrain 1.1.0
 =======

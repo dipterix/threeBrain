@@ -257,13 +257,13 @@ ElectrodePrototype <- R6::R6Class(
 
         if ( abs( a_y ) < 0.9999999 ) {
 
-          a_x = atan2( m33[3, 2], m33[3, 3] );
-          a_z = atan2( m33[2, 1], m33[1, 1] );
+          a_x <- atan2( m33[3, 2], m33[3, 3] )
+          a_z <- atan2( m33[2, 1], m33[1, 1] )
 
         } else {
 
-          a_x = 0;
-          a_z = atan2( - m33[1, 2], m33[2, 2] );
+          a_x <- 0
+          a_z <- atan2( - m33[1, 2], m33[2, 2] )
 
         }
 

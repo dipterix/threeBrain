@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `b30a2e23 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed contact-switching and highlight box
+* `57c15ccd (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed shiny callback when electrode contacts are double-clicked
+* `b30a2e23` [_`dipterix`_]: Fixed contact-switching and highlight box
 * `c80ed86d` [_`dipterix`_]: Added `PMT` electrodes
 * `4c1e669d` [_`dipterix`_]: Fixed non-integer search radius issue
 * `8b10f9ee` [_`dipterix`_]: Adjust electrode position can be done under volumetric mode to improve user experience; Electrodes with prototype geometries will use the prototype to infer the locations rather than spacial calculation; Added keyboard shortcut for registering from crosshair

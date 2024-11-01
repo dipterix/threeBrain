@@ -970,7 +970,7 @@ BrainElectrodes <- R6::R6Class(
       })
 
       lapply(seq_along(self$objects2), function(ii) {
-        el = self$objects2[[ii]]
+        el <- self$objects2[[ii]]
         channels <- el$prototype$channel_numbers
         base_table <- data.frame( Electrode = channels )
 

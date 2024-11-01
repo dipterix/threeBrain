@@ -293,7 +293,8 @@ config <- list(
   )
 )
 
-proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config); proto
+proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config)
+proto
 proto$validate()
 
 a <- invisible(proto$get_texture(seq_len(proto$n_channels), plot = TRUE))

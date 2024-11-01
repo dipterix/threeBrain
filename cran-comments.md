@@ -1,7 +1,7 @@
 # Update logs (for R-cran only)
 
-## 2024-07-16
-**Version 1.1.1 (current)**
+## 2024-11-01
+**Version 1.2.0 (current)**
 
 To address the `CRAN` issues:
 
@@ -22,16 +22,16 @@ Package `ravetools` has been updated and on `CRAN` now. The dependency is cleare
 
 This package (`threeBrain`) is developed out of fun and used in my thesis and later projects. I am the solo developer in this project (wrote 99.99% code). Other contributors are explicitly claimed in the `DESCRIPTION`.
 
-There is one external `JavaScript` library `three-brain-js`. The code is located at `inst/threeBrainJS`. I am also the main maintainer and contributor of that project. The distribution included is a compiled bundle that is released under `MPL-2.0` as a whole. As required, the license file has been included. There might some other external programs used by that bundle, but they can't claim the authorship of the release bundle. Their corresponding license files are included too.
+There is one external `JavaScript` library `three-brain-js`. The code is located at `inst/threeBrainJS`. I am also the main maintainer and contributor of that project. The distribution included is a compiled bundle that is released under `MPL-2.0` as a whole. As required, the license file has been included when `mpn` compiles the bundles, see `inst/threeBrainJS/dist`. There might some other external programs, but they can't claim the authorship of the release bundle. Their corresponding license files are included too.
 
 
 Self check: 0 errors | 0 warnings | 1 note
 
 ```
 ❯ checking installed package size ... NOTE
-    installed size is  6.9Mb
+    installed size is  7.3Mb
     sub-directories of 1Mb or more:
-      R              2.1Mb
+      R              2.0Mb
       threeBrainJS   2.9Mb
 ```
 

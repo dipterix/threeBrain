@@ -367,7 +367,8 @@ config <- list(
   )
 )
 
-proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config); proto
+proto <- threeBrain:::ElectrodePrototype$new("")$from_list(config)
+proto
 proto$validate()
 
 a <- invisible(proto$get_texture(seq_len(proto$n_channels), plot = TRUE))
@@ -377,9 +378,9 @@ proto$preview_3d()
 proto$save_as_default(force = TRUE)
 
 
-mesh = proto$as_mesh3d()
-mesh$material$back = "filled"
-self = proto
+mesh <- proto$as_mesh3d()
+mesh$material$back <- "filled"
+self <- proto
 ravetools::rgl_view({
   ravetools::rgl_call("shade3d", mesh)
 })
