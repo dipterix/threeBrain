@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `3e042619 (HEAD -> master)` [_`dipterix`_]: Added `PMT` electrodes
-* `4c1e669d (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed non-integer search radius issue
+* `fdd53822 (HEAD -> master)` [_`dipterix`_]: Fixed contact-switching and highlight box
+* `c80ed86d (origin/master, origin/HEAD)` [_`dipterix`_]: Added `PMT` electrodes
+* `4c1e669d` [_`dipterix`_]: Fixed non-integer search radius issue
 * `8b10f9ee` [_`dipterix`_]: Adjust electrode position can be done under volumetric mode to improve user experience; Electrodes with prototype geometries will use the prototype to infer the locations rather than spacial calculation; Added keyboard shortcut for registering from crosshair
 * `0c3164e0` [_`dipterix`_]: Added `get_atlas_values` for continuous atlases such as binary or probablistic `ROI`. The radius refers to maximum `RAS` distance instead of voxel indexing distance, hence more accurate when the atlas volume has imbalanced slice count.
 * `161545b2` [_`dipterix`_]: Renamed `active-voxel` to `column-row-slice`
