@@ -33,11 +33,11 @@ video_content <- function(path, duration = Inf, time_start = 0, asp_ratio = 16 /
     if( local ){
       # try to download video because path is probably an URL
       url <- path
-      timeout <- getOption("timeout", 60)
-      on.exit({
-        options("timeout" = timeout)
-      })
-      options("timeout" = 6000)
+
+      # 60s is too short to download a video
+      oldopt <- options("timeout" = 6000)
+      on.exit({ options(oldopt) })
+
       path <- tempfile(fileext = '.mp4')
       utils::download.file(url, destfile = path)
       temp <- TRUE

@@ -511,7 +511,8 @@ ElectrodePrototype <- R6::R6Class(
       if(with_texture && !is.null(self$.last_texture)) {
         texture_file <- file.path(tempdir(check = TRUE), sprintf("%s.png", private$id))
         grDevices::png(filename = texture_file, units = "px", width = 256, height = 256)
-        graphics::par(mar = c(0,0,0,0))
+        oldpar <- graphics::par(mar = c(0, 0, 0, 0))
+        on.exit({ graphics::par(oldpar) })
         self$preview_texture(...)
         grDevices::dev.off()
         texture_file <- normalizePath(texture_file)

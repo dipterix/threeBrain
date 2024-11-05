@@ -3,7 +3,49 @@
 ## 2024-11-01
 **Version 1.2.0 (current)**
 
-To address the `CRAN` issues:
+To address the `CRAN` issues (2024-11-05)
+
+```
+\dontrun{} should only be used if the example really cannot be executed (e.g. because of missing additional software, missing API keys, ...) by the user. That's why wrapping examples in \dontrun{} adds the comment ("# Not run:") as a warning for the user. Does not seem necessary. Please replace \dontrun with \donttest.
+Please unwrap the examples if they are executable in < 5 sec, or replace dontrun{} with \donttest{}.
+-> create_group.Rd; freesurfer_brain.Rd; geom_freemesh.Rd
+```
+
+Thanks, currently there are three `\dontrun{}` because these examples do require users to 
+
+* download additional data and software that are not licensed under, nor built into this package.
+* run the code in interactive sessions
+
+I have also tried my best to provide toy-examples if possible. This package originally has lots of `dontrun`s and I have converted most of them to `donttest` back in version `0.1.2` (see comments down below). I believe these three `dontrun` cases have been left since then.
+
+
+```
+Please make sure that you do not change the user's options, par or working directory. If you really have to do so within functions, please ensure with an *immediate* call of on.exit() that the settings are reset when the function is exited.
+e.g.:
+...
+oldpar <- par(no.readonly = TRUE) # code line i
+on.exit(par(oldpar)) # code line i + 1
+...
+par(mfrow=c(2,2)) # somewhere after
+...
+e.g.: ->  R/class_electrode_proto.R; R/ext_media.R; R/plot_volume-slices.R
+If you're not familiar with the function, please check ?on.exit. This function makes it possible to restore options before exiting a function even if the function breaks. Therefore it needs to be called immediately after the option change within a function.
+```
+
+Thanks, I have added `on.exit` to all functions that change `options` and `par`. 
+
+Just in case you miss it, there are multiple lines changing `par` in the function `plot_slices` (`R/plot_volume-slices.R`), and I make sure the `par` remain unchanged via the following two lines at the very beginning.
+
+```r
+oldpar <- graphics::par(no.readonly = TRUE)
+on.exit({ graphics::par(oldpar) })
+```
+
+
+
+
+
+To address the previous `CRAN` issues (2024-11-01)
 
 ```
 URL: https://cran.r-project.org/web/packages/threeBrain/index.html
@@ -22,7 +64,7 @@ Package `ravetools` has been updated and on `CRAN` now. The dependency is cleare
 
 This package (`threeBrain`) is developed out of fun and used in my thesis and later projects. I am the solo developer in this project (wrote 99.99% code). Other contributors are explicitly claimed in the `DESCRIPTION`.
 
-There is one external `JavaScript` library `three-brain-js`. The code is located at `inst/threeBrainJS`. I am also the main maintainer and contributor of that project. The distribution included is a compiled bundle that is released under `MPL-2.0` as a whole. As required, the license file has been included when `mpn` compiles the bundles, see `inst/threeBrainJS/dist`. There might some other external programs, but they can't claim the authorship of the release bundle. Their corresponding license files are included too.
+There is one external `JavaScript` library `three-brain-js`. The code is located at `inst/threeBrainJS`. I am also the main maintainer and contributor of that project. The distribution included is a compiled bundle that is released under `MPL-2.0` as a whole. As required, the license file has been included when `npm` compiles the bundles, see `inst/threeBrainJS/dist`. There might some other external programs, but they can't claim the authorship of the release bundle. Their corresponding license files are included too.
 
 
 Self check: 0 errors | 0 warnings | 1 note
@@ -130,7 +172,7 @@ Please fix and resubmit.
 
 #### Solution:
 
-* exported internal functions needed by exaples
+* exported internal functions needed by examples
 * changed dontrun to donttest
 
 

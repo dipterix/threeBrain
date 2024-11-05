@@ -54,6 +54,10 @@ plot_slices <- function(
   # overlays <- list.files(root_path, pattern = "\\.nii.gz$", full.names = TRUE)
   # overlay_alpha <- 0.3
 
+  # Make sure `par` is reset on exit
+  oldpar <- graphics::par(no.readonly = TRUE)
+  on.exit({ graphics::par(oldpar) })
+
   title_position <- match.arg(title_position)
 
   if( is.character(volume) ) {
@@ -182,8 +186,6 @@ plot_slices <- function(
 
   pos <- rbind(t(as.matrix(expand.grid(x, x, KEEP.OUT.ATTRS = FALSE))), 0, 1)
 
-  oldpar <- graphics::par(no.readonly = TRUE)
-
   if(!length(nc) || is.na(nc[[1]])) {
     nc <- grDevices::n2mfrow(npts, asp = 1/n_plots)[[2]]
   } else {
@@ -223,6 +225,7 @@ plot_slices <- function(
       padding_top <- 0.8
     }
 
+    # The function calls on.exit({ graphics::par(oldpar) }) so no need to reset here
     graphics::par(
       bg = pal[[1]],
       fg = pal[[length(pal)]],
@@ -230,7 +233,6 @@ plot_slices <- function(
       col.axis = pal[[1]],
       mar = c(0,0,0,0)
     )
-    on.exit({ do.call(graphics::par, oldpar) })
   }
 
   # Calculate plt
@@ -244,6 +246,8 @@ plot_slices <- function(
     ratio <- pin[[1]] / pin[[2]]
     plt <- c( 0, 1, 0.5 - ratio / 2, 0.5 + ratio / 2 )
   }
+
+  # The function calls on.exit({ graphics::par(oldpar) }) so no need to reset here
   adjust_plt <- function(reset = FALSE) {
     if( reset ) {
       graphics::par("plt" = c(0, 1, 0, 1))
