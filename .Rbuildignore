@@ -21,8 +21,8 @@
 ^inst/threeBrainJS/old
 ^inst/threeBrainJS/src
 ^inst/threeBrainJS/dist/[0-9]+.threebrain-[a-zA-Z0-9]+.js
-^inst/threeBrainJS/dist/threebrain-main\.js\.map$
-^inst/threeBrainJS/dist/threebrain-worker\.js\.map$
+^inst/threeBrainJS/dist/threebrain-main\.js\.mapp$
+^inst/threeBrainJS/dist/threebrain-worker\.js\.mapp$
 ^inst/threeBrainJS/build\.sh
 ^inst/threeBrainJS/package
 ^inst/threeBrainJS/webpack

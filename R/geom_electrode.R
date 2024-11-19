@@ -34,6 +34,8 @@ ElectrodeGeom <- R6::R6Class(
     hemisphere = NULL,
     vertex_number = -1,
     anatomical_label = NULL,
+
+    # a vector of 3x number of contacts
     MNI305_position = c(0,0,0),
     sphere_position = c(0,0,0),
     number = NULL,

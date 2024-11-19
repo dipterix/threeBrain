@@ -766,7 +766,20 @@ BrainElectrodes <- R6::R6Class(
           el$number <- electrode_numbers
           el$is_surface_electrode <- FALSE
           el$vertex_number <- -1
-          el$MNI305_position <- c(0, 0, 0)
+
+          # set MNI305 columns
+          mni305_positions <- proto$get_contact_positions(apply_transform = FALSE)
+          mni305_positions[] <- 0
+          if(length(mni305_positions) && all(c("MNI305_x", "MNI305_y", "MNI305_z") %in% names(sub))) {
+            mni305_positions[contact_order, 1] <- sub$MNI305_x[sel]
+            mni305_positions[contact_order, 2] <- sub$MNI305_y[sel]
+            mni305_positions[contact_order, 3] <- sub$MNI305_z[sel]
+
+            el$MNI305_position <- as.vector(t(mni305_positions))
+          } else {
+            el$MNI305_position <- c(0, 0, 0)
+          }
+
           el$vertex_number <- -1
 
           hemi <- tolower(sub$Hemisphere)
