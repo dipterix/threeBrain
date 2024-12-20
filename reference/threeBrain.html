@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">threeBrain</span><span class="op">(</span></span>
 <span>  <span class="va">path</span>,</span>
 <span>  <span class="va">subject_code</span>,</span>
-<span>  surface_types <span class="op">=</span> <span class="st">"pial"</span>,</span>
+<span>  surface_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pial"</span>, <span class="st">"smoothwm"</span>, <span class="st">"inflated"</span>, <span class="st">"sphere.reg"</span><span class="op">)</span>,</span>
 <span>  <span class="va">atlas_types</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -70,7 +70,8 @@ containing 'FreeSurfer' files, or simply a 'RAVE' subject</p></dd>
 
 <dt id="arg-surface-types">surface_types<a class="anchor" aria-label="anchor" href="#arg-surface-types"></a></dt>
 <dd><p>surface types to load; default is <code>'pial'</code>,
-other common types are <code>'white'</code>, <code>'smoothwm'</code></p></dd>
+other common types are <code>'white'</code>, <code>'smoothwm'</code>, <code>'inflated'</code>,
+<code>'sphere.reg'</code></p></dd>
 
 
 <dt id="arg-atlas-types">atlas_types<a class="anchor" aria-label="anchor" href="#arg-atlas-types"></a></dt>
