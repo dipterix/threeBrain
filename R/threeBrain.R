@@ -115,7 +115,8 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' containing 'FreeSurfer' files, or simply a 'RAVE' subject
 #' @param subject_code subject code, characters
 #' @param surface_types surface types to load; default is \code{'pial'},
-#' other common types are \code{'white'}, \code{'smoothwm'}
+#' other common types are \code{'white'}, \code{'smoothwm'}, \code{'inflated'},
+#' \code{'sphere.reg'}
 #' @param atlas_types brain atlas to load; default is \code{'wmparc'},
 #' or if not exists, \code{'aparc+aseg'},
 #' other choices are \code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'},
@@ -126,7 +127,7 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' @param ... reserved for future use
 #' @export
 threeBrain <- function(
-    path, subject_code, surface_types = "pial",
+    path, subject_code, surface_types = c("pial", "smoothwm", "inflated", "sphere.reg"),
     atlas_types,
     ...,
     template_subject = unname(getOption('threeBrain.template_subject', 'N27')),

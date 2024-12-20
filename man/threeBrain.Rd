@@ -7,7 +7,7 @@
 threeBrain(
   path,
   subject_code,
-  surface_types = "pial",
+  surface_types = c("pial", "smoothwm", "inflated", "sphere.reg"),
   atlas_types,
   ...,
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
@@ -21,7 +21,8 @@ containing 'FreeSurfer' files, or simply a 'RAVE' subject}
 \item{subject_code}{subject code, characters}
 
 \item{surface_types}{surface types to load; default is \code{'pial'},
-other common types are \code{'white'}, \code{'smoothwm'}}
+other common types are \code{'white'}, \code{'smoothwm'}, \code{'inflated'},
+\code{'sphere.reg'}}
 
 \item{atlas_types}{brain atlas to load; default is \code{'wmparc'},
 or if not exists, \code{'aparc+aseg'},
