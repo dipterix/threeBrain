@@ -70,6 +70,42 @@ FreeGeom <- R6::R6Class(
 
     },
 
+    set_annotation = function(name, path) {
+
+      abspath <- normalizePath(path, winslash = "/", mustWork = TRUE)
+      # # make sure it's fs format
+      # if(!endsWith(tolower(abspath), ".annot")) {
+      #   stop(filename(abspath), " is not a FreeSurfer annotation file. Please convert it.")
+      # }
+
+      hemi <- tolower(self$hemisphere)
+
+      cache <- list(
+        path = path,
+        absolute_path = abspath,
+        file_name = filename(abspath),
+        is_new_cache = FALSE,
+        is_cache = TRUE,
+        hemisphere = hemi,
+        is_fs_annot = TRUE
+      )
+
+      if( !name %in% self$group$group_data$annotation_list ) {
+        self$group$group_data$annotation_list <- c(self$group$group_data$annotation_list, name)
+      }
+
+      if(startsWith(hemi, "l")) {
+        cache_key <- sprintf("lh_annotation_%s", name)
+      } else {
+        cache_key <- sprintf("rh_annotation_%s", name)
+      }
+
+      self$group$set_group_data(cache_key, value = cache, is_cached = TRUE)
+
+      invisible()
+
+    },
+
     initialize = function(name, position = c(0,0,0), vertex, face, group,
                           ..., cache_file = NULL){
       # cache_file = '~/rave_data/data_dir/Complete/YAB/rave/viewer/lh_normal.json'

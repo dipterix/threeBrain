@@ -128,7 +128,7 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' @export
 threeBrain <- function(
     path, subject_code, surface_types = c("pial", "smoothwm", "inflated", "sphere.reg"),
-    atlas_types,
+    atlas_types, annotation_types = "label/aparc.a2009s",
     ...,
     template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
     backward_compatible = getOption("threeBrain.compatible", FALSE)
@@ -523,6 +523,7 @@ threeBrain <- function(
         group$set_group_data( "lh_primary_vertex_color", is_cached = TRUE, value = left_vcolor )
         group$set_group_data( "rh_primary_vertex_color", is_cached = TRUE, value = right_vcolor )
       }
+
     }
 
     surface <- BrainSurface$new(subject_code = subject_code, surface_type = surface_name, mesh_type = 'fs',
@@ -542,6 +543,19 @@ threeBrain <- function(
     }
   }
 
+
+
+  # --------- Step 6: Add annotations ------------------------------------------
+
+
+  for( ii in seq_along(annotation_types) ) {
+
+    annotation_type <- annotation_types[[ ii ]]
+    brain$add_annotation( annotation_type, surface_type = "pial" )
+
+  }
+
+  # --------- Return -----------------------------------------------------------
   return( brain )
   # brain$plot(debug = TRUE)
 }

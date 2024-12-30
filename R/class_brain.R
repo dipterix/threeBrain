@@ -271,6 +271,41 @@ Brain2 <- R6::R6Class(
 
     },
 
+    add_annotation = function(annotation, surface_type = "pial") {
+      if(tolower(surface_type) == "pial.t1") {
+        surface_type <- "pial"
+      }
+      if(!surface_type %in% self$surface_types) {
+        return(invisible())
+      }
+      annot_dir <- dirname(annotation)
+      annot_fname <- filename(annotation)
+
+      label_path <- file.path(self$base_path, annot_dir)
+
+      lh_path <- file.path(label_path, sprintf(c("lh.%s.annot", "lh.%s"), annot_fname))
+      # lh_path_gii <- file.path(label_path, sprintf("lh.%s.annot.gii", annotation))
+      lh_path <- lh_path[file.exists(lh_path)]
+
+
+      rh_path <- file.path(label_path, sprintf(c("rh.%s.annot", "rh.%s"), annot_fname))
+      # rh_path_gii <- file.path(label_path, sprintf("rh.%s.annot.gii", annotation))
+      rh_path <- rh_path[file.exists(rh_path)]
+
+      surface_instance <- self$surfaces[[surface_type]]
+
+      if(length(lh_path)) {
+        surface_instance$left_hemisphere$set_annotation(annotation, lh_path[[1]])
+      }
+
+      if(length(rh_path)) {
+        surface_instance$right_hemisphere$set_annotation(annotation, rh_path[[1]])
+      }
+
+      return(invisible())
+    },
+
+
     # special: must be cached path
     add_vertex_color = function(name, path, lazy = TRUE){
       path <- normalizePath(path)
