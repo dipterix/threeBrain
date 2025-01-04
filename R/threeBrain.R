@@ -121,6 +121,9 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' or if not exists, \code{'aparc+aseg'},
 #' other choices are \code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'},
 #' depending on the atlas files in \code{'fs/mri'} folder
+#' @param annotation_types annotations, this can be one or more files relative
+#' to the 'FreeSurfer' subject directory. Each annotation can be discrete such
+#' as surface atlas, or continuous such as surface curvature.
 #' @param template_subject template subject to refer to; used for group
 #' template mapping
 #' @param backward_compatible whether to support old format; default is false

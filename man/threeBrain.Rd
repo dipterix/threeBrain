@@ -9,6 +9,7 @@ threeBrain(
   subject_code,
   surface_types = c("pial", "smoothwm", "inflated", "sphere.reg"),
   atlas_types,
+  annotation_types = "label/aparc.a2009s",
   ...,
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
   backward_compatible = getOption("threeBrain.compatible", FALSE)
@@ -28,6 +29,10 @@ other common types are \code{'white'}, \code{'smoothwm'}, \code{'inflated'},
 or if not exists, \code{'aparc+aseg'},
 other choices are \code{'aparc.a2009s+aseg'}, \code{'aparc.DKTatlas+aseg'},
 depending on the atlas files in \code{'fs/mri'} folder}
+
+\item{annotation_types}{annotations, this can be one or more files relative
+to the 'FreeSurfer' subject directory. Each annotation can be discrete such
+as surface atlas, or continuous such as surface curvature.}
 
 \item{...}{reserved for future use}
 
