@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,13 +40,23 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>3126093d (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Load other common surfaces by default</li>
+<code>42c58e13 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Added surface coordinate for crosshair</li>
+<li>
+<code>6981b0e9</code> [<em><code>dipterix</code></em>]: Fixed get controller state function; added stage transition, allowing users to create animations from key states</li>
+<li>
+<code>c720b964</code> [<em><code>dipterix</code></em>]: Using “color” instead of separated <code>color</code> and <code>underlayColor</code> attributes for surface underlay</li>
+<li>
+<code>3e8e0784</code> [<em><code>dipterix</code></em>]: Supported visualizing surface annotations; surface colors are sync’ed to the electrode colors if the names are consistent; re-wrote the surface shader to support under- and over-lay colors</li>
+<li>
+<code>b09e94ea (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Updated <code>SurfaceShader</code> to use morph normal and transformed positions</li>
+<li>
+<code>3126093d</code> [<em><code>dipterix</code></em>]: Load other common surfaces by default</li>
 <li>
 <code>9096bdaf</code> [<em><code>dipterix</code></em>]: Switching subject surface types will trigger morph if the number of vertex nodes are the same</li>
 <li>
 <code>838bff7f</code> [<em><code>dipterix</code></em>]: Allow animation presets to be shown even when data is not available; added keyboard shortcut to sync data threshold with display; added hidden features that are experimental; <code>crosshair</code> position is changed to scanner<code>RAS</code> and <code>Affine MNI152</code>; added tooltip title support for controllers; added global clock for app; updated <code>ViewerCanvas</code> constructor arguments; supported <code>useMorphTarget</code> for surface objects</li>
 <li>
-<code>4bc77317 (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Fixed electrode useMatrix when contacts are represented as spheres</li>
+<code>4bc77317</code> [<em><code>dipterix</code></em>]: Fixed electrode useMatrix when contacts are represented as spheres</li>
 <li>
 <code>fa452b72</code> [<em><code>dipterix</code></em>]: Fixed template mapping, supported non-linear mapping for electrode geometries</li>
 </ul></div>

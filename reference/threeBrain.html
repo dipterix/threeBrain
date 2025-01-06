@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9003</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,6 +49,7 @@
 <span>  <span class="va">subject_code</span>,</span>
 <span>  surface_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pial"</span>, <span class="st">"smoothwm"</span>, <span class="st">"inflated"</span>, <span class="st">"sphere.reg"</span><span class="op">)</span>,</span>
 <span>  <span class="va">atlas_types</span>,</span>
+<span>  annotation_types <span class="op">=</span> <span class="st">"label/aparc.a2009s"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  backward_compatible <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.compatible"</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -79,6 +80,12 @@ other common types are <code>'white'</code>, <code>'smoothwm'</code>, <code>'inf
 or if not exists, <code>'aparc+aseg'</code>,
 other choices are <code>'aparc.a2009s+aseg'</code>, <code>'aparc.DKTatlas+aseg'</code>,
 depending on the atlas files in <code>'fs/mri'</code> folder</p></dd>
+
+
+<dt id="arg-annotation-types">annotation_types<a class="anchor" aria-label="anchor" href="#arg-annotation-types"></a></dt>
+<dd><p>annotations, this can be one or more files relative
+to the 'FreeSurfer' subject directory. Each annotation can be discrete such
+as surface atlas, or continuous such as surface curvature.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
