@@ -307,6 +307,8 @@ threeBrain <- function(
     base_path = fs_path
   )
 
+  scan_to_tkr_ras <- brain$Torig %*% solve(brain$Norig)
+
   # --------- Step 3: Add T1 MRI slices ----------------------------------------
   if(length(path_mri)) {
 
@@ -494,6 +496,9 @@ threeBrain <- function(
 
     if( subcortical ) {
       group$.cache_name <- sprintf("%s/subcortical", subject_code)
+
+      # volume_to_surf is written in scanner space
+      group$set_transform(scan_to_tkr_ras)
 
       subcortical_key <- as.integer(gsub(".*-([0-9]+)[/]{0,}$", "\\1", path_left))
       subcortical_info <- freesurfer_lut$from_key(subcortical_key, label_only = FALSE)[[1]]
