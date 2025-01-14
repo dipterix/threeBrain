@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `d15cdb6a (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added surface coordinate for crosshair
+* `1c373a4d (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed subcortical ROI matrices
+* `d15cdb6a` [_`dipterix`_]: Added surface coordinate for crosshair
 * `6981b0e9` [_`dipterix`_]: Fixed get controller state function; added stage transition, allowing users to create animations from key states
 * `c720b964` [_`dipterix`_]: Using "color" instead of separated `color` and `underlayColor` attributes for surface underlay
 * `3e8e0784` [_`dipterix`_]: Supported visualizing surface annotations; surface colors are sync'ed to the electrode colors if the names are consistent; re-wrote the surface shader to support under- and over-lay colors
