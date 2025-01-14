@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `1c373a4d (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed subcortical ROI matrices
+* `45b6e8ab (HEAD -> master)` [_`dipterix`_]: Transition animation allows video recording
+* `94ec004f` [_`dipterix`_]: Fixed screenshot button and improved video quality
+* `1c373a4d (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed subcortical ROI matrices
 * `d15cdb6a` [_`dipterix`_]: Added surface coordinate for crosshair
 * `6981b0e9` [_`dipterix`_]: Fixed get controller state function; added stage transition, allowing users to create animations from key states
 * `c720b964` [_`dipterix`_]: Using "color" instead of separated `color` and `underlayColor` attributes for surface underlay
