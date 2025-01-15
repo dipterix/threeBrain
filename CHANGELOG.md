@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `9664b0a2 (HEAD -> master)` [_`dipterix`_]: Fixed shader ignoring always-depth flag when outline is off; updated `jsPDF` to the 2.5.2 build
-* `ad202235 (origin/master, origin/HEAD)` [_`dipterix`_]: Transition animation allows video recording
+* `2b01cd6b (HEAD -> master)` [_`dipterix`_]: Canvas and screenshot is transparent when background is `#ffffff`
+* `ff5eca46 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed shader ignoring always-depth flag when outline is off; updated `jsPDF` to the 2.5.2 build
+* `ad202235` [_`dipterix`_]: Transition animation allows video recording
 * `94ec004f` [_`dipterix`_]: Fixed screenshot button and improved video quality
 * `1c373a4d` [_`dipterix`_]: Fixed subcortical ROI matrices
 * `d15cdb6a` [_`dipterix`_]: Added surface coordinate for crosshair
