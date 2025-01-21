@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `2b01cd6b (HEAD -> master)` [_`dipterix`_]: Canvas and screenshot is transparent when background is `#ffffff`
-* `ff5eca46 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed shader ignoring always-depth flag when outline is off; updated `jsPDF` to the 2.5.2 build
+* `27324b88 (HEAD -> master)` [_`dipterix`_]: Fixing the side panels so the background color is always black
+* `ad4633fe (origin/master, origin/HEAD)` [_`dipterix`_]: Canvas and screenshot is transparent when background is `#ffffff`
+* `ff5eca46` [_`dipterix`_]: Fixed shader ignoring always-depth flag when outline is off; updated `jsPDF` to the 2.5.2 build
 * `ad202235` [_`dipterix`_]: Transition animation allows video recording
 * `94ec004f` [_`dipterix`_]: Fixed screenshot button and improved video quality
 * `1c373a4d` [_`dipterix`_]: Fixed subcortical ROI matrices
