@@ -271,12 +271,15 @@ Brain2 <- R6::R6Class(
 
     },
 
-    add_annotation = function(annotation, surface_type = "pial") {
+    add_annotation = function(annotation, surface_type = "pial", template_subject = "fsaverage") {
       if(tolower(surface_type) == "pial.t1") {
         surface_type <- "pial"
       }
       if(!surface_type %in% self$surface_types) {
-        return(invisible())
+        self$add_surface(surface_type)
+        if(!surface_type %in% self$surface_types) {
+          return(invisible())
+        }
       }
       annot_dir <- dirname(annotation)
       annot_fname <- filename(annotation)
@@ -293,6 +296,22 @@ Brain2 <- R6::R6Class(
       rh_path <- rh_path[file.exists(rh_path)]
 
       surface_instance <- self$surfaces[[surface_type]]
+
+      if(!length(lh_path) || !length(rh_path)) {
+        # annot file is missing; generate one on the fly
+        tryCatch({
+          generate_cortical_parcellation(brain = self,
+                                         template_subject = template_subject,
+                                         annotation = annot_fname,
+                                         add_annotation = FALSE)
+          lh_path <- file.path(label_path, sprintf(c("lh.%s.annot", "lh.%s"), annot_fname))
+          lh_path <- lh_path[file.exists(lh_path)]
+          rh_path <- file.path(label_path, sprintf(c("rh.%s.annot", "rh.%s"), annot_fname))
+          rh_path <- rh_path[file.exists(rh_path)]
+        }, error = function(e) {
+          warning(e)
+        })
+      }
 
       if(length(lh_path)) {
         surface_instance$left_hemisphere$set_annotation(annotation, lh_path[[1]])
