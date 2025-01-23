@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `af5b9c90 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: `add_annotation` automatically compiles annotations from template if missing
+* `a5a0b6cd (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Allows continuous data cube to change color map
+* `af5b9c90` [_`dipterix`_]: `add_annotation` automatically compiles annotations from template if missing
 * `dd4b0b0a` [_`dipterix`_]: Fixing the side panels so the background color is always black
 * `ad4633fe` [_`dipterix`_]: Canvas and screenshot is transparent when background is `#ffffff`
 * `ff5eca46` [_`dipterix`_]: Fixed shader ignoring always-depth flag when outline is off; updated `jsPDF` to the 2.5.2 build
