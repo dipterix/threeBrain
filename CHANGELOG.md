@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `a5a0b6cd (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Allows continuous data cube to change color map
+* `caf0a3ed (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: `GIfTI` reader now respect the transforms if there exists a transform with target space to be the `scanner_anat`
+* `a5a0b6cd` [_`dipterix`_]: Allows continuous data cube to change color map
 * `af5b9c90` [_`dipterix`_]: `add_annotation` automatically compiles annotations from template if missing
 * `dd4b0b0a` [_`dipterix`_]: Fixing the side panels so the background color is always black
 * `ad4633fe` [_`dipterix`_]: Canvas and screenshot is transparent when background is `#ffffff`
