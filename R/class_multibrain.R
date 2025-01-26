@@ -75,7 +75,10 @@ MultiBrain2 <- R6::R6Class(
       # If N27, make sure it's installed
       stopifnot2(check_freesurfer_path(template_path),
                  msg = paste0('Cannot find template subject - ', template_subject,
-                              '\nTo install N27 template subject, you can use:\n\n\t',
+                              '\nYou might want to download template subject via ',
+                              'the following command if the template exists:\n\n\t',
+                              sprintf('threeBrain::download_template_subject("%s")', template_subject),
+                              '\n\nTo install Collins-N27 template brain, you can use:\n\n\t',
                               'threeBrain::download_N27(make_default=TRUE)'))
 
       if( !length( surface_types ) ){
