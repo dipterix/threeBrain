@@ -558,8 +558,12 @@ threeBrain <- function(
 
   for( ii in seq_along(annotation_types) ) {
 
-    annotation_type <- annotation_types[[ ii ]]
-    brain$add_annotation( annotation_type, surface_type = "pial" )
+    # This might lead to downloading templates, which will trigger warnings
+    # However, webr doesn't like it when warning exists
+    suppressWarnings({
+      annotation_type <- annotation_types[[ ii ]]
+      brain$add_annotation( annotation_type, surface_type = "pial" )
+    })
 
   }
 

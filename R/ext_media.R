@@ -39,7 +39,7 @@ video_content <- function(path, duration = Inf, time_start = 0, asp_ratio = 16 /
       on.exit({ options(oldopt) })
 
       path <- tempfile(fileext = '.mp4')
-      utils::download.file(url, destfile = path)
+      download_file(url, destfile = path)
       temp <- TRUE
     } else {
       is_url <- TRUE

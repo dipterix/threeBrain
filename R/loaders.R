@@ -50,7 +50,7 @@ download_template_subject <- function(
   if(file.exists(destzip)) {
     unlink(destzip)
   }
-  utils::download.file(url = url, destfile = destzip, quiet = FALSE, cacheOK = TRUE)
+  download_file(url = url, destfile = destzip, quiet = FALSE, cacheOK = TRUE)
 
   sub_dir <- file.path(dir, subject_code)
   # sub_dir = dir
@@ -238,7 +238,7 @@ available_templates <- function() {
   )
 
   res <- tryCatch({
-    utils::download.file(url, destfile = tf, quiet = TRUE)
+    download_file(url, destfile = tf, quiet = TRUE)
     releases <- jsonlite::read_json(tf)
     res <- releases[vapply(releases, function(rel) {
       isTRUE(rel$tag_name == "1.0.0")
