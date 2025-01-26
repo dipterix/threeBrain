@@ -53,7 +53,8 @@ MultiBrain2 <- R6::R6Class(
         self$alter_template( template_subject = template_subject,
                              surface_types = template_surface_types,
                              template_dir = template_dir,
-                             use_cache = use_cache, use_141 = use_141 )
+                             use_cache = use_cache, use_141 = use_141,
+                             ... )
       }
     },
 
@@ -61,7 +62,8 @@ MultiBrain2 <- R6::R6Class(
       surface_types = NULL,
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
       template_dir = default_template_directory(),
-      use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE))
+      use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)),
+      ...
     ){
       # test
       template_path <- file.path(template_dir, template_subject)
@@ -103,7 +105,7 @@ MultiBrain2 <- R6::R6Class(
 
       self$template_object <- threeBrain(
         path = template_path, subject_code = template_subject,
-        surface_types = surface_types, template_subject = template_subject)
+        surface_types = surface_types, template_subject = template_subject, ...)
 
       # special treatments
       if( isTRUE(template_subject %in% "cvs_avg35_inMNI152") ) {

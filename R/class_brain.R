@@ -303,18 +303,14 @@ Brain2 <- R6::R6Class(
           return(invisible())
         }
         # annot file is missing; generate one on the fly
-        tryCatch({
-          generate_cortical_parcellation(brain = self,
-                                         template_subject = template_subject,
-                                         annotation = annot_fname,
-                                         add_annotation = FALSE)
-          lh_path <- file.path(label_path, sprintf(c("lh.%s.annot", "lh.%s"), annot_fname))
-          lh_path <- lh_path[file.exists(lh_path)]
-          rh_path <- file.path(label_path, sprintf(c("rh.%s.annot", "rh.%s"), annot_fname))
-          rh_path <- rh_path[file.exists(rh_path)]
-        }, error = function(e) {
-          warning(e)
-        })
+        generate_cortical_parcellation(brain = self,
+                                       template_subject = template_subject,
+                                       annotation = annot_fname,
+                                       add_annotation = FALSE)
+        lh_path <- file.path(label_path, sprintf(c("lh.%s.annot", "lh.%s"), annot_fname))
+        lh_path <- lh_path[file.exists(lh_path)]
+        rh_path <- file.path(label_path, sprintf(c("rh.%s.annot", "rh.%s"), annot_fname))
+        rh_path <- rh_path[file.exists(rh_path)]
       }
 
       if(length(lh_path)) {

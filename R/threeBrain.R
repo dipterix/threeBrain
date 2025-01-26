@@ -562,7 +562,7 @@ threeBrain <- function(
     # However, webr doesn't like it when warning exists
     suppressWarnings({
       annotation_type <- annotation_types[[ ii ]]
-      brain$add_annotation( annotation_type, surface_type = "pial" )
+      brain$add_annotation( annotation_type, surface_type = "pial", template_subject = NULL )
     })
 
   }
