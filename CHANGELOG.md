@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `caf0a3ed (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: `GIfTI` reader now respect the transforms if there exists a transform with target space to be the `scanner_anat`
+* `2bdf8722 (HEAD -> master)` [_`dipterix`_]: Added `FileDataHandler` classes to handle drag & drop files; supported drop-in electrode coordinate files
+* `caf0a3ed (origin/master, origin/HEAD)` [_`dipterix`_]: `GIfTI` reader now respect the transforms if there exists a transform with target space to be the `scanner_anat`
 * `a5a0b6cd` [_`dipterix`_]: Allows continuous data cube to change color map
 * `af5b9c90` [_`dipterix`_]: `add_annotation` automatically compiles annotations from template if missing
 * `dd4b0b0a` [_`dipterix`_]: Fixing the side panels so the background color is always black
