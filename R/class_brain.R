@@ -298,6 +298,10 @@ Brain2 <- R6::R6Class(
       surface_instance <- self$surfaces[[surface_type]]
 
       if(!length(lh_path) || !length(rh_path)) {
+        if(length(template_subject) != 1 || is.na(template_subject)) {
+          # no-op: do NOT generate parc, just return
+          return(invisible())
+        }
         # annot file is missing; generate one on the fly
         tryCatch({
           generate_cortical_parcellation(brain = self,

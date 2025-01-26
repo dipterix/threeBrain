@@ -140,7 +140,7 @@ generate_cortical_parcellation <- function(
   # ieegio::write_surface(x = rh_annot, con = file.path(brain$base_path, "label", sprintf("rh.%s.annot", annotation)), format = "freesurfer", type = "annotations")
 
   if( add_annotation ) {
-    brain$add_annotation(sprintf("label/%s", annotation))
+    brain$add_annotation(sprintf("label/%s", annotation), template_subject = NULL)
   }
   invisible(brain)
 
