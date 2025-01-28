@@ -1,8 +1,12 @@
 ## Changes since last CRAN release
-* `4c7c6ac6 (HEAD -> master)` [_`dipterix`_]: Disable downloading files in `WASM` by default to avoid triggering `CORS` condition that will terminate the program
+* `db0c007f (HEAD -> master)` [_`dipterix`_]: Fixed `GLB` format issue
+* `dbd793be (origin/master, origin/HEAD)` [_`dipterix`_]: Minor change on the error message
+* `57da325d` [_`dipterix`_]: Multi-brain template passes extra arguments to template object constructor
+* `70aa92ef` [_`dipterix`_]: Function `threeBrain` does not automatically download templates if annotation is not found
+* `18823dd7` [_`dipterix`_]: Disable downloading files in `WASM` by default to avoid triggering `CORS` condition that will terminate the program
 * `a26514bf` [_`dipterix`_]: rewrote drag & drop code so its framework can be easily extended; surface color handlers now handle measurements and annotations different, with separate storage
 * `2bdf8722` [_`dipterix`_]: Added `FileDataHandler` classes to handle drag & drop files; supported drop-in electrode coordinate files
-* `caf0a3ed (origin/master, origin/HEAD)` [_`dipterix`_]: `GIfTI` reader now respect the transforms if there exists a transform with target space to be the `scanner_anat`
+* `caf0a3ed` [_`dipterix`_]: `GIfTI` reader now respect the transforms if there exists a transform with target space to be the `scanner_anat`
 * `a5a0b6cd` [_`dipterix`_]: Allows continuous data cube to change color map
 * `af5b9c90` [_`dipterix`_]: `add_annotation` automatically compiles annotations from template if missing
 * `dd4b0b0a` [_`dipterix`_]: Fixing the side panels so the background color is always black
