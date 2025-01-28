@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9016</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9017</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,13 +40,21 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>4c7c6ac6 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Disable downloading files in <code>WASM</code> by default to avoid triggering <code>CORS</code> condition that will terminate the program</li>
+<code>db0c007f (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Fixed <code>GLB</code> format issue</li>
+<li>
+<code>dbd793be (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Minor change on the error message</li>
+<li>
+<code>57da325d</code> [<em><code>dipterix</code></em>]: Multi-brain template passes extra arguments to template object constructor</li>
+<li>
+<code>70aa92ef</code> [<em><code>dipterix</code></em>]: Function <code>threeBrain</code> does not automatically download templates if annotation is not found</li>
+<li>
+<code>18823dd7</code> [<em><code>dipterix</code></em>]: Disable downloading files in <code>WASM</code> by default to avoid triggering <code>CORS</code> condition that will terminate the program</li>
 <li>
 <code>a26514bf</code> [<em><code>dipterix</code></em>]: rewrote drag &amp; drop code so its framework can be easily extended; surface color handlers now handle measurements and annotations different, with separate storage</li>
 <li>
 <code>2bdf8722</code> [<em><code>dipterix</code></em>]: Added <code>FileDataHandler</code> classes to handle drag &amp; drop files; supported drop-in electrode coordinate files</li>
 <li>
-<code>caf0a3ed (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: <code>GIfTI</code> reader now respect the transforms if there exists a transform with target space to be the <code>scanner_anat</code>
+<code>caf0a3ed</code> [<em><code>dipterix</code></em>]: <code>GIfTI</code> reader now respect the transforms if there exists a transform with target space to be the <code>scanner_anat</code>
 </li>
 <li>
 <code>a5a0b6cd</code> [<em><code>dipterix</code></em>]: Allows continuous data cube to change color map</li>
