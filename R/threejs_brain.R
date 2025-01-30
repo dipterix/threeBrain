@@ -262,11 +262,11 @@ threejs_brain <- function(
     c$to_list()
   }, USE.NAMES = TRUE, simplify = FALSE)
 
-  if( length(animation_types) ){
-    if( !length(default_colormap) || !default_colormap %in% animation_types){
+  if(length(animation_types)) {
+    if (!length(default_colormap) || !default_colormap %in% animation_types) {
       default_colormap <- animation_types[1]
     }
-  }else{
+  } else{
     default_colormap <- NULL
   }
 
