@@ -93,7 +93,13 @@ KeyFrame <- R6::R6Class(
   active = list(
     is_continuous = function(){ private$.dtype == 'continuous' },
     time_range = function(){
-      rg <- range(private$.time, na.rm = TRUE)
+      time <- unlist(private$.time)
+      time <- time[is.finite(time)]
+      if(length(time)) {
+        rg <- range(time, na.rm = TRUE)
+      } else {
+        rg <- c(0, 0)
+      }
       if(rg[2] == rg[1]) {
         rg[2] <- rg[1] + 1
       } else {
@@ -104,7 +110,18 @@ KeyFrame <- R6::R6Class(
       return(rg)
     },
     value_range = function(){
-      if( self$is_continuous ){ range(unlist(private$.values), na.rm = TRUE) }else{ NULL }
+      if(self$is_continuous) {
+        values <- unlist(private$.values)
+        values <- values[is.finite(values)]
+        if(length(values)) {
+          return(range(values, na.rm = TRUE))
+        } else {
+          # NA or Inf
+          return(c(0, 0))
+        }
+      } else{
+        NULL
+      }
     },
     value_names = function(){
       if( self$is_continuous ) { return(NULL) }

@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `48c170fe (HEAD -> master)` [_`dipterix`_]: Fixed bugs drag & drop electrode data type: the electrodes with missing data will be reset, and the color palettes for existing data will be kept
-* `0db22204 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed `GLB` format issue
+* `32b6f58f (HEAD -> master)` [_`dipterix`_]: Handles infinite electrode numbers
+* `cd4df436 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed bugs drag & drop electrode data type: the electrodes with missing data will be reset, and the color palettes for existing data will be kept
+* `0db22204` [_`dipterix`_]: Fixed `GLB` format issue
 * `dbd793be` [_`dipterix`_]: Minor change on the error message
 * `57da325d` [_`dipterix`_]: Multi-brain template passes extra arguments to template object constructor
 * `70aa92ef` [_`dipterix`_]: Function `threeBrain` does not automatically download templates if annotation is not found

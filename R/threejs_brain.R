@@ -387,20 +387,35 @@ threejs_brain <- function(
     geoms = geoms
   )
 
-  attr(x, 'TOJSON_ARGS') <- list(null = 'null', na = 'null')
+  # FIXME: htmlwidgets does not respect `TOJSON_ARGS`
+  attr(x, 'TOJSON_ARGS') <- list(null = 'null', na = 'null', inf = "Infinity")
 
   # Save x to $tmp_dir/config.json
   data_filename <- sprintf("config_%s.json", digest::digest(x))
   path <- file.path(tmp_dir, data_filename)
 
-  writeLines(to_json2(x), path)
+  # writeLines(to_json2(x), path)
+  writeLines(
+    con = path,
+    text = jsonlite::toJSON(
+      x = x, dataframe = "columns", null = "null", na = "null",
+      auto_unbox = TRUE, digits = getOption("shiny.json.digits",  16), use_signif = TRUE,
+      force = TRUE, POSIXt = "ISO8601", UTC = TRUE, rownames = FALSE,
+      keep_vec_names = TRUE, json_verbatim = TRUE
+    )
+  )
 
   htmlwidgets::createWidget(
-    name = 'threejs_brain', x = list(
+    name = 'threejs_brain',
+    x = list(
       data_filename = data_filename,
       settings = settings,
       force_render = !show_modal
-    ), width = width, height = height, package = 'threeBrain', sizingPolicy = htmlwidgets::sizingPolicy(
+    ),
+    width = width,
+    height = height,
+    package = 'threeBrain',
+    sizingPolicy = htmlwidgets::sizingPolicy(
       defaultWidth = '100%',
       browser.external = browser_external,
       defaultHeight = '100vh',
@@ -408,7 +423,9 @@ threejs_brain <- function(
       viewer.suppress = !isTRUE(embed),
       viewer.fill = TRUE,
       padding = '0px',
-    ), dependencies = dependencies)
+    ),
+    dependencies = dependencies
+  )
 }
 
 
