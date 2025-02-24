@@ -1,6 +1,8 @@
 ## Changes since last CRAN release
-* `50050d7e (HEAD -> master)` [_`dipterix`_]: Fixed color palette offset issue; Supported dropping color map for electrode contacts
-* `ea8d8bc6 (origin/master, origin/HEAD)` [_`dipterix`_]: Handles infinite electrode numbers
+* `af90e49b (HEAD -> master)` [_`dipterix`_]: Supported dynamic color-map (value range) for continuous surfaces and volumes; supported showing additional volume components (such as time component in `fMRI`)
+* `c7ee490a (origin/master, origin/HEAD)` [_`dipterix`_]: Added prototype geometries for `AdTech-SD16R-AP0?X`
+* `0e8d1aac` [_`dipterix`_]: Fixed color palette offset issue; Supported dropping color map for electrode contacts
+* `ea8d8bc6` [_`dipterix`_]: Handles infinite electrode numbers
 * `cd4df436` [_`dipterix`_]: Fixed bugs drag & drop electrode data type: the electrodes with missing data will be reset, and the color palettes for existing data will be kept
 * `0db22204` [_`dipterix`_]: Fixed `GLB` format issue
 * `dbd793be` [_`dipterix`_]: Minor change on the error message
