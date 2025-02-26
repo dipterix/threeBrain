@@ -136,6 +136,7 @@ threeBrain <- function(
     template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
     backward_compatible = getOption("threeBrain.compatible", FALSE)
 ) {
+
   # No SUMA 141 brain for default option
 
   fs_path <- path

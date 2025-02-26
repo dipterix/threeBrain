@@ -32,6 +32,8 @@ MultiBrain2 <- R6::R6Class(
     initialize = function(
       ..., .list = NULL,
       template_surface_types = NULL,
+      template_atlas_types = NULL,
+      template_annotation_types = "label/aparc.a2009s",
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
       template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)) ){
@@ -52,6 +54,8 @@ MultiBrain2 <- R6::R6Class(
       if( is.null(self$template_object) ){
         self$alter_template( template_subject = template_subject,
                              surface_types = template_surface_types,
+                             atlas_types = template_atlas_types,
+                             annotation_types = template_annotation_types,
                              template_dir = template_dir,
                              use_cache = use_cache, use_141 = use_141,
                              ... )
@@ -60,6 +64,8 @@ MultiBrain2 <- R6::R6Class(
 
     alter_template = function(
       surface_types = NULL,
+      atlas_types = NULL,
+      annotation_types = "label/aparc.a2009s",
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
       template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)),
@@ -88,6 +94,14 @@ MultiBrain2 <- R6::R6Class(
       surface_types <- unique(c('pial', 'pial-outer-smoothed', 'sphere.reg',
                                 unlist( surface_types )))
 
+      if( !length(atlas_types) ) {
+        atlas_types <- lapply(self$objects, function(x){ x$atlas_types })
+        atlas_types <- unique(unlist(atlas_types))
+        if(!length(atlas_types)) {
+          atlas_types <- "wmparc"
+        }
+      }
+
       # check if pial-outer-smoothed exist
       lh_envelope <- file.path(template_path, "surf", 'lh.pial-outer-smoothed')
       rh_envelope <- file.path(template_path, "surf", 'rh.pial-outer-smoothed')
@@ -107,8 +121,14 @@ MultiBrain2 <- R6::R6Class(
       }
 
       self$template_object <- threeBrain(
-        path = template_path, subject_code = template_subject,
-        surface_types = surface_types, template_subject = template_subject, ...)
+        path = template_path,
+        subject_code = template_subject,
+        surface_types = surface_types,
+        template_subject = template_subject,
+        atlas_types = atlas_types,
+        annotation_types = annotation_types,
+        ...
+      )
 
       # special treatments
       if( isTRUE(template_subject %in% "cvs_avg35_inMNI152") ) {
