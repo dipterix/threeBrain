@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `d8a3f49f (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Minor edits on ruler
+* `646d6e09 (HEAD -> master)` [_`dipterix`_]: Updated `jspdf` version
+* `28dcfe04` [_`dipterix`_]: Ruler supports multiple segments and displays segment lengths and angles for adjacent segments
+* `d8a3f49f (origin/master, origin/HEAD)` [_`dipterix`_]: Minor edits on ruler
 * `12275afa` [_`dipterix`_]: Make sure the ruler does not automatically disappear unless pressing "R" key
 * `694ad754` [_`dipterix`_]: Added ruler helper
 * `c51d89e7` [_`dipterix`_]: Fixed template brain argument issue when template `atlas` and `annotation` types are not specified explicitly
