@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `12275afa (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Make sure the ruler does not automatically disappear unless pressing "R" key
+* `d8a3f49f (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Minor edits on ruler
+* `12275afa` [_`dipterix`_]: Make sure the ruler does not automatically disappear unless pressing "R" key
 * `694ad754` [_`dipterix`_]: Added ruler helper
 * `c51d89e7` [_`dipterix`_]: Fixed template brain argument issue when template `atlas` and `annotation` types are not specified explicitly
 * `dba73daf` [_`dipterix`_]: Supported dynamic color-map (value range) for continuous surfaces and volumes; supported showing additional volume components (such as time component in `fMRI`)
