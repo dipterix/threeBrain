@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `919c9f1d (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Updated `jspdf` version
+* `b92b895b (HEAD -> master)` [_`dipterix`_]: Ray-caster with ruler now works on surfaces derived from volumes
+* `1bc5240b (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed volume value range issue: instead of using `cal_min` and `cal_max`, always calculate the data minimum and maximum instead.
+* `919c9f1d` [_`dipterix`_]: Updated `jspdf` version
 * `28dcfe04` [_`dipterix`_]: Ruler supports multiple segments and displays segment lengths and angles for adjacent segments
 * `d8a3f49f` [_`dipterix`_]: Minor edits on ruler
 * `12275afa` [_`dipterix`_]: Make sure the ruler does not automatically disappear unless pressing "R" key
