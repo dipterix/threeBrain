@@ -157,7 +157,7 @@ get_os <- function(){
 download_file <- function(...) {
   if( identical(get_os(), "emscripten") && !isTRUE(getOption("threeBrain.download.wasm.enabled", FALSE)) ) {
     # WASM and downloading files might not work well :|
-    stop("WASM environment detected. Downloading external files is disabled");
+    stop("WASM environment detected. Downloading external files is disabled")
   }
   utils::download.file(...)
 }

@@ -20,7 +20,7 @@ Default Directory to Store Template Brain
 \details{
 When \code{threeBrain.template_dir} is not set or invalid, the
 function checks 'RAVE' (R Analysis and Visualization for 'iEEG',
-\url{https://openwetware.org/wiki/RAVE}) folder at home directory. If
+\url{https://rave.wiki}) folder at home directory. If
 this folder is missing, then returns results from
 \code{R_user_dir('threeBrain', 'data')}. To override the default behavior,
 use \code{options(threeBrain.template_dir=...)}.

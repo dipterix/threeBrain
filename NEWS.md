@@ -1,5 +1,49 @@
 # Change Log
 
+threeBrain 1.3.0
+=======
+
+* Ray-caster with ruler now works on surfaces derived from volumes
+* Fixed volume value range issue: instead of using `cal_min` and `cal_max`, always calculate the data minimum and maximum instead.
+* Updated `jspdf` version
+* Ruler supports multiple segments and displays segment lengths and angles for adjacent segments
+* Minor edits on ruler
+* Make sure the ruler does not automatically disappear unless pressing "R" key
+* Added ruler helper
+* Fixed template brain argument issue when template `atlas` and `annotation` types are not specified explicitly
+* Supported dynamic color-map (value range) for continuous surfaces and volumes; supported showing additional volume components (such as time component in `fMRI`)
+* Added prototype geometries for `AdTech-SD16R-AP0?X`
+* Fixed color palette offset issue; Supported dropping color map for electrode contacts
+* Handles infinite electrode numbers
+* Fixed bugs drag & drop electrode data type: the electrodes with missing data will be reset, and the color palettes for existing data will be kept
+* Fixed `GLB` format issue
+* Minor change on the error message
+* Multi-brain template passes extra arguments to template object constructor
+* Function `threeBrain` does not automatically download templates if annotation is not found
+* Disable downloading files in `WASM` by default to avoid triggering `CORS` condition that will terminate the program
+* rewrote drag & drop code so its framework can be easily extended; surface color handlers now handle measurements and annotations different, with separate storage
+* Added `FileDataHandler` classes to handle drag & drop files; supported drop-in electrode coordinate files
+* `GIfTI` reader now respect the transforms if there exists a transform with target space to be the `scanner_anat`
+* Allows continuous data cube to change color map
+* `add_annotation` automatically compiles annotations from template if missing
+* Fixing the side panels so the background color is always black
+* Canvas and screenshot is transparent when background is `#ffffff`
+* Fixed `shader` ignoring always-depth flag when outline is off; updated `jsPDF` to the 2.5.2 build
+* Transition animation allows video recording
+* Fixed screenshot button and improved video quality
+* Fixed sub-cortical `ROI` matrices
+* Added surface coordinate for cross-hair
+* Fixed get controller state function; added stage transition, allowing users to create animations from key states
+* Using "color" instead of separated `color` and `underlayColor` attributes for surface underlay
+* Supported visualizing surface annotations; surface colors are synced to the electrode colors if the names are consistent; re-wrote the surface `shader` to support under- and over-lay colors
+* Updated `SurfaceShader` to use morph normal and transformed positions
+* Load other common surfaces by default
+* Switching subject surface types will trigger morph if the number of vertex nodes are the same
+* Allow animation presets to be shown even when data is not available; added keyboard shortcut to sync data threshold with display; added hidden features that are experimental; `crosshair` position is changed to scanner`RAS` and `Affine MNI152`; added `tooltip` title support for controllers; added global clock for app; updated `ViewerCanvas` constructor arguments; supported `useMorphTarget` for surface objects
+* Fixed electrode `useMatrix` when contacts are represented as spheres
+* Fixed template mapping, supported non-linear mapping for electrode geometries
+
+
 threeBrain 1.2.0
 =======
 

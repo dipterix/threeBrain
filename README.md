@@ -144,7 +144,7 @@ The viewer will be in `N27` template, and electrodes of these two subjects can b
 
 ## F. Electrode Localization (`YAEL`)
 
-[YAEL ("Your Advanced Electrode Localizer)](https://doi.org/10.1523/ENEURO.0328-23.2023) has been integrated into [RAVE (R Analysis and Visualization of iEEG)](https://openwetware.org/wiki/RAVE). Please check our website https://yael.wiki
+[YAEL ("Your Advanced Electrode Localizer)](https://doi.org/10.1523/ENEURO.0328-23.2023) has been integrated into [RAVE (R Analysis and Visualization of iEEG)](https://rave.wiki). Please check our website https://rave.wiki
 
 [Here is a `sfN` poster](https://www.dropbox.com/s/st0cw1aro4kmo2e/2022-poster-sfN-Zhengjia-RAVE_poster-07Nov22.pdf?dl=0)
 

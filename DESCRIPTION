@@ -1,7 +1,7 @@
 Package: threeBrain
 Type: Package
 Title: Your Advanced 3D Brain Visualization
-Version: 1.2.0.9028
+Version: 1.3.0
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
     person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("ctb", "res")),
@@ -21,10 +21,10 @@ Description: A fast, interactive cross-platform, and easy to share
     inputs. Please check the publication by Wang, Magnotti, Zhang,
     and Beauchamp (2023, <doi:10.1523/ENEURO.0328-23.2023>) for electrode 
     localization. This viewer has been fully adopted by 'RAVE' 
-    <https://openwetware.org/wiki/RAVE>, an interactive toolbox to 
+    <https://rave.wiki>, an interactive toolbox to 
     analyze 'iEEG' data by Magnotti, Wang, and Beauchamp (2020, 
     <doi:10.1016/j.neuroimage.2020.117341>). Please check 
-    'citation("threeBrain")' for details.
+    citation("threeBrain") for details.
 License: MPL-2.0
 Encoding: UTF-8
 RoxygenNote: 7.3.2

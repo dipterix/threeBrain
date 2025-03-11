@@ -622,8 +622,8 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
 
   if(as_zip){
     wd <- getwd()
-    on.exit({ setwd(wd) })
     setwd(directory)
+    on.exit({ setwd(wd) })
     fname <- basename(path)
     zipfile <- paste0(fname, ".zip")
     utils::zip(zipfile, files = fname)
