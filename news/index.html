@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0.9028</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,53 @@
       <small>Source: <a href="https://github.com/dipterix/threeBrain/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.0" id="threebrain-130">threeBrain 1.3.0<a class="anchor" aria-label="anchor" href="#threebrain-130"></a></h2>
+<ul><li>Ray-caster with ruler now works on surfaces derived from volumes</li>
+<li>Fixed volume value range issue: instead of using <code>cal_min</code> and <code>cal_max</code>, always calculate the data minimum and maximum instead.</li>
+<li>Updated <code>jspdf</code> version</li>
+<li>Ruler supports multiple segments and displays segment lengths and angles for adjacent segments</li>
+<li>Minor edits on ruler</li>
+<li>Make sure the ruler does not automatically disappear unless pressing “R” key</li>
+<li>Added ruler helper</li>
+<li>Fixed template brain argument issue when template <code>atlas</code> and <code>annotation</code> types are not specified explicitly</li>
+<li>Supported dynamic color-map (value range) for continuous surfaces and volumes; supported showing additional volume components (such as time component in <code>fMRI</code>)</li>
+<li>Added prototype geometries for <code>AdTech-SD16R-AP0?X</code>
+</li>
+<li>Fixed color palette offset issue; Supported dropping color map for electrode contacts</li>
+<li>Handles infinite electrode numbers</li>
+<li>Fixed bugs drag &amp; drop electrode data type: the electrodes with missing data will be reset, and the color palettes for existing data will be kept</li>
+<li>Fixed <code>GLB</code> format issue</li>
+<li>Minor change on the error message</li>
+<li>Multi-brain template passes extra arguments to template object constructor</li>
+<li>Function <code>threeBrain</code> does not automatically download templates if annotation is not found</li>
+<li>Disable downloading files in <code>WASM</code> by default to avoid triggering <code>CORS</code> condition that will terminate the program</li>
+<li>rewrote drag &amp; drop code so its framework can be easily extended; surface color handlers now handle measurements and annotations different, with separate storage</li>
+<li>Added <code>FileDataHandler</code> classes to handle drag &amp; drop files; supported drop-in electrode coordinate files</li>
+<li>
+<code>GIfTI</code> reader now respect the transforms if there exists a transform with target space to be the <code>scanner_anat</code>
+</li>
+<li>Allows continuous data cube to change color map</li>
+<li>
+<code>add_annotation</code> automatically compiles annotations from template if missing</li>
+<li>Fixing the side panels so the background color is always black</li>
+<li>Canvas and screenshot is transparent when background is <code>#ffffff</code>
+</li>
+<li>Fixed <code>shader</code> ignoring always-depth flag when outline is off; updated <code>jsPDF</code> to the 2.5.2 build</li>
+<li>Transition animation allows video recording</li>
+<li>Fixed screenshot button and improved video quality</li>
+<li>Fixed sub-cortical <code>ROI</code> matrices</li>
+<li>Added surface coordinate for cross-hair</li>
+<li>Fixed get controller state function; added stage transition, allowing users to create animations from key states</li>
+<li>Using “color” instead of separated <code>color</code> and <code>underlayColor</code> attributes for surface underlay</li>
+<li>Supported visualizing surface annotations; surface colors are synced to the electrode colors if the names are consistent; re-wrote the surface <code>shader</code> to support under- and over-lay colors</li>
+<li>Updated <code>SurfaceShader</code> to use morph normal and transformed positions</li>
+<li>Load other common surfaces by default</li>
+<li>Switching subject surface types will trigger morph if the number of vertex nodes are the same</li>
+<li>Allow animation presets to be shown even when data is not available; added keyboard shortcut to sync data threshold with display; added hidden features that are experimental; <code>crosshair</code> position is changed to scanner<code>RAS</code> and <code>Affine MNI152</code>; added <code>tooltip</code> title support for controllers; added global clock for app; updated <code>ViewerCanvas</code> constructor arguments; supported <code>useMorphTarget</code> for surface objects</li>
+<li>Fixed electrode <code>useMatrix</code> when contacts are represented as spheres</li>
+<li>Fixed template mapping, supported non-linear mapping for electrode geometries</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.0" id="threebrain-120">threeBrain 1.2.0<a class="anchor" aria-label="anchor" href="#threebrain-120"></a></h2><p class="text-muted">CRAN release: 2024-11-07</p>
 <ul><li>Fixed shiny callback when electrode contacts are double-clicked</li>
