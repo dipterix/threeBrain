@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,86 +40,7 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>b7f48696 (HEAD -&gt; master, origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Ray-caster with ruler now works on surfaces derived from volumes</li>
-<li>
-<code>1bc5240b</code> [<em><code>dipterix</code></em>]: Fixed volume value range issue: instead of using <code>cal_min</code> and <code>cal_max</code>, always calculate the data minimum and maximum instead.</li>
-<li>
-<code>919c9f1d</code> [<em><code>dipterix</code></em>]: Updated <code>jspdf</code> version</li>
-<li>
-<code>28dcfe04</code> [<em><code>dipterix</code></em>]: Ruler supports multiple segments and displays segment lengths and angles for adjacent segments</li>
-<li>
-<code>d8a3f49f</code> [<em><code>dipterix</code></em>]: Minor edits on ruler</li>
-<li>
-<code>12275afa</code> [<em><code>dipterix</code></em>]: Make sure the ruler does not automatically disappear unless pressing “R” key</li>
-<li>
-<code>694ad754</code> [<em><code>dipterix</code></em>]: Added ruler helper</li>
-<li>
-<code>c51d89e7</code> [<em><code>dipterix</code></em>]: Fixed template brain argument issue when template <code>atlas</code> and <code>annotation</code> types are not specified explicitly</li>
-<li>
-<code>dba73daf</code> [<em><code>dipterix</code></em>]: Supported dynamic color-map (value range) for continuous surfaces and volumes; supported showing additional volume components (such as time component in <code>fMRI</code>)</li>
-<li>
-<code>c7ee490a</code> [<em><code>dipterix</code></em>]: Added prototype geometries for <code>AdTech-SD16R-AP0?X</code>
-</li>
-<li>
-<code>0e8d1aac</code> [<em><code>dipterix</code></em>]: Fixed color palette offset issue; Supported dropping color map for electrode contacts</li>
-<li>
-<code>ea8d8bc6</code> [<em><code>dipterix</code></em>]: Handles infinite electrode numbers</li>
-<li>
-<code>cd4df436</code> [<em><code>dipterix</code></em>]: Fixed bugs drag &amp; drop electrode data type: the electrodes with missing data will be reset, and the color palettes for existing data will be kept</li>
-<li>
-<code>0db22204</code> [<em><code>dipterix</code></em>]: Fixed <code>GLB</code> format issue</li>
-<li>
-<code>dbd793be</code> [<em><code>dipterix</code></em>]: Minor change on the error message</li>
-<li>
-<code>57da325d</code> [<em><code>dipterix</code></em>]: Multi-brain template passes extra arguments to template object constructor</li>
-<li>
-<code>70aa92ef</code> [<em><code>dipterix</code></em>]: Function <code>threeBrain</code> does not automatically download templates if annotation is not found</li>
-<li>
-<code>18823dd7</code> [<em><code>dipterix</code></em>]: Disable downloading files in <code>WASM</code> by default to avoid triggering <code>CORS</code> condition that will terminate the program</li>
-<li>
-<code>a26514bf</code> [<em><code>dipterix</code></em>]: rewrote drag &amp; drop code so its framework can be easily extended; surface color handlers now handle measurements and annotations different, with separate storage</li>
-<li>
-<code>2bdf8722</code> [<em><code>dipterix</code></em>]: Added <code>FileDataHandler</code> classes to handle drag &amp; drop files; supported drop-in electrode coordinate files</li>
-<li>
-<code>caf0a3ed</code> [<em><code>dipterix</code></em>]: <code>GIfTI</code> reader now respect the transforms if there exists a transform with target space to be the <code>scanner_anat</code>
-</li>
-<li>
-<code>a5a0b6cd</code> [<em><code>dipterix</code></em>]: Allows continuous data cube to change color map</li>
-<li>
-<code>af5b9c90</code> [<em><code>dipterix</code></em>]: <code>add_annotation</code> automatically compiles annotations from template if missing</li>
-<li>
-<code>dd4b0b0a</code> [<em><code>dipterix</code></em>]: Fixing the side panels so the background color is always black</li>
-<li>
-<code>ad4633fe</code> [<em><code>dipterix</code></em>]: Canvas and screenshot is transparent when background is <code>#ffffff</code>
-</li>
-<li>
-<code>ff5eca46</code> [<em><code>dipterix</code></em>]: Fixed shader ignoring always-depth flag when outline is off; updated <code>jsPDF</code> to the 2.5.2 build</li>
-<li>
-<code>ad202235</code> [<em><code>dipterix</code></em>]: Transition animation allows video recording</li>
-<li>
-<code>94ec004f</code> [<em><code>dipterix</code></em>]: Fixed screenshot button and improved video quality</li>
-<li>
-<code>1c373a4d</code> [<em><code>dipterix</code></em>]: Fixed subcortical ROI matrices</li>
-<li>
-<code>d15cdb6a</code> [<em><code>dipterix</code></em>]: Added surface coordinate for crosshair</li>
-<li>
-<code>6981b0e9</code> [<em><code>dipterix</code></em>]: Fixed get controller state function; added stage transition, allowing users to create animations from key states</li>
-<li>
-<code>c720b964</code> [<em><code>dipterix</code></em>]: Using “color” instead of separated <code>color</code> and <code>underlayColor</code> attributes for surface underlay</li>
-<li>
-<code>3e8e0784</code> [<em><code>dipterix</code></em>]: Supported visualizing surface annotations; surface colors are sync’ed to the electrode colors if the names are consistent; re-wrote the surface shader to support under- and over-lay colors</li>
-<li>
-<code>b09e94ea</code> [<em><code>dipterix</code></em>]: Updated <code>SurfaceShader</code> to use morph normal and transformed positions</li>
-<li>
-<code>3126093d</code> [<em><code>dipterix</code></em>]: Load other common surfaces by default</li>
-<li>
-<code>9096bdaf</code> [<em><code>dipterix</code></em>]: Switching subject surface types will trigger morph if the number of vertex nodes are the same</li>
-<li>
-<code>838bff7f</code> [<em><code>dipterix</code></em>]: Allow animation presets to be shown even when data is not available; added keyboard shortcut to sync data threshold with display; added hidden features that are experimental; <code>crosshair</code> position is changed to scanner<code>RAS</code> and <code>Affine MNI152</code>; added tooltip title support for controllers; added global clock for app; updated <code>ViewerCanvas</code> constructor arguments; supported <code>useMorphTarget</code> for surface objects</li>
-<li>
-<code>4bc77317</code> [<em><code>dipterix</code></em>]: Fixed electrode useMatrix when contacts are represented as spheres</li>
-<li>
-<code>fa452b72</code> [<em><code>dipterix</code></em>]: Fixed template mapping, supported non-linear mapping for electrode geometries</li>
+<code>80c16686 (HEAD -&gt; master, origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Added release tag</li>
 </ul></div>
 
   </main></div>
