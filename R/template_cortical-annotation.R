@@ -42,15 +42,20 @@ generate_cortical_parcellation <- function(
   }
 
   # check if the annoations are available
-  lh_annot_path <- file.path(tempolate_path, "label", sprintf("lh.%s.annot", annotation))
-  rh_annot_path <- file.path(tempolate_path, "label", sprintf("rh.%s.annot", annotation))
+  lh_annot_path <- file.path(tempolate_path, "label", sprintf(c("lh.%s.annot", "lh.%s"), annotation))
+  rh_annot_path <- file.path(tempolate_path, "label", sprintf(c("rh.%s.annot", "rh.%s"), annotation))
 
-  if(!file.exists(lh_annot_path)) {
-    stop(sprintf("Template `%s` does not have FreeSurfer annotation `%s` for the left hemisphere (%s is missing).", template_subject, annotation, basename(lh_annot_path)))
+  lh_annot_path <- lh_annot_path[file.exists(lh_annot_path)]
+  rh_annot_path <- rh_annot_path[file.exists(rh_annot_path)]
+
+  if(!length(lh_annot_path)) {
+    stop(sprintf("Template `%s` does not have FreeSurfer annotation `%s` for the left hemisphere (lh.%s.annot and lh.%s are missing).", template_subject, annotation, annotation, annotation))
   }
-  if(!file.exists(rh_annot_path)) {
-    stop(sprintf("Template `%s` does not have FreeSurfer annotation `%s` for the right hemisphere (%s is missing).", template_subject, annotation, basename(rh_annot_path)))
+  if(!length(rh_annot_path)) {
+    stop(sprintf("Template `%s` does not have FreeSurfer annotation `%s` for the right hemisphere (rh.%s.annot and rh.%s are missing).", template_subject, annotation, annotation, annotation))
   }
+  lh_annot_path <- lh_annot_path[[1]]
+  rh_annot_path <- rh_annot_path[[1]]
 
   # sphere.reg for template
   lh_sphere_reg_path_template <- file.path(tempolate_path, "surf", "lh.sphere.reg")
@@ -65,19 +70,36 @@ generate_cortical_parcellation <- function(
   # left
   sphere_reg <- freesurferformats::read.fs.surface(lh_sphere_reg_path)
   sphere_reg_template <- freesurferformats::read.fs.surface(lh_sphere_reg_path_template)
-  annot_template <- freesurferformats::read.fs.annot(lh_annot_path)
 
-  kdtree <- ravetools::vcg_kdtree_nearest(
-    target = sphere_reg_template$vertices[, 1:3, drop = FALSE],
-    query = sphere_reg$vertices[, 1:3, drop = FALSE],
-    k = 1
-  )
-  new_label_codes <- annot_template$label_codes[kdtree$index[, 1]]
+  if(endsWith(lh_annot_path, ".annot")) {
+    annot_template <- freesurferformats::read.fs.annot(lh_annot_path)
 
-  annot_path <- file.path(brain$base_path, "label", sprintf("lh.%s.annot", annotation))
-  freesurferformats::write.fs.annot(
-    filepath = annot_path, num_vertices = as.integer(length(new_label_codes)),
-    colortable = annot_template$colortable_df, labels_as_colorcodes = new_label_codes)
+    kdtree <- ravetools::vcg_kdtree_nearest(
+      target = sphere_reg_template$vertices[, 1:3, drop = FALSE],
+      query = sphere_reg$vertices[, 1:3, drop = FALSE],
+      k = 1
+    )
+    new_label_codes <- annot_template$label_codes[kdtree$index[, 1]]
+
+    annot_path <- file.path(brain$base_path, "label", sprintf("lh.%s.annot", annotation))
+    freesurferformats::write.fs.annot(
+      filepath = annot_path, num_vertices = as.integer(length(new_label_codes)),
+      colortable = annot_template$colortable_df, labels_as_colorcodes = new_label_codes)
+  } else {
+
+    cont_template <- freesurferformats::read.fs.curv(lh_annot_path)
+
+    kdtree <- ravetools::vcg_kdtree_nearest(
+      target = sphere_reg_template$vertices[, 1:3, drop = FALSE],
+      query = sphere_reg$vertices[, 1:3, drop = FALSE],
+      k = 1
+    )
+    new_measurements <- cont_template[kdtree$index[, 1]]
+
+    meas_path <- file.path(brain$base_path, "label", sprintf("lh.%s", annotation))
+    freesurferformats::write.fs.curv(filepath = meas_path, data = new_measurements)
+  }
+
 
 
   # pial_annotated <- merge(
@@ -88,19 +110,34 @@ generate_cortical_parcellation <- function(
   # right
   sphere_reg <- freesurferformats::read.fs.surface(rh_sphere_reg_path)
   sphere_reg_template <- freesurferformats::read.fs.surface(rh_sphere_reg_path_template)
-  annot_template <- freesurferformats::read.fs.annot(rh_annot_path)
 
-  kdtree <- ravetools::vcg_kdtree_nearest(
-    target = sphere_reg_template$vertices[, 1:3, drop = FALSE],
-    query = sphere_reg$vertices[, 1:3, drop = FALSE],
-    k = 1
-  )
-  new_label_codes <- annot_template$label_codes[kdtree$index[, 1]]
+  if(endsWith(rh_annot_path, ".annot")) {
+    annot_template <- freesurferformats::read.fs.annot(rh_annot_path)
 
-  annot_path <- file.path(brain$base_path, "label", sprintf("rh.%s.annot", annotation))
-  freesurferformats::write.fs.annot(
-    filepath = annot_path, num_vertices = as.integer(length(new_label_codes)),
-    colortable = annot_template$colortable_df, labels_as_colorcodes = new_label_codes)
+    kdtree <- ravetools::vcg_kdtree_nearest(
+      target = sphere_reg_template$vertices[, 1:3, drop = FALSE],
+      query = sphere_reg$vertices[, 1:3, drop = FALSE],
+      k = 1
+    )
+    new_label_codes <- annot_template$label_codes[kdtree$index[, 1]]
+
+    annot_path <- file.path(brain$base_path, "label", sprintf("rh.%s.annot", annotation))
+    freesurferformats::write.fs.annot(
+      filepath = annot_path, num_vertices = as.integer(length(new_label_codes)),
+      colortable = annot_template$colortable_df, labels_as_colorcodes = new_label_codes)
+  } else {
+    cont_template <- freesurferformats::read.fs.curv(rh_annot_path)
+
+    kdtree <- ravetools::vcg_kdtree_nearest(
+      target = sphere_reg_template$vertices[, 1:3, drop = FALSE],
+      query = sphere_reg$vertices[, 1:3, drop = FALSE],
+      k = 1
+    )
+    new_measurements <- cont_template[kdtree$index[, 1]]
+
+    meas_path <- file.path(brain$base_path, "label", sprintf("rh.%s", annotation))
+    freesurferformats::write.fs.curv(filepath = meas_path, data = new_measurements)
+  }
 
   # pial_annotated <- merge(
   #   ieegio::read_surface(file.path(brain$base_path, "surf", "rh.pial")),
