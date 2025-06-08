@@ -156,6 +156,7 @@ invisible(apply(mat, 1L, function(x) {
     default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
     overwrite = TRUE
   )
+  proto$save_as_default(force = TRUE)
 }))
 
 
