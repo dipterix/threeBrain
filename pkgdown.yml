@@ -1,10 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.1.1
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   A-getting-started: A-getting-started.html
   B-data-visualization: B-data-visualization.html
-last_built: 2025-04-25T20:56Z
+last_built: 2025-06-14T22:07Z
 urls:
   reference: https://dipterix.org/threeBrain/reference
   article: https://dipterix.org/threeBrain/articles
