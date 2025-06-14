@@ -199,7 +199,47 @@ threeBrain <- function(
     sprintf("%s.mgz", allowed_mri_prefix)
   )))
   path_mri <- path_mri[file.exists(path_mri)]
-  if(length(path_mri)){ path_mri <- path_mri[[1]] }
+  if(length(path_mri)){
+    if(startsWith(basename(tolower(path_mri[[1]])), "rave_slices.nii")) {
+      # User plugins `rave_slices.nii[.gz]`, but we need to check the size
+      # If user plugin too large image, need to resample or throw an warning
+      tryCatch({
+        rave_slice_path <- path_mri[[1]]
+        rave_slice_header <- read_volume(rave_slice_path, header_only = TRUE)
+        rave_slice_shape <- dim(rave_slice_header$header)
+        if(length(rave_slice_shape) ==3 && prod(rave_slice_shape) > 134217728 && any(rave_slice_shape > 384)) {
+          # The volume file is likely to exceed 32 bit address or possibly greater than 2GB
+          # It's not worth-while and may take hell of time to load...
+          # Let's shrink down the size to 384x384x384 (at max)
+          # This file could still be quite large... but manageable
+          # If you installed RAVE, you will have ieegio package... let that package do the job!
+          if(system.file(package = "ieegio") != "") {
+            ieegio <- asNamespace("ieegio")
+            rave_slice_new_shape <- rave_slice_shape
+            rave_slice_new_shape[rave_slice_new_shape > 384] <- 384
+            cat(sprintf(
+              "The user-speficied `rave_slices.nii[.gz]` is too large.\nDownsampling from [%s] to [%s]\n",
+              paste(rave_slice_shape, collapse = "x"),
+              paste(rave_slice_new_shape, collapse = "x")
+            ))
+            rave_slice_reshaped <- ieegio$resample_volume(rave_slice_path, rave_slice_new_shape, na_fill = 0L)
+            cat("Backing up the `rave_slices.nii[.gz]` (appending .orig to the filename)\n")
+            file.rename(rave_slice_path, sprintf("%s.orig", rave_slice_path))
+            rave_slice_path <- file.path(fs_path, "mri", "rave_slices.nii.gz")
+            ieegio$write_volume(rave_slice_reshaped, rave_slice_path)
+            cat("Resample done.\n")
+            path_mri[[1]] <- rave_slice_path
+          } else {
+            # Ooops. Well at this moment it's all at your own risk. Hope for the best!
+            warning("The user-speficied `rave_slices.nii[.gz]` resolution is too high. Your browser will (most likely to) crash. Remove `rave_slices.nii[.gz]` or down-sample the image.")
+          }
+        }
+      }, error = function(e) {
+        # No error if fail. The worst case is T1 is not visible. No big deal ;P
+      })
+    }
+    path_mri <- path_mri[[1]]
+  }
 
   path_fsmri <- file.path(fs_path, "mri", as.vector(rbind(
     sprintf("%s.nii.gz", allowed_fsmri_prefix),
