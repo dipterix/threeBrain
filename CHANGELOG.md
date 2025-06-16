@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `7bf5c2ce (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Drag drop supports folders now
+* `3036d0a9 (HEAD -> master)` [_`dipterix`_]: Drag & drop file now generates consistent default colors and ignores the left-right keywords
+* `80a90588 (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed drag and drop multiple files issue
+* `7bf5c2ce` [_`dipterix`_]: Drag drop supports folders now
 * `4a7aa43c` [_`dipterix`_]: Fixed https://github.com/rave-ieeg/rave-pipelines/issues/49; Added support for streamline
 * `cc9ba41f` [_`dipterix`_]: Added support for `MXene` electrodes
 * `510f3f8c` [_`dipterix`_]: Added Adtech-RD series
