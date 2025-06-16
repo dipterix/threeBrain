@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `4a7aa43c (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed https://github.com/rave-ieeg/rave-pipelines/issues/49; Added support for streamline
+* `7bf5c2ce (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Drag drop supports folders now
+* `4a7aa43c` [_`dipterix`_]: Fixed https://github.com/rave-ieeg/rave-pipelines/issues/49; Added support for streamline
 * `cc9ba41f` [_`dipterix`_]: Added support for `MXene` electrodes
 * `510f3f8c` [_`dipterix`_]: Added Adtech-RD series
 * `da5ff210` [_`dipterix`_]: Added interpolate without refine
