@@ -37,7 +37,7 @@ to 'T1'; must be in 'NIFTI' format}
 cached; this file will be used to keep track of changes in case the
 application is crashed or shutdown}
 
-\item{...}{other parameters to pass into \code{\link{freesurfer_brain2}}}
+\item{...}{other parameters to pass into \code{\link{threeBrain}}}
 
 \item{control_presets, side_display, controllers}{passed to
 \code{\link{threejs_brain}}}

@@ -83,7 +83,7 @@ BrainAtlas <- R6::R6Class(
 #' @param value data values (length \code{n}); used if \code{keys} is missing
 #' @param colormap a color map generated from \code{create_colormap}; see \code{\link{voxel_colormap}} for details
 #' @param dimension volume dimension; default is a \code{256 x 256 x 256} array cube; must be integers and have length of 3
-#' @param brain a 'threeBrain' brain object generated from \code{\link{freesurfer_brain2}} or \code{\link{merge_brain}}. If you have \code{'rave'} package installed, the brain can be generated from \code{rave::rave_brain2}
+#' @param brain a 'threeBrain' brain object generated from \code{\link{threeBrain}} or \code{\link{merge_brain}}. If you have \code{'rave'} package installed, the brain can be generated from \code{rave::rave_brain2}
 #' @param name the name of voxel cube, only letters, digits and \code{'_'} are allowed; other characters will be replaced by \code{'_'}
 #' @param cube a 3-mode array; see the following example
 #' @param size the actual size of the volume, usually dot multiplication of the dimension and voxel size

@@ -6,15 +6,25 @@
 #' @param template_surface_types which template surface types to load, default is auto-guess
 #' @param template_subject character, subject code to be treated as template, default is `N27`
 #' @param template_dir the parent directory where template subject is stored in
+#' @param electrode_priority electrode shape priority, used to manage how
+#' electrodes are displayed; default is \code{'asis'} (no change) to be
+#' backward compatible; recommended option is \code{'sphere'} to display
+#' contacts as spheres (radius is based on the 'Radius' column from
+#' electrode table); \code{'prototype'} should work in most cases but might
+#' be inaccurate since electrodes need to maintain the original geometry shape,
+#' but the template mapping might not be linear.
 #' @export
 merge_brain <- function(
   ..., .list = NULL,
   template_surface_types = NULL,
   template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
-  template_dir = default_template_directory()
+  template_dir = default_template_directory(),
+  electrode_priority = c("asis", "sphere", "prototype", "both")
 ){
+  electrode_priority <- match.arg(electrode_priority)
   MultiBrain2$new( ... , .list = .list, template_subject = template_subject,
-                   template_dir = template_dir, template_surface_types = template_surface_types)
+                   template_dir = template_dir, template_surface_types = template_surface_types,
+                   electrode_priority = electrode_priority)
 }
 
 
@@ -29,6 +39,46 @@ MultiBrain2 <- R6::R6Class(
     # Stores rave-brain
     objects = list(),
 
+    print = function(...) {
+
+      volume_types <- self$template_object$volume_types
+      if(length(volume_types)) {
+        volume_types <- paste(volume_types, collapse = ", ")
+      } else {
+        volume_types <- "[none]"
+      }
+
+      surface_types <- self$template_object$surface_types
+      if(length(surface_types)) {
+        surface_types <- paste(surface_types, collapse = ", ")
+      } else {
+        surface_types <- "[none]"
+      }
+
+      atlas_types <- self$template_object$atlas_types
+      if(length(atlas_types)) {
+        atlas_types <- paste(atlas_types, collapse = ", ")
+      } else {
+        atlas_types <- "[none]"
+      }
+
+      str <- c(
+        "Group template brain",
+        sprintf("- Template name: %s", self$template_object$subject_code),
+        sprintf("- Underlay slices: %s", volume_types),
+        sprintf("- Surface types: %s", surface_types),
+        sprintf("- Additional atlases/volumes: %s", atlas_types),
+        sprintf("Number of native subjects: %d", length(self$objects)),
+        "- Subject details:",
+        unlist(lapply(self$objects, function(brain) {
+          sprintf("  [%s]: %d channels", brain$subject_code, nrow(brain$electrodes$raw_table))
+        }))
+      )
+
+      cat(str, sep = "\n")
+
+    },
+
     initialize = function(
       ..., .list = NULL,
       template_surface_types = NULL,
@@ -36,13 +86,20 @@ MultiBrain2 <- R6::R6Class(
       template_annotation_types = "label/aparc.a2009s",
       template_subject = unname(getOption('threeBrain.template_subject', 'N27')),
       template_dir = default_template_directory(),
-      use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)) ){
+      use_cache = TRUE, use_141 = unname(getOption('threeBrain.use141', TRUE)),
+      electrode_priority = c("asis", "sphere", "prototype", "both")){
 
+      electrode_priority <- match.arg(electrode_priority)
 
       l <- unlist( c(list(...), .list) )
       self$objects <- list()
       for( x in l ){
         if( 'rave-brain' %in% class(x) ){
+
+          if(electrode_priority != "asis" && is.data.frame(x$electrodes$raw_table)) {
+            x$set_electrodes(x$electrodes$raw_table, priority = electrode_priority)
+          }
+
           if( x$subject_code == template_subject ){
             self$template_object <- x
           }else{
@@ -255,6 +312,116 @@ MultiBrain2 <- R6::R6Class(
         control_panel = control_panel, control_presets = control_presets,
         width = width, height = height, debug = debug, token = token,
         browser_external = browser_external, global_data = global_data, ...)
+
+    },
+
+    render = function(
+      outputId, ..., controllers = list(), show_modal = FALSE,
+      session = shiny::getDefaultReactiveDomain()
+    ) {
+      if(!is.environment(session)) {
+        session <- shiny::MockShinySession$new()
+      }
+      proxy <- brain_proxy(outputId, session = session)
+
+      user_controllers <- as.list(controllers)
+      controllers <- user_controllers
+      main_camera <- list()
+
+      # get controller and camera information
+      tryCatch({
+        shiny::isolate({
+          main_camera <- as.list(proxy$main_camera)
+          controllers <- as.list(proxy$get_controllers())
+          for(nm in names(user_controllers)) {
+            controllers[[ nm ]] <- user_controllers[[ nm ]]
+          }
+        })
+      }, error = function(...){})
+
+      # remember background
+      background <- controllers[["Background Color"]]
+      if(length(background) != 1) {
+        background <- "#FFFFFF"
+      }
+
+      # remember zoom-level
+      zoom_level <- main_camera$zoom
+      if(length(zoom_level) != 1 || zoom_level <= 0) {
+        zoom_level <- 1
+      }
+
+      # remember camera position
+      position <- as.numeric(unname(unlist(main_camera$position)))
+      up <- as.numeric(unname(unlist(main_camera$up)))
+      if(length(position) != 3 || length(up) != 3 ||
+         all(position == 0) || all(up == 0) ||
+         any(is.na(position)) || any(is.na(up))) {
+        position <- c(0, 0, 500)
+        up <- c(0, 1, 0)
+      } else {
+        position <- position / sqrt(sum(position^2)) * 500
+        up <- up / sqrt(sum(up^2))
+      }
+
+      # remember variable names
+      dnames <- lapply(self$objects, function(brain) {
+        names(self$electrodes$value_table)
+      })
+      dnames <- unique(unlist(dnames))
+      dnames <- dnames[!dnames %in% c("Project", "Subject", "Electrode", "Time", "Label")]
+      dname <- controllers[["Display Data"]]
+      if(length(dname) != 1 || !dname %in% dnames) {
+        dname <- NULL
+        if(length(dnames)) {
+          dname <- dnames[[1]]
+        }
+      }
+
+      # set variable name and reset range if inconsistent
+      if(!identical(controllers[["Display Data"]], dname) && length(dname)) {
+        controllers[["Display Data"]] <- dname
+        controllers[["Display Range"]] <- ""
+      }
+
+      # remember side panel options
+      if(!isTRUE(controllers[["Show Panels"]])) {
+        controllers[["Show Panels"]] <- FALSE
+      }
+
+      self$plot(
+        show_modal = show_modal,
+        background = background,
+        controllers = controllers,
+        start_zoom = zoom_level,
+        # send signals to update parameters such as camera, zoom-level...
+        custom_javascript = sprintf(
+          '
+          // Remove the focus box
+          if( canvas.focus_box ) {
+            canvas.focus_box.visible = false;
+          }
+
+          // set camera
+          canvas.mainCamera.position.set( %f , %f , %f );
+          canvas.mainCamera.up.set( %f , %f , %f );
+          canvas.mainCamera.updateProjectionMatrix();
+
+          // Let shiny know the viewer is ready
+          if( window.Shiny ) {
+            window.Shiny.setInputValue("%s", "%f");
+          }
+
+          // Force render one frame (update the canvas)
+          canvas.needsUpdate = true;
+          ',
+          position[[1]], position[[2]], position[[3]],
+          up[[1]], up[[2]], up[[3]],
+          session$ns( outputId ),
+          Sys.time()
+        ),
+        ...
+      )
 
     },
 

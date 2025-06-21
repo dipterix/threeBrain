@@ -9,7 +9,8 @@ merge_brain(
   .list = NULL,
   template_surface_types = NULL,
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
-  template_dir = default_template_directory()
+  template_dir = default_template_directory(),
+  electrode_priority = c("asis", "sphere", "prototype", "both")
 )
 }
 \arguments{
@@ -20,6 +21,14 @@ merge_brain(
 \item{template_subject}{character, subject code to be treated as template, default is `N27`}
 
 \item{template_dir}{the parent directory where template subject is stored in}
+
+\item{electrode_priority}{electrode shape priority, used to manage how
+electrodes are displayed; default is \code{'asis'} (no change) to be
+backward compatible; recommended option is \code{'sphere'} to display
+contacts as spheres (radius is based on the 'Radius' column from
+electrode table); \code{'prototype'} should work in most cases but might
+be inaccurate since electrodes need to maintain the original geometry shape,
+but the template mapping might not be linear.}
 }
 \description{
 Create Multi-subject Template

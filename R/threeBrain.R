@@ -283,21 +283,21 @@ threeBrain <- function(
 
   surface_types <- as.character(surface_types)
   # check if this is legacy subject
-  if( backward_compatible && file.exists(file.path(fs_path, 'RAVE', "common.digest")) ) {
-    brain <- freesurfer_brain2(
-      fs_subject_folder = fs_path,
-      subject_name = subject_code,
-      surface_types = surface_types,
-      atlas_types = atlas_types,
-      template_subject = template_subject,
-      ...
-    )
-    if(!is.null(brain) && (
-      length(brain$volume_types) || length(brain$surface_types)
-    )) {
-      return( brain )
-    }
-  }
+  # if( backward_compatible && file.exists(file.path(fs_path, 'RAVE', "common.digest")) ) {
+  #   brain <- freesurfer_brain2(
+  #     fs_subject_folder = fs_path,
+  #     subject_name = subject_code,
+  #     surface_types = surface_types,
+  #     atlas_types = atlas_types,
+  #     template_subject = template_subject,
+  #     ...
+  #   )
+  #   if(!is.null(brain) && (
+  #     length(brain$volume_types) || length(brain$surface_types)
+  #   )) {
+  #     return( brain )
+  #   }
+  # }
 
   # --------- Step 1: Find transforms (xfm, Norig, Torig) ----------------------
   # xfm

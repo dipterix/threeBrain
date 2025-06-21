@@ -35,7 +35,7 @@ create_voxel_cube(
 )
 }
 \arguments{
-\item{brain}{a 'threeBrain' brain object generated from \code{\link{freesurfer_brain2}} or \code{\link{merge_brain}}. If you have \code{'rave'} package installed, the brain can be generated from \code{rave::rave_brain2}}
+\item{brain}{a 'threeBrain' brain object generated from \code{\link{threeBrain}} or \code{\link{merge_brain}}. If you have \code{'rave'} package installed, the brain can be generated from \code{rave::rave_brain2}}
 
 \item{name}{the name of voxel cube, only letters, digits and \code{'_'} are allowed; other characters will be replaced by \code{'_'}}
 

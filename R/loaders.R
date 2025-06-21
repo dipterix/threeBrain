@@ -4,7 +4,7 @@
 #' @aliases N27
 #' @details To view electrodes implanted in multiple subjects, it's highly
 #' recommended to view them in a template space The detail mapping method
-#' is discussed in function \code{freesurfer_brain}.
+#' is discussed in function \code{threeBrain}.
 #'
 #' To map to a template space, one idea is to find someone whose brain is
 #' normal. In our case, the choice is subject `N27`, also known as `Colin 27`.

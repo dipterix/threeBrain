@@ -11,7 +11,7 @@
 #' @param use_141 whether to try 'SUMA' standard 141 surface; default is true
 #' @param shiny_options shiny application options; see \code{options} in
 #' \code{\link[shiny]{shinyApp}}
-#' @param ... other parameters to pass into \code{\link{freesurfer_brain2}}
+#' @param ... other parameters to pass into \code{\link{threeBrain}}
 #' @param control_presets,side_display,controllers passed to
 #' \code{\link{threejs_brain}}
 #' @param save_path a temporary file where the electrode table should be
