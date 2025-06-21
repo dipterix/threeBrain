@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,8 @@
 <span>  .list <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  template_surface_types <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  template_subject <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.template_subject"</span>, <span class="st">"N27"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  template_dir <span class="op">=</span> <span class="fu"><a href="default_template_directory.html">default_template_directory</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  electrode_priority <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"asis"</span>, <span class="st">"sphere"</span>, <span class="st">"prototype"</span>, <span class="st">"both"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -71,6 +72,16 @@
 
 <dt id="arg-template-dir">template_dir<a class="anchor" aria-label="anchor" href="#arg-template-dir"></a></dt>
 <dd><p>the parent directory where template subject is stored in</p></dd>
+
+
+<dt id="arg-electrode-priority">electrode_priority<a class="anchor" aria-label="anchor" href="#arg-electrode-priority"></a></dt>
+<dd><p>electrode shape priority, used to manage how
+electrodes are displayed; default is <code>'asis'</code> (no change) to be
+backward compatible; recommended option is <code>'sphere'</code> to display
+contacts as spheres (radius is based on the 'Radius' column from
+electrode table); <code>'prototype'</code> should work in most cases but might
+be inaccurate since electrodes need to maintain the original geometry shape,
+but the template mapping might not be linear.</p></dd>
 
 </dl></div>
     <div class="section level2">
