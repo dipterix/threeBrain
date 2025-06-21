@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `e5c88b9b (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Drag & drop file now generates consistent default colors and ignores the left-right keywords
+* `e0355547 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added try-catch to handle file processing errors to avoid stopping processing files
+* `e5c88b9b` [_`dipterix`_]: Drag & drop file now generates consistent default colors and ignores the left-right keywords
 * `80a90588` [_`dipterix`_]: Fixed drag and drop multiple files issue
 * `7bf5c2ce` [_`dipterix`_]: Drag drop supports folders now
 * `4a7aa43c` [_`dipterix`_]: Fixed https://github.com/rave-ieeg/rave-pipelines/issues/49; Added support for streamline
