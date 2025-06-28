@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,11 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>24b00b58 (HEAD -&gt; master, origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Removed obsolete <code>freesurfer_brain</code> and embrace the new universal interface <code>threeBrain</code>; added <code>render</code> method for template brain; <code>mereg_brain</code> also gains new argument <code>electrode_priority</code> to control the priority when setting electrode shape</li>
+<code>7fc15e77 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Use <code>KDTree</code> to query the intersected volumes</li>
+<li>
+<code>4f28d734 (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Updated <code>BlueRed</code> color palette to match with the <code>ravebuiltins</code> color</li>
+<li>
+<code>24b00b58</code> [<em><code>dipterix</code></em>]: Removed obsolete <code>freesurfer_brain</code> and embrace the new universal interface <code>threeBrain</code>; added <code>render</code> method for template brain; <code>mereg_brain</code> also gains new argument <code>electrode_priority</code> to control the priority when setting electrode shape</li>
 <li>
 <code>f35f6d98</code> [<em><code>dipterix</code></em>]: Drag and drop is handled by file-system <code>API</code> or <code>Webkit</code> before fallback to naive approaches; Added support for <code>tt</code> format; streamline colors are fixed; using new shaders for streamline; better fallback for workers who don’t get new job spawned; Worker spawn is throttled; Added pseudo random generator; Streamlines have better memory management, with random shuffle; In highlight mode faded streamline widths can be adjusted; Added global ruler next to compass</li>
 <li>
