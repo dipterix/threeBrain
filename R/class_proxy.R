@@ -116,7 +116,10 @@ ViewerProxy <- R6::R6Class(
       ))
     },
 
-    set_electrode_data = function(data, palettes = NULL, value_ranges = NULL, clear_first = FALSE, update_display = TRUE) {
+    set_electrode_data = function(
+      data, palettes = NULL, value_ranges = NULL, clear_first = FALSE,
+      update_display = TRUE, override = TRUE
+    ) {
       stopifnot2(
         is.data.frame(data),
         msg = "brain_proxy$set_electrode_data(data, ...): `data` must be a data.frame."
@@ -126,7 +129,8 @@ ViewerProxy <- R6::R6Class(
         palettes = as.list(palettes),
         valueRanges = as.list(value_ranges),
         clearFirst = clear_first,
-        updateDisplay = update_display
+        updateDisplay = update_display,
+        override = override
       ))
     },
 
