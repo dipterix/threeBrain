@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `7fc15e77 (HEAD -> master)` [_`dipterix`_]: Use `KDTree` to query the intersected volumes
-* `4f28d734 (origin/master, origin/HEAD)` [_`dipterix`_]: Updated `BlueRed` color palette to match with the `ravebuiltins` color
+* `dfb1f92e (HEAD -> master)` [_`dipterix`_]: Added radiographic view
+* `43ee4c15 (origin/master, origin/HEAD)` [_`dipterix`_]: Use `KDTree` to query the stream-lines that intersect the target volume
+* `4f28d734` [_`dipterix`_]: Updated `BlueRed` color palette to match with the `ravebuiltins` color
 * `24b00b58` [_`dipterix`_]: Removed obsolete `freesurfer_brain` and embrace the new universal interface `threeBrain`; added `render` method for template brain; `mereg_brain` also gains new argument `electrode_priority` to control the priority when setting electrode shape
 * `f35f6d98` [_`dipterix`_]: Drag and drop is handled by file-system `API` or `Webkit` before fallback to naive approaches; Added support for `tt` format; streamline colors are fixed; using new shaders for streamline; better fallback for workers who don't get new job spawned; Worker spawn is throttled; Added pseudo random generator; Streamlines have better memory management, with random shuffle; In highlight mode faded streamline widths can be adjusted; Added global ruler next to compass
 * `e0355547` [_`dipterix`_]: Added try-catch to handle file processing errors to avoid stopping processing files
