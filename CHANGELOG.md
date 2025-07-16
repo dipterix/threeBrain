@@ -1,6 +1,6 @@
 ## Changes since last CRAN release
-* `2ea07114 (HEAD -> master)` [_`dipterix`_]: Fixed drag and drop color key length issue
-* `2d525370 (origin/master, origin/HEAD)` [_`dipterix`_]: Added radiographic view
+* `fbca73d5 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed drag and drop color key length issue
+* `2d525370` [_`dipterix`_]: Added radiographic view
 * `43ee4c15` [_`dipterix`_]: Use `KDTree` to query the stream-lines that intersect the target volume
 * `4f28d734` [_`dipterix`_]: Updated `BlueRed` color palette to match with the `ravebuiltins` color
 * `24b00b58` [_`dipterix`_]: Removed obsolete `freesurfer_brain` and embrace the new universal interface `threeBrain`; added `render` method for template brain; `mereg_brain` also gains new argument `electrode_priority` to control the priority when setting electrode shape
