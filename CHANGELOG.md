@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `fbca73d5 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed drag and drop color key length issue
+* `13e1d35f (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Suppressed rendering flags when the trackball is inactive, fixing the rendering policy
+* `fbca73d5` [_`dipterix`_]: Fixed drag and drop color key length issue
 * `2d525370` [_`dipterix`_]: Added radiographic view
 * `43ee4c15` [_`dipterix`_]: Use `KDTree` to query the stream-lines that intersect the target volume
 * `4f28d734` [_`dipterix`_]: Updated `BlueRed` color palette to match with the `ravebuiltins` color
