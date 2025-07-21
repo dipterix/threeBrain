@@ -234,7 +234,8 @@ available_templates <- function() {
     fsaverage = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage.zip",
     fsaverage_sym = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage_sym.zip",
     `N27-complete` = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27-complete.zip",
-    N27 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip"
+    N27 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip",
+    fsaverage_inCIT168 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage_inCIT168.zip"
   )
 
   res <- tryCatch({
