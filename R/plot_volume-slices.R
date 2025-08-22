@@ -47,7 +47,7 @@ plot_slices <- function(
   # overlays <- "~/rave_data/raw_dir/YAB/rave-imaging/fs/mri/aseg.mgz"
   #
   # # test with overlays
-  # brain <- raveio::rave_brain("YAEL/AnonSEEG")
+  # brain <- ravecore::rave_brain("YAEL/AnonSEEG")
   # root_path <- "/Users/dipterix/Library/CloudStorage/Box-Box/RAVEExternal/YAEL-Andrew-Stanford/rave_data/raw_dir/AnonSEEG/rave-imaging/atlases/OCD Response Tract Atlas (Li 2020)/mixed/"
   # pixel_width <- 1
   # volume <- file.path(brain$base_path, "mri", "T1.mgz")

@@ -177,7 +177,7 @@ ElectrodePrototype <- R6::R6Class(
 
     set_transform_from_points = function( x, y, z, up = NULL ) {
       # DIPSAUS DEBUG START
-      # brain <- raveio::rave_brain("devel/mni152_b")
+      # brain <- ravecore::rave_brain("devel/mni152_b")
       # self <- brain$electrodes$geometries$`SEEG-16_R_NAC`
       # private <- self$.__enclos_env__$private
       # t_cp <- private$.world_control_points
@@ -454,7 +454,7 @@ ElectrodePrototype <- R6::R6Class(
 
     get_contact_positions = function( channels, apply_transform = TRUE ) {
       # DIPSAUS DEBUG START
-      # brain <- raveio::rave_brain("devel/mni152_b")
+      # brain <- ravecore::rave_brain("devel/mni152_b")
       # self = brain$electrodes$geometries$`SEEG-16_R_NAC`
       # private <- self$.__enclos_env__$private
       # apply_transform <- TRUE

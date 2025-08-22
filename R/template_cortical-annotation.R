@@ -19,7 +19,7 @@ generate_cortical_parcellation <- function(
 
   # DIPSAUS DEBUG START
   # devtools::load_all()
-  # brain <- raveio::rave_brain("demo/DemoSubject")
+  # brain <- ravecore::rave_brain("demo/DemoSubject")
   # template_subject <- "fsaverage"
   # annotation <- "Yeo2011_17Networks_N1000"
 

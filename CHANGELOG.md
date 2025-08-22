@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `13e1d35f (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Suppressed rendering flags when the trackball is inactive, fixing the rendering policy
+* `74c72618 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added fsaverage in CIT168
+* `39e1d289` [_`dipterix`_]: Fixed trk format; supported tck format
+* `13e1d35f` [_`dipterix`_]: Suppressed rendering flags when the trackball is inactive, fixing the rendering policy
 * `fbca73d5` [_`dipterix`_]: Fixed drag and drop color key length issue
 * `2d525370` [_`dipterix`_]: Added radiographic view
 * `43ee4c15` [_`dipterix`_]: Use `KDTree` to query the stream-lines that intersect the target volume
