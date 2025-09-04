@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `74c72618 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added fsaverage in CIT168
+* `04a68fed (HEAD -> ravecore, origin/ravecore)` [_`dipterix`_]: removed raveio from comments and using scanner RAS for slices
+* `74c72618 (origin/master, origin/HEAD, master)` [_`dipterix`_]: Added fsaverage in CIT168
 * `39e1d289` [_`dipterix`_]: Fixed trk format; supported tck format
 * `13e1d35f` [_`dipterix`_]: Suppressed rendering flags when the trackball is inactive, fixing the rendering policy
 * `fbca73d5` [_`dipterix`_]: Fixed drag and drop color key length issue
