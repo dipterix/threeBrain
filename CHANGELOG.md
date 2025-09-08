@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `552cee75 (HEAD -> ravecore, origin/ravecore)` [_`dipterix`_]: Allowed electrode prototypes to be rigid when mapping to template
+* `02701b1c (HEAD -> ravecore, origin/ravecore)` [_`dipterix`_]: Using phisical materials for electrode prototypes
+* `552cee75` [_`dipterix`_]: Allowed electrode prototypes to be rigid when mapping to template
 * `04a68fed` [_`dipterix`_]: removed raveio from comments and using scanner RAS for slices
 * `74c72618 (origin/master, origin/HEAD, master)` [_`dipterix`_]: Added fsaverage in CIT168
 * `39e1d289` [_`dipterix`_]: Fixed trk format; supported tck format
