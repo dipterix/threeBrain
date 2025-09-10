@@ -279,7 +279,7 @@ seeg_prototype <- function(
 #
 #
 #
-# brain <- raveio::rave_brain("devel/mni152_b")
+# brain <- ravecore::rave_brain("devel/mni152_b")
 # brain$electrodes$remote_geometry(prototype_name = "sEEG-16", delete = TRUE)
-# brain <- raveio::rave_brain("devel/mni152_b")
+# brain <- ravecore::rave_brain("devel/mni152_b")
 # brain$plot(debug=TRUE)

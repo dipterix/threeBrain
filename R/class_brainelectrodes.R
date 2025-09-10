@@ -429,7 +429,7 @@ BrainElectrodes <- R6::R6Class(
 
     get_atlas_values = function(atlas, radius = 1.5, ...) {
       # DIPSAUS DEBUG START
-      # self <- raveio::rave_brain("demo/DemoSubject")$electrodes
+      # self <- ravecore::rave_brain("demo/DemoSubject")$electrodes
       # atlas <- "~/rave_data/raw_dir/DemoSubject/rave-imaging/fs/mri/aparc.a2009s+aseg.mgz"
       # radius <- 2
 
@@ -513,7 +513,7 @@ BrainElectrodes <- R6::R6Class(
 
     get_atlas_labels = function(atlas, radius = 1.5, lut = NULL) {
       # DIPSAUS DEBUG START
-      # self <- raveio::rave_brain("demo/DemoSubject")$electrodes
+      # self <- ravecore::rave_brain("demo/DemoSubject")$electrodes
       # atlas <- "~/rave_data/raw_dir/DemoSubject/rave-imaging/fs/mri/aparc.a2009s+aseg.mgz"
       # lut = NULL
       # radius <- 2
@@ -659,7 +659,7 @@ BrainElectrodes <- R6::R6Class(
       self$raw_table <- table
 
       # DIPSAUS DEBUG START
-      # brain <- raveio::rave_brain("demo/DemoSubject")
+      # brain <- ravecore::rave_brain("demo/DemoSubject")
       # self <- brain$electrodes
       # label_prefix <- "G"
       # row = list(Prototype = "Precision33x31")
@@ -902,7 +902,7 @@ BrainElectrodes <- R6::R6Class(
     # function to set values to electrodes
     set_values = function(table_or_path){
       # DIPSAUS DEBUG START
-      # brain <- raveio::rave_brain("YAEL/PrecisionDemo")
+      # brain <- ravecore::rave_brain("YAEL/PrecisionDemo")
       # self <- brain$electrodes
       # table_or_path <- brain$electrodes$raw_table
       # table <- table_or_path

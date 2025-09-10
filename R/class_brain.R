@@ -979,7 +979,7 @@ Brain2 <- R6::R6Class(
       device_init = NULL,
       save_to = NULL, one_plot = is.null(save_to), width = 12, height = 4) {
       # DIPSAUS DEBUG START
-      # self <- raveio::rave_brain('demo/DemoSubject')
+      # self <- ravecore::rave_brain('demo/DemoSubject')
       # private <- self$private
 
       # Load electrode table
