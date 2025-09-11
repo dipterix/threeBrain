@@ -4,11 +4,11 @@ Title: Your Advanced 3D Brain Visualization
 Version: 1.3.0.18
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre", "cph")),
-    person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("ctb", "res")),
     person("Xiang", "Zhang", email = "xiang.zhang@pennmedicine.upenn.edu", role = c("ctb", "res")),
     person("Brian", "Metzger", email = "bmetzge1@swarthmore.edu", role = c("res")),
     person("Elizabeth", "Nesbitt", email = "Elizabeth.Nesbitt@bcm.edu", role = c("res")),
     person("Meng", "Li", email = "meng@rice.edu", role = c("ths")),
+    person("John", "Magnotti", email = "John.Magnotti@Pennmedicine.upenn.edu", role = c("ctb", "res")),
     person("Michael", "Beauchamp", email = "Michael.Beauchamp@Pennmedicine.upenn.edu", role = c("ths", "ctb", "dtc"))
     )
 Description: A fast, interactive cross-platform, and easy to share 
