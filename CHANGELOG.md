@@ -1,8 +1,11 @@
 ## Changes since last CRAN release
-* `02701b1c (HEAD -> ravecore, origin/ravecore)` [_`dipterix`_]: Using phisical materials for electrode prototypes
+* `ba941b65 (HEAD -> master)` [_`dipterix`_]: Electrode transparency improvement; Added slice threshold to strip masks; volue slice masks work even the orientation is different
+* `5f1f4312 (origin/master, origin/HEAD)` [_`dipterix`_]: Bump version to trigger update
+* `926d78be (origin/ravecore, ravecore)` [_`dipterix`_]: Added slice material to wrap shaders and refactored sampling method (super-sampling in shader rather than completely linear interp); added outline mode for discrete overlays; temporarily removed masks
+* `02701b1c` [_`dipterix`_]: Using phisical materials for electrode prototypes
 * `552cee75` [_`dipterix`_]: Allowed electrode prototypes to be rigid when mapping to template
 * `04a68fed` [_`dipterix`_]: removed raveio from comments and using scanner RAS for slices
-* `74c72618 (origin/master, origin/HEAD, master)` [_`dipterix`_]: Added fsaverage in CIT168
+* `74c72618` [_`dipterix`_]: Added fsaverage in CIT168
 * `39e1d289` [_`dipterix`_]: Fixed trk format; supported tck format
 * `13e1d35f` [_`dipterix`_]: Suppressed rendering flags when the trackball is inactive, fixing the rendering policy
 * `fbca73d5` [_`dipterix`_]: Fixed drag and drop color key length issue
