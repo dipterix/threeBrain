@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `ba941b65 (HEAD -> master)` [_`dipterix`_]: Electrode transparency improvement; Added slice threshold to strip masks; volue slice masks work even the orientation is different
-* `5f1f4312 (origin/master, origin/HEAD)` [_`dipterix`_]: Bump version to trigger update
+* `9f1b04ee (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Moved JFM to senior position
+* `6a288bf2` [_`dipterix`_]: Electrode transparency improvement; Added slice threshold to strip masks; volue slice masks work even the orientation is different
+* `5f1f4312` [_`dipterix`_]: Bump version to trigger update
 * `926d78be (origin/ravecore, ravecore)` [_`dipterix`_]: Added slice material to wrap shaders and refactored sampling method (super-sampling in shader rather than completely linear interp); added outline mode for discrete overlays; temporarily removed masks
 * `02701b1c` [_`dipterix`_]: Using phisical materials for electrode prototypes
 * `552cee75` [_`dipterix`_]: Allowed electrode prototypes to be rigid when mapping to template
