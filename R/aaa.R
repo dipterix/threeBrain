@@ -111,6 +111,20 @@ DEFAULT_COLOR_CONTINUOUS <- c(
   "#ffffff", "#fddbc7", "#f4a582", "#d6604d", "#b2182b", "#67001f"
 )
 
+
+# As of 2022-05-09
+DEFAULT_TEMPLATES <- list(
+  bert = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/bert.zip",
+  cvs_avg35 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35.zip",
+  cvs_avg35_inMNI152 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/cvs_avg35_inMNI152.zip",
+  fsaverage = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage.zip",
+  fsaverage_sym = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage_sym.zip",
+  `N27-complete` = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27-complete.zip",
+  N27 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/N27.zip",
+  fsaverage_inCIT168 = "https://github.com/dipterix/threeBrain-sample/releases/download/1.0.0/fsaverage_inCIT168.zip"
+)
+
+
 #' @title Setup Package, Install Environment
 #' @author Zhengjia Wang
 #' @param continued logical, there are two phases of setting up environment. You

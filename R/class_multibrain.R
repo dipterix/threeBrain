@@ -22,6 +22,19 @@ merge_brain <- function(
   electrode_priority = c("asis", "sphere", "prototype", "both")
 ){
   electrode_priority <- match.arg(electrode_priority)
+
+  # check if the template subject exists
+  if(isTRUE(template_subject %in% names(DEFAULT_TEMPLATES))) {
+    template_subject_path <- file.path(template_dir, template_subject)
+    if(!dir.exists(template_subject_path)) {
+
+      message("Template ", sQuote(template_subject), " is missing. Downloading from the Github.")
+      download_template_subject(template_subject, template_dir = template_dir)
+
+    }
+  }
+
+
   MultiBrain2$new( ... , .list = .list, template_subject = template_subject,
                    template_dir = template_dir, template_surface_types = template_surface_types,
                    electrode_priority = electrode_priority)
