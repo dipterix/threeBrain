@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `9f1b04ee (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Moved JFM to senior position
+* `9d1bbcb1 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Automatically download template subject if missing
+* `a910ac51` [_`dipterix`_]: Use MeshBasicMaterial when rendering the sphere electrodes
+* `9f1b04ee` [_`dipterix`_]: Moved JFM to senior position
 * `6a288bf2` [_`dipterix`_]: Electrode transparency improvement; Added slice threshold to strip masks; volue slice masks work even the orientation is different
 * `5f1f4312` [_`dipterix`_]: Bump version to trigger update
 * `926d78be (origin/ravecore, ravecore)` [_`dipterix`_]: Added slice material to wrap shaders and refactored sampling method (super-sampling in shader rather than completely linear interp); added outline mode for discrete overlays; temporarily removed masks

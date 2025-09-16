@@ -1,5 +1,46 @@
 # Change Log
 
+threeBrain 1.4.0
+=======
+
+* Automatically download template subject when `merge_brain` is called but the subject is missing
+* Electrode transparency is improved when visualized as geometry
+* Added slice threshold, an user controller to strip the skulls 
+* Volume slice masks work even the orientation and dimensions are different
+* Added slice material instead of `RawMaterial` to wrap up changes to the `uniforms`
+* Rewrote slice sampling method (super-sampling rather than completely linear interpolation) to improve the user experience when inspecting `MRI` slices
+* Added outline mode for discrete overlays
+* Using physical/standard materials for electrode prototype geometries
+* Allowed electrode prototype transforms to be rigid when mapping to template
+* removed `raveio` from comments and using scanner RAS for slices
+* Added `fsaverage_inCIT168` template
+* Fixed `trk` format; supported `tck` format (drag and drop)
+* Suppressed rendering flags when the trackball is inactive, fixing the rendering policy
+* Fixed drag and drop color key length issue
+* Added `radiographic` view
+* Use `KDTree` to query the streamlines that intersect the target volume
+* Updated `BlueRed` color palette to match with the `ravebuiltins` color
+* Removed obsolete `freesurfer_brain` and embrace the new universal interface `threeBrain`
+* Added `render` method for template brain for remembering the states in shiny applications
+* `merge_brain` also gains new argument `electrode_priority` to control the priority when setting electrode shape
+* Drag and drop is handled by file-system `API` or `Webkit` before fallback to naive approaches to support dropping in folders
+* Added support for `tt` streamline format
+* The default colors for dropped objects are determined by their file names to avoid random colors
+* Better fallback method for workers who don't get new job spawned
+* Worker spawn is throttled
+* Added pseudo random generator
+* Streamlines have better memory management with random shuffle
+* In highlight mode faded streamline widths can be adjusted
+* Added global ruler next to compass
+* Added try-catch to handle file processing errors to avoid stopping processing files
+* Drag-and-dropped files now generate consistent default colors and ignores the left-right keywords
+* Fixed drag and drop multiple files issue
+* Drag drop supports folders now
+* Added support for multiple electrodes
+* Added "interpolate without refine" option for electrode localization, if the users prefer;
+* native annotation from template supports `FreeSurfer` `curv` file too
+* Surface mapping is more robust even if the hemisphere is unset: using `MNI152` R-axis to infer the hemisphere instead
+
 threeBrain 1.3.0
 =======
 
