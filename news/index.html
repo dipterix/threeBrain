@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.20</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.21</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,49 @@
       <small>Source: <a href="https://github.com/dipterix/threeBrain/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.4.0" id="threebrain-140">threeBrain 1.4.0<a class="anchor" aria-label="anchor" href="#threebrain-140"></a></h2>
+<ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
+<li>Electrode transparency is improved when visualized as geometry</li>
+<li>Added slice threshold, an user controller to strip the skulls</li>
+<li>Volume slice masks work even the orientation and dimensions are different</li>
+<li>Added slice material instead of <code>RawMaterial</code> to wrap up changes to the <code>uniforms</code>
+</li>
+<li>Rewrote slice sampling method (super-sampling rather than completely linear interpolation) to improve the user experience when inspecting <code>MRI</code> slices</li>
+<li>Added outline mode for discrete overlays</li>
+<li>Using physical/standard materials for electrode prototype geometries</li>
+<li>Allowed electrode prototype transforms to be rigid when mapping to template</li>
+<li>removed <code>raveio</code> from comments and using scanner RAS for slices</li>
+<li>Added <code>fsaverage_inCIT168</code> template</li>
+<li>Fixed <code>trk</code> format; supported <code>tck</code> format (drag and drop)</li>
+<li>Suppressed rendering flags when the trackball is inactive, fixing the rendering policy</li>
+<li>Fixed drag and drop color key length issue</li>
+<li>Added <code>radiographic</code> view</li>
+<li>Use <code>KDTree</code> to query the streamlines that intersect the target volume</li>
+<li>Updated <code>BlueRed</code> color palette to match with the <code>ravebuiltins</code> color</li>
+<li>Removed obsolete <code>freesurfer_brain</code> and embrace the new universal interface <code>threeBrain</code>
+</li>
+<li>Added <code>render</code> method for template brain for remembering the states in shiny applications</li>
+<li>
+<code>merge_brain</code> also gains new argument <code>electrode_priority</code> to control the priority when setting electrode shape</li>
+<li>Drag and drop is handled by file-system <code>API</code> or <code>Webkit</code> before fallback to naive approaches to support dropping in folders</li>
+<li>Added support for <code>tt</code> streamline format</li>
+<li>The default colors for dropped objects are determined by their file names to avoid random colors</li>
+<li>Better fallback method for workers who don’t get new job spawned</li>
+<li>Worker spawn is throttled</li>
+<li>Added pseudo random generator</li>
+<li>Streamlines have better memory management with random shuffle</li>
+<li>In highlight mode faded streamline widths can be adjusted</li>
+<li>Added global ruler next to compass</li>
+<li>Added try-catch to handle file processing errors to avoid stopping processing files</li>
+<li>Drag-and-dropped files now generate consistent default colors and ignores the left-right keywords</li>
+<li>Fixed drag and drop multiple files issue</li>
+<li>Drag drop supports folders now</li>
+<li>Added support for multiple electrodes</li>
+<li>Added “interpolate without refine” option for electrode localization, if the users prefer;</li>
+<li>native annotation from template supports <code>FreeSurfer</code> <code>curv</code> file too</li>
+<li>Surface mapping is more robust even if the hemisphere is unset: using <code>MNI152</code> R-axis to infer the hemisphere instead</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.0" id="threebrain-130">threeBrain 1.3.0<a class="anchor" aria-label="anchor" href="#threebrain-130"></a></h2>
 <ul><li>Ray-caster with ruler now works on surfaces derived from volumes</li>
