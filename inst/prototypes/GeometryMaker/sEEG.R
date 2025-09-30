@@ -436,3 +436,41 @@ for( spacing in contact_spacing ) {
 
 
 
+
+# ---- sEEG-Zimmer-NSEEGXXXX-RF ---------------------------------------------
+# NeuroOne / Zimmer BioTech
+
+shaft_names <- c("NSEEG1605-RF", "NSEEG2708-RF", "NSEEG3410-RF", "NSEEG4112-RF",
+                 "NSEEG4814-RF", "NSEEG5516-RF", "NSEEG6216-RF", "NSEEG6916-RF",
+                 "NSEEG8016-RF")
+probe_head <- 1 # 1mm tip
+width <- 2
+contact_spacings <- c(3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 4, 4.4, 5.2)
+overall_length <- 400
+diameter <- 0.8
+
+n_contacts <- c(5, 8, 10, 12, 14, 16, 16, 16, 16)
+
+for( ii in seq_along(n_contacts) ) {
+  shaft_name <- shaft_names[[ii]]
+  n_contact <- n_contacts[[ii]]
+  contact_spacing <- contact_spacings[[ii]]
+  contacts <- probe_head + width / 2 + 0:(n_contact-1) * contact_spacing
+  overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
+  proto <- seeg_prototype(
+    type = sprintf("sEEG-ZIMMER-%s", shaft_name),
+    description = c(
+      sprintf("NeuroOne/Zimmer EVO sEEG - %d contacts", n_contact),
+      sprintf("Contact length   : %.1f mm", width),
+      sprintf("Central spacing  : %.1f mm", contact_spacing),
+      sprintf("Tip size         : %.1f mm", probe_head),
+      sprintf("Diameter         : %.1f mm", diameter)
+    ),
+    center_position = contacts,
+    contact_widths = width,
+    diameter = diameter,
+    overall_length = overall_length,
+    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    overwrite = TRUE
+  )
+}
