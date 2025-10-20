@@ -458,7 +458,7 @@ BrainElectrodes <- R6::R6Class(
       # construct neighboring indices
       if( radius > 0 ) {
         # columns of ras_to_ijk are incremental steps along voxel-index space
-        max_index_radius <- max(abs(ras_to_ijk[, 1:3])) * radius
+        max_index_radius <- round(max(abs(ras_to_ijk[, 1:3])) * radius)
         max_radius_int <- ceiling(max_index_radius)
         # IJK offsets
         deltas <- t(as.matrix(expand.grid(
@@ -550,7 +550,7 @@ BrainElectrodes <- R6::R6Class(
       # construct neighboring indices
       if( radius > 0 ) {
         # columns of ras_to_ijk are incremental steps along voxel-index space
-        max_index_radius <- max(abs(ras_to_ijk[, 1:3])) * radius
+        max_index_radius <- round(max(abs(ras_to_ijk[, 1:3])) * radius)
         # IJK offsets
         deltas <- t(as.matrix(expand.grid(
           seq.int(-max_index_radius, max_index_radius),

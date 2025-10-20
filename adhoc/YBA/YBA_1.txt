@@ -1,0 +1,690 @@
+1	Left superior temporal pole A		
+2	Left superior temporal pole B		
+3	Left superior temporal pole B		
+4	Left superior temporal pole C		
+5	Left superior temporal pole D		
+6	Left superior temporal pole F		
+7	Left superior middle temporal pole A		
+8	Left superior middle temporal pole B		
+9	Left superior middle temporal pole C		
+10	Left superior middle temporal pole D		
+11	Left inferior middle temporal pole A		
+12	Left inferior middle temporal pole B		
+13	Left inferior middle temporal pole C		
+14	Left inferior middle temporal pole D 		
+15	Left inferior temporal pole A		
+16	Left inferior temporal pole B		
+17	Left inferior temporal pole C		
+18	Left inferior temporal pole D		
+19	Left superior temporal gyrus A		
+20	Left superior temporal gyrus B 		
+21	Left superior temporal gyrus C 		
+22	Left superior temporal gyrus D 		
+23	Left superior temporal gyrus E		
+24	Left superior temporal gyrus F 		
+25	Left superior temporal gyrus G		
+26	Left superior middle temporal gyrus A		
+27	Left superior middle temporal gyrus B		
+28	Left superior middle temporal gyrus C		
+29	Left superior middle temporal gyrus D		
+30	Left superior middle temporal gyrus E		
+31	Left superior middle temporal gyrus F		
+32	Left superior middle temporal gyrus G		
+33	Left inferior middle temporal gyrus A		
+34	Left inferior middle temporal gyrus B		
+35	Left inferior middle temporal gyrus C		
+36	Left inferior middle temporal gyrus D		
+37	Left inferior middle temporal gyrus E		
+38	Left inferior middle temporal gyrus F		
+39	Left inferior middle temporal gyrus G		
+40	Left lateral inferior temporal gyrus A		
+41	Left lateral inferior temporal gyrus B		
+42	Left lateral inferior temporal gyrus C		
+43	Left lateral inferior temporal gyrus D		
+44	Left lateral inferior temporal gyrus E		
+45	Left lateral inferior temporal gyrus F		
+46	Left basal inferior temporal gyrus A		
+47	Left basal inferior temporal gyrus B		
+48	Left basal inferior temporal gyrus C		
+49	Left basal inferior temporal gyrus D		
+50	Left basal inferior temporal gyrus E		
+51	Left superior occipital gyrus A 		
+52	Left superior occipital gyrus B		
+53	Left superior occipital gyrus C 		
+54	Left superior occipital gyrus D		
+55	Left superior occipital gyrus E		
+56	Left superior middle occipital gyrus A		
+57	Left superior middle occipital gyrus B		
+58	Left superior middle occipital gyrus C		
+59	Left superior middle occipital gyrus D		
+60	Left superior middle occipital gyrus E		
+61	Left inferior middle occipital gyrus A		
+62	Left inferior middle occipital gyrus B		
+63	Left inferior middle occipital gyrus C		
+64	Left inferior middle occipital gyrus D		
+65	Left inferior middle occipital gyrus E		
+66	Left inferior middle occipital gyrus F		
+67	Left inferior middle occipital gyrus G		
+68	Left inferior middle occipital gyrus H		
+69	Left inferior middle occipital gyrus I		
+70	Left inferior middle occipital gyrus J		
+71	Left inferior middle occipital gyrus K		
+72	Left inferior occipital gyrus A		
+73	Left inferior occipital gyrus B		
+74	Left inferior occipital gyrus C superior		
+75	Left inferior occipital gyrus C inferior		
+76	Left inferior occipital gyrus D superior		
+77	Left inferior occipital gyrus D inferior		
+78	Left inferior occipital gyrus E		
+79	Left inferior occipital gyrus F		
+80	Left inferior occipital gyrus G		
+81	Left inferior occipital gyrus H		
+82	Left inferior occipital gyrus I		
+83	Left fourth occipital gyrus A		
+84	Left fourth occipital gyrus B		
+85	Left superior angular gyrus A		
+86	Left superior angular gyrus B		
+87	Left superior angular gyrus C		
+88	Left inferior angular gyrus A		
+89	Left inferior angular gyrus B		
+90	Left inferior angular gyrus C		
+91	Left inferior angular gyrus D		
+92	Left supramarginal gyrus 1 A 		
+93	Left supramarginal gyrus 1 B		
+94	Left supramarginal gyrus 1 C		
+95	Left supramarginal gyrus 1 D		
+96	Left supramarginal gyrus 1 E		
+97	Left supramarginal gyrus 2 A 		
+98	Left supramarginal gyrus 2 B		
+99	Left supramarginal gyrus 3 A 		
+100	Left supramarginal gyrus 3 B		
+101	Left supramarginal gyrus 3 C		
+102	Left supramarginal gyrus 4 A 		
+103	Left supramarginal gyrus 4 B		
+104	Left supramarginal gyrus 4 C		
+105	Left supramarginal gyrus 5 A 		
+106	Left supramarginal gyrus 5 B		
+107	Left supramarginal gyrus 5 C		
+108	Left supramarginal gyrus 5 D		
+109	Left supramarginal gyrus 5 E		
+110	Left superior parietal 1 A		
+111	Left superior parietal 1 B		
+112	Left superior parietal 1 C		
+113	Left superior parietal 1 D		
+114	Left superior parietal 1 E		
+115	Left superior parietal 1 F		
+116	Left superior parietal 1 G		
+117	Left superior parietal 2 A		
+118	Left superior parietal 2 B		
+119	Left superior parietal 2 C		
+120	Left superior parietal 2 D		
+121	Left superior parietal 3 A		
+122	Left superior parietal 3 B		
+123	Left superior parietal 3 C		
+124	Left superior parietal 3 D		
+125	Left superior parietal 3 E		
+126	Left superior parietal 3 F		
+127	Left superior parietal 4 A		
+128	Left superior parietal 4 B		
+129	Left superior parietal 4 C		
+130	Left superior parietal 4 D		
+131	Left superior parietal 4 E		
+132	Left superior parietal 4 F		
+133	Left superior parietal 4 G		
+134	Left somatosensory A 		
+135	Left somatosensory B		
+136	Left somatosensory C		
+137	Left somatosensory D		
+138	Left somatosensory E		
+139	Left somatosensory F		
+140	Left somatosensory G		
+141	Left somatosensory H		
+142	Left somatosensory I		
+143	Left somatosensory J		
+144	Left somatosensory K		
+145	Left somatosensory L		
+146	Left somatosensory M		
+147	Left anterior motor A		
+148	Left anterior motor B		
+149	Left anterior motor C		
+150	Left anterior motor D		
+151	Left posterior motor A 		
+152	Left posterior motor B		
+153	Left posterior motor C		
+154	Left posterior motor D		
+155	Left posterior motor E		
+156	Left posterior motor F		
+157	Left posterior motor G		
+158	Left posterior motor H		
+159	Left posterior motor I		
+160	Left posterior motor J		
+161	Left posterior motor K		
+162	Left superior frontal gyrus 1 A		
+163	Left superior frontal gyrus 1 B		
+164	Left superior frontal gyrus 1 C		
+165	Left superior frontal gyrus 1 D		
+166	Left superior frontal gyrus 2 A		
+167	Left superior frontal gyrus 2 B		
+168	Left superior frontal gyrus 2 C		
+169	Left superior frontal gyrus 2 D		
+170	Left superior frontal gyrus 3 A		
+171	Left superior frontal gyrus 3 B		
+172	Left superior frontal gyrus 3 C		
+173	Left superior frontal gyrus 3 D		
+174	Left superior frontal gyrus 4 A		
+175	Left superior frontal gyrus 4 B		
+176	Left superior frontal gyrus 4 C		
+177	Left superior frontal gyrus 4 D		
+178	Left superior frontal gyrus 5 A		
+179	Left superior frontal gyrus 5 B		
+180	Left superior frontal gyrus 5 C		
+181	Left superior frontal gyrus 5 D		
+182	Left superior frontal gyrus 6 A		
+183	Left superior frontal gyrus 6 B		
+184	Left superior frontal gyrus 6 C		
+185	Left superior frontal gyrus 6 D		
+186	Left superior frontal gyrus 7 A		
+187	Left superior frontal gyrus 7 B		
+188	Left superior frontal gyrus 7 C		
+189	Left superior frontal gyrus 7 D		
+190	Left superior frontal gyrus 7 E		
+191	Left superior frontal gyrus 8 A		
+192	Left superior frontal gyrus 8 B		
+193	Left superior frontal gyrus 8 C		
+194	Left superior frontal gyrus 8 D		
+195	Left middle frontal gyrus 1 A		
+196	Left middle frontal gyrus 1 B		
+197	Left middle frontal gyrus 1 C		
+198	Left middle frontal gyrus 2 A		
+199	Left middle frontal gyrus 2 B		
+200	Left middle frontal gyrus 2 C		
+201	Left middle frontal gyrus 2 D		
+202	Left middle frontal gyrus 3 A		
+203	Left middle frontal gyrus 3 B		
+204	Left middle frontal gyrus 3 C		
+205	Left middle frontal gyrus 3 D		
+206	Left middle frontal gyrus 4 A		
+207	Left middle frontal gyrus 4 B		
+208	Left middle frontal gyrus 4 C		
+209	Left middle frontal gyrus 4 D		
+210	Left middle frontal gyrus 5 A		
+211	Left middle frontal gyrus 5 B		
+212	Left middle frontal gyrus 5 C		
+213	Left middle frontal gyrus 6 A		
+214	Left middle frontal gyrus 6 B		
+215	Left middle frontal gyrus 6 C		
+216	Left middle frontal gyrus 7 A		
+217	Left middle frontal gyrus 7 B		
+218	Left middle frontal gyrus 7 C		
+219	Left middle frontal gyrus 8 A		
+220	Left pars opercularis A 		
+221	Left pars opercularis B		
+222	Left pars opercularis C		
+223	Left anterior pars triangularis A		
+224	Left anterior pars triangularis B		
+225	Left middle pars triangularis A		
+226	Left middle pars triangularis B		
+227	Left posterior pars triangularis A		
+228	Left posterior pars triangularis B		
+229	Left pars orbitalis A 		
+230	Left pars orbitalis B		
+231	Left pars orbitalis C		
+232	Left frontal pole 1 A		
+233	Left frontal pole 1 B		
+234	Left frontal pole 1 C		
+235	Left frontal pole 1 D		
+236	Left frontal pole 1 E		
+237	Left frontal pole 1 F		
+238	Left frontal pole 1 G		
+239	Left frontal pole 1 H		
+240	Left frontal pole 2 A 		
+241	Left frontal pole 2 B		
+242	Left frontal pole 2 C 		
+243	Left frontal pole 2 D		
+244	Left frontal pole 3 A		
+245	Left frontal pole 3 B		
+246	Left frontal pole 3 C		
+247	Left frontal pole 3 D		
+248	Left frontal pole 3 E		
+249	Left frontal pole 3 F		
+250	Left frontal pole 3 G		
+251	Left frontal pole 4 A		
+252	Left frontal pole 4 B		
+253	Left frontal pole 4 C		
+254	Left frontal pole 4 D		
+255	Left frontal pole 4 E		
+256	Left frontal pole 4 F		
+257	Left frontal orbital 1 A		
+258	Left frontal orbital 1 B		
+259	Left frontal orbital 1 C		
+260	Left frontal orbital 1 D 		
+261	Left frontal orbital 2 A		
+262	Left frontal orbital 2 B		
+263	Left frontal orbital 2 C		
+264	Left frontal orbital 2 D		
+265	Left frontal orbital 2 E		
+266	Left frontal orbital 3 A		
+267	Left frontal orbital 3 B		
+268	Left frontal orbital 3 C		
+269	Left frontal orbital 3 D		
+270	Left frontal orbital 4 A		
+271	Left frontal orbital 4 B		
+272	Left frontal orbital 4 C		
+273	Left frontal orbital 4 D		
+274	Left frontal orbital 5 A		
+275	Left frontal orbital 5 B		
+276	Left frontal orbital 5 C		
+277	Left frontal orbital 5 D		
+278	Left frontal orbital 5 E		
+279	Left frontal orbital 6 A		
+280	Left frontal orbital 6 B		
+281	Left frontal orbital 6 C		
+282	Left lateral occipitotemporal gyrus A		
+283	Left lateral occipitotemporal gyrus B 		
+284	Left lateral occipitotemporal gyrus C		
+285	Left lateral occipitotemporal gyrus D		
+286	Left lateral occipitotemporal gyrus E		
+287	Left medial occipitotemporal gyrus A 		
+288	Left medial occipitotemporal gyrus B		
+289	Left medial occipitotemporal gyrus C		
+290	Left medial occipitotemporal gyrus D		
+291	Left medial occipitotemporal gyrus E		
+292	Left medial occipitotemporal gyrus F		
+293	Left medial occipitotemporal gyrus G		
+294	Left medial occipitotemporal gyrus H		
+295	Left parahippocampal gyrus A		
+296	Left parahippocampal gyrus B		
+297	Left parahippocampal gyrus C		
+298	Left parahippocampal gyrus D		
+299	Left parahippocampal gyrus E		
+300	Left parahippocampal gyrus F		
+301	Left parahippocampal gyrus G 		
+302	Left lingual gyrus A		
+303	Left lingual gyrus B		
+304	Left lingual gyrus C		
+305	Left cingulate gyrus A		
+306	Left cingulate gyrus B		
+307	Left cingulate gyrus C		
+308	Left cingulate gyrus D		
+309	Left cingulate gyrus E		
+310	Left cingulate gyrus F		
+311	Left cingulate gyrus G		
+312	Left cingulate gyrus H		
+313	Left cingulate gyrus I		
+314	Left cingulate gyrus J		
+315	Left cingulate gyrus K 		
+316	Left cingulate gyrus L		
+317	Left cingulate gyrus M		
+318	Left cingulate gyrus N superior		
+319	Left cingulate gyrus N inferior		
+320	Left cingulate gyrus O		
+321	Left cingulate gyrus P		
+322	Left cingulate gyrus Q		
+323	Left cingulate gyrus R		
+324	Left hippocampus pes		
+325	Left hippocampus body 		
+326	Left hippocampus tail		
+327	Left amygdala superior 		
+328	Left amygdala inferior		
+329	Left anterior short insular gyrus A		
+330	Left anterior short insular gyrus B		
+331	Left anterior short insular gyrus C		
+332	Left middle short insular gyrus A		
+333	Left middle short insular gyrus B		
+334	Left middle short insular gyrus C		
+335	Left posterior short insular gyrus A		
+336	Left posterior short insular gyrus B		
+337	Left posterior short insular gyrus C		
+338	Left anterior long insular gyrus A		
+339	Left anterior long insular gyrus B		
+340	Left anterior long insular gyrus C		
+341	Left anterior long insular gyrus D		
+342	Left posterior long insular gyrus A		
+343	Left posterior long insular gyrus B		
+344	Left posterior long insular gyrus C		
+345	Left posterior long insular gyrus D		
+346	Right superior temporal pole A		
+347	Right superior temporal pole B		
+348	Right superior temporal pole B		
+349	Right superior temporal pole C		
+350	Right superior temporal pole D		
+351	Right superior temporal pole F		
+352	Right superior middle temporal pole A		
+353	Right superior middle temporal pole B		
+354	Right superior middle temporal pole C		
+355	Right superior middle temporal pole D		
+356	Right inferior middle temporal pole A		
+357	Right inferior middle temporal pole B		
+358	Right inferior middle temporal pole C		
+359	Right inferior middle temporal pole D 		
+360	Right inferior temporal pole A		
+361	Right inferior temporal pole B		
+362	Right inferior temporal pole C		
+363	Right inferior temporal pole D		
+364	Right superior temporal gyrus A		
+365	Right superior temporal gyrus B 		
+366	Right superior temporal gyrus C 		
+367	Right superior temporal gyrus D 		
+368	Right superior temporal gyrus E		
+369	Right superior temporal gyrus F 		
+370	Right superior temporal gyrus G		
+371	Right superior middle temporal gyrus A		
+372	Right superior middle temporal gyrus B		
+373	Right superior middle temporal gyrus C		
+374	Right superior middle temporal gyrus D		
+375	Right superior middle temporal gyrus E		
+376	Right superior middle temporal gyrus F		
+377	Right superior middle temporal gyrus G		
+378	Right inferior middle temporal gyrus A		
+379	Right inferior middle temporal gyrus B		
+380	Right inferior middle temporal gyrus C		
+381	Right inferior middle temporal gyrus D		
+382	Right inferior middle temporal gyrus E		
+383	Right inferior middle temporal gyrus F		
+384	Right inferior middle temporal gyrus G		
+385	Right lateral inferior temporal gyrus A		
+386	Right lateral inferior temporal gyrus B		
+387	Right lateral inferior temporal gyrus C		
+388	Right lateral inferior temporal gyrus D		
+389	Right lateral inferior temporal gyrus E		
+390	Right lateral inferior temporal gyrus F		
+391	Right basal inferior temporal gyrus A		
+392	Right basal inferior temporal gyrus B		
+393	Right basal inferior temporal gyrus C		
+394	Right basal inferior temporal gyrus D		
+395	Right basal inferior temporal gyrus E		
+396	Right superior occipital gyrus A 		
+397	Right superior occipital gyrus B		
+398	Right superior occipital gyrus C 		
+399	Right superior occipital gyrus D		
+400	Right superior occipital gyrus E		
+401	Right superior middle occipital gyrus A		
+402	Right superior middle occipital gyrus B		
+403	Right superior middle occipital gyrus C		
+404	Right superior middle occipital gyrus D		
+405	Right superior middle occipital gyrus E		
+406	Right inferior middle occipital gyrus A		
+407	Right inferior middle occipital gyrus B		
+408	Right inferior middle occipital gyrus C		
+409	Right inferior middle occipital gyrus D		
+410	Right inferior middle occipital gyrus E		
+411	Right inferior middle occipital gyrus F		
+412	Right inferior middle occipital gyrus G		
+413	Right inferior middle occipital gyrus H		
+414	Right inferior middle occipital gyrus I		
+415	Right inferior middle occipital gyrus J		
+416	Right inferior middle occipital gyrus K		
+417	Right inferior occipital gyrus A		
+418	Right inferior occipital gyrus B		
+419	Right inferior occipital gyrus C superior		
+420	Right inferior occipital gyrus C inferior		
+421	Right inferior occipital gyrus D superior		
+422	Right inferior occipital gyrus D inferior		
+423	Right inferior occipital gyrus E		
+424	Right inferior occipital gyrus F		
+425	Right inferior occipital gyrus G		
+426	Right inferior occipital gyrus H		
+427	Right inferior occipital gyrus I		
+428	Right fourth occipital gyrus A		
+429	Right fourth occipital gyrus B		
+430	Right superior angular gyrus A		
+431	Right superior angular gyrus B		
+432	Right superior angular gyrus C		
+433	Right inferior angular gyrus A		
+434	Right inferior angular gyrus B		
+435	Right inferior angular gyrus C		
+436	Right inferior angular gyrus D		
+437	Right supramarginal gyrus 1 A 		
+438	Right supramarginal gyrus 1 B		
+439	Right supramarginal gyrus 1 C		
+440	Right supramarginal gyrus 1 D		
+441	Right supramarginal gyrus 1 E		
+442	Right supramarginal gyrus 2 A 		
+443	Right supramarginal gyrus 2 B		
+444	Right supramarginal gyrus 3 A 		
+445	Right supramarginal gyrus 3 B		
+446	Right supramarginal gyrus 3 C		
+447	Right supramarginal gyrus 4 A 		
+448	Right supramarginal gyrus 4 B		
+449	Right supramarginal gyrus 4 C		
+450	Right supramarginal gyrus 5 A 		
+451	Right supramarginal gyrus 5 B		
+452	Right supramarginal gyrus 5 C		
+453	Right supramarginal gyrus 5 D		
+454	Right supramarginal gyrus 5 E		
+455	Right superior parietal 1 A		
+456	Right superior parietal 1 B		
+457	Right superior parietal 1 C		
+458	Right superior parietal 1 D		
+459	Right superior parietal 1 E		
+460	Right superior parietal 1 F		
+461	Right superior parietal 1 G		
+462	Right superior parietal 2 A		
+463	Right superior parietal 2 B		
+464	Right superior parietal 2 C		
+465	Right superior parietal 2 D		
+466	Right superior parietal 3 A		
+467	Right superior parietal 3 B		
+468	Right superior parietal 3 C		
+469	Right superior parietal 3 D		
+470	Right superior parietal 3 E		
+471	Right superior parietal 3 F		
+472	Right superior parietal 4 A		
+473	Right superior parietal 4 B		
+474	Right superior parietal 4 C		
+475	Right superior parietal 4 D		
+476	Right superior parietal 4 E		
+477	Right superior parietal 4 F		
+478	Right superior parietal 4 G		
+479	Right somatosensory A 		
+480	Right somatosensory B		
+481	Right somatosensory C		
+482	Right somatosensory D		
+483	Right somatosensory E		
+484	Right somatosensory F		
+485	Right somatosensory G		
+486	Right somatosensory H		
+487	Right somatosensory I		
+488	Right somatosensory J		
+489	Right somatosensory K		
+490	Right somatosensory L		
+491	Right somatosensory M		
+492	Right anterior motor A		
+493	Right anterior motor B		
+494	Right anterior motor C		
+495	Right anterior motor D		
+496	Right posterior motor A 		
+497	Right posterior motor B		
+498	Right posterior motor C		
+499	Right posterior motor D		
+500	Right posterior motor E		
+501	Right posterior motor F		
+502	Right posterior motor G		
+503	Right posterior motor H		
+504	Right posterior motor I		
+505	Right posterior motor J		
+506	Right posterior motor K		
+507	Right superior frontal gyrus 1 A		
+508	Right superior frontal gyrus 1 B		
+509	Right superior frontal gyrus 1 C		
+510	Right superior frontal gyrus 1 D		
+511	Right superior frontal gyrus 2 A		
+512	Right superior frontal gyrus 2 B		
+513	Right superior frontal gyrus 2 C		
+514	Right superior frontal gyrus 2 D		
+515	Right superior frontal gyrus 3 A		
+516	Right superior frontal gyrus 3 B		
+517	Right superior frontal gyrus 3 C		
+518	Right superior frontal gyrus 3 D		
+519	Right superior frontal gyrus 4 A		
+520	Right superior frontal gyrus 4 B		
+521	Right superior frontal gyrus 4 C		
+522	Right superior frontal gyrus 4 D		
+523	Right superior frontal gyrus 5 A		
+524	Right superior frontal gyrus 5 B		
+525	Right superior frontal gyrus 5 C		
+526	Right superior frontal gyrus 5 D		
+527	Right superior frontal gyrus 6 A		
+528	Right superior frontal gyrus 6 B		
+529	Right superior frontal gyrus 6 C		
+530	Right superior frontal gyrus 6 D		
+531	Right superior frontal gyrus 7 A		
+532	Right superior frontal gyrus 7 B		
+533	Right superior frontal gyrus 7 C		
+534	Right superior frontal gyrus 7 D		
+535	Right superior frontal gyrus 7 E		
+536	Right superior frontal gyrus 8 A		
+537	Right superior frontal gyrus 8 B		
+538	Right superior frontal gyrus 8 C		
+539	Right superior frontal gyrus 8 D		
+540	Right middle frontal gyrus 1 A		
+541	Right middle frontal gyrus 1 B		
+542	Right middle frontal gyrus 1 C		
+543	Right middle frontal gyrus 2 A		
+544	Right middle frontal gyrus 2 B		
+545	Right middle frontal gyrus 2 C		
+546	Right middle frontal gyrus 2 D		
+547	Right middle frontal gyrus 3 A		
+548	Right middle frontal gyrus 3 B		
+549	Right middle frontal gyrus 3 C		
+550	Right middle frontal gyrus 3 D		
+551	Right middle frontal gyrus 4 A		
+552	Right middle frontal gyrus 4 B		
+553	Right middle frontal gyrus 4 C		
+554	Right middle frontal gyrus 4 D		
+555	Right middle frontal gyrus 5 A		
+556	Right middle frontal gyrus 5 B		
+557	Right middle frontal gyrus 5 C		
+558	Right middle frontal gyrus 6 A		
+559	Right middle frontal gyrus 6 B		
+560	Right middle frontal gyrus 6 C		
+561	Right middle frontal gyrus 7 A		
+562	Right middle frontal gyrus 7 B		
+563	Right middle frontal gyrus 7 C		
+564	Right middle frontal gyrus 8 A		
+565	Right pars opercularis A 		
+566	Right pars opercularis B		
+567	Right pars opercularis C		
+568	Right anterior pars triangularis A		
+569	Right anterior pars triangularis B		
+570	Right middle pars triangularis A		
+571	Right middle pars triangularis B		
+572	Right posterior pars triangularis A		
+573	Right posterior pars triangularis B		
+574	Right pars orbitalis A 		
+575	Right pars orbitalis B		
+576	Right pars orbitalis C		
+577	Right frontal pole 1 A		
+578	Right frontal pole 1 B		
+579	Right frontal pole 1 C		
+580	Right frontal pole 1 D		
+581	Right frontal pole 1 E		
+582	Right frontal pole 1 F		
+583	Right frontal pole 1 G		
+584	Right frontal pole 1 H		
+585	Right frontal pole 2 A 		
+586	Right frontal pole 2 B		
+587	Right frontal pole 2 C 		
+588	Right frontal pole 2 D		
+589	Right frontal pole 3 A		
+590	Right frontal pole 3 B		
+591	Right frontal pole 3 C		
+592	Right frontal pole 3 D		
+593	Right frontal pole 3 E		
+594	Right frontal pole 3 F		
+595	Right frontal pole 3 G		
+596	Right frontal pole 4 A		
+597	Right frontal pole 4 B		
+598	Right frontal pole 4 C		
+599	Right frontal pole 4 D		
+600	Right frontal pole 4 E		
+601	Right frontal pole 4 F		
+602	Right frontal orbital 1 A		
+603	Right frontal orbital 1 B		
+604	Right frontal orbital 1 C		
+605	Right frontal orbital 1 D 		
+606	Right frontal orbital 2 A		
+607	Right frontal orbital 2 B		
+608	Right frontal orbital 2 C		
+609	Right frontal orbital 2 D		
+610	Right frontal orbital 2 E		
+611	Right frontal orbital 3 A		
+612	Right frontal orbital 3 B		
+613	Right frontal orbital 3 C		
+614	Right frontal orbital 3 D		
+615	Right frontal orbital 4 A		
+616	Right frontal orbital 4 B		
+617	Right frontal orbital 4 C		
+618	Right frontal orbital 4 D		
+619	Right frontal orbital 5 A		
+620	Right frontal orbital 5 B		
+621	Right frontal orbital 5 C		
+622	Right frontal orbital 5 D		
+623	Right frontal orbital 5 E		
+624	Right frontal orbital 6 A		
+625	Right frontal orbital 6 B		
+626	Right frontal orbital 6 C		
+627	Right lateral occipitotemporal gyrus A		
+628	Right lateral occipitotemporal gyrus B 		
+629	Right lateral occipitotemporal gyrus C		
+630	Right lateral occipitotemporal gyrus D		
+631	Right lateral occipitotemporal gyrus E		
+632	Right medial occipitotemporal gyrus A 		
+633	Right medial occipitotemporal gyrus B		
+634	Right medial occipitotemporal gyrus C		
+635	Right medial occipitotemporal gyrus D		
+636	Right medial occipitotemporal gyrus E		
+637	Right medial occipitotemporal gyrus F		
+638	Right medial occipitotemporal gyrus G		
+639	Right medial occipitotemporal gyrus H		
+640	Right parahippocampal gyrus A		
+641	Right parahippocampal gyrus B		
+642	Right parahippocampal gyrus C		
+643	Right parahippocampal gyrus D		
+644	Right parahippocampal gyrus E		
+645	Right parahippocampal gyrus F		
+646	Right parahippocampal gyrus G 		
+647	Right lingual gyrus A		
+648	Right lingual gyrus B		
+649	Right lingual gyrus C		
+650	Right cingulate gyrus A		
+651	Right cingulate gyrus B		
+652	Right cingulate gyrus C		
+653	Right cingulate gyrus D		
+654	Right cingulate gyrus E		
+655	Right cingulate gyrus F		
+656	Right cingulate gyrus G		
+657	Right cingulate gyrus H		
+658	Right cingulate gyrus I		
+659	Right cingulate gyrus J		
+660	Right cingulate gyrus K 		
+661	Right cingulate gyrus L		
+662	Right cingulate gyrus M		
+663	Right cingulate gyrus N superior		
+664	Right cingulate gyrus N inferior		
+665	Right cingulate gyrus O		
+666	Right cingulate gyrus P		
+667	Right cingulate gyrus Q		
+668	Right cingulate gyrus R		
+669	Right hippocampus pes		
+670	Right hippocampus body 		
+671	Right hippocampus tail		
+672	Right amygdala superior 		
+673	Right amygdala inferior		
+674	Right anterior short insular gyrus A		
+675	Right anterior short insular gyrus B		
+676	Right anterior short insular gyrus C		
+677	Right middle short insular gyrus A		
+678	Right middle short insular gyrus B		
+679	Right middle short insular gyrus C		
+680	Right posterior short insular gyrus A		
+681	Right posterior short insular gyrus B		
+682	Right posterior short insular gyrus C		
+683	Right anterior long insular gyrus A		
+684	Right anterior long insular gyrus B		
+685	Right anterior long insular gyrus C		
+686	Right anterior long insular gyrus D		
+687	Right posterior long insular gyrus A		
+688	Right posterior long insular gyrus B		
+689	Right posterior long insular gyrus C		
+690	Right posterior long insular gyrus D		

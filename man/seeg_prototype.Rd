@@ -16,6 +16,7 @@ seeg_prototype(
   dry_run = FALSE,
   default_interpolation = NULL,
   viewer_options = NULL,
+  behnke_fried = FALSE,
   overwrite = FALSE
 )
 }
@@ -48,6 +49,9 @@ localization}
 \item{viewer_options}{list of viewer options; this should be a list of
 key-value pairs where the keys are the controller names and values are the
 corresponding values when users switch to localizing the electrode group}
+
+\item{behnke_fried}{whether the electrode has micro-wires at the tip;
+default is false}
 
 \item{overwrite}{whether to overwrite existing configuration file; default
 is false, which throws a warning when duplicated}

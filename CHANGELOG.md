@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `9d1bbcb1 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Automatically download template subject if missing
+* `606428c2 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added NeuroOne/Zimmer EVO electrode specifications
+* `a03a67a0` [_`dipterix`_]: Mask is applied to slice overlays
+* `9d1bbcb1` [_`dipterix`_]: Automatically download template subject if missing
 * `a910ac51` [_`dipterix`_]: Use MeshBasicMaterial when rendering the sphere electrodes
 * `9f1b04ee` [_`dipterix`_]: Moved JFM to senior position
 * `6a288bf2` [_`dipterix`_]: Electrode transparency improvement; Added slice threshold to strip masks; volue slice masks work even the orientation is different

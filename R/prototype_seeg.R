@@ -19,6 +19,8 @@
 #' is false, which throws a warning when duplicated
 #' @param default_interpolation default interpolation string for electrode
 #' localization
+#' @param behnke_fried whether the electrode has micro-wires at the tip;
+#' default is false
 #' @param viewer_options list of viewer options; this should be a list of
 #' key-value pairs where the keys are the controller names and values are the
 #' corresponding values when users switch to localizing the electrode group
@@ -62,6 +64,7 @@ seeg_prototype <- function(
     description = NULL, dry_run = FALSE,
     default_interpolation = NULL,
     viewer_options = NULL,
+    behnke_fried = FALSE,
     overwrite = FALSE) {
 
   # DIPSAUS DEBUG START
@@ -193,13 +196,28 @@ seeg_prototype <- function(
   #   )
   # )
 
+  # if behnke fried
+  if(behnke_fried) {
+
+    position_micro <- cbind(
+      c(0, 0, -1),
+      rbind(x * radius0 / 4, y * radius0 / 4, -1),
+      rbind(x * radius0 / 4, y * radius0 / 4, radius0 * 0.1)
+    )
+
+    position <- cbind(position, position_micro)
+    index <- c(index, c(as.vector(side_cover), as.vector(height_index_base)) + nverts)
+
+    uv <- cbind(uv, array(-1, c(2, ncol(position_micro))))
+  }
+
   config <- list(
     type = type,
     name = "",
     description = paste(description, collapse = "\n      "),
 
     # number of vertices and face indices
-    n = c(nverts, length(index) - 1L),
+    n = c(length(position) / 3, length(index) - 1L),
 
     # internal geometry name
     geometry = "CustomGeometry",
