@@ -278,6 +278,7 @@ for( n_contacts in c(15, 18) ) {
   )
 }
 
+
 # ---- BostonScientific DBS-BSC-DB-2201 electrode ------------
 probe_head <- 1.5 # Not sure about this one
 width <- 1.5
