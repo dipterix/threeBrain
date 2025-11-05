@@ -1,6 +1,7 @@
 ## Changes since last CRAN release
-* `70adf3b2 (HEAD -> master)` [_`dipterix`_]: Added prototypes for DIXI-MM08 electrodes
-* `b64effe3 (origin/master, origin/HEAD)` [_`dipterix`_]: Added YBA atlas colormap; added Behnke-Fried electrode prototypes
+* `35b0d0d6 (HEAD -> master)` [_`dipterix`_]: Added RD16R-SP03/05X (AdTech) sEEG prototypes
+* `1f73a138 (origin/master, origin/HEAD)` [_`dipterix`_]: Added prototypes for DIXI-MM08 electrodes
+* `b64effe3` [_`dipterix`_]: Added YBA atlas colormap; added Behnke-Fried electrode prototypes
 * `606428c2` [_`dipterix`_]: Added NeuroOne/Zimmer EVO electrode specifications
 * `a03a67a0` [_`dipterix`_]: Mask is applied to slice overlays
 * `9d1bbcb1` [_`dipterix`_]: Automatically download template subject if missing

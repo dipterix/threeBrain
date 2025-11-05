@@ -132,8 +132,8 @@ width <- 2.29
 overall_length <- 300
 diameter <- 0.86
 
-mat <- cbind(c(6, 8, 8, 10, 10, 10, 10, 10, 10, 12, 14),
-             c(5, 4, 5, 3,  4,  5,  6,  7,  8,   5,  5))
+mat <- cbind(c(6, 8, 8, 10, 10, 10, 10, 10, 10, 12, 14, 16, 16),
+             c(5, 4, 5, 3,  4,  5,  6,  7,  8,   5,  5, 5, 3))
 
 invisible(apply(mat, 1L, function(x) {
   n_contacts <- x[[1]]
