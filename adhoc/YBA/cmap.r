@@ -46,3 +46,5 @@ b = read.table('adhoc/YBA/YBA_690_parcel_dict.csv', sep = "\t")
 
 idx <- which(a$Long_name[seq_len(nrow(b))] != trimws(b$V2))
 idx # int[0]
+
+

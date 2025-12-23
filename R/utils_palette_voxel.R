@@ -13,6 +13,7 @@
 #' file path can be passed as \code{voxel_colormap} into \code{\link{threejs_brain}}.
 #' @param auto_rescale automatically scale the color according to image values;
 #' only valid for continuous color maps
+#' @param format file format to read from
 #' @param ... used by continuous color maps, passed to
 #' \code{\link[grDevices]{colorRampPalette}}
 #'
@@ -242,3 +243,52 @@ print.colormap <- function(x, ...){
   invisible(x)
 }
 
+
+read_colormap_itksnap <- function(con) {
+  ################################################
+  # ITK-SnAP Label Description File
+  # File format:
+  # IDX   -R-  -G-  -B-  -A--  VIS MSH  LABEL
+  # Fields:
+  #    IDX:   Zero-based index
+  #    -R-:   Red color component (0..255)
+  #    -G-:   Green color component (0..255)
+  #    -B-:   Blue color component (0..255)
+  #    -A-:   Label transparency (0.00 .. 1.00)
+  #    VIS:   Label visibility (0 or 1)
+  #    IDX:   Label mesh visibility (0 or 1)
+  #  LABEL:   Label description
+  ################################################
+  # con <- "/Users/dipterix/Downloads/Rave/ashs/altases/snap/snaplabels.txt"
+  cmap_tbl <- read.table(con, comment.char = "#", header = FALSE)
+  names(cmap_tbl) <- c("ColorID", "R", "G", "B", "A", "Visibility", "MVIS", "Label")
+  cmap_tbl$Label <- gsub(" ", "_", cmap_tbl$Label)
+  cmap_tbl$Label[cmap_tbl$ColorID == 0] <- "Unknown"
+
+  col <- grDevices::rgb(cmap_tbl$R, cmap_tbl$G, cmap_tbl$B, maxColorValue = 255)
+  cmap <- create_colormap(
+    gtype = 'volume',
+    dtype = 'discrete',
+    key = cmap_tbl$ColorID,
+    color = col,
+    value = cmap_tbl$Label,
+    alpha = FALSE,
+    con = NULL
+  )
+
+  cmap
+}
+
+#' @rdname voxel_colormap
+#' @export
+read_colormap <- function(con, format = c("rave", "itksnap")) {
+  format <- match.arg(format)
+  cmap <- switch (
+    format,
+    'itksnap' = read_colormap_itksnap(con),
+    {
+      load_colormap(con)
+    }
+  )
+  cmap
+}

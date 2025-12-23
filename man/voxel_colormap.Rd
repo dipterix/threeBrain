@@ -6,6 +6,7 @@
 \alias{save_colormap}
 \alias{freeserfer_colormap}
 \alias{load_colormap}
+\alias{read_colormap}
 \title{Color maps for volume or surface data}
 \usage{
 create_colormap(
@@ -25,6 +26,8 @@ save_colormap(cmap, con)
 freeserfer_colormap(con)
 
 load_colormap(con)
+
+read_colormap(con, format = c("rave", "itksnap"))
 }
 \arguments{
 \item{gtype}{geometry type, choices are \code{"surface"}, \code{"volume"}}
@@ -50,6 +53,8 @@ only valid for continuous color maps}
 \code{\link[grDevices]{colorRampPalette}}}
 
 \item{cmap}{color map object}
+
+\item{format}{file format to read from}
 }
 \value{
 A list of color map information
