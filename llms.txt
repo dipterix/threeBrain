@@ -378,6 +378,7 @@ existing viewers as a whole into your own work “as-is” is permissive.
   [`save_colormap()`](https://dipterix.org/threeBrain/reference/voxel_colormap.md)
   [`freeserfer_colormap()`](https://dipterix.org/threeBrain/reference/voxel_colormap.md)
   [`load_colormap()`](https://dipterix.org/threeBrain/reference/voxel_colormap.md)
+  [`read_colormap()`](https://dipterix.org/threeBrain/reference/voxel_colormap.md)
   : Color maps for volume or surface data
 
 - [`add_voxel_cube()`](https://dipterix.org/threeBrain/reference/voxel_cube.md)

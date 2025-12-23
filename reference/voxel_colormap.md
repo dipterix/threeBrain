@@ -22,6 +22,8 @@ save_colormap(cmap, con)
 freeserfer_colormap(con)
 
 load_colormap(con)
+
+read_colormap(con, format = c("rave", "itksnap"))
 ```
 
 ## Arguments
@@ -70,6 +72,10 @@ load_colormap(con)
 - cmap:
 
   color map object
+
+- format:
+
+  file format to read from
 
 ## Value
 
