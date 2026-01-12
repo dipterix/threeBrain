@@ -1,5 +1,9 @@
 ## Changes since last CRAN release
-* `5580a157 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added RD16R-SP03/05X (AdTech) sEEG prototypes
+* `5f60030b (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added read_colormap to support reading from RAVE (json) or itksnap format
+* `ac95dca1` [_`dipterix`_]: Added PMT 2102-16-099 specs
+* `41450e6f` [_`dipterix`_]: Added BF09R-SP51X-0BB specs
+* `65b856e5` [_`dipterix`_]: Upgraded engine to `r182`; Removed `jsm` folder; Optimized electrode shader to calculate inversed `modelViewProjection` in `JavaScript` rather than vertex-shader
+* `5580a157` [_`dipterix`_]: Added RD16R-SP03/05X (AdTech) sEEG prototypes
 * `1f73a138` [_`dipterix`_]: Added prototypes for DIXI-MM08 electrodes
 * `b64effe3` [_`dipterix`_]: Added YBA atlas colormap; added Behnke-Fried electrode prototypes
 * `606428c2` [_`dipterix`_]: Added NeuroOne/Zimmer EVO electrode specifications

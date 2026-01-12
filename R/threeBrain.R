@@ -137,6 +137,32 @@ threeBrain <- function(
     backward_compatible = getOption("threeBrain.compatible", FALSE)
 ) {
 
+  # if path is a nii or mgz file, create a temporary dir and copy-paste
+  path_lower <- tolower(path)
+  if(
+    endsWith(path_lower, ".nii") ||
+    endsWith(path_lower, ".nii.gz") ||
+    endsWith(path_lower, ".mgz")
+  ) {
+    subject_code <- gsub("[^a-zA-Z0-9_-]", "_", subject_code)
+    temp_root <- file.path(tempdir(), "threeBrain-tempsubject", subject_code)
+    if(file.exists(temp_root)) {
+      unlink(temp_root, recursive = TRUE)
+    }
+    dir_create(file.path(temp_root, "mri"))
+    file.copy(path, file.path(
+      temp_root,
+      "mri",
+      gsub(
+        "^.*\\.(nii|nii.gz|mgz)$",
+        "rave_slices.\\1",
+        basename(path),
+        ignore.case = TRUE
+      )
+    ))
+    path <- temp_root
+  }
+
   # No SUMA 141 brain for default option
 
   fs_path <- path

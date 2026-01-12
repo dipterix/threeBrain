@@ -1,0 +1,231 @@
+# Rigorous package checks - manually triggered
+# Performs spelling, goodpractice, and CRAN win-devel checks
+# All issues are reported as warnings in the summary, workflow never fails
+
+name: Good-Practice R Package Check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      run_win_devel:
+        description: 'Submit to CRAN win-builder (results via email)'
+        type: boolean
+        default: true
+
+permissions: read-all
+
+jobs:
+  rigorous-check:
+    runs-on: ubuntu-latest
+    name: Rigorous Package Check
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for CRAN trigger
+        id: cran-trigger
+        run: |
+          if echo "${{ github.event.head_commit.message }}" | grep -iq "ready for cran"; then
+            echo "run_win_devel=true" >> $GITHUB_OUTPUT
+          else
+            echo "run_win_devel=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-tinytex@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::spelling
+            any::goodpractice
+            any::lintr
+            any::stringr
+            any::covr
+            any::devtools
+          needs: check
+
+      # Step 1: Spell Check
+      - name: Spell Check
+        id: spelling
+        run: |
+          outdir <- Sys.getenv("RUNNER_TEMP")
+          cat("
+          ╔══════════════════════════════════════════════════════════════╗
+          ║                     📖 SPELL CHECK                           ║
+          ╚══════════════════════════════════════════════════════════════╝
+          \n")
+          results <- spelling::spell_check_package()
+          print(results)
+          n_issues <- nrow(results)
+          if (n_issues > 0) {
+            cat("::warning::Found", n_issues, "potential spelling issues\n")
+            writeLines(
+              paste0("| ", results$word, " | ", results$found, " |"),
+              file.path(outdir, "spelling_issues.txt")
+            )
+          } else {
+            writeLines("No spelling issues found.", file.path(outdir, "spelling_issues.txt"))
+          }
+          writeLines(as.character(n_issues), file.path(outdir, "spelling_count.txt"))
+        shell: Rscript {0}
+
+      # Step 2: Good Practice Check
+      - name: Good Practice Check
+        id: goodpractice
+        run: |
+          outdir <- Sys.getenv("RUNNER_TEMP")
+          cat("
+          ╔══════════════════════════════════════════════════════════════╗
+          ║                  ✅ GOOD PRACTICE CHECK                       ║
+          ╚══════════════════════════════════════════════════════════════╝
+          \n")
+          checks <- goodpractice::all_checks()
+          check_list <- stringr::str_match(checks, '^[^_]+')
+          cat("All available checks:\n")
+          print(data.frame(index = seq_along(checks), check = checks, category = check_list[,1]))
+          cat("\nRunning checks (excluding indices 1, 2, 8, 11, 12):\n")
+          checks_to_run <- checks[-c(1, 2, 8, 11, 12)]
+          print(checks_to_run)
+          cat("\n--- Starting goodpractice analysis ---\n\n")
+
+          # Run goodpractice
+          gp_result <- goodpractice::gp(checks = checks_to_run)
+          print(gp_result)
+
+          # Extract and save results
+          failed_checks <- goodpractice::failed_checks(gp_result)
+          n_failed <- length(failed_checks)
+
+          if (n_failed > 0) {
+            cat("::warning::goodpractice found", n_failed, "issues\n")
+            writeLines(failed_checks, file.path(outdir, "gp_failed_checks.txt"))
+          } else {
+            writeLines("All goodpractice checks passed.", file.path(outdir, "gp_failed_checks.txt"))
+          }
+          writeLines(as.character(n_failed), file.path(outdir, "gp_count.txt"))
+
+          # Capture full output
+          sink(file.path(outdir, "gp_full_results.txt"))
+          print(gp_result)
+          sink()
+        shell: Rscript {0}
+
+      # Step 3: Submit to Win-Devel (optional)
+      # Manual trigger: respects run_win_devel input
+      # Automatic trigger (push/PR): runs if commit message contains "ready for CRAN" (case-insensitive)
+      - name: Submit to Win-Devel
+        id: windevel
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.run_win_devel == 'true') || (github.event_name != 'workflow_dispatch' && steps.cran-trigger.outputs.run_win_devel == 'true') }}
+        run: |
+          outdir <- Sys.getenv("RUNNER_TEMP")
+          cat("
+          ╔══════════════════════════════════════════════════════════════╗
+          ║              🪟 CRAN WIN-DEVEL SUBMISSION                    ║
+          ╚══════════════════════════════════════════════════════════════╝
+          \n")
+          cat("Submitting package to CRAN win-builder (R-devel)...\n")
+          cat("Results will be sent to the maintainer email.\n\n")
+          devtools::check_win_devel(quiet = TRUE)
+          cat("\n::notice::Package submitted to win-builder. Check maintainer email for results.\n")
+          writeLines("submitted", file.path(outdir, "win_devel_status.txt"))
+        shell: Rscript {0}
+
+      # Step 4: Upload Artifacts
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rigorous-check-results
+          path: |
+            ${{ runner.temp }}/spelling_issues.txt
+            ${{ runner.temp }}/spelling_count.txt
+            ${{ runner.temp }}/gp_failed_checks.txt
+            ${{ runner.temp }}/gp_count.txt
+            ${{ runner.temp }}/gp_full_results.txt
+            ${{ runner.temp }}/win_devel_status.txt
+        if: always()
+
+      # Step 5: Generate Summary
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "## 📋 Rigorous Package Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Spelling details
+          echo "### 📖 Spelling Check" >> $GITHUB_STEP_SUMMARY
+          if [ -f "$RUNNER_TEMP/spelling_count.txt" ]; then
+            SPELL_COUNT=$(cat "$RUNNER_TEMP/spelling_count.txt")
+            if [ "$SPELL_COUNT" -gt 0 ]; then
+              echo "⚠️ Found **$SPELL_COUNT** potential spelling issues:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "| Word | Found In |" >> $GITHUB_STEP_SUMMARY
+              echo "|------|----------|" >> $GITHUB_STEP_SUMMARY
+              cat "$RUNNER_TEMP/spelling_issues.txt" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ No spelling issues found." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❓ Spelling check did not run." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Goodpractice details
+          echo "### ✅ Good Practice Check" >> $GITHUB_STEP_SUMMARY
+          if [ -f "$RUNNER_TEMP/gp_count.txt" ]; then
+            GP_COUNT=$(cat "$RUNNER_TEMP/gp_count.txt")
+            if [ "$GP_COUNT" -gt 0 ]; then
+              echo "⚠️ Found **$GP_COUNT** goodpractice issues:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat "$RUNNER_TEMP/gp_failed_checks.txt" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "<details><summary>Full goodpractice output</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat "$RUNNER_TEMP/gp_full_results.txt" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ All goodpractice checks passed." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❓ Goodpractice check did not run." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Win-devel details
+          echo "### 🪟 CRAN Win-Devel Check" >> $GITHUB_STEP_SUMMARY
+          if [ -f "$RUNNER_TEMP/win_devel_status.txt" ]; then
+            echo "📤 Package submitted to CRAN win-builder." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> **Note:** Results will be sent to the package maintainer's email address." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.run_win_devel }}" == "true" ]; then
+              echo "❓ Win-devel submission did not complete." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⏭️ Skipped (disabled in workflow inputs)." >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ steps.cran-trigger.outputs.run_win_devel }}" == "true" ]; then
+            echo "❓ Win-devel submission did not complete." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Skipped (commit message doesn't contain 'ready for CRAN')." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Final note
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "*All issues are reported as warnings. Review the details above before CRAN submission.*" >> $GITHUB_STEP_SUMMARY
