@@ -15,6 +15,7 @@ Volume Rendering Improvements:
 * Added outline mode for discrete overlays
 * Added slice threshold, a user controller to strip the skulls
 * Volume slice masks work even when orientation and dimensions are different
+* Improved lazy rendering so the canvas does not forces the `GPU` to render unless there is a need to
 
 Worker Thread Infrastructure:
 

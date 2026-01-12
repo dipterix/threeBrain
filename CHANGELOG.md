@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `5f60030b (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added read_colormap to support reading from RAVE (json) or itksnap format
+* `809a302a (HEAD -> master)` [_`dipterix`_]: Add gradient texture pre-computation for faster normal calculation; Implement 3D Sobel filter for both continuous and discrete volumes; Add MatCap texture-based lighting for improved visual quality; Support gradient-based opacity modulation for continuous data; Add fast-pass empty space skipping with adaptive step sizing; Add `invokeWorker` method to ViewerApp for unified worker dispatch; Support ArrayBuffer transferables for zero-copy data transfer; Register `computeVolumeGradients` as worker-callable function; Convert colorChannels and dithering to compile-time defines; Add USE_GRADIENT_MAP and SINGLE_CHANNEL shader variants; Implement two-sided lighting with view-space normal correction
+* `5f60030b (origin/master, origin/HEAD)` [_`dipterix`_]: Added read_colormap to support reading from RAVE (json) or itksnap format
 * `ac95dca1` [_`dipterix`_]: Added PMT 2102-16-099 specs
 * `41450e6f` [_`dipterix`_]: Added BF09R-SP51X-0BB specs
 * `65b856e5` [_`dipterix`_]: Upgraded engine to `r182`; Removed `jsm` folder; Optimized electrode shader to calculate inversed `modelViewProjection` in `JavaScript` rather than vertex-shader
