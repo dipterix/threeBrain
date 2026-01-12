@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.27</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.29</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,46 +39,81 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.4.0" id="threebrain-140">threeBrain 1.4.0<a class="anchor" aria-label="anchor" href="#threebrain-140"></a></h2>
-<ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
-<li>Electrode transparency is improved when visualized as geometry</li>
-<li>Added slice threshold, an user controller to strip the skulls</li>
-<li>Volume slice masks work even the orientation and dimensions are different</li>
+<p>Volume Rendering Improvements:</p>
+<ul><li>Added precomputed gradient textures for faster normal calculation during volume rendering</li>
+<li>Implemented 3D <code>Sobel</code> filter for computing gradients on both continuous (MRI) and discrete (atlas parcellation) volume data</li>
+<li>Added <code>MatCap</code> (Material Capture) texture-based lighting for improved visual quality of volumetric surfaces</li>
+<li>Introduced gradient-based opacity modulation for continuous data visualization</li>
+<li>Added adaptive fast-pass empty space skipping with ray-angle-aware step sizing for improved rendering performance</li>
 <li>Added slice material instead of <code>RawMaterial</code> to wrap up changes to the <code>uniforms</code>
 </li>
-<li>Rewrote slice sampling method (super-sampling rather than completely linear interpolation) to improve the user experience when inspecting <code>MRI</code> slices</li>
+<li>Rewrote slice sampling method (super-sampling rather than completely linear interpolation) to improve the user experience when inspecting MRI slices</li>
 <li>Added outline mode for discrete overlays</li>
+<li>Added slice threshold, a user controller to strip the skulls</li>
+<li>Volume slice masks work even when orientation and dimensions are different</li>
+<li>Improved lazy rendering so the canvas does not forces the <code>GPU</code> to render unless there is a need to</li>
+</ul><p>Worker Thread Infrastructure:</p>
+<ul><li>Added <code>invokeWorker()</code> method to <code>ViewerApp</code> for unified worker thread dispatch with fallback support</li>
+<li>Added <code>ArrayBuffer</code> transferable support for zero-copy data transfer between main thread and workers</li>
+<li>Registered <code>computeVolumeGradients</code> as a worker-callable function for offloading heavy gradient computation</li>
+<li>Better fallback method for workers who don’t get new job spawned</li>
+<li>Worker spawn is throttled</li>
+</ul><p>Shader Optimizations:</p>
+<ul><li>Converted <code>colorChannels</code> and <code>dithering</code> uniforms to compile-time shader defines for better GPU performance</li>
+<li>Added <code>USE_GRADIENT_MAP</code> and <code>SINGLE_CHANNEL</code> shader variants for optimized code paths</li>
+<li>Implemented two-sided lighting with proper view-space normal correction</li>
+</ul><p>Engine Updates:</p>
+<ul><li>Upgraded <code>three.js</code> engine to <code>r182</code>
+</li>
+<li>Removed <code>jsm</code> folder; optimized electrode shader to calculate inverse <code>modelViewProjection</code> in JavaScript rather than vertex-shader</li>
+</ul><p>Streamline Visualization:</p>
+<ul><li>Added support for <code>tt</code> streamline format</li>
+<li>Fixed <code>trk</code> format; supported <code>tck</code> format (drag and drop)</li>
+<li>Use <code>KDTree</code> to query the streamlines that intersect the target volume</li>
+<li>Streamlines have better memory management with random shuffle</li>
+<li>In highlight mode faded streamline widths can be adjusted</li>
+</ul><p>Minor Changes:</p>
+<ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
+<li>Electrode transparency is improved when visualized as geometry</li>
 <li>Using physical/standard materials for electrode prototype geometries</li>
 <li>Allowed electrode prototype transforms to be rigid when mapping to template</li>
-<li>removed <code>raveio</code> from comments and using scanner RAS for slices</li>
+<li>Removed <code>raveio</code> from comments and using scanner RAS for slices</li>
 <li>Added <code>fsaverage_inCIT168</code> template</li>
-<li>Fixed <code>trk</code> format; supported <code>tck</code> format (drag and drop)</li>
-<li>Suppressed rendering flags when the trackball is inactive, fixing the rendering policy</li>
-<li>Fixed drag and drop color key length issue</li>
 <li>Added <code>radiographic</code> view</li>
-<li>Use <code>KDTree</code> to query the streamlines that intersect the target volume</li>
+<li>Added global ruler next to compass</li>
+<li>Added <code>read_colormap</code> to support reading from <code>RAVE</code> (<code>JSON</code>) or <code>ITK-SNAP</code> format</li>
+<li>Mask is now applied to slice overlays</li>
+<li>Use <code>MeshBasicMaterial</code> when rendering sphere electrodes for better performance</li>
 <li>Updated <code>BlueRed</code> color palette to match with the <code>ravebuiltins</code> color</li>
 <li>Removed obsolete <code>freesurfer_brain</code> and embrace the new universal interface <code>threeBrain</code>
 </li>
 <li>Added <code>render</code> method for template brain for remembering the states in shiny applications</li>
 <li>
 <code>merge_brain</code> also gains new argument <code>electrode_priority</code> to control the priority when setting electrode shape</li>
-<li>Drag and drop is handled by file-system <code>API</code> or <code>Webkit</code> before fallback to naive approaches to support dropping in folders</li>
-<li>Added support for <code>tt</code> streamline format</li>
-<li>The default colors for dropped objects are determined by their file names to avoid random colors</li>
-<li>Better fallback method for workers who don’t get new job spawned</li>
-<li>Worker spawn is throttled</li>
 <li>Added pseudo random generator</li>
-<li>Streamlines have better memory management with random shuffle</li>
-<li>In highlight mode faded streamline widths can be adjusted</li>
-<li>Added global ruler next to compass</li>
-<li>Added try-catch to handle file processing errors to avoid stopping processing files</li>
+<li>Native annotation from template supports <code>FreeSurfer</code> <code>curv</code> file too</li>
+<li>Surface mapping is more robust even if the hemisphere is unset: using <code>MNI152</code> R-axis to infer the hemisphere instead</li>
+<li>Added <code>YBA</code> atlas color-map</li>
+</ul><p>Electrode Localization:</p>
+<ul><li>Added “interpolate without refine” option for electrode localization, if the users prefer</li>
+<li>Added support for multiple electrodes</li>
+</ul><p>New Experimental Electrode Prototypes:</p>
+<ul><li>Added <code>PMT-2102-16-099</code> specifications</li>
+<li>Added <code>BF09R-SP51X-0BB</code> specifications</li>
+<li>Added <code>RD16R-SP03/05X</code> (<code>AdTech</code>) specifications</li>
+<li>Added <code>DIXI-MM08</code> electrode specifications</li>
+<li>Added <code>Behnke-Fried</code> electrode specifications</li>
+<li>Added <code>NeuroOne/Zimmer</code> electrode specifications</li>
+</ul><p>Drag and Drop Improvements:</p>
+<ul><li>Drag and drop is handled by file-system API or <code>WebKit</code> before fallback to naive approaches to support dropping in folders</li>
+<li>Drag drop supports folders now</li>
+<li>The default colors for dropped objects are determined by their file names to avoid random colors</li>
 <li>Drag-and-dropped files now generate consistent default colors and ignores the left-right keywords</li>
 <li>Fixed drag and drop multiple files issue</li>
-<li>Drag drop supports folders now</li>
-<li>Added support for multiple electrodes</li>
-<li>Added “interpolate without refine” option for electrode localization, if the users prefer;</li>
-<li>native annotation from template supports <code>FreeSurfer</code> <code>curv</code> file too</li>
-<li>Surface mapping is more robust even if the hemisphere is unset: using <code>MNI152</code> R-axis to infer the hemisphere instead</li>
+<li>Fixed drag and drop color key length issue</li>
+<li>Added try-catch to handle file processing errors to avoid stopping processing files</li>
+</ul><p>Bug Fixes:</p>
+<ul><li>Suppressed rendering flags when the trackball is inactive, fixing the rendering policy</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.0" id="threebrain-130">threeBrain 1.3.0<a class="anchor" aria-label="anchor" href="#threebrain-130"></a></h2>

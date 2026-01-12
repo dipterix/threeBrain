@@ -2,8 +2,27 @@
 
 ## Changes since last CRAN release
 
-- `5580a157 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Added RD16R-SP03/05X (AdTech) sEEG prototypes
+- `809a302a (HEAD -> master)` \[*`dipterix`*\]: Add gradient texture
+  pre-computation for faster normal calculation; Implement 3D Sobel
+  filter for both continuous and discrete volumes; Add MatCap
+  texture-based lighting for improved visual quality; Support
+  gradient-based opacity modulation for continuous data; Add fast-pass
+  empty space skipping with adaptive step sizing; Add `invokeWorker`
+  method to ViewerApp for unified worker dispatch; Support ArrayBuffer
+  transferables for zero-copy data transfer; Register
+  `computeVolumeGradients` as worker-callable function; Convert
+  colorChannels and dithering to compile-time defines; Add
+  USE_GRADIENT_MAP and SINGLE_CHANNEL shader variants; Implement
+  two-sided lighting with view-space normal correction
+- `5f60030b (origin/master, origin/HEAD)` \[*`dipterix`*\]: Added
+  read_colormap to support reading from RAVE (json) or itksnap format
+- `ac95dca1` \[*`dipterix`*\]: Added PMT 2102-16-099 specs
+- `41450e6f` \[*`dipterix`*\]: Added BF09R-SP51X-0BB specs
+- `65b856e5` \[*`dipterix`*\]: Upgraded engine to `r182`; Removed `jsm`
+  folder; Optimized electrode shader to calculate inversed
+  `modelViewProjection` in `JavaScript` rather than vertex-shader
+- `5580a157` \[*`dipterix`*\]: Added RD16R-SP03/05X (AdTech) sEEG
+  prototypes
 - `1f73a138` \[*`dipterix`*\]: Added prototypes for DIXI-MM08 electrodes
 - `b64effe3` \[*`dipterix`*\]: Added YBA atlas colormap; added
   Behnke-Fried electrode prototypes

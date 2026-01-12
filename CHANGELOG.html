@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.27</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.29</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,17 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>5580a157 (HEAD -&gt; master, origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Added RD16R-SP03/05X (AdTech) sEEG prototypes</li>
+<code>809a302a (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Add gradient texture pre-computation for faster normal calculation; Implement 3D Sobel filter for both continuous and discrete volumes; Add MatCap texture-based lighting for improved visual quality; Support gradient-based opacity modulation for continuous data; Add fast-pass empty space skipping with adaptive step sizing; Add <code>invokeWorker</code> method to ViewerApp for unified worker dispatch; Support ArrayBuffer transferables for zero-copy data transfer; Register <code>computeVolumeGradients</code> as worker-callable function; Convert colorChannels and dithering to compile-time defines; Add USE_GRADIENT_MAP and SINGLE_CHANNEL shader variants; Implement two-sided lighting with view-space normal correction</li>
+<li>
+<code>5f60030b (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Added read_colormap to support reading from RAVE (json) or itksnap format</li>
+<li>
+<code>ac95dca1</code> [<em><code>dipterix</code></em>]: Added PMT 2102-16-099 specs</li>
+<li>
+<code>41450e6f</code> [<em><code>dipterix</code></em>]: Added BF09R-SP51X-0BB specs</li>
+<li>
+<code>65b856e5</code> [<em><code>dipterix</code></em>]: Upgraded engine to <code>r182</code>; Removed <code>jsm</code> folder; Optimized electrode shader to calculate inversed <code>modelViewProjection</code> in <code>JavaScript</code> rather than vertex-shader</li>
+<li>
+<code>5580a157</code> [<em><code>dipterix</code></em>]: Added RD16R-SP03/05X (AdTech) sEEG prototypes</li>
 <li>
 <code>1f73a138</code> [<em><code>dipterix</code></em>]: Added prototypes for DIXI-MM08 electrodes</li>
 <li>

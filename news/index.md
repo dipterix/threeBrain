@@ -2,29 +2,81 @@
 
 ## threeBrain 1.4.0
 
-- Automatically download template subject when `merge_brain` is called
-  but the subject is missing
-- Electrode transparency is improved when visualized as geometry
-- Added slice threshold, an user controller to strip the skulls
-- Volume slice masks work even the orientation and dimensions are
-  different
+Volume Rendering Improvements:
+
+- Added precomputed gradient textures for faster normal calculation
+  during volume rendering
+- Implemented 3D `Sobel` filter for computing gradients on both
+  continuous (MRI) and discrete (atlas parcellation) volume data
+- Added `MatCap` (Material Capture) texture-based lighting for improved
+  visual quality of volumetric surfaces
+- Introduced gradient-based opacity modulation for continuous data
+  visualization
+- Added adaptive fast-pass empty space skipping with ray-angle-aware
+  step sizing for improved rendering performance
 - Added slice material instead of `RawMaterial` to wrap up changes to
   the `uniforms`
 - Rewrote slice sampling method (super-sampling rather than completely
   linear interpolation) to improve the user experience when inspecting
-  `MRI` slices
+  MRI slices
 - Added outline mode for discrete overlays
+- Added slice threshold, a user controller to strip the skulls
+- Volume slice masks work even when orientation and dimensions are
+  different
+- Improved lazy rendering so the canvas does not forces the `GPU` to
+  render unless there is a need to
+
+Worker Thread Infrastructure:
+
+- Added `invokeWorker()` method to `ViewerApp` for unified worker thread
+  dispatch with fallback support
+- Added `ArrayBuffer` transferable support for zero-copy data transfer
+  between main thread and workers
+- Registered `computeVolumeGradients` as a worker-callable function for
+  offloading heavy gradient computation
+- Better fallback method for workers who don’t get new job spawned
+- Worker spawn is throttled
+
+Shader Optimizations:
+
+- Converted `colorChannels` and `dithering` uniforms to compile-time
+  shader defines for better GPU performance
+- Added `USE_GRADIENT_MAP` and `SINGLE_CHANNEL` shader variants for
+  optimized code paths
+- Implemented two-sided lighting with proper view-space normal
+  correction
+
+Engine Updates:
+
+- Upgraded `three.js` engine to `r182`
+- Removed `jsm` folder; optimized electrode shader to calculate inverse
+  `modelViewProjection` in JavaScript rather than vertex-shader
+
+Streamline Visualization:
+
+- Added support for `tt` streamline format
+- Fixed `trk` format; supported `tck` format (drag and drop)
+- Use `KDTree` to query the streamlines that intersect the target volume
+- Streamlines have better memory management with random shuffle
+- In highlight mode faded streamline widths can be adjusted
+
+Minor Changes:
+
+- Automatically download template subject when `merge_brain` is called
+  but the subject is missing
+- Electrode transparency is improved when visualized as geometry
 - Using physical/standard materials for electrode prototype geometries
 - Allowed electrode prototype transforms to be rigid when mapping to
   template
-- removed `raveio` from comments and using scanner RAS for slices
+- Removed `raveio` from comments and using scanner RAS for slices
 - Added `fsaverage_inCIT168` template
-- Fixed `trk` format; supported `tck` format (drag and drop)
-- Suppressed rendering flags when the trackball is inactive, fixing the
-  rendering policy
-- Fixed drag and drop color key length issue
 - Added `radiographic` view
-- Use `KDTree` to query the streamlines that intersect the target volume
+- Added global ruler next to compass
+- Added `read_colormap` to support reading from `RAVE` (`JSON`) or
+  `ITK-SNAP` format
+- Mask is now applied to slice overlays
+- Use `MeshBasicMaterial` when rendering sphere electrodes for better
+  performance
 - Updated `BlueRed` color palette to match with the `ravebuiltins` color
 - Removed obsolete `freesurfer_brain` and embrace the new universal
   interface `threeBrain`
@@ -32,29 +84,45 @@
   shiny applications
 - `merge_brain` also gains new argument `electrode_priority` to control
   the priority when setting electrode shape
-- Drag and drop is handled by file-system `API` or `Webkit` before
+- Added pseudo random generator
+- Native annotation from template supports `FreeSurfer` `curv` file too
+- Surface mapping is more robust even if the hemisphere is unset: using
+  `MNI152` R-axis to infer the hemisphere instead
+- Added `YBA` atlas color-map
+
+Electrode Localization:
+
+- Added “interpolate without refine” option for electrode localization,
+  if the users prefer
+- Added support for multiple electrodes
+
+New Experimental Electrode Prototypes:
+
+- Added `PMT-2102-16-099` specifications
+- Added `BF09R-SP51X-0BB` specifications
+- Added `RD16R-SP03/05X` (`AdTech`) specifications
+- Added `DIXI-MM08` electrode specifications
+- Added `Behnke-Fried` electrode specifications
+- Added `NeuroOne/Zimmer` electrode specifications
+
+Drag and Drop Improvements:
+
+- Drag and drop is handled by file-system API or `WebKit` before
   fallback to naive approaches to support dropping in folders
-- Added support for `tt` streamline format
+- Drag drop supports folders now
 - The default colors for dropped objects are determined by their file
   names to avoid random colors
-- Better fallback method for workers who don’t get new job spawned
-- Worker spawn is throttled
-- Added pseudo random generator
-- Streamlines have better memory management with random shuffle
-- In highlight mode faded streamline widths can be adjusted
-- Added global ruler next to compass
-- Added try-catch to handle file processing errors to avoid stopping
-  processing files
 - Drag-and-dropped files now generate consistent default colors and
   ignores the left-right keywords
 - Fixed drag and drop multiple files issue
-- Drag drop supports folders now
-- Added support for multiple electrodes
-- Added “interpolate without refine” option for electrode localization,
-  if the users prefer;
-- native annotation from template supports `FreeSurfer` `curv` file too
-- Surface mapping is more robust even if the hemisphere is unset: using
-  `MNI152` R-axis to infer the hemisphere instead
+- Fixed drag and drop color key length issue
+- Added try-catch to handle file processing errors to avoid stopping
+  processing files
+
+Bug Fixes:
+
+- Suppressed rendering flags when the trackball is inactive, fixing the
+  rendering policy
 
 ## threeBrain 1.3.0
 
