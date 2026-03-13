@@ -2,20 +2,22 @@
 
 ## Changes since last CRAN release
 
-- `809a302a (HEAD -> master)` \[*`dipterix`*\]: Add gradient texture
-  pre-computation for faster normal calculation; Implement 3D Sobel
-  filter for both continuous and discrete volumes; Add MatCap
-  texture-based lighting for improved visual quality; Support
-  gradient-based opacity modulation for continuous data; Add fast-pass
-  empty space skipping with adaptive step sizing; Add `invokeWorker`
-  method to ViewerApp for unified worker dispatch; Support ArrayBuffer
-  transferables for zero-copy data transfer; Register
-  `computeVolumeGradients` as worker-callable function; Convert
-  colorChannels and dithering to compile-time defines; Add
-  USE_GRADIENT_MAP and SINGLE_CHANNEL shader variants; Implement
+- `32861939 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Improved lazy rendering so the canvas does not
+  forces the `GPU` to render unless there is a need to
+- `809a302a` \[*`dipterix`*\]: Add gradient texture pre-computation for
+  faster normal calculation; Implement 3D Sobel filter for both
+  continuous and discrete volumes; Add MatCap texture-based lighting for
+  improved visual quality; Support gradient-based opacity modulation for
+  continuous data; Add fast-pass empty space skipping with adaptive step
+  sizing; Add `invokeWorker` method to ViewerApp for unified worker
+  dispatch; Support ArrayBuffer transferables for zero-copy data
+  transfer; Register `computeVolumeGradients` as worker-callable
+  function; Convert colorChannels and dithering to compile-time defines;
+  Add USE_GRADIENT_MAP and SINGLE_CHANNEL shader variants; Implement
   two-sided lighting with view-space normal correction
-- `5f60030b (origin/master, origin/HEAD)` \[*`dipterix`*\]: Added
-  read_colormap to support reading from RAVE (json) or itksnap format
+- `5f60030b` \[*`dipterix`*\]: Added read_colormap to support reading
+  from RAVE (json) or itksnap format
 - `ac95dca1` \[*`dipterix`*\]: Added PMT 2102-16-099 specs
 - `41450e6f` \[*`dipterix`*\]: Added BF09R-SP51X-0BB specs
 - `65b856e5` \[*`dipterix`*\]: Upgraded engine to `r182`; Removed `jsm`
