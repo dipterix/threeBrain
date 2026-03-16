@@ -2,9 +2,10 @@
 
 ## Changes since last CRAN release
 
-- `32861939 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Improved lazy rendering so the canvas does not
-  forces the `GPU` to render unless there is a need to
+- `c3d3ae9a (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Preserve canvas context to allow obtaining `dataURL`
+- `32861939` \[*`dipterix`*\]: Improved lazy rendering so the canvas
+  does not forces the `GPU` to render unless there is a need to
 - `809a302a` \[*`dipterix`*\]: Add gradient texture pre-computation for
   faster normal calculation; Implement 3D Sobel filter for both
   continuous and discrete volumes; Add MatCap texture-based lighting for
