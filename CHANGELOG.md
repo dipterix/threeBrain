@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `c3d3ae9a (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Preserve canvas context to allow obtaining `dataURL`
+* `05794e2e (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Improves the readability for screenshots and recordings (https://github.com/orgs/rave-ieeg/discussions/145)
+* `c3d3ae9a` [_`dipterix`_]: Preserve canvas context to allow obtaining `dataURL`
 * `32861939` [_`dipterix`_]: Improved lazy rendering so the canvas does not forces the `GPU` to render unless there is a need to
 * `809a302a` [_`dipterix`_]: Add gradient texture pre-computation for faster normal calculation; Implement 3D Sobel filter for both continuous and discrete volumes; Add MatCap texture-based lighting for improved visual quality; Support gradient-based opacity modulation for continuous data; Add fast-pass empty space skipping with adaptive step sizing; Add `invokeWorker` method to ViewerApp for unified worker dispatch; Support ArrayBuffer transferables for zero-copy data transfer; Register `computeVolumeGradients` as worker-callable function; Convert colorChannels and dithering to compile-time defines; Add USE_GRADIENT_MAP and SINGLE_CHANNEL shader variants; Implement two-sided lighting with view-space normal correction
 * `5f60030b` [_`dipterix`_]: Added read_colormap to support reading from RAVE (json) or itksnap format
