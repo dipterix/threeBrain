@@ -2,8 +2,12 @@
 
 ## Changes since last CRAN release
 
-- `c3d3ae9a (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Preserve canvas context to allow obtaining `dataURL`
+- `2d964e82 (HEAD -> master)` \[*`dipterix`*\]: Updated `jsPDF` version
+- `05794e2e (origin/master, origin/HEAD)` \[*`dipterix`*\]: Improves the
+  readability for screenshots and recordings
+  (<https://github.com/orgs/rave-ieeg/discussions/145>)
+- `c3d3ae9a` \[*`dipterix`*\]: Preserve canvas context to allow
+  obtaining `dataURL`
 - `32861939` \[*`dipterix`*\]: Improved lazy rendering so the canvas
   does not forces the `GPU` to render unless there is a need to
 - `809a302a` \[*`dipterix`*\]: Add gradient texture pre-computation for
