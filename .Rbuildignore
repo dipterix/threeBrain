@@ -39,3 +39,5 @@
 ^_rs_job\.R$
 ^CRAN-SUBMISSION$
 ^CHANGELOG\.md$
+^\.positai$
+^\.claude$
