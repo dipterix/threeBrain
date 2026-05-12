@@ -8,10 +8,6 @@ Query the 'FreeSurfer' labels
 freesurfer_lut
 ```
 
-## Format
-
-An object of class `list` of length 3.
-
 ## Details
 
 The 'FreeSurfer' atlases use
@@ -24,6 +20,7 @@ filter.
 ## Examples
 
 ``` r
+
 freesurfer_lut$from_key(0:10)
 #>                              0                              1 
 #>                      "Unknown"       "Left-Cerebral-Exterior" 

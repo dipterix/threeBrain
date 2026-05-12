@@ -105,6 +105,7 @@ is a valid path, then the mesh will be saved to this location.
 ## Examples
 
 ``` r
+
 library(threeBrain)
 N27_path <- file.path(default_template_directory(), "N27")
 if(dir.exists(N27_path)) {

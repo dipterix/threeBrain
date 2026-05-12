@@ -30,12 +30,14 @@ shortcuts](https://dipterix.org/threeBrain/shortcuts.html)
 2.  Open `RStudio`, enter from its console:
 
 ``` r
+
 install.packages("threeBrain", repos = "https://rave-ieeg.r-universe.dev")
 ```
 
 If you want to install `dev` version from *Github*, then use:
 
 ``` r
+
 install.packages("remotes")
 remotes::install_github("dipterix/threeBrain")
 ```
@@ -44,6 +46,7 @@ remotes::install_github("dipterix/threeBrain")
     the following command
 
 ``` r
+
 threeBrain::brain_setup()
 ```
 
@@ -56,6 +59,7 @@ subject `N27` (Collin’s 27) created locally. The location is
 platform-related. You can find it by running the following command:
 
 ``` r
+
 library(threeBrain)
 
 default_template_directory()
@@ -70,6 +74,7 @@ Let’s view this subject using the `threeBrain` function.
 1.  Import subject
 
 ``` r
+
 library(threeBrain)
 
 n27_path <- file.path(default_template_directory(), "N27")
@@ -81,6 +86,7 @@ x <- threeBrain( path = n27_path,
 2.  Visualize
 
 ``` r
+
 plot(x)       # alternatively, you can use x$plot()`
 ```
 
@@ -97,6 +103,7 @@ If you have electrode file, you can import it before calling `plot`
 function. Please make sure it’s in `csv` format.
 
 ``` r
+
 x$set_electrodes(electrodes = "[PATH to ELECTRODE FILE]")
 ```
 
@@ -117,6 +124,7 @@ location from `FreeSurfer` coordinates.
 To assign values to electrodes, run
 
 ``` r
+
 x$set_electrode_values(electrodes = "[PATH to ELECTRODE VALUE FILE]")
 ```
 
@@ -144,6 +152,7 @@ have two subjects `YAB` and `YCQ`. To merge these two subjects and show
 them on `N27` template,
 
 ``` r
+
 library(threeBrain)
 
 # yab = ... (see section B for import a single subject)

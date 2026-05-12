@@ -28,6 +28,7 @@ throw an error.
 ## Examples
 
 ``` r
+
 availables <- list_electrode_prototypes()
 if( "sEEG-16" %in% names(availables) ) {
   proto <- load_prototype( "sEEG-16" )

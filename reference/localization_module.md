@@ -73,6 +73,7 @@ A list of `'ui'` elements, `'server'` function, and a stand-alone
 ## Examples
 
 ``` r
+
 # This example require N27 template brain to be installed
 # see `?download_N27` for details
 

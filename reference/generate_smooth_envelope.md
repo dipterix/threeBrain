@@ -51,6 +51,7 @@ is also saved to `save_as` is specified.
 ## Examples
 
 ``` r
+
 if(interactive() &&
    file.exists(file.path(default_template_directory(), "N27"))) {
 

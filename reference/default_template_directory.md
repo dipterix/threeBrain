@@ -32,6 +32,7 @@ To override the default behavior, use
 ## Examples
 
 ``` r
+
 default_template_directory()
 #> [1] "/home/runner/.local/share/R/threeBrain/templates"
 ```

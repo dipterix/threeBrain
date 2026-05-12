@@ -29,6 +29,7 @@ An electrode prototype instance
 
 ``` r
 
+
 available_prototypes <- list_electrode_prototypes()
 if("Precision33x31" %in% names(available_prototypes)) {
 

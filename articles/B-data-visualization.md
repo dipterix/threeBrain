@@ -6,6 +6,7 @@ code to set up. Alternatively, you can substitute variables
 `subject_code` and `subject_path` accordingly.
 
 ``` r
+
 library(threeBrain)
 subject_code <- "N27"
 subject_path <- "~/Downloads/N27"
@@ -33,6 +34,7 @@ will be used. Please download this file and place it at
 `~/Downloads/N27/electrodes.csv`
 
 ``` r
+
 electrode_table <- `~/Downloads/N27/electrodes.csv`
 brain$set_electrodes(electrode_table)
 brain$plot()
@@ -87,6 +89,7 @@ Download sample value table from
 and save it to `~/Downloads/N27/values.csv`
 
 ``` r
+
 electrode_table <- `~/Downloads/N27/electrodes.csv`
 value_table <- `~/Downloads/N27/values.csv`
 brain$set_electrodes(electrode_table)
@@ -131,6 +134,7 @@ function to interpolate colors. Please use
 to see the documentation.
 
 ``` r
+
 pal <- c(
   colorRampPalette(c("red", "#FFC6C6"))(8),
   colorRampPalette(c("#FFC6C6", "white"))(56)
@@ -147,7 +151,7 @@ p-values rendered as light
 reds](https://raw.githubusercontent.com/dipterix/threeBrain-sample/master/screenshots/vignette-12.png)
 
 Adjusted p-value palette: the value range is from 0 to 1; the color
-transition is non-linear, with $p < 0.05$ rendered as deep red, and
+transition is non-linear, with $`p<0.05`$ rendered as deep red, and
 large p-values rendered as light reds
 
 ## Map Electrode Values to the Surface

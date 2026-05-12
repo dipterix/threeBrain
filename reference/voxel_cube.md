@@ -115,6 +115,7 @@ create_voxel_cube(
 ## Examples
 
 ``` r
+
 # requires N27 brain to be installed
 # use `download_N27()` to download template Collins brain
 

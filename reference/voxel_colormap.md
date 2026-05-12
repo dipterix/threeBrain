@@ -93,6 +93,7 @@ it for valid values.
 ## Examples
 
 ``` r
+
 # Creates a symmetric continuous colormap with 3 keys
 # The color range is -10 to 10
 # The colors are 'blue','white','red' for these keys

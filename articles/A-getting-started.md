@@ -31,6 +31,7 @@ In the following context, I will use `~/Downloads/N27` as an example
 ## Generate Viewer Object
 
 ``` r
+
 library(threeBrain)
 subject_code <- "N27"
 subject_path <- "~/Downloads/N27"
@@ -84,6 +85,7 @@ cache files.
 Visualizing the viewer is simply just one line.
 
 ``` r
+
 brain$plot()
 ```
 
@@ -127,6 +129,7 @@ The viewer shows ‘Coronal’ plane, smoothed white matter, ‘Ventricle’,
 and ‘Cerebellum’ all together in one scene.
 
 ``` r
+
 brain <- threeBrain(
   subject_path, subject_code, 
   surface_types = c('pial', 'smoothwm'), 
