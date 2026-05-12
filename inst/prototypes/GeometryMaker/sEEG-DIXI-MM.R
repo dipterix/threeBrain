@@ -178,3 +178,61 @@ proto$preview_3d()
 
 paths = threeBrain::list_electrode_prototypes()
 paths[["SEEG-DIXI-MM08-06B51D12"]]
+
+
+# ---- sEEG-DIXI-D08-15PIX -----------------------------------------------------
+# The D08-15PIX is a 15-contact electrode featuring uniform spacing with 1 mm
+# contact size and 1 mm spacing throughout the electrode.
+
+proto = threeBrain::seeg_prototype(
+  type = "sEEG-DIXI-D08-15PIX",
+  description = c(
+    "DIXI sEEG - 15 contacts",
+    "Contact length   : 1   mm",
+    "Central spacing  : 2   mm",  # 1mm edge-to-edge
+    "Tip size         : 0   mm",
+    "Diameter         : 0.8 mm"
+  ),
+  center_position = (1:15) * 2 - 1.5,
+  contact_widths = 1,
+  diameter = 0.8,
+  overall_length = 30,
+  default_interpolation = "2x14",
+  overwrite = TRUE
+)
+invisible(proto$get_texture(letters))
+proto$preview_3d()
+proto$preview_texture()
+
+
+# ---- sEEG-DIXI-D08-18PIXEL ---------------------------------------------------
+# The D08-18PIX is an 18-contact electrode in which the first 15 mm has uniform
+# 1 mm contacts and 1 mm spacing, while the remaining 35 mm transitions to our
+# traditional configuration of 2 mm contacts with 1.5 mm spacing.
+
+proto = threeBrain::seeg_prototype(
+  type = "sEEG-DIXI-D08-18PIXEL",
+  description = c(
+    "DIXI sEEG - 18 (8 + 10) contacts",
+    "Contact length   : 8x1 mm, then 10x2 mm",
+    "Central spacing  : 7x2 mm, 1x3 mm, then 9x3.5 mm", # center to center
+    "Tip size         : 0   mm",
+    "Diameter         : 0.8 mm"
+  ),
+  center_position = c(
+    (1:8) * 2 - 1.5,
+    17.5 + (1:10 - 1) * 3.5
+  ),
+  contact_widths = c(rep(1, 8), rep(2, 10)),
+  diameter = 0.8,
+  overall_length = 50,
+  default_interpolation = "2x7,3x1,3.5x9",
+  overwrite = TRUE
+)
+invisible(proto$get_texture(letters))
+proto$preview_3d()
+proto$preview_texture()
+
+
+
+
