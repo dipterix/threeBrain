@@ -1,6 +1,12 @@
 ## Changes since last CRAN release
-* `2d964e82 (HEAD -> master)` [_`dipterix`_]: Updated `jsPDF` version
-* `05794e2e (origin/master, origin/HEAD)` [_`dipterix`_]: Improves the readability for screenshots and recordings (https://github.com/orgs/rave-ieeg/discussions/145)
+* `e962ffd2 (HEAD -> master)` [_`dipterix`_]: Added per-contact active/inactive tracking for `InstancedMesh` electrode contacts: inactive contacts (no display value or failed threshold) suppress outlines; `hide inactives` visibility mode discards inactive contact fragments via `HIDE_INACTIVE_CONTACTS` shader define; replaced alpha-based inactive fading with `discard`; `instanceActive` per-instance buffer attribute drives all inactive logic; added `setHideInactives()` and `useInactiveAlpha()` material methods; added `guessHemisphere()` to infer electrode hemisphere from FreeSurfer anatomical label
+* `584f2c68` [_`dipterix`_]: Added NeuroPixel shanks
+* `5300ae5b (origin/master, origin/HEAD)` [_`dipterix`_]: Added Medtronic 3387 and 3389
+* `9f650ac4` [_`dipterix`_]: Added DIXI 15PIX and 18PIXEL
+* `9aca9098` [_`dipterix`_]: Added more BF??R-SP21X electrodes
+* `b7eee16e` [_`dipterix`_]: Changed the screenshot/recording name date to be full-year with local timestamp
+* `2d964e82` [_`dipterix`_]: Updated `jsPDF` version
+* `05794e2e` [_`dipterix`_]: Improves the readability for screenshots and recordings (https://github.com/orgs/rave-ieeg/discussions/145)
 * `c3d3ae9a` [_`dipterix`_]: Preserve canvas context to allow obtaining `dataURL`
 * `32861939` [_`dipterix`_]: Improved lazy rendering so the canvas does not forces the `GPU` to render unless there is a need to
 * `809a302a` [_`dipterix`_]: Add gradient texture pre-computation for faster normal calculation; Implement 3D Sobel filter for both continuous and discrete volumes; Add MatCap texture-based lighting for improved visual quality; Support gradient-based opacity modulation for continuous data; Add fast-pass empty space skipping with adaptive step sizing; Add `invokeWorker` method to ViewerApp for unified worker dispatch; Support ArrayBuffer transferables for zero-copy data transfer; Register `computeVolumeGradients` as worker-callable function; Convert colorChannels and dithering to compile-time defines; Add USE_GRADIENT_MAP and SINGLE_CHANNEL shader variants; Implement two-sided lighting with view-space normal correction
