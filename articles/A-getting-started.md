@@ -132,8 +132,8 @@ and ‘Cerebellum’ all together in one scene.
 
 brain <- threeBrain(
   subject_path, subject_code, 
-  surface_types = c('pial', 'smoothwm'), 
-  atlas_types = 'aseg')
+  surface_types = c("pial", "smoothwm"), 
+  atlas_types = "aseg")
 
 brain$plot(
   controllers = list(

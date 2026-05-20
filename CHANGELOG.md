@@ -2,10 +2,26 @@
 
 ## Changes since last CRAN release
 
-- `2d964e82 (HEAD -> master)` \[*`dipterix`*\]: Updated `jsPDF` version
-- `05794e2e (origin/master, origin/HEAD)` \[*`dipterix`*\]: Improves the
-  readability for screenshots and recordings
-  (<https://github.com/orgs/rave-ieeg/discussions/145>)
+- `e962ffd2 (HEAD -> master)` \[*`dipterix`*\]: Added per-contact
+  active/inactive tracking for `InstancedMesh` electrode contacts:
+  inactive contacts (no display value or failed threshold) suppress
+  outlines; `hide inactives` visibility mode discards inactive contact
+  fragments via `HIDE_INACTIVE_CONTACTS` shader define; replaced
+  alpha-based inactive fading with `discard`; `instanceActive`
+  per-instance buffer attribute drives all inactive logic; added
+  `setHideInactives()` and `useInactiveAlpha()` material methods; added
+  `guessHemisphere()` to infer electrode hemisphere from FreeSurfer
+  anatomical label
+- `584f2c68` \[*`dipterix`*\]: Added NeuroPixel shanks
+- `5300ae5b (origin/master, origin/HEAD)` \[*`dipterix`*\]: Added
+  Medtronic 3387 and 3389
+- `9f650ac4` \[*`dipterix`*\]: Added DIXI 15PIX and 18PIXEL
+- `9aca9098` \[*`dipterix`*\]: Added more BF??R-SP21X electrodes
+- `b7eee16e` \[*`dipterix`*\]: Changed the screenshot/recording name
+  date to be full-year with local timestamp
+- `2d964e82` \[*`dipterix`*\]: Updated `jsPDF` version
+- `05794e2e` \[*`dipterix`*\]: Improves the readability for screenshots
+  and recordings (<https://github.com/orgs/rave-ieeg/discussions/145>)
 - `c3d3ae9a` \[*`dipterix`*\]: Preserve canvas context to allow
   obtaining `dataURL`
 - `32861939` \[*`dipterix`*\]: Improved lazy rendering so the canvas
