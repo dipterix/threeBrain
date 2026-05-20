@@ -35,8 +35,8 @@ lines <- matrix(ncol = 2, byrow = TRUE, c(
 ))
 
 
-plot(lines, pch = 20, col = 'gray', asp = 1, xlim = range(lines[,1]), ylim = range(lines[,2]), xlab = "x", ylab = 'y')
-for(i in seq_len(9)) {
+plot(lines, pch = 20, col = "gray", asp = 1, xlim = range(lines[, 1]), ylim = range(lines[, 2]), xlab = "x", ylab = "y")
+for (i in seq_len(9)) {
   segments(lines[i, 1], lines[i, 2], lines[i + 1, 1], lines[i + 1, 2])
 }
 
@@ -59,8 +59,8 @@ text(
   channel_info$channel
 )
 
-abline(v = c(0, 51), lty = 2, col = 'gray80')
-abline(h = c(0, 18), lty = 2, col = 'gray80')
+abline(v = c(0, 51), lty = 2, col = "gray80")
+abline(h = c(0, 18), lty = 2, col = "gray80")
 
 text(lines, label = seq_len(nrow(lines)))
 

@@ -2,14 +2,14 @@
 #' @param volume, 3-mode tensor (voxels), usually from `mgz`, `nii`, or `BRIK` files
 #' @param Torig a \code{4x4} transform matrix mapping volume (`CRS`) to `RAS`
 #' @return Reshaped tensor with dimensions corresponding to `R`, `A`, and `S`
-reorient_volume <- function( volume, Torig ){
+reorient_volume <- function(volume, Torig) {
   # volume = fill_blanks(brain_finalsurf$get_data(), niter=2)
 
   # Re-order the data according to Torig, map voxels to RAS coord - anatomical
-  order_index <- round((Torig %*% c(1,2,3,0))[1:3])
+  order_index <- round((Torig %*% c(1, 2, 3, 0))[1:3])
   volume <- aperm(volume, abs(order_index))
-  sub <- sprintf(c('%d:1', '1:%d')[(sign(order_index) + 3) / 2], dim(volume))
-  volume <- eval(parse(text = sprintf('volume[%s]', paste(sub, collapse = ','))))
+  sub <- sprintf(c("%d:1", "1:%d")[(sign(order_index) + 3) / 2], dim(volume))
+  volume <- eval(parse(text = sprintf("volume[%s]", paste(sub, collapse = ","))))
 
   volume
 }
@@ -36,18 +36,18 @@ cross_prod <- function(x, y) {
 calculate_rotation <- function(vec_from, vec_to) {
   len1 <- sqrt(sum(vec_from^2))
   len2 <- sqrt(sum(vec_to^2))
-  if( len1 == 0 ) {
+  if ( len1 == 0 ) {
     stop("`calculate_rotation`: length of `vec_from` must not be zero")
   }
-  if( len2 == 0 ) {
+  if ( len2 == 0 ) {
     stop("`calculate_rotation`: length of `vec_to` must not be zero")
   }
   vec1 <- vec_from / len1
   vec2 <- vec_to / len2
   r <- sum(vec1 * vec2) + 1
-  if( r < 1e-6 ) {
+  if ( r < 1e-6 ) {
     r <- 0
-    if( abs(vec_from[1]) > vec_from[3] ) {
+    if ( abs(vec_from[1]) > vec_from[3] ) {
       quat <- c( -vec1[2], vec1[1], 0, r)
     } else {
       quat <- c(0, -vec1[3], vec1[2], r)
@@ -62,7 +62,7 @@ calculate_rotation <- function(vec_from, vec_to) {
     )
   }
   l <- sqrt(sum(quat^2))
-  if( l == 0 ) {
+  if ( l == 0 ) {
     quat <- c(0, 0, 0, 1)
   } else {
     quat <- quat / l
@@ -117,7 +117,7 @@ conform_volume <- function(x, save_to, dim = c(256, 256, 256)) {
   stopifnot2(length(dim) == 3L && all(dim > 1), msg = "conform_nifti: `dim` must be positive integers of length 3")
 
   # read in volume
-  if(is.character(x)) { x <- read_volume(x, header_only = FALSE) }
+  if (is.character(x)) { x <- read_volume(x, header_only = FALSE) }
 
   # current dimension
   old_dim <- dim(x$data)[1:3]

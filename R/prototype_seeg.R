@@ -78,7 +78,7 @@ seeg_prototype <- function(
   # description <- NULL
   # type <- "sEEG-16"
 
-  if( length(default_interpolation) != 1 || is.na(default_interpolation) ) {
+  if ( length(default_interpolation) != 1 || is.na(default_interpolation) ) {
     default_interpolation <- NULL
   } else {
     default_interpolation <- as.character(default_interpolation)
@@ -90,10 +90,10 @@ seeg_prototype <- function(
 
   npos <- length(center_position)
   widths <- contact_widths
-  if(length(widths) == 1) {
+  if (length(widths) == 1) {
     widths <- rep(widths, npos)
   }
-  if(length(segments) == 1) {
+  if (length(segments) == 1) {
     segments <- rep(segments, npos)
   }
   stopifnot(npos == length(widths))
@@ -101,17 +101,17 @@ seeg_prototype <- function(
   stopifnot(npos == length(channel_order))
   contact_widths0 <- widths / 2
 
-  if(!length(description)) {
-    if(length(center_position) > 1) {
+  if (!length(description)) {
+    if (length(center_position) > 1) {
       spacing <- diff(center_position)
-      if(length(spacing) > 1) {
+      if (length(spacing) > 1) {
         spacing <- spacing[[2]]
       }
       spacing <- sprintf("SP%.0f", spacing * 100)
     } else {
       spacing <- "probe"
     }
-    if(length(contact_widths) > 1) {
+    if (length(contact_widths) > 1) {
       cw <- contact_widths[[2]]
     } else {
       cw <- contact_widths[[1]]
@@ -123,7 +123,7 @@ seeg_prototype <- function(
   # widthSegment = 12, heightSegment = ?
   max_p <- max(center_position + widths / 2)
   max_e <- overall_length
-  if( max_e <= max_p ) {
+  if ( max_e <= max_p ) {
     max_e <- max_p + 0.1
   }
   radius0 <- radius
@@ -149,7 +149,7 @@ seeg_prototype <- function(
     z <- zr[[1]]
     r <- zr[[2]]
 
-    if( z == 0 ) {
+    if ( z == 0 ) {
       x <- 0.0001
     }
     rbind(x * r, y * r, z, uvu, z / max_p)
@@ -157,10 +157,10 @@ seeg_prototype <- function(
 
   nverts <- length(paths) * ( width_segments + 1 )
   dim(positions_n_uv) <- c(5, nverts)
-  positions_n_uv <- cbind(c(0,0,0,0,0), positions_n_uv, c(0, 0, max_e, 2, 2))
+  positions_n_uv <- cbind(c(0, 0, 0, 0, 0), positions_n_uv, c(0, 0, max_e, 2, 2))
   nverts <- nverts + 2
 
-  positions_n_uv[c(4,5), nverts + 1 - seq_len(width_segments * 2 + 1)] <- 2
+  positions_n_uv[c(4, 5), nverts + 1 - seq_len(width_segments * 2 + 1)] <- 2
 
   position <- positions_n_uv[1:3, ]
   uv <- positions_n_uv[4:5, ]
@@ -197,7 +197,7 @@ seeg_prototype <- function(
   # )
 
   # if behnke fried
-  if(behnke_fried) {
+  if (behnke_fried) {
 
     position_micro <- cbind(
       c(0, 0, -1),
@@ -259,11 +259,11 @@ seeg_prototype <- function(
   proto <- ElectrodePrototype$new("")$from_list(config)
   proto$validate()
 
-  if(!dry_run) {
+  if (!dry_run) {
     tryCatch({
       proto$save_as_default( force = overwrite )
     }, warning = function(e) {
-      if(!overwrite) {
+      if (!overwrite) {
         warning("Electrode prototype already exists. Please use `overwrite = TRUE` to overwrite.")
       } else {
         warning(e)

@@ -12,8 +12,8 @@ contact_spacing <- 3.5
 # overall_length <- probe_head + width + contact_spacing * (n_contacts-1)
 diameter <- 0.8
 
-for( n_contacts in c(8, 10, 12, 14, 16) ) {
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+for (n_contacts in c(8, 10, 12, 14, 16)) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 300)
   proto <- seeg_prototype(
     type = sprintf("sEEG-PMT-2102-%02d-SP350", n_contacts),
@@ -45,8 +45,8 @@ contact_spacing <- c(3.97, 4.43)
 diameter <- 0.8
 n_contacts <- 16
 
-for( spacing in contact_spacing ) {
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * spacing
+for (spacing in contact_spacing) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 300)
   proto <- seeg_prototype(
     type = sprintf("sEEG-PMT-2102-16-SP%.0f", spacing * 100),

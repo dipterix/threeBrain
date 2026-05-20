@@ -61,37 +61,37 @@
 #'
 NULL
 
-register_get_key <- function(re){
+register_get_key <- function(re) {
   dtype <- re$mapDataType
   gtype <- re$mapGeomType
 
-  if(re$mapDataType == 'continuous'){
+  if (re$mapDataType == "continuous") {
     auto_rescale <- isTRUE(re$colorIDAutoRescale)
     re$colorIDAutoRescale <- auto_rescale
-    re$get_key <- function(value, max_delta = Inf, ...){
-      map <- sapply(re$map, function(x){
+    re$get_key <- function(value, max_delta = Inf, ...) {
+      map <- sapply(re$map, function(x) {
         c(x$ColorID, x$Label)
       })
 
-      k <- sapply(value, function(v){
-        if(is.na(v)){ return(0) }
+      k <- sapply(value, function(v) {
+        if (is.na(v)) { return(0) }
         diff <- abs(map[2, ] - v)
         ii <- which.min(diff)
-        if(diff[[ii]] > max_delta) { return(0) }
+        if (diff[[ii]] > max_delta) { return(0) }
         map[1, ii]
       })
-      if( auto_rescale ) {
+      if ( auto_rescale ) {
         warning("Color map has [colorIDAutoRescale] set to TRUE. The actual color key/ID might vary according to the actual data range.")
       }
       as.integer(k)
     }
   } else {
     re$colorIDAutoRescale <- FALSE
-    re$get_key <- function(value, ...){
-      sapply(value, function(v){
-        if(is.na(v)){ return(0) }
-        dipsaus::forelse(re$map, function(x){
-          if(x$Label == v){
+    re$get_key <- function(value, ...) {
+      sapply(value, function(v) {
+        if (is.na(v)) { return(0) }
+        dipsaus::forelse(re$map, function(x) {
+          if (x$Label == v) {
             return(x$ColorID)
           }
           return()
@@ -106,7 +106,7 @@ register_get_key <- function(re){
 #' @rdname voxel_colormap
 #' @export
 create_colormap <- function(
-  gtype = c('surface', 'volume'), dtype = c('continuous', 'discrete'),
+  gtype = c("surface", "volume"), dtype = c("continuous", "discrete"),
   key, color, value, alpha = FALSE, con = NULL,
   auto_rescale = FALSE, ...
 ) {
@@ -117,25 +117,25 @@ create_colormap <- function(
   auto_rescale <- as.logical(auto_rescale)[[1]] && dtype == "continuous"
   stopifnot(length(key) > 1)
   stopifnot(!any(is.na(key)))
-  if(!length(value)){
+  if (!length(value)) {
     value <- key
   }
-  if(length(color) != length(key)){
+  if (length(color) != length(key)) {
     color <- grDevices::colorRampPalette(color, alpha = alpha, ...)(length(key))
   }
   rgb <- col2rgb(color, alpha = alpha)
-  if(alpha){
+  if (alpha) {
     tbl <- data.frame(
-      ColorID = key, Label = value, R = rgb[1,],
-      G = rgb[2,], B = rgb[3,], A = rgb[4,]
+      ColorID = key, Label = value, R = rgb[1, ],
+      G = rgb[2, ], B = rgb[3, ], A = rgb[4, ]
     )
   } else {
     tbl <- data.frame(
-      ColorID = key, Label = value, R = rgb[1,],
-      G = rgb[2,], B = rgb[3,]
+      ColorID = key, Label = value, R = rgb[1, ],
+      G = rgb[2, ], B = rgb[3, ]
     )
   }
-  ss <- jsonlite::toJSON(tbl, dataframe = 'rows')
+  ss <- jsonlite::toJSON(tbl, dataframe = "rows")
   ss <- jsonlite::fromJSON(ss, simplifyDataFrame = FALSE)
   names(ss) <- tbl$ColorID
   re <- list(
@@ -150,7 +150,7 @@ create_colormap <- function(
     mapVersion = 1.1
   )
   re <- register_get_key(re)
-  if(length(con)){
+  if (length(con)) {
     save_colormap(re, con)
   }
   re
@@ -158,14 +158,14 @@ create_colormap <- function(
 
 #' @rdname voxel_colormap
 #' @export
-save_colormap <- function(cmap, con){
-  stopifnot2('colormap' %in% class(cmap), msg = "`save_colormap`: cmap must be a color map.")
+save_colormap <- function(cmap, con) {
+  stopifnot2("colormap" %in% class(cmap), msg = "`save_colormap`: cmap must be a color map.")
   dtype <- cmap$mapDataType
   cmap$get_key <- NULL
-  x <- switch (
+  x <- switch(
     cmap$mapGeomType,
-    'volume' = { list("__global_data__.VolumeColorLUT" = unclass(cmap)) },
-    'surface' = { list("__global_data__.SurfaceColorLUT" = unclass(cmap)) },
+    "volume" = { list("__global_data__.VolumeColorLUT" = unclass(cmap)) },
+    "surface" = { list("__global_data__.SurfaceColorLUT" = unclass(cmap)) },
   )
   jsonlite::write_json(x, path = con, auto_unbox = TRUE)
   return(invisible(normalizePath(con)))
@@ -174,39 +174,39 @@ save_colormap <- function(cmap, con){
 
 #' @rdname voxel_colormap
 #' @export
-freeserfer_colormap <- function(con){
-  if(missing(con)){
+freeserfer_colormap <- function(con) {
+  if (missing(con)) {
     # for my use
-    con <- 'inst/palettes/datacube2/FreeSurferColorLUT.json'
-    if(!file.exists(con)){ con <- NULL }
+    con <- "inst/palettes/datacube2/FreeSurferColorLUT.json"
+    if (!file.exists(con)) { con <- NULL }
   }
-  file <- 'https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT?action=raw'
+  file <- "https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT?action=raw"
   s <- readLines(file)[-c(1:6, 1439:1441)]
-  s <- s[!stringr::str_detect(s, '^[ ]{0,}#')]
+  s <- s[!stringr::str_detect(s, "^[ ]{0,}#")]
   s <- stringr::str_trim(s)
-  s <- s[s!='']
+  s <- s[s != ""]
   s <- stringr::str_replace_all(s, "[ \t]+", "\t")
   f <- tempfile()
   writeLines(s, f)
-  tbl <- utils::read.table(f, header = FALSE, sep = '\t')
-  # tbl <- data.table::fread(paste(s, collapse = '\n'))
-  names(tbl) <- c('ColorID', 'Label', 'R', 'G', 'B', 'A')
+  tbl <- utils::read.table(f, header = FALSE, sep = "\t")
+  # tbl <- data.table::fread(paste(s, collapse = "\n"))
+  names(tbl) <- c("ColorID", "Label", "R", "G", "B", "A")
   col <- rgb(tbl$R, tbl$G, tbl$B, maxColorValue = 255)
-  create_colormap(gtype = 'volume', dtype = 'discrete', key = tbl$ColorID,
+  create_colormap(gtype = "volume", dtype = "discrete", key = tbl$ColorID,
                   color = col, value = tbl$Label, alpha = FALSE, con = con)
 }
 
 #' @rdname voxel_colormap
 #' @export
-load_colormap <- function(con){
+load_colormap <- function(con) {
   re <- jsonlite::read_json(con)
   nms <- names(re)
-  if("__global_data__.VolumeColorLUT" %in% nms){
+  if ("__global_data__.VolumeColorLUT" %in% nms) {
     re <- re$`__global_data__.VolumeColorLUT`
   } else {
     re <- re$`__global_data__.SurfaceColorLUT`
   }
-  if(!length(re)) {
+  if (!length(re)) {
     stop("`load_colormap`: Invalid colormap")
   }
   return(register_get_key(re))
@@ -214,7 +214,7 @@ load_colormap <- function(con){
 
 
 #' @export
-print.colormap <- function(x, ...){
+print.colormap <- function(x, ...) {
   cat(sprintf(
     paste(sep = "", c(
       "<threeBrain Colormap>",
@@ -226,19 +226,19 @@ print.colormap <- function(x, ...){
       "  Min Colorkey: %.0f",
       "  Max Colorkey: %.0f",
       "  Auto-rescale ColorKey: %s\n"
-    ), collapse = '\n'),
-    x[['mapVersion']],
-    x[['mapGeomType']],
-    x[['mapDataType']],
-    x[['mapAlpha']],
-    length(x[['map']]),
-    x[['mapMinColorID']],
-    x[['mapMaxColorID']],
-    ifelse(isTRUE(x[['colorIDAutoRescale']]), "yes", "no")
+    ), collapse = "\n"),
+    x[["mapVersion"]],
+    x[["mapGeomType"]],
+    x[["mapDataType"]],
+    x[["mapAlpha"]],
+    length(x[["map"]]),
+    x[["mapMinColorID"]],
+    x[["mapMaxColorID"]],
+    ifelse(isTRUE(x[["colorIDAutoRescale"]]), "yes", "no")
   ))
-  if(isTRUE(x[['mapDataType']] == "continuous")){
-    rg <- x[['mapValueRange']]
-    cat("  Value Range: ", rg[[1]], " ~ ", rg[[2]], "\n", sep = '')
+  if (isTRUE(x[["mapDataType"]] == "continuous")) {
+    rg <- x[["mapValueRange"]]
+    cat("  Value Range: ", rg[[1]], " ~ ", rg[[2]], "\n", sep = "")
   }
   invisible(x)
 }
@@ -267,8 +267,8 @@ read_colormap_itksnap <- function(con) {
 
   col <- grDevices::rgb(cmap_tbl$R, cmap_tbl$G, cmap_tbl$B, maxColorValue = 255)
   cmap <- create_colormap(
-    gtype = 'volume',
-    dtype = 'discrete',
+    gtype = "volume",
+    dtype = "discrete",
     key = cmap_tbl$ColorID,
     color = col,
     value = cmap_tbl$Label,
@@ -283,9 +283,9 @@ read_colormap_itksnap <- function(con) {
 #' @export
 read_colormap <- function(con, format = c("rave", "itksnap")) {
   format <- match.arg(format)
-  cmap <- switch (
+  cmap <- switch(
     format,
-    'itksnap' = read_colormap_itksnap(con),
+    "itksnap" = read_colormap_itksnap(con),
     {
       load_colormap(con)
     }

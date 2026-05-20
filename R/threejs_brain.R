@@ -90,22 +90,22 @@ threejs_brain <- function(
   control_panel = TRUE, control_presets = NULL, control_display = TRUE,
 
   # Main camera and scene center
-  camera_center = c(0,0,0), camera_pos = c(500,0,0), start_zoom = 1,
+  camera_center = c(0, 0, 0), camera_pos = c(500, 0, 0), start_zoom = 1,
 
   # For colors and animation
-  symmetric = 0, default_colormap = 'Value', palettes = NULL,
+  symmetric = 0, default_colormap = "Value", palettes = NULL,
   value_ranges = NULL, value_alias = NULL,
   show_inactive_electrodes = TRUE,
   # color palettes for volume rendering (datacube2)
   surface_colormap = system.file(
-    'palettes', 'surface', 'ContinuousSample.json', package = 'threeBrain'),
+    "palettes", "surface", "ContinuousSample.json", package = "threeBrain"),
   voxel_colormap = system.file(
-    'palettes', 'datacube2', 'FreeSurferColorLUT.json', package = 'threeBrain'),
+    "palettes", "datacube2", "FreeSurferColorLUT.json", package = "threeBrain"),
 
   videos = list(),
 
   # Builds, additional data, etc (misc)
-  widget_id = 'threebrain_data', tmp_dirname = NULL,
+  widget_id = "threebrain_data", tmp_dirname = NULL,
   debug = FALSE, enable_cache = FALSE, token = NULL, controllers = list(),
   browser_external = TRUE, global_data = list(), global_files = list(),
 
@@ -116,13 +116,13 @@ threejs_brain <- function(
   custom_javascript = NULL,
   show_modal = "auto", embed = FALSE
 
-){
-  if(isTRUE(show_modal == 'auto')){
-    if( is.null(shiny::getDefaultReactiveDomain()) ){
+) {
+  if (isTRUE(show_modal == "auto")) {
+    if ( is.null(shiny::getDefaultReactiveDomain()) ) {
       show_modal <- FALSE
     } else {
       # check if rave is launched
-      if( isNamespaceLoaded("rave") || isNamespaceLoaded("ravedash") ){
+      if ( isNamespaceLoaded("rave") || isNamespaceLoaded("ravedash") ) {
         show_modal <- FALSE
       } else {
         show_modal <- TRUE
@@ -132,22 +132,22 @@ threejs_brain <- function(
     show_modal <- isTRUE(as.logical(show_modal))
   }
 
-  stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = 'camera_center must be a numeric vector of 3')
-  stopifnot2(length(camera_pos) == 3 && is.numeric(camera_pos) && sum(abs(camera_pos)) > 0, msg = 'camera_pos must be a vector length of 3 and cannot be origin')
+  stopifnot2(length(camera_center) == 3 && is.numeric(camera_center), msg = "camera_center must be a numeric vector of 3")
+  stopifnot2(length(camera_pos) == 3 && is.numeric(camera_pos) && sum(abs(camera_pos)) > 0, msg = "camera_pos must be a vector length of 3 and cannot be origin")
 
   # Inject global data
-  global_container <- BlankGeom$new(name = '__blank__', group = GeomGroup$new(name = '__global_data'))
-  sapply( names(global_data), function(nm){
+  global_container <- BlankGeom$new(name = "__blank__", group = GeomGroup$new(name = "__global_data"))
+  sapply( names(global_data), function(nm) {
     global_container$group$set_group_data(
-      name = sprintf('__global_data__%s', nm),
+      name = sprintf("__global_data__%s", nm),
       value = global_data[[ nm ]]
     )
   })
-  sapply( names(global_files), function(nm){
+  sapply( names(global_files), function(nm) {
     file_info <- as.list(global_files[[nm]])
-    if(all(c("path", "absolute_path", "file_name", "is_new_cache", "is_cache") %in% names(file_info))){
+    if (all(c("path", "absolute_path", "file_name", "is_new_cache", "is_cache") %in% names(file_info))) {
       global_container$group$set_group_data(
-        name = sprintf('__global_data__%s', nm),
+        name = sprintf("__global_data__%s", nm),
         value = file_info,
         is_cached = TRUE,
         cache_if_not_exists = FALSE
@@ -156,73 +156,73 @@ threejs_brain <- function(
   })
 
   # surface cmap
-  if( 'colormap' %in% class(surface_colormap) ){
-    f <- tempfile(fileext = '.json', pattern = "surface_palette_")
+  if ( "colormap" %in% class(surface_colormap) ) {
+    f <- tempfile(fileext = ".json", pattern = "surface_palette_")
     save_colormap( surface_colormap, f )
     surface_colormap <- normalizePath(f)
   }
   global_container$group$set_group_data(
-    name = '__global_data__.SurfaceColorLUT',
+    name = "__global_data__.SurfaceColorLUT",
     value = list(
-      'path' = normalizePath(surface_colormap, mustWork = FALSE),
-      'absolute_path' = normalizePath(surface_colormap, mustWork = FALSE),
-      'file_name' = filename(surface_colormap),
-      'is_new_cache' = FALSE,
-      'is_cache' = TRUE
+      "path" = normalizePath(surface_colormap, mustWork = FALSE),
+      "absolute_path" = normalizePath(surface_colormap, mustWork = FALSE),
+      "file_name" = filename(surface_colormap),
+      "is_new_cache" = FALSE,
+      "is_cache" = TRUE
     ),
     is_cached = TRUE,
     cache_if_not_exists = FALSE
   )
 
   # Voxel cmap
-  if( 'colormap' %in% class(voxel_colormap) ){
-    f <- tempfile(fileext = '.json', pattern = "volume_palette_")
+  if ( "colormap" %in% class(voxel_colormap) ) {
+    f <- tempfile(fileext = ".json", pattern = "volume_palette_")
     save_colormap( voxel_colormap, f )
     voxel_colormap <- normalizePath(f)
   }
   global_container$group$set_group_data(
-    name = '__global_data__.VolumeColorLUT',
+    name = "__global_data__.VolumeColorLUT",
     value = list(
-      'path' = normalizePath(voxel_colormap, mustWork = FALSE),
-      'absolute_path' = normalizePath(voxel_colormap, mustWork = FALSE),
-      'file_name' = filename(voxel_colormap),
-      'is_new_cache' = FALSE,
-      'is_cache' = TRUE
+      "path" = normalizePath(voxel_colormap, mustWork = FALSE),
+      "absolute_path" = normalizePath(voxel_colormap, mustWork = FALSE),
+      "file_name" = filename(voxel_colormap),
+      "is_new_cache" = FALSE,
+      "is_cache" = TRUE
     ),
     is_cached = TRUE,
     cache_if_not_exists = FALSE
   )
 
   fs_colormap <- system.file(
-    'palettes', 'FSColorLUT.json', package = 'threeBrain')
+    "palettes", "FSColorLUT.json", package = "threeBrain")
   global_container$group$set_group_data(
-    name = '__global_data__.FSColorLUT',
+    name = "__global_data__.FSColorLUT",
     value = list(
-      'path' = normalizePath(fs_colormap, mustWork = TRUE),
-      'absolute_path' = normalizePath(fs_colormap, mustWork = TRUE),
-      'file_name' = filename(fs_colormap),
-      'is_new_cache' = FALSE,
-      'is_cache' = TRUE
+      "path" = normalizePath(fs_colormap, mustWork = TRUE),
+      "absolute_path" = normalizePath(fs_colormap, mustWork = TRUE),
+      "file_name" = filename(fs_colormap),
+      "is_new_cache" = FALSE,
+      "is_cache" = TRUE
     ),
     is_cached = TRUE,
     cache_if_not_exists = FALSE
   )
 
   # Video contents
-  if( length(videos) ){
+  if ( length(videos) ) {
     nms <- names(videos)
     sel <- !nms %in% ""
-    if(length(nms) && any(sel)){
+    if (length(nms) && any(sel)) {
       videos <- videos[sel]
       nms <- nms[sel]
-      videos <- lapply(nms, function(nm){
+      videos <- lapply(nms, function(nm) {
         x <- videos[[nm]]
         x$name <- stringr::str_replace_all(nm, "[^a-zA-Z0-9-_]", "_")
         x
       })
-      names(videos) <- sapply(videos, "[[", 'name')
+      names(videos) <- sapply(videos, "[[", "name")
       global_container$group$set_group_data(
-        name = '__global_data__.media_content',
+        name = "__global_data__.media_content",
         value = videos,
         is_cached = FALSE,
         cache_if_not_exists = FALSE
@@ -235,38 +235,38 @@ threejs_brain <- function(
   # Create element list
   geoms <- unlist(c(global_container, list(...), .list))
   # Remove illegal geoms
-  is_geom <- vapply(geoms, function(x){ R6::is.R6(x) && inherits(x, 'AbstractGeom') }, FUN.VALUE = FALSE)
+  is_geom <- vapply(geoms, function(x) { R6::is.R6(x) && inherits(x, "AbstractGeom") }, FUN.VALUE = FALSE)
   geoms <- unlist(geoms[is_geom])
 
-  groups <- unique(lapply(geoms, '[[', 'group'))
+  groups <- unique(lapply(geoms, "[[", "group"))
   groups <- groups[!vapply(groups, is.null, FUN.VALUE = FALSE)]
 
   # get color schema
-  animation_types <- unique(unlist( lapply(geoms, function(g){ g$animation_types }) ))
-  if(!is.list(palettes)){ palettes <- list() }
+  animation_types <- unique(unlist( lapply(geoms, function(g) { g$animation_types }) ))
+  if (!is.list(palettes)) { palettes <- list() }
   pnames <- names(palettes)
-  if(!is.list(value_ranges)){ value_ranges <- list() }
+  if (!is.list(value_ranges)) { value_ranges <- list() }
 
-  color_maps <- sapply(animation_types, function(atype){
+  color_maps <- sapply(animation_types, function(atype) {
     c <- ColorMap$new(name = atype, .list = geoms, symmetric = symmetric,
                      alias = value_alias[[atype]])
-    if( atype %in% pnames ){
+    if ( atype %in% pnames ) {
       c$set_colors( palettes[[atype]] )
     }
-    if( c$value_type == 'continuous' && length(value_ranges[[atype]]) >= 2 ){
-      c$value_range <- value_ranges[[atype]][c(1,2)]
-      if( length(value_ranges[[atype]]) >= 4 ){
-        c$hard_range <- sort(value_ranges[[atype]][c(3,4)])
+    if ( c$value_type == "continuous" && length(value_ranges[[atype]]) >= 2 ) {
+      c$value_range <- value_ranges[[atype]][c(1, 2)]
+      if ( length(value_ranges[[atype]]) >= 4 ) {
+        c$hard_range <- sort(value_ranges[[atype]][c(3, 4)])
       }
     }
     c$to_list()
   }, USE.NAMES = TRUE, simplify = FALSE)
 
-  if(length(animation_types)) {
+  if (length(animation_types)) {
     if (!length(default_colormap) || !default_colormap %in% animation_types) {
       default_colormap <- animation_types[1]
     }
-  } else{
+  } else {
     default_colormap <- NULL
   }
 
@@ -277,36 +277,36 @@ threejs_brain <- function(
 
 
   # Check elements
-  geoms <- lapply(geoms, function(g){ g$to_list() })
+  geoms <- lapply(geoms, function(g) { g$to_list() })
 
   # Check lib_path. whether running inside of shiny or standalone
-  if(is.null(shiny::getDefaultReactiveDomain())){
-    lib_path <- 'lib/'
-  }else{
-    lib_path <- ''
-    if(is.null(token)){
+  if (is.null(shiny::getDefaultReactiveDomain())) {
+    lib_path <- "lib/"
+  } else {
+    lib_path <- ""
+    if (is.null(token)) {
       session <- shiny::getDefaultReactiveDomain()
       token <- session$userData$rave_id
     }
 
     # If in shiny, token is given or rave_id is given, we use fixed temp path
     # in this way to reduce redundency
-    if( !is.null(token) && length(tmp_dirname) != 1 ){
+    if ( !is.null(token) && length(tmp_dirname) != 1 ) {
       tmp_dirname <- token
     }
   }
 
   # Check cached json files
-  if(length(tmp_dirname) != 1){
+  if (length(tmp_dirname) != 1) {
     tmp_dirname <- rand_string(10)
   }
-  tmp_dir <- file.path(tempdir(), 'threebrain_cache', tmp_dirname)
+  tmp_dir <- file.path(tempdir(), "threebrain_cache", tmp_dirname)
   dir_create(tmp_dir)
 
-  lapply(groups, function(g){
-    if(length(g$cached_items)){
+  lapply(groups, function(g) {
+    if (length(g$cached_items)) {
       dir_create(file.path(tmp_dir, g$cache_name()))
-      for(f in g$cached_items){
+      for (f in g$cached_items) {
         re <- g$group_data[[f]]
         file.copy(
           from = re$absolute_path,
@@ -316,13 +316,13 @@ threejs_brain <- function(
       }
     }
   })
-  lapply(videos, function(x){
-    if(!x$is_url){
+  lapply(videos, function(x) {
+    if (!x$is_url) {
       target <- file.path(
         tmp_dir, global_container$group$cache_name(), filename(x$path)
       )
       file.copy(x$path, target, overwrite = TRUE)
-      if( x$temp ){
+      if ( x$temp ) {
         unlink(x$path)
       }
     }
@@ -330,17 +330,17 @@ threejs_brain <- function(
 
   # This is a tricky part, if the widget is created from shiny, there might be multiple instance running and we cannot have any cross talk
   # TODO: Need to think on how to resolve conflicts.
-  widget_id <- stringr::str_replace_all(widget_id, '[^a-zA-Z0-9]', '_')
+  widget_id <- stringr::str_replace_all(widget_id, "[^a-zA-Z0-9]", "_")
 
   dependencies <- htmlDependency(
     name = widget_id,
-    version = '0',
+    version = "0",
     src = tmp_dir,
     all_files = TRUE
   )
 
   # Get groups
-  groups <- lapply(groups, function(g){ g$to_list() })
+  groups <- lapply(groups, function(g) { g$to_list() })
 
 
   # Generate settings
@@ -360,7 +360,7 @@ threejs_brain <- function(
     show_legend = TRUE,
     render_timestamp = isTRUE(timestamp),
     control_presets = control_presets,
-    cache_folder = paste0(lib_path, widget_id, '-0/'),
+    cache_folder = paste0(lib_path, widget_id, "-0/"),
     worker_script = paste0(lib_path, "three-brain-1.0.0/threebrain-worker.js"),
     lib_path = lib_path,
     default_controllers = controllers,
@@ -377,7 +377,7 @@ threejs_brain <- function(
   )
 
   # Generate external file
-  # sapply(names(external_files) , function(nm){
+  # sapply(names(external_files) , function(nm) {
   #   data_uri(file = external_files[[nm]]);
   # }, simplify = F, USE.NAMES = T)
 
@@ -388,7 +388,7 @@ threejs_brain <- function(
   )
 
   # FIXME: htmlwidgets does not respect `TOJSON_ARGS`
-  attr(x, 'TOJSON_ARGS') <- list(null = 'null', na = 'null', inf = "Infinity")
+  attr(x, "TOJSON_ARGS") <- list(null = "null", na = "null", inf = "Infinity")
 
   # Save x to $tmp_dir/config.json
   data_filename <- sprintf("config_%s.json", digest::digest(x))
@@ -406,7 +406,7 @@ threejs_brain <- function(
   )
 
   htmlwidgets::createWidget(
-    name = 'threejs_brain',
+    name = "threejs_brain",
     x = list(
       data_filename = data_filename,
       settings = settings,
@@ -414,15 +414,15 @@ threejs_brain <- function(
     ),
     width = width,
     height = height,
-    package = 'threeBrain',
+    package = "threeBrain",
     sizingPolicy = htmlwidgets::sizingPolicy(
-      defaultWidth = '100%',
+      defaultWidth = "100%",
       browser.external = browser_external,
-      defaultHeight = '100vh',
+      defaultHeight = "100vh",
       viewer.paneHeight = 500,
       viewer.suppress = !isTRUE(embed),
       viewer.fill = TRUE,
-      padding = '0px',
+      padding = "0px",
     ),
     dependencies = dependencies
   )
@@ -440,7 +440,7 @@ threejs_brain <- function(
 NULL
 
 #' @export
-threejsBrainOutput <- function(outputId, width = '100%', height = '500px', reportSize = TRUE){
+threejsBrainOutput <- function(outputId, width = "100%", height = "500px", reportSize = TRUE) {
   htmlwidgets::shinyWidgetOutput(outputId, "threejs_brain", width, height, package = "threeBrain",
                                  reportSize = reportSize, inline = FALSE)
 }
@@ -470,14 +470,14 @@ renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
 #' @param as_zip whether to create zip file "compressed.zip".
 #' @param ... ignored, used for backward compatibility
 #' @export
-save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
+save_brain <- function(widget, path, title = "3D Viewer", as_zip = FALSE, ...) {
   # Backward compatible:
   # old: directory is specified, path = directory/filename
   # new: path is specified directory
   args <- list(...)
-  if(missing(path)) {
-    path <- file.path(c(args$directory, ".")[[1]], c(args$filename, 'index.html')[[1]])
-  } else if ( !grepl(pattern = "\\.htm[l]{0,1}$", path, ignore.case = TRUE) ){
+  if (missing(path)) {
+    path <- file.path(c(args$directory, ".")[[1]], c(args$filename, "index.html")[[1]])
+  } else if ( !grepl(pattern = "\\.htm[l]{0,1}$", path, ignore.case = TRUE) ) {
     path <- sprintf("%s.html", path)
   }
 
@@ -506,13 +506,13 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   # convert <script src=*> to <script>js file contents</script>
   js_lines <- which(grepl(
     x = html_text,
-    pattern = '(src=.*js)'
+    pattern = "(src=.*js)"
   ))
 
   # convert link[rel=stylesheet] to <style>css file contents</style>
   css_lines <- which(grepl(
     x = html_text,
-    pattern = '(href=.*css)'
+    pattern = "(href=.*css)"
   ))
 
   readlines_quiet <- function(path) {
@@ -522,7 +522,7 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   }
 
   # perform self-contained conversion/replacement of JS
-  if(length(js_lines) > 0) {
+  if (length(js_lines) > 0) {
     html_text[js_lines] <- lapply(js_lines, function(js_line) {
       js_file <- sub(x = html_text[js_line],
                      pattern = '.*src=[":\'](.*\\.js).*',
@@ -536,15 +536,15 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
 
 
   # perform self-contained conversion/replacement of JS
-  if(length(css_lines) > 0) {
+  if (length(css_lines) > 0) {
     html_text[css_lines] <- lapply(css_lines, function(css_line) {
-      css_file <- sub(x=html_text[css_line], pattern='.*href=[":\'](.*\\.css).*', replacement="\\1")
-      css_content <- paste0(
-        "<style>",
-        paste0(readlines_quiet(file.path(wdir,css_file)), collapse="\n"),
-        "</style>",
-        collapse="\n"
-      )
+      css_file <- sub(x = html_text[css_line],
+                      pattern = '.*href=[":\'](.*\\.css).*',
+                      replacement = "\\1")
+      css_content <- paste0("<style>",
+                            paste0(readlines_quiet(file.path(wdir, css_file)), collapse = "\n"),
+                            "</style>",
+                            collapse = "\n")
     })
   }
 
@@ -563,9 +563,9 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   index <- file.path(wdir, "_tmp.html")
 
   s <- readLines(index)
-  m <- stringr::str_match(s, '^(.*)</head>(.*)$')
-  idx <- which(!is.na(m[,1]))
-  if(length(idx)) {
+  m <- stringr::str_match(s, "^(.*)</head>(.*)$")
+  idx <- which(!is.na(m[, 1]))
+  if (length(idx)) {
     idx <- idx[[1]]
   } else {
     idx <- 2L
@@ -574,12 +574,12 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   post <- s[seq.int(idx, length(s))]
 
   # read in base64 of each files
-  datapath_root <- file.path(wdir, "_lib", 'threebrain_data-0/')
+  datapath_root <- file.path(wdir, "_lib", "threebrain_data-0/")
   data_files <- list.files(datapath_root, all.files = FALSE, full.names = FALSE, recursive = TRUE, include.dirs = FALSE)
 
   # Make sure the parent path exists
   directory <- dir_create(dirname(path))
-  if(length(data_files)) {
+  if (length(data_files)) {
     # convert data into base64
     conn <- file(path, "w+")
     writeLines(pre, conn)
@@ -590,17 +590,17 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
 
       data_file <- gsub("[\\\\/]+", "/", x = data_file)
       data_file <- gsub("^[/]+", "", data_file)
-      if(endsWith(data_file, "json")) {
-        datauri_type <- 'application/json'
+      if (endsWith(data_file, "json")) {
+        datauri_type <- "application/json"
       } else {
-        datauri_type <- 'application/octet-stream'
+        datauri_type <- "application/octet-stream"
       }
 
       fsize0 <- file.size(data_abspath)
       fsize <- fsize0
       fin <- file(data_abspath, open = "rb")
       ii <- 0
-      while(fsize > 0) {
+      while (fsize > 0) {
         raws <- readBin(con = fin, what = "raw", n = min(fsize, DATAURI_MAX))
         writeLines(c(
           sprintf("<script type='text/plain;charset=UTF-8' data-for='#%s' data-partition='%d' data-type='%s' data-size='%.0f' data-start='%.0f' data-parition-size='%.0f'>", data_file, ii, datauri_type, fsize0, fsize0 - fsize, length(raws)),
@@ -620,7 +620,7 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
   }
   unlink(wdir, recursive = TRUE)
 
-  if(as_zip){
+  if (as_zip) {
     wd <- getwd()
     setwd(directory)
     on.exit({ setwd(wd) })
@@ -631,32 +631,32 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
 
   structure(
     normalizePath(path),
-    class = 'threeBrain.save_brain'
+    class = "threeBrain.save_brain"
   )
 #
 #   directory <- normalizePath(directory)
 
 #
 #
-#   s <- paste(readLines(file.path(directory, filename)), collapse = '\n')
+#   s <- paste(readLines(file.path(directory, filename)), collapse = "\n")
 #
 #
-#   # s <- stringr::str_replace_all(s, '\\n', '')
+#   # s <- stringr::str_replace_all(s, "\\n", "")
 #
-#   m <- stringr::str_match(s, '<head(.*?)</head>')
-#   if(length(m)){
+#   m <- stringr::str_match(s, "<head(.*?)</head>")
+#   if (length(m)) {
 #     m <- m[1,2]
-#     css <- unlist(stringr::str_extract_all(m, '<link[^>]*>'))
-#     js <- unlist(stringr::str_extract_all(m, '<script[^>]*></script>'))
-#   }else{
+#     css <- unlist(stringr::str_extract_all(m, "<link[^>]*>"))
+#     js <- unlist(stringr::str_extract_all(m, "<script[^>]*></script>"))
+#   } else {
 #     css <- NULL
 #     js <- NULL
 #   }
 #
 #   json <- stringr::str_match(s, '<script type="application/json" data-for=[^>]*>(.*)</script>')
-#   if(length(json)){
+#   if (length(json)) {
 #     json <- json[1,2]
-#   }else{
+#   } else {
 #     json <- NULL
 #   }
 #
@@ -699,8 +699,8 @@ save_brain <- function(widget, path, title = '3D Viewer', as_zip = FALSE, ...){
 
 }
 
-grey_col <- function(...){
-  if( rs_avail() ){
+grey_col <- function(...) {
+  if ( rs_avail() ) {
     cat("\033[38;5;246m", paste(..., sep = " ", collapse = "\n"),
         "\033[39m", sep = "")
   } else {
@@ -708,8 +708,8 @@ grey_col <- function(...){
   }
 }
 
-green_col <- function(...){
-  if( rs_avail() ){
+green_col <- function(...) {
+  if ( rs_avail() ) {
     cat("\033[38;5;35m", paste(..., sep = " ", collapse = "\n"),
         "\033[39m", sep = "")
   } else {
@@ -717,8 +717,8 @@ green_col <- function(...){
   }
 }
 
-red_col <- function(...){
-  if( rs_avail() ){
+red_col <- function(...) {
+  if ( rs_avail() ) {
     cat("\033[38;5;215m", paste(..., sep = " ", collapse = "\n"),
         "\033[39m", sep = "")
   } else {
@@ -727,14 +727,14 @@ red_col <- function(...){
 }
 
 #' @export
-plot.threeBrain.save_brain <- function(x, ...){
+plot.threeBrain.save_brain <- function(x, ...) {
   x <- normalizePath(x, winslash = "/", mustWork = TRUE)
   x <- gsub("[\\\\/]+", "/", x)
   utils::browseURL(sprintf("file://%s", x))
 }
 
 #' @export
-format.threeBrain.save_brain <- function(x, ...){
+format.threeBrain.save_brain <- function(x, ...) {
   path_exists <- file.exists(x)
   paste(
     c(
@@ -749,7 +749,7 @@ format.threeBrain.save_brain <- function(x, ...){
 }
 
 #' @export
-print.threeBrain.save_brain <- function(x, ...){
+print.threeBrain.save_brain <- function(x, ...) {
   cat(format(x), "\n", sep = "")
   invisible(x)
 }

@@ -4,10 +4,10 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
   # standalone <- TRUE
   # knitrOptions <- list()
   knitrOptions <- as.list(knitrOptions)
-  if(length(knitrOptions$out.width)) {
+  if (length(knitrOptions$out.width)) {
     x$width <- knitrOptions$out.width
   }
-  if(length(knitrOptions$out.height)) {
+  if (length(knitrOptions$out.height)) {
     x$height <- knitrOptions$out.height
   }
 
@@ -30,28 +30,28 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
   )
 
   content <- dipsaus::fastqueue2()
-  datapath_root <- file.path(wdir, "_lib", 'threebrain_data-0/')
+  datapath_root <- file.path(wdir, "_lib", "threebrain_data-0/")
   data_files <- list.files(datapath_root, all.files = FALSE, full.names = FALSE, recursive = TRUE, include.dirs = FALSE)
 
   # Make sure the parent path exists
-  if(length(data_files)) {
+  if (length(data_files)) {
     DATAURI_MAX <- floor(65529 / 73 * 54) #72 / 4 * 3
     lapply(data_files, function(data_file) {
       data_abspath <- file.path(datapath_root, data_file)
 
       data_file <- gsub("[\\\\/]+", "/", x = data_file)
       data_file <- gsub("^[/]+", "", data_file)
-      if(endsWith(data_file, "json")) {
-        datauri_type <- 'application/json'
+      if (endsWith(data_file, "json")) {
+        datauri_type <- "application/json"
       } else {
-        datauri_type <- 'application/octet-stream'
+        datauri_type <- "application/octet-stream"
       }
 
       fsize0 <- file.size(data_abspath)
       fsize <- fsize0
       fin <- file(data_abspath, open = "rb")
       ii <- 0
-      while(fsize > 0) {
+      while (fsize > 0) {
         raws <- readBin(con = fin, what = "raw", n = min(fsize, DATAURI_MAX))
         content$madd(
           sprintf(
@@ -67,7 +67,7 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
       close(fin)
     })
   }
-  if( content$size() > 0 ) {
+  if ( content$size() > 0 ) {
     content <- htmltools::HTML(do.call("paste0", content$as_list()))
   } else {
     content <- ""
@@ -77,7 +77,7 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
   viewer_tag <- htmltools::as.tags(list(content, widget_tag))
 
   cls <- class(viewer_tag)
-  if(inherits(x, "suppress_viewer")) {
+  if (inherits(x, "suppress_viewer")) {
     cls <- c("suppress_viewer", cls)
   }
   class(viewer_tag) <- c("threebrain_to_html", cls)
@@ -100,9 +100,9 @@ knit_print.threejs_brain <- function(x, ..., options = NULL) {
 }
 
 #' @export
-print.threejs_brain <- function (x, ..., embed = NA, viewer = getOption("viewer", utils::browseURL)) {
+print.threejs_brain <- function(x, ..., embed = NA, viewer = getOption("viewer", utils::browseURL)) {
 
-  if( identical(get_os(), "emscripten") ) {
+  if ( identical(get_os(), "emscripten") ) {
     # this is in WASM, use save_brain
     digest_string <- dipsaus::digest(x)
     tmp_file <- file.path(tempdir(check = TRUE), sprintf("threeBrain-wasm-%s.html", digest_string))
@@ -133,18 +133,18 @@ print.threejs_brain <- function (x, ..., embed = NA, viewer = getOption("viewer"
   } else {
     tmp_dir <- tempdir(check = TRUE)
 
-    if(is.na(embed)) {
+    if (is.na(embed)) {
       embed <- !inherits(x, "suppress_viewer")
     }
 
-    if( embed ) {
+    if ( embed ) {
       print(to_html(x), viewer = viewer)
     } else {
       # wrap up files as html object
       html <- htmltools::as.tags(x, standalone = TRUE)
       # prepare widget
       www_dir <- file.path(tmp_dir, "threeBrainViewer")
-      if( !dir.exists(www_dir) ) {
+      if ( !dir.exists(www_dir) ) {
         dir.create(www_dir, showWarnings = FALSE, recursive = FALSE)
       }
       index_name <- x$x$data_filename
@@ -154,7 +154,7 @@ print.threejs_brain <- function (x, ..., embed = NA, viewer = getOption("viewer"
 
       htmltools::save_html(html, file = index_html, background = "white", libdir = "lib")
 
-      if(!file.exists(file.path(www_dir, "favicon.ico"))) {
+      if (!file.exists(file.path(www_dir, "favicon.ico"))) {
         file.copy(
           from = system.file("favicon.ico", package = "threeBrain"),
           to = file.path(www_dir, "favicon.ico")
@@ -173,8 +173,8 @@ print.threejs_brain <- function (x, ..., embed = NA, viewer = getOption("viewer"
 .onUnload <- function(libPath) {
   tryCatch({
     app <- getOption("threeBrain.viewer.app", NULL)
-    if(is.list(app) && isTRUE(app$is_threeBrain_viewer_app)) {
+    if (is.list(app) && isTRUE(app$is_threeBrain_viewer_app)) {
       app$stop_server()
     }
-  }, error = function(...){})
+  }, error = function(...) {})
 }

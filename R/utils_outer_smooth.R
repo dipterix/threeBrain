@@ -63,13 +63,13 @@ generate_smooth_envelope <- function(
   stopifnot2(inflate >= 0, msg = "generate_smooth_envelope: `inflate` must be non-negative")
 
   debug <- function(...) {
-    if(verbose) {
+    if (verbose) {
       cat(...)
     }
   }
 
   # Load surface
-  if(isTRUE(is.character(surface_path))) {
+  if (isTRUE(is.character(surface_path))) {
     surface <- freesurferformats::read.fs.surface(surface_path)
   } else {
     surface <- surface_path
@@ -102,7 +102,7 @@ generate_smooth_envelope <- function(
   # rgl::wire3d(ravetools:::ensure_mesh3d(mesh), col = 3)
 
   # save
-  if(length(save_as) && !is.na(save_as)) {
+  if (length(save_as) && !is.na(save_as)) {
     freesurferformats::write.fs.surface(
       filepath = save_as,
       vertex_coords = mesh$vertices,

@@ -17,8 +17,8 @@ contact_spacing <- 5
 overall_length <- 400
 diameter <- 1.12
 
-for( n_contacts in c(4, 6, 8, 10, 12) ) {
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+for ( n_contacts in c(4, 6, 8, 10, 12) ) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-SD%02dR-SP05X-000", n_contacts),
@@ -46,8 +46,8 @@ contact_spacing <- 10
 overall_length <- 400
 diameter <- 1.12
 
-for( n_contacts in c(4, 6, 8, 10) ) {
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+for ( n_contacts in c(4, 6, 8, 10) ) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-SD%02dR-SP10X-000", n_contacts),
@@ -75,8 +75,8 @@ contact_spacing <- 2.2
 overall_length <- 300
 diameter <- 1.12
 
-for( n_contacts in c(4, 6, 8) ) {
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+for ( n_contacts in c(4, 6, 8) ) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-SD%02dR-AP58X-000", n_contacts),
@@ -105,8 +105,8 @@ overall_length <- 400
 diameter <- 1.1
 n_contacts <- 16
 
-for( contact_spacing in c(2, 3) ) {
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+for ( contact_spacing in c(2, 3) ) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-SD%02dR-AP%02dX-000", n_contacts, contact_spacing),
     description = c(
@@ -138,7 +138,7 @@ mat <- cbind(c(6, 8, 8, 10, 10, 10, 10, 10, 10, 12, 14, 16, 16),
 invisible(apply(mat, 1L, function(x) {
   n_contacts <- x[[1]]
   contact_spacing <- x[[2]]
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-AdTech-RD%02dR-SP%02dX-000", n_contacts, contact_spacing),
@@ -176,8 +176,8 @@ diameter <- 0.8
 
 # Li + Lc
 contact_spacing <- 1.5 + 2
-for( n_contacts in c(5,8,10,12,15,18) ) {
-  contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+for (n_contacts in c(5, 8, 10, 12, 15, 18)) {
+  contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-DIXI-D08-%02dAM", n_contacts),
@@ -207,9 +207,9 @@ diameter <- 0.8
 contact_spacing <- 1.5 + 2
 # Large spacing
 lsi <- 7
-for( n_contacts in c(15) ) {
+for (n_contacts in c(15)) {
   part_contacts <- n_contacts / 3
-  part_positions <- 0:(part_contacts-1) * contact_spacing
+  part_positions <- 0:(part_contacts - 1) * contact_spacing
   contacts <- probe_head + width / 2 + part_positions
   contacts <- c(contacts, max(contacts) + lsi + width + part_positions)
   contacts <- c(contacts, max(contacts) + lsi + width + part_positions)
@@ -248,9 +248,9 @@ diameter <- 0.8
 contact_spacing <- 1.5 + 2
 # Large spacing
 lsi <- 11
-for( n_contacts in c(15, 18) ) {
+for ( n_contacts in c(15, 18) ) {
   part_contacts <- n_contacts / 3
-  part_positions <- 0:(part_contacts-1) * contact_spacing
+  part_positions <- 0:(part_contacts - 1) * contact_spacing
   contacts <- probe_head + width / 2 + part_positions
   contacts <- c(contacts, max(contacts) + lsi + width + part_positions)
   contacts <- c(contacts, max(contacts) + lsi + width + part_positions)
@@ -260,7 +260,7 @@ for( n_contacts in c(15, 18) ) {
     description = c(
       sprintf("DIXI sEEG - %d (3x%d) contacts", n_contacts, part_contacts),
       "Contact length   : 2   mm",
-      sprintf("Central spacing  : %dx3.5 mm, then %.1f mm", part_contacts-1, lsi + width),
+      sprintf("Central spacing  : %dx3.5 mm, then %.1f mm", part_contacts - 1, lsi + width),
       "Tip size         : 0   mm",
       "Diameter         : 0.8 mm"
     ),
@@ -287,7 +287,7 @@ overall_length <- 450
 diameter <- 1.3
 n_contacts <- 8
 
-contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
 # overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
 
 proto <- seeg_prototype(
@@ -320,7 +320,7 @@ contact_spacing <- 3.5
 overall_length <- 440
 diameter <- 1.27
 n_contacts <- 4
-contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
 proto <- seeg_prototype(
   type = sprintf("sEEG-NeuroPace-DL-330_or_344-%.1f", contact_spacing),
   description = c(
@@ -349,7 +349,7 @@ contact_spacing <- 10
 overall_length <- 440
 diameter <- 1.27
 n_contacts <- 4
-contacts <- probe_head + width / 2 + 0:(n_contacts-1) * contact_spacing
+contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
 proto <- seeg_prototype(
   type = sprintf("sEEG-NeuroPace-DL-330_or_344-%.0f", contact_spacing),
   description = c(
@@ -381,11 +381,11 @@ diameter <- 0.8
 
 n_contacts <- c(5, 8, 10, 12, 14, 16, 16, 16, 16)
 
-for( ii in seq_along(n_contacts) ) {
+for ( ii in seq_along(n_contacts) ) {
   shaft_name <- shaft_names[[ii]]
   n_contact <- n_contacts[[ii]]
   contact_spacing <- contact_spacings[[ii]]
-  contacts <- probe_head + width / 2 + 0:(n_contact-1) * contact_spacing
+  contacts <- probe_head + width / 2 + 0:(n_contact - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
     type = sprintf("sEEG-ZIMMER-%s", shaft_name),

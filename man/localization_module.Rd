@@ -57,7 +57,7 @@ is purely for demonstration purposes.
 
 # using N27 to localize
 fs_path <- file.path(default_template_directory(), "N27")
-if(interactive() && dir.exists(fs_path)){
+if(interactive() && dir.exists(fs_path)) {
   module <- localization_module("N27", fs_path)
 
   print(module$app)

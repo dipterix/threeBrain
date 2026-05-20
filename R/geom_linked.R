@@ -1,6 +1,6 @@
 # Linked to a freegeom, to be removed
 LinkedSphereGeom <- R6::R6Class(
-  classname = 'LinkedSphereGeom',
+  classname = "LinkedSphereGeom",
   inherit = SphereGeom,
   public = list(
     linked_geom = NULL,
@@ -9,7 +9,7 @@ LinkedSphereGeom <- R6::R6Class(
 
     use_link = FALSE,
 
-    to_list = function(){
+    to_list = function() {
       re <- super$to_list()
       re$use_link <- self$use_link
       re$vertex_number <- self$vertex_number

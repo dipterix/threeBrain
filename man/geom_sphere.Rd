@@ -32,7 +32,7 @@ Create sphere geometry
 }
 \examples{
 # Create a sphere with animation
-g = lapply(1:10, function(ii){
+g = lapply(1:10, function(ii) {
   v = rep(ii, 10)
   v[1:ii] = 1:ii
   geom_sphere(paste0('s', ii), ii, value = v, position = c(11 * ii, 0,0), time_stamp = (1:10)/10)

@@ -9,7 +9,7 @@
 # Contact center locations (tip is 0) in mm: 1.00, 4.90, 8.80, 12.70, 16.60, 20.50, 24.40, 28.30, 32.20
 # Contact widths: 2.0
 # Diameters: 0.8 mm
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-MM08-09A33D08",
   description = c(
     "DIXI sEEG - 9 macro, 8 micro contacts",
@@ -38,7 +38,7 @@ proto$preview_3d()
 # Contact center locations (tip is 0) in mm: 1.00, 5.80, 10.60, 15.40, 20.20, 25.00, 29.80, 34.60, 39.40
 # Contact widths: 2.0
 # Diameters: 0.8 mm
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-MM08-09A40D08",
   description = c(
     "DIXI sEEG - 9 macro, 8 micro contacts",
@@ -66,7 +66,7 @@ proto$preview_3d()
 # Contact center locations (tip is 0) in mm: 1.00, 7.10, 13.20, 19.30, 25.40, 31.50, 37.60, 43.70, 49.80
 # Contact widths: 2.0
 # Diameters: 0.8 mm
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-MM08-09A51D08",
   description = c(
     "DIXI sEEG - 9 macro, 8 micro contacts",
@@ -95,7 +95,7 @@ proto$preview_3d()
 # Recording length: N/A
 # ***NOTE: The electrode MM08-06B33D12 has only 6 active contacts, but there are 3 disconnected contacts that show up on the CT but are non-recording/non-functional (a total of 9 contacts visible on imaging). Hence, the contact center locations above reflect only the active contacts.***
 # Diameters: 0.8 mm
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-MM08-06B33D12",
   description = c(
     "DIXI sEEG - 6 (2x3) macro, 12 micro contacts",
@@ -126,7 +126,7 @@ proto$preview_3d()
 # Recording length: N/A
 # ***NOTE: The electrode MM08-06B40D12 has only 6 active contacts, but there are 5 disconnected contacts that show up on the CT but are non-recording/non-functional (a total of 11 contacts visible on imaging). Hence, the contact center locations above reflect only the active contacts.***
 # Diameters: 0.8 mm
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-MM08-06B40D12",
   description = c(
     "DIXI sEEG - 6 (2x3) macro, 12 micro contacts",
@@ -157,7 +157,7 @@ proto$preview_3d()
 # Recording length: N/A
 # ***NOTE: The electrode MM08-06B33D12 has only 6 active contacts, but there are 7 disconnected contacts that show up on the CT but are non-recording/non-functional (a total of 13 contacts visible on imaging). Hence, the contact center locations above reflect only the active contacts.***
 # Diameters: 0.8 mm
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-MM08-06B51D12",
   description = c(
     "DIXI sEEG - 6 (2x3) macro, 12 micro contacts",
@@ -176,7 +176,7 @@ proto = threeBrain::seeg_prototype(
 invisible(proto$get_texture(letters))
 proto$preview_3d()
 
-paths = threeBrain::list_electrode_prototypes()
+paths <- threeBrain::list_electrode_prototypes()
 paths[["SEEG-DIXI-MM08-06B51D12"]]
 
 
@@ -184,7 +184,7 @@ paths[["SEEG-DIXI-MM08-06B51D12"]]
 # The D08-15PIX is a 15-contact electrode featuring uniform spacing with 1 mm
 # contact size and 1 mm spacing throughout the electrode.
 
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-D08-15PIX",
   description = c(
     "DIXI sEEG - 15 contacts",
@@ -210,7 +210,7 @@ proto$preview_texture()
 # 1 mm contacts and 1 mm spacing, while the remaining 35 mm transitions to our
 # traditional configuration of 2 mm contacts with 1.5 mm spacing.
 
-proto = threeBrain::seeg_prototype(
+proto <- threeBrain::seeg_prototype(
   type = "sEEG-DIXI-D08-18PIXEL",
   description = c(
     "DIXI sEEG - 18 (8 + 10) contacts",

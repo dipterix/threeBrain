@@ -5,12 +5,12 @@ NULL
 
 #' @export
 FreeGeom <- R6::R6Class(
-  classname = 'FreeGeom',
+  classname = "FreeGeom",
   inherit = AbstractGeom,
   public = list(
     cache_file = NULL,
 
-    type = 'free',
+    type = "free",
 
     value = NULL,
     time_stamp = NULL,
@@ -23,18 +23,18 @@ FreeGeom <- R6::R6Class(
 
     subcortical_info = NULL,
 
-    set_value = function(value, colormap, time_stamp = 0, key = colormap$get_key(value)){
+    set_value = function(value, colormap, time_stamp = 0, key = colormap$get_key(value)) {
       self$value <- as.integer(key)
       self$time_stamp <- time_stamp
     },
 
-    set_value2 = function(value = NULL, time_stamp = 0, name = 'Value',
-                         target = '.geometry.attributes.color.array',
-                         temporary = FALSE, ...){
-      stopifnot2(name != '[None]', msg = 'name cannot be "[None]", it\'s reserved')
+    set_value2 = function(value = NULL, time_stamp = 0, name = "Value",
+                         target = ".geometry.attributes.color.array",
+                         temporary = FALSE, ...) {
+      stopifnot2(name != "[None]", msg = 'name cannot be "[None]", it\'s reserved')
 
       # Check length
-      if(length(value) == 0){
+      if (length(value) == 0) {
         # Delete animation keyframe
         self$keyframes[[name]] <- NULL
         return(invisible())
@@ -42,20 +42,20 @@ FreeGeom <- R6::R6Class(
       value <- as.vector(value)
 
       kf <- KeyFrame2$new(name = name, value = value, time = time_stamp,
-                        dtype = ifelse( isTRUE(is.numeric(value)), 'continuous', 'discrete'),
-                        target = '.geometry.attributes.color.array', ...)
+                        dtype = ifelse( isTRUE(is.numeric(value)), "continuous", "discrete"),
+                        target = ".geometry.attributes.color.array", ...)
 
 
-      if(length(self$cache_file) && !temporary ){
-        cf <- stringr::str_replace(self$cache_file, '\\.json$', paste0('__', name, '.json'))
+      if (length(self$cache_file) && !temporary ) {
+        cf <- stringr::str_replace(self$cache_file, "\\.json$", paste0("__", name, ".json"))
       } else {
-        cf <- tempfile(fileext = '.json')
-        if(file.exists(cf)){
-          cf <- tempfile(fileext = '.json')
+        cf <- tempfile(fileext = ".json")
+        if (file.exists(cf)) {
+          cf <- tempfile(fileext = ".json")
         }
       }
 
-      dname <- sprintf('free_vertex_colors_%s_%s', name, self$name)
+      dname <- sprintf("free_vertex_colors_%s_%s", name, self$name)
       kf$use_cache(path = cf, name = dname, auto_unbox = TRUE)
 
       re <- list(
@@ -90,11 +90,11 @@ FreeGeom <- R6::R6Class(
         is_fs_annot = TRUE
       )
 
-      if( !name %in% self$group$group_data$annotation_list ) {
+      if ( !name %in% self$group$group_data$annotation_list ) {
         self$group$group_data$annotation_list <- c(self$group$group_data$annotation_list, name)
       }
 
-      if(startsWith(hemi, "l")) {
+      if (startsWith(hemi, "l")) {
         cache_key <- sprintf("lh_annotation_%s", name)
       } else {
         cache_key <- sprintf("rh_annotation_%s", name)
@@ -106,8 +106,8 @@ FreeGeom <- R6::R6Class(
 
     },
 
-    initialize = function(name, position = c(0,0,0), vertex, face, group,
-                          ..., cache_file = NULL){
+    initialize = function(name, position = c(0, 0, 0), vertex, face, group,
+                          ..., cache_file = NULL) {
       # cache_file = '~/rave_data/data_dir/Complete/YAB/rave/viewer/lh_normal.json'
 
 
@@ -116,12 +116,12 @@ FreeGeom <- R6::R6Class(
       # Must specify a group, vertices and faces will be stored within the group
       self$group <- group
 
-      if(length(cache_file)){
+      if (length(cache_file)) {
         self$cache_file <- cache_file
 
-        if(missing(vertex) || missing(face)){
+        if (missing(vertex) || missing(face)) {
           # Use cache file only
-          stopifnot2(file.exists(cache_file), msg = 'cache_file does not exist!')
+          stopifnot2(file.exists(cache_file), msg = "cache_file does not exist!")
 
           re <- list(
             path = cache_file,
@@ -131,28 +131,28 @@ FreeGeom <- R6::R6Class(
             is_cache = TRUE
           )
 
-        }else{
+        } else {
 
           # Still need to check data
-          stopifnot2(ncol(vertex) == 3, msg = 'vertex must have 3 columns')
-          stopifnot2(ncol(face) == 3, msg = 'face must have 3 columns')
+          stopifnot2(ncol(vertex) == 3, msg = "vertex must have 3 columns")
+          stopifnot2(ncol(face) == 3, msg = "face must have 3 columns")
 
           data <- list( vertex = vertex, face = face )
-          names(data) <- sprintf(c('free_vertices_%s', 'free_faces_%s'), name)
+          names(data) <- sprintf(c("free_vertices_%s", "free_faces_%s"), name)
 
           re <- json_cache(path = cache_file, data = data)
         }
 
-        group$set_group_data(sprintf('free_vertices_%s', name), value = re, is_cached = TRUE)
-        group$set_group_data(sprintf('free_faces_%s', name), value = re, is_cached = TRUE)
+        group$set_group_data(sprintf("free_vertices_%s", name), value = re, is_cached = TRUE)
+        group$set_group_data(sprintf("free_faces_%s", name), value = re, is_cached = TRUE)
 
-      }else{
+      } else {
 
-        stopifnot2(ncol(vertex) == 3, msg = 'vertex must have 3 columns')
-        stopifnot2(ncol(face) == 3, msg = 'face must have 3 columns')
+        stopifnot2(ncol(vertex) == 3, msg = "vertex must have 3 columns")
+        stopifnot2(ncol(face) == 3, msg = "face must have 3 columns")
 
-        group$set_group_data(sprintf('free_vertices_%s', name), value = vertex)
-        group$set_group_data(sprintf('free_faces_%s', name), value = face)
+        group$set_group_data(sprintf("free_vertices_%s", name), value = vertex)
+        group$set_group_data(sprintf("free_faces_%s", name), value = face)
 
 
       }
@@ -165,7 +165,7 @@ FreeGeom <- R6::R6Class(
 
 
     },
-    to_list = function(){
+    to_list = function() {
       re <- super$to_list()
       re$hemisphere <- self$hemisphere
       re$surface_type <- self$surface_type

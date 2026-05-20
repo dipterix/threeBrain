@@ -75,8 +75,8 @@
 #'
 #' }
 #' @export
-create_group <- function(name, position = c(0,0,0), layer = 1){
-  GeomGroup$new(name = name,layer = layer,position = position)
+create_group <- function(name, position = c(0, 0, 0), layer = 1) {
+  GeomGroup$new(name = name, layer = layer, position = position)
 }
 
 
@@ -90,14 +90,14 @@ create_group <- function(name, position = c(0,0,0), layer = 1){
 #' @param value,time_stamp color of the sphere, used for animation/color rendering
 #' @examples
 #' # Create a sphere with animation
-#' g = lapply(1:10, function(ii){
+#' g = lapply(1:10, function(ii) {
 #'   v = rep(ii, 10)
 #'   v[1:ii] = 1:ii
 #'   geom_sphere(paste0('s', ii), ii, value = v, position = c(11 * ii, 0,0), time_stamp = (1:10)/10)
 #' })
 #' if( interactive() ) { threejs_brain(.list = g) }
 #' @export
-geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL, value = NULL, time_stamp = NULL){
+geom_sphere <- function(name, radius, position = c(0, 0, 0), layer = 1, group = NULL, value = NULL, time_stamp = NULL) {
   SphereGeom$new(name = name, position = position, radius = radius, group = group, value = value, time_stamp = time_stamp, layer = layer)
 }
 
@@ -150,19 +150,34 @@ geom_sphere <- function(name, radius, position = c(0,0,0), layer=1, group = NULL
 #'
 #' }
 #' @export
-geom_freemesh <- function(name, vertex = NULL,face = NULL, position = c(0,0,0), layer = 1, cache_file = NULL, group = NULL){
-  if(is.null(group)){
-    group <- create_group(paste(name, '(group)'))
+geom_freemesh <- function(name,
+                          vertex = NULL,
+                          face = NULL,
+                          position = c(0, 0, 0),
+                          layer = 1,
+                          cache_file = NULL,
+                          group = NULL) {
+  if (is.null(group)) {
+    group <- create_group(paste(name, "(group)"))
   }
-  if(!is.null(cache_file) && file.exists(cache_file)){
-    FreeGeom$new(name = name, position = position, group = group, cache_file = cache_file,layer = layer)
-  }else{
-    FreeGeom$new(name = name, position = position, vertex = vertex,
-                 face = face, group = group,cache_file = cache_file,layer = layer)
+  if (!is.null(cache_file) && file.exists(cache_file)) {
+    FreeGeom$new(
+      name = name,
+      position = position,
+      group = group,
+      cache_file = cache_file,
+      layer = layer
+    )
+  } else {
+    FreeGeom$new(
+      name = name,
+      position = position,
+      vertex = vertex,
+      face = face,
+      group = group,
+      cache_file = cache_file,
+      layer = layer
+    )
   }
 
 }
-
-
-
-

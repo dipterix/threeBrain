@@ -78,25 +78,29 @@ contact_size    <- half_tw * shank_vis_scale * 1.5   # = 0.054 mm
 # computeVertexNormals().  Quads wound CCW from outside.
 box_mesh <- function(x0, x1, y0, y1, z0, z1, u_range = c(0, 1)) {
   u_w  <- u_range[[2]] - u_range[[1]]
-  z_lo <- min(z0, z1); z_rng <- max(z0, z1) - z_lo
-  uv_of <- function(x, z)
+  z_lo <- min(z0, z1)
+  z_rng <- max(z0, z1) - z_lo
+  uv_of <- function(x, z) {
     c(u_range[[1]] + (x - x0) / (x1 - x0 + 1e-9) * u_w,
       if (z_rng > 0) (z - z_lo) / z_rng else 0)
+  }
 
   faces <- list(
-    rbind(c(x0,y0,z0), c(x0,y1,z0), c(x1,y1,z0), c(x1,y0,z0)), # -Z
-    rbind(c(x0,y0,z1), c(x1,y0,z1), c(x1,y1,z1), c(x0,y1,z1)), # +Z
-    rbind(c(x0,y0,z0), c(x1,y0,z0), c(x1,y0,z1), c(x0,y0,z1)), # -Y
-    rbind(c(x0,y1,z0), c(x0,y1,z1), c(x1,y1,z1), c(x1,y1,z0)), # +Y
-    rbind(c(x0,y0,z0), c(x0,y0,z1), c(x0,y1,z1), c(x0,y1,z0)), # -X
-    rbind(c(x1,y0,z0), c(x1,y1,z0), c(x1,y1,z1), c(x1,y0,z1))  # +X
+    rbind(c(x0, y0, z0), c(x0, y1, z0), c(x1, y1, z0), c(x1, y0, z0)), # -Z
+    rbind(c(x0, y0, z1), c(x1, y0, z1), c(x1, y1, z1), c(x0, y1, z1)), # +Z
+    rbind(c(x0, y0, z0), c(x1, y0, z0), c(x1, y0, z1), c(x0, y0, z1)), # -Y
+    rbind(c(x0, y1, z0), c(x0, y1, z1), c(x1, y1, z1), c(x1, y1, z0)), # +Y
+    rbind(c(x0, y0, z0), c(x0, y0, z1), c(x0, y1, z1), c(x0, y1, z0)), # -X
+    rbind(c(x1, y0, z0), c(x1, y1, z0), c(x1, y1, z1), c(x1, y0, z1))  # +X
   )
   pos <- do.call(cbind, lapply(faces, t))
-  uv  <- do.call(cbind, lapply(faces, function(vm)
-    apply(vm, 1, function(v) uv_of(v[[1]], v[[3]]))))
+  uv  <- do.call(cbind, lapply(faces, function(vm) {
+    apply(vm, 1, function(v) uv_of(v[[1]], v[[3]]))
+  }))
+
   idx <- do.call(cbind, lapply(seq_len(6L), function(fi) {
     v0 <- (fi - 1L) * 4L
-    cbind(c(v0, v0+1L, v0+2L), c(v0, v0+2L, v0+3L))
+    cbind(c(v0, v0 + 1L, v0 + 2L), c(v0, v0 + 2L, v0 + 3L))
   }))
   list(position = pos, index = idx, uv = uv)
 }
@@ -127,18 +131,18 @@ shank_mesh <- function(cx, half_w, half_t, z_levels, uv_v, u_lo, u_hi) {
   for (li in seq_len(n_zlev - 1L)) {
     b  <- (li - 1L) * 4L
     bt <- li * 4L
-    tris[[length(tris)+1]] <- c(b+2, bt+2, bt+3)  # +Y face
-    tris[[length(tris)+1]] <- c(b+2, bt+3, b+3)
-    tris[[length(tris)+1]] <- c(b+0, b+1, bt+1)   # -Y face
-    tris[[length(tris)+1]] <- c(b+0, bt+1, bt+0)
-    tris[[length(tris)+1]] <- c(b+0, bt+0, bt+2)  # -X face
-    tris[[length(tris)+1]] <- c(b+0, bt+2, b+2)
-    tris[[length(tris)+1]] <- c(b+1, b+3, bt+3)   # +X face
-    tris[[length(tris)+1]] <- c(b+1, bt+3, bt+1)
+    tris[[length(tris) + 1]] <- c(b + 2, bt + 2, bt + 3)  # +Y face
+    tris[[length(tris) + 1]] <- c(b + 2, bt + 3, b + 3)
+    tris[[length(tris) + 1]] <- c(b + 0, b + 1, bt + 1)   # -Y face
+    tris[[length(tris) + 1]] <- c(b + 0, bt + 1, bt + 0)
+    tris[[length(tris) + 1]] <- c(b + 0, bt + 0, bt + 2)  # -X face
+    tris[[length(tris) + 1]] <- c(b + 0, bt + 2, b + 2)
+    tris[[length(tris) + 1]] <- c(b + 1, b + 3, bt + 3)   # +X face
+    tris[[length(tris) + 1]] <- c(b + 1, bt + 3, bt + 1)
   }
   b <- 0L  # bottom cap (-Z)
-  tris[[length(tris)+1]] <- c(b+0, b+3, b+1)
-  tris[[length(tris)+1]] <- c(b+0, b+2, b+3)
+  tris[[length(tris) + 1]] <- c(b + 0, b + 3, b + 1)
+  tris[[length(tris) + 1]] <- c(b + 0, b + 2, b + 3)
 
   idx <- t(do.call(rbind, tris))
   list(position = verts, index = idx, uv = uvs)
@@ -154,8 +158,8 @@ merge_meshes <- function(meshes) {
   for (m in meshes) {
     nv <- ncol(m$position)
     pos_all[, v_off + seq_len(nv)] <- m$position
-    uv_all[,  v_off + seq_len(nv)] <- m$uv
-    idx_list[[length(idx_list)+1]] <- m$index + v_off
+    uv_all[, v_off + seq_len(nv)] <- m$uv
+    idx_list[[length(idx_list) + 1]] <- m$index + v_off
     v_off <- v_off + nv
   }
   idx_all <- do.call(cbind, idx_list)

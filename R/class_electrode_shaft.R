@@ -5,15 +5,15 @@ ElectrodePrototypeOld <- R6::R6Class(
     contacts = NULL,
     .min_length = numeric(),
     adjust_length = function(length = NA) {
-      if(is.na(length)) { length <- 0 }
+      if (is.na(length)) { length <- 0 }
       lmax <- 0
       lmin <- 0
       control_points <- private$control_points
-      if(is.matrix(control_points) && nrow(control_points)) {
+      if (is.matrix(control_points) && nrow(control_points)) {
         lmax <- max(0, control_points[, 2], na.rm = TRUE)
         lmin <- min(0, control_points[, 2], na.rm = TRUE)
       }
-      if(length(private$contacts)) {
+      if (length(private$contacts)) {
         lmax <- max(
           unlist(lapply(as.list(private$contacts), "[[", "positions")),
           lmax)
@@ -25,11 +25,11 @@ ElectrodePrototypeOld <- R6::R6Class(
       length <- private$adjust_length(length = length)
       control_points <- private$control_points
       ncpts <- 0
-      if(is.matrix(control_points) && nrow(control_points)) {
+      if (is.matrix(control_points) && nrow(control_points)) {
         ncpts <- nrow(control_points)
       }
 
-      if( ncpts == 0 ) {
+      if ( ncpts == 0 ) {
         control_points <- rbind(
           c(0, 0, 0, 0, 0.5),
           c(0, length, 0, 1, 0.5)
@@ -37,13 +37,13 @@ ElectrodePrototypeOld <- R6::R6Class(
       } else {
         control_points <- private$control_points
         control_points <- control_points[order(control_points[, 2]), , drop = FALSE]
-        if( control_points[1, 2] > 0 ) {
+        if ( control_points[1, 2] > 0 ) {
           tp <- control_points[1, ]
           tp[2] <- 0
           control_points <- rbind(tp, control_points)
           ncpts <- ncpts + 1
         }
-        if( control_points[ncpts, 2] < length ) {
+        if ( control_points[ncpts, 2] < length ) {
           tp <- control_points[ncpts, ]
           tp[2] <- length
           control_points <- rbind(control_points, tp)
@@ -58,8 +58,8 @@ ElectrodePrototypeOld <- R6::R6Class(
   ),
   active = list(
     min_length = function(v) {
-      if(!missing(v)) {
-        if(!is.finite(v) || v < 0) {
+      if (!missing(v)) {
+        if (!is.finite(v) || v < 0) {
           stop("Electrode min length must be non-negative")
         }
         private$.min_length <- v
@@ -83,22 +83,22 @@ ElectrodePrototypeOld <- R6::R6Class(
     start_angle = 0, end_angle = 2 * pi
     ) {
       order <- as.integer(order)
-      if(is.na(order) || order <= 0) {
+      if (is.na(order) || order <= 0) {
         stop("add_contact: `order` must be positive integer")
       }
-      if( start_position < 0 ) {
+      if ( start_position < 0 ) {
         stop("add_contact: `start_position` must be non-negative")
       }
-      if( end_position < start_position ) {
+      if ( end_position < start_position ) {
         stop("add_contact: `end_position` must be > end_position")
       }
-      if( start_position == end_position ) {
+      if ( start_position == end_position ) {
         end_position <- end_position + 0.001
       }
-      if( start_angle < 0 || start_angle > 2 * pi) {
+      if ( start_angle < 0 || start_angle > 2 * pi) {
         stop("add_contact: `start_angle` must be >= 0 && <= 2 pi")
       }
-      if( end_angle < 0 || end_angle > 2 * pi) {
+      if ( end_angle < 0 || end_angle > 2 * pi) {
         stop("add_contact: `end_angle` must be >= 0 && <= 2 pi")
       }
 
@@ -122,9 +122,9 @@ ElectrodePrototypeOld <- R6::R6Class(
     generate_texture = function( background, length = NA,
                                  height = NULL, width = 256 ) {
       background <- grDevices::col2rgb(background, FALSE)
-      if(is.na(length)) { length <- 0 }
+      if (is.na(length)) { length <- 0 }
       length <- private$adjust_length(length = length)
-      if(length(height) != 1) {
+      if (length(height) != 1) {
         height <- 2^ceiling(log2(length * 10))
       }
       height <- ceiling(height)
@@ -133,12 +133,12 @@ ElectrodePrototypeOld <- R6::R6Class(
       width_factor <- width / (2 * pi)
 
       img <- array(0, dim = c(height, width, 4))
-      img[,,1] <- background[[1]] / 255
-      img[,,2] <- background[[2]] / 255
-      img[,,3] <- background[[3]] / 255
-      img[,,4] <- 0
+      img[, , 1] <- background[[1]] / 255
+      img[, , 2] <- background[[2]] / 255
+      img[, , 3] <- background[[3]] / 255
+      img[, , 4] <- 0
 
-      for(order in names(private$contacts)) {
+      for (order in names(private$contacts)) {
         contact <- private$contacts[[ order ]]
         # positions = c(start_position, end_position),
         # angles = sort(c(start_angle, end_angle))
@@ -149,7 +149,7 @@ ElectrodePrototypeOld <- R6::R6Class(
         img[seq(h1, h2), seq(w1, w2), ] <- 1
       }
 
-      return( img[seq(height, 1),,,drop = FALSE] )
+      return(img[seq(height, 1), , , drop = FALSE])
     },
 
     generate_geometry = function(
@@ -161,7 +161,7 @@ ElectrodePrototypeOld <- R6::R6Class(
       on.exit({
         close(rconn)
       })
-      img <- self$generate_texture( background = background, length = length,... )
+      img <- self$generate_texture(background = background, length = length, ...)
       png::writePNG(img, target = rconn)
       control_points <- private$get_control_points(length = length)
       re <- TubeGeom$new(
@@ -172,10 +172,10 @@ ElectrodePrototypeOld <- R6::R6Class(
           jsonlite::base64_enc(input = rawConnectionValue(rconn))
         )
       )
-      if(length(target_position) != 3) {
+      if (length(target_position) != 3) {
         target_position <- self$target_position
       }
-      if(length(entry_position) != 3) {
+      if (length(entry_position) != 3) {
         entry_position <- self$entry_position
       }
       dir <- entry_position - target_position
@@ -269,17 +269,17 @@ new_electrode_prototype_old <- function(
     contacts = list()
 ) {
 
-  if(min_length < 0) {
+  if (min_length < 0) {
     stop("Electrode shaft minimal length must be non-negative.")
   }
 
   proto <- ElectrodePrototypeOld$new(prefix = prefix)
   proto$min_length <- min_length
 
-  if(length(geom_control_points) != length(geom_control_diameters)) {
+  if (length(geom_control_points) != length(geom_control_diameters)) {
     stop("Electrode shaft control points must share the same vector length as diameters")
   }
-  if(length(geom_control_points)) {
+  if (length(geom_control_points)) {
     lapply(seq_along(geom_control_points), function(ii) {
       proto$add_control_point(
         geom_control_points[[ ii ]],
@@ -289,12 +289,12 @@ new_electrode_prototype_old <- function(
   }
 
   order <- 0
-  for(item in contacts) {
-    if(is.list(item)) {
-      if(length(item$order) != 1 || is.numeric(item$order)) {
+  for (item in contacts) {
+    if (is.list(item)) {
+      if (length(item$order) != 1 || is.numeric(item$order)) {
         item$order <- order + 1
       }
-      if(length(item$end_position) != 1) {
+      if (length(item$end_position) != 1) {
         item$end_position <- item$start_position + item$size
       }
       proto$add_contact(
@@ -302,9 +302,9 @@ new_electrode_prototype_old <- function(
         start_position = item$start_position,
         end_position = item$end_position,
         start_angle = c(item$start_angle, 0)[[1]],
-        end_angle = c(item$end_angle, 2*pi)[[1]]
+        end_angle = c(item$end_angle, 2 * pi)[[1]]
       )
-      if( order < item$order ) {
+      if ( order < item$order ) {
         order <- item$order
       }
     }

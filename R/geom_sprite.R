@@ -5,19 +5,19 @@ NULL
 
 #' @export
 SpriteGeom <- R6::R6Class(
-  classname = 'SpriteGeom',
+  classname = "SpriteGeom",
   inherit = AbstractGeom,
   public = list(
 
     clickable = FALSE,
-    type = 'imagesprite',
+    type = "imagesprite",
     image_uri = "",
     aspect_ratio = 1.0,
 
     initialize = function(name, image_path,
-                          entry_position = c(1,0,0),
-                          target_position = c(0,0,0),
-                          ...){
+                          entry_position = c(1, 0, 0),
+                          target_position = c(0, 0, 0),
+                          ...) {
       # target position
       center_position <- (entry_position + target_position) / 2
       super$initialize(name, position = c(0, 0, 0), ...)
@@ -52,7 +52,7 @@ SpriteGeom <- R6::R6Class(
       self$aspect_ratio <- dm[[2]] / dm[[1]]
       self$image_uri <- dipsaus::to_datauri(file = image_path)
     },
-    to_list = function(){
+    to_list = function() {
       c(
         super$to_list(),
         list(

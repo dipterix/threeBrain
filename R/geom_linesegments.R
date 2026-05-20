@@ -6,21 +6,21 @@ NULL
 
 #' @export
 LineSegmentsGeom <- R6::R6Class(
-  classname = 'LineSegmentsGeom',
+  classname = "LineSegmentsGeom",
   inherit = AbstractGeom,
   private = list(
     .dynamic = FALSE
   ),
   public = list(
 
-    type = 'linesegments',
+    type = "linesegments",
 
     color = character(0),
     size = numeric(0),
     vertices = NULL,
 
 
-    initialize = function(name, dynamic = FALSE, ...){
+    initialize = function(name, dynamic = FALSE, ...) {
       super$initialize(name, position = c(0, 0, 0), ...)
       private$.dynamic <- dynamic
       self$size <- 1.0
@@ -28,13 +28,13 @@ LineSegmentsGeom <- R6::R6Class(
     },
 
     set_vertices = function(..., .list = list(), append = FALSE) {
-      if(self$dynamic) {
+      if (self$dynamic) {
 
         new_pos <- c(list(...), .list)
         new_pos <- lapply(new_pos, function(item) {
-          if(length(item) == 3) {
+          if (length(item) == 3) {
             item_ <- unlist(item)
-            if(is.numeric(item_)) {
+            if (is.numeric(item_)) {
               return(list(
                 position = item_
               ))
@@ -43,7 +43,7 @@ LineSegmentsGeom <- R6::R6Class(
           item <- as.list(item)
           subject_code <- item$subject_code
           electrode <- as.integer(item$electrode)
-          if(length(subject_code) != 1) {
+          if (length(subject_code) != 1) {
             stop("Cannot set dynamical line segment positions from electrodes: each position must be either a numeric vector (length=3), or a named list with subject code and electrode number (e.g. list(subject_code=..., electrode=...))")
           }
           list(
@@ -52,7 +52,7 @@ LineSegmentsGeom <- R6::R6Class(
           )
         })
 
-        if( append ) {
+        if ( append ) {
           self$vertices <- c(self$vertices, new_pos)
         } else {
           self$vertices <- new_pos
@@ -61,15 +61,15 @@ LineSegmentsGeom <- R6::R6Class(
       } else {
 
         new_pos <- unlist(c(..., .list))
-        if(!is.numeric(new_pos)) {
+        if (!is.numeric(new_pos)) {
           stop("LineSegmentsGeom: static positions must be numeric")
         }
-        if(length(new_pos) %% 3 != 0) {
+        if (length(new_pos) %% 3 != 0) {
           stop("LineSegmentsGeom: static position vector length must be multiple of 3")
         }
         new_pos <- matrix(new_pos, nrow = 3, byrow = FALSE)
 
-        if( append ) {
+        if ( append ) {
           self$vertices <- cbind(self$vertices, new_pos)
         } else {
           self$vertices <- new_pos
@@ -86,16 +86,16 @@ LineSegmentsGeom <- R6::R6Class(
 
     set_size = function(...) {
       new_size <- unlist(c(...))
-      if(!length(new_size) || any(is.na(new_size) | new_size < 0)) {
+      if (!length(new_size) || any(is.na(new_size) | new_size < 0)) {
         stop("LineSegmentsGeom line size (widths) can either be a number or a numeric vector with positive length with only non-negative values.")
       }
       self$size <- new_size
     },
 
-    to_list = function(){
+    to_list = function() {
 
       nverts <- length(self$vertices)
-      if(self$dynamic) {
+      if (self$dynamic) {
         verts <- self$vertices
       } else {
         verts <- t(self$vertices)
@@ -104,12 +104,12 @@ LineSegmentsGeom <- R6::R6Class(
 
       col <- self$color
       siz <- self$size
-      if(length(col) > 1) {
+      if (length(col) > 1) {
         col <- grDevices::colorRampPalette(colors = col)(nverts)
       } else {
         col <- rep(col, nverts)
       }
-      if(length(siz) > 1) {
+      if (length(siz) > 1) {
         siz <- approx(siz, n = nverts)$y
       } else {
         siz <- rep(siz, nverts)

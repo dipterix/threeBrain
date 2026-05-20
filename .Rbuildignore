@@ -41,3 +41,4 @@
 ^CHANGELOG\.md$
 ^\.positai$
 ^\.claude$
+^\.lintr$

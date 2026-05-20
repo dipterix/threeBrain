@@ -1,28 +1,28 @@
 ViewerProxy <- R6::R6Class(
   portable = TRUE,
   cloneable = FALSE,
-  classname = 'ViewerProxy',
+  classname = "ViewerProxy",
   private = list(
     outputId = character(0),
     session = NULL,
-    ensure_session = function(){
-      if(is.null(private$session)){
+    ensure_session = function() {
+      if (is.null(private$session)) {
         session <- shiny::getDefaultReactiveDomain()
         private$session <- session
       }
-      stopifnot2(!is.null(private$session), msg = 'cannot find shiny reactive session')
+      stopifnot2(!is.null(private$session), msg = "cannot find shiny reactive session")
     },
-    get_value = function(name, default = NULL){
+    get_value = function(name, default = NULL) {
       private$ensure_session()
-      re <- private$session$input[[paste0(private$outputId, '_', name)]]
-      if(is.null(re)){
+      re <- private$session$input[[paste0(private$outputId, "_", name)]]
+      if (is.null(re)) {
         re <- default
       }
       re
     },
-    set_value = function(name, value){
+    set_value = function(name, value) {
       private$ensure_session()
-      message_type <- sprintf('threeBrain-RtoJS-%s', private$session$ns(private$outputId))
+      message_type <- sprintf("threeBrain-RtoJS-%s", private$session$ns(private$outputId))
 
       private$session$sendCustomMessage(message_type, list(
         name = name,
@@ -31,86 +31,86 @@ ViewerProxy <- R6::R6Class(
     }
   ),
   public = list(
-    print = function(...){
+    print = function(...) {
       cat(c(
-        '<threeBrain Viewer Proxy>',
-        'Fields are:',
-        '  $main_camera        - main camera position, up, and zoom',
-        '  $background         - background color in hex code',
-        '  $side_display       - whether side canvas is visible',
-        '  $surface_type       - surface type (pial, white, ...)',
-        '  $display_variable   - data to visualize',
-        '  $plane_position     - sagittal, coronal, axial position (RAS)',
-        'Methods are:',
-        '  $isolate(<field>)   - get fields but avoid shiny reactive events',
-        ''
-      ), sep = '\n')
+        "<threeBrain Viewer Proxy>",
+        "Fields are:",
+        "  $main_camera        - main camera position, up, and zoom",
+        "  $background         - background color in hex code",
+        "  $side_display       - whether side canvas is visible",
+        "  $surface_type       - surface type (pial, white, ...)",
+        "  $display_variable   - data to visualize",
+        "  $plane_position     - sagittal, coronal, axial position (RAS)",
+        "Methods are:",
+        "  $isolate(<field>)   - get fields but avoid shiny reactive events",
+        ""
+      ), sep = "\n")
     },
-    initialize = function(outputId, session = shiny::getDefaultReactiveDomain()){
+    initialize = function(outputId, session = shiny::getDefaultReactiveDomain()) {
       private$outputId <- outputId
-      if(is.null(session)){
-        warning('please run proxy in shiny reactive environment.')
-      }else{
+      if (is.null(session)) {
+        warning("please run proxy in shiny reactive environment.")
+      } else {
         private$session <- session
       }
 
     },
-    isolate = function(name){
+    isolate = function(name) {
       shiny::isolate(self[[name]])
     },
 
-    get_controllers = function(){
-      shiny::isolate(private$get_value('controllers', list()))
+    get_controllers = function() {
+      shiny::isolate(private$get_value("controllers", list()))
     },
 
-    set_controllers = function(ctrl){
-      private$set_value('controllers', ctrl)
+    set_controllers = function(ctrl) {
+      private$set_value("controllers", ctrl)
     },
 
-    set_background = function(col){
-      private$set_value('background', col2hexStr(col))
+    set_background = function(col) {
+      private$set_value("background", col2hexStr(col))
     },
 
     set_title = function( title ) {
-      if(missing(title) || length(title) == 0) {
+      if (missing(title) || length(title) == 0) {
         title <- ""
       }
-      private$set_value('title', paste(format(title), collapse = ""))
+      private$set_value("title", paste(format(title), collapse = ""))
     },
 
-    set_zoom_level = function( zoom ){
-      stopifnot2(zoom > 0, msg = 'zoom level must be strictly positive')
-      private$set_value('zoom_level', zoom)
+    set_zoom_level = function( zoom ) {
+      stopifnot2(zoom > 0, msg = "zoom level must be strictly positive")
+      private$set_value("zoom_level", zoom)
     },
 
-    set_camera = function(position, up){
+    set_camera = function(position, up) {
       dis <- sqrt(sum(position^2))
-      stopifnot2(dis > 0, msg = 'camera position cannot be at origin')
+      stopifnot2(dis > 0, msg = "camera position cannot be at origin")
       position <- position / dis
-      if(missing(up)){
-        up <- c(0,0,1)
+      if (missing(up)) {
+        up <- c(0, 0, 1)
       }
-      private$set_value('camera', list(
+      private$set_value("camera", list(
         position = position * 500,
         up = up
       ))
     },
 
-    set_display_data = function(variable = '', range = NULL){
-      if(variable == '' && length(range) != 2){ return() }
-      private$set_value('display_data', list(
+    set_display_data = function(variable = "", range = NULL) {
+      if (variable == "" && length(range) != 2) { return() }
+      private$set_value("display_data", list(
         variable = variable,
         range = sort(as.numeric(range))
       ))
     },
 
-    set_focused_electrode = function( subject_code, electrode ){
+    set_focused_electrode = function( subject_code, electrode ) {
       stopifnot2(
         is.character(subject_code) && length(subject_code) == 1
         && length(electrode) == 1,
-        msg = 'subject_code must be character and electrode length must be one.'
+        msg = "subject_code must be character and electrode length must be one."
       )
-      private$set_value('focused_electrode', list(
+      private$set_value("focused_electrode", list(
         subject_code = subject_code,
         electrode = as.integer(electrode)
       ))
@@ -124,7 +124,7 @@ ViewerProxy <- R6::R6Class(
         is.data.frame(data),
         msg = "brain_proxy$set_electrode_data(data, ...): `data` must be a data.frame."
       )
-      private$set_value('set_electrode_data', list(
+      private$set_value("set_electrode_data", list(
         data = data,
         palettes = as.list(palettes),
         valueRanges = as.list(value_ranges),
@@ -137,20 +137,20 @@ ViewerProxy <- R6::R6Class(
     set_electrode_palette = function(colors, variable) {
       colors <- col2hexStr(colors)
       stopifnot2(length(colors) > 0, msg = "`colors` must not be empty")
-      private$set_value('set_electrode_palette', list(
+      private$set_value("set_electrode_palette", list(
         colors = colors,
         name = variable
       ))
     },
 
-    set_cex = function( cex = 1 ){
-      stopifnot2(cex > 0, msg = 'cex must be positive')
-      private$set_value('font_magnification', cex)
+    set_cex = function( cex = 1 ) {
+      stopifnot2(cex > 0, msg = "cex must be positive")
+      private$set_value("font_magnification", cex)
     },
 
-    set_localization_electrode = function(which, params, update_shiny = TRUE){
+    set_localization_electrode = function(which, params, update_shiny = TRUE) {
       which <- as.integer(which)
-      private$set_value('set_localization_electrode', list(
+      private$set_value("set_localization_electrode", list(
         which = which,
         params = as.list(params),
         update_shiny = isTRUE(update_shiny)
@@ -158,31 +158,31 @@ ViewerProxy <- R6::R6Class(
     },
 
     set_matrix_world = function( name, m44 ) {
-      if(length(m44) != 16) {
+      if (length(m44) != 16) {
         stop("brain_proxy$set_matrix_world: `m44` must be a 4x4 matrix")
       }
-      if(is.matrix(m44)) {
+      if (is.matrix(m44)) {
         m44 <- as.vector(t(m44))
       }
-      private$set_value('set_matrix_world', list(
+      private$set_value("set_matrix_world", list(
         instanceName = name,
         matrix = m44,
         byrow = TRUE
       ))
     },
 
-    add_localization_electrode = function(params, update_shiny = TRUE){
+    add_localization_electrode = function(params, update_shiny = TRUE) {
       params <- as.list(params)
-      if(!isTRUE(params$is_prototype)) {
-        if(length(c(params$Coord_x,params$Coord_y,params$Coord_z)) != 3){
+      if (!isTRUE(params$is_prototype)) {
+        if (length(c(params$Coord_x, params$Coord_y, params$Coord_z)) != 3) {
           stop("`add_localization_electrode` must contains valid `Coord_x, Coord_y, Coord_z` (tkrRAS)")
         }
       }
       params$update_shiny <- isTRUE(update_shiny)
-      private$set_value('add_localization_electrode', params)
+      private$set_value("add_localization_electrode", params)
     },
 
-    clear_localization = function(update_shiny = TRUE){
+    clear_localization = function(update_shiny = TRUE) {
       private$set_value( "clear_localization", isTRUE(update_shiny) )
     },
 
@@ -192,16 +192,16 @@ ViewerProxy <- R6::R6Class(
 
     set_values = function( name, target_object, data_type,
                            value, palette = rainbow(64), symmetric = FALSE,
-                           time = ifelse(length(value)==1, 0, stop('time must match length with value')),
+                           time = ifelse(length(value) == 1, 0, stop("time must match length with value")),
                            value_range = NULL, time_range = NULL, value_names = NULL,
-                           switch_display = FALSE){
+                           switch_display = FALSE) {
       data_type <- data_type[[1]]
-      stopifnot2(data_type %in% c('continuous', 'discrete'), msg = paste(
-        'data_type must be either', sQuote('continuous'), 'or', sQuote('discrete')
+      stopifnot2(data_type %in% c("continuous", "discrete"), msg = paste(
+        "data_type must be either", sQuote("continuous"), "or", sQuote("discrete")
       ))
 
-      geom <- ElectrodeGeom$new(name = '')
-      if(length(time) == 1){
+      geom <- ElectrodeGeom$new(name = "")
+      if (length(time) == 1) {
         time <- rep(time, length(value))
       }
       geom$set_value(value = value, name = name, time_stamp = time)
@@ -218,7 +218,7 @@ ViewerProxy <- R6::R6Class(
       # data_type = args.data_type,
       # value = args.value,
       # time = args.time || 0,
-      # value_names = args.value_names || [''],
+      # value_names = args.value_names || [""],
       # value_range = args.value_range || [0,1];
       # time_range = args.time_range || [0,0],
       # color_keys = to_array( args.color_keys ),
@@ -227,14 +227,14 @@ ViewerProxy <- R6::R6Class(
       # focusui = args.focus || false;
 
 
-      if(length(value_range) < 2 && data_type == 'continuous'){
+      if (length(value_range) < 2 && data_type == "continuous") {
         value_range <- cl$value_range
       }
-      if(symmetric && data_type == 'continuous'){
-        value_range <- c(-1,1) * max(abs(value_range))
+      if (symmetric && data_type == "continuous") {
+        value_range <- c(-1, 1) * max(abs(value_range))
       }
 
-      private$set_value('add_clip', list(
+      private$set_value("add_clip", list(
         clip_name = kf$name,
         target = target_object,
         data_type = data_type,
@@ -254,7 +254,7 @@ ViewerProxy <- R6::R6Class(
       pos <- c(self$plane_position, 1)
       space <- match.arg(space)
       subject <- shiny::isolate(self$current_subject)
-      if(is.null(subject$subject_code)) {
+      if (is.null(subject$subject_code)) {
         return(c(0, 0, 0))
       }
       Norig <- subject$Norig
@@ -279,7 +279,7 @@ ViewerProxy <- R6::R6Class(
         }
       )
 
-      return(pos[c(1,2,3)])
+      return(pos[c(1, 2, 3)])
 
     },
 
@@ -287,17 +287,17 @@ ViewerProxy <- R6::R6Class(
 
       space <- match.arg(space)
 
-      if(length(position) != 3) {
+      if (length(position) != 3) {
         stop("set_crosshair_position: `position` length must be 3")
       }
       position <- as.numeric(position)
-      if(anyNA(position) || !all(is.finite(position))) {
+      if (anyNA(position) || !all(is.finite(position))) {
         stop("set_crosshair_position: `position` length must be finite")
       }
 
       pos <- c(position, 1)
       subject <- shiny::isolate(self$current_subject)
-      if(!is.null(subject$subject_code)) {
+      if (!is.null(subject$subject_code)) {
         Norig <- subject$Norig
         Torig <- subject$Torig
         xfm <- subject$xfm
@@ -330,7 +330,7 @@ ViewerProxy <- R6::R6Class(
         "Axial (I - S)" = pos[[3]]
       ))
 
-      # private$set_value('set_plane', list(
+      # private$set_value("set_plane", list(
       #   x = pos[[1]],
       #   y = pos[[2]],
       #   z = pos[[3]]
@@ -340,20 +340,20 @@ ViewerProxy <- R6::R6Class(
   ),
   active = list(
     # canvas background color
-    background = function(){
-      private$get_value('background', '#FFFFFF')
+    background = function() {
+      private$get_value("background", "#FFFFFF")
     },
     # get main camera
-    main_camera = function(){
-      camera <- private$get_value('main_camera', NULL)
-      if(!is.list(camera)){ camera <- list() }
+    main_camera = function() {
+      camera <- private$get_value("main_camera", NULL)
+      if (!is.list(camera)) { camera <- list() }
 
       # make sure position exists, numerical, and not NA/origin
       position <- c(500, 0, 0)
       pos <- unname(unlist(camera$position))
-      if(length(pos) == 3) {
+      if (length(pos) == 3) {
         pos <- as.numeric(pos)
-        if(!anyNA(pos) && !all(pos == 0)) {
+        if (!anyNA(pos) && !all(pos == 0)) {
           position <- pos
         }
       }
@@ -362,9 +362,9 @@ ViewerProxy <- R6::R6Class(
       # make sure `up` exists, numerical, and not NA/origin
       up0 <- c(0, 0, 1)
       up <- unname(unlist(camera$up))
-      if(length(up) == 3) {
+      if (length(up) == 3) {
         up <- as.numeric(up)
-        if(!anyNA(up) && !all(up == 0)) {
+        if (!anyNA(up) && !all(up == 0)) {
           up0 <- up
         }
       }
@@ -372,7 +372,7 @@ ViewerProxy <- R6::R6Class(
 
       # make sure zoom exists
       zoom <- as.numeric(camera$zoom)
-      if(length(zoom) != 1 || is.na(zoom) || zoom <= 0) {
+      if (length(zoom) != 1 || is.na(zoom) || zoom <= 0) {
         zoom <- 1
       }
       camera$zoom <- zoom
@@ -380,45 +380,45 @@ ViewerProxy <- R6::R6Class(
     },
 
     # visibility
-    side_display = function(){
-      private$get_value('side_display', NULL)
+    side_display = function() {
+      private$get_value("side_display", NULL)
     },
 
     # side depth
-    surface_type = function(){
-      private$get_value('surface_type', 'pial')
+    surface_type = function() {
+      private$get_value("surface_type", "pial")
     },
 
     # display name
-    display_variable = function(){
-      private$get_value('clip_name', '[None]')
+    display_variable = function() {
+      private$get_value("clip_name", "[None]")
     },
 
-    plane_position = function(){
+    plane_position = function() {
       controllers <- self$get_controllers()
       sagittal_depth <- controllers[["Sagittal (L - R)"]]
-      if(length(sagittal_depth) != 1) { sagittal_depth <- 0 }
+      if (length(sagittal_depth) != 1) { sagittal_depth <- 0 }
 
       coronal_depth <- controllers[["Coronal (P - A)"]]
-      if(length(coronal_depth) != 1) { coronal_depth <- 0 }
+      if (length(coronal_depth) != 1) { coronal_depth <- 0 }
 
       axial_depth <- controllers[["Axial (I - S)"]]
-      if(length(axial_depth) != 1) { axial_depth <- 0 }
-      # sagittal_depth <- private$get_value('sagittal_depth', 0)
-      # coronal_depth <- private$get_value('coronal_depth', 0)
-      # axial_depth <- private$get_value('axial_depth', 0)
+      if (length(axial_depth) != 1) { axial_depth <- 0 }
+      # sagittal_depth <- private$get_value("sagittal_depth", 0)
+      # coronal_depth <- private$get_value("coronal_depth", 0)
+      # axial_depth <- private$get_value("axial_depth", 0)
       re <- c(sagittal_depth, coronal_depth, axial_depth)
-      names(re) <- c('R', 'A', 'S')
+      names(re) <- c("R", "A", "S")
       re
     },
 
-    localization_table = function(){
+    localization_table = function() {
       private$ensure_session()
-      tbl <- private$get_value('localization_table', NULL)
-      if(!is.null(tbl)){
+      tbl <- private$get_value("localization_table", NULL)
+      if (!is.null(tbl)) {
         tbl <- tryCatch({
           jsonlite::fromJSON(tbl, simplifyDataFrame = TRUE)
-        }, error = function(e){
+        }, error = function(e) {
           NULL
         })
       }
@@ -427,24 +427,24 @@ ViewerProxy <- R6::R6Class(
 
     localization_add_quaternion = function() {
       private$ensure_session()
-      private$get_value('localization_addQuaternion', list())
+      private$get_value("localization_addQuaternion", list())
     },
 
-    mouse_event_double_click = function(){
-      private$get_value('mouse_dblclicked', list())
+    mouse_event_double_click = function() {
+      private$get_value("mouse_dblclicked", list())
     },
 
-    mouse_event_click = function(){
-      private$get_value('mouse_clicked', list())
+    mouse_event_click = function() {
+      private$get_value("mouse_clicked", list())
     },
 
-    controllers = function(){
-      private$get_value('controllers', list())
+    controllers = function() {
+      private$get_value("controllers", list())
     },
 
-    current_subject = function(){
-      data <- private$get_value('current_subject', list())
-      if(length(data)) {
+    current_subject = function() {
+      data <- private$get_value("current_subject", list())
+      if (length(data)) {
         data$Norig <- matrix(unlist(data$Norig), nrow = 4, byrow = TRUE)
         data$Torig <- matrix(unlist(data$Torig), nrow = 4, byrow = TRUE)
         data$xfm <- matrix(unlist(data$xfm), nrow = 4, byrow = TRUE)
@@ -452,13 +452,13 @@ ViewerProxy <- R6::R6Class(
       data
     },
 
-    sync = function(){
-      private$get_value('sync', '')
+    sync = function() {
+      private$get_value("sync", "")
     },
 
     acpc_alignment = function() {
-      data <- private$get_value('acpc_realign', list())
-      if(!length(data) || !is.list(data)) { return(data) }
+      data <- private$get_value("acpc_realign", list())
+      if (!length(data) || !is.list(data)) { return(data) }
       acpc <- data$acpc
       Torig <- matrix(unlist(data$transforms$Torig), byrow = FALSE, nrow = 4)
       Norig <- matrix(unlist(data$transforms$Norig), byrow = FALSE, nrow = 4)
@@ -467,24 +467,24 @@ ViewerProxy <- R6::R6Class(
 
       ac <- c(0, 0, 0)
       ac_set <- FALSE
-      if(isTRUE(acpc$acSet)) {
+      if (isTRUE(acpc$acSet)) {
         ac <- (tkr2scanner %*% c(unlist(acpc$ac), 1))[seq_len(3)]
         ac_set <- TRUE
       }
       pc <- c(0, -1, 0)
       pc_set <- FALSE
-      if(isTRUE(acpc$pcSet)) {
+      if (isTRUE(acpc$pcSet)) {
         pc <- (tkr2scanner %*% c(unlist(acpc$pc), 1))[seq_len(3)]
         pc_set <- TRUE
       }
       x_axis <- (tkr2scanner %*% c(unlist(acpc$xAxis), 0))[seq_len(3)]
-      if(all(x_axis == 0)) {
+      if (all(x_axis == 0)) {
         x_axis <- c(1, 0, 0)
       } else {
         x_axis <- x_axis / norm(x_axis, type = "2")
       }
       y_axis <- ac - pc
-      if(all(y_axis == 0)) {
+      if (all(y_axis == 0)) {
         y_axis <- c(0, 1, 0)
         pc <- ac - y_axis
       } else {
@@ -516,7 +516,7 @@ ViewerProxy <- R6::R6Class(
 #' @param session shiny session, default is current session (see \code{\link[shiny]{domains}})
 #' @return \code{R6} class \code{ViewerProxy}
 #' @export
-brain_proxy <- function(outputId, session = shiny::getDefaultReactiveDomain()){
+brain_proxy <- function(outputId, session = shiny::getDefaultReactiveDomain()) {
   ViewerProxy$new(outputId, session)
 }
 

@@ -62,7 +62,7 @@ if(dir.exists(N27_path)) {
   mesh <- volume_to_surf(aseg, threshold_lb = 1034,
                          threshold_ub = 1036)
 
-  if(interactive()) {
+  if (interactive()) {
     ravetools::rgl_view({
       ravetools::rgl_call("shade3d", mesh, color = "yellow")
     })

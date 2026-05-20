@@ -22,15 +22,15 @@
 #' faster than the local alternatives.
 #'
 #' @export
-video_content <- function(path, duration = Inf, time_start = 0, asp_ratio = 16 / 9, local = TRUE){
+video_content <- function(path, duration = Inf, time_start = 0, asp_ratio = 16 / 9, local = TRUE) {
 
   is_url <- FALSE
   temp <- FALSE
-  if(!file.exists(path)){
-    if( !startsWith(path, "http") && !startsWith(path, "ftp") ){
+  if (!file.exists(path)) {
+    if ( !startsWith(path, "http") && !startsWith(path, "ftp") ) {
       stop("`video_content`: `path` not exists, must be a local path or an url")
     }
-    if( local ){
+    if ( local ) {
       # try to download video because path is probably an URL
       url <- path
 
@@ -38,7 +38,7 @@ video_content <- function(path, duration = Inf, time_start = 0, asp_ratio = 16 /
       oldopt <- options("timeout" = 6000)
       on.exit({ options(oldopt) })
 
-      path <- tempfile(fileext = '.mp4')
+      path <- tempfile(fileext = ".mp4")
       download_file(url, destfile = path)
       temp <- TRUE
     } else {
@@ -47,10 +47,10 @@ video_content <- function(path, duration = Inf, time_start = 0, asp_ratio = 16 /
 
   }
 
-  if(!is_url && !endsWith(tolower(path), "mp4")){
+  if (!is_url && !endsWith(tolower(path), "mp4")) {
     warning("`video_content` only allows mp4 videos. The viewer might not work with other media contents.")
   }
-  if(is_url){
+  if (is_url) {
     url <- path
   } else {
     path <- normalizePath(path)

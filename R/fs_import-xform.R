@@ -1,31 +1,31 @@
 #' @export
-import_fs.xform <- function(subject_name, fs_path, quiet = FALSE, dtype, sub_type, hemisphere, ...){
+import_fs.xform <- function(subject_name, fs_path, quiet = FALSE, dtype, sub_type, hemisphere, ...) {
 
   fs_path <- normalizePath(fs_path)
   # sub_type <- match.arg(sub_type)
 
 
-  path_xform <- normalizePath(file.path(fs_path, 'mri', 'transforms', 'talairach.xfm'), mustWork = FALSE)
+  path_xform <- normalizePath(file.path(fs_path, "mri", "transforms", "talairach.xfm"), mustWork = FALSE)
   success <- FALSE
-  xfm <- diag(c(1,1,1,1))
-  if( file.exists(path_xform) ){
+  xfm <- diag(c(1, 1, 1, 1))
+  if ( file.exists(path_xform) ) {
     ss <- readLines(path_xform)
-    ss <- stringr::str_match(ss, '^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$')
-    ss <- ss[!is.na(ss[,1]), -1, drop = FALSE]
-    if( nrow(ss) >= 3 ){
-      ss <- ss[1:3,1:4]
+    ss <- stringr::str_match(ss, "^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$")
+    ss <- ss[!is.na(ss[, 1]), -1, drop = FALSE]
+    if ( nrow(ss) >= 3 ) {
+      ss <- ss[1:3, 1:4]
       success <- TRUE
-    }else if(!quiet){
-      cat2('Cannot parse file talairach.xfm properly.', level = 'WARNING')
-      ss <- cbind(diag(c(1,1,1)), 0)
+    } else if (!quiet) {
+      cat2("Cannot parse file talairach.xfm properly.", level = "WARNING")
+      ss <- cbind(diag(c(1, 1, 1)), 0)
     }
     ss <- as.numeric(ss)
-    dim(ss) <- c(3,4)
-    xfm <- rbind(ss, c(0,0,0,1))
+    dim(ss) <- c(3, 4)
+    xfm <- rbind(ss, c(0, 0, 0, 1))
   }
   add_to_digest_file(
-    file = file.path(fs_path, 'RAVE', 'common.digest'),
-    last_cached = strftime(Sys.time(), '%Y-%m-%d %H:%M:%S', usetz = TRUE),
+    file = file.path(fs_path, "RAVE", "common.digest"),
+    last_cached = strftime(Sys.time(), "%Y-%m-%d %H:%M:%S", usetz = TRUE),
     xfm = xfm,
     cache_version = cache_version,
     # Replace if items exist
@@ -36,7 +36,7 @@ import_fs.xform <- function(subject_name, fs_path, quiet = FALSE, dtype, sub_typ
 
 }
 
-# import_fs('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'xform')
+# import_fs("YCQ", fs_path = "~/rave_data/others/fs/", dtype = "xform")
 
 
 read_xfm <- function(path) {
@@ -45,15 +45,15 @@ read_xfm <- function(path) {
     freesurferformats::read.fs.transform.xfm( path )
   }, error = function(...) {
     ss <- readLines(path)
-    ss <- stringr::str_match(ss, '^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ;]{0,}$')
-    ss <- ss[!is.na(ss[,1]), -1, drop = FALSE]
-    ss <- ss[1:3,1:4]
+    ss <- stringr::str_match(ss, "^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ;]{0,}$")
+    ss <- ss[!is.na(ss[, 1]), -1, drop = FALSE]
+    ss <- ss[1:3, 1:4]
 
     ss <- as.numeric(ss)
-    dim(ss) <- c(3,4)
+    dim(ss) <- c(3, 4)
     list(
       type = "Linear",
-      matrix = rbind(ss, c(0,0,0,1))
+      matrix = rbind(ss, c(0, 0, 0, 1))
     )
   })
 }

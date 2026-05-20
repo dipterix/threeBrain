@@ -6,11 +6,11 @@ NULL
 
 #' @export
 TubeGeom <- R6::R6Class(
-  classname = 'TubeGeom',
+  classname = "TubeGeom",
   inherit = AbstractGeom,
   public = list(
 
-    type = 'tube',
+    type = "tube",
 
     # n segments along circle
     radial_segments = 10,
@@ -23,12 +23,12 @@ TubeGeom <- R6::R6Class(
     # texture
     image_uri = NULL,
 
-    initialize = function(name, control_data, image_uri = NULL, ...){
+    initialize = function(name, control_data, image_uri = NULL, ...) {
       super$initialize(name, position = c(0, 0, 0), ...)
 
       other_args <- list(...)
 
-      self$radial_segments <- get2('radial_segments', other_args, ifnotfound = 10)
+      self$radial_segments <- get2("radial_segments", other_args, ifnotfound = 10)
       self$image_uri <- image_uri
 
       control_data <- as.matrix(control_data)
@@ -44,10 +44,10 @@ TubeGeom <- R6::R6Class(
       self$control_data <- as.vector(t(control_data))
 
       v <- v[o]
-      dif <- v[-1] - v[ - length(v) ]
+      dif <- v[-1] - v[-length(v)]
       dif <- dif[ dif > 0.002 ]
-      if(length(dif)) {
-        if( length(v) > 100 ) {
+      if (length(dif)) {
+        if ( length(v) > 100 ) {
           self$tubular_segments <- 500
         } else {
           self$tubular_segments <- length(v)
@@ -55,12 +55,12 @@ TubeGeom <- R6::R6Class(
       } else {
         self$tubular_segments <- min(ceiling(1 / min(dif)), 500)
       }
-      if( self$tubular_segments < 2 ) {
+      if ( self$tubular_segments < 2 ) {
         self$tubular_segments <- 2
       }
     },
 
-    to_list = function(){
+    to_list = function() {
       c(
         super$to_list(),
         list(

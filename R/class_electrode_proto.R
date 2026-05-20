@@ -1,18 +1,18 @@
 as_row_matrix <- function(x, nr, nc = NULL, storage_mode = NULL) {
   call <- as.list(match.call())[-1]
   name <- deparse1(call[["x"]])
-  if(is.vector(x)) {
+  if (is.vector(x)) {
     x <- matrix(unlist(x), nrow = nr)
   } else {
     x <- as.matrix(x)
     dimnames(x) <- NULL
-    if(nrow(x) != nr) { x <- t(x) }
+    if (nrow(x) != nr) { x <- t(x) }
   }
-  if(!is.null(storage_mode)) {
+  if (!is.null(storage_mode)) {
     storage.mode(x) <- storage_mode
   }
   stopifnot2(nrow(x) == nr, msg = sprintf("`%s` must have %d rows", name, nr))
-  if(length(nc)) {
+  if (length(nc)) {
     stopifnot2(ncol(x) == nc, msg = sprintf("`%s` must have %d columns", name, nc))
   }
   x
@@ -31,9 +31,9 @@ register_points_rigid <- function(m_cp, t_cp) {
   t_v <- svd$v
   m_v <- svd$u
 
-  if( det(t_v) * det(m_v) < 0 ) {
+  if ( det(t_v) * det(m_v) < 0 ) {
     # need to change hands because the eigenvalue is 0 and U/V may change hands
-    t_v[,3] <- -t_v[,3]
+    t_v[, 3] <- -t_v[, 3]
   }
 
   # t(m_centered) %*% t_centered - m_v %*% diag(svd$d) %*% t(t_v) # == 0
@@ -57,9 +57,9 @@ register_points_rigid <- function(m_cp, t_cp) {
 }
 
 normalize_vector3 <- function(v) {
-  if(length(v) != 3) { return(c(0, 0, 0))}
+  if (length(v) != 3) { return(c(0, 0, 0))}
   l <- sqrt(sum(v^2))
-  if( !is.finite(l) || l == 0 ) {
+  if ( !is.finite(l) || l == 0 ) {
     return(c(0, 0, 0))
   }
   return( v / l )
@@ -134,12 +134,12 @@ ElectrodePrototype <- R6::R6Class(
 
     set_transform = function( m44, byrow = TRUE ) {
       stopifnot2(is.numeric(m44) && !anyNA(m44), msg = "Transform must be a 4x4 numeric matrix with no NA")
-      if(is.matrix(m44)) {
+      if (is.matrix(m44)) {
         dm <- dim(m44)
         stopifnot2(dm[[2]] == 4L, msg = "Transform must be a 4x4 matrix")
         stopifnot2(dm[[1]] %in% c(3L, 4L), msg = "Transform must be a 4x4 matrix")
-        if(dm[[1]] == 3L) {
-          m44 <- rbind(m44, c(0,0,0,1))
+        if (dm[[1]] == 3L) {
+          m44 <- rbind(m44, c(0, 0, 0, 1))
         }
       } else {
         m44 <- matrix(as.vector(m44), nrow = 4, ncol = 4, byrow = byrow)
@@ -152,18 +152,18 @@ ElectrodePrototype <- R6::R6Class(
       pos <- unique(pos)
       stopifnot2(nrow(pos) >= 2L, msg = "Needs at least 2 unique control points")
       svd <- svd(crossprod(pos))
-      if( sum(abs(svd$d > 1e-5)) < 1 ) {
+      if ( sum(abs(svd$d > 1e-5)) < 1 ) {
         stop("The matrix rank of the control points must be at least 2 (you need at least 2 points that are not identical) to calculate the transforms.")
       }
       npos <- nrow(pos)
-      if(length(fixed_point)) {
+      if (length(fixed_point)) {
         fixed_point <- as.integer(fixed_point[[1]])
-        if( fixed_point < 1 || fixed_point > npos ) {
+        if ( fixed_point < 1 || fixed_point > npos ) {
           stop("`fixed_point` must be an integer or `NULL`")
         }
       }
       order <- as.integer(order)
-      if(length(order) > 0) {
+      if (length(order) > 0) {
         stopifnot2(length(order) == npos, msg = "`set_model_control_points`: `order` must be integers and/or NAs with size of control points.")
       }
       private$.model_control_points <- pos
@@ -183,7 +183,7 @@ ElectrodePrototype <- R6::R6Class(
       # t_cp <- private$.world_control_points
 
       m_cp <- private$.model_control_points
-      if(!is.matrix(m_cp)) {
+      if (!is.matrix(m_cp)) {
         stop("Please run electrode$set_model_control_points first to set control points on model coordinates")
       }
 
@@ -191,9 +191,9 @@ ElectrodePrototype <- R6::R6Class(
 
       sel <- which(rowSums(is.na(t_cp)) == 0)
 
-      if(length(private$.fix_control_index)) {
+      if (length(private$.fix_control_index)) {
         idx <- private$.fix_control_index[[1]]
-        if(!sel[[ idx ]]) {
+        if (!sel[[ idx ]]) {
           m_fixed <- NULL
           t_fixed <- NULL
         } else {
@@ -220,15 +220,15 @@ ElectrodePrototype <- R6::R6Class(
         msg = "Please specify at least 2 or 3 control points to calculate the rigid transform"
       )
 
-      if( is.null(m_fixed) || is.null(t_fixed) ) {
+      if ( is.null(m_fixed) || is.null(t_fixed) ) {
         m_fixed <- colMeans( m_cp )
         t_fixed <- colMeans( t_cp )
       }
 
       m44 <- register_points_rigid(m_cp = m_cp, t_cp = t_cp)
 
-      if( !all(is.finite(m44)) ) {
-        if( n >= 3 ) {
+      if ( !all(is.finite(m44)) ) {
+        if ( n >= 3 ) {
           stop("Cannot calculate the transform from control points. Please make sure the rank of control points is at least 2.")
         } else {
           warning("Cannot calculate rotation matrix. More control points are needed.")
@@ -239,7 +239,7 @@ ElectrodePrototype <- R6::R6Class(
       # check rank of the model
       qr_decomp <- qr(m_cp)
 
-      if(
+      if (
         qr_decomp$rank == 1 &&
         sum(cross_prod(self$model_direction, self$model_up) ^ 2) > 0.5
       ) {
@@ -282,16 +282,16 @@ ElectrodePrototype <- R6::R6Class(
 
       }
 
-      if( length(m_fixed) ) {
+      if ( length(m_fixed) ) {
         m44[1:3, 4] <- 0
         m44[1:3, 4] <- t_fixed - (m44 %*% c(m_fixed, 1))[1:3]
       }
 
-      if(length(up) != 3) {
+      if (length(up) != 3) {
         up <- private$.world_up
       }
       up <- normalize_vector3( up )
-      if(
+      if (
         n >= 1 && qr_decomp$rank == 1 && sum(up^2) > 0.5 &&
         sum((self$model_up) ^ 2) > 0.5 && sum((self$model_direction) ^ 2) > 0.5
       ) {
@@ -310,7 +310,7 @@ ElectrodePrototype <- R6::R6Class(
         # r33 x m_basis = t_basis
         m_qr <- qr( m_basis )
         t_qr <- qr( t_basis )
-        if( m_qr$rank == 3 && t_qr$rank == 3 ) {
+        if ( m_qr$rank == 3 && t_qr$rank == 3 ) {
           # no linearity
           r33 <- t_basis %*% solve( m_basis )
           m44[1:3, 1:3] <- r33
@@ -331,7 +331,7 @@ ElectrodePrototype <- R6::R6Class(
 
     set_index = function(index, index_start = NA) {
       index <- as_row_matrix(index, nr = 3, nc = NULL, storage_mode = "integer")
-      if(is.na(index_start)) {
+      if (is.na(index_start)) {
         index_start <- min(index)
       }
       stopifnot2(isTRUE(min(index) >= index_start), msg = "`index` contains invalid face index")
@@ -340,10 +340,10 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     set_normal = function( normal = "auto" ) {
-      if(is.null(normal)) {
+      if (is.null(normal)) {
         private$.normal <- NULL
-      } else if(identical(normal, "auto")){
-        if(is.null(private$.normal)) {
+      } else if (identical(normal, "auto")) {
+        if (is.null(private$.normal)) {
           mesh <- ravetools::vcg_update_normals( self$as_mesh3d( apply_transform = FALSE, with_texture = FALSE ) )
           private$.normal <- mesh$normal
         }
@@ -365,8 +365,8 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     set_channel_map = function(channel_map, center_positions) {
-      if(!missing(channel_map)) {
-        if(!is.null(channel_map)) {
+      if (!missing(channel_map)) {
+        if (!is.null(channel_map)) {
           channel_map <- as_row_matrix(channel_map, nr = 4, storage_mode = "integer")
           channel_map[ is.na(channel_map) | channel_map < 1 | channel_map > private$.texture_size ] <- NA
         }
@@ -375,16 +375,16 @@ ElectrodePrototype <- R6::R6Class(
       }
 
       n_channels <- self$n_channels
-      if( missing(center_positions) ) {
-        if( is.matrix(private$.contact_center) && ncol(private$.contact_center) == n_channels ) {
+      if ( missing(center_positions) ) {
+        if ( is.matrix(private$.contact_center) && ncol(private$.contact_center) == n_channels ) {
           center_positions <- private$.contact_center
         } else {
           center_positions <- NULL
         }
       }
-      if(length(center_positions)) {
+      if (length(center_positions)) {
         center_positions <- as_row_matrix(center_positions, nr = 3L)
-        if( ncol(center_positions) != n_channels ) {
+        if ( ncol(center_positions) != n_channels ) {
           stop(sprintf("Number of contacts should be the same as number of channels (%d). Please set texture size and make sure `center_positions` has the same row as `channel_map`.", self$n_channels))
         }
         private$.contact_center <- center_positions
@@ -392,15 +392,15 @@ ElectrodePrototype <- R6::R6Class(
         private$.contact_center <- NULL
       }
       channel_numbers <- private$.channel_numbers
-      if(length(channel_numbers) != n_channels) {
+      if (length(channel_numbers) != n_channels) {
         private$.channel_numbers <- NULL
       }
     },
 
     set_marker_map = function(marker_map) {
       # only for visualization purposes
-      if(!missing(marker_map)) {
-        if(!is.null(marker_map)) {
+      if (!missing(marker_map)) {
+        if (!is.null(marker_map)) {
           marker_map <- as_row_matrix(marker_map, nr = 4, storage_mode = "integer")
           marker_map[ is.na(marker_map) | marker_map < 1 | marker_map > private$.texture_size ] <- NA
         }
@@ -409,21 +409,21 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     set_contact_sizes = function( sizes ) {
-      if(!is.numeric(sizes)) {
+      if (!is.numeric(sizes)) {
         warning("Contact sizes must be numeric (mm).")
         return(invisible(self))
       }
       sizes <- as.numeric(sizes)
-      if(!length(sizes)) {
+      if (!length(sizes)) {
         private$.contact_sizes <- NULL
         return(invisible(self))
       }
       n_channels <- self$n_channels
-      if(length(sizes) == 1) {
+      if (length(sizes) == 1) {
         private$.contact_sizes <- rep(sizes, n_channels)
         return(invisible(self))
       }
-      if(length(sizes) != n_channels) {
+      if (length(sizes) != n_channels) {
         stop("Number of contact sizes not matches with the number of channels")
       }
       private$.contact_sizes <- as.vector(sizes)
@@ -431,11 +431,11 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     set_contact_channels = function(channel_numbers, contact_orders) {
-      if(!length(channel_numbers)) {
+      if (!length(channel_numbers)) {
         private$.channel_numbers <- NULL
         return(invisible(self))
       }
-      if(missing(contact_orders) || !length(contact_orders)) {
+      if (missing(contact_orders) || !length(contact_orders)) {
         contact_orders <- seq_along(channel_numbers)
       } else {
         contact_orders <- as.integer(contact_orders)
@@ -445,7 +445,7 @@ ElectrodePrototype <- R6::R6Class(
       contact_orders <- contact_orders[sel]
       channel_numbers <- channel_numbers[sel]
       cnum <- rep(NA_integer_, n_channels)
-      if(length(channel_numbers)) {
+      if (length(channel_numbers)) {
         cnum[contact_orders] <- channel_numbers
       }
       private$.channel_numbers <- cnum
@@ -459,33 +459,33 @@ ElectrodePrototype <- R6::R6Class(
       # private <- self$.__enclos_env__$private
       # apply_transform <- TRUE
       cpos <- private$.contact_center
-      if(!length(cpos)) { return(NULL) }
-      if(missing(channels)) {
+      if (!length(cpos)) { return(NULL) }
+      if (missing(channels)) {
         channels <- private$.channel_numbers
-        if(!length(channels)) {
+        if (!length(channels)) {
           channels <- seq_len(self$n_channels)
         }
       }
-      if(!length(channels)) { return(matrix(numeric(0L), ncol = 3)) }
+      if (!length(channels)) { return(matrix(numeric(0L), ncol = 3)) }
 
-      if( apply_transform ) {
+      if ( apply_transform ) {
         cpos <- self$transform %*% rbind(cpos, 1)
       }
 
       cnum <- private$.channel_numbers
       cpos <- sapply(channels, function(ch) {
-        if( is.na(ch) ) { return(c(NA_real_, NA_real_, NA_real_)) }
+        if ( is.na(ch) ) { return(c(NA_real_, NA_real_, NA_real_)) }
         sel <- which(!is.na(cnum) & cnum == ch)
-        if( length(sel) ) {
+        if ( length(sel) ) {
           sel <- sel[[1]]
 
           # sel2 control point is a contact
-          if( apply_transform && length(private$.model_control_point_orders) > 0 ) {
+          if ( apply_transform && length(private$.model_control_point_orders) > 0 ) {
             sel2 <- which( private$.model_control_point_orders == sel )
-            if( length(sel2) ) {
+            if ( length(sel2) ) {
               sel2 <- sel2[[1]]
               # Need to check if we do have such control point
-              if( length(private$.world_control_points) >= sel2 * 3 ) {
+              if ( length(private$.world_control_points) >= sel2 * 3 ) {
                 return( private$.world_control_points[sel2, ] )
               }
             }
@@ -500,15 +500,15 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     as_mesh3d = function( apply_transform = TRUE, with_texture = TRUE, ... ) {
-      if( apply_transform ) {
+      if ( apply_transform ) {
         pos <- self$transform %*% rbind(private$.position, 1)
       } else {
         pos <- private$.position
       }
       uv <- private$.uv
       uv[uv < 0 | uv > 1] <- NA
-      uv[1,] <- 1 - uv[1,]
-      if(with_texture && !is.null(self$.last_texture)) {
+      uv[1, ] <- 1 - uv[1, ]
+      if (with_texture && !is.null(self$.last_texture)) {
         texture_file <- file.path(tempdir(check = TRUE), sprintf("%s.png", private$id))
         grDevices::png(filename = texture_file, units = "px", width = 256, height = 256)
         oldpar <- graphics::par(mar = c(0, 0, 0, 0))
@@ -536,17 +536,17 @@ ElectrodePrototype <- R6::R6Class(
 
     get_texture = function(value, plot = FALSE, ...) {
       dim <- private$.texture_size
-      if(is.null(private$.channel_map)) {
+      if (is.null(private$.channel_map)) {
         re <- array(value, dim = dim)
       } else {
         re <- array(NA, dim = dim)
 
         # ensure markers
-        if(!is.null(private$.marker_map)) {
+        if (!is.null(private$.marker_map)) {
           n_iters <- ncol(private$.marker_map)
-          for(ii in seq_len(n_iters)) {
+          for (ii in seq_len(n_iters)) {
             map <- private$.marker_map[, ii]
-            if(!anyNA(map)) {
+            if (!anyNA(map)) {
               i <- (map[[1]] - 1) + seq_len(map[[3]])
               i[i > dim[[1]]] <- i[i > dim[[1]]] - dim[[1]]
               j <- (map[[2]] - 1) + seq_len(map[[4]])
@@ -557,9 +557,9 @@ ElectrodePrototype <- R6::R6Class(
         }
 
         n_channels <- ncol(private$.channel_map)
-        for(ii in seq_len(n_channels)) {
+        for (ii in seq_len(n_channels)) {
           map <- private$.channel_map[, ii]
-          if(!anyNA(map)) {
+          if (!anyNA(map)) {
             i <- (map[[1]] - 1) + seq_len(map[[3]])
             i[i > dim[[1]]] <- i[i > dim[[1]]] - dim[[1]]
             j <- (map[[2]] - 1) + seq_len(map[[4]])
@@ -574,42 +574,42 @@ ElectrodePrototype <- R6::R6Class(
         # }
       }
 
-      if(is.factor(value)) {
+      if (is.factor(value)) {
         attr(re, "levels") <- unique(c(levels(value), "0"))
-      } else if(is.character(value)) {
+      } else if (is.character(value)) {
         attr(re, "levels") <- unique(c(sort(unique(unlist(value))), "0"))
       }
       self$.last_texture <- re
-      if(plot) {
+      if (plot) {
         self$preview_texture(...)
       }
       re
     },
 
     preview_texture = function(..., axes = FALSE, xlab = "", ylab = "", col = NULL, sub = NULL) {
-      if(is.null(self$.last_texture)) {
+      if (is.null(self$.last_texture)) {
         stop("Please run electrode$get_texture first.")
       }
       re <- self$.last_texture
       lv <- attr(re, "levels")
       dim <- self$texture_size
       asp <- dim[[1]] / dim[[2]]
-      if( !is.null(lv) ) {
+      if ( !is.null(lv) ) {
         # discrete
-        if(!length(col)) {
+        if (!length(col)) {
           col <- DEFAULT_COLOR_DISCRETE
         }
         col <- rep(col, ceiling(length(lv) / length(col)))[seq_along(lv)]
         x <- re[seq(dim[[1]], 1), , drop = FALSE]
         dm <- dim(x)
         x <- array(as.integer(factor(as.vector(x), levels = lv)), dim = dm)
-      } else if(!length(col)) {
+      } else if (!length(col)) {
         # continuous
         col <- grDevices::colorRampPalette(DEFAULT_COLOR_CONTINUOUS)(64)
         x <- re[seq(dim[[1]], 1), , drop = FALSE]
       }
 
-      if(is.null(sub)) {
+      if (is.null(sub)) {
         sub <- sprintf("Prototype: %s", self$type)
       }
 
@@ -651,11 +651,11 @@ ElectrodePrototype <- R6::R6Class(
 
     as_list = function(...) {
       model_control_points <- private$.model_control_points
-      if(is.matrix(model_control_points)) {
+      if (is.matrix(model_control_points)) {
         model_control_points <- t(model_control_points)
       }
       world_control_points <- private$.world_control_points
-      if(is.matrix(world_control_points)) {
+      if (is.matrix(world_control_points)) {
         world_control_points <- t(world_control_points)
       }
 
@@ -705,7 +705,7 @@ ElectrodePrototype <- R6::R6Class(
       self$set_marker_map(li$marker_map)
       self$set_contact_channels(li$channel_numbers)
       self$set_contact_sizes(li$contact_sizes)
-      if(length(li$model_control_points)) {
+      if (length(li$model_control_points)) {
         mcp <- matrix(data = li$model_control_points, nrow = 3L, dimnames = NULL)
         self$set_model_control_points(
           x = mcp[1, ], y = mcp[2, ], z = mcp[3, ],
@@ -716,7 +716,7 @@ ElectrodePrototype <- R6::R6Class(
       self$model_direction <- li$model_direction
       self$model_up <- li$model_up
 
-      if(length(li$world_control_points) >= 6) {
+      if (length(li$world_control_points) >= 6) {
         tcp <- matrix(data = li$world_control_points, nrow = 3L, dimnames = NULL)
         tryCatch({
           self$set_transform(li$transform)
@@ -728,7 +728,7 @@ ElectrodePrototype <- R6::R6Class(
       self$set_transform(li$transform)
       tryCatch({
         self$description <- li$description
-      }, error = function(e){})
+      }, error = function(e) {})
 
       self$default_interpolation <- li$default_interpolation
       self$model_rigid <- !isFALSE(li$model_rigid)
@@ -738,7 +738,7 @@ ElectrodePrototype <- R6::R6Class(
     as_json = function(to_file = NULL, ...) {
       li <- self$as_list()
       json <- to_json(li, matrix = "rowmajor", auto_unbox = TRUE, to_file = to_file)
-      if(is.null(to_file)) {
+      if (is.null(to_file)) {
         return(json)
       } else {
         return(invisible(json))
@@ -746,7 +746,7 @@ ElectrodePrototype <- R6::R6Class(
     },
     from_json = function(json, is_file = FALSE) {
       threeBrain <- asNamespace("threeBrain")
-      if( is_file ) {
+      if ( is_file ) {
         li <- threeBrain$from_json(from_file = json)
       } else {
         li <- threeBrain$from_json(txt = json)
@@ -755,20 +755,20 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     update_from = function( other ) {
-      if(inherits(other, "ElectrodePrototype")) {
+      if (inherits(other, "ElectrodePrototype")) {
         other <- other$as_list()
       } else {
         other <- as.list(other)
       }
 
       n_channels <- self$n_channels
-      if(length(other$channel_numbers) == n_channels) {
+      if (length(other$channel_numbers) == n_channels) {
         self$set_contact_channels( other$channel_numbers )
       } else {
         warning(sprintf("The number of electrode contacts [%s] mismatches with prototype [%s]",
                         length(other$channel_numbers), n_channels))
       }
-      if(length(other$world_control_points) >= 6) {
+      if (length(other$world_control_points) >= 6) {
         tcp <- matrix(data = other$world_control_points, nrow = 3L, dimnames = NULL)
         tryCatch({
           self$set_transform(other$transform)
@@ -782,10 +782,10 @@ ElectrodePrototype <- R6::R6Class(
     },
 
     validate = function() {
-      if(length(self$type) != 1 || !nzchar(self$type)) {
+      if (length(self$type) != 1 || !nzchar(self$type)) {
         stop("Electrode prototype `type` shouldn't be empty.")
       }
-      if(!is.matrix(private$.model_control_points) || nrow(private$.model_control_points) < 2L ) {
+      if (!is.matrix(private$.model_control_points) || nrow(private$.model_control_points) < 2L ) {
         warning("Electrode prototype control points (model) must be a matrix with at least 2-3 points. Please use `set_model_control_points` to set them")
       }
       invisible()
@@ -798,10 +798,10 @@ ElectrodePrototype <- R6::R6Class(
     print = function(..., details = TRUE) {
       n_mcp <- length(private$.model_control_points) / 3
       n_anchors <- 0
-      if(length(private$.model_control_point_orders)) {
+      if (length(private$.model_control_point_orders)) {
         n_anchors <- sum(is.na( private$.model_control_point_orders ))
       }
-      if(sum((self$model_direction) ^ 2) > 0) {
+      if (sum((self$model_direction) ^ 2) > 0) {
         dir <- self$transform %*% c(self$model_direction, 0.0)
         euler_axis <- paste(sprintf("%.1f", dir[1:3]), collapse = ", ")
       } else {
@@ -819,7 +819,7 @@ ElectrodePrototype <- R6::R6Class(
         sprintf("  Channels    : %d\n", self$n_channels),
         sprintf("  Anchors     : %d contacts, %d non-contacts\n", n_mcp - n_anchors, n_anchors)
       )
-      if( details ) {
+      if ( details ) {
         cat(
           sep = "",
           sprintf("  Mesh info   : %d vertices, %d triangle faces\n",
@@ -841,9 +841,9 @@ ElectrodePrototype <- R6::R6Class(
       root_path <- prototype_search_paths()[[1]]
       target_path <- file.path(root_path, sprintf("%s.json", type))
 
-      if(length(path) == 1 && file.exists(path)) {
-        if( force ) {
-          if( file.exists(target_path) ) {
+      if (length(path) == 1 && file.exists(path)) {
+        if ( force ) {
+          if ( file.exists(target_path) ) {
             file.rename(target_path, paste0(
               target_path,
               strftime(Sys.time(), format = ".%y%m%d_%H%M%S.bkup")
@@ -871,7 +871,7 @@ ElectrodePrototype <- R6::R6Class(
   ),
   active = list(
     type = function(v) {
-      if(!missing(v)) {
+      if (!missing(v)) {
         private$.type <- toupper(v)
       }
       private$.type
@@ -880,66 +880,66 @@ ElectrodePrototype <- R6::R6Class(
       private$.n_vertices
     },
     n_channels = function() {
-      if(is.null(private$.channel_map)) {
+      if (is.null(private$.channel_map)) {
         return(prod(private$.texture_size))
       } else {
         return(ncol(private$.channel_map))
       }
     },
     channel_numbers = function() {
-      if(length(private$.channel_numbers)) {
+      if (length(private$.channel_numbers)) {
         return(private$.channel_numbers)
       }
       return(seq_len(self$n_channels))
     },
     contact_sizes = function() {
-      if(!length(private$.contact_sizes)) { return(rep(0.1, self$n_channels))}
+      if (!length(private$.contact_sizes)) { return(rep(0.1, self$n_channels))}
       return(private$.contact_sizes)
     },
     model_direction = function( dir ) {
-      if(!missing(dir)) {
-        if(is.null(dir)) {
+      if (!missing(dir)) {
+        if (is.null(dir)) {
           private$.model_direction <- c(0, 0, 0)
         } else {
           dir <- as.double(dir[])
-          if(length(dir) != 3L || anyNA(dir)) {
+          if (length(dir) != 3L || anyNA(dir)) {
             stop("Electrode direction/normal must have length of 3 and cannot contain NA")
           }
-          if(sum(dir^2) > 0) {
+          if (sum(dir^2) > 0) {
             # normalize
             dir <- dir / sqrt(sum(dir^2))
           }
           private$.model_direction <- dir
         }
       }
-      if(length(private$.model_direction) != 3) {
+      if (length(private$.model_direction) != 3) {
         private$.model_direction <- c(0, 0, 0)
       }
       private$.model_direction
     },
     model_up = function( dir ) {
-      if(!missing(dir)) {
-        if(is.null(dir)) {
+      if (!missing(dir)) {
+        if (is.null(dir)) {
           private$.model_up <- c(0, 0, 0)
         } else {
           dir <- as.double(dir[])
-          if(length(dir) != 3L || anyNA(dir)) {
+          if (length(dir) != 3L || anyNA(dir)) {
             stop("Electrode `up` direction must have length of 3 and cannot contain NA")
           }
-          if(sum(dir^2) > 0) {
+          if (sum(dir^2) > 0) {
             # normalize
             dir <- dir / sqrt(sum(dir^2))
           }
           private$.model_up <- dir
         }
       }
-      if(length(private$.model_up) != 3) {
+      if (length(private$.model_up) != 3) {
         private$.model_up <- c(0, 0, 0)
       }
       private$.model_up
     },
     position = function(v) {
-      if(!missing(v)) {
+      if (!missing(v)) {
         stop("Please use x$set_position(...) to set vertex positions")
       }
       pos <- self$transform %*% rbind(private$.position, 1)
@@ -953,13 +953,13 @@ ElectrodePrototype <- R6::R6Class(
     # marker_map = function() { private$.marker_map },
     transform = function() { private$.transform },
     control_points = function() {
-      if( !length(private$.model_control_points) ) { return(NULL) }
+      if ( !length(private$.model_control_points) ) { return(NULL) }
       mcp <- private$.model_control_points
       tcp <- private$.world_control_points
 
       n <- nrow(mcp)
-      if(length(tcp) && is.matrix(tcp)) {
-        if( nrow(tcp) < n ) {
+      if (length(tcp) && is.matrix(tcp)) {
+        if ( nrow(tcp) < n ) {
           tcp_ <- array(NA_real_, c(n, 3L))
           tcp_[seq_len(nrow(tcp)), ] <- tcp
         } else {
@@ -975,7 +975,7 @@ ElectrodePrototype <- R6::R6Class(
       order <- private$.model_control_point_orders
       channels <- NA
       tryCatch({
-        if(length(order) == n) {
+        if (length(order) == n) {
           channels <- self$channel_numbers[ order ]
         }
       }, error = function(e) {})
@@ -1027,17 +1027,17 @@ new_electrode_prototype <- function(
     base_prototype, modifier = NULL) {
 
   prototype <- ElectrodePrototype$new("")
-  if(inherits(base_prototype, "ElectrodePrototype")) {
+  if (inherits(base_prototype, "ElectrodePrototype")) {
     prototype$copy( base_prototype )
   } else if (is.list(base_prototype)) {
     prototype$from_list(base_prototype)
-  } else if(is.character(base_prototype)) {
+  } else if (is.character(base_prototype)) {
     plist <- list_electrode_prototypes()
     f <- plist[[ base_prototype ]]
-    if(length(f) == 1 && file.exists(f)) {
+    if (length(f) == 1 && file.exists(f)) {
       prototype$from_json(json = f, is_file = TRUE)
     } else {
-      if(file.exists(base_prototype)) {
+      if (file.exists(base_prototype)) {
         prototype$from_json(json = base_prototype, is_file = TRUE)
       } else {
         tryCatch({
@@ -1052,15 +1052,15 @@ new_electrode_prototype <- function(
   }
   prototype$validate()
 
-  if(is.list(modifier)) {
+  if (is.list(modifier)) {
 
     lapply(names(modifier), function(nm) {
       cf <- modifier[[nm]]
-      if(is.function(cf)) {
+      if (is.function(cf)) {
         cf <- cf(prototype)
       } else {
         f <- prototype[[sprintf("set_%s", nm)]]
-        if(is.function(f)) {
+        if (is.function(f)) {
           f(cf)
         }
       }
@@ -1069,7 +1069,7 @@ new_electrode_prototype <- function(
 
     nms <- names(modifier)
     sel <- sprintf("set_%s", nms) %in% names(prototype)
-    if(any(sel)) {
+    if (any(sel)) {
 
     }
   }
@@ -1082,9 +1082,9 @@ new_electrode_prototype <- function(
 prototype_search_paths <- function() {
   paths <- file.path(
     c(
-      '~/rave_data/others/three_brain',
+      "~/rave_data/others/three_brain",
       default_template_directory(),
-      system.file(package = 'threeBrain')
+      system.file(package = "threeBrain")
     ),
     "prototypes"
   )
@@ -1123,7 +1123,7 @@ list_electrode_prototypes <- function() {
   root_paths <- rev(prototype_search_paths())
   root_paths <- root_paths[dir.exists(root_paths)]
 
-  if(!length(root_paths)) { return(re) }
+  if (!length(root_paths)) { return(re) }
 
   root_paths <- normalizePath(root_paths, mustWork = FALSE)
   root_paths <- unique(root_paths)
@@ -1133,7 +1133,7 @@ list_electrode_prototypes <- function() {
                          include.dirs = FALSE, full.names = FALSE,
                          all.files = FALSE, recursive = FALSE)
 
-    if(length(fnames)) {
+    if (length(fnames)) {
       pnames <- gsub("\\.json$", "", fnames, ignore.case = TRUE)
       pnames <- toupper(pnames)
       re[ pnames ] <<- file.path(path, fnames)
@@ -1147,7 +1147,7 @@ list_electrode_prototypes <- function() {
 load_prototype <- function( type ) {
   li <- list_electrode_prototypes()
   path <- li[[ toupper(type) ]]
-  if(!length(path)) { stop("No such electrode geometry prototype: ", type) }
+  if (!length(path)) { stop("No such electrode geometry prototype: ", type) }
   prototype <- ElectrodePrototype$new("")
   prototype$from_json(json = path, is_file = TRUE)
 }

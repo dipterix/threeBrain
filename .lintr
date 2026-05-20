@@ -1,0 +1,15 @@
+linters: linters_with_defaults(
+  commented_code_linter = NULL,
+  line_length_linter = line_length_linter(120L),
+  brace_linter = brace_linter(allow_single_line = TRUE),
+  object_length_linter = object_length_linter(length = 60L),
+  indentation_linter = NULL,
+  object_usage_linter = NULL,
+  trailing_blank_lines_linter = NULL,
+  trailing_whitespace_linter = NULL,
+  line_length_linter = NULL,
+  return_linter = NULL,
+  spaces_inside_linter = NULL,
+  object_name_linter = NULL,
+  whitespace_linter = NULL)
+encoding: "UTF-8"

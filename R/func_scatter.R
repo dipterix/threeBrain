@@ -42,28 +42,28 @@
 # three_scatter <- function(
 #   x, y, z, size = 1, col = 1, label = NULL, group = 1, timestamp = NULL, pal = NULL,
 #   scale = 1, control_panel = TRUE, control_presets = NULL, camera_pos, ...
-# ){
+# ) {
 #   maxl <- max(length(x),length(y),length(z))
-#   rec <- function(d, max_len = maxl){
-#     if(length(d) == 0){
+#   rec <- function(d, max_len = maxl) {
+#     if (length(d) == 0) {
 #       return(seq_len(max_len))
 #     }
-#     if(is.matrix(d)){
-#       if(nrow(d) > max_len){
+#     if (is.matrix(d)) {
+#       if (nrow(d) > max_len) {
 #         return(d[seq_len(max_len),,drop=FALSE])
 #       }
 #       nrep <- ceiling(max_len / nrow(d))
-#       if(nrep > 1){
-#         d <- apply(d, 2, function(dd){
+#       if (nrep > 1) {
+#         d <- apply(d, 2, function(dd) {
 #           rep(dd, nrep)[seq_len(max_len)]
 #         })
 #       }
-#     }else{
-#       if(length(d) > max_len){
+#     } else {
+#       if (length(d) > max_len) {
 #         return(d[seq_len(max_len)])
 #       }
 #       nrep <- ceiling(max_len / length(d))
-#       if(nrep > 1){
+#       if (nrep > 1) {
 #         d <- rep(d, nrep)[seq_len(max_len)]
 #       }
 #     }
@@ -72,12 +72,12 @@
 #
 #   }
 #
-#   if(length(scale)){
+#   if (length(scale)) {
 #     scale <- scale[[1]]
-#     if(scale == 'auto'){
+#     if (scale == 'auto') {
 #       scale <- 50 / max(abs(range(x,y,z)))
 #     }
-#   }else{
+#   } else {
 #     scale <- 1
 #   }
 #
@@ -88,29 +88,29 @@
 #   label <- rec(label)
 #   group <- rec(as.character(group))
 #
-#   groups <- sapply(sort(unique(group)), function(gname){
+#   groups <- sapply(sort(unique(group)), function(gname) {
 #     GeomGroup$new(name = gname)
 #   }, USE.NAMES = TRUE, simplify = FALSE)
 #
 #
-#   if(!is.numeric(col)){
+#   if (!is.numeric(col)) {
 #     col <- as.factor(col)
 #   }
 #
 #   col <- as.matrix(rec(col))
 #   timestamp <- rec(timestamp, ncol(col))
 #
-#   geoms <- lapply(seq_len(maxl), function(ii){
-#     if(length(groups) > 1){
+#   geoms <- lapply(seq_len(maxl), function(ii) {
+#     if (length(groups) > 1) {
 #       nm <- sprintf('%s (%s)', label[ii], group[[ii]])
-#     }else{
+#     } else {
 #       nm <- label[ii]
 #     }
 #     g <- SphereGeom$new(name = nm, position = c(x[ii], y[ii], z[ii]) * scale,
 #                        radius = size[ii], group = groups[[group[[ii]]]])
 #     g$set_value(value = col[ii,], time_stamp = timestamp, name = 'Value')
 #
-#     if(scale != 1){
+#     if (scale != 1) {
 #       g$custom_info <- sprintf('Rescale: %.2f x', 1/scale)
 #     }
 #
@@ -125,7 +125,7 @@
 #   span <- sqrt(max(sum(span^2), sum((span - camera_center)^2)))
 #
 #
-#   if(missing(camera_pos)){
+#   if (missing(camera_pos)) {
 #     camera_pos <- camera_center + c(0,0,2*span)
 #   }
 #

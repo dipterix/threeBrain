@@ -5,11 +5,11 @@ NULL
 
 #' @export
 DataCubeGeom2 <- R6::R6Class(
-  classname = 'DataCubeGeom2',
+  classname = "DataCubeGeom2",
   inherit = DataCubeGeom,
   public = list(
 
-    type = 'datacube2',
+    type = "datacube2",
     clickable = FALSE,
     threshold = 0.6,
     color_format = "RGBAFormat",
@@ -20,14 +20,14 @@ DataCubeGeom2 <- R6::R6Class(
     trans_space_from = "model",
 
     initialize = function(name, value, dim = dim(value),
-                          half_size = c(128,128,128),
-                          group = GeomGroup$new(name = 'default'),
+                          half_size = c(128, 128, 128),
+                          group = GeomGroup$new(name = "default"),
                           position = c( 0, 0, 0),
                           color_format = c("RGBAFormat", "RedFormat"),
                           cache_file = NULL,
-                          layer = 8, digest = TRUE, ...){
+                          layer = 8, digest = TRUE, ...) {
       # Make sure value is from 0 to 255
-      if(missing(value)){
+      if (missing(value)) {
         super$initialize(name = name, dim = dim, half_size = half_size,
                          group = group, position = position,
                          cache_file = cache_file,
@@ -45,7 +45,7 @@ DataCubeGeom2 <- R6::R6Class(
 
     },
 
-    to_list = function(){
+    to_list = function() {
       re <- super$to_list()
       re$threshold <- self$threshold
       re$color_format <- self$color_format
@@ -56,7 +56,7 @@ DataCubeGeom2 <- R6::R6Class(
     }
   ),
   active = list(
-    is_datacube2 = function(){ TRUE }
+    is_datacube2 = function() { TRUE }
   )
 )
 
@@ -64,15 +64,15 @@ VolumeGeom2 <- R6::R6Class(
   classname = "VolumeGeom2",
   inherit = AbstractGeom,
   public = list(
-    type = 'datacube2',
+    type = "datacube2",
     clickable = FALSE,
     threshold = 0.6,
     color_format = "RGBAFormat",
     color_map = NULL,
     trans_space_from = "model",
     initialize = function(
-      name, path, group = GeomGroup$new(name = 'default'), layer = 8,
-      color_format = c("RGBAFormat", "RedFormat"), ...){
+      name, path, group = GeomGroup$new(name = "default"), layer = 8,
+      color_format = c("RGBAFormat", "RedFormat"), ...) {
 
       color_format <- match.arg(color_format)
       abspath <- normalizePath(path, mustWork = TRUE)
@@ -92,7 +92,7 @@ VolumeGeom2 <- R6::R6Class(
 
     },
 
-    to_list = function(){
+    to_list = function() {
       re <- super$to_list()
       re$threshold <- self$threshold
       re$color_format <- self$color_format
@@ -104,7 +104,7 @@ VolumeGeom2 <- R6::R6Class(
     }
   ),
   active = list(
-    is_datacube2 = function(){ TRUE },
-    is_volumecube2 = function(){ TRUE }
+    is_datacube2 = function() { TRUE },
+    is_volumecube2 = function() { TRUE }
   )
 )

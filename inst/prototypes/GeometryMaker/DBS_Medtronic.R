@@ -39,16 +39,16 @@ markers <- data.frame(
   # 1mm, the 2nd row is around 1+1.5+0.5=3, ...
   distance_to_tip = 1 + c(
                                                     # dis                   # Proximal marker
-      0,   2,   2,   2,   4,   4,   4,   6,         10.5,11,11.5,12,        13,13.5,14,14.5),
+      0,   2,   2,   2,   4,   4,   4,   6,         10.5, 11, 11.5, 12,     13, 13.5, 14, 14.5),
   # counter-clockwise from proximal end
   angle_start = c(
-      0,  20, 140, 260,  20, 140, 260,   0,         150, 165, 180, 195,     30,30,30,30),
+      0,  20, 140, 260,  20, 140, 260,   0,         150, 165, 180, 195,     30, 30, 30, 30),
   angle_end = c(
-    360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45,60,75,90),
+    360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45, 60, 75, 90),
   is_contact = c(
-    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE),
+    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
   # order = 1 will be fixed, 0 ignored
-  anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0,0,0,0,                0,0,0,0)
+  anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0, 0, 0, 0,             0, 0, 0, 0)
 )
 
 overall_length <- 420 # 420 mm
@@ -76,16 +76,16 @@ markers <- data.frame(
   # The distance between tip to the edge of the contact is around 1mm?
   # 1mm, the 2nd row is around 1+1.5+0.5=3, ...
   distance_to_tip = 1 + c(
-    0,   3,   3,   3,   6,   6,   6,   9,           15.5,16,16.5,17,        18,18.5,19,19.5),
+    0,   3,   3,   3,   6,   6,   6,   9,           15.5, 16, 16.5, 17,     18, 18.5, 19, 19.5),
   # counter-clockwise from proximal end
   angle_start = c(
-    0,  20, 140, 260,  20, 140, 260,   0,           150, 165, 180, 195,     30,30,30,30),
+    0,  20, 140, 260,  20, 140, 260,   0,           150, 165, 180, 195,     30, 30, 30, 30),
   angle_end = c(
-    360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45,60,75,90),
+    360, 100, 220, 340, 100, 220, 340,   0,         210, 210, 210, 210,     45, 60, 75, 90),
   is_contact = c(
     TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
   # order = 1 will be fixed, 0 ignored
-  anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0,0,0,0,                0,0,0,0)
+  anchor_order = c(1, 0, 0, 0, 0, 0, 0,  2,         0, 0, 0, 0,             0, 0, 0, 0)
 )
 
 overall_length <- 420 # 420 mm
@@ -114,7 +114,7 @@ up_direction <- c(
 width_segments <- 36
 radius <- diameter / 2.0
 
-if(sum(up_direction^2) > 0) {
+if (sum(up_direction^2) > 0) {
   up_direction <- up_direction / sqrt(sum(up_direction^2))
 }
 
@@ -151,11 +151,11 @@ is_metal <- is_metal[sel]
 
 # tip
 tip_paths <- c(0, radius * (1 - cos(pi / 8 * seq_len(4))))
-for(z in tip_paths) {
-  if(any(z_paths == z)) { next }
+for (z in tip_paths) {
+  if (any(z_paths == z)) { next }
   idx1 <- which(z_paths > z)
   idx2 <- which(z_paths < z)
-  if(!length(idx2)) {
+  if (!length(idx2)) {
     z_paths <- c(z, z_paths)
     is_metal <- c(0, is_metal)
   } else {
@@ -177,13 +177,13 @@ z_radius <- sqrt(radius^2 - ifelse(z_paths > radius, 0, radius - z_paths)^2)
 # z_paths[[1]] has to be 0, but also need a disc at the tail of the electrode
 n_discs <- length(z_paths)
 pos_x <- as.vector(sapply(seq_len(n_discs), function(ii) {
-  if(ii < n_discs) {
+  if (ii < n_discs) {
     ii <- ii + 1
   }
   x0 * z_radius[ii]
 }))
 pos_y <- as.vector(sapply(seq_len(n_discs), function(ii) {
-  if(ii < n_discs) {
+  if (ii < n_discs) {
     ii <- ii + 1
   }
   y0 * z_radius[ii]
@@ -259,7 +259,7 @@ contact_info <- lapply(seq_len(nrow(markers)), function(row_ii) {
   cz0 <- markers$distance_to_tip[[ row_ii ]]
   cw <- markers$width[[ row_ii ]]
 
-  if(a0 == a1) {
+  if (a0 == a1) {
     u0 <- 1
     w <- 360
 
@@ -268,7 +268,7 @@ contact_info <- lapply(seq_len(nrow(markers)), function(row_ii) {
     r <- max(radius, cw / 2)
   } else {
     u0 <- a0 + 1
-    if( a0 < a1 ) {
+    if ( a0 < a1 ) {
       w <- a1 - u0
     } else {
       w <- 360 - a0 + a1
@@ -293,7 +293,7 @@ contact_center <- contact_info[5:7, markers$is_contact, drop = FALSE]
 contact_sizes <- contact_info[8, markers$is_contact, drop = TRUE]
 
 marker_map <- contact_info[1:4, !markers$is_contact, drop = FALSE]
-if(!length(marker_map)) { marker_map <- NULL }
+if (!length(marker_map)) { marker_map <- NULL }
 
 # ---- Anchors ----------------------------------------------------------------
 anchors <- markers[markers$anchor_order > 0, ]
@@ -303,7 +303,7 @@ model_control_points <- cbind(
   0, 0, anchors$distance_to_tip + anchors$width / 2
 )
 sel <- !duplicated(model_control_points)
-model_control_points <- model_control_points[sel, , drop=FALSE]
+model_control_points <- model_control_points[sel, , drop = FALSE]
 anchor_order <- anchors$anchor_order[sel]
 anchor_order[anchor_order <= 0] <- NA
 

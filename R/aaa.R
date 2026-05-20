@@ -132,102 +132,102 @@ DEFAULT_TEMPLATES <- list(
 #' @param show_example whether to show example of `N27` subject at the end.
 #' @param ... ignored
 #' @export
-brain_setup <- function(continued = FALSE, show_example = TRUE, ...){
-  cat2('Downloading N27 brain from the Internet.', level = 'INFO')
+brain_setup <- function(continued = FALSE, show_example = TRUE, ...) {
+  cat2("Downloading N27 brain from the Internet.", level = "INFO")
   download_N27()
 
-  cat2('Wrapping up installation...', level = 'INFO')
+  cat2("Wrapping up installation...", level = "INFO")
 
   template_dir <- default_template_directory()
 
-  template <- merge_brain(template_subject = "N27", template_dir = template_dir, template_surface_types = c('pial', 'smoothwm'))
+  template <- merge_brain(template_subject = "N27", template_dir = template_dir, template_surface_types = c("pial", "smoothwm"))
 
 
-  if( show_example ){
+  if ( show_example ) {
     template$template_object$plot()
   }
 }
 
-get_os <- function(){
+get_os <- function() {
   os <- R.version$os
-  if(grepl('^darwin', os, ignore.case = TRUE)){
-    return('darwin')
+  if (grepl("^darwin", os, ignore.case = TRUE)) {
+    return("darwin")
   }
-  if(grepl('^linux', os, ignore.case = TRUE)){
-    return('linux')
+  if (grepl("^linux", os, ignore.case = TRUE)) {
+    return("linux")
   }
-  if(grepl('^solaris', os, ignore.case = TRUE)){
-    return('solaris')
+  if (grepl("^solaris", os, ignore.case = TRUE)) {
+    return("solaris")
   }
-  if(grepl('^win', os, ignore.case = TRUE)){
-    return('windows')
+  if (grepl("^win", os, ignore.case = TRUE)) {
+    return("windows")
   }
-  if(grepl("^(emscr|wasm)", os, ignore.case = TRUE)) {
-    return('emscripten')
+  if (grepl("^(emscr|wasm)", os, ignore.case = TRUE)) {
+    return("emscripten")
   }
-  return('unknown')
+  return("unknown")
 }
 
 download_file <- function(...) {
-  if( identical(get_os(), "emscripten") && !isTRUE(getOption("threeBrain.download.wasm.enabled", FALSE)) ) {
+  if ( identical(get_os(), "emscripten") && !isTRUE(getOption("threeBrain.download.wasm.enabled", FALSE)) ) {
     # WASM and downloading files might not work well :|
     stop("WASM environment detected. Downloading external files is disabled")
   }
   utils::download.file(...)
 }
 
-package_installed <- function(pkgs, all = FALSE){
-  re <- sapply(pkgs, function(p){
-    system.file('', package = p) != ''
+package_installed <- function(pkgs, all = FALSE) {
+  re <- sapply(pkgs, function(p) {
+    system.file("", package = p) != ""
   })
-  if(all){
+  if (all) {
     re <- all(re)
   }
   re
 }
 
-col2hexStr <- function(col, alpha = NULL, prefix = '#', ...){
-  if(is.null(alpha)){
+col2hexStr <- function(col, alpha = NULL, prefix = "#", ...) {
+  if (is.null(alpha)) {
     alpha <- 1
     transparent <- FALSE
-  }else{
+  } else {
     transparent <- TRUE
   }
   re <- grDevices::adjustcolor(col, alpha.f = alpha)
-  if(!transparent){
+  if (!transparent) {
     re <- substr(re, start = 1L, stop = 7L)
   }
-  gsub('^[^0-9A-F]*', replacement = prefix, x = re)
+  gsub("^[^0-9A-F]*", replacement = prefix, x = re)
 }
 
-rs_avail <- function(){
+rs_avail <- function() {
   tryCatch({
     spath <- search()
-    if('tools:rstudio' %in% spath) {
+    if ("tools:rstudio" %in% spath) {
       rs_ver <- get("RStudio.Version", inherits = TRUE, envir = parent.env(globalenv()))
-      if(is.function(rs_ver)) {
+      if (is.function(rs_ver)) {
         rs_ver()
         return(TRUE)
       }
     }
     return(FALSE)
-  }, error = function(e){
+  }, error = function(e) {
     return(FALSE)
   })
 }
 
-`%?<-%` <- function(lhs, value){
+`%?<-%` <- function(lhs, value) {
   env <- parent.frame()
   lhs <- substitute(lhs)
 
   isnull <- tryCatch({
     is.null(eval(lhs, envir = env))
-  }, error = function(e){
+  }, error = function(e) {
     return(TRUE)
   })
 
 
-  if(isnull){
+  if (isnull) {
     eval(as.call(list( quote(`<-`), lhs, value )), envir = env)
   }
 }
@@ -251,16 +251,16 @@ surface_alternative_types <- list(
 TRANSFORM_SPACES <- c("tkr", "scanner", "mni152", "mni305")
 
 
-col2hexStr <- function(col, alpha = NULL, prefix = '#', ...){
-  if(is.null(alpha)){
+col2hexStr <- function(col, alpha = NULL, prefix = "#", ...) {
+  if (is.null(alpha)) {
     alpha <- 1
     transparent <- FALSE
-  }else{
+  } else {
     transparent <- TRUE
   }
   re <- grDevices::adjustcolor(col, alpha.f = alpha)
-  if(!transparent){
+  if (!transparent) {
     re <- substr(re, start = 1L, stop = 7L)
   }
-  gsub('^[^0-9A-F]*', prefix, re)
+  gsub("^[^0-9A-F]*", prefix, re)
 }

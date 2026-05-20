@@ -20,27 +20,27 @@ freesurfer_lut <- local({
 
   list(
 
-    get_key = function(value){
-      if(is.null(cmap)){
+    get_key = function(value) {
+      if (is.null(cmap)) {
         cmap <<- load_colormap(system.file(
-          "palettes", "datacube2", "FreeSurferColorLUT.json", package = 'threeBrain'))
+          "palettes", "datacube2", "FreeSurferColorLUT.json", package = "threeBrain"))
       }
 
       cmap$get_key(value)
 
     },
 
-    from_key = function(key, label_only = TRUE){
-      if(is.null(cmap)){
+    from_key = function(key, label_only = TRUE) {
+      if (is.null(cmap)) {
         cmap <<- load_colormap(system.file(
-          "palettes", "datacube2", "FreeSurferColorLUT.json", package = 'threeBrain'))
+          "palettes", "datacube2", "FreeSurferColorLUT.json", package = "threeBrain"))
       }
 
       re <- cmap$map[as.character(key)]
 
-      if( label_only ){
-        re <- sapply(re, function(x){
-          if(is.null(x)){ return(NA) }
+      if ( label_only ) {
+        re <- sapply(re, function(x) {
+          if (is.null(x)) { return(NA) }
           x$Label
         })
       }
@@ -48,9 +48,9 @@ freesurfer_lut <- local({
     },
 
     get_map = function() {
-      if(is.null(cmap)){
+      if (is.null(cmap)) {
         cmap <<- load_colormap(system.file(
-          "palettes", "datacube2", "FreeSurferColorLUT.json", package = 'threeBrain'))
+          "palettes", "datacube2", "FreeSurferColorLUT.json", package = "threeBrain"))
       }
       cmap
     }

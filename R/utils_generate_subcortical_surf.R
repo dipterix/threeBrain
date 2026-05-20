@@ -38,8 +38,8 @@ NULL
 #' @export
 read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FALSE) {
   format <- match.arg(format)
-  if(format == "auto") {
-    if(endsWith(file, "mgz") || endsWith(file, "mgh")) {
+  if (format == "auto") {
+    if (endsWith(file, "mgz") || endsWith(file, "mgh")) {
       format <- "mgh"
     } else {
       format <- "nii"
@@ -49,8 +49,8 @@ read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FA
   data <- NULL
   header <- NULL
 
-  if(format == "mgh") {
-    if( header_only ) {
+  if (format == "mgh") {
+    if ( header_only ) {
       header <- read_fs_mgh_header( file )
     } else {
       volume <- freesurferformats::read.fs.mgh(filepath = file, with_header = TRUE)
@@ -66,7 +66,7 @@ read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FA
     Torig[4, 4] <- 1
   } else {
     volume <- read_nii2(file, head_only = header_only)
-    if( !header_only ) {
+    if ( !header_only ) {
       data <- volume$get_data()
     }
     header <- volume$header
@@ -100,7 +100,7 @@ read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FA
 get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
   type <- match.arg(type)
 
-  if( inherits(x, "ants.core.ants_image.ANTsImage")) {
+  if ( inherits(x, "ants.core.ants_image.ANTsImage")) {
     tmpfile <- tempfile(fileext = ".nii.gz")
     on.exit({
       unlink(tmpfile)
@@ -109,20 +109,20 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
     x <- read_volume(tmpfile, header_only = TRUE)
   }
 
-  if(is.character(x)) {
+  if (is.character(x)) {
     x <- read_volume(x, header_only = TRUE)
   }
-  if(inherits(x, "threeBrain.volume")) {
-    if(type == "scanner") {
+  if (inherits(x, "threeBrain.volume")) {
+    if (type == "scanner") {
       return(x$Norig)
     } else {
       return(x$Torig)
     }
   }
-  if( inherits(x, "mghheader") ) {
+  if ( inherits(x, "mghheader") ) {
     # Norig: IJK to scanner-RAS
     Norig <- x$vox2ras_matrix
-    if(type == "scanner") {
+    if (type == "scanner") {
       return(Norig)
     } else {
       # Torig: IJK to tkr-RAS
@@ -132,39 +132,39 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
       return(Torig)
     }
   }
-  if( inherits(x, "oro.nifti") ) {
+  if ( inherits(x, "oro.nifti") ) {
     sform_code <- c(x@sform_code, 0)[[1]]
     qform_code <- c(x@qform_code, 0)[[1]]
 
     # https://github.com/dipterix/threeBrain/issues/15
-    if(sform_code == 0 && qform_code == 0) {
-      Norig <- diag(c(x@pixdim[seq(2,4)], 1))
+    if (sform_code == 0 && qform_code == 0) {
+      Norig <- diag(c(x@pixdim[seq(2, 4)], 1))
     } else {
       use_sform <- TRUE
       prefered_code <- c(1, 4, 2, 5, 3, 0)
 
-      if(which(prefered_code == sform_code) >
+      if (which(prefered_code == sform_code) >
          which(prefered_code == qform_code)) {
         use_sform <- FALSE
       }
-      if( use_sform ) {
+      if ( use_sform ) {
         Norig <- rbind(
           x@srow_x,
           x@srow_y,
           x@srow_z,
-          c(0,0,0,1)
+          c(0, 0, 0, 1)
         )
       } else {
         Norig <- oro.nifti::qform(x)
       }
     }
 
-    if(type == "scanner") {
+    if (type == "scanner") {
       return(Norig)
     } else {
       # Torig: IJK to tkr-RAS
       Torig <- Norig[1:4, 1:3]
-      Torig <- cbind(Torig, -Torig %*% oro.nifti::dim_(x)[c(2,3,4)] / 2)
+      Torig <- cbind(Torig, -Torig %*% oro.nifti::dim_(x)[c(2, 3, 4)] / 2)
       Torig[4, 4] <- 1
       return(Torig)
     }
@@ -175,7 +175,7 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
 
 as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
   x <- vapply(as.character(x), function(k) {
-    if(grepl("^[0-9]+$", k)) {
+    if (grepl("^[0-9]+$", k)) {
       return(as.character(freesurfer_lut$from_key(k, label_only = TRUE)))
     } else {
       return(k)
@@ -184,7 +184,7 @@ as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
 
   x <- tolower(x)
 
-  if( remove_hemisphere ) {
+  if ( remove_hemisphere ) {
     x <- gsub("^(ctx|wm)[_-][lr]h", "\\1", x)
     x <- gsub("^(left|right)[_-]", "", x)
   } else {
@@ -212,7 +212,7 @@ as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
 generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label = NULL, IJK2RAS = NULL, grow = 1,
                                          remesh = TRUE, smooth = TRUE, smooth_delta = 3, ...) {
 
-  if(is.character(atlas)) {
+  if (is.character(atlas)) {
     atlas <- read_volume(atlas)
   }
 
@@ -220,12 +220,12 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
   # atlas <- freesurferformats::read.fs.mgh(file.path(path, "mri", "aparc+aseg.mgz"), with_header = TRUE)
   # atlas_path <- file.path(path, "mri", atlas_file)
   # atlas <- read_volume(atlas_path, header_only = FALSE)
-  if(!is.matrix(IJK2RAS)) {
+  if (!is.matrix(IJK2RAS)) {
     IJK2RAS <- atlas$Torig
   }
 
   # get label
-  if(length(label) != 1 || is.na(label) || !nzchar(trimws(label))) {
+  if (length(label) != 1 || is.na(label) || !nzchar(trimws(label))) {
     label <- as_subcortical_label(index, remove_hemisphere = FALSE)
   } else {
     label <- trimws(label)
@@ -236,7 +236,7 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 
 
   grow <- as.integer(grow)
-  if( grow >= 1) {
+  if ( grow >= 1) {
     ravetools <- asNamespace("ravetools")
     mask <- ravetools$grow_volume(mask, grow)
   }
@@ -258,7 +258,7 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
   # }
   mesh$atlas_label <- as_subcortical_label(label)
   mesh$atlas_index <- as_subcortical_label(index)
-  if(length(save_prefix) == 1) {
+  if (length(save_prefix) == 1) {
     freesurferformats::write.fs.surface(
       filepath = file.path(save_prefix, sprintf("%s-%s", label, index)),
       vertex_coords = mesh$vertices,
@@ -311,7 +311,7 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 #'   mesh <- volume_to_surf(aseg, threshold_lb = 1034,
 #'                          threshold_ub = 1036)
 #'
-#'   if(interactive()) {
+#'   if (interactive()) {
 #'     ravetools::rgl_view({
 #'       ravetools::rgl_call("shade3d", mesh, color = "yellow")
 #'     })
@@ -326,15 +326,15 @@ volume_to_surf <- function(
     format = "auto") {
   # volume = '~/rave_data/raw_dir/testtest2/rave-imaging/atlases/AHEAD Atlas (Alkemade 2020)/lh/GPe_prob.nii.gz'
 
-  if(length(save_to) != 1 || is.na(save_to) || !nzchar(save_to)) {
+  if (length(save_to) != 1 || is.na(save_to) || !nzchar(save_to)) {
     save_to <- NA
   }
 
-  if(is.character(volume)) {
+  if (is.character(volume)) {
     volume <- read_volume(volume)
   }
   vol_dim <- dim(volume$data)
-  if(length(vol_dim) < 3) {
+  if (length(vol_dim) < 3) {
     vol_dim <- c(vol_dim, 1, 1, 1)[seq_len(3)]
   } else if (length(vol_dim) > 3) {
     vol_dim <- vol_dim[seq_len(3)]
@@ -350,7 +350,7 @@ volume_to_surf <- function(
   )
 
   # smooth
-  if( isTRUE( lambda > 0 ) ) {
+  if ( isTRUE( lambda > 0 ) ) {
     mesh <- ravetools::vcg_smooth_implicit(
       mesh,
       lambda = lambda,
@@ -366,7 +366,7 @@ volume_to_surf <- function(
   #   ravetools::rgl_call("shade3d", mesh, col = 'red')
   # })
 
-  if(!is.na(save_to)) {
+  if (!is.na(save_to)) {
     freesurferformats::write.fs.surface(
       filepath = save_to,
       vertex_coords = t(mesh$vb[1:3, , drop = FALSE]),
