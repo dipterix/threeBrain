@@ -194,6 +194,17 @@ normalize_electrode_table <- function(table, self, position_names = c("x", "y", 
 }
 
 
+#' R6 Class - Brain Electrode Collection
+#' @description
+#' Internal class that manages the full set of electrode geometry objects
+#' and the electrode coordinate table for one subject.  Handles coordinate
+#' transformations between FreeSurfer surface space and other coordinate
+#' systems (scanner, MNI305, MNI152).
+#' @author Zhengjia Wang
+#' @name BrainElectrodes
+#' @noRd
+NULL
+
 BrainElectrodes <- R6::R6Class(
   classname = "brain-electrodes",
   portable = TRUE,
@@ -707,6 +718,8 @@ BrainElectrodes <- R6::R6Class(
           position = tkr_ras,
           radius = radius, group = self$group, subtype = "SphereGeometry", prototype = proto)
         el$number <- row$Electrode
+        el$label_prefix <- label_prefix
+        el$device_name <- as.character(row$Prototype %||% "")
         el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
         el$MNI305_position <- mni_305
         el$sphere_position <- sphere_xyz
@@ -767,6 +780,12 @@ BrainElectrodes <- R6::R6Class(
             position = c(999, 999, 999), # this will be ignored
             radius = 1, group = self$group, subtype = "CustomGeometry", prototype = proto)
           el$number <- electrode_numbers
+          if (length(sub$LabelPrefix)) {
+            el$label_prefix <- as.character(sub$LabelPrefix[[1]])
+          } 
+          if (length(sub$Prototype)) {
+            el$device_name <- as.character(sub$Prototype[[1]])
+          }
           el$is_surface_electrode <- FALSE
           el$vertex_number <- -1
 

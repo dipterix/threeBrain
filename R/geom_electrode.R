@@ -1,5 +1,15 @@
 
 
+#' R6 Class - Electrode Geometry
+#' @description
+#' Internal geometry class representing a single intracranial electrode
+#' contact in the three-brain viewer.  Supports both sphere and custom
+#' prototype shapes, surface snapping, and MNI-space position storage.
+#' @author Zhengjia Wang
+#' @name ElectrodeGeom
+#' @noRd
+NULL
+
 # electrodes
 ElectrodeGeom <- R6::R6Class(
   classname = "ElectrodeGeom",
@@ -44,6 +54,15 @@ ElectrodeGeom <- R6::R6Class(
     # case 2: list(color, names, [true/false]): colors that will only be activated
     # when names in(true) or not in(false) given names
     fixed_color = NULL,
+
+    # optional surgical / clinical / custom display string shown when the
+    # "Electrode Text" controller is set to 'label_prefix'
+    label_prefix = NULL,
+
+    # optional device / product / prototype model name shown when the
+    # "Electrode Text" controller is set to 'device_name'. When NULL,
+    # falls back to the underlying prototype object's name (if any).
+    device_name = NULL,
 
     # ------------ for sub cortical electrodes only ------------
 
@@ -109,6 +128,14 @@ ElectrodeGeom <- R6::R6Class(
       } else {
         prototype <- NULL
       }
+
+      if (length(self$device_name) == 1 && !is.na(self$device_name) && nzchar(self$device_name)) {
+        device_name <- as.character(self$device_name)
+      } else if (length(prototype) == 1 && !is.na(prototype)) {
+        device_name <- as.character(prototype)
+      } else {
+        device_name <- ""
+      }
       re <- c(
         super$to_list(),
         list(
@@ -127,7 +154,11 @@ ElectrodeGeom <- R6::R6Class(
           search_geoms = self$hemisphere,
           number = c(self$number, NA)[[1]],
           fixed_color = fixed_color,
-          surface_offset = self$surface_offset
+          surface_offset = self$surface_offset,
+          additional_info = list(
+            label_prefix = if (length(self$label_prefix) == 1 && !is.na(self$label_prefix)) as.character(self$label_prefix) else "",
+            device_name  = device_name
+          )
         )
       )
       return( re )
