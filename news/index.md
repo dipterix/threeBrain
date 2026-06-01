@@ -51,6 +51,7 @@ Engine Updates:
 - Upgraded `three.js` engine to `r182`
 - Removed `jsm` folder; optimized electrode shader to calculate inverse
   `modelViewProjection` in JavaScript rather than vertex-shader
+- Updated `jsPDF` version
 
 Streamline Visualization:
 
@@ -89,21 +90,39 @@ Minor Changes:
 - Surface mapping is more robust even if the hemisphere is unset: using
   `MNI152` R-axis to infer the hemisphere instead
 - Added `YBA` atlas color-map
+- Improved readability for screenshots and recordings
+- Screenshot and recording filenames now use full-year with local
+  timestamp
+- Preserved canvas context to allow obtaining `dataURL`
 
 Electrode Localization:
 
 - Added “interpolate without refine” option for electrode localization,
   if the users prefer
 - Added support for multiple electrodes
+- Added per-contact active/inactive tracking for `InstancedMesh`
+  contacts: inactive contacts suppress outlines; `hide inactives`
+  visibility mode discards inactive contact fragments via
+  `HIDE_INACTIVE_CONTACTS` shader define
+- Added `guessHemisphere()` to infer electrode hemisphere from
+  `FreeSurfer` anatomical label
 
 New Experimental Electrode Prototypes:
 
 - Added `PMT-2102-16-099` specifications
 - Added `BF09R-SP51X-0BB` specifications
+- Added `BF07R-SP21X-0B0`, `BF08R-SP21X-0C2`, `BF09R-SP21X-0BB`, and
+  `BF12R-SP21X-0C3` (`AdTech`) specifications
 - Added `RD16R-SP03/05X` (`AdTech`) specifications
+- Added `AdTech RD` series specifications (`RD06R`, `RD08R`, `RD10R`,
+  `RD12R`, `RD14R` variants in multiple spacing sizes)
+- Added `DIXI-D08-15PIX` and `DIXI-D08-18PIXEL` specifications
 - Added `DIXI-MM08` electrode specifications
 - Added `Behnke-Fried` electrode specifications
 - Added `NeuroOne/Zimmer` electrode specifications
+- Added `Medtronic 3387` and `Medtronic 3389` `DBS` lead specifications
+- Added `NeuroPixel NP1001`, `NP2004`, and `NP2014` shank specifications
+- Added `Spencer-MXene-7x18` `ECoG` array specifications
 
 Drag and Drop Improvements:
 

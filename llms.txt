@@ -243,10 +243,16 @@ existing viewers as a whole into your own work “as-is” is permissive.
   : R6 Class - Generate Sphere Geometry
 
 - [`SpriteGeom`](https://dipterix.org/threeBrain/reference/SpriteGeom.md)
-  : R6 Class - Generate Sphere Geometry
+  : R6 Class - Generate Image Sprite Geometry
+
+- [`TextDecorGeom`](https://dipterix.org/threeBrain/reference/TextDecorGeom.md)
+  : R6 Class - Text Decoration Geometry
 
 - [`TubeGeom`](https://dipterix.org/threeBrain/reference/TubeGeom.md) :
   R6 Class - Generate Tube Geometry
+
+- [`ViewerProxy`](https://dipterix.org/threeBrain/reference/ViewerProxy.md)
+  : R6 Class - Shiny Proxy for the Three-Brain Viewer
 
 - [`brain_proxy()`](https://dipterix.org/threeBrain/reference/brain_proxy.md)
   : Shiny Proxy for Viewer

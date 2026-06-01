@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.35</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.36</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,6 +66,7 @@
 <ul><li>Upgraded <code>three.js</code> engine to <code>r182</code>
 </li>
 <li>Removed <code>jsm</code> folder; optimized electrode shader to calculate inverse <code>modelViewProjection</code> in JavaScript rather than vertex-shader</li>
+<li>Updated <code>jsPDF</code> version</li>
 </ul><p>Streamline Visualization:</p>
 <ul><li>Added support for <code>tt</code> streamline format</li>
 <li>Fixed <code>trk</code> format; supported <code>tck</code> format (drag and drop)</li>
@@ -94,16 +95,28 @@
 <li>Native annotation from template supports <code>FreeSurfer</code> <code>curv</code> file too</li>
 <li>Surface mapping is more robust even if the hemisphere is unset: using <code>MNI152</code> R-axis to infer the hemisphere instead</li>
 <li>Added <code>YBA</code> atlas color-map</li>
+<li>Improved readability for screenshots and recordings</li>
+<li>Screenshot and recording filenames now use full-year with local timestamp</li>
+<li>Preserved canvas context to allow obtaining <code>dataURL</code>
+</li>
 </ul><p>Electrode Localization:</p>
 <ul><li>Added “interpolate without refine” option for electrode localization, if the users prefer</li>
 <li>Added support for multiple electrodes</li>
+<li>Added per-contact active/inactive tracking for <code>InstancedMesh</code> contacts: inactive contacts suppress outlines; <code>hide inactives</code> visibility mode discards inactive contact fragments via <code>HIDE_INACTIVE_CONTACTS</code> shader define</li>
+<li>Added <code>guessHemisphere()</code> to infer electrode hemisphere from <code>FreeSurfer</code> anatomical label</li>
 </ul><p>New Experimental Electrode Prototypes:</p>
 <ul><li>Added <code>PMT-2102-16-099</code> specifications</li>
 <li>Added <code>BF09R-SP51X-0BB</code> specifications</li>
+<li>Added <code>BF07R-SP21X-0B0</code>, <code>BF08R-SP21X-0C2</code>, <code>BF09R-SP21X-0BB</code>, and <code>BF12R-SP21X-0C3</code> (<code>AdTech</code>) specifications</li>
 <li>Added <code>RD16R-SP03/05X</code> (<code>AdTech</code>) specifications</li>
+<li>Added <code>AdTech RD</code> series specifications (<code>RD06R</code>, <code>RD08R</code>, <code>RD10R</code>, <code>RD12R</code>, <code>RD14R</code> variants in multiple spacing sizes)</li>
+<li>Added <code>DIXI-D08-15PIX</code> and <code>DIXI-D08-18PIXEL</code> specifications</li>
 <li>Added <code>DIXI-MM08</code> electrode specifications</li>
 <li>Added <code>Behnke-Fried</code> electrode specifications</li>
 <li>Added <code>NeuroOne/Zimmer</code> electrode specifications</li>
+<li>Added <code>Medtronic 3387</code> and <code>Medtronic 3389</code> <code>DBS</code> lead specifications</li>
+<li>Added <code>NeuroPixel NP1001</code>, <code>NP2004</code>, and <code>NP2014</code> shank specifications</li>
+<li>Added <code>Spencer-MXene-7x18</code> <code>ECoG</code> array specifications</li>
 </ul><p>Drag and Drop Improvements:</p>
 <ul><li>Drag and drop is handled by file-system API or <code>WebKit</code> before fallback to naive approaches to support dropping in folders</li>
 <li>Drag drop supports folders now</li>
