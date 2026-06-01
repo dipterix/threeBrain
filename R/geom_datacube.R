@@ -1,4 +1,8 @@
 #' R6 Class - Generate Data Cube Geometry
+#' @description
+#' Volumetric data cube geometry for rendering 3D scalar volumes as voxel
+#' data.  Stores a flat value array and its 3D dimensions in the owning
+#' \code{GeomGroup} for JSON export to the three-brain viewer.
 #' @author Zhengjia Wang
 #' @name DataCubeGeom
 NULL
@@ -9,8 +13,24 @@ DataCubeGeom <- R6::R6Class(
   inherit = AbstractGeom,
   public = list(
 
+    #' @field type Geometry type string (\code{"datacube"}).
     type = "datacube",
+    #' @field clickable Logical; always \code{FALSE} for volume geometry.
     clickable = FALSE,
+    #' @description
+    #' Create a new data cube geometry.
+    #' @param name Unique character name.
+    #' @param value Numeric vector or array of voxel values.
+    #' @param dim Integer vector of length 3: dimensions of the volume
+    #'   (\code{c(nx, ny, nz)}).
+    #' @param group \code{GeomGroup} used to store the voxel data.
+    #' @param position Numeric vector of length 3: geometry origin.
+    #'   Default \code{c(0, 0, 0)}.
+    #' @param cache_file Path to a JSON cache file, \code{TRUE} for a
+    #'   temporary file, or \code{NULL} to keep data in memory.
+    #' @param layer Camera layer.  Default \code{13} (invisible).
+    #' @param digest Logical; compute a content digest for cache validation.
+    #' @param ... Additional arguments forwarded to \code{AbstractGeom}.
     initialize = function(name, value, dim = dim(value),
                           group = GeomGroup$new(name = "default"),
                           position = c(0, 0, 0),
@@ -82,6 +102,10 @@ DataCubeGeom <- R6::R6Class(
       return(invisible())
     },
     # Ususally paricle system has lots of points, it's forced to save to a group
+    #' @description Update the voxel values of the geometry (not yet
+    #'   implemented; currently calls \code{.NotYetImplemented()}).
+    #' @param value Numeric vector of replacement voxel values.
+    #' @param dim Integer vector of length 3: dimensions matching \code{value}.
     set_value = function(value = NULL, dim = dim(value)) {
 
       .NotYetImplemented()
@@ -98,11 +122,20 @@ DataCubeGeom <- R6::R6Class(
 
       return(invisible())
     },
+    #' @description Serialize the data cube geometry to a named list for JSON
+    #'   export, adding the \code{isDataCube} flag.
     to_list = function() {
       re <- super$to_list()
       re$isDataCube <- TRUE
       re
     },
+    #' @description Retrieve a data value from this geometry or its owning
+    #'   group.
+    #' @param key Group data key to retrieve.
+    #' @param force_reload Logical; reload from the file cache even when an
+    #'   in-memory copy exists.  Default \code{FALSE}.
+    #' @param ifnotfound Value returned when \code{key} is not found.
+    #'   Default \code{NULL}.
     get_data = function(key, force_reload = FALSE, ifnotfound = NULL) {
       super$get_data(key = key, force_reload = force_reload, ifnotfound = ifnotfound)
     }

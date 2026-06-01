@@ -67,6 +67,17 @@ normalize_vector3 <- function(v) {
 
 
 
+#' R6 Class - Electrode Prototype
+#' @description
+#' Internal class that defines the 3D geometry prototype for a particular
+#' electrode model (e.g. a specific SEEG or ECoG device).  Stores vertex
+#' positions, face indices, contact center locations, UV coordinates, and
+#' control points used to fit the electrode to patient anatomy.
+#' @author Zhengjia Wang
+#' @name ElectrodePrototype
+#' @noRd
+NULL
+
 ElectrodePrototype <- R6::R6Class(
   classname = "ElectrodePrototype",
   private = list(

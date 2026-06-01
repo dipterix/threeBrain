@@ -1,4 +1,14 @@
 
+#' R6 Class - Brain Volume Data
+#' @description
+#' Internal class that wraps a single volumetric geometry object
+#' (\code{DataCubeGeom} or \code{VolumeGeom}) for one volume type
+#' (e.g. T1, brain mask) along with its owning \code{GeomGroup}.
+#' @author Zhengjia Wang
+#' @name BrainVolume
+#' @noRd
+NULL
+
 BrainVolume <- R6::R6Class(
   classname = "brain-volume",
   portable = TRUE,

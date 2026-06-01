@@ -1,5 +1,9 @@
 #' R6 Class - Generate Geometry from Vertices and Face Indices
-#'
+#' @description
+#' Geometry defined by explicit vertex coordinates and face indices, used
+#' primarily for brain surface meshes.  Supports per-vertex color animation
+#' and FreeSurfer annotation overlays.
+#' @author Zhengjia Wang
 #' @name FreeGeom
 NULL
 
@@ -8,19 +12,29 @@ FreeGeom <- R6::R6Class(
   classname = "FreeGeom",
   inherit = AbstractGeom,
   public = list(
+    #' @field cache_file Path to the JSON file used as a persistent data cache,
+    #'   or \code{NULL} when caching is disabled.
     cache_file = NULL,
 
+    #' @field type Geometry type string (\code{"free"}).
     type = "free",
 
     value = NULL,
     time_stamp = NULL,
 
+    #' @field clickable Logical; always \code{FALSE} for mesh surfaces.
     clickable = FALSE,
 
     # for brain surfaces only
+    #' @field hemisphere Hemisphere label: \code{"lh"} (left) or \code{"rh"}
+    #'   (right), or \code{NULL} for other geometry.
     hemisphere = NULL,
+    #' @field surface_type Surface type label, e.g. \code{"pial"} or
+    #'   \code{"white"}; \code{NULL} for non-surface geometry.
     surface_type = NULL,
 
+    #' @field subcortical_info Named list of subcortical structure metadata,
+    #'   or \code{NULL}.
     subcortical_info = NULL,
 
     set_value = function(value, colormap, time_stamp = 0, key = colormap$get_key(value)) {

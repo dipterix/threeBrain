@@ -12,6 +12,10 @@
 
 
 #' R6 Class - Generate Group of Geometries
+#' @description
+#' Container that collects geometry objects belonging to the same logical group
+#' in the three-brain viewer.  Manages shared data, an optional 4-by-4
+#' transformation matrix, spatial position, and a local file cache.
 #' @author Zhengjia Wang
 #' @name GeomGroup
 NULL
@@ -21,24 +25,51 @@ GeomGroup <- R6::R6Class(
   classname = "GeomGroup",
   portable = TRUE,
   public = list(
+    #' @field name Unique character name of the group.
     name = "",
+    #' @field layer Camera layer(s); 0 = main camera only, 1 = all cameras,
+    #'   13 = invisible.
     layer = NULL,
+    #' @field position Numeric vector of length 3: group origin in world space.
     position = c(0, 0, 0),
+    #' @field group_data Named list of shared data attached to the group.
     group_data = NULL,
+    #' @field trans_mat Optional 4-by-4 transformation matrix
+    #'   (\code{NULL} for identity).
     trans_mat = NULL,
+    #' @field cached_items Character vector of group data keys stored in the
+    #'   file cache.
     cached_items = NULL,
+    #' @field cache_env Local environment used for in-memory caching of loaded
+    #'   cache files.
     cache_env = NULL,
+    #' @field cache_path Directory path for the file cache.
     cache_path = NULL,
+    #' @field disable_trans_mat Logical; when \code{TRUE} the transformation
+    #'   matrix is ignored during rendering.
     disable_trans_mat = FALSE,
+    #' @field parent_group Name of the parent group, or \code{NULL}.
     parent_group = NULL,
+    #' @field subject_code Subject identifier string, or \code{NULL}.
     subject_code = NULL,
+    #' @field .cache_name Override for the sanitized cache directory name.
+    #'   When \code{NULL} the name is derived from \code{$name} by replacing
+    #'   non-alphanumeric characters with underscores.
     .cache_name = NULL,
+    #' @description Return the sanitized cache directory name for this group.
+    #'   Uses \code{.cache_name} when set, otherwise derives the name from
+    #'   \code{$name} by replacing non-alphanumeric characters with
+    #'   underscores.
     cache_name = function() {
       if (!is.null(self$.cache_name)) {
         return(self$.cache_name)
       }
       stringr::str_replace_all(self$name, "[^a-zA-Z0-9]", "_")
     },
+    #' @description Set or clear the 4-by-4 transformation matrix for the
+    #'   group.
+    #' @param mat A 4-by-4 numeric matrix, or \code{NULL} to use the identity
+    #'   transform.
     set_transform = function(mat = NULL) {
       if (!length(mat)) {
         self$trans_mat <- NULL
@@ -47,6 +78,15 @@ GeomGroup <- R6::R6Class(
         self$trans_mat <- mat
       }
     },
+    #' @description
+    #' Create a new geometry group.
+    #' @param name Unique character name for the group.
+    #' @param layer Camera layer(s), 0-13.  Default \code{0}.
+    #' @param position Numeric vector of length 3: group origin.
+    #'   Default \code{c(0, 0, 0)}.
+    #' @param cache_path Directory path for caching serialized data.
+    #' @param parent Name or \code{GeomGroup} object of the parent group,
+    #'   or \code{NULL}.
     initialize = function(name, layer = 0, position = c(0, 0, 0),
                           cache_path = tempfile(), parent = NULL) {
       self$name <- name
@@ -69,6 +109,15 @@ GeomGroup <- R6::R6Class(
 
       self$cache_path <- cache_path
     },
+    #' @description
+    #' Attach a named data object to the group, optionally storing it in the
+    #' file cache.
+    #' @param name Key name for the data object.
+    #' @param value Data to store.
+    #' @param is_cached Logical; whether \code{value} is already a cache
+    #'   descriptor list.
+    #' @param cache_if_not_exists Logical; write \code{value} to the file cache
+    #'   when no cache file exists yet.
     set_group_data = function(name, value, is_cached = FALSE, cache_if_not_exists = FALSE) {
       if (is.null(self$group_data)) {
         self$group_data <- list()
@@ -91,6 +140,13 @@ GeomGroup <- R6::R6Class(
 
 
     },
+    #' @description
+    #' Retrieve a data object from the group by key, loading from the file
+    #' cache when necessary.
+    #' @param key Name of the data object to retrieve.
+    #' @param force_reload Logical; reload from the file cache even when an
+    #'   in-memory copy exists.
+    #' @param ifnotfound Value returned when \code{key} is not found.
     get_data = function(key, force_reload = FALSE, ifnotfound = NULL) {
       re <- self$group_data[[key]]
 
@@ -122,6 +178,7 @@ GeomGroup <- R6::R6Class(
 
       return(re)
     },
+    #' @description Serialize the group to a named list for JSON export.
     to_list = function() {
       if (!is.null(self$trans_mat)) {
         trans_mat <- as.vector(t(self$trans_mat))
@@ -146,6 +203,10 @@ GeomGroup <- R6::R6Class(
 
 
 #' R6 Class - Abstract Class of Geometries
+#' @description
+#' Base class inherited by all geometry types in the three-brain viewer.
+#' Provides common fields for position, layer visibility, transformation,
+#' click response, and animation clips.
 #' @author Zhengjia Wang
 #' @name AbstractGeom
 NULL
@@ -155,26 +216,59 @@ AbstractGeom <- R6::R6Class(
   classname = "AbstractGeom",
   portable = TRUE,
   public = list(
+    #' @field name Unique character name of the geometry object.
     name = "",
+    #' @field type Geometry type string used by the JavaScript engine.
     type = "abstract",
+    #' @field render_order Rendering priority; higher values render on top.
     render_order = 1,
 
     # time_stamp and value are deprecated! use keyframe instead
+    #' @field time_stamp Deprecated; use the \code{keyframes} field instead.
+    #'   Numeric vector of animation time points.
     time_stamp = NULL,
+    #' @field value Deprecated; use the \code{keyframes} field instead.
+    #'   Numeric or character animation values.
     value = NULL,
 
-    # Animation keyframes
+    #' @field keyframes Named list of \code{KeyFrame} objects that store
+    #'   animation clip data for this geometry.
     keyframes = list(),
 
+    #' @field position Numeric vector of length 3: object origin in world
+    #'   space.
     position = c(0, 0, 0),
+    #' @field trans_mat Optional 4-by-4 transformation matrix
+    #'   (\code{NULL} = identity).
     trans_mat = NULL,
+    #' @field disable_trans_mat Logical; when \code{TRUE} the transformation
+    #'   matrix is ignored.
     disable_trans_mat = FALSE,
+    #' @field group \code{GeomGroup} that owns this geometry, or \code{NULL}.
     group = NULL,
+    #' @field clickable Logical; whether the geometry responds to mouse clicks
+    #'   in the viewer.
     clickable = TRUE,
+    #' @field layer Camera layer(s); 0 = main camera only, 1 = all cameras,
+    #'   13 = invisible.
     layer = 0,
+    #' @field use_cache Logical; whether to read/write data from a file cache.
     use_cache = FALSE,
+    #' @field custom_info Optional character string for additional annotation.
     custom_info = "",
+    #' @field subject_code Subject identifier string, or \code{NULL}.
     subject_code = NULL,
+    #' @description
+    #' Create a new abstract geometry.  Subclasses call this via
+    #' \code{super$initialize()}.
+    #' @param name Unique character name.
+    #' @param position Numeric vector of length 3: object origin.
+    #'   Default \code{c(0, 0, 0)}.
+    #' @param group \code{GeomGroup} to attach this geometry to, or
+    #'   \code{NULL}.
+    #' @param layer Camera layer(s), 0-13.  Default \code{0}.
+    #' @param trans_mat Optional 4-by-4 numeric transformation matrix.
+    #' @param ... Reserved for subclass use.
     initialize = function(name, position = c(0, 0, 0), group = NULL, layer = 0, trans_mat = NULL, ...) {
       self$name <- name
       # self$time_stamp = time_stamp
@@ -187,6 +281,9 @@ AbstractGeom <- R6::R6Class(
         self$trans_mat <- trans_mat
       }
     },
+    #' @description Set the world-space position of the geometry.
+    #' @param ... Numeric values that together form a length-3 vector
+    #'   \code{c(x, y, z)}.
     set_position = function(...) {
       pos <- c(...)
       stopifnot2(length(pos) == 3, msg = "Position must be a length of 3 - X,Y,Z")
@@ -195,6 +292,13 @@ AbstractGeom <- R6::R6Class(
     # set_value = function(value = NULL, time_stamp = NULL) {
     #   .NotYetImplemented()
     # },
+    #' @description
+    #' Attach animation data to this geometry as an animation clip.
+    #' @param value Numeric or character vector of animation values.
+    #' @param time_stamp Numeric vector of time points matching \code{value}.
+    #' @param name Character clip name.  Defaults to \code{"Value"}.
+    #' @param target JavaScript property path to animate.
+    #' @param ... Additional arguments passed to \code{KeyFrame}.
     set_value = function(value = NULL, time_stamp = NULL, name = "Value", target = ".material.color", ...) {
       stopifnot2(name != "[None]", msg = 'name cannot be "[None]", it\'s reserved')
 
@@ -227,6 +331,7 @@ AbstractGeom <- R6::R6Class(
       self$keyframes[[name]] <- kf
 
     },
+    #' @description Serialize the geometry to a named list for JSON export.
     to_list = function() {
       group_info <- NULL
       subject_code <- self$subject_code
@@ -266,6 +371,14 @@ AbstractGeom <- R6::R6Class(
         keyframes = sapply(self$keyframes, function(kf) { kf$to_list() }, USE.NAMES = TRUE, simplify = FALSE)
       )
     },
+    #' @description Retrieve a data value from this geometry or its owning
+    #'   group.
+    #' @param key Field name or group data key to retrieve.  Default
+    #'   \code{"value"}.
+    #' @param force_reload Logical; reload from the file cache even when an
+    #'   in-memory copy exists.  Default \code{FALSE}.
+    #' @param ifnotfound Value returned when \code{key} is not found.
+    #'   Default \code{NULL}.
     get_data = function(key = "value", force_reload = FALSE, ifnotfound = NULL) {
       if (!is.null(self[[key]])) {
         return(self[[key]])
@@ -275,6 +388,8 @@ AbstractGeom <- R6::R6Class(
       }
       return(ifnotfound)
     },
+    #' @description Return the time range of a named animation clip.
+    #' @param ani_name Name of the animation clip.
     animation_time_range = function( ani_name ) {
       kf <- self$keyframes[[ ani_name ]]
       if (length(kf)) {
@@ -282,6 +397,8 @@ AbstractGeom <- R6::R6Class(
       }
       return(NULL)
     },
+    #' @description Return the value range of a named continuous animation clip.
+    #' @param ani_name Name of the animation clip.
     animation_value_range = function( ani_name ) {
       kf <- self$keyframes[[ ani_name ]]
       if (length(kf) && kf$is_continuous) {
@@ -289,6 +406,9 @@ AbstractGeom <- R6::R6Class(
       }
       return(NULL)
     },
+    #' @description Return the category level names of a named discrete
+    #'   animation clip.
+    #' @param ani_name Name of the animation clip.
     animation_value_names = function( ani_name ) {
       kf <- self$keyframes[[ ani_name ]]
       if (length(kf) && !kf$is_continuous) {
@@ -298,6 +418,8 @@ AbstractGeom <- R6::R6Class(
     }
   ),
   active = list(
+    #' @field animation_types Character vector of animation clip names attached
+    #'   to this geometry.
     animation_types = function() {
       names(self$keyframes)
     }

@@ -4,8 +4,158 @@
 \alias{DataCubeGeom}
 \title{R6 Class - Generate Data Cube Geometry}
 \description{
-R6 Class - Generate Data Cube Geometry
+Volumetric data cube geometry for rendering 3D scalar volumes as voxel
+data.  Stores a flat value array and its 3D dimensions in the owning
+\code{GeomGroup} for JSON export to the three-brain viewer.
 }
 \author{
 Zhengjia Wang
+}
+\section{Super class}{
+\code{\link[threeBrain:AbstractGeom]{AbstractGeom}} -> \code{DataCubeGeom}
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{type}}{Geometry type string (\code{"datacube"}).}
+
+    \item{\code{clickable}}{Logical; always \code{FALSE} for volume geometry.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-DataCubeGeom-initialize}{\code{DataCubeGeom$new()}}
+    \item \href{#method-DataCubeGeom-set_value}{\code{DataCubeGeom$set_value()}}
+    \item \href{#method-DataCubeGeom-to_list}{\code{DataCubeGeom$to_list()}}
+    \item \href{#method-DataCubeGeom-get_data}{\code{DataCubeGeom$get_data()}}
+    \item \href{#method-DataCubeGeom-clone}{\code{DataCubeGeom$clone()}}
+  }
+}
+\if{html}{\out{<details open><summary>Inherited methods</summary>
+<ul>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_time_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_time_range'><code>AbstractGeom$animation_time_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_names"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_names'><code>AbstractGeom$animation_value_names()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_range'><code>AbstractGeom$animation_value_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_position"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_position'><code>AbstractGeom$set_position()</code></a></span></li>
+</ul>
+</details>}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom-initialize}{}}}
+\subsection{\code{DataCubeGeom$new()}}{
+  Create a new data cube geometry.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom$new(
+  name,
+  value,
+  dim = dim(value),
+  group = GeomGroup$new(name = "default"),
+  position = c(0, 0, 0),
+  cache_file = NULL,
+  layer = 13,
+  digest = TRUE,
+  ...
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Unique character name.}
+      \item{\code{value}}{Numeric vector or array of voxel values.}
+      \item{\code{dim}}{Integer vector of length 3: dimensions of the volume
+(\code{c(nx, ny, nz)}).}
+      \item{\code{group}}{\code{GeomGroup} used to store the voxel data.}
+      \item{\code{position}}{Numeric vector of length 3: geometry origin.
+Default \code{c(0, 0, 0)}.}
+      \item{\code{cache_file}}{Path to a JSON cache file, \code{TRUE} for a
+temporary file, or \code{NULL} to keep data in memory.}
+      \item{\code{layer}}{Camera layer.  Default \code{13} (invisible).}
+      \item{\code{digest}}{Logical; compute a content digest for cache validation.}
+      \item{\code{...}}{Additional arguments forwarded to \code{AbstractGeom}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom-set_value"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom-set_value}{}}}
+\subsection{\code{DataCubeGeom$set_value()}}{
+  Update the voxel values of the geometry (not yet
+  implemented; currently calls \code{.NotYetImplemented()}).
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom$set_value(value = NULL, dim = dim(value))}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{value}}{Numeric vector of replacement voxel values.}
+      \item{\code{dim}}{Integer vector of length 3: dimensions matching \code{value}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom-to_list}{}}}
+\subsection{\code{DataCubeGeom$to_list()}}{
+  Serialize the data cube geometry to a named list for JSON
+  export, adding the \code{isDataCube} flag.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom-get_data"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom-get_data}{}}}
+\subsection{\code{DataCubeGeom$get_data()}}{
+  Retrieve a data value from this geometry or its owning
+  group.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom$get_data(key, force_reload = FALSE, ifnotfound = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{key}}{Group data key to retrieve.}
+      \item{\code{force_reload}}{Logical; reload from the file cache even when an
+in-memory copy exists.  Default \code{FALSE}.}
+      \item{\code{ifnotfound}}{Value returned when \code{key} is not found.
+Default \code{NULL}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom-clone}{}}}
+\subsection{\code{DataCubeGeom$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }

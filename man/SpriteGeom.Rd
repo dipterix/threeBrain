@@ -2,10 +2,112 @@
 % Please edit documentation in R/geom_sprite.R
 \name{SpriteGeom}
 \alias{SpriteGeom}
-\title{R6 Class - Generate Sphere Geometry}
+\title{R6 Class - Generate Image Sprite Geometry}
 \description{
-R6 Class - Generate Sphere Geometry
+Image sprite geometry that positions a PNG texture billboard between two
+3D points.  The image is encoded as a data URI and rendered facing the
+camera in the three-brain viewer.
 }
 \author{
 Zhengjia Wang
+}
+\section{Super class}{
+\code{\link[threeBrain:AbstractGeom]{AbstractGeom}} -> \code{SpriteGeom}
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{clickable}}{Logical; always \code{FALSE} for sprite geometry.}
+
+    \item{\code{type}}{Geometry type string (\code{"imagesprite"}).}
+
+    \item{\code{image_uri}}{Base64 data URI of the PNG image used as the sprite
+texture.}
+
+    \item{\code{aspect_ratio}}{Width-to-height ratio of the source image, used to
+preserve proportions when scaling.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-SpriteGeom-initialize}{\code{SpriteGeom$new()}}
+    \item \href{#method-SpriteGeom-to_list}{\code{SpriteGeom$to_list()}}
+    \item \href{#method-SpriteGeom-clone}{\code{SpriteGeom$clone()}}
+  }
+}
+\if{html}{\out{<details><summary>Inherited methods</summary>
+<ul>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_time_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_time_range'><code>AbstractGeom$animation_time_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_names"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_names'><code>AbstractGeom$animation_value_names()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_range'><code>AbstractGeom$animation_value_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="get_data"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-get_data'><code>AbstractGeom$get_data()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_position"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_position'><code>AbstractGeom$set_position()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_value"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_value'><code>AbstractGeom$set_value()</code></a></span></li>
+</ul>
+</details>}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SpriteGeom-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-SpriteGeom-initialize}{}}}
+\subsection{\code{SpriteGeom$new()}}{
+  Create a new image sprite geometry.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SpriteGeom$new(
+  name,
+  image_path,
+  entry_position = c(1, 0, 0),
+  target_position = c(0, 0, 0),
+  ...
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Unique character name.}
+      \item{\code{image_path}}{Path to a PNG image file on disk.}
+      \item{\code{entry_position}}{Numeric vector of length 3: one end of the sprite
+axis (e.g. electrode entry point).  Default \code{c(1, 0, 0)}.}
+      \item{\code{target_position}}{Numeric vector of length 3: the other end of the
+sprite axis (e.g. electrode target point).  Default \code{c(0, 0, 0)}.}
+      \item{\code{...}}{Additional arguments forwarded to \code{AbstractGeom}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SpriteGeom-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-SpriteGeom-to_list}{}}}
+\subsection{\code{SpriteGeom$to_list()}}{
+  Serialize the sprite geometry to a named list for JSON
+  export.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SpriteGeom$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SpriteGeom-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-SpriteGeom-clone}{}}}
+\subsection{\code{SpriteGeom$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SpriteGeom$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }

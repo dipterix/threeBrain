@@ -1,7 +1,10 @@
 ## Changes since last CRAN release
-* `e962ffd2 (HEAD -> master)` [_`dipterix`_]: Added per-contact active/inactive tracking for `InstancedMesh` electrode contacts: inactive contacts (no display value or failed threshold) suppress outlines; `hide inactives` visibility mode discards inactive contact fragments via `HIDE_INACTIVE_CONTACTS` shader define; replaced alpha-based inactive fading with `discard`; `instanceActive` per-instance buffer attribute drives all inactive logic; added `setHideInactives()` and `useInactiveAlpha()` material methods; added `guessHemisphere()` to infer electrode hemisphere from FreeSurfer anatomical label
+* `69ce2e29 (HEAD -> master)` [_`dipterix`_]: Added documentations for exported `R6` classes
+* `58b3bacc` [_`dipterix`_]: Added text decorator to allow adding text sprite at given locations; Added optional text fields for electrodes
+* `4021fb93 (origin/master, origin/HEAD)` [_`dipterix`_]: R code style fix (via `lintr`)
+* `f7c86f60` [_`dipterix`_]: Added per-contact active/inactive tracking for `InstancedMesh` electrode contacts: inactive contacts (no display value or failed threshold) suppress outlines; `hide inactives` visibility mode discards inactive contact fragments via `HIDE_INACTIVE_CONTACTS` shader define; replaced alpha-based inactive fading with `discard`; `instanceActive` per-instance buffer attribute drives all inactive logic; added `setHideInactives()` and `useInactiveAlpha()` material methods; added `guessHemisphere()` to infer electrode hemisphere from FreeSurfer anatomical label
 * `584f2c68` [_`dipterix`_]: Added NeuroPixel shanks
-* `5300ae5b (origin/master, origin/HEAD)` [_`dipterix`_]: Added Medtronic 3387 and 3389
+* `5300ae5b` [_`dipterix`_]: Added Medtronic 3387 and 3389
 * `9f650ac4` [_`dipterix`_]: Added DIXI 15PIX and 18PIXEL
 * `9aca9098` [_`dipterix`_]: Added more BF??R-SP21X electrodes
 * `b7eee16e` [_`dipterix`_]: Changed the screenshot/recording name date to be full-year with local timestamp

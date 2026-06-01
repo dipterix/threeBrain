@@ -1,3 +1,13 @@
+#' R6 Class - Animation Keyframe
+#' @description
+#' Internal class that stores a single named animation clip: a parallel
+#' set of values and time points, plus metadata such as the target property
+#' path and whether the data are continuous or discrete.
+#' @author Zhengjia Wang
+#' @name KeyFrame
+#' @noRd
+NULL
+
 KeyFrame <- R6::R6Class(
   classname = "brain-animation-keyframe",
   portable = TRUE,

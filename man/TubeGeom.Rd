@@ -4,8 +4,106 @@
 \alias{TubeGeom}
 \title{R6 Class - Generate Tube Geometry}
 \description{
-R6 Class - Generate Tube Geometry
+Tube geometry that sweeps a circular cross-section along a curved path
+defined by control points.  Used to render electrode shafts and tract
+trajectories in the three-brain viewer.
 }
 \author{
 Zhengjia Wang
+}
+\section{Super class}{
+\code{\link[threeBrain:AbstractGeom]{AbstractGeom}} -> \code{TubeGeom}
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{type}}{Geometry type string (\code{"tube"}).}
+
+    \item{\code{radial_segments}}{Number of segments around the tube circumference.}
+
+    \item{\code{tubular_segments}}{Number of segments along the tube path.}
+
+    \item{\code{control_data}}{Flattened numeric vector (row-major) of control
+points; each row encodes \code{x}, \code{y}, \code{z}, \code{t}
+(normalized path position 0-1), and \code{radius}.}
+
+    \item{\code{image_uri}}{Base64 data URI of the tube texture image, or
+\code{NULL} for a plain color.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-TubeGeom-initialize}{\code{TubeGeom$new()}}
+    \item \href{#method-TubeGeom-to_list}{\code{TubeGeom$to_list()}}
+    \item \href{#method-TubeGeom-clone}{\code{TubeGeom$clone()}}
+  }
+}
+\if{html}{\out{<details><summary>Inherited methods</summary>
+<ul>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_time_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_time_range'><code>AbstractGeom$animation_time_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_names"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_names'><code>AbstractGeom$animation_value_names()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_range'><code>AbstractGeom$animation_value_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="get_data"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-get_data'><code>AbstractGeom$get_data()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_position"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_position'><code>AbstractGeom$set_position()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_value"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_value'><code>AbstractGeom$set_value()</code></a></span></li>
+</ul>
+</details>}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TubeGeom-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-TubeGeom-initialize}{}}}
+\subsection{\code{TubeGeom$new()}}{
+  Create a new tube geometry.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{TubeGeom$new(name, control_data, image_uri = NULL, ...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Unique character name.}
+      \item{\code{control_data}}{Numeric matrix with 5 columns: \code{x}, \code{y},
+\code{z}, \code{t} (path position), \code{radius}.  Must have at
+least 2 rows.}
+      \item{\code{image_uri}}{Optional base64 data URI string for a texture image.}
+      \item{\code{...}}{Additional arguments forwarded to \code{AbstractGeom}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TubeGeom-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-TubeGeom-to_list}{}}}
+\subsection{\code{TubeGeom$to_list()}}{
+  Serialize the tube geometry to a named list for JSON
+  export.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{TubeGeom$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TubeGeom-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-TubeGeom-clone}{}}}
+\subsection{\code{TubeGeom$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{TubeGeom$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }

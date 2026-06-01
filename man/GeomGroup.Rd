@@ -4,8 +4,210 @@
 \alias{GeomGroup}
 \title{R6 Class - Generate Group of Geometries}
 \description{
-R6 Class - Generate Group of Geometries
+Container that collects geometry objects belonging to the same logical group
+in the three-brain viewer.  Manages shared data, an optional 4-by-4
+transformation matrix, spatial position, and a local file cache.
 }
 \author{
 Zhengjia Wang
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{name}}{Unique character name of the group.}
+
+    \item{\code{layer}}{Camera layer(s); 0 = main camera only, 1 = all cameras,
+13 = invisible.}
+
+    \item{\code{position}}{Numeric vector of length 3: group origin in world space.}
+
+    \item{\code{group_data}}{Named list of shared data attached to the group.}
+
+    \item{\code{trans_mat}}{Optional 4-by-4 transformation matrix
+(\code{NULL} for identity).}
+
+    \item{\code{cached_items}}{Character vector of group data keys stored in the
+file cache.}
+
+    \item{\code{cache_env}}{Local environment used for in-memory caching of loaded
+cache files.}
+
+    \item{\code{cache_path}}{Directory path for the file cache.}
+
+    \item{\code{disable_trans_mat}}{Logical; when \code{TRUE} the transformation
+matrix is ignored during rendering.}
+
+    \item{\code{parent_group}}{Name of the parent group, or \code{NULL}.}
+
+    \item{\code{subject_code}}{Subject identifier string, or \code{NULL}.}
+
+    \item{\code{.cache_name}}{Override for the sanitized cache directory name.
+When \code{NULL} the name is derived from \code{$name} by replacing
+non-alphanumeric characters with underscores.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-GeomGroup-cache_name}{\code{GeomGroup$cache_name()}}
+    \item \href{#method-GeomGroup-set_transform}{\code{GeomGroup$set_transform()}}
+    \item \href{#method-GeomGroup-initialize}{\code{GeomGroup$new()}}
+    \item \href{#method-GeomGroup-set_group_data}{\code{GeomGroup$set_group_data()}}
+    \item \href{#method-GeomGroup-get_data}{\code{GeomGroup$get_data()}}
+    \item \href{#method-GeomGroup-to_list}{\code{GeomGroup$to_list()}}
+    \item \href{#method-GeomGroup-clone}{\code{GeomGroup$clone()}}
+  }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-GeomGroup-cache_name"></a>}}
+\if{latex}{\out{\hypertarget{method-GeomGroup-cache_name}{}}}
+\subsection{\code{GeomGroup$cache_name()}}{
+  Return the sanitized cache directory name for this group.
+  Uses \code{.cache_name} when set, otherwise derives the name from
+  \code{$name} by replacing non-alphanumeric characters with
+  underscores.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{GeomGroup$cache_name()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-GeomGroup-set_transform"></a>}}
+\if{latex}{\out{\hypertarget{method-GeomGroup-set_transform}{}}}
+\subsection{\code{GeomGroup$set_transform()}}{
+  Set or clear the 4-by-4 transformation matrix for the
+  group.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{GeomGroup$set_transform(mat = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{mat}}{A 4-by-4 numeric matrix, or \code{NULL} to use the identity
+transform.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-GeomGroup-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-GeomGroup-initialize}{}}}
+\subsection{\code{GeomGroup$new()}}{
+  Create a new geometry group.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{GeomGroup$new(
+  name,
+  layer = 0,
+  position = c(0, 0, 0),
+  cache_path = tempfile(),
+  parent = NULL
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Unique character name for the group.}
+      \item{\code{layer}}{Camera layer(s), 0-13.  Default \code{0}.}
+      \item{\code{position}}{Numeric vector of length 3: group origin.
+Default \code{c(0, 0, 0)}.}
+      \item{\code{cache_path}}{Directory path for caching serialized data.}
+      \item{\code{parent}}{Name or \code{GeomGroup} object of the parent group,
+or \code{NULL}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-GeomGroup-set_group_data"></a>}}
+\if{latex}{\out{\hypertarget{method-GeomGroup-set_group_data}{}}}
+\subsection{\code{GeomGroup$set_group_data()}}{
+  Attach a named data object to the group, optionally storing it in the
+file cache.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{GeomGroup$set_group_data(
+  name,
+  value,
+  is_cached = FALSE,
+  cache_if_not_exists = FALSE
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Key name for the data object.}
+      \item{\code{value}}{Data to store.}
+      \item{\code{is_cached}}{Logical; whether \code{value} is already a cache
+descriptor list.}
+      \item{\code{cache_if_not_exists}}{Logical; write \code{value} to the file cache
+when no cache file exists yet.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-GeomGroup-get_data"></a>}}
+\if{latex}{\out{\hypertarget{method-GeomGroup-get_data}{}}}
+\subsection{\code{GeomGroup$get_data()}}{
+  Retrieve a data object from the group by key, loading from the file
+cache when necessary.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{GeomGroup$get_data(key, force_reload = FALSE, ifnotfound = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{key}}{Name of the data object to retrieve.}
+      \item{\code{force_reload}}{Logical; reload from the file cache even when an
+in-memory copy exists.}
+      \item{\code{ifnotfound}}{Value returned when \code{key} is not found.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-GeomGroup-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-GeomGroup-to_list}{}}}
+\subsection{\code{GeomGroup$to_list()}}{
+  Serialize the group to a named list for JSON export.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{GeomGroup$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-GeomGroup-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-GeomGroup-clone}{}}}
+\subsection{\code{GeomGroup$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{GeomGroup$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }

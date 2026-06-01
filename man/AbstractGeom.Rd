@@ -4,8 +4,273 @@
 \alias{AbstractGeom}
 \title{R6 Class - Abstract Class of Geometries}
 \description{
-R6 Class - Abstract Class of Geometries
+Base class inherited by all geometry types in the three-brain viewer.
+Provides common fields for position, layer visibility, transformation,
+click response, and animation clips.
 }
 \author{
 Zhengjia Wang
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{name}}{Unique character name of the geometry object.}
+
+    \item{\code{type}}{Geometry type string used by the JavaScript engine.}
+
+    \item{\code{render_order}}{Rendering priority; higher values render on top.}
+
+    \item{\code{time_stamp}}{Deprecated; use the \code{keyframes} field instead.
+Numeric vector of animation time points.}
+
+    \item{\code{value}}{Deprecated; use the \code{keyframes} field instead.
+Numeric or character animation values.}
+
+    \item{\code{keyframes}}{Named list of \code{KeyFrame} objects that store
+animation clip data for this geometry.}
+
+    \item{\code{position}}{Numeric vector of length 3: object origin in world
+space.}
+
+    \item{\code{trans_mat}}{Optional 4-by-4 transformation matrix
+(\code{NULL} = identity).}
+
+    \item{\code{disable_trans_mat}}{Logical; when \code{TRUE} the transformation
+matrix is ignored.}
+
+    \item{\code{group}}{\code{GeomGroup} that owns this geometry, or \code{NULL}.}
+
+    \item{\code{clickable}}{Logical; whether the geometry responds to mouse clicks
+in the viewer.}
+
+    \item{\code{layer}}{Camera layer(s); 0 = main camera only, 1 = all cameras,
+13 = invisible.}
+
+    \item{\code{use_cache}}{Logical; whether to read/write data from a file cache.}
+
+    \item{\code{custom_info}}{Optional character string for additional annotation.}
+
+    \item{\code{subject_code}}{Subject identifier string, or \code{NULL}.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Active bindings}{
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{animation_types}}{Character vector of animation clip names attached
+to this geometry.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-AbstractGeom-initialize}{\code{AbstractGeom$new()}}
+    \item \href{#method-AbstractGeom-set_position}{\code{AbstractGeom$set_position()}}
+    \item \href{#method-AbstractGeom-set_value}{\code{AbstractGeom$set_value()}}
+    \item \href{#method-AbstractGeom-to_list}{\code{AbstractGeom$to_list()}}
+    \item \href{#method-AbstractGeom-get_data}{\code{AbstractGeom$get_data()}}
+    \item \href{#method-AbstractGeom-animation_time_range}{\code{AbstractGeom$animation_time_range()}}
+    \item \href{#method-AbstractGeom-animation_value_range}{\code{AbstractGeom$animation_value_range()}}
+    \item \href{#method-AbstractGeom-animation_value_names}{\code{AbstractGeom$animation_value_names()}}
+    \item \href{#method-AbstractGeom-clone}{\code{AbstractGeom$clone()}}
+  }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-initialize}{}}}
+\subsection{\code{AbstractGeom$new()}}{
+  Create a new abstract geometry.  Subclasses call this via
+\code{super$initialize()}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$new(
+  name,
+  position = c(0, 0, 0),
+  group = NULL,
+  layer = 0,
+  trans_mat = NULL,
+  ...
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Unique character name.}
+      \item{\code{position}}{Numeric vector of length 3: object origin.
+Default \code{c(0, 0, 0)}.}
+      \item{\code{group}}{\code{GeomGroup} to attach this geometry to, or
+\code{NULL}.}
+      \item{\code{layer}}{Camera layer(s), 0-13.  Default \code{0}.}
+      \item{\code{trans_mat}}{Optional 4-by-4 numeric transformation matrix.}
+      \item{\code{...}}{Reserved for subclass use.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-set_position"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-set_position}{}}}
+\subsection{\code{AbstractGeom$set_position()}}{
+  Set the world-space position of the geometry.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$set_position(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Numeric values that together form a length-3 vector
+\code{c(x, y, z)}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-set_value"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-set_value}{}}}
+\subsection{\code{AbstractGeom$set_value()}}{
+  Attach animation data to this geometry as an animation clip.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$set_value(
+  value = NULL,
+  time_stamp = NULL,
+  name = "Value",
+  target = ".material.color",
+  ...
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{value}}{Numeric or character vector of animation values.}
+      \item{\code{time_stamp}}{Numeric vector of time points matching \code{value}.}
+      \item{\code{name}}{Character clip name.  Defaults to \code{"Value"}.}
+      \item{\code{target}}{JavaScript property path to animate.}
+      \item{\code{...}}{Additional arguments passed to \code{KeyFrame}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-to_list}{}}}
+\subsection{\code{AbstractGeom$to_list()}}{
+  Serialize the geometry to a named list for JSON export.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-get_data"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-get_data}{}}}
+\subsection{\code{AbstractGeom$get_data()}}{
+  Retrieve a data value from this geometry or its owning
+  group.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$get_data(key = "value", force_reload = FALSE, ifnotfound = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{key}}{Field name or group data key to retrieve.  Default
+\code{"value"}.}
+      \item{\code{force_reload}}{Logical; reload from the file cache even when an
+in-memory copy exists.  Default \code{FALSE}.}
+      \item{\code{ifnotfound}}{Value returned when \code{key} is not found.
+Default \code{NULL}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-animation_time_range"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-animation_time_range}{}}}
+\subsection{\code{AbstractGeom$animation_time_range()}}{
+  Return the time range of a named animation clip.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$animation_time_range(ani_name)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{ani_name}}{Name of the animation clip.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-animation_value_range"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-animation_value_range}{}}}
+\subsection{\code{AbstractGeom$animation_value_range()}}{
+  Return the value range of a named continuous animation clip.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$animation_value_range(ani_name)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{ani_name}}{Name of the animation clip.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-animation_value_names"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-animation_value_names}{}}}
+\subsection{\code{AbstractGeom$animation_value_names()}}{
+  Return the category level names of a named discrete
+  animation clip.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$animation_value_names(ani_name)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{ani_name}}{Name of the animation clip.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-AbstractGeom-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-AbstractGeom-clone}{}}}
+\subsection{\code{AbstractGeom$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{AbstractGeom$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }

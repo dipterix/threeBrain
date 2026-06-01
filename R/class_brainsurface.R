@@ -1,3 +1,13 @@
+#' R6 Class - Brain Surface Data
+#' @description
+#' Internal class that holds the left- and right-hemisphere mesh objects
+#' (\code{FreeGeom} instances) for a single surface type (e.g. pial, white,
+#' or inflated) along with the owning \code{GeomGroup}.
+#' @author Zhengjia Wang
+#' @name BrainSurface
+#' @noRd
+NULL
+
 BrainSurface <- R6::R6Class(
   classname = "brain-surface",
   portable = TRUE,

@@ -1,4 +1,14 @@
 
+#' R6 Class - Brain Atlas Data
+#' @description
+#' Internal class that wraps a parcellation atlas mesh (\code{FreeGeom})
+#' for one atlas type (e.g. aparc+aseg) along with its owning
+#' \code{GeomGroup}.
+#' @author Zhengjia Wang
+#' @name BrainAtlas
+#' @noRd
+NULL
+
 BrainAtlas <- R6::R6Class(
   classname = "brain-atlas",
   portable = TRUE,

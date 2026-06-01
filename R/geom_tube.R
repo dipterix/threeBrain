@@ -1,4 +1,8 @@
 #' R6 Class - Generate Tube Geometry
+#' @description
+#' Tube geometry that sweeps a circular cross-section along a curved path
+#' defined by control points.  Used to render electrode shafts and tract
+#' trajectories in the three-brain viewer.
 #' @author Zhengjia Wang
 #' @name TubeGeom
 NULL
@@ -10,19 +14,35 @@ TubeGeom <- R6::R6Class(
   inherit = AbstractGeom,
   public = list(
 
+    #' @field type Geometry type string (\code{"tube"}).
     type = "tube",
 
     # n segments along circle
+    #' @field radial_segments Number of segments around the tube circumference.
     radial_segments = 10,
+    #' @field tubular_segments Number of segments along the tube path.
     tubular_segments = 100,
 
     # control points: rows = x y z t radius, columns = points
     # t = 0 -> target; t = 1 -> entry
+    #' @field control_data Flattened numeric vector (row-major) of control
+    #'   points; each row encodes \code{x}, \code{y}, \code{z}, \code{t}
+    #'   (normalized path position 0-1), and \code{radius}.
     control_data = NULL,
 
     # texture
+    #' @field image_uri Base64 data URI of the tube texture image, or
+    #'   \code{NULL} for a plain color.
     image_uri = NULL,
 
+    #' @description
+    #' Create a new tube geometry.
+    #' @param name Unique character name.
+    #' @param control_data Numeric matrix with 5 columns: \code{x}, \code{y},
+    #'   \code{z}, \code{t} (path position), \code{radius}.  Must have at
+    #'   least 2 rows.
+    #' @param image_uri Optional base64 data URI string for a texture image.
+    #' @param ... Additional arguments forwarded to \code{AbstractGeom}.
     initialize = function(name, control_data, image_uri = NULL, ...) {
       super$initialize(name, position = c(0, 0, 0), ...)
 
@@ -60,6 +80,8 @@ TubeGeom <- R6::R6Class(
       }
     },
 
+    #' @description Serialize the tube geometry to a named list for JSON
+    #'   export.
     to_list = function() {
       c(
         super$to_list(),

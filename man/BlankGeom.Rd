@@ -4,5 +4,120 @@
 \alias{BlankGeom}
 \title{A geometry that renders nothing}
 \description{
-This is mainly used when you want to upload group data only
+No-op geometry used when only shared group data needs to be uploaded to
+the viewer.  The geometry renders nothing and is assigned to an invisible
+camera layer (31).
+}
+\author{
+Zhengjia Wang
+}
+\section{Super class}{
+\code{\link[threeBrain:AbstractGeom]{AbstractGeom}} -> \code{BlankGeom}
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{value}}{Reserved; always \code{NULL} for blank geometry.}
+
+    \item{\code{type}}{Geometry type string used by the JavaScript engine.}
+
+    \item{\code{clickable}}{Logical; whether the geometry responds to mouse clicks
+in the viewer.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-BlankGeom-set_value}{\code{BlankGeom$set_value()}}
+    \item \href{#method-BlankGeom-initialize}{\code{BlankGeom$new()}}
+    \item \href{#method-BlankGeom-to_list}{\code{BlankGeom$to_list()}}
+    \item \href{#method-BlankGeom-clone}{\code{BlankGeom$clone()}}
+  }
+}
+\if{html}{\out{<details open><summary>Inherited methods</summary>
+<ul>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_time_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_time_range'><code>AbstractGeom$animation_time_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_names"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_names'><code>AbstractGeom$animation_value_names()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_range'><code>AbstractGeom$animation_value_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="get_data"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-get_data'><code>AbstractGeom$get_data()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_position"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_position'><code>AbstractGeom$set_position()</code></a></span></li>
+</ul>
+</details>}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-BlankGeom-set_value"></a>}}
+\if{latex}{\out{\hypertarget{method-BlankGeom-set_value}{}}}
+\subsection{\code{BlankGeom$set_value()}}{
+  No-op value setter; blank geometry accepts no data.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlankGeom$set_value(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Ignored.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-BlankGeom-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-BlankGeom-initialize}{}}}
+\subsection{\code{BlankGeom$new()}}{
+  Create a new blank geometry.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlankGeom$new(
+  group,
+  name = paste(sample(c(LETTERS, letters, 0:9), 16), collapse = ""),
+  ...
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{group}}{\code{GeomGroup} to attach this geometry to.}
+      \item{\code{name}}{Unique character name.  Defaults to a random 16-character
+alphanumeric string.}
+      \item{\code{...}}{Additional arguments forwarded to \code{AbstractGeom}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-BlankGeom-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-BlankGeom-to_list}{}}}
+\subsection{\code{BlankGeom$to_list()}}{
+  Serialize the blank geometry to a named list for JSON export.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlankGeom$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-BlankGeom-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-BlankGeom-clone}{}}}
+\subsection{\code{BlankGeom$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{BlankGeom$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }

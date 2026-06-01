@@ -1,6 +1,16 @@
 # surface = BrainSurface$new("YAB", surface_type = "pial", mesh_type = "std.141", left_hemisphere = s$left, right_hemisphere = s$right)
 # volume = BrainVolume$new(subject_code = "YAB", volume_type = "brain.finalsurf", volume = env$volume)
 
+#' R6 Class - Single-subject Brain Data Object
+#' @description
+#' Internal class that aggregates all loaded data for a single subject:
+#' cortical surfaces, subcortical volumes, atlases, and electrodes.  It also
+#' stores the subject-level coordinate transform matrices used to convert
+#' between FreeSurfer surface space, scanner space, and MNI space.
+#' @author Zhengjia Wang
+#' @name Brain2
+#' @noRd
+NULL
 
 Brain2 <- R6::R6Class(
   classname = "rave-brain",

@@ -41,6 +41,16 @@ merge_brain <- function(
 }
 
 
+#' R6 Class - Multi-subject Brain Viewer
+#' @description
+#' Internal class that aggregates multiple \code{Brain2} objects onto a
+#' shared template brain (typically N27) for group-level visualization.
+#' Constructed via \code{\link{merge_brain}}.
+#' @author Zhengjia Wang
+#' @name MultiBrain2
+#' @noRd
+NULL
+
 MultiBrain2 <- R6::R6Class(
   classname = "multi-rave-brain",
   portable = FALSE,

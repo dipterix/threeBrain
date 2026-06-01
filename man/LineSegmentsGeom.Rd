@@ -4,8 +4,175 @@
 \alias{LineSegmentsGeom}
 \title{R6 Class - Generate Line Segments}
 \description{
-R6 Class - Generate Line Segments
+Line-segment geometry for drawing connections or paths in the
+three-brain viewer.  Vertices may be static numeric coordinates or
+dynamic electrode references resolved at render time.
 }
 \author{
 Zhengjia Wang
+}
+\section{Super class}{
+\code{\link[threeBrain:AbstractGeom]{AbstractGeom}} -> \code{LineSegmentsGeom}
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{type}}{Geometry type string (\code{"linesegments"}).}
+
+    \item{\code{color}}{CSS hex color string(s) applied to line segments.}
+
+    \item{\code{size}}{Line width(s) in world-space units.}
+
+    \item{\code{vertices}}{Vertex positions: a numeric matrix (3 x N) for static
+segments, or a list of position/electrode descriptors for dynamic
+segments.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Active bindings}{
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{dynamic}}{Logical; \code{TRUE} when vertices are electrode
+references resolved at render time rather than static coordinates.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-LineSegmentsGeom-initialize}{\code{LineSegmentsGeom$new()}}
+    \item \href{#method-LineSegmentsGeom-set_vertices}{\code{LineSegmentsGeom$set_vertices()}}
+    \item \href{#method-LineSegmentsGeom-set_color}{\code{LineSegmentsGeom$set_color()}}
+    \item \href{#method-LineSegmentsGeom-set_size}{\code{LineSegmentsGeom$set_size()}}
+    \item \href{#method-LineSegmentsGeom-to_list}{\code{LineSegmentsGeom$to_list()}}
+    \item \href{#method-LineSegmentsGeom-clone}{\code{LineSegmentsGeom$clone()}}
+  }
+}
+\if{html}{\out{<details><summary>Inherited methods</summary>
+<ul>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_time_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_time_range'><code>AbstractGeom$animation_time_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_names"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_names'><code>AbstractGeom$animation_value_names()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_range'><code>AbstractGeom$animation_value_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="get_data"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-get_data'><code>AbstractGeom$get_data()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_position"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_position'><code>AbstractGeom$set_position()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_value"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_value'><code>AbstractGeom$set_value()</code></a></span></li>
+</ul>
+</details>}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LineSegmentsGeom-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-LineSegmentsGeom-initialize}{}}}
+\subsection{\code{LineSegmentsGeom$new()}}{
+  Create a new line-segment geometry.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LineSegmentsGeom$new(name, dynamic = FALSE, ...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Unique character name.}
+      \item{\code{dynamic}}{Logical; when \code{TRUE} vertices are electrode
+references resolved at render time rather than fixed coordinates.}
+      \item{\code{...}}{Additional arguments forwarded to \code{AbstractGeom}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LineSegmentsGeom-set_vertices"></a>}}
+\if{latex}{\out{\hypertarget{method-LineSegmentsGeom-set_vertices}{}}}
+\subsection{\code{LineSegmentsGeom$set_vertices()}}{
+  Set vertex positions for the line segments.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LineSegmentsGeom$set_vertices(..., .list = list(), append = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Positions as numeric vectors of length 3 (static mode) or
+named lists with \code{subject_code} and \code{electrode} elements
+(dynamic mode).}
+      \item{\code{.list}}{Additional positions supplied as a list.}
+      \item{\code{append}}{Logical; when \code{TRUE} append rather than replace.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LineSegmentsGeom-set_color"></a>}}
+\if{latex}{\out{\hypertarget{method-LineSegmentsGeom-set_color}{}}}
+\subsection{\code{LineSegmentsGeom$set_color()}}{
+  Set the color(s) of the line segments.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LineSegmentsGeom$set_color(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{One or more R color values (names, hex strings, or integer
+palette indices) that are interpolated across all segments.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LineSegmentsGeom-set_size"></a>}}
+\if{latex}{\out{\hypertarget{method-LineSegmentsGeom-set_size}{}}}
+\subsection{\code{LineSegmentsGeom$set_size()}}{
+  Set the line width(s).
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LineSegmentsGeom$set_size(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{One or more positive numbers interpolated across all
+segments.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LineSegmentsGeom-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-LineSegmentsGeom-to_list}{}}}
+\subsection{\code{LineSegmentsGeom$to_list()}}{
+  Serialize the line-segment geometry to a named list for
+  JSON export.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LineSegmentsGeom$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-LineSegmentsGeom-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-LineSegmentsGeom-clone}{}}}
+\subsection{\code{LineSegmentsGeom$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LineSegmentsGeom$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }

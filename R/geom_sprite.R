@@ -1,4 +1,8 @@
-#' R6 Class - Generate Sphere Geometry
+#' R6 Class - Generate Image Sprite Geometry
+#' @description
+#' Image sprite geometry that positions a PNG texture billboard between two
+#' 3D points.  The image is encoded as a data URI and rendered facing the
+#' camera in the three-brain viewer.
 #' @author Zhengjia Wang
 #' @name SpriteGeom
 NULL
@@ -9,11 +13,26 @@ SpriteGeom <- R6::R6Class(
   inherit = AbstractGeom,
   public = list(
 
+    #' @field clickable Logical; always \code{FALSE} for sprite geometry.
     clickable = FALSE,
+    #' @field type Geometry type string (\code{"imagesprite"}).
     type = "imagesprite",
+    #' @field image_uri Base64 data URI of the PNG image used as the sprite
+    #'   texture.
     image_uri = "",
+    #' @field aspect_ratio Width-to-height ratio of the source image, used to
+    #'   preserve proportions when scaling.
     aspect_ratio = 1.0,
 
+    #' @description
+    #' Create a new image sprite geometry.
+    #' @param name Unique character name.
+    #' @param image_path Path to a PNG image file on disk.
+    #' @param entry_position Numeric vector of length 3: one end of the sprite
+    #'   axis (e.g. electrode entry point).  Default \code{c(1, 0, 0)}.
+    #' @param target_position Numeric vector of length 3: the other end of the
+    #'   sprite axis (e.g. electrode target point).  Default \code{c(0, 0, 0)}.
+    #' @param ... Additional arguments forwarded to \code{AbstractGeom}.
     initialize = function(name, image_path,
                           entry_position = c(1, 0, 0),
                           target_position = c(0, 0, 0),
@@ -52,6 +71,8 @@ SpriteGeom <- R6::R6Class(
       self$aspect_ratio <- dm[[2]] / dm[[1]]
       self$image_uri <- dipsaus::to_datauri(file = image_path)
     },
+    #' @description Serialize the sprite geometry to a named list for JSON
+    #'   export.
     to_list = function() {
       c(
         super$to_list(),

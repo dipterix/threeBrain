@@ -4,8 +4,139 @@
 \alias{DataCubeGeom2}
 \title{R6 Class - Generate Data Cube Geometry via 3D Volume Texture}
 \description{
-R6 Class - Generate Data Cube Geometry via 3D Volume Texture
+Volumetric data cube geometry rendered via a 3D texture lookup.
+Extends \code{DataCubeGeom} with four-channel color map support and opacity
+thresholding.
 }
 \author{
 Zhengjia Wang
+}
+\section{Super classes}{
+\code{\link[threeBrain:AbstractGeom]{AbstractGeom}} -> \code{\link[threeBrain:DataCubeGeom]{DataCubeGeom}} -> \code{DataCubeGeom2}
+}
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{type}}{Geometry type string (\code{"datacube2"}).}
+
+    \item{\code{clickable}}{Logical; always \code{FALSE} for volume geometry.}
+
+    \item{\code{threshold}}{Opacity threshold: voxel values below this level are
+rendered as transparent.  Default \code{0.6}.}
+
+    \item{\code{color_format}}{WebGL texture format string; either
+\code{"RGBAFormat"} or \code{"RedFormat"}.}
+
+    \item{\code{color_map}}{Named list describing the four-channel color map applied
+to the volume, or \code{NULL}.}
+
+    \item{\code{trans_space_from}}{Coordinate space of the input data before
+applying the transformation matrix; either \code{"model"} (default)
+or \code{"scannerRAS"}.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Active bindings}{
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{is_datacube2}}{Logical flag; always \code{TRUE} for
+\code{DataCubeGeom2} instances.}
+  }
+  \if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+  \itemize{
+    \item \href{#method-DataCubeGeom2-initialize}{\code{DataCubeGeom2$new()}}
+    \item \href{#method-DataCubeGeom2-to_list}{\code{DataCubeGeom2$to_list()}}
+    \item \href{#method-DataCubeGeom2-clone}{\code{DataCubeGeom2$clone()}}
+  }
+}
+\if{html}{\out{<details><summary>Inherited methods</summary>
+<ul>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_time_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_time_range'><code>AbstractGeom$animation_time_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_names"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_names'><code>AbstractGeom$animation_value_names()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="animation_value_range"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-animation_value_range'><code>AbstractGeom$animation_value_range()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="AbstractGeom" data-id="set_position"><a href='../../threeBrain/html/AbstractGeom.html#method-AbstractGeom-set_position'><code>AbstractGeom$set_position()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="DataCubeGeom" data-id="get_data"><a href='../../threeBrain/html/DataCubeGeom.html#method-DataCubeGeom-get_data'><code>DataCubeGeom$get_data()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="threeBrain" data-topic="DataCubeGeom" data-id="set_value"><a href='../../threeBrain/html/DataCubeGeom.html#method-DataCubeGeom-set_value'><code>DataCubeGeom$set_value()</code></a></span></li>
+</ul>
+</details>}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom2-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom2-initialize}{}}}
+\subsection{\code{DataCubeGeom2$new()}}{
+  Create a new data cube geometry using a 3D texture.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom2$new(
+  name,
+  value,
+  dim = dim(value),
+  half_size = c(128, 128, 128),
+  group = GeomGroup$new(name = "default"),
+  position = c(0, 0, 0),
+  color_format = c("RGBAFormat", "RedFormat"),
+  cache_file = NULL,
+  layer = 8,
+  digest = TRUE,
+  ...
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{Unique character name.}
+      \item{\code{value}}{Integer vector of voxel values (0-255).}
+      \item{\code{dim}}{Integer vector of length 3: dimensions of the volume.}
+      \item{\code{half_size}}{Numeric vector of length 3: half-extents of the
+bounding box in world-space units.  Default \code{c(128, 128, 128)}.}
+      \item{\code{group}}{\code{GeomGroup} used to store the voxel data.}
+      \item{\code{position}}{Numeric vector of length 3: geometry origin.}
+      \item{\code{color_format}}{WebGL texture format: \code{"RGBAFormat"} (default)
+or \code{"RedFormat"}.}
+      \item{\code{cache_file}}{Path to a JSON cache file, \code{TRUE} for a
+temporary file, or \code{NULL} to keep data in memory.}
+      \item{\code{layer}}{Camera layer.  Default \code{8} (main camera only).}
+      \item{\code{digest}}{Logical; compute a content digest for cache validation.}
+      \item{\code{...}}{Additional arguments forwarded to \code{DataCubeGeom}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom2-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom2-to_list}{}}}
+\subsection{\code{DataCubeGeom2$to_list()}}{
+  Serialize the texture data cube geometry to a named list
+  for JSON export, adding \code{threshold}, \code{color_format},
+  \code{color_map}, \code{isDataCube2}, and \code{trans_space_from}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom2$to_list()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataCubeGeom2-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-DataCubeGeom2-clone}{}}}
+\subsection{\code{DataCubeGeom2$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{DataCubeGeom2$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
 }
