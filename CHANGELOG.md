@@ -1,7 +1,8 @@
 ## Changes since last CRAN release
-* `69ce2e29 (HEAD -> master)` [_`dipterix`_]: Added documentations for exported `R6` classes
+* `0bd0e124 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added AdTech RD16R-SP47/8/9X prototypes
+* `8c0415e1` [_`dipterix`_]: Added documentations for exported `R6` classes
 * `58b3bacc` [_`dipterix`_]: Added text decorator to allow adding text sprite at given locations; Added optional text fields for electrodes
-* `4021fb93 (origin/master, origin/HEAD)` [_`dipterix`_]: R code style fix (via `lintr`)
+* `4021fb93` [_`dipterix`_]: R code style fix (via `lintr`)
 * `f7c86f60` [_`dipterix`_]: Added per-contact active/inactive tracking for `InstancedMesh` electrode contacts: inactive contacts (no display value or failed threshold) suppress outlines; `hide inactives` visibility mode discards inactive contact fragments via `HIDE_INACTIVE_CONTACTS` shader define; replaced alpha-based inactive fading with `discard`; `instanceActive` per-instance buffer attribute drives all inactive logic; added `setHideInactives()` and `useInactiveAlpha()` material methods; added `guessHemisphere()` to infer electrode hemisphere from FreeSurfer anatomical label
 * `584f2c68` [_`dipterix`_]: Added NeuroPixel shanks
 * `5300ae5b` [_`dipterix`_]: Added Medtronic 3387 and 3389

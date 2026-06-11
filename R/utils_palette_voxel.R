@@ -99,7 +99,7 @@ register_get_key <- function(re) {
       })
     }
   }
-  class(re) <- c(sprintf("%s_colormap", gtype), sprintf("%s_colormap", dtype), "colormap")
+  class(re) <- c(sprintf("%s_colormap", gtype), sprintf("%s_colormap", dtype), "threeBrain_colormap", "colormap")
   re
 }
 

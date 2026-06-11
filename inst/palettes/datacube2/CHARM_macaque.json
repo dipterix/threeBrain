@@ -1,0 +1,1749 @@
+{
+  "__global_data__.VolumeColorLUT": {
+    "map": {
+      "0": {
+        "ColorID": 0,
+        "Label": "Unknown",
+        "R": 0,
+        "G": 0,
+        "B": 0
+      },
+      "1": {
+        "ColorID": 1,
+        "Label": "Frontal_Lobe",
+        "R": 255,
+        "G": 166,
+        "B": 188
+      },
+      "2": {
+        "ColorID": 2,
+        "Label": "anterior_cingulate_gyrus",
+        "R": 222,
+        "G": 0,
+        "B": 22
+      },
+      "3": {
+        "ColorID": 3,
+        "Label": "anterior_cingulate_cortex",
+        "R": 158,
+        "G": 0,
+        "B": 50
+      },
+      "4": {
+        "ColorID": 4,
+        "Label": "area_32",
+        "R": 128,
+        "G": 57,
+        "B": 81
+      },
+      "5": {
+        "ColorID": 5,
+        "Label": "subgenual_cortex",
+        "R": 128,
+        "G": 29,
+        "B": 70
+      },
+      "6": {
+        "ColorID": 6,
+        "Label": "area_24",
+        "R": 191,
+        "G": 0,
+        "B": 38
+      },
+      "7": {
+        "ColorID": 7,
+        "Label": "areas_24a_and_24b",
+        "R": 128,
+        "G": 0,
+        "B": 53
+      },
+      "8": {
+        "ColorID": 8,
+        "Label": "area_24a",
+        "R": 191,
+        "G": 44,
+        "B": 59
+      },
+      "9": {
+        "ColorID": 9,
+        "Label": "area_24b",
+        "R": 255,
+        "G": 115,
+        "B": 162
+      },
+      "10": {
+        "ColorID": 10,
+        "Label": "area_24c",
+        "R": 255,
+        "G": 140,
+        "B": 179
+      },
+      "11": {
+        "ColorID": 11,
+        "Label": "midcingulate_cortex",
+        "R": 128,
+        "G": 29,
+        "B": 78
+      },
+      "12": {
+        "ColorID": 12,
+        "Label": "areas_24a'_and_24b'",
+        "R": 255,
+        "G": 59,
+        "B": 157
+      },
+      "13": {
+        "ColorID": 13,
+        "Label": "area_24a'",
+        "R": 255,
+        "G": 140,
+        "B": 207
+      },
+      "14": {
+        "ColorID": 14,
+        "Label": "area_24b'",
+        "R": 255,
+        "G": 166,
+        "B": 207
+      },
+      "15": {
+        "ColorID": 15,
+        "Label": "area_24c'",
+        "R": 255,
+        "G": 166,
+        "B": 231
+      },
+      "16": {
+        "ColorID": 16,
+        "Label": "orbital_frontal_cortex",
+        "R": 255,
+        "G": 191,
+        "B": 222
+      },
+      "17": {
+        "ColorID": 17,
+        "Label": "medial_orbital_frontal_cortex",
+        "R": 255,
+        "G": 115,
+        "B": 229
+      },
+      "18": {
+        "ColorID": 18,
+        "Label": "frontal_pole",
+        "R": 212,
+        "G": 0,
+        "B": 123
+      },
+      "19": {
+        "ColorID": 19,
+        "Label": "rostral_medial_frontal_pole",
+        "R": 128,
+        "G": 0,
+        "B": 115
+      },
+      "20": {
+        "ColorID": 20,
+        "Label": "caudal_medial_frontal_pole",
+        "R": 191,
+        "G": 44,
+        "B": 130
+      },
+      "21": {
+        "ColorID": 21,
+        "Label": "orbital_frontal_pole",
+        "R": 255,
+        "G": 59,
+        "B": 108
+      },
+      "22": {
+        "ColorID": 22,
+        "Label": "gyrus_rectus",
+        "R": 128,
+        "G": 57,
+        "B": 115
+      },
+      "23": {
+        "ColorID": 23,
+        "Label": "rostral_gyrus_rectus",
+        "R": 255,
+        "G": 166,
+        "B": 239
+      },
+      "24": {
+        "ColorID": 24,
+        "Label": "caudal_gyrus_rectus",
+        "R": 128,
+        "G": 29,
+        "B": 126
+      },
+      "25": {
+        "ColorID": 25,
+        "Label": "lateral_orbital_frontal_cortex",
+        "R": 119,
+        "G": 0,
+        "B": 128
+      },
+      "26": {
+        "ColorID": 26,
+        "Label": "areas_11_and_13",
+        "R": 191,
+        "G": 0,
+        "B": 143
+      },
+      "27": {
+        "ColorID": 27,
+        "Label": "area_11",
+        "R": 255,
+        "G": 59,
+        "B": 252
+      },
+      "28": {
+        "ColorID": 28,
+        "Label": "medial_area_11",
+        "R": 247,
+        "G": 140,
+        "B": 255
+      },
+      "29": {
+        "ColorID": 29,
+        "Label": "lateral_area_11",
+        "R": 228,
+        "G": 140,
+        "B": 255
+      },
+      "30": {
+        "ColorID": 30,
+        "Label": "area_13",
+        "R": 79,
+        "G": 0,
+        "B": 128
+      },
+      "31": {
+        "ColorID": 31,
+        "Label": "areas_13a_and_13b",
+        "R": 217,
+        "G": 0,
+        "B": 232
+      },
+      "32": {
+        "ColorID": 32,
+        "Label": "medial_area_13",
+        "R": 138,
+        "G": 39,
+        "B": 168
+      },
+      "33": {
+        "ColorID": 33,
+        "Label": "lateral_area_13",
+        "R": 255,
+        "G": 59,
+        "B": 235
+      },
+      "34": {
+        "ColorID": 34,
+        "Label": "medial_and_orbital_area_12",
+        "R": 213,
+        "G": 115,
+        "B": 255
+      },
+      "35": {
+        "ColorID": 35,
+        "Label": "medial_area_12",
+        "R": 101,
+        "G": 0,
+        "B": 148
+      },
+      "36": {
+        "ColorID": 36,
+        "Label": "orbital_area_12",
+        "R": 183,
+        "G": 0,
+        "B": 212
+      },
+      "37": {
+        "ColorID": 37,
+        "Label": "caudal_orbital_frontal_cortex",
+        "R": 90,
+        "G": 29,
+        "B": 128
+      },
+      "38": {
+        "ColorID": 38,
+        "Label": "agranular_orbitofrontal_cortex",
+        "R": 123,
+        "G": 0,
+        "B": 168
+      },
+      "39": {
+        "ColorID": 39,
+        "Label": "medial_agranular_insular_region",
+        "R": 153,
+        "G": 0,
+        "B": 191
+      },
+      "40": {
+        "ColorID": 40,
+        "Label": "lateral_agranular_insular_region",
+        "R": 201,
+        "G": 49,
+        "B": 212
+      },
+      "41": {
+        "ColorID": 41,
+        "Label": "intermediate_agranular_insula_area",
+        "R": 106,
+        "G": 57,
+        "B": 128
+      },
+      "42": {
+        "ColorID": 42,
+        "Label": "lateral_agranular_insula_area",
+        "R": 221,
+        "G": 140,
+        "B": 255
+      },
+      "43": {
+        "ColorID": 43,
+        "Label": "posterior_lateral_agranular_insula_area",
+        "R": 237,
+        "G": 166,
+        "B": 255
+      },
+      "44": {
+        "ColorID": 44,
+        "Label": "primary_olfactory_cortex",
+        "R": 255,
+        "G": 0,
+        "B": 230
+      },
+      "45": {
+        "ColorID": 45,
+        "Label": "anterior_olfactory_cortex",
+        "R": 147,
+        "G": 0,
+        "B": 191
+      },
+      "46": {
+        "ColorID": 46,
+        "Label": "posterior_olfactory_cortex",
+        "R": 82,
+        "G": 29,
+        "B": 128
+      },
+      "47": {
+        "ColorID": 47,
+        "Label": "caudolateral_orbitofrontal_cortex",
+        "R": 163,
+        "G": 59,
+        "B": 255
+      },
+      "48": {
+        "ColorID": 48,
+        "Label": "gustatory_cortex",
+        "R": 192,
+        "G": 140,
+        "B": 255
+      },
+      "49": {
+        "ColorID": 49,
+        "Label": "precentral_operular_area",
+        "R": 166,
+        "G": 115,
+        "B": 255
+      },
+      "50": {
+        "ColorID": 50,
+        "Label": "lateral_prefrontal_cortex",
+        "R": 57,
+        "G": 29,
+        "B": 128
+      },
+      "51": {
+        "ColorID": 51,
+        "Label": "periarcuate_area_8A_(Frontal_Eye_Fields)",
+        "R": 242,
+        "G": 59,
+        "B": 255
+      },
+      "52": {
+        "ColorID": 52,
+        "Label": "dorsal_periarcuate_area_8A",
+        "R": 83,
+        "G": 57,
+        "B": 128
+      },
+      "53": {
+        "ColorID": 53,
+        "Label": "ventral_periarcuate_area_8A",
+        "R": 182,
+        "G": 140,
+        "B": 255
+      },
+      "54": {
+        "ColorID": 54,
+        "Label": "dorsolateral_prefrontal_cortex",
+        "R": 202,
+        "G": 166,
+        "B": 255
+      },
+      "55": {
+        "ColorID": 55,
+        "Label": "area_8B",
+        "R": 98,
+        "G": 59,
+        "B": 255
+      },
+      "56": {
+        "ColorID": 56,
+        "Label": "dorsal_area_8B",
+        "R": 195,
+        "G": 0,
+        "B": 255
+      },
+      "57": {
+        "ColorID": 57,
+        "Label": "medial_area_8B",
+        "R": 83,
+        "G": 0,
+        "B": 191
+      },
+      "58": {
+        "ColorID": 58,
+        "Label": "arcuate_sulcus_area_8B",
+        "R": 49,
+        "G": 29,
+        "B": 128
+      },
+      "59": {
+        "ColorID": 59,
+        "Label": "rostral_dorsolateral_prefrontal_cortex",
+        "R": 154,
+        "G": 140,
+        "B": 255
+      },
+      "60": {
+        "ColorID": 60,
+        "Label": "area_9",
+        "R": 8,
+        "G": 0,
+        "B": 153
+      },
+      "61": {
+        "ColorID": 61,
+        "Label": "dorsal_area_9",
+        "R": 65,
+        "G": 0,
+        "B": 230
+      },
+      "62": {
+        "ColorID": 62,
+        "Label": "medial_area_9",
+        "R": 122,
+        "G": 115,
+        "B": 255
+      },
+      "63": {
+        "ColorID": 63,
+        "Label": "dorsal_area_46",
+        "R": 21,
+        "G": 0,
+        "B": 178
+      },
+      "64": {
+        "ColorID": 64,
+        "Label": "ventrolateral_prefrontal_cortex",
+        "R": 0,
+        "G": 4,
+        "B": 128
+      },
+      "65": {
+        "ColorID": 65,
+        "Label": "rostral_ventrolateral_prefrontal_cortex",
+        "R": 29,
+        "G": 33,
+        "B": 128
+      },
+      "66": {
+        "ColorID": 66,
+        "Label": "ventral_and_fundus_portion_of_area_46",
+        "R": 41,
+        "G": 0,
+        "B": 204
+      },
+      "67": {
+        "ColorID": 67,
+        "Label": "area_46_in_fundus_of_the_principal_sulcus",
+        "R": 93,
+        "G": 0,
+        "B": 255
+      },
+      "68": {
+        "ColorID": 68,
+        "Label": "ventral_area_46",
+        "R": 180,
+        "G": 59,
+        "B": 255
+      },
+      "69": {
+        "ColorID": 69,
+        "Label": "rostral_and_lateral_area_12",
+        "R": 61,
+        "G": 57,
+        "B": 128
+      },
+      "70": {
+        "ColorID": 70,
+        "Label": "lateral_area_12",
+        "R": 146,
+        "G": 140,
+        "B": 255
+      },
+      "71": {
+        "ColorID": 71,
+        "Label": "rostral_area_12",
+        "R": 140,
+        "G": 163,
+        "B": 255
+      },
+      "72": {
+        "ColorID": 72,
+        "Label": "caudal_ventrolateral_prefrontal_cortex",
+        "R": 166,
+        "G": 167,
+        "B": 255
+      },
+      "73": {
+        "ColorID": 73,
+        "Label": "area_45",
+        "R": 8,
+        "G": 0,
+        "B": 255
+      },
+      "74": {
+        "ColorID": 74,
+        "Label": "area_45a",
+        "R": 0,
+        "G": 27,
+        "B": 204
+      },
+      "75": {
+        "ColorID": 75,
+        "Label": "area_45b",
+        "R": 0,
+        "G": 39,
+        "B": 178
+      },
+      "76": {
+        "ColorID": 76,
+        "Label": "area_44",
+        "R": 29,
+        "G": 65,
+        "B": 128
+      },
+      "77": {
+        "ColorID": 77,
+        "Label": "motor_cortex",
+        "R": 0,
+        "G": 47,
+        "B": 128
+      },
+      "78": {
+        "ColorID": 78,
+        "Label": "lateral_motor_cortex",
+        "R": 0,
+        "G": 43,
+        "B": 153
+      },
+      "79": {
+        "ColorID": 79,
+        "Label": "primary_motor_cortex",
+        "R": 114,
+        "G": 59,
+        "B": 255
+      },
+      "80": {
+        "ColorID": 80,
+        "Label": "premotor_cortex",
+        "R": 57,
+        "G": 77,
+        "B": 128
+      },
+      "81": {
+        "ColorID": 81,
+        "Label": "dorsal_premotor_cortex",
+        "R": 115,
+        "G": 154,
+        "B": 255
+      },
+      "82": {
+        "ColorID": 82,
+        "Label": "caudal_dorsal_premotor_cortex",
+        "R": 166,
+        "G": 191,
+        "B": 255
+      },
+      "83": {
+        "ColorID": 83,
+        "Label": "rostral_dorsal_premotor_cortex",
+        "R": 0,
+        "G": 64,
+        "B": 191
+      },
+      "84": {
+        "ColorID": 84,
+        "Label": "ventral_premotor_cortex",
+        "R": 0,
+        "G": 56,
+        "B": 212
+      },
+      "85": {
+        "ColorID": 85,
+        "Label": "area_F4_of_ventral_premotor_cortex",
+        "R": 36,
+        "G": 87,
+        "B": 158
+      },
+      "86": {
+        "ColorID": 86,
+        "Label": "area_F5_of_ventral_premotor_cortex",
+        "R": 51,
+        "G": 85,
+        "B": 222
+      },
+      "87": {
+        "ColorID": 87,
+        "Label": "medial_supplementary_motor_areas",
+        "R": 115,
+        "G": 176,
+        "B": 255
+      },
+      "88": {
+        "ColorID": 88,
+        "Label": "presupplementary_motor_area",
+        "R": 44,
+        "G": 88,
+        "B": 191
+      },
+      "89": {
+        "ColorID": 89,
+        "Label": "supplementary_motor_area",
+        "R": 29,
+        "G": 80,
+        "B": 128
+      },
+      "90": {
+        "ColorID": 90,
+        "Label": "Parietal_Lobe",
+        "R": 0,
+        "G": 67,
+        "B": 148
+      },
+      "91": {
+        "ColorID": 91,
+        "Label": "somatosensory_cortex",
+        "R": 0,
+        "G": 46,
+        "B": 232
+      },
+      "92": {
+        "ColorID": 92,
+        "Label": "primary_somatosensory_cortex",
+        "R": 59,
+        "G": 75,
+        "B": 255
+      },
+      "93": {
+        "ColorID": 93,
+        "Label": "areas_3a_and_3b",
+        "R": 57,
+        "G": 88,
+        "B": 128
+      },
+      "94": {
+        "ColorID": 94,
+        "Label": "areas_1-2",
+        "R": 140,
+        "G": 190,
+        "B": 255
+      },
+      "95": {
+        "ColorID": 95,
+        "Label": "secondary_somatosensory_cortex",
+        "R": 29,
+        "G": 88,
+        "B": 128
+      },
+      "96": {
+        "ColorID": 96,
+        "Label": "superior_parietal_lobule",
+        "R": 0,
+        "G": 70,
+        "B": 191
+      },
+      "97": {
+        "ColorID": 97,
+        "Label": "visual_areas_V6_and_V6A",
+        "R": 0,
+        "G": 8,
+        "B": 255
+      },
+      "98": {
+        "ColorID": 98,
+        "Label": "visual_area_V6",
+        "R": 59,
+        "G": 176,
+        "B": 255
+      },
+      "99": {
+        "ColorID": 99,
+        "Label": "visual_area_V6A",
+        "R": 140,
+        "G": 219,
+        "B": 255
+      },
+      "100": {
+        "ColorID": 100,
+        "Label": "ventral_visual_area_6A",
+        "R": 57,
+        "G": 111,
+        "B": 128
+      },
+      "101": {
+        "ColorID": 101,
+        "Label": "dorsal_visual_area_6A",
+        "R": 49,
+        "G": 136,
+        "B": 212
+      },
+      "102": {
+        "ColorID": 102,
+        "Label": "area_5",
+        "R": 59,
+        "G": 131,
+        "B": 255
+      },
+      "103": {
+        "ColorID": 103,
+        "Label": "dorsal_area_5",
+        "R": 0,
+        "G": 119,
+        "B": 158
+      },
+      "104": {
+        "ColorID": 104,
+        "Label": "areas_PEc_and_PEci",
+        "R": 0,
+        "G": 118,
+        "B": 222
+      },
+      "105": {
+        "ColorID": 105,
+        "Label": "area_PE",
+        "R": 29,
+        "G": 113,
+        "B": 128
+      },
+      "106": {
+        "ColorID": 106,
+        "Label": "area_PEa",
+        "R": 115,
+        "G": 222,
+        "B": 255
+      },
+      "107": {
+        "ColorID": 107,
+        "Label": "ventromedial_intraparietal_sulcus",
+        "R": 140,
+        "G": 228,
+        "B": 255
+      },
+      "108": {
+        "ColorID": 108,
+        "Label": "medial_intraparietal_area",
+        "R": 166,
+        "G": 222,
+        "B": 255
+      },
+      "109": {
+        "ColorID": 109,
+        "Label": "fundus_of_the_intraparietal_sulcus",
+        "R": 207,
+        "G": 191,
+        "B": 255
+      },
+      "110": {
+        "ColorID": 110,
+        "Label": "ventral_intraparietal_area",
+        "R": 36,
+        "G": 148,
+        "B": 158
+      },
+      "111": {
+        "ColorID": 111,
+        "Label": "posterior_intraparietal_area",
+        "R": 59,
+        "G": 173,
+        "B": 255
+      },
+      "112": {
+        "ColorID": 112,
+        "Label": "inferior_parietal_lobule",
+        "R": 115,
+        "G": 246,
+        "B": 255
+      },
+      "113": {
+        "ColorID": 113,
+        "Label": "lateral_intraparietal_sulcus",
+        "R": 29,
+        "G": 128,
+        "B": 126
+      },
+      "114": {
+        "ColorID": 114,
+        "Label": "anterior_intraparietal_area",
+        "R": 0,
+        "G": 151,
+        "B": 168
+      },
+      "115": {
+        "ColorID": 115,
+        "Label": "lateral_intraparietal_area",
+        "R": 0,
+        "G": 162,
+        "B": 255
+      },
+      "116": {
+        "ColorID": 116,
+        "Label": "dorsal_lateral_intraparietal_area",
+        "R": 0,
+        "G": 162,
+        "B": 232
+      },
+      "117": {
+        "ColorID": 117,
+        "Label": "ventral_lateral_intraparietal_area",
+        "R": 44,
+        "G": 162,
+        "B": 191
+      },
+      "118": {
+        "ColorID": 118,
+        "Label": "lateral_occipital_parietal_area",
+        "R": 51,
+        "G": 171,
+        "B": 222
+      },
+      "119": {
+        "ColorID": 119,
+        "Label": "medial_superior_temporal_area",
+        "R": 57,
+        "G": 123,
+        "B": 128
+      },
+      "120": {
+        "ColorID": 120,
+        "Label": "area_7_in_the_inferior_parietal_lobule",
+        "R": 140,
+        "G": 247,
+        "B": 255
+      },
+      "121": {
+        "ColorID": 121,
+        "Label": "inferior_parietal_lobule_areas_7a_and_7b",
+        "R": 140,
+        "G": 255,
+        "B": 236
+      },
+      "122": {
+        "ColorID": 122,
+        "Label": "caudal_inferior_parietal_lobule_area_7a_(Opt/PG)",
+        "R": 166,
+        "G": 255,
+        "B": 251
+      },
+      "123": {
+        "ColorID": 123,
+        "Label": "rostral_inferior_parietal_lobule_area_7b_(PFG/PF)",
+        "R": 59,
+        "G": 255,
+        "B": 206
+      },
+      "124": {
+        "ColorID": 124,
+        "Label": "parietal_operculum",
+        "R": 0,
+        "G": 174,
+        "B": 255
+      },
+      "125": {
+        "ColorID": 125,
+        "Label": "posterior_medial_cortex",
+        "R": 0,
+        "G": 128,
+        "B": 85
+      },
+      "126": {
+        "ColorID": 126,
+        "Label": "area_7_(PGm)_on_the_medial_wall",
+        "R": 29,
+        "G": 128,
+        "B": 103
+      },
+      "127": {
+        "ColorID": 127,
+        "Label": "posterior_cingulate_gyrus",
+        "R": 140,
+        "G": 255,
+        "B": 217
+      },
+      "128": {
+        "ColorID": 128,
+        "Label": "posterior_cingulate_cortex",
+        "R": 140,
+        "G": 255,
+        "B": 198
+      },
+      "129": {
+        "ColorID": 129,
+        "Label": "area_31",
+        "R": 44,
+        "G": 191,
+        "B": 140
+      },
+      "130": {
+        "ColorID": 130,
+        "Label": "area_23",
+        "R": 0,
+        "G": 168,
+        "B": 81
+      },
+      "131": {
+        "ColorID": 131,
+        "Label": "area_23a",
+        "R": 0,
+        "G": 212,
+        "B": 138
+      },
+      "132": {
+        "ColorID": 132,
+        "Label": "area_23b",
+        "R": 59,
+        "G": 255,
+        "B": 252
+      },
+      "133": {
+        "ColorID": 133,
+        "Label": "area_23c",
+        "R": 29,
+        "G": 128,
+        "B": 62
+      },
+      "134": {
+        "ColorID": 134,
+        "Label": "area_v23",
+        "R": 140,
+        "G": 255,
+        "B": 179
+      },
+      "135": {
+        "ColorID": 135,
+        "Label": "retrosplenial_cortex",
+        "R": 166,
+        "G": 255,
+        "B": 210
+      },
+      "136": {
+        "ColorID": 136,
+        "Label": "area_29",
+        "R": 0,
+        "G": 255,
+        "B": 212
+      },
+      "137": {
+        "ColorID": 137,
+        "Label": "area_30",
+        "R": 0,
+        "G": 128,
+        "B": 23
+      },
+      "138": {
+        "ColorID": 138,
+        "Label": "Temporal_Lobe",
+        "R": 29,
+        "G": 128,
+        "B": 56
+      },
+      "139": {
+        "ColorID": 139,
+        "Label": "medial_temporal_lobe",
+        "R": 59,
+        "G": 255,
+        "B": 111
+      },
+      "140": {
+        "ColorID": 140,
+        "Label": "hippocampus",
+        "R": 140,
+        "G": 255,
+        "B": 161
+      },
+      "141": {
+        "ColorID": 141,
+        "Label": "hippocampal_formation",
+        "R": 29,
+        "G": 128,
+        "B": 39
+      },
+      "142": {
+        "ColorID": 142,
+        "Label": "hippocampus_proper",
+        "R": 0,
+        "G": 191,
+        "B": 64
+      },
+      "143": {
+        "ColorID": 143,
+        "Label": "hippocampal_subfields_CA1-CA3",
+        "R": 0,
+        "G": 255,
+        "B": 170
+      },
+      "144": {
+        "ColorID": 144,
+        "Label": "hippocampal_subfield_CA4",
+        "R": 59,
+        "G": 255,
+        "B": 78
+      },
+      "145": {
+        "ColorID": 145,
+        "Label": "dentate_gyrus",
+        "R": 140,
+        "G": 255,
+        "B": 142
+      },
+      "146": {
+        "ColorID": 146,
+        "Label": "subiculum_and_prosubiculum",
+        "R": 0,
+        "G": 255,
+        "B": 128
+      },
+      "147": {
+        "ColorID": 147,
+        "Label": "presubiculum_and_parasubiculum",
+        "R": 0,
+        "G": 191,
+        "B": 32
+      },
+      "148": {
+        "ColorID": 148,
+        "Label": "parahippocampal_cortex",
+        "R": 124,
+        "G": 255,
+        "B": 115
+      },
+      "149": {
+        "ColorID": 149,
+        "Label": "areas_TF_and_TFO",
+        "R": 62,
+        "G": 128,
+        "B": 57
+      },
+      "150": {
+        "ColorID": 150,
+        "Label": "area_TFO",
+        "R": 148,
+        "G": 255,
+        "B": 140
+      },
+      "151": {
+        "ColorID": 151,
+        "Label": "area_TF",
+        "R": 166,
+        "G": 255,
+        "B": 170
+      },
+      "152": {
+        "ColorID": 152,
+        "Label": "area_TH",
+        "R": 175,
+        "G": 255,
+        "B": 140
+      },
+      "153": {
+        "ColorID": 153,
+        "Label": "rhinal_cortex",
+        "R": 134,
+        "G": 255,
+        "B": 59
+      },
+      "154": {
+        "ColorID": 154,
+        "Label": "entorhinal_cortex",
+        "R": 67,
+        "G": 128,
+        "B": 29
+      },
+      "155": {
+        "ColorID": 155,
+        "Label": "caudal_entorhinal_cortex",
+        "R": 194,
+        "G": 255,
+        "B": 140
+      },
+      "156": {
+        "ColorID": 156,
+        "Label": "caudal_division_of_entorhinal_cortex",
+        "R": 200,
+        "G": 255,
+        "B": 166
+      },
+      "157": {
+        "ColorID": 157,
+        "Label": "caudal_limiting_division_of_entorhinal_cortex",
+        "R": 191,
+        "G": 255,
+        "B": 209
+      },
+      "158": {
+        "ColorID": 158,
+        "Label": "middle_entorhinal_cortex",
+        "R": 83,
+        "G": 128,
+        "B": 29
+      },
+      "159": {
+        "ColorID": 159,
+        "Label": "rostral_entorhinal_cortex",
+        "R": 167,
+        "G": 255,
+        "B": 59
+      },
+      "160": {
+        "ColorID": 160,
+        "Label": "perirhinal_cortex",
+        "R": 213,
+        "G": 255,
+        "B": 140
+      },
+      "161": {
+        "ColorID": 161,
+        "Label": "area_35",
+        "R": 112,
+        "G": 191,
+        "B": 0
+      },
+      "162": {
+        "ColorID": 162,
+        "Label": "area_36",
+        "R": 102,
+        "G": 128,
+        "B": 0
+      },
+      "163": {
+        "ColorID": 163,
+        "Label": "caudal_area_36",
+        "R": 88,
+        "G": 255,
+        "B": 59
+      },
+      "164": {
+        "ColorID": 164,
+        "Label": "rostral_and_polar_area_36",
+        "R": 107,
+        "G": 222,
+        "B": 0
+      },
+      "165": {
+        "ColorID": 165,
+        "Label": "temporal_pole",
+        "R": 94,
+        "G": 255,
+        "B": 0
+      },
+      "166": {
+        "ColorID": 166,
+        "Label": "agranular_temporal_pole",
+        "R": 108,
+        "G": 128,
+        "B": 29
+      },
+      "167": {
+        "ColorID": 167,
+        "Label": "granular_and_dysgranular_temporal_pole",
+        "R": 215,
+        "G": 255,
+        "B": 115
+      },
+      "168": {
+        "ColorID": 168,
+        "Label": "dysgranular_temporal_pole",
+        "R": 108,
+        "G": 128,
+        "B": 57
+      },
+      "169": {
+        "ColorID": 169,
+        "Label": "dorsal_dysgranular_temporal_pole",
+        "R": 222,
+        "G": 255,
+        "B": 140
+      },
+      "170": {
+        "ColorID": 170,
+        "Label": "ventral_dysgranular_temporal_pole",
+        "R": 226,
+        "G": 255,
+        "B": 166
+      },
+      "171": {
+        "ColorID": 171,
+        "Label": "granular_temporal_pole",
+        "R": 150,
+        "G": 255,
+        "B": 59
+      },
+      "172": {
+        "ColorID": 172,
+        "Label": "dorsal_granular_temporal_pole",
+        "R": 148,
+        "G": 212,
+        "B": 0
+      },
+      "173": {
+        "ColorID": 173,
+        "Label": "ventral_granular_temporal_pole",
+        "R": 121,
+        "G": 128,
+        "B": 0
+      },
+      "174": {
+        "ColorID": 174,
+        "Label": "sts_part_of_temporal_pole",
+        "R": 123,
+        "G": 128,
+        "B": 29
+      },
+      "175": {
+        "ColorID": 175,
+        "Label": "inferior_temporal_cortex",
+        "R": 118,
+        "G": 128,
+        "B": 57
+      },
+      "176": {
+        "ColorID": 176,
+        "Label": "area_TEO",
+        "R": 144,
+        "G": 255,
+        "B": 0
+      },
+      "177": {
+        "ColorID": 177,
+        "Label": "area_TE",
+        "R": 131,
+        "G": 148,
+        "B": 0
+      },
+      "178": {
+        "ColorID": 178,
+        "Label": "gyral_aspect_of_area_TE",
+        "R": 152,
+        "G": 212,
+        "B": 49
+      },
+      "179": {
+        "ColorID": 179,
+        "Label": "posterior_area_TE",
+        "R": 147,
+        "G": 191,
+        "B": 0
+      },
+      "180": {
+        "ColorID": 180,
+        "Label": "posterior_ventral_area_TE",
+        "R": 140,
+        "G": 168,
+        "B": 0
+      },
+      "181": {
+        "ColorID": 181,
+        "Label": "posterior_dorsal_area_TE",
+        "R": 142,
+        "G": 168,
+        "B": 39
+      },
+      "182": {
+        "ColorID": 182,
+        "Label": "anterior_area_TE",
+        "R": 236,
+        "G": 255,
+        "B": 115
+      },
+      "183": {
+        "ColorID": 183,
+        "Label": "anterior_ventral_area_TE",
+        "R": 240,
+        "G": 255,
+        "B": 140
+      },
+      "184": {
+        "ColorID": 184,
+        "Label": "anterior_dorsal_area_TE",
+        "R": 150,
+        "G": 255,
+        "B": 59
+      },
+      "185": {
+        "ColorID": 185,
+        "Label": "area_TE_in_the_ventral_STS",
+        "R": 184,
+        "G": 230,
+        "B": 0
+      },
+      "186": {
+        "ColorID": 186,
+        "Label": "area_TEm",
+        "R": 180,
+        "G": 204,
+        "B": 0
+      },
+      "187": {
+        "ColorID": 187,
+        "Label": "area_TEa",
+        "R": 128,
+        "G": 116,
+        "B": 29
+      },
+      "188": {
+        "ColorID": 188,
+        "Label": "fundus_of_the_superior_temporal_sulcus",
+        "R": 128,
+        "G": 125,
+        "B": 57
+      },
+      "189": {
+        "ColorID": 189,
+        "Label": "anterior_fundus_of_the_superior_temporal_sulcus",
+        "R": 183,
+        "G": 255,
+        "B": 0
+      },
+      "190": {
+        "ColorID": 190,
+        "Label": "area_IPa",
+        "R": 153,
+        "G": 148,
+        "B": 0
+      },
+      "191": {
+        "ColorID": 191,
+        "Label": "area_PGa",
+        "R": 128,
+        "G": 113,
+        "B": 0
+      },
+      "192": {
+        "ColorID": 192,
+        "Label": "floor_of_the_superior_temporal_area",
+        "R": 255,
+        "G": 250,
+        "B": 115
+      },
+      "193": {
+        "ColorID": 193,
+        "Label": "superior_temporal_region",
+        "R": 255,
+        "G": 251,
+        "B": 140
+      },
+      "194": {
+        "ColorID": 194,
+        "Label": "rostral_superior_temporal_region",
+        "R": 128,
+        "G": 102,
+        "B": 0
+      },
+      "195": {
+        "ColorID": 195,
+        "Label": "dorsal_bank_of_the_superior_temporal_sulcus",
+        "R": 255,
+        "G": 204,
+        "B": 0
+      },
+      "196": {
+        "ColorID": 196,
+        "Label": "temporal_parietooccipital_associated_area",
+        "R": 255,
+        "G": 222,
+        "B": 140
+      },
+      "197": {
+        "ColorID": 197,
+        "Label": "area_TAa",
+        "R": 255,
+        "G": 250,
+        "B": 166
+      },
+      "198": {
+        "ColorID": 198,
+        "Label": "rostral_superior_temporal_gyrus",
+        "R": 128,
+        "G": 83,
+        "B": 29
+      },
+      "199": {
+        "ColorID": 199,
+        "Label": "caudal_superior_temporal_gyrus",
+        "R": 255,
+        "G": 252,
+        "B": 59
+      },
+      "200": {
+        "ColorID": 200,
+        "Label": "temporo-parietal_area",
+        "R": 191,
+        "G": 177,
+        "B": 86
+      },
+      "201": {
+        "ColorID": 201,
+        "Label": "parabelt_areas_of_auditory_cortex",
+        "R": 128,
+        "G": 70,
+        "B": 0
+      },
+      "202": {
+        "ColorID": 202,
+        "Label": "caudal_parabelt_region",
+        "R": 235,
+        "G": 203,
+        "B": 0
+      },
+      "203": {
+        "ColorID": 203,
+        "Label": "rostral_parabelt_region",
+        "R": 128,
+        "G": 96,
+        "B": 57
+      },
+      "204": {
+        "ColorID": 204,
+        "Label": "core_and_belt_areas_of_auditory_cortex",
+        "R": 181,
+        "G": 127,
+        "B": 0
+      },
+      "205": {
+        "ColorID": 205,
+        "Label": "belt_areas_of_auditory_cortex",
+        "R": 163,
+        "G": 106,
+        "B": 0
+      },
+      "206": {
+        "ColorID": 206,
+        "Label": "lateral_belt_areas",
+        "R": 217,
+        "G": 177,
+        "B": 0
+      },
+      "207": {
+        "ColorID": 207,
+        "Label": "caudal_areas_of_the_lateral_belt",
+        "R": 158,
+        "G": 115,
+        "B": 36
+      },
+      "208": {
+        "ColorID": 208,
+        "Label": "caudal_lateral_belt_region",
+        "R": 191,
+        "G": 157,
+        "B": 44
+      },
+      "209": {
+        "ColorID": 209,
+        "Label": "middle_lateral_belt_region",
+        "R": 227,
+        "G": 255,
+        "B": 115
+      },
+      "210": {
+        "ColorID": 210,
+        "Label": "rostral_areas_of_the_lateral_belt",
+        "R": 255,
+        "G": 240,
+        "B": 140
+      },
+      "211": {
+        "ColorID": 211,
+        "Label": "anterior_lateral_belt_region",
+        "R": 191,
+        "G": 112,
+        "B": 0
+      },
+      "212": {
+        "ColorID": 212,
+        "Label": "lateral_rostrotemporal_belt_region",
+        "R": 128,
+        "G": 51,
+        "B": 0
+      },
+      "213": {
+        "ColorID": 213,
+        "Label": "medial_belt_areas",
+        "R": 128,
+        "G": 91,
+        "B": 57
+      },
+      "214": {
+        "ColorID": 214,
+        "Label": "caudomedial_belt_region",
+        "R": 168,
+        "G": 87,
+        "B": 0
+      },
+      "215": {
+        "ColorID": 215,
+        "Label": "rostral_areas_of_the_medial_belt",
+        "R": 148,
+        "G": 69,
+        "B": 0
+      },
+      "216": {
+        "ColorID": 216,
+        "Label": "rostromedial_belt_region",
+        "R": 232,
+        "G": 166,
+        "B": 0
+      },
+      "217": {
+        "ColorID": 217,
+        "Label": "medial_rostrotemporal_belt_region",
+        "R": 191,
+        "G": 150,
+        "B": 44
+      },
+      "218": {
+        "ColorID": 218,
+        "Label": "polar_rostrotemporal_cortex",
+        "R": 212,
+        "G": 138,
+        "B": 0
+      },
+      "219": {
+        "ColorID": 219,
+        "Label": "core_areas_of_auditory_cortex",
+        "R": 255,
+        "G": 200,
+        "B": 0
+      },
+      "220": {
+        "ColorID": 220,
+        "Label": "rostral_areas_of_the_core",
+        "R": 245,
+        "G": 255,
+        "B": 59
+      },
+      "221": {
+        "ColorID": 221,
+        "Label": "rostral_core_region",
+        "R": 255,
+        "G": 183,
+        "B": 115
+      },
+      "222": {
+        "ColorID": 222,
+        "Label": "rostrotemporal_core_region",
+        "R": 255,
+        "G": 196,
+        "B": 140
+      },
+      "223": {
+        "ColorID": 223,
+        "Label": "primary_auditory_cortex",
+        "R": 191,
+        "G": 86,
+        "B": 0
+      },
+      "224": {
+        "ColorID": 224,
+        "Label": "floor_of_the_lateral_sulcus",
+        "R": 255,
+        "G": 170,
+        "B": 0
+      },
+      "225": {
+        "ColorID": 225,
+        "Label": "insula_and_parainsula",
+        "R": 255,
+        "G": 159,
+        "B": 115
+      },
+      "226": {
+        "ColorID": 226,
+        "Label": "parainsula",
+        "R": 128,
+        "G": 30,
+        "B": 0
+      },
+      "227": {
+        "ColorID": 227,
+        "Label": "insula",
+        "R": 222,
+        "G": 122,
+        "B": 0
+      },
+      "228": {
+        "ColorID": 228,
+        "Label": "agranular_and_dysgranular_insula",
+        "R": 158,
+        "G": 53,
+        "B": 0
+      },
+      "229": {
+        "ColorID": 229,
+        "Label": "granular_insula",
+        "R": 128,
+        "G": 80,
+        "B": 57
+      },
+      "230": {
+        "ColorID": 230,
+        "Label": "retroinsula",
+        "R": 255,
+        "G": 177,
+        "B": 140
+      },
+      "231": {
+        "ColorID": 231,
+        "Label": "Occipital_Lobe",
+        "R": 255,
+        "G": 215,
+        "B": 166
+      },
+      "232": {
+        "ColorID": 232,
+        "Label": "middle_temporal_area",
+        "R": 255,
+        "G": 88,
+        "B": 59
+      },
+      "233": {
+        "ColorID": 233,
+        "Label": "extrastriate_visual_areas_2-4",
+        "R": 255,
+        "G": 183,
+        "B": 0
+      },
+      "234": {
+        "ColorID": 234,
+        "Label": "visual_area_4",
+        "R": 191,
+        "G": 73,
+        "B": 0
+      },
+      "235": {
+        "ColorID": 235,
+        "Label": "dorsal_visual_area_4",
+        "R": 128,
+        "G": 44,
+        "B": 29
+      },
+      "236": {
+        "ColorID": 236,
+        "Label": "ventral_visual_area_4",
+        "R": 255,
+        "G": 148,
+        "B": 140
+      },
+      "237": {
+        "ColorID": 237,
+        "Label": "preoccipital_visual_areas_2-3",
+        "R": 168,
+        "G": 47,
+        "B": 39
+      },
+      "238": {
+        "ColorID": 238,
+        "Label": "visual_area_3",
+        "R": 158,
+        "G": 3,
+        "B": 0
+      },
+      "239": {
+        "ColorID": 239,
+        "Label": "visual_areas_V3d_and_V3A",
+        "R": 128,
+        "G": 0,
+        "B": 8
+      },
+      "240": {
+        "ColorID": 240,
+        "Label": "visual_area_V3A",
+        "R": 255,
+        "G": 137,
+        "B": 59
+      },
+      "241": {
+        "ColorID": 241,
+        "Label": "dorsal_visual_area_3",
+        "R": 128,
+        "G": 57,
+        "B": 62
+      },
+      "242": {
+        "ColorID": 242,
+        "Label": "ventral_visual_area_3",
+        "R": 191,
+        "G": 111,
+        "B": 86
+      },
+      "243": {
+        "ColorID": 243,
+        "Label": "visual_area_2",
+        "R": 255,
+        "G": 194,
+        "B": 115
+      },
+      "244": {
+        "ColorID": 244,
+        "Label": "possibly_part_of_visual_area_2",
+        "R": 140,
+        "G": 255,
+        "B": 168
+      },
+      "245": {
+        "ColorID": 245,
+        "Label": "clearly_part_of_visual_area_2",
+        "R": 241,
+        "G": 255,
+        "B": 166
+      },
+      "246": {
+        "ColorID": 246,
+        "Label": "primary_visual_cortex",
+        "R": 255,
+        "G": 255,
+        "B": 191
+      }
+    },
+    "mapAlpha": false,
+    "mapMinColorID": 0,
+    "mapMaxColorID": 247,
+    "mapValueRange": [
+      "agranular_and_dysgranular_insula",
+      "visual_areas_V6_and_V6A"
+    ],
+    "mapDataType": "discrete",
+    "mapGeomType": "volume",
+    "colorIDAutoRescale": false,
+    "mapVersion": 1.1000000000000001,
+    "ieegio": {
+      "colorspace": "RGB"
+    }
+  }
+}
