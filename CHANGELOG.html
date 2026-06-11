@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.37</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.38</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,11 +40,13 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>69ce2e29 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Added documentations for exported <code>R6</code> classes</li>
+<code>0bd0e124 (HEAD -&gt; master, origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Added AdTech RD16R-SP47/8/9X prototypes</li>
+<li>
+<code>8c0415e1</code> [<em><code>dipterix</code></em>]: Added documentations for exported <code>R6</code> classes</li>
 <li>
 <code>58b3bacc</code> [<em><code>dipterix</code></em>]: Added text decorator to allow adding text sprite at given locations; Added optional text fields for electrodes</li>
 <li>
-<code>4021fb93 (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: R code style fix (via <code>lintr</code>)</li>
+<code>4021fb93</code> [<em><code>dipterix</code></em>]: R code style fix (via <code>lintr</code>)</li>
 <li>
 <code>f7c86f60</code> [<em><code>dipterix</code></em>]: Added per-contact active/inactive tracking for <code>InstancedMesh</code> electrode contacts: inactive contacts (no display value or failed threshold) suppress outlines; <code>hide inactives</code> visibility mode discards inactive contact fragments via <code>HIDE_INACTIVE_CONTACTS</code> shader define; replaced alpha-based inactive fading with <code>discard</code>; <code>instanceActive</code> per-instance buffer attribute drives all inactive logic; added <code>setHideInactives()</code> and <code>useInactiveAlpha()</code> material methods; added <code>guessHemisphere()</code> to infer electrode hemisphere from FreeSurfer anatomical label</li>
 <li>

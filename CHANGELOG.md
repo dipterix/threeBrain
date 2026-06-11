@@ -2,12 +2,13 @@
 
 ## Changes since last CRAN release
 
-- `69ce2e29 (HEAD -> master)` \[*`dipterix`*\]: Added documentations for
-  exported `R6` classes
+- `0bd0e124 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Added AdTech RD16R-SP47/8/9X prototypes
+- `8c0415e1` \[*`dipterix`*\]: Added documentations for exported `R6`
+  classes
 - `58b3bacc` \[*`dipterix`*\]: Added text decorator to allow adding text
   sprite at given locations; Added optional text fields for electrodes
-- `4021fb93 (origin/master, origin/HEAD)` \[*`dipterix`*\]: R code style
-  fix (via `lintr`)
+- `4021fb93` \[*`dipterix`*\]: R code style fix (via `lintr`)
 - `f7c86f60` \[*`dipterix`*\]: Added per-contact active/inactive
   tracking for `InstancedMesh` electrode contacts: inactive contacts (no
   display value or failed threshold) suppress outlines; `hide inactives`
