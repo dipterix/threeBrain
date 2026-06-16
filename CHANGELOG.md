@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `0bd0e124 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added AdTech RD16R-SP47/8/9X prototypes
+* `9bd1f0d9 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added `threeBrain_colormap` to class colormap; added `CHARM` look-up table; Fixed a bug that discrete color with highest key number never shows up.
+* `0bd0e124` [_`dipterix`_]: Added AdTech RD16R-SP47/8/9X prototypes
 * `8c0415e1` [_`dipterix`_]: Added documentations for exported `R6` classes
 * `58b3bacc` [_`dipterix`_]: Added text decorator to allow adding text sprite at given locations; Added optional text fields for electrodes
 * `4021fb93` [_`dipterix`_]: R code style fix (via `lintr`)
