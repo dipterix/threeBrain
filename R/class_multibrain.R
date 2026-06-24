@@ -365,7 +365,7 @@ MultiBrain2 <- R6::R6Class(
       # remember background
       background <- controllers[["Background Color"]]
       if (length(background) != 1) {
-        background <- "#FFFFFF"
+        background <- dipsaus::col2hexStr(graphics::par("bg") %||% "#FFFFFF")
       }
 
       # remember zoom-level
