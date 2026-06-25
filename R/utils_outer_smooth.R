@@ -102,6 +102,12 @@ generate_smooth_envelope <- function(
       niterations = 10,
       rescale = FALSE
     )
+    face_index <- t(mesh$it)
+    face_index_start <- min(face_index)
+    face_index <- face_index - (face_index_start - 1L)
+    vertices <- t(mesh$vb[c(1, 2, 3), ])
+    mesh <- structure(list(mesh_face_type = "tris", vertices = vertices,
+                           faces = face_index), class = c("fs.surface", "list"))
   } else {
     mesh <- ravetools::mesh_from_volume(
       volume = filled_volume$volume,
