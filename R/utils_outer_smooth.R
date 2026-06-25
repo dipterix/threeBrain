@@ -80,21 +80,45 @@ generate_smooth_envelope <- function(
 
   # generate surface from envelop
   debug("Generating surface from volume...\n")
-  mesh <- ravetools::mesh_from_volume(
-    volume = filled_volume$volume,
-    output_format = "freesurfer",
-    IJK2RAS = filled_volume$IJK2RAS,
-    threshold = 0.5,
-    verbose = verbose,
-    remesh = TRUE,
-    remesh_voxel_size = 1L,
-    remesh_multisample = TRUE,
-    remesh_automerge = TRUE,
-    smooth = TRUE,
-    smooth_lambda = 10,
-    smooth_delta = 20,
-    smooth_method = "surfPreserveLaplace"
-  )
+  # Check if ravetools has mris_smooth
+  mris_smooth <- asNamespace("ravetools")$mris_smooth
+  if (is.function(mris_smooth)) {
+    mesh <- ravetools::mesh_from_volume(
+      volume = filled_volume$volume,
+      output_format = "freesurfer",
+      IJK2RAS = filled_volume$IJK2RAS,
+      threshold = 0.5,
+      verbose = verbose,
+      remesh = TRUE,
+      remesh_voxel_size = 1L,
+      remesh_multisample = TRUE,
+      remesh_automerge = TRUE,
+      smooth = FALSE
+    )
+    mesh <- mris_smooth(
+      mesh,
+      verbose = verbose,
+      npasses = max(floor(inflate * 2), 1),
+      niterations = 10,
+      rescale = FALSE
+    )
+  } else {
+    mesh <- ravetools::mesh_from_volume(
+      volume = filled_volume$volume,
+      output_format = "freesurfer",
+      IJK2RAS = filled_volume$IJK2RAS,
+      threshold = 0.5,
+      verbose = verbose,
+      remesh = TRUE,
+      remesh_voxel_size = 1L,
+      remesh_multisample = TRUE,
+      remesh_automerge = TRUE,
+      smooth = TRUE,
+      smooth_lambda = 10,
+      smooth_delta = 20,
+      smooth_method = "surfPreserveLaplace"
+    )
+  }
 
   # DIPSAUS DEBUG START
   # rgl::close3d(); rgl::open3d()
