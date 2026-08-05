@@ -2,9 +2,13 @@
 
 ## Changes since last CRAN release
 
-- `814a857d (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Fixed the previous commit, which created saving
-  issues when `save_as` is not `NULL`
+- `93dba4d0 (HEAD -> master)` \[*`dipterix`*\]: Fixed a bug in shiny
+  driver that `override` does not propagate to the engine, causing
+  updating electrode colormap failed.
+- `410928bf (origin/master, origin/HEAD)` \[*`dipterix`*\]: Drag and
+  drop colormap column names are trimmed
+- `814a857d` \[*`dipterix`*\]: Fixed the previous commit, which created
+  saving issues when `save_as` is not `NULL`
 - `8e7154c9` \[*`dipterix`*\]: Pial envelope uses
   `ravetools::mris_smooth` now
 - `bd925aac` \[*`dipterix`*\]: `brain$render()` now respects `par("bg")`
