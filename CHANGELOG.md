@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `814a857d (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Fixed the previous commit, which created saving issues when `save_as` is not `NULL`
+* `410928bf (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Drag and drop colormap column names are trimmed
+* `814a857d` [_`dipterix`_]: Fixed the previous commit, which created saving issues when `save_as` is not `NULL`
 * `8e7154c9` [_`dipterix`_]: Pial envelope uses `ravetools::mris_smooth` now
 * `bd925aac` [_`dipterix`_]: `brain$render()` now respects `par("bg")`
 * `4e4072af` [_`dipterix`_]: Allowing electrode text decoration is be toggled off
