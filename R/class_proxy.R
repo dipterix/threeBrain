@@ -202,9 +202,16 @@ ViewerProxy <- R6::R6Class(
         is.data.frame(data),
         msg = "brain_proxy$set_electrode_data(data, ...): `data` must be a data.frame."
       )
+      palettes <- as.list(palettes)
+      if (length(palettes)) {
+        palettes <- structure(
+          names = names(palettes),
+          lapply(palettes, col2hexStr)
+        )
+      }
       private$set_value("set_electrode_data", list(
         data = data,
-        palettes = as.list(palettes),
+        palettes = palettes,
         valueRanges = as.list(value_ranges),
         clearFirst = clear_first,
         updateDisplay = update_display,
@@ -226,7 +233,7 @@ ViewerProxy <- R6::R6Class(
 
     #' @description Set the global text magnification factor for the viewer.
     #' @param cex Positive numeric magnification factor.  Default \code{1}.
-    set_cex = function( cex = 1 ) {
+    set_cex = function(cex = 1) {
       stopifnot2(cex > 0, msg = "cex must be positive")
       private$set_value("font_magnification", cex)
     },
