@@ -1,6 +1,6 @@
 ## Changes since last CRAN release
-* `bce167df (HEAD -> master)` [_`dipterix`_]: `proxy$set_electrode_data` converts color to `Hex` codes instead of passing the color names
-* `140d4609 (origin/master, origin/HEAD)` [_`dipterix`_]: Added a active-only mode for outlines so the electrode outlines are shown only when there is data
+* `cb087245 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: `proxy$set_electrode_data` converts color to `Hex` codes instead of passing the color names
+* `140d4609` [_`dipterix`_]: Added a active-only mode for outlines so the electrode outlines are shown only when there is data
 * `93dba4d0` [_`dipterix`_]: Fixed a bug in shiny driver that `override` does not propagate to the engine, causing updating electrode colormap failed.
 * `410928bf` [_`dipterix`_]: Drag and drop colormap column names are trimmed
 * `814a857d` [_`dipterix`_]: Fixed the previous commit, which created saving issues when `save_as` is not `NULL`
