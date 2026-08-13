@@ -2,9 +2,11 @@
 
 ## Changes since last CRAN release
 
-- `cb087245 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: `proxy$set_electrode_data` converts color to `Hex`
-  codes instead of passing the color names
+- `f6727032 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Fixed data options not updating when setting viewer
+  data via proxy with `updateDisplay=false`
+- `cb087245` \[*`dipterix`*\]: `proxy$set_electrode_data` converts color
+  to `Hex` codes instead of passing the color names
 - `140d4609` \[*`dipterix`*\]: Added a active-only mode for outlines so
   the electrode outlines are shown only when there is data
 - `93dba4d0` \[*`dipterix`*\]: Fixed a bug in shiny driver that
