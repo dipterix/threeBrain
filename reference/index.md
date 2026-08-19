@@ -29,6 +29,9 @@
 - [`SpriteGeom`](https://dipterix.org/threeBrain/reference/SpriteGeom.md)
   : R6 Class - Generate Image Sprite Geometry
 
+- [`StreamlineGeom`](https://dipterix.org/threeBrain/reference/StreamlineGeom.md)
+  : R6 Class - Streamline Geometry
+
 - [`TextDecorGeom`](https://dipterix.org/threeBrain/reference/TextDecorGeom.md)
   : R6 Class - Text Decoration Geometry
 
@@ -37,6 +40,9 @@
 
 - [`ViewerProxy`](https://dipterix.org/threeBrain/reference/ViewerProxy.md)
   : R6 Class - Shiny Proxy for the Three-Brain Viewer
+
+- [`add_streamline()`](https://dipterix.org/threeBrain/reference/add_streamline.md)
+  : Add a streamline (fiber tract) bundle to a brain object
 
 - [`brain_proxy()`](https://dipterix.org/threeBrain/reference/brain_proxy.md)
   : Shiny Proxy for Viewer

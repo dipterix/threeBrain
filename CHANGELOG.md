@@ -2,9 +2,12 @@
 
 ## Changes since last CRAN release
 
-- `f6727032 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Fixed data options not updating when setting viewer
-  data via proxy with `updateDisplay=false`
+- `f17b3f9d (HEAD -> master)` \[*`dipterix`*\]: Added class for
+  streamline support into brain object
+- `d8157e9f (origin/master, origin/HEAD)` \[*`dipterix`*\]: Fixed the
+  previous fix
+- `f6727032` \[*`dipterix`*\]: Fixed data options not updating when
+  setting viewer data via proxy with `updateDisplay=false`
 - `cb087245` \[*`dipterix`*\]: `proxy$set_electrode_data` converts color
   to `Hex` codes instead of passing the color names
 - `140d4609` \[*`dipterix`*\]: Added a active-only mode for outlines so

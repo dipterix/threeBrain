@@ -12,6 +12,7 @@ threeBrain(
   atlas_types,
   annotation_types = "label/aparc.a2009s",
   ...,
+  streamline_types = "default/",
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
   backward_compatible = getOption("threeBrain.compatible", FALSE)
 )
@@ -49,6 +50,21 @@ threeBrain(
 - ...:
 
   reserved for future use
+
+- streamline_types:
+
+  streamline (`tractography`) bundles to load from the `'fs/streamline'`
+  folder; passed straight to
+  [`add_streamline`](https://dipterix.org/threeBrain/reference/add_streamline.md),
+  so each entry may name one bundle (`'motor/AF_left'`) or a whole
+  circuit group (`'motor/'` or `'motor/*'`). The default `'default/'`
+  loads the `'default'` circuit, that is every streamline file placed
+  directly under `'fs/streamline'` as well as under
+  `'fs/streamline/default'`. Use `NULL` to skip. Please note that each
+  declared bundle is downloaded and parsed by the browser when the
+  viewer starts, hence only one group is loaded by default; use
+  [`add_streamline`](https://dipterix.org/threeBrain/reference/add_streamline.md)
+  to add more.
 
 - template_subject:
 
