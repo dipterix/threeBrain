@@ -19,7 +19,18 @@ Brain2 <- R6::R6Class(
   private = list(
     .subject_code = "",
     .base_path = NULL,
-    .available_surfaces = NULL
+    .available_surfaces = NULL,
+
+    # memoized `fs/streamline/colormap.csv`; invalidated when `base_path` changes
+    .streamline_colormap = NULL,
+    get_streamline_colormap = function() {
+      if (is.null(private$.streamline_colormap)) {
+        private$.streamline_colormap <- streamline_read_colormap(
+          file.path(self$base_path, "streamline")
+        )
+      }
+      private$.streamline_colormap
+    }
   ),
   public = list(
 
@@ -34,6 +45,9 @@ Brain2 <- R6::R6Class(
 
     # Stores a list of BrainAtlas objects
     atlases = NULL,
+
+    # Stores a list of BrainStreamline objects, keyed by "group/name"
+    streamlines = NULL,
 
     #Stores a list of BrainElectrodes objects
     electrodes = NULL,
@@ -67,6 +81,7 @@ Brain2 <- R6::R6Class(
 
       self$volumes <- list()
       self$surfaces <- list()
+      self$streamlines <- list()
       self$electrodes <- BrainElectrodes$new(subject_code = subject_code)
       self$electrodes$set_brain( self )
       self$meta <- list()
@@ -281,6 +296,162 @@ Brain2 <- R6::R6Class(
 
     },
 
+    remove_streamline = function(streamline_types) {
+      if (missing(streamline_types)) {
+        streamline_types <- self$streamline_types
+      }
+      for ( s in streamline_types ) {
+        self$streamlines[[ s ]] <- NULL
+      }
+    },
+
+    add_streamline = function(name, color = NA) {
+
+      added <- list()
+
+      if (inherits(name, "brain-streamline")) {
+        name$set_subject_code( self$subject_code )
+        self$streamlines[[ name$streamline_type ]] <- name
+        added[[ name$streamline_type ]] <- name
+        return(invisible(added))
+      }
+
+      if (!length(name)) { return(invisible(added)) }
+
+      streamline_root <- file.path( self$base_path, "streamline" )
+      if (!length(self$base_path) || !dir.exists(streamline_root)) {
+        # warn once, no matter how many keys were requested
+        warning("`add_streamline`: cannot find streamline folder - ", streamline_root)
+        return(invisible(added))
+      }
+
+      # ---- Resolve every key to a (group, bundle, path) record ---------------
+      # `default` is special by group identity, not by how the key was spelled:
+      # it always covers the files sitting right under `fs/streamline` as well
+      # as those under `fs/streamline/default`.
+      matches <- list()
+
+      for ( key_string in name ) {
+
+        key <- streamline_parse_key( key_string )
+
+        if ( streamline_normalize_key(key$group) == "default" ) {
+          search_dirs <- c(
+            streamline_root,
+            streamline_match_dir( streamline_root, "default" )
+          )
+          # a hit directly under `fs/streamline` still belongs to `default`,
+          # so never derive the group from `dirname()` here
+          group_names <- rep("default", length(search_dirs))
+        } else {
+          search_dirs <- streamline_match_dir( streamline_root, key$group )
+          # adopt the on-disk spelling of the folder
+          group_names <- filename( search_dirs )
+        }
+
+        found <- list()
+
+        if ( key$is_pattern ) {
+
+          seen <- character(0L)
+          for ( ii in seq_along(search_dirs) ) {
+            for ( hit in streamline_match_files( search_dirs[[ii]], key$pattern ) ) {
+              bundle_key <- streamline_normalize_key(hit$name)
+              if ( bundle_key %in% seen ) { next }
+              seen <- c(seen, bundle_key)
+              hit$group <- group_names[[ii]]
+              found[[ length(found) + 1L ]] <- hit
+            }
+          }
+
+        } else {
+
+          for ( ii in seq_along(search_dirs) ) {
+            hit <- streamline_match_file( search_dirs[[ii]], key$pattern )
+            if ( length(hit) ) {
+              hit$group <- group_names[[ii]]
+              found[[ length(found) + 1L ]] <- hit
+              break
+            }
+          }
+
+        }
+
+        if (!length(found)) {
+          warning(sprintf(
+            "`add_streamline`: cannot find streamline `%s` under %s",
+            key_string, streamline_root
+          ))
+          next
+        }
+
+        matches <- c(matches, found)
+      }
+
+      if (!length(matches)) { return(invisible(added)) }
+
+      # ---- Colors recycle over the expanded bundle list ----------------------
+      colors <- rep_len( color, length(matches) )
+      colormap <- private$get_streamline_colormap()
+      subject_code <- private$.subject_code
+
+      for ( ii in seq_along(matches) ) {
+
+        matched <- matches[[ii]]
+        bundle <- matched$name
+        group_name <- matched$group
+
+        # Re-use the circuit's GeomGroup when another bundle already created it
+        geom_group <- NULL
+        for ( existing in self$streamlines ) {
+          if ( streamline_normalize_key(existing$streamline_group) ==
+               streamline_normalize_key(group_name) ) {
+            geom_group <- existing$group
+            group_name <- existing$streamline_group
+            break
+          }
+        }
+
+        if ( is.null(geom_group) ) {
+          geom_group <- GeomGroup$new(
+            name = sprintf("Streamline - %s (%s)", group_name, subject_code)
+          )
+          geom_group$subject_code <- subject_code
+          # streamline files are stored in scanner RAS; bring them to tkrRAS
+          geom_group$set_transform( self$Torig %*% solve(self$Norig) )
+        }
+
+        bundle_color <- streamline_resolve_color(
+          color = colors[[ii]], group = group_name, name = bundle,
+          colormap = colormap
+        )
+
+        geom <- StreamlineGeom$new(
+          name = sprintf("Streamline - %s/%s (%s)", group_name, bundle, subject_code),
+          path = matched$path,
+          streamline_name = bundle,
+          streamline_group = group_name,
+          color = bundle_color,
+          group = geom_group
+        )
+
+        streamline <- BrainStreamline$new(
+          subject_code = subject_code,
+          streamline_name = bundle,
+          streamline_group = group_name,
+          streamline = geom,
+          path = matched$path
+        )
+
+        self$streamlines[[ streamline$streamline_type ]] <- streamline
+        added[[ streamline$streamline_type ]] <- streamline
+
+      }
+
+      return(invisible(added))
+
+    },
+
     add_annotation = function(annotation, surface_type = "pial", template_subject = "fsaverage") {
       if (tolower(surface_type) == "pial.t1") {
         surface_type <- "pial"
@@ -489,7 +660,8 @@ Brain2 <- R6::R6Class(
       invisible(rows)
     },
 
-    get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE, atlases = TRUE) {
+    get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE,
+                              atlases = TRUE, streamlines = TRUE) {
 
       geoms <- list(self$globals)
 
@@ -519,6 +691,20 @@ Brain2 <- R6::R6Class(
 
       for (a in atlases) {
         geoms <- c(geoms, self$atlases[[a]]$object)
+      }
+
+      if ( is.logical(streamlines) ) {
+        if (isTRUE(streamlines)) {
+          streamlines <- self$streamline_types
+        } else {
+          streamlines <- NULL
+        }
+      } else {
+        streamlines <- streamlines[ streamlines %in% self$streamline_types ]
+      }
+
+      for (s in streamlines) {
+        geoms <- c(geoms, self$streamlines[[s]]$object)
       }
 
       if ( is.logical(surfaces) ) {
@@ -583,6 +769,19 @@ Brain2 <- R6::R6Class(
         v <- "invalid"
         level <- "WARNING"
         if ( volume$has_volume ) {
+          v <- ""
+          level <- "INFO"
+        }
+        cat2(s, v, level = level)
+        invisible()
+      })
+
+      cat(sprintf("Streamline information (total count %d)\n", length( self$streamlines )))
+      lapply( self$streamlines, function( streamline ) {
+        s <- sprintf( "  %s [ %s ]",  streamline$streamline_type, streamline$color)
+        v <- "invalid"
+        level <- "WARNING"
+        if ( streamline$has_streamline ) {
           v <- ""
           level <- "INFO"
         }
@@ -821,7 +1020,8 @@ Brain2 <- R6::R6Class(
     },
 
     plot = function( # Elements
-      volumes = TRUE, surfaces = TRUE, atlases = TRUE, start_zoom = 1, cex = 1,
+      volumes = TRUE, surfaces = TRUE, atlases = TRUE, streamlines = TRUE,
+      start_zoom = 1, cex = 1,
       background = "#FFFFFF",
 
       # Layouts
@@ -843,7 +1043,8 @@ Brain2 <- R6::R6Class(
 
 
       # collect volume information
-      geoms <- self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE, atlases = atlases )
+      geoms <- self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE,
+                                    atlases = atlases, streamlines = streamlines )
       geoms <- c(geoms, additional_geoms)
 
       is_r6 <- vapply(geoms, function(x) { "AbstractGeom" %in% class(x) }, FALSE)
@@ -1174,6 +1375,16 @@ Brain2 <- R6::R6Class(
     atlas_types = function() {
       names(self$atlases)
     },
+    streamline_types = function() {
+      names(self$streamlines)
+    },
+    streamline_groups = function() {
+      unique(unname(vapply(
+        self$streamlines,
+        function(x) { x$streamline_group },
+        character(1L)
+      )))
+    },
     global_data = function() {
       re <- structure(list(list(
         Norig = self$Norig,
@@ -1182,7 +1393,9 @@ Brain2 <- R6::R6Class(
         vox2vox_MNI305 = self$vox2vox_MNI305,
         scanner_center = self$scanner_center,
         atlas_types = self$atlas_types,
-        volume_types = self$volume_types
+        volume_types = self$volume_types,
+        streamline_types = self$streamline_types,
+        streamline_groups = self$streamline_groups
       )), names = self$subject_code)
       re$.subject_codes <- self$subject_code
       re
@@ -1196,6 +1409,8 @@ Brain2 <- R6::R6Class(
         }
         return(private$.base_path)
       }
+      # streamline color table lives under the FreeSurfer path; drop the memo
+      private$.streamline_colormap <- NULL
       if (length(v) == 0) {
         private$.base_path <- character(0L)
         return(private$.base_path)

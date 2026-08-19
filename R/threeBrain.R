@@ -124,6 +124,16 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' @param annotation_types annotations, this can be one or more files relative
 #' to the 'FreeSurfer' subject directory. Each annotation can be discrete such
 #' as surface atlas, or continuous such as surface curvature.
+#' @param streamline_types streamline (\verb{tractography}) bundles to load from
+#' the \code{'fs/streamline'} folder; passed straight to
+#' \code{\link{add_streamline}}, so each entry may name one bundle
+#' (\code{'motor/AF_left'}) or a whole circuit group (\code{'motor/'} or
+#' \code{'motor/*'}). The default \code{'default/'} loads the \code{'default'}
+#' circuit, that is every streamline file placed directly under
+#' \code{'fs/streamline'} as well as under \code{'fs/streamline/default'}.
+#' Use \code{NULL} to skip. Please note that each declared bundle is downloaded
+#' and parsed by the browser when the viewer starts, hence only one group is
+#' loaded by default; use \code{\link{add_streamline}} to add more.
 #' @param template_subject template subject to refer to; used for group
 #' template mapping
 #' @param backward_compatible whether to support old format; default is false
@@ -133,6 +143,9 @@ threeBrain <- function(
     path, subject_code, surface_types = c("pial", "smoothwm", "inflated", "sphere.reg"),
     atlas_types, annotation_types = "label/aparc.a2009s",
     ...,
+    # after `...` on purpose: callers such as `merge_brain` forward unnamed
+    # arguments through `...`, and a positional slot here would swallow them
+    streamline_types = "default/",
     template_subject = unname(getOption("threeBrain.template_subject", "N27")),
     backward_compatible = getOption("threeBrain.compatible", FALSE)
 ) {
@@ -619,6 +632,19 @@ threeBrain <- function(
   }
 
 
+
+  # --------- Step 5b: Add streamlines -----------------------------------------
+
+  # `add_streamline` understands both bundle keys and group patterns, so the
+  # requested types can be handed over as-is
+  if ( length(streamline_types) && dir.exists(file.path(fs_path, "streamline")) ) {
+    streamline_types <- as.character(streamline_types)
+    streamline_types <- streamline_types[
+      !is.na(streamline_types) & nzchar(trimws(streamline_types)) ]
+    if ( length(streamline_types) ) {
+      brain$add_streamline( streamline_types )
+    }
+  }
 
   # --------- Step 6: Add annotations ------------------------------------------
 

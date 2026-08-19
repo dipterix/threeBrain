@@ -11,6 +11,7 @@ threeBrain(
   atlas_types,
   annotation_types = "label/aparc.a2009s",
   ...,
+  streamline_types = "default/",
   template_subject = unname(getOption("threeBrain.template_subject", "N27")),
   backward_compatible = getOption("threeBrain.compatible", FALSE)
 )
@@ -35,6 +36,17 @@ to the 'FreeSurfer' subject directory. Each annotation can be discrete such
 as surface atlas, or continuous such as surface curvature.}
 
 \item{...}{reserved for future use}
+
+\item{streamline_types}{streamline (\verb{tractography}) bundles to load from
+the \code{'fs/streamline'} folder; passed straight to
+\code{\link{add_streamline}}, so each entry may name one bundle
+(\code{'motor/AF_left'}) or a whole circuit group (\code{'motor/'} or
+\code{'motor/*'}). The default \code{'default/'} loads the \code{'default'}
+circuit, that is every streamline file placed directly under
+\code{'fs/streamline'} as well as under \code{'fs/streamline/default'}.
+Use \code{NULL} to skip. Please note that each declared bundle is downloaded
+and parsed by the browser when the viewer starts, hence only one group is
+loaded by default; use \code{\link{add_streamline}} to add more.}
 
 \item{template_subject}{template subject to refer to; used for group
 template mapping}

@@ -312,7 +312,8 @@ MultiBrain2 <- R6::R6Class(
               volumes = volumes, surfaces = surfaces, electrodes = TRUE, atlases = atlases ))
           } else {
             geoms <- c(geoms, s$get_geometries(
-              volumes = FALSE, surfaces = FALSE, electrodes = TRUE, atlases = FALSE ))
+              volumes = FALSE, surfaces = FALSE, electrodes = TRUE, atlases = FALSE,
+              streamlines = FALSE ))
           }
         }
       }
