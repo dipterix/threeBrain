@@ -20,7 +20,8 @@
 - `814a857d` \[*`dipterix`*\]: Fixed the previous commit, which created
   saving issues when `save_as` is not `NULL`
 - `8e7154c9` \[*`dipterix`*\]: Pial envelope uses
-  `ravetools::mris_smooth` now
+  [`ravetools::mris_smooth`](https://dipterix.org/ravetools/reference/mris_smooth.html)
+  now
 - `bd925aac` \[*`dipterix`*\]: `brain$render()` now respects `par("bg")`
 - `4e4072af` \[*`dipterix`*\]: Allowing electrode text decoration is be
   toggled off
