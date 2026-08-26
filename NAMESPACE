@@ -98,39 +98,49 @@ export(volume_to_surf)
 export(write.fs.surface)
 export(write.nifti1)
 export(write.nifti2)
-importFrom(R6,R6Class)
-importFrom(R6,is.R6)
-importFrom(freesurferformats,read.fs.annot)
-importFrom(freesurferformats,read.fs.curv)
-importFrom(freesurferformats,read.fs.label)
-importFrom(freesurferformats,read.fs.mgh)
-importFrom(freesurferformats,read.fs.morph)
-importFrom(freesurferformats,read.fs.surface)
-importFrom(freesurferformats,read.fs.transform)
-importFrom(freesurferformats,read.fs.volume)
-importFrom(freesurferformats,read.fs.weight)
-importFrom(freesurferformats,read.nifti1.data)
-importFrom(freesurferformats,read.nifti1.header)
-importFrom(freesurferformats,read.nifti2.data)
-importFrom(freesurferformats,read.nifti2.header)
-importFrom(freesurferformats,write.fs.surface)
-importFrom(freesurferformats,write.nifti1)
-importFrom(freesurferformats,write.nifti2)
-importFrom(grDevices,col2rgb)
-importFrom(grDevices,palette)
-importFrom(grDevices,rgb)
+importFrom(R6,
+  R6Class,
+  is.R6
+)
+importFrom(freesurferformats,
+  read.fs.annot,
+  read.fs.curv,
+  read.fs.label,
+  read.fs.mgh,
+  read.fs.morph,
+  read.fs.surface,
+  read.fs.transform,
+  read.fs.volume,
+  read.fs.weight,
+  read.nifti1.data,
+  read.nifti1.header,
+  read.nifti2.data,
+  read.nifti2.header,
+  write.fs.surface,
+  write.nifti1,
+  write.nifti2
+)
+importFrom(grDevices,
+  col2rgb,
+  palette,
+  rgb
+)
 importFrom(graphics,plot)
-importFrom(htmlwidgets,createWidget)
-importFrom(htmlwidgets,saveWidget)
-importFrom(htmlwidgets,shinyRenderWidget)
-importFrom(htmlwidgets,shinyWidgetOutput)
-importFrom(htmlwidgets,sizingPolicy)
+importFrom(htmlwidgets,
+  createWidget,
+  saveWidget,
+  shinyRenderWidget,
+  shinyWidgetOutput,
+  sizingPolicy
+)
 importFrom(knitr,knit_print)
 importFrom(png,writePNG)
 importFrom(shiny,getDefaultReactiveDomain)
-importFrom(utils,compareVersion)
-importFrom(utils,download.file)
-importFrom(utils,read.table)
-importFrom(utils,unzip)
-importFrom(utils,write.csv)
-importFrom(utils,zip)
+importFrom(utils,
+  compareVersion,
+  download.file,
+  read.table,
+  unzip,
+  write.csv,
+  zip
+)

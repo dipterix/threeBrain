@@ -147,7 +147,7 @@ Brain2 <- R6::R6Class(
         if ( tolower(surface_name) == "pial.t1" ) {
           surface_name <- "pial"
         }
-        available_surfaces_lower <- tolower(private$.available_surfaces)
+        available_surfaces_lower <- tolower(self$available_surfaces)
         # surface_type might be symlink since fs 7.0 (e.g., pial)
         surface_type <- c(surface_alternative_types[[surface_name]], surface_name)
         surface_type <- surface_type[tolower(surface_type) %in% available_surfaces_lower]
@@ -1419,16 +1419,45 @@ Brain2 <- R6::R6Class(
         stop("Cannot assign brain$base_path: file path must be length(1) and must exist")
       }
       private$.base_path <- normalizePath(v)
-      fs_path <- private$.base_path
-      surface_filenames <- list.files(file.path(fs_path, "surf"), pattern = "^[lr]h\\.", ignore.case = TRUE)
-      available_surfaces <- unique(gsub("^[l|r]h\\.", "", surface_filenames, ignore.case = TRUE))
-      available_surfaces <- available_surfaces[!grepl("^(sulc|thick|volume|jacob|curv|area)", available_surfaces, ignore.case = TRUE)]
-      available_surfaces <- available_surfaces[!grepl("(crv|mgh|curv|labels|label)$", available_surfaces, ignore.case = TRUE)]
-      private$.available_surfaces <- available_surfaces
       return(private$.base_path)
     },
     available_surfaces = function() {
-      private$.available_surfaces
+      fs_path <- private$.base_path
+      if (length(fs_path) != 1 || is.na(fs_path)) {
+        return(character(0L))
+      }
+      pattern <- "^[lr]h\\."
+      filenames <- list.files(file.path(fs_path, "surf"), pattern = pattern, ignore.case = TRUE)
+      re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
+      re <- re[!grepl("^(sulc|thick|volume|jacob|curv|area)", re, ignore.case = TRUE)]
+      re <- re[!grepl("(crv|mgh|curv|labels|label)$", re, ignore.case = TRUE)]
+      re
+    },
+    available_atlases = function() {
+      fs_path <- private$.base_path
+      if (length(fs_path) != 1 || is.na(fs_path)) {
+        return(character(0L))
+      }
+      pattern <- "\\.(mgz|nii|nii\\.gz)$"
+      filenames <- list.files(file.path(fs_path, "mri"), pattern = pattern, ignore.case = TRUE)
+      re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
+      re <- re[!tolower(re) %in% c("nu", "brain", "brain.finalsurfs", "rave_slices", "synthstrip", "t1", "synthseg.rca", "antsdn.brain", "ctrl_pts", "brain.finalsurfs.manedit", "entowm", "rawavg", "norm", "orig")]
+      re
+    },
+    available_streamlines = function() {
+      fs_path <- private$.base_path
+      if (length(fs_path) != 1 || is.na(fs_path)) {
+        return(character(0L))
+      }
+      pattern <- "\\.(tck|trk|tt|vtk|vtp|tt\\.gz)$"
+      filenames <- list.files(file.path(fs_path, "streamline"), pattern = pattern, ignore.case = TRUE)
+      re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
+
+      dirnames <- list.dirs(file.path(fs_path, "streamline"), full.names = FALSE, recursive = FALSE)
+      dirnames <- dirnames[grepl("^[a-zA-Z0-9]", dirnames)]
+      re <- c(sprintf("%s/*", dirnames), sprintf("default/%s", re))
+
+      re
     }
   )
 )
