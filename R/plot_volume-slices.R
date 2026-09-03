@@ -30,10 +30,24 @@
 #' @returns Nothing
 #' @export
 plot_slices <- function(
-    volume, overlays = NULL, transform = NULL, positions = NULL, zoom = 1, pixel_width = 0.5,
-    col = c("black", "white"), normalize = NULL, zclip = NULL, overlay_alpha = 0.3,
-    zlim = normalize, main = "", title_position = c("left", "top"),
-    fun = NULL, nc = NA, which = NULL, ...) {
+  volume,
+  overlays = NULL,
+  transform = NULL,
+  positions = NULL,
+  zoom = 1,
+  pixel_width = 0.5,
+  col = c("black", "white"),
+  normalize = NULL,
+  zclip = NULL,
+  overlay_alpha = 0.3,
+  zlim = normalize,
+  main = "",
+  title_position = c("left", "top"),
+  fun = NULL,
+  nc = NA,
+  which = NULL,
+  ...
+) {
   # DIPSAUS DEBUG START
   # volume <- "~/rave_data/raw_dir/YAB/rave-imaging/fs/mri/brain.finalsurfs.mgz"
   # list2env(list(transform = NULL, positions = NULL, zoom = 1, pixel_width = 0.5,
@@ -56,11 +70,13 @@ plot_slices <- function(
 
   # Make sure `par` is reset on exit
   oldpar <- graphics::par(no.readonly = TRUE)
-  on.exit({ graphics::par(oldpar) })
+  on.exit({
+    graphics::par(oldpar)
+  })
 
   title_position <- match.arg(title_position)
 
-  if ( is.character(volume) ) {
+  if (is.character(volume)) {
     volume <- read_volume(volume)
   }
   if (!inherits(volume, "threeBrain.volume")) {
@@ -83,7 +99,7 @@ plot_slices <- function(
 
   canvas_ratio <- 3
   n_plots <- 3
-  if ( default_add ) {
+  if (default_add) {
     # assuming length(which) == 1 and you want to add to plot
     canvas_ratio <- 1
     n_plots <- 1
@@ -94,10 +110,14 @@ plot_slices <- function(
     }
   }
 
-
   overlays <- lapply(seq_along(overlays), function(ii) {
-    item <- overlays[[ ii ]]
-    default_color <- col2hexStr(DEFAULT_COLOR_DISCRETE[[(ii - 1L) %% length(DEFAULT_COLOR_DISCRETE) + 1L]], alpha = overlay_alpha)
+    item <- overlays[[ii]]
+    default_color <- col2hexStr(
+      DEFAULT_COLOR_DISCRETE[[
+        (ii - 1L) %% length(DEFAULT_COLOR_DISCRETE) + 1L
+      ]],
+      alpha = overlay_alpha
+    )
     if (is.character(item)) {
       ovol <- read_volume(item)
       return(list(
@@ -106,7 +126,9 @@ plot_slices <- function(
         world2ijk = solve(ovol$Norig)
       ))
     }
-    if (!is.list(item)) { return(NULL) }
+    if (!is.list(item)) {
+      return(NULL)
+    }
     if (inherits(item, "threeBrain.volume")) {
       return(list(
         volume = item,
@@ -123,7 +145,7 @@ plot_slices <- function(
       item$color <- col2hexStr(item$color, alpha = overlay_alpha)
     }
     item$world2ijk <- solve(item$volume$Norig)
-    return( item )
+    return(item)
   })
 
   if (is.null(transform)) {
@@ -148,12 +170,14 @@ plot_slices <- function(
 
   npts <- nrow(positions)
 
-
   rg <- range(volume$data, na.rm = TRUE)
   if (length(normalize) == 2) {
     nu <- function(slice) {
-      slice <- (slice - rg[[1]]) * (normalize[[2]] - normalize[[1]]) / (rg[[2]] - rg[[1]]) + normalize[[1]]
-      if ( length(zclip) == 2 ) {
+      slice <- (slice - rg[[1]]) *
+        (normalize[[2]] - normalize[[1]]) /
+        (rg[[2]] - rg[[1]]) +
+        normalize[[1]]
+      if (length(zclip) == 2) {
         slice[slice < zclip[[1]]] <- zclip[[1]]
         slice[slice > zclip[[2]]] <- zclip[[2]]
       }
@@ -162,7 +186,7 @@ plot_slices <- function(
   } else {
     normalize <- rg
     nu <- function(slice) {
-      if ( length(zclip) == 2 ) {
+      if (length(zclip) == 2) {
         slice[slice < zclip[[1]]] <- zclip[[1]]
         slice[slice > zclip[[2]]] <- zclip[[2]]
       }
@@ -198,7 +222,7 @@ plot_slices <- function(
   padding_top <- 0
 
   if (!length(which)) {
-    if ( title_position == "left") {
+    if (title_position == "left") {
       lmat <- matrix(seq_len(nr * nc), ncol = nc, byrow = FALSE)
       lmat <- t(apply(lmat, 1, function(l) {
         l <- (l - 1) * 4
@@ -241,27 +265,28 @@ plot_slices <- function(
   pin[[2]] <- pin[[2]] / nr
   if (pin[[1]] > pin[[2]]) {
     ratio <- pin[[2]] / pin[[1]]
-    plt <- c( 0.5 - ratio / 2, 0.5 + ratio / 2, 0, 1 )
+    plt <- c(0.5 - ratio / 2, 0.5 + ratio / 2, 0, 1)
   } else {
     ratio <- pin[[1]] / pin[[2]]
-    plt <- c( 0, 1, 0.5 - ratio / 2, 0.5 + ratio / 2 )
+    plt <- c(0, 1, 0.5 - ratio / 2, 0.5 + ratio / 2)
   }
 
   # The function calls on.exit({ graphics::par(oldpar) }) so no need to reset here
   adjust_plt <- function(reset = FALSE) {
-    if ( reset ) {
+    if (reset) {
       graphics::par("plt" = c(0, 1, 0, 1))
     } else {
       graphics::par("plt" = plt)
     }
   }
 
-
   panel_last <- fun
   if (is.function(fun)) {
     fun_args <- names(formals(fun))
     if (length(fun_args) < 2 && !"..." %in% fun_args) {
-      panel_last <- function(...) { fun() }
+      panel_last <- function(...) {
+        fun()
+      }
     }
   } else {
     panel_last <- function(...) {}
@@ -269,25 +294,35 @@ plot_slices <- function(
 
   # create template positions to calculate world positions
   # pre-apply inverse of the rotation to template position
-  wpos_axial <- transform_inv %*% pos  # varying RA, S=0 -> axial
+  wpos_axial <- transform_inv %*% pos # varying RA, S=0 -> axial
   wpos_sagittal <- transform_inv %*% pos[c(3, 1, 2, 4), , drop = FALSE] # varying AS, R=0 -> sagittal
   wpos_coronal <- transform_inv %*% pos[c(1, 3, 2, 4), , drop = FALSE] # varying RS, A=0 -> coronal
 
   get_ijk <- function(point_position, which_slice, world2ijk, volume_data) {
     wpos <- switch(
       which_slice,
-      "axial" = { wpos_axial + point_position },
-      "sagittal" = { wpos_sagittal + point_position },
-      "coronal" = { wpos_coronal + point_position },
-      { stop("Invalid slice type") }
+      "axial" = {
+        wpos_axial + point_position
+      },
+      "sagittal" = {
+        wpos_sagittal + point_position
+      },
+      "coronal" = {
+        wpos_coronal + point_position
+      },
+      {
+        stop("Invalid slice type")
+      }
     )
     # world to voxel index
-    IJK <- round( world2ijk[c(1, 2, 3), ] %*% wpos )
+    IJK <- round(world2ijk[c(1, 2, 3), ] %*% wpos)
 
     # Remove invalid indices
     shape <- dim(volume_data)
     cumshape <- cumprod(c(1, shape))[seq_len(3)]
-    sel <- IJK[1, ] >= shape[[1]] | IJK[2, ] >= shape[[2]] | IJK[3, ] >= shape[[3]]
+    sel <- IJK[1, ] >= shape[[1]] |
+      IJK[2, ] >= shape[[2]] |
+      IJK[3, ] >= shape[[3]]
     IJK[, sel] <- NA
     IJK[!is.na(IJK) & IJK < 0] <- NA
 
@@ -299,7 +334,6 @@ plot_slices <- function(
   }
 
   lapply(seq_len(npts), function(ii) {
-
     pos_pt <- c(positions[ii, ], 0)
 
     adjust_plt(reset = TRUE)
@@ -317,7 +351,12 @@ plot_slices <- function(
       # Axial
       # translate x transform_inv x translate^-1 x Norig
 
-      underlay <- get_ijk(pos_pt, which_slice = "axial", world2ijk = world2ijk, volume$data)
+      underlay <- get_ijk(
+        pos_pt,
+        which_slice = "axial",
+        world2ijk = world2ijk,
+        volume$data
+      )
       more_args$add <- default_add
       more_args$col <- pal
       more_args$z <- nu(underlay)
@@ -327,8 +366,15 @@ plot_slices <- function(
       more_args$z <- NULL
       more_args$add <- TRUE
       lapply(overlays, function(item) {
-        if (!is.list(item)) { return() }
-        overlay <- get_ijk(point_position = pos_pt, which_slice = "axial", world2ijk = item$world2ijk, volume_data = item$volume$data)
+        if (!is.list(item)) {
+          return()
+        }
+        overlay <- get_ijk(
+          point_position = pos_pt,
+          which_slice = "axial",
+          world2ijk = item$world2ijk,
+          volume_data = item$volume$data
+        )
         invalids <- is.na(overlay) | overlay < 0.5
         if (!all(invalids)) {
           overlay[invalids] <- NA
@@ -338,13 +384,17 @@ plot_slices <- function(
         }
       })
 
-      panel_last( ii, 1 )
+      panel_last(ii, 1)
     }
-
 
     if (!length(which) || 2 %in% which) {
       # Sagittal
-      underlay <- get_ijk(pos_pt, which_slice = "sagittal", world2ijk = world2ijk, volume$data)
+      underlay <- get_ijk(
+        pos_pt,
+        which_slice = "sagittal",
+        world2ijk = world2ijk,
+        volume$data
+      )
       more_args$add <- default_add
       more_args$col <- pal
       more_args$z <- nu(underlay)
@@ -354,8 +404,15 @@ plot_slices <- function(
       more_args$z <- NULL
       more_args$add <- TRUE
       lapply(overlays, function(item) {
-        if (!is.list(item)) { return() }
-        overlay <- get_ijk(pos_pt, which_slice = "sagittal", world2ijk = item$world2ijk, item$volume$data)
+        if (!is.list(item)) {
+          return()
+        }
+        overlay <- get_ijk(
+          pos_pt,
+          which_slice = "sagittal",
+          world2ijk = item$world2ijk,
+          item$volume$data
+        )
         invalids <- is.na(overlay) | overlay < 0.5
         if (!all(invalids)) {
           overlay[invalids] <- NA
@@ -366,12 +423,17 @@ plot_slices <- function(
         }
       })
 
-      panel_last( ii, 1 )
+      panel_last(ii, 1)
     }
 
     if (!length(which) || 3 %in% which) {
       # Coronal
-      underlay <- get_ijk(pos_pt, which_slice = "coronal", world2ijk = world2ijk, volume$data)
+      underlay <- get_ijk(
+        pos_pt,
+        which_slice = "coronal",
+        world2ijk = world2ijk,
+        volume$data
+      )
       more_args$add <- default_add
       more_args$col <- pal
       more_args$z <- nu(underlay)
@@ -381,8 +443,15 @@ plot_slices <- function(
       more_args$z <- NULL
       more_args$add <- TRUE
       lapply(overlays, function(item) {
-        if (!is.list(item)) { return() }
-        overlay <- get_ijk(pos_pt, which_slice = "coronal", world2ijk = item$world2ijk, item$volume$data)
+        if (!is.list(item)) {
+          return()
+        }
+        overlay <- get_ijk(
+          pos_pt,
+          which_slice = "coronal",
+          world2ijk = item$world2ijk,
+          item$volume$data
+        )
         invalids <- is.na(overlay) | overlay < 0.5
         if (!all(invalids)) {
           overlay[invalids] <- NA
@@ -393,7 +462,7 @@ plot_slices <- function(
         }
       })
 
-      panel_last( ii, 1 )
+      panel_last(ii, 1)
     }
 
     NULL

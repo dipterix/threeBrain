@@ -34,22 +34,39 @@
 #'
 #' @export
 localization_module <- function(
-  subject_code, fs_path, ct_path = NULL, surfaces = "pial", use_141 = TRUE,
+  subject_code,
+  fs_path,
+  ct_path = NULL,
+  surfaces = "pial",
+  use_141 = TRUE,
   shiny_options = list(launch.browser = TRUE),
   save_path = tempfile(pattern = "electrode", fileext = ".csv"),
-  ..., control_presets = NULL, side_display = FALSE, controllers = list()
+  ...,
+  control_presets = NULL,
+  side_display = FALSE,
+  controllers = list()
 ) {
-
-  message("This function is for demonstration purpose. Please check more sophisticated localization integration with RAVE at\n  https://rave.wiki")
+  message(
+    "This function is for demonstration purpose. Please check more sophisticated localization integration with RAVE at\n  https://rave.wiki"
+  )
   if (!package_installed("DT")) {
-    stop("Package `DT` is needed to run this module. Please install it by running\n  ",
-         "install.packages('DT')")
+    stop(
+      "Package `DT` is needed to run this module. Please install it by running\n  ",
+      "install.packages('DT')"
+    )
   }
 
-  fslut_json <- system.file("palettes", "datacube2", "FreeSurferColorLUT.json",
-                            package = "threeBrain")
+  fslut_json <- system.file(
+    "palettes",
+    "datacube2",
+    "FreeSurferColorLUT.json",
+    package = "threeBrain"
+  )
   cmap <- load_colormap(fslut_json)
-  cmap <- do.call("rbind", lapply(cmap$map, as.data.frame, stringAsFactors = FALSE))
+  cmap <- do.call(
+    "rbind",
+    lapply(cmap$map, as.data.frame, stringAsFactors = FALSE)
+  )
 
   brain <- threeBrain(
     path = fs_path,
@@ -82,7 +99,7 @@ localization_module <- function(
     } else {
       localize <- local({
         control_presets <- c("localization", control_presets)
-        ct <- read_nii2( normalizePath(ct_path, mustWork = TRUE) )
+        ct <- read_nii2(normalizePath(ct_path, mustWork = TRUE))
         # cube <- reorient_volume( ct$get_data(), brain$Torig )
 
         # TODO: FIXME
@@ -92,12 +109,19 @@ localization_module <- function(
         trans_mat[1:3, 4] <- ct_shape / 2
         trans_mat <- ct$get_IJK_to_tkrRAS(brain) %*% trans_mat
 
-        add_voxel_cube(brain, "CT", ct$get_data(), size = ct_shape,
-                       trans_mat = trans_mat)
+        add_voxel_cube(
+          brain,
+          "CT",
+          ct$get_data(),
+          size = ct_shape,
+          trans_mat = trans_mat
+        )
         key <- seq(0, max(ct$get_range()))
         cmap <- create_colormap(
-          gtype = "volume", dtype = "continuous",
-          key = key, value = key,
+          gtype = "volume",
+          dtype = "continuous",
+          key = key,
+          value = key,
           color = c("white", "green", "darkgreen")
         )
         controllers[["Left Opacity"]] <- 0.4
@@ -120,20 +144,24 @@ localization_module <- function(
         }
       })
     }
-
   }
-
 
   ui <- function(module_id, side_height = 300, height = "100vh") {
     ns <- shiny::NS(module_id)
     shiny::div(
-      style = sprintf("width: 100%%; display: flex; flex-flow: column; height: %s;", height),
+      style = sprintf(
+        "width: 100%%; display: flex; flex-flow: column; height: %s;",
+        height
+      ),
       shiny::div(
         style = sprintf("flex: 0 0 %spx;", side_height),
         shiny::column(
           width = 9,
           shiny::div(
-            style = sprintf("max-height: %dpx; overflow-y: auto; overlow-x: hidden;", side_height),
+            style = sprintf(
+              "max-height: %dpx; overflow-y: auto; overlow-x: hidden;",
+              side_height
+            ),
             DT::DTOutput(ns("table"), width = "100%")
           )
         ),
@@ -150,10 +178,24 @@ localization_module <- function(
               selected = character(0),
               width = "100%"
             ),
-            shiny::textInput(ns("fslutid"), "Index code", value = "", width = "100%",
-                             placeholder = "FreeSurfer index code will be displayed here..."),
-            shiny::fileInput(ns("load"), dipsaus::html_asis(" "), width = "100%", buttonLabel = "Import & add"),
-            shiny::actionButton(ns("refresh"), "Validate & Update table", width = "100%"),
+            shiny::textInput(
+              ns("fslutid"),
+              "Index code",
+              value = "",
+              width = "100%",
+              placeholder = "FreeSurfer index code will be displayed here..."
+            ),
+            shiny::fileInput(
+              ns("load"),
+              dipsaus::html_asis(" "),
+              width = "100%",
+              buttonLabel = "Import & add"
+            ),
+            shiny::actionButton(
+              ns("refresh"),
+              "Validate & Update table",
+              width = "100%"
+            ),
             shiny::actionButton(ns("clear"), "Clear table", width = "100%"),
             shiny::downloadButton(ns("save"), "Export", style = "width: 100%")
           ),
@@ -162,12 +204,20 @@ localization_module <- function(
       shiny::div(
         style = "flex: 1 0 auto;",
         threejsBrainOutput(
-          ns("viewer"), width = "100%", height = "100%")
+          ns("viewer"),
+          width = "100%",
+          height = "100%"
+        )
       )
     )
   }
   server <- function(input, output, session) {
-    shiny::updateSelectizeInput(session = session, inputId = "fslut", choices = cmap$Label, server = TRUE)
+    shiny::updateSelectizeInput(
+      session = session,
+      inputId = "fslut",
+      choices = cmap$Label,
+      server = TRUE
+    )
     # session <- shiny::MockShinySession$new()
     proxy_brain <- brain_proxy(outputId = "viewer", session = session)
 
@@ -175,7 +225,13 @@ localization_module <- function(
       table = NULL
     )
     output$viewer <- renderBrain({
-      shiny::showNotification(shiny::p("Loading... Please wait"), type = "message", closeButton = FALSE, duration = NULL, id = "notif")
+      shiny::showNotification(
+        shiny::p("Loading... Please wait"),
+        type = "message",
+        closeButton = FALSE,
+        duration = NULL,
+        id = "notif"
+      )
       on.exit({
         shiny::removeNotification("notif")
       })
@@ -194,30 +250,45 @@ localization_module <- function(
     shiny::observeEvent(input$load, {
       print(input$load)
       infile <- input$load
-      tryCatch({
-        dat <- utils::read.csv(infile$datapath)
-        for (i in seq_len(nrow(dat))) {
-          proxy_brain$add_localization_electrode(dat[i, ], i == nrow(dat))
+      tryCatch(
+        {
+          dat <- utils::read.csv(infile$datapath)
+          for (i in seq_len(nrow(dat))) {
+            proxy_brain$add_localization_electrode(dat[i, ], i == nrow(dat))
+          }
+        },
+        error = function(e) {
+          shiny::showNotification(
+            shiny::p(
+              "Error while trying to load from ",
+              infile$name,
+              ": ",
+              e$message
+            ),
+            type = "error"
+          )
         }
-
-      }, error = function(e) {
-        shiny::showNotification(shiny::p("Error while trying to load from ", infile$name, ": ",
-                                  e$message), type = "error")
-      })
-
+      )
     })
 
     shiny::observeEvent(input$refresh, {
       proxy_brain$set_localization_electrode(
-        -1, list(), update_shiny = TRUE)
+        -1,
+        list(),
+        update_shiny = TRUE
+      )
     })
 
     shiny::observeEvent(input$fslut, {
       nm <- input$fslut
       if (length(nm) == 1) {
-        cid <- cmap$ColorID[ cmap$Label == nm ]
+        cid <- cmap$ColorID[cmap$Label == nm]
         if (length(cid) == 1) {
-          shiny::updateTextInput(session = session, inputId = "fslutid", value = cid)
+          shiny::updateTextInput(
+            session = session,
+            inputId = "fslutid",
+            value = cid
+          )
         }
       }
     })
@@ -230,16 +301,23 @@ localization_module <- function(
 
       # assign("edit", edit, envir = globalenv())
 
-      mode <- sapply(nms, function(nm) { mode(tbl[[nm]]) })
-      params <- structure(lapply(seq_along(nms), function(ii) {
-        re <- edit$value[edit$col == ii]
-        mode(re) <- mode[[ii]]
-        re
-      }), names = nms)
+      mode <- sapply(nms, function(nm) {
+        mode(tbl[[nm]])
+      })
+      params <- structure(
+        lapply(seq_along(nms), function(ii) {
+          re <- edit$value[edit$col == ii]
+          mode(re) <- mode[[ii]]
+          re
+        }),
+        names = nms
+      )
 
       proxy_brain$set_localization_electrode(
-        params$LocalizationOrder, params, update_shiny = FALSE)
-
+        params$LocalizationOrder,
+        params,
+        update_shiny = FALSE
+      )
     })
 
     shiny::observeEvent(input$clear, {
@@ -258,8 +336,12 @@ localization_module <- function(
       DT::datatable(
         tbl,
         class = "compact cell-border stripe",
-        editable = list(target = "row", disable = list(
-          columns = c(1, 3:5, 9, 10:15))),
+        editable = list(
+          target = "row",
+          disable = list(
+            columns = c(1, 3:5, 9, 10:15)
+          )
+        ),
         selection = "single",
         rownames = TRUE,
         filter = "none",
@@ -278,7 +360,13 @@ localization_module <- function(
     output$save <- shiny::downloadHandler(
       filename = "electrode.csv",
       content = function(conn) {
-        shiny::showNotification(shiny::p("Generating electrode.csv ..."), type = "message", duration = NULL, id = "save_notif", closeButton = FALSE)
+        shiny::showNotification(
+          shiny::p("Generating electrode.csv ..."),
+          type = "message",
+          duration = NULL,
+          id = "save_notif",
+          closeButton = FALSE
+        )
         tbl <- local_reactive$table
 
         # calculate template vertex numbers
@@ -316,20 +404,23 @@ localization_module <- function(
     #   shiny::stopApp()
     # })
   }
-  app <- shiny::shinyApp(ui = shiny::fluidPage(
-    title = "Electrode Localization",
-    shiny::fluidRow(
-      # container
-      ui("threeBrain")
-    )
-  ), server = function(input, output, session) {
-    shiny::callModule(server, "threeBrain", session = session)
-  }, options = shiny_options)
+  app <- shiny::shinyApp(
+    ui = shiny::fluidPage(
+      title = "Electrode Localization",
+      shiny::fluidRow(
+        # container
+        ui("threeBrain")
+      )
+    ),
+    server = function(input, output, session) {
+      shiny::callModule(server, "threeBrain", session = session)
+    },
+    options = shiny_options
+  )
 
   dipsaus::list_to_fastmap2(list(
     ui = ui,
     server = server,
     app = app
   ))
-
 }

@@ -143,7 +143,7 @@ brain_setup <- function(continued = FALSE, show_example = TRUE, ...) {
   template <- merge_brain(template_subject = "N27", template_dir = template_dir, template_surface_types = c("pial", "smoothwm"))
 
 
-  if ( show_example ) {
+  if (show_example) {
     template$template_object$plot()
   }
 }
@@ -169,7 +169,10 @@ get_os <- function() {
 }
 
 download_file <- function(...) {
-  if ( identical(get_os(), "emscripten") && !isTRUE(getOption("threeBrain.download.wasm.enabled", FALSE)) ) {
+  if (
+    identical(get_os(), "emscripten") &&
+      !isTRUE(getOption("threeBrain.download.wasm.enabled", FALSE))
+  ) {
     # WASM and downloading files might not work well :|
     stop("WASM environment detected. Downloading external files is disabled")
   }
@@ -228,7 +231,7 @@ rs_avail <- function() {
 
 
   if (isnull) {
-    eval(as.call(list( quote(`<-`), lhs, value )), envir = env)
+    eval(as.call(list(quote(`<-`), lhs, value)), envir = env)
   }
 }
 

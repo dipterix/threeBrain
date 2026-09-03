@@ -1,15 +1,22 @@
 #' @export
-import_fs.T1 <- function(subject_name, fs_path, quiet = FALSE, dtype,
-                         sub_type = c("brain.finalsurfs", "brainmask", "brainmask.auto", "T1"), hemisphere, ...) {
+import_fs.T1 <- function(
+  subject_name,
+  fs_path,
+  quiet = FALSE,
+  dtype,
+  sub_type = c("brain.finalsurfs", "brainmask", "brainmask.auto", "T1"),
+  hemisphere,
+  ...
+) {
   sub_type <- match.arg(sub_type)
   fs_path <- normalizePath(fs_path)
   fname <- sprintf("%s.mgz", sub_type)
   src <- file.path(fs_path, "mri", fname)
-  if ( ! file.exists(src) ) {
+  if (!file.exists(src)) {
     if (!quiet) {
       cat2(sprintf("  * mri/%s is missing\n", fname), level = "WARNING")
     }
-    return( FALSE )
+    return(FALSE)
   }
   src <- normalizePath(src)
   tname <- sprintf("%s_t1.json", subject_name)
@@ -18,7 +25,7 @@ import_fs.T1 <- function(subject_name, fs_path, quiet = FALSE, dtype,
 
   cached <- validate_digest(src, target)
   if (!isFALSE(cached)) {
-    return( TRUE )
+    return(TRUE)
   }
 
   # Load file
@@ -27,19 +34,26 @@ import_fs.T1 <- function(subject_name, fs_path, quiet = FALSE, dtype,
   Torig <- dat$header$get_vox2ras_tkr()
   volume_shape <- as.integer(dat$get_shape())
 
-  group_volume <- GeomGroup$new(name = sprintf("Volume - T1 (%s)", subject_name))
+  group_volume <- GeomGroup$new(
+    name = sprintf("Volume - T1 (%s)", subject_name)
+  )
   group_volume$subject_code <- subject_name
 
   # TODO: use the actual volume + transform
   volume <- dat$get_data()
-  volume <- reorient_volume( volume, Torig )
+  volume <- reorient_volume(volume, Torig)
 
   # Create a datacube geom to force cache
   unlink(target)
   DataCubeGeom$new(
-    name = sprintf("T1 (%s)", subject_name), value = volume, dim = volume_shape,
-    half_size = volume_shape / 2, group = group_volume, position = c(0, 0, 0),
-    cache_file = target)
+    name = sprintf("T1 (%s)", subject_name),
+    value = volume,
+    dim = volume_shape,
+    half_size = volume_shape / 2,
+    group = group_volume,
+    position = c(0, 0, 0),
+    cache_file = target
+  )
 
   rm(volume)
   rm(dat)
@@ -67,7 +81,6 @@ import_fs.T1 <- function(subject_name, fs_path, quiet = FALSE, dtype,
   )
 
   return(TRUE)
-
 }
 
 # import_fs("YCQ", fs_path = "~/rave_data/others/fs/", dtype = "T1", sub_type = "brain.finalsurfs")

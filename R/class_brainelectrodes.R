@@ -1,20 +1,23 @@
 identity4 <- diag(1.0, nrow = 4, ncol = 4)
 
 guess_hemisphere <- function(which_side, anatomical_label) {
-  if (length(which_side) != 1 ||
-     !isTRUE(tolower(which_side) %in% c("left", "right")) &&
-     length(anatomical_label) && !is.na(anatomical_label)) {
+  if (
+    length(which_side) != 1 ||
+      !isTRUE(tolower(which_side) %in% c("left", "right")) &&
+        length(anatomical_label) &&
+        !is.na(anatomical_label)
+  ) {
     label_str <- tolower(anatomical_label)
     if (
       startsWith(label_str, "ctx-lh") ||
-      startsWith(label_str, "ctx_lh") ||
-      startsWith(label_str, "left")
+        startsWith(label_str, "ctx_lh") ||
+        startsWith(label_str, "left")
     ) {
       which_side <- "left"
     } else if (
       startsWith(label_str, "ctx-rh") ||
-      startsWith(label_str, "ctx_rh") ||
-      startsWith(label_str, "right")
+        startsWith(label_str, "ctx_rh") ||
+        startsWith(label_str, "right")
     ) {
       which_side <- "right"
     }
@@ -22,22 +25,29 @@ guess_hemisphere <- function(which_side, anatomical_label) {
   which_side
 }
 
-normalize_electrode_table <- function(table, self, position_names = c("x", "y", "z"), coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")) {
+normalize_electrode_table <- function(
+  table,
+  self,
+  position_names = c("x", "y", "z"),
+  coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")
+) {
   coord_sys <- match.arg(coord_sys)
   table_colnames <- names(table)
-  stopifnot2("Electrode" %in% table_colnames,
-             msg = "Electrode table must contains column `Electrode` (case-sensitive, values are channels in integers)")
+  stopifnot2(
+    "Electrode" %in% table_colnames,
+    msg = "Electrode table must contains column `Electrode` (case-sensitive, values are channels in integers)"
+  )
 
   table$Electrode <- as.integer(table$Electrode)
   table <- table[!is.na(table$Electrode), ]
   n <- nrow(table)
 
-  if ( n == 0 ) {
+  if (n == 0) {
     return(invisible())
   }
 
   # auto generate label
-  if ( !length(table$Label) ) {
+  if (!length(table$Label)) {
     table$Label <- sprintf("NoLabel-%d", seq_len(n))
   }
 
@@ -50,78 +60,108 @@ normalize_electrode_table <- function(table, self, position_names = c("x", "y", 
   # then coord_sys arguments is ignored, and xyz will be obtained through Coord_xyz
   explicit <- FALSE
   xyz_names <- position_names
-  if (coord_sys == "tkrRAS" && all(c("Coord_x", "Coord_y", "Coord_z") %in% table_colnames)) {
+  if (
+    coord_sys == "tkrRAS" &&
+      all(c("Coord_x", "Coord_y", "Coord_z") %in% table_colnames)
+  ) {
     explicit <- TRUE
     xyz_names <- c("Coord_x", "Coord_y", "Coord_z")
   }
-  if (!explicit && coord_sys == "scannerRAS" &&
-     all(c("T1R", "T1A", "T1S") %in% table_colnames)) {
+  if (
+    !explicit &&
+      coord_sys == "scannerRAS" &&
+      all(c("T1R", "T1A", "T1S") %in% table_colnames)
+  ) {
     explicit <- TRUE
     xyz_names <- c("T1R", "T1A", "T1S")
   }
-  if (!explicit && coord_sys == "MNI305" &&
-     all(c("MNI305_x", "MNI305_y", "MNI305_z") %in% table_colnames)) {
+  if (
+    !explicit &&
+      coord_sys == "MNI305" &&
+      all(c("MNI305_x", "MNI305_y", "MNI305_z") %in% table_colnames)
+  ) {
     explicit <- TRUE
     xyz_names <- c("MNI305_x", "MNI305_y", "MNI305_z")
   }
-  if (!explicit && coord_sys == "MNI152" &&
-     all(c("MNI152_x", "MNI152_y", "MNI152_z") %in% table_colnames)) {
+  if (
+    !explicit &&
+      coord_sys == "MNI152" &&
+      all(c("MNI152_x", "MNI152_y", "MNI152_z") %in% table_colnames)
+  ) {
     explicit <- TRUE
     xyz_names <- c("MNI152_x", "MNI152_y", "MNI152_z")
   }
   if (!explicit && !all(xyz_names %in% table_colnames)) {
-    stop("Cannot infer electrode coordinates from the electrode table. Please specify `x`, `y`, `z` columns and the corresponding coordinate system.")
+    stop(
+      "Cannot infer electrode coordinates from the electrode table. Please specify `x`, `y`, `z` columns and the corresponding coordinate system."
+    )
   }
 
   # Calculate tkrRAS
   if (all(c("Coord_x", "Coord_y", "Coord_z") %in% table_colnames)) {
     # Check coordinates
-    table$Coord_x <- as.numeric( table$Coord_x )
-    table$Coord_y <- as.numeric( table$Coord_y )
-    table$Coord_z <- as.numeric( table$Coord_z )
+    table$Coord_x <- as.numeric(table$Coord_x)
+    table$Coord_y <- as.numeric(table$Coord_y)
+    table$Coord_z <- as.numeric(table$Coord_z)
   } else {
-    ras <- self$apply_transform_points(table[, xyz_names], from = coord_sys, to = "tkrRAS")
+    ras <- self$apply_transform_points(
+      table[, xyz_names],
+      from = coord_sys,
+      to = "tkrRAS"
+    )
     table$Coord_x <- ras[, 1]
     table$Coord_y <- ras[, 2]
     table$Coord_z <- ras[, 3]
   }
   na_coord <- is.na(table$Coord_x) | is.na(table$Coord_y) | is.na(table$Coord_z)
-  if ( any(na_coord) ) {
-    table$Coord_x[ na_coord ] <- 0
-    table$Coord_y[ na_coord ] <- 0
-    table$Coord_z[ na_coord ] <- 0
+  if (any(na_coord)) {
+    table$Coord_x[na_coord] <- 0
+    table$Coord_y[na_coord] <- 0
+    table$Coord_z[na_coord] <- 0
   }
 
   # Calculate MNI305 for template brain
   has_mni305 <- FALSE
-  if ( coord_sys == "MNI305" || all( c("MNI305_x", "MNI305_y", "MNI305_z") %in% table_colnames ) ) {
-    if ( coord_sys == "MNI305" ) {
+  if (
+    coord_sys == "MNI305" ||
+      all(c("MNI305_x", "MNI305_y", "MNI305_z") %in% table_colnames)
+  ) {
+    if (coord_sys == "MNI305") {
       xyz_names2 <- xyz_names
     } else {
       xyz_names2 <- c("MNI305_x", "MNI305_y", "MNI305_z")
     }
-    table$MNI305_x <- as.numeric( table[[ xyz_names2[[1]] ]] )
-    table$MNI305_y <- as.numeric( table[[ xyz_names2[[2]] ]] )
-    table$MNI305_z <- as.numeric( table[[ xyz_names2[[3]] ]] )
+    table$MNI305_x <- as.numeric(table[[xyz_names2[[1]]]])
+    table$MNI305_y <- as.numeric(table[[xyz_names2[[2]]]])
+    table$MNI305_z <- as.numeric(table[[xyz_names2[[3]]]])
     has_mni305 <- TRUE
-  } else if ( coord_sys == "MNI152" || all( c("MNI152_x", "MNI152_y", "MNI152_z") %in% table_colnames ) ) {
-    if ( coord_sys == "MNI152" ) {
-      ras <- self$apply_transform_points(table[, xyz_names], from = coord_sys, to = "MNI305")
+  } else if (
+    coord_sys == "MNI152" ||
+      all(c("MNI152_x", "MNI152_y", "MNI152_z") %in% table_colnames)
+  ) {
+    if (coord_sys == "MNI152") {
+      ras <- self$apply_transform_points(
+        table[, xyz_names],
+        from = coord_sys,
+        to = "MNI305"
+      )
     } else {
       ras <- as.matrix(table[, c("MNI152_x", "MNI152_y", "MNI152_z")])
     }
-    table$MNI305_x <- as.numeric( ras[, 1] )
-    table$MNI305_y <- as.numeric( ras[, 2] )
-    table$MNI305_z <- as.numeric( ras[, 3] )
+    table$MNI305_x <- as.numeric(ras[, 1])
+    table$MNI305_y <- as.numeric(ras[, 2])
+    table$MNI305_z <- as.numeric(ras[, 3])
     has_mni305 <- TRUE
   }
 
-  if ( has_mni305 ) {
-    na_coord <- is.na(table$MNI305_x) | is.na(table$MNI305_y) | is.na(table$MNI305_z)
-    if ( any(na_coord) ) {
-      table$MNI305_x[ na_coord ] <- 0
-      table$MNI305_y[ na_coord ] <- 0
-      table$MNI305_z[ na_coord ] <- 0
+  if (has_mni305) {
+    na_coord <- is.na(table$MNI305_x) |
+      is.na(table$MNI305_y) |
+      is.na(table$MNI305_z)
+    if (any(na_coord)) {
+      table$MNI305_x[na_coord] <- 0
+      table$MNI305_y[na_coord] <- 0
+      table$MNI305_z[na_coord] <- 0
     }
   } else {
     table$MNI305_x <- 0
@@ -130,14 +170,16 @@ normalize_electrode_table <- function(table, self, position_names = c("x", "y", 
   }
 
   if (all(paste0("Sphere_", c("x", "y", "z")) %in% names(table))) {
-    table$Sphere_x <- as.numeric( table$Sphere_x )
-    table$Sphere_y <- as.numeric( table$Sphere_y )
-    table$Sphere_z <- as.numeric( table$Sphere_z )
-    na_coord <- is.na(table$Sphere_x) | is.na(table$Sphere_y) | is.na(table$Sphere_z)
-    if ( any(na_coord) ) {
-      table$Sphere_x[ na_coord ] <- 0
-      table$Sphere_y[ na_coord ] <- 0
-      table$Sphere_z[ na_coord ] <- 0
+    table$Sphere_x <- as.numeric(table$Sphere_x)
+    table$Sphere_y <- as.numeric(table$Sphere_y)
+    table$Sphere_z <- as.numeric(table$Sphere_z)
+    na_coord <- is.na(table$Sphere_x) |
+      is.na(table$Sphere_y) |
+      is.na(table$Sphere_z)
+    if (any(na_coord)) {
+      table$Sphere_x[na_coord] <- 0
+      table$Sphere_y[na_coord] <- 0
+      table$Sphere_z[na_coord] <- 0
     }
   } else {
     table$Sphere_x <- 0
@@ -145,47 +187,53 @@ normalize_electrode_table <- function(table, self, position_names = c("x", "y", 
     table$Sphere_z <- 0
   }
 
-  if ( length(table$SurfaceElectrode) ) {
-    table$SurfaceElectrode <- stringr::str_to_upper(table$SurfaceElectrode) %in% c("T", "TRUE")
+  if (length(table$SurfaceElectrode)) {
+    table$SurfaceElectrode <- stringr::str_to_upper(table$SurfaceElectrode) %in%
+      c("T", "TRUE")
   } else {
     table$SurfaceElectrode <- FALSE
   }
 
-  if ( !length(table$SurfaceType) ) {
+  if (!length(table$SurfaceType)) {
     table$SurfaceType <- "pial"
   }
   table$SurfaceType <- as.character(table$SurfaceType)
 
-  if ( !length(table$Radius) ) {
+  if (!length(table$Radius)) {
     table$Radius <- 2
   }
-  table$Radius <- as.numeric( table$Radius )
-  table$Radius[ is.na(table$Radius) ] <- 2
+  table$Radius <- as.numeric(table$Radius)
+  table$Radius[is.na(table$Radius)] <- 2
 
-  if ( !length(table$VertexNumber) ) {
+  if (!length(table$VertexNumber)) {
     table$VertexNumber <- -1
   }
   table$VertexNumber <- as.integer(table$VertexNumber)
-  table$VertexNumber[ is.na(table$VertexNumber) ] <- -1
+  table$VertexNumber[is.na(table$VertexNumber)] <- -1
 
   # geometry
-  if ( length(table$Prototype) ) {
+  if (length(table$Prototype)) {
     geom <- as.character(table$Prototype)
     geom[is.na(geom)] <- ""
     table$Prototype <- geom
 
-    if (!length(table$ContactOrder) && any(nzchar( geom ))) {
-
-      table <- do.call("rbind", lapply(split(table, paste(table$Prototype, table$LabelPrefix)), function(sub) {
-        sub$ContactOrder <- order(sub$Electrode)
-        sub
-      }))
+    if (!length(table$ContactOrder) && any(nzchar(geom))) {
+      table <- do.call(
+        "rbind",
+        lapply(
+          split(table, paste(table$Prototype, table$LabelPrefix)),
+          function(sub) {
+            sub$ContactOrder <- order(sub$Electrode)
+            sub
+          }
+        )
+      )
     }
   } else {
     table$Prototype <- ""
   }
 
-  if ( !length(table$Hemisphere) ) {
+  if (!length(table$Hemisphere)) {
     table$Hemisphere <- NA
   }
 
@@ -213,26 +261,25 @@ BrainElectrodes <- R6::R6Class(
   active = list(
     Norig = function() {
       if (inherits(self$brain, "rave-brain")) {
-        return( self$brain$Norig )
+        return(self$brain$Norig)
       }
       identity4
     },
     Torig = function() {
       if (inherits(self$brain, "rave-brain")) {
-        return( self$brain$Torig )
+        return(self$brain$Torig)
       }
       identity4
     },
     xfm = function() {
       if (inherits(self$brain, "rave-brain")) {
-        return( self$brain$xfm )
+        return(self$brain$xfm)
       }
       identity4
     }
   ),
 
   public = list(
-
     subject_code = NULL,
 
     # used to store electrode data frame, do not call directly, use set_electrodes
@@ -253,135 +300,213 @@ BrainElectrodes <- R6::R6Class(
 
     geometries = NULL,
 
-    set_brain = function( brain ) {
+    set_brain = function(brain) {
       if (inherits(brain, "rave-brain")) {
         self$brain <- brain
-        self$set_subject_code( brain$subject_code )
+        self$set_subject_code(brain$subject_code)
       } else if (is.character(brain)) {
-        self$set_subject_code( brain )
+        self$set_subject_code(brain)
       }
     },
 
-    set_subject_code = function( subject_code ) {
-      if ( !is.null(self$group) ) {
+    set_subject_code = function(subject_code) {
+      if (!is.null(self$group)) {
         self$group$name <- sprintf("Electrodes (%s)", subject_code)
       }
-      self$set_electrodes( self$raw_table )
+      self$set_electrodes(self$raw_table)
       self$subject_code <- subject_code
     },
 
     initialize = function(subject_code) {
-      self$group <- GeomGroup$new(name = sprintf("Electrodes (%s)", subject_code),
-                                  position = c(0, 0, 0))
-      self$set_subject_code( subject_code )
+      self$group <- GeomGroup$new(
+        name = sprintf("Electrodes (%s)", subject_code),
+        position = c(0, 0, 0)
+      )
+      self$set_subject_code(subject_code)
       self$geometries <- list()
     },
 
-    add_geometry = function( label_prefix, prototype_name, cache_ok = TRUE, native_ok = TRUE ) {
-
-      if ( !native_ok ) {
+    add_geometry = function(
+      label_prefix,
+      prototype_name,
+      cache_ok = TRUE,
+      native_ok = TRUE
+    ) {
+      if (!native_ok) {
         cache_ok <- FALSE
       }
       label_prefix <- trimws(label_prefix)
       prototype_name <- trimws(prototype_name)
 
-      if ( length(label_prefix) != 1 || is.na(label_prefix) || !is.character(label_prefix) || label_prefix == "" ) { return() }
-      if ( length(prototype_name) != 1 || is.na(prototype_name) || !is.character(prototype_name) || prototype_name == "" ) { return() }
+      if (
+        length(label_prefix) != 1 ||
+          is.na(label_prefix) ||
+          !is.character(label_prefix) ||
+          label_prefix == ""
+      ) {
+        return()
+      }
+      if (
+        length(prototype_name) != 1 ||
+          is.na(prototype_name) ||
+          !is.character(prototype_name) ||
+          prototype_name == ""
+      ) {
+        return()
+      }
 
       name <- sprintf("%s_%s", prototype_name, label_prefix)
       name_upper <- toupper(name)
       prototype_name_upper <- toupper(prototype_name)
-      if (cache_ok && inherits(self$geometries[[ name_upper ]], "ElectrodePrototype")) {
-        return( self$geometries[[ name_upper ]] )
+      if (
+        cache_ok &&
+          inherits(self$geometries[[name_upper]], "ElectrodePrototype")
+      ) {
+        return(self$geometries[[name_upper]])
       }
 
       # load from prototypes
       search_paths <- prototype_search_paths()
       proto <- NULL
       for (search_path in search_paths) {
-        config_files <- list.files(search_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+        config_files <- list.files(
+          search_path,
+          pattern = "\\.json$",
+          full.names = FALSE,
+          include.dirs = FALSE,
+          ignore.case = TRUE,
+          recursive = FALSE,
+          all.files = FALSE
+        )
         config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
         config_names <- toupper(config_names)
         idx <- which(config_names == prototype_name_upper)
-        if ( length(idx) ) {
+        if (length(idx)) {
           idx <- idx[[1]]
-          proto <- new_electrode_prototype(base_prototype = file.path(search_path, config_files[[ idx ]]))
+          proto <- new_electrode_prototype(
+            base_prototype = file.path(search_path, config_files[[idx]])
+          )
           proto$name <- name_upper
           proto$type <- prototype_name
-          self$geometries[[ name_upper ]] <- proto
+          self$geometries[[name_upper]] <- proto
           break
         }
       }
 
-      if ( inherits(self$brain, "rave-brain") ) {
+      if (inherits(self$brain, "rave-brain")) {
         native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
       } else {
         native_path <- NULL
       }
 
       if (native_ok && length(native_path) == 1 && dir.exists(native_path)) {
-        config_files <- list.files(native_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+        config_files <- list.files(
+          native_path,
+          pattern = "\\.json$",
+          full.names = FALSE,
+          include.dirs = FALSE,
+          ignore.case = TRUE,
+          recursive = FALSE,
+          all.files = FALSE
+        )
         config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
         config_names <- toupper(config_names)
         idx <- which(config_names == name_upper)
-        if ( length(idx) ) {
+        if (length(idx)) {
           idx <- idx[[1]]
-          tryCatch({
-            if (is.null(proto)) {
-              proto <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
-              proto$name <- name_upper
-              proto$type <- prototype_name
-            } else {
-              proto_native <- new_electrode_prototype(base_prototype = file.path(native_path, config_files[[ idx ]]))
-              proto$name <- name_upper
-              proto$type <- prototype_name
-              proto$update_from( proto_native )
+          tryCatch(
+            {
+              if (is.null(proto)) {
+                proto <- new_electrode_prototype(
+                  base_prototype = file.path(native_path, config_files[[idx]])
+                )
+                proto$name <- name_upper
+                proto$type <- prototype_name
+              } else {
+                proto_native <- new_electrode_prototype(
+                  base_prototype = file.path(native_path, config_files[[idx]])
+                )
+                proto$name <- name_upper
+                proto$type <- prototype_name
+                proto$update_from(proto_native)
+              }
+            },
+            error = function(e) {
+              warning(e)
             }
-
-          }, error = function(e) {
-            warning(e)
-          })
+          )
         }
       }
 
       return(proto)
     },
 
-    remote_geometry = function( label_prefix, prototype_name, delete = FALSE ) {
+    remote_geometry = function(label_prefix, prototype_name, delete = FALSE) {
       prototype_name <- trimws(prototype_name)
 
-      if ( length(prototype_name) != 1 || is.na(prototype_name) || !is.character(prototype_name) || prototype_name == "" ) { return() }
+      if (
+        length(prototype_name) != 1 ||
+          is.na(prototype_name) ||
+          !is.character(prototype_name) ||
+          prototype_name == ""
+      ) {
+        return()
+      }
       if (missing(label_prefix)) {
         label_prefix <- self$raw_table$LabelPrefix
       }
-      if (!length(label_prefix)) { return(invisible()) }
+      if (!length(label_prefix)) {
+        return(invisible())
+      }
       if (length(label_prefix) > 1) {
         lapply(label_prefix, function(p) {
-          self$remote_geometry(p, prototype_name = prototype_name, delete = delete)
+          self$remote_geometry(
+            p,
+            prototype_name = prototype_name,
+            delete = delete
+          )
         })
         return(invisible())
       }
-      if ( is.na(label_prefix) || !is.character(label_prefix) || label_prefix == "" ) { return() }
+      if (
+        is.na(label_prefix) || !is.character(label_prefix) || label_prefix == ""
+      ) {
+        return()
+      }
       label_prefix <- trimws(label_prefix)
 
       name <- sprintf("%s_%s", prototype_name, label_prefix)
       name_upper <- toupper(name)
 
-      self$geometries[[ name_upper ]] <- NULL
+      self$geometries[[name_upper]] <- NULL
 
-      if ( !delete ) { return(invisible()) }
-      if ( !inherits(self$brain, "rave-brain") ) { return(invisible()) }
+      if (!delete) {
+        return(invisible())
+      }
+      if (!inherits(self$brain, "rave-brain")) {
+        return(invisible())
+      }
       native_path <- file.path(self$brain$base_path, "RAVE", "geometry")
       if (length(native_path) != 1 || !dir.exists(native_path)) {
         return(invisible())
       }
-      config_files <- list.files(native_path, pattern = "\\.json$", full.names = FALSE, include.dirs = FALSE, ignore.case = TRUE, recursive = FALSE, all.files = FALSE)
+      config_files <- list.files(
+        native_path,
+        pattern = "\\.json$",
+        full.names = FALSE,
+        include.dirs = FALSE,
+        ignore.case = TRUE,
+        recursive = FALSE,
+        all.files = FALSE
+      )
       config_names <- gsub("\\.json$", "", config_files, ignore.case = TRUE)
       config_names <- toupper(config_names)
       idx <- which(config_names == name_upper)
-      if ( !length(idx) ) { return(invisible()) }
+      if (!length(idx)) {
+        return(invisible())
+      }
       for (id in idx) {
-        f <- file.path(native_path, config_files[[ id ]])
+        f <- file.path(native_path, config_files[[id]])
         unlink(f)
       }
       return(invisible())
@@ -392,9 +517,9 @@ BrainElectrodes <- R6::R6Class(
       if (!n_elec) {
         return(list())
       }
-      lapply(seq_len( n_elec ), function( ii ) {
+      lapply(seq_len(n_elec), function(ii) {
         el <- self$objects[[ii]]
-        if ( !is.null(el) || !check_valid ) {
+        if (!is.null(el) || !check_valid) {
           return(fun(el, ii))
         } else {
           return(NULL)
@@ -402,11 +527,15 @@ BrainElectrodes <- R6::R6Class(
       })
     },
 
-    get_transform_to_tkrRAS = function( from = c("tkrRAS", "scannerRAS", "MNI305", "MNI152") ) {
+    get_transform_to_tkrRAS = function(
+      from = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")
+    ) {
       from <- match.arg(from)
       m <- switch(
         from,
-        "tkrRAS" = { diag(1.0, nrow = 4L, ncol = 4L) },
+        "tkrRAS" = {
+          diag(1.0, nrow = 4L, ncol = 4L)
+        },
         "scannerRAS" = {
           self$Torig %*% solve(self$Norig)
         },
@@ -420,14 +549,18 @@ BrainElectrodes <- R6::R6Class(
       m
     },
 
-    apply_transform_points = function(positions,
-                                      from = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
-                                      to = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")) {
+    apply_transform_points = function(
+      positions,
+      from = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
+      to = c("tkrRAS", "scannerRAS", "MNI305", "MNI152")
+    ) {
       from <- match.arg(from)
       to <- match.arg(to)
       positions <- as.matrix(positions)[, seq_len(3), drop = FALSE]
       dimnames(positions) <- NULL
-      if ( from == to ) { return(positions) }
+      if (from == to) {
+        return(positions)
+      }
 
       # calculate matrix from `from` to `tkrRAS`
       from_to_tkr <- self$get_transform_to_tkrRAS(from = from)
@@ -456,11 +589,19 @@ BrainElectrodes <- R6::R6Class(
       sub_tbl <- as.matrix(self$raw_table[, c("Coord_x", "Coord_y", "Coord_z")])
       dist <- rowSums(sub_tbl^2)
       valids <- !is.na(dist) & dist > 0
-      scanner_ras <- self$apply_transform_points(sub_tbl, from = "tkrRAS", to = "scannerRAS")
+      scanner_ras <- self$apply_transform_points(
+        sub_tbl,
+        from = "tkrRAS",
+        to = "scannerRAS"
+      )
       ras_to_ijk <- solve(atlas$Norig)
 
       # IJK starts from 0, 0, 0
-      ijk <- round((ras_to_ijk %*% rbind(t(scanner_ras), 1))[seq_len(3), , drop = FALSE])
+      ijk <- round((ras_to_ijk %*% rbind(t(scanner_ras), 1))[
+        seq_len(3),
+        ,
+        drop = FALSE
+      ])
 
       atlas_shape <- dim(atlas$data)[seq_len(3)]
       atlas_cumprod <- cumprod(c(1, atlas_shape))
@@ -468,7 +609,7 @@ BrainElectrodes <- R6::R6Class(
       atlas_cumprod <- atlas_cumprod[seq_len(3)]
 
       # construct neighboring indices
-      if ( radius > 0 ) {
+      if (radius > 0) {
         # columns of ras_to_ijk are incremental steps along voxel-index space
         max_index_radius <- round(max(abs(ras_to_ijk[, 1:3])) * radius)
         max_radius_int <- ceiling(max_index_radius)
@@ -539,18 +680,29 @@ BrainElectrodes <- R6::R6Class(
       }
       if (is.null(lut)) {
         lut <- load_colormap(system.file(
-          "palettes", "datacube2", "FreeSurferColorLUT.json",
-          package = "threeBrain"))
+          "palettes",
+          "datacube2",
+          "FreeSurferColorLUT.json",
+          package = "threeBrain"
+        ))
       }
 
       sub_tbl <- as.matrix(self$raw_table[, c("Coord_x", "Coord_y", "Coord_z")])
       dist <- rowSums(sub_tbl^2)
       valids <- !is.na(dist) & dist > 0
-      scanner_ras <- self$apply_transform_points(sub_tbl, from = "tkrRAS", to = "scannerRAS")
+      scanner_ras <- self$apply_transform_points(
+        sub_tbl,
+        from = "tkrRAS",
+        to = "scannerRAS"
+      )
       ras_to_ijk <- solve(atlas$Norig)
 
       # IJK starts from 0, 0, 0
-      ijk <- round((ras_to_ijk %*% rbind(t(scanner_ras), 1))[seq_len(3), , drop = FALSE])
+      ijk <- round((ras_to_ijk %*% rbind(t(scanner_ras), 1))[
+        seq_len(3),
+        ,
+        drop = FALSE
+      ])
 
       atlas_shape <- dim(atlas$data)[seq_len(3)]
       atlas_cumprod <- cumprod(c(1, atlas_shape))
@@ -560,7 +712,7 @@ BrainElectrodes <- R6::R6Class(
       lut_keys <- names(lut$map)
 
       # construct neighboring indices
-      if ( radius > 0 ) {
+      if (radius > 0) {
         # columns of ras_to_ijk are incremental steps along voxel-index space
         max_index_radius <- round(max(abs(ras_to_ijk[, 1:3])) * radius)
         # IJK offsets
@@ -623,9 +775,9 @@ BrainElectrodes <- R6::R6Class(
         labels <- sapply(idx_uni, function(id) {
           li <- lut$map[[as.character(id)]]
           if (is.list(li) && is.character(li$Label)) {
-            return( li$Label[[1]] )
+            return(li$Label[[1]])
           } else {
-            return( "NA-Label" )
+            return("NA-Label")
           }
         })
         data.frame(
@@ -647,18 +799,24 @@ BrainElectrodes <- R6::R6Class(
         )
       })
       return(do.call("rbind", labels))
-
     },
 
-    set_electrodes = function(table_or_path, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
-                              position_names = c("x", "y", "z"), priority = c("prototype", "sphere", "both")) {
+    set_electrodes = function(
+      table_or_path,
+      coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
+      position_names = c("x", "y", "z"),
+      priority = c("prototype", "sphere", "both")
+    ) {
       coord_sys <- match.arg(coord_sys)
       priority <- match.arg(priority)
-      if ( is.null(table_or_path) ) {
+      if (is.null(table_or_path)) {
         return(invisible())
       }
-      stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
-                 msg = "table_or_path must be either data.frame or path to electrodes.csv")
+      stopifnot2(
+        is.data.frame(table_or_path) ||
+          (length(table_or_path) == 1) && is.character(table_or_path),
+        msg = "table_or_path must be either data.frame or path to electrodes.csv"
+      )
       if (!is.data.frame(table_or_path)) {
         # table_or_path = "~/Downloads/YAB_electrodes.csv"
         self$raw_table_path <- table_or_path
@@ -667,7 +825,12 @@ BrainElectrodes <- R6::R6Class(
         self$raw_table_path <- NULL
         table <- table_or_path
       }
-      table <- normalize_electrode_table(table, self, position_names = position_names, coord_sys = coord_sys)
+      table <- normalize_electrode_table(
+        table,
+        self,
+        position_names = position_names,
+        coord_sys = coord_sys
+      )
       self$raw_table <- table
 
       # DIPSAUS DEBUG START
@@ -679,7 +842,9 @@ BrainElectrodes <- R6::R6Class(
       # table$Prototype <- "Precision33x31"
       # table <- normalize_electrode_table(table)
 
-      if (!is.data.frame(table)) { return() }
+      if (!is.data.frame(table)) {
+        return()
+      }
       n <- nrow(table)
 
       # Generate objects
@@ -689,38 +854,56 @@ BrainElectrodes <- R6::R6Class(
       subject_code <- self$subject_code
 
       # load electrode prototypes
-      electrode_geometry_names <- apply(unique(cbind(table$LabelPrefix, table$Prototype)), 1, function(x) {
-        proto <- self$add_geometry( label_prefix = x[[1]], prototype_name = x[[2]] )
-        if (is.null(proto)) { return("") }
-        proto$name
-      })
-      table_geom_names <- toupper(sprintf("%s_%s", table$Prototype, table$LabelPrefix))
+      electrode_geometry_names <- apply(
+        unique(cbind(table$LabelPrefix, table$Prototype)),
+        1,
+        function(x) {
+          proto <- self$add_geometry(
+            label_prefix = x[[1]],
+            prototype_name = x[[2]]
+          )
+          if (is.null(proto)) {
+            return("")
+          }
+          proto$name
+        }
+      )
+      table_geom_names <- toupper(sprintf(
+        "%s_%s",
+        table$Prototype,
+        table$LabelPrefix
+      ))
       table_geom_names[!table_geom_names %in% electrode_geometry_names] <- ""
-
 
       add_single_contact <- function(row, proto = NULL) {
         anatomical_label <- row$FSLabel
         which_side <- guess_hemisphere(row$Hemisphere, anatomical_label)
         nearest_vertex <- row$VertexNumber
-        mni_305 <- c( row$MNI305_x, row$MNI305_y, row$MNI305_z )
-        sphere_xyz <- c( row$Sphere_x, row$Sphere_y, row$Sphere_z )
+        mni_305 <- c(row$MNI305_x, row$MNI305_y, row$MNI305_z)
+        sphere_xyz <- c(row$Sphere_x, row$Sphere_y, row$Sphere_z)
         tkr_ras <- c(row$Coord_x, row$Coord_y, row$Coord_z)
         if (length(mni_305) != 3) {
           mni_305 <- c(0, 0, 0)
         }
         surf_type <- c(row$SurfaceType, "pial")[1]
-        if ( is.na(surf_type) ) { surf_type <- "NA" }
+        if (is.na(surf_type)) {
+          surf_type <- "NA"
+        }
         radius <- row$Radius
         label_prefix <- row$LabelPrefix
 
         el <- ElectrodeGeom$new(
           name = sprintf("%s, %d - %s", subject_code, row$Electrode, row$Label),
           position = tkr_ras,
-          radius = radius, group = self$group, subtype = "SphereGeometry", prototype = proto)
+          radius = radius,
+          group = self$group,
+          subtype = "SphereGeometry",
+          prototype = proto
+        )
         el$number <- row$Electrode
         el$label_prefix <- label_prefix
         el$device_name <- as.character(row$Prototype %||% "")
-        el$is_surface_electrode <- isTRUE( row$SurfaceElectrode )
+        el$is_surface_electrode <- isTRUE(row$SurfaceElectrode)
         el$MNI305_position <- mni_305
         el$sphere_position <- sphere_xyz
         el$vertex_number <- nearest_vertex
@@ -730,18 +913,20 @@ BrainElectrodes <- R6::R6Class(
         el$subject_code <- subject_code
         el$set_value(value = as.character(subject_code), name = "[Subject]")
 
-        if ( length(row$DistanceShifted) == 1 && is.numeric(row$DistanceShifted) ) {
+        if (
+          length(row$DistanceShifted) == 1 && is.numeric(row$DistanceShifted)
+        ) {
           el$surface_offset <- row$DistanceShifted
         } else {
           tkr_orig <- c(row$OrigCoord_x, row$OrigCoord_y, row$OrigCoord_z)
-          if ( length(tkr_orig) == 3 ) {
+          if (length(tkr_orig) == 3) {
             el$surface_offset <- sqrt(sum((tkr_orig - tkr_ras)^2))
           } else {
             el$surface_offset <- 0
           }
         }
 
-        self$objects[[ row$Electrode ]] <- el
+        self$objects[[row$Electrode]] <- el
         return()
       }
 
@@ -759,30 +944,48 @@ BrainElectrodes <- R6::R6Class(
         # if(all(is.na(channels))) { return() }
         # proto$set_channel_map(channel_numbers = channels)
 
-        if ( priority %in% c("prototype", "both") ) {
+        if (priority %in% c("prototype", "both")) {
           contact_order <- sub$ContactOrder
 
           proto$set_contact_channels(sub$Electrode, contact_order)
-          if (all(is.na(proto$channel_numbers))) { return() }
+          if (all(is.na(proto$channel_numbers))) {
+            return()
+          }
 
-          contact_positions <- proto$get_contact_positions(apply_transform = TRUE)
-          sel <- !is.na(contact_order) & contact_order >= 1 & contact_order <= proto$n_channels
+          contact_positions <- proto$get_contact_positions(
+            apply_transform = TRUE
+          )
+          sel <- !is.na(contact_order) &
+            contact_order >= 1 &
+            contact_order <= proto$n_channels
           contact_order <- contact_order[sel]
           contact_positions[contact_order, 1] <- sub$Coord_x[sel]
           contact_positions[contact_order, 2] <- sub$Coord_y[sel]
           contact_positions[contact_order, 3] <- sub$Coord_z[sel]
-          contact_positions <- solve(proto$transform) %*% t(cbind(contact_positions, 1))
-          proto$set_channel_map(center_positions = contact_positions[seq_len(3), , drop = FALSE])
+          contact_positions <- solve(proto$transform) %*%
+            t(cbind(contact_positions, 1))
+          proto$set_channel_map(
+            center_positions = contact_positions[seq_len(3), , drop = FALSE]
+          )
 
           electrode_numbers <- dipsaus::deparse_svec(sub$Electrode)
           el <- ElectrodeGeom$new(
-            name = sprintf("%s, (%d) - %s", subject_code, nrow(sub), sub$LabelPrefix[[1]]),
+            name = sprintf(
+              "%s, (%d) - %s",
+              subject_code,
+              nrow(sub),
+              sub$LabelPrefix[[1]]
+            ),
             position = c(999, 999, 999), # this will be ignored
-            radius = 1, group = self$group, subtype = "CustomGeometry", prototype = proto)
+            radius = 1,
+            group = self$group,
+            subtype = "CustomGeometry",
+            prototype = proto
+          )
           el$number <- electrode_numbers
           if (length(sub$LabelPrefix)) {
             el$label_prefix <- as.character(sub$LabelPrefix[[1]])
-          } 
+          }
           if (length(sub$Prototype)) {
             el$device_name <- as.character(sub$Prototype[[1]])
           }
@@ -790,9 +993,14 @@ BrainElectrodes <- R6::R6Class(
           el$vertex_number <- -1
 
           # set MNI305 columns
-          mni305_positions <- proto$get_contact_positions(apply_transform = FALSE)
+          mni305_positions <- proto$get_contact_positions(
+            apply_transform = FALSE
+          )
           mni305_positions[] <- 0
-          if (length(mni305_positions) && all(c("MNI305_x", "MNI305_y", "MNI305_z") %in% names(sub))) {
+          if (
+            length(mni305_positions) &&
+              all(c("MNI305_x", "MNI305_y", "MNI305_z") %in% names(sub))
+          ) {
             mni305_positions[contact_order, 1] <- sub$MNI305_x[sel]
             mni305_positions[contact_order, 2] <- sub$MNI305_y[sel]
             mni305_positions[contact_order, 3] <- sub$MNI305_z[sel]
@@ -821,8 +1029,7 @@ BrainElectrodes <- R6::R6Class(
           el$surface_type <- c(sub$SurfaceType, "pial")[1]
           el$subject_code <- subject_code
 
-          el$set_value( value = as.character(subject_code), name = "[Subject]" )
-
+          el$set_value(value = as.character(subject_code), name = "[Subject]")
 
           # if( length(sub$DistanceShifted) > 0 && is.numeric(sub$DistanceShifted) ) {
           #   el$surface_offset <- sub$DistanceShifted[sel]
@@ -837,12 +1044,12 @@ BrainElectrodes <- R6::R6Class(
           #   }
           # }
 
-          self$objects2[[ length(self$objects2) + 1 ]] <- el
+          self$objects2[[length(self$objects2) + 1]] <- el
         } else {
           proto <- NULL
         }
 
-        if ( priority %in% c("sphere", "both")) {
+        if (priority %in% c("sphere", "both")) {
           for (ii in seq_len(nrow(sub))) {
             add_single_contact(sub[ii, ], proto)
           }
@@ -851,7 +1058,10 @@ BrainElectrodes <- R6::R6Class(
       }
 
       lapply(split(table, table_geom_names), function(sub) {
-        proto <- self$add_geometry( label_prefix = sub$LabelPrefix[[1]], prototype_name = sub$Prototype[[1]] )
+        proto <- self$add_geometry(
+          label_prefix = sub$LabelPrefix[[1]],
+          prototype_name = sub$Prototype[[1]]
+        )
         if (is.null(proto)) {
           lapply(seq_len(nrow(sub)), function(ii) {
             add_single_contact(sub[ii, ])
@@ -872,16 +1082,21 @@ BrainElectrodes <- R6::R6Class(
     #| \code{inclusive=false} (exclusive), then only \code{names} will
     #| be fixed
     #|
-    fix_electrode_color = function(number, color, names = NULL, inclusive = FALSE) {
-
+    fix_electrode_color = function(
+      number,
+      color,
+      names = NULL,
+      inclusive = FALSE
+    ) {
       number <- as.integer(number)
-      if ( !is.finite(number) || number <= 0 ) { return() }
+      if (!is.finite(number) || number <= 0) {
+        return()
+      }
 
       fixed_colors <- as.list(self$group$get_data("fixed_colors"))
       if (!length(color)) {
         fixed_colors[[as.character(number)]] <- NA
       } else {
-
         color_settings <- list(
           default = color[[1]],
           inclusive = inclusive,
@@ -889,7 +1104,7 @@ BrainElectrodes <- R6::R6Class(
         )
         n_names <- length(names)
         if (length(color) != n_names) {
-          if ( n_names == 0 ) {
+          if (n_names == 0) {
             names <- "[None]"
             n_names <- 1
           }
@@ -928,24 +1143,26 @@ BrainElectrodes <- R6::R6Class(
       # self <- brain$electrodes
       # table_or_path <- brain$electrodes$raw_table
       # table <- table_or_path
-      if ( missing(table_or_path) ) {
+      if (missing(table_or_path)) {
         table <- self$value_table
         if (!is.data.frame(table)) {
           table <- self$raw_table
         }
       } else {
-        stopifnot2(is.data.frame(table_or_path) || (length(table_or_path) == 1) && is.character(table_or_path),
-                   msg = "table_or_path must be either data.frame or path to a csv file")
+        stopifnot2(
+          is.data.frame(table_or_path) ||
+            (length(table_or_path) == 1) && is.character(table_or_path),
+          msg = "table_or_path must be either data.frame or path to a csv file"
+        )
         if (!is.data.frame(table_or_path)) {
           table <- read.csv(table_or_path, stringsAsFactors = FALSE)
         } else {
           table <- table_or_path
         }
       }
-      if ( !is.data.frame(table) ) {
+      if (!is.data.frame(table)) {
         return(NULL)
       }
-
 
       # an example, electrode and value are mandatory
       # Subject Electrode xxx Time
@@ -955,21 +1172,23 @@ BrainElectrodes <- R6::R6Class(
       # 4     YAB         4     4  0.5
       # 5     YAB         5     5  0.5
       # 6     YAB         6     6  0.5
-      stopifnot2(all(c("Electrode") %in% names(table)),
-                 msg = "value table must contains Electrode (integer)")
+      stopifnot2(
+        all(c("Electrode") %in% names(table)),
+        msg = "value table must contains Electrode (integer)"
+      )
 
-      if ( length(table$Subject) ) {
+      if (length(table$Subject)) {
         table <- table[table$Subject %in% self$subject_code, ]
       }
       table$Electrode <- as.integer(table$Electrode)
       table <- table[!is.na(table$Electrode), ]
       var_names <- names(table)
 
-      if ( "Time" %in% var_names ) {
+      if ("Time" %in% var_names) {
         # Sort by time
         table <- table[!is.na(table$Time), ]
-        table <- table[order( table$Time ), ]
-      } else if ( nrow(table) ) {
+        table <- table[order(table$Time), ]
+      } else if (nrow(table)) {
         table$Time <- 0
       }
       # Backup table
@@ -977,13 +1196,19 @@ BrainElectrodes <- R6::R6Class(
 
       # Need to figure out what variables to be put into electrodes
 
-      var_names <- var_names[ !var_names %in% c("Electrode", "Time", "Note") ]
+      var_names <- var_names[!var_names %in% c("Electrode", "Time", "Note")]
 
-      if (!length(var_names)) { return(invisible())}
+      if (!length(var_names)) {
+        return(invisible())
+      }
 
       # Check values
-      for ( vn in var_names ) {
-        if ( !is.list(table[[vn]]) && !is.numeric(table[[vn]]) && !is.factor(table[[vn]]) ) {
+      for (vn in var_names) {
+        if (
+          !is.list(table[[vn]]) &&
+            !is.numeric(table[[vn]]) &&
+            !is.factor(table[[vn]])
+        ) {
           table[[vn]] <- as.factor(table[[vn]])
         }
       }
@@ -995,9 +1220,14 @@ BrainElectrodes <- R6::R6Class(
         sub <- table[table$Electrode == ii, ]
         lapply(var_names, function(vn) {
           # if no subset, then remove keyframes, else set keyframes
-          el$set_value(value = sub[[vn]], time_stamp = sub$Time, channels = sub$Electrode,
-                       name = vn, target = ".material.color")
-          if ( length(sub$Note) && is.character(sub$Note) ) {
+          el$set_value(
+            value = sub[[vn]],
+            time_stamp = sub$Time,
+            channels = sub$Electrode,
+            name = vn,
+            target = ".material.color"
+          )
+          if (length(sub$Note) && is.character(sub$Note)) {
             el$custom_info <- sub$Note
           }
         })
@@ -1007,7 +1237,7 @@ BrainElectrodes <- R6::R6Class(
       lapply(seq_along(self$objects2), function(ii) {
         el <- self$objects2[[ii]]
         channels <- el$prototype$channel_numbers
-        base_table <- data.frame( Electrode = channels )
+        base_table <- data.frame(Electrode = channels)
 
         sub <- table[table$Electrode %in% channels, ]
         if (has_time) {
@@ -1023,16 +1253,31 @@ BrainElectrodes <- R6::R6Class(
         })
 
         lapply(split_table, function(split_item) {
-          split_values <- merge(base_table, split_item, all.x = TRUE, all.y = FALSE, by = "Electrode", sort = FALSE)
-          od <- vapply(channels, function(ch) {
-            if ( is.na(ch) ) { return(NA_integer_) }
-            idx <- which(split_values$Electrode == ch)
-            if (length(idx)) { return(idx[[1]])}
-            return(NA_integer_)
-          }, NA_integer_)
+          split_values <- merge(
+            base_table,
+            split_item,
+            all.x = TRUE,
+            all.y = FALSE,
+            by = "Electrode",
+            sort = FALSE
+          )
+          od <- vapply(
+            channels,
+            function(ch) {
+              if (is.na(ch)) {
+                return(NA_integer_)
+              }
+              idx <- which(split_values$Electrode == ch)
+              if (length(idx)) {
+                return(idx[[1]])
+              }
+              return(NA_integer_)
+            },
+            NA_integer_
+          )
           split_values <- split_values[od, ]
 
-          if ( has_time ) {
+          if (has_time) {
             time <- split_item$Time[[1]]
           } else {
             time <- 0
@@ -1051,7 +1296,7 @@ BrainElectrodes <- R6::R6Class(
 
         lapply(var_names, function(nm) {
           item <- vtable[[nm]]
-          if ( length(item$time) ) {
+          if (length(item$time)) {
             el$set_value(value = item$values, time_stamp = item$time, name = nm)
           }
           NULL

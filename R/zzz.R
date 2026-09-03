@@ -3,7 +3,6 @@ loaders <- new.env(parent = emptyenv())
 DISABLE_PYTHON <- TRUE
 
 load_nibabel <- function(force_reload = FALSE) {
-
   # this function is depricated
   return(NULL)
   # if( DISABLE_PYTHON ) {
@@ -46,8 +45,12 @@ read_mgz <- function(path) {
     ))
   }
   # Use freesurferformats instead
-  res <- freesurferformats::read.fs.mgh(path, with_header = TRUE,
-                                        flatten = FALSE, drop_empty_dims = FALSE)
+  res <- freesurferformats::read.fs.mgh(
+    path,
+    with_header = TRUE,
+    flatten = FALSE,
+    drop_empty_dims = FALSE
+  )
   res$get_data <- function() {
     dm <- dim(res$data)
     if (dm[[4]] == 1) {
@@ -63,9 +66,11 @@ read_mgz <- function(path) {
     }
     dm
   }
-  default_mat <- matrix(c(-1, 0, 0, 128, 0, 0, 1, -128, 0, -1, 0, 128, 0, 0, 0, 1),
-                        byrow = TRUE,
-                        nrow = 4)
+  default_mat <- matrix(
+    c(-1, 0, 0, 128, 0, 0, 1, -128, 0, -1, 0, 128, 0, 0, 0, 1),
+    byrow = TRUE,
+    nrow = 4
+  )
   res$header$get_vox2ras <- function() {
     if (res$header$ras_good_flag == 1) {
       res$header$internal$M
@@ -89,7 +94,10 @@ read_mgz <- function(path) {
 read_nifti <- function(path) {
   dat <- oro.nifti::readNIfTI(path, reorient = FALSE)
   vox2ras <- oro.nifti::qform(dat)
-  vox2ras_tkr <- cbind(vox2ras[, -4], cbind(-vox2ras[, -4], c(0, 0, 0, 1)) %*% c(128, 128, 128, 1))
+  vox2ras_tkr <- cbind(
+    vox2ras[, -4],
+    cbind(-vox2ras[, -4], c(0, 0, 0, 1)) %*% c(128, 128, 128, 1)
+  )
   dat <- dat@.Data
   if (length(dim(dat)) == 4 && dim(dat)[[4]] == 1) {
     dat <- dat[, , , 1, drop = TRUE]
@@ -97,11 +105,19 @@ read_nifti <- function(path) {
   list(
     data = dat,
     header = list(
-      get_vox2ras = function() { vox2ras },
-      get_vox2ras_tkr = function() { vox2ras_tkr }
+      get_vox2ras = function() {
+        vox2ras
+      },
+      get_vox2ras_tkr = function() {
+        vox2ras_tkr
+      }
     ),
-    get_shape = function() { dim(dat) },
-    get_data = function() { dat }
+    get_shape = function() {
+      dim(dat)
+    },
+    get_data = function() {
+      dat
+    }
   )
 }
 
@@ -120,7 +136,7 @@ read_gii2 <- function(path) {
   path <- normalizePath(path, mustWork = FALSE)
 
   nibabel <- load_nibabel()
-  if ( !is.null(nibabel) ) {
+  if (!is.null(nibabel)) {
     tmp <- nibabel$load(path)
     vertices <- tmp$darrays[[1]]$data[, 1:3]
     faces <- tmp$darrays[[2]]$data[, 1:3]
@@ -143,13 +159,24 @@ read_gii2 <- function(path) {
 }
 
 
-read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
-                      reorient = FALSE, rescale_data = FALSE, ...)
-{
+read_nii2 <- function(
+  path,
+  head_only = FALSE,
+  verbose = FALSE,
+  reorient = FALSE,
+  rescale_data = FALSE,
+  ...
+) {
   path <- normalizePath(path, mustWork = FALSE)
 
-  nii <- oro.nifti::readNIfTI(path, verbose = reorient, reorient = reorient,
-                              read_data = !head_only, rescale_data = rescale_data, ...)
+  nii <- oro.nifti::readNIfTI(
+    path,
+    verbose = reorient,
+    reorient = reorient,
+    read_data = !head_only,
+    rescale_data = rescale_data,
+    ...
+  )
 
   get_range <- function() {
     c(nii@cal_min, nii@cal_max)
@@ -167,7 +194,9 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     return(oro.nifti::qform(nii))
   }
 
-  get_voxel_size <- function() { oro.nifti::voxdim(nii) }
+  get_voxel_size <- function() {
+    oro.nifti::voxdim(nii)
+  }
 
   get_boundary <- function() {
     qform <- oro.nifti::qform(nii)
@@ -199,12 +228,13 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     use_sform <- TRUE
     prefered_code <- c(1, 4, 2, 5, 3, 0)
 
-    if (which(prefered_code == sform_code) >
-       which(prefered_code == qform_code)) {
+    if (
+      which(prefered_code == sform_code) > which(prefered_code == qform_code)
+    ) {
       use_sform <- FALSE
     }
 
-    if ( use_sform ) {
+    if (use_sform) {
       # method 3
       mat <- rbind(
         nii@srow_x,
@@ -245,13 +275,29 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     voxToWorldMat <- get_IJK_to_RAS()$matrix
     voxToScaledVoxMat <- diag(c(pixdim, 1))
     isneuro <- det(voxToWorldMat) > 0
-    if ( isneuro ) {
-      flip <- matrix(c(
-        -1, 0, 0, (shape[1] - 1) * pixdim[1],
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-      ), nrow = 4L, byrow = TRUE)
+    if (isneuro) {
+      flip <- matrix(
+        c(
+          -1,
+          0,
+          0,
+          (shape[1] - 1) * pixdim[1],
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ),
+        nrow = 4L,
+        byrow = TRUE
+      )
       voxToScaledVoxMat <- flip %*% voxToScaledVoxMat
     }
 
@@ -261,7 +307,11 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
   get_IJK_to_tkrRAS <- function(brain) {
     ijk2ras <- get_IJK_to_RAS()
     if (ijk2ras$code %in% c(0, 2, 3, 5)) {
-      warning("The NifTi file contains a transform matrix, projecting IJK indices to a XYZ space that is not supported: [", ijk2ras$space, "]. The rendering result might be improper.")
+      warning(
+        "The NifTi file contains a transform matrix, projecting IJK indices to a XYZ space that is not supported: [",
+        ijk2ras$space,
+        "]. The rendering result might be improper."
+      )
     }
     mat <- ijk2ras$matrix
     switch(
@@ -277,7 +327,8 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
       `4` = {
         # MNI-152, MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
         mat <- brain$Torig %*% solve(brain$Norig) %*% solve(brain$xfm) %*% mat
-      }, {
+      },
+      {
         mat <- brain$Torig %*% solve(brain$Norig) %*% mat
       }
     )
@@ -289,7 +340,9 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
       header = nii,
       get_range = get_range,
       get_shape = get_shape,
-      get_data = function() { nii@.Data },
+      get_data = function() {
+        nii@.Data
+      },
       # Torig
       get_qform = get_qform,
       get_voxel_size = get_voxel_size,
@@ -301,11 +354,4 @@ read_nii2 <- function(path, head_only = FALSE, verbose = FALSE,
     ),
     class = c("threeBrain.nii", "list")
   )
-
 }
-
-
-
-
-
-

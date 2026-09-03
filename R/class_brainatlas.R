@@ -26,15 +26,14 @@ BrainAtlas <- R6::R6Class(
 
     group = NULL,
 
-    set_subject_code = function( subject_code ) {
-      if ( self$has_atlas ) {
+    set_subject_code = function(subject_code) {
+      if (self$has_atlas) {
         self$object$subject_code <- subject_code
         self$group$subject_code <- subject_code
 
         self$object$name <- sprintf("Atlas - %s (%s)", self$atlas_type, subject_code)
         self$group$name <- sprintf("Atlas - %s (%s)", self$atlas_type, subject_code)
       }
-
       self$subject_code <- subject_code
     },
 
@@ -50,34 +49,36 @@ BrainAtlas <- R6::R6Class(
 
       self$object <- atlas
       self$group <- atlas$group
-      self$set_subject_code( subject_code )
+      self$set_subject_code(subject_code)
 
       self$atlas_type <- stringr::str_replace_all(atlas_type, "[\\W]", "_")
 
       # position is set for group
-      if ( length(position) == 3 ) {
-        self$set_group_position( position )
+      if (length(position) == 3) {
+        self$set_group_position(position)
       }
     },
 
-    print = function( ... ) {
+    print = function(...) {
 
       cat("Subject\t\t:", self$subject_code, end = "\n")
       cat("Atlas type\t:", self$atlas_type, end = "\n")
 
-      if ( !self$has_atlas ) {
+      if (!self$has_atlas) {
         warning("No atlas found!")
       }
 
-      invisible( self )
+      invisible(self)
     }
 
   ),
   active = list(
     has_atlas = function() {
-      if ( !is.null(self$object) &&
+      if (
+        !is.null(self$object) &&
           R6::is.R6(self$object) &&
-          "datacube2" %in% self$object$type) {
+          "datacube2" %in% self$object$type
+      ) {
         return(TRUE)
       }
 
@@ -181,10 +182,13 @@ add_voxel_cube <- function(brain, name, cube, size = c(256, 256, 256),
   geom$trans_space_from <- trans_space_from
 
   obj <- BrainAtlas$new(
-    subject_code = subject, atlas_type = name,
-    atlas = geom, position = c(0, 0, 0 ))
+    subject_code = subject,
+    atlas_type = name,
+    atlas = geom,
+    position = c(0, 0, 0)
+  )
 
-  brain$add_atlas( atlas = obj )
+  brain$add_atlas(atlas = obj)
   invisible(re)
 }
 

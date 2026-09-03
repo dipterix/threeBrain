@@ -1,4 +1,3 @@
-
 # Supported streamline file formats, in resolution priority order.
 # `vtk`/`vtp` are recognized so we can raise an informative error, but they are
 # not renderable: the viewer has no VTK reader.
@@ -46,13 +45,19 @@ streamline_parse_key <- function(name) {
     }
   }
 
-  stopifnot2(nzchar(group), msg = "`add_streamline`: circuit group cannot be blank")
+  stopifnot2(
+    nzchar(group),
+    msg = "`add_streamline`: circuit group cannot be blank"
+  )
   stopifnot2(
     !grepl("*", group, fixed = TRUE),
-    msg = sprintf(paste0(
-      "`add_streamline`: `%s` uses '*' in the circuit group. Wild cards are only ",
-      "allowed in the bundle name, e.g. 'motor/*' or 'motor/CST_*'."
-    ), name)
+    msg = sprintf(
+      paste0(
+        "`add_streamline`: `%s` uses '*' in the circuit group. Wild cards are only ",
+        "allowed in the bundle name, e.g. 'motor/*' or 'motor/CST_*'."
+      ),
+      name
+    )
   )
 
   list(
@@ -67,11 +72,17 @@ streamline_parse_key <- function(name) {
 #' @description Case-insensitively resolve a sub-directory of \code{root}.
 #' Returns \code{NULL} when no directory matches.
 streamline_match_dir <- function(root, group) {
-  if (!length(root) || !dir.exists(root)) { return(NULL) }
+  if (!length(root) || !dir.exists(root)) {
+    return(NULL)
+  }
   dirs <- list.dirs(root, full.names = FALSE, recursive = FALSE)
-  idx <- which(streamline_normalize_key(dirs) == streamline_normalize_key(group))
-  if (!length(idx)) { return(NULL) }
-  file.path(root, dirs[[ idx[[1]] ]])
+  idx <- which(
+    streamline_normalize_key(dirs) == streamline_normalize_key(group)
+  )
+  if (!length(idx)) {
+    return(NULL)
+  }
+  file.path(root, dirs[[idx[[1]]]])
 }
 
 #' @noRd
@@ -80,9 +91,13 @@ streamline_match_dir <- function(root, group) {
 #' and the on-disk spelling of the bundle name, or \code{NULL}. When the only
 #' matches use an unsupported format, this errors out with an explicit message.
 streamline_match_file <- function(dir, name) {
-  if (!length(dir) || !dir.exists(dir)) { return(NULL) }
+  if (!length(dir) || !dir.exists(dir)) {
+    return(NULL)
+  }
   fnames <- list.files(dir, full.names = FALSE, recursive = FALSE)
-  if (!length(fnames)) { return(NULL) }
+  if (!length(fnames)) {
+    return(NULL)
+  }
 
   fnames <- fnames[!dir.exists(file.path(dir, fnames))]
   normalized <- streamline_normalize_key(fnames)
@@ -91,7 +106,7 @@ streamline_match_file <- function(dir, name) {
   for (ext in STREAMLINE_EXTENSIONS) {
     idx <- which(normalized == sprintf("%s.%s", target, ext))
     if (length(idx)) {
-      fname <- fnames[[ idx[[1]] ]]
+      fname <- fnames[[idx[[1]]]]
       return(list(
         path = file.path(dir, fname),
         # on-disk spelling of the bundle name, i.e. filename minus extension
@@ -108,7 +123,8 @@ streamline_match_file <- function(dir, name) {
           "`add_streamline`: `%s` is stored as %s, which the 3D viewer cannot read. ",
           "Supported streamline formats are: %s. Please convert the file."
         ),
-        name, fnames[[ idx[[1]] ]],
+        name,
+        fnames[[idx[[1]]]],
         paste(sprintf("'%s'", STREAMLINE_EXTENSIONS), collapse = ", ")
       ))
     }
@@ -124,11 +140,17 @@ streamline_match_file <- function(dir, name) {
 #' unsupported formats are skipped silently: a stray \code{'vtp'} must not abort
 #' a whole-group scan. \code{colormap.csv} is excluded by the extension filter.
 streamline_match_files <- function(dir, pattern) {
-  if (!length(dir) || !dir.exists(dir)) { return(list()) }
+  if (!length(dir) || !dir.exists(dir)) {
+    return(list())
+  }
   fnames <- list.files(dir, full.names = FALSE, recursive = FALSE)
-  if (!length(fnames)) { return(list()) }
+  if (!length(fnames)) {
+    return(list())
+  }
   fnames <- fnames[!dir.exists(file.path(dir, fnames))]
-  if (!length(fnames)) { return(list()) }
+  if (!length(fnames)) {
+    return(list())
+  }
 
   normalized <- streamline_normalize_key(fnames)
   regexp <- utils::glob2rx(streamline_normalize_key(pattern))
@@ -143,17 +165,27 @@ streamline_match_files <- function(dir, pattern) {
     for (ii in which(endsWith(normalized, suffix))) {
       stem <- substr(fnames[[ii]], 1L, nchar(fnames[[ii]]) - nchar(suffix))
       key <- streamline_normalize_key(stem)
-      if (key %in% seen || !grepl(regexp, key)) { next }
+      if (key %in% seen || !grepl(regexp, key)) {
+        next
+      }
       seen <- c(seen, key)
-      re[[ length(re) + 1L ]] <- list(
+      re[[length(re) + 1L]] <- list(
         path = file.path(dir, fnames[[ii]]),
         name = stem
       )
     }
   }
 
-  if (!length(re)) { return(re) }
-  re[ order(streamline_normalize_key(vapply(re, function(x) { x$name }, ""))) ]
+  if (!length(re)) {
+    return(re)
+  }
+  re[order(streamline_normalize_key(vapply(
+    re,
+    function(x) {
+      x$name
+    },
+    ""
+  )))]
 }
 
 #' @noRd
@@ -161,35 +193,49 @@ streamline_match_files <- function(dir, pattern) {
 #' named character vector mapping normalized \code{Filename} entries to colors.
 streamline_read_colormap <- function(streamline_root) {
   empty <- structure(character(0L), names = character(0L))
-  if (!length(streamline_root) || !dir.exists(streamline_root)) { return(empty) }
+  if (!length(streamline_root) || !dir.exists(streamline_root)) {
+    return(empty)
+  }
 
   fnames <- list.files(streamline_root, full.names = FALSE, recursive = FALSE)
   idx <- which(streamline_normalize_key(fnames) == "colormap.csv")
-  if (!length(idx)) { return(empty) }
+  if (!length(idx)) {
+    return(empty)
+  }
 
-  tbl <- tryCatch({
-    utils::read.csv(
-      file.path(streamline_root, fnames[[ idx[[1]] ]]),
-      stringsAsFactors = FALSE, colClasses = "character"
-    )
-  }, error = function(e) {
-    warning("Unable to read streamline `colormap.csv`: ", e$message)
-    NULL
-  })
-  if (!is.data.frame(tbl) || !nrow(tbl)) { return(empty) }
+  tbl <- tryCatch(
+    {
+      utils::read.csv(
+        file.path(streamline_root, fnames[[idx[[1]]]]),
+        stringsAsFactors = FALSE,
+        colClasses = "character"
+      )
+    },
+    error = function(e) {
+      warning("Unable to read streamline `colormap.csv`: ", e$message)
+      NULL
+    }
+  )
+  if (!is.data.frame(tbl) || !nrow(tbl)) {
+    return(empty)
+  }
 
   headers <- streamline_normalize_key(names(tbl))
   col_fname <- which(headers == "filename")
   col_color <- which(headers == "color")
   if (!length(col_fname) || !length(col_color)) {
-    warning("Streamline `colormap.csv` must have `Filename` and `Color` columns; ignored.")
+    warning(
+      "Streamline `colormap.csv` must have `Filename` and `Color` columns; ignored."
+    )
     return(empty)
   }
 
-  keys <- streamline_normalize_key(tbl[[ col_fname[[1]] ]])
-  values <- trimws(tbl[[ col_color[[1]] ]])
+  keys <- streamline_normalize_key(tbl[[col_fname[[1]]]])
+  values <- trimws(tbl[[col_color[[1]]]])
   sel <- nzchar(keys) & nzchar(values) & !is.na(keys) & !is.na(values)
-  if (!any(sel)) { return(empty) }
+  if (!any(sel)) {
+    return(empty)
+  }
 
   structure(values[sel], names = keys[sel])
 }
@@ -205,21 +251,27 @@ streamline_resolve_color <- function(color, group, name, colormap = NULL) {
 
   if (length(colormap)) {
     lookups <- streamline_normalize_key(c(
-      sprintf("%s/%s", group, name),   # most specific
+      sprintf("%s/%s", group, name), # most specific
       name,
-      sprintf("%s/", group)            # group entries must carry a trailing slash
+      sprintf("%s/", group) # group entries must carry a trailing slash
     ))
     for (key in lookups) {
-      if (!key %in% names(colormap)) { next }
-      value <- unname(colormap[[ key ]])
+      if (!key %in% names(colormap)) {
+        next
+      }
+      value <- unname(colormap[[key]])
       if (length(value) == 1 && !is.na(value) && nzchar(value)) {
-        hex <- tryCatch(streamline_as_hex(value), error = function(e) { NULL })
-        if (length(hex)) { return(hex) }
+        hex <- tryCatch(streamline_as_hex(value), error = function(e) {
+          NULL
+        })
+        if (length(hex)) {
+          return(hex)
+        }
       }
     }
   }
 
-  random_color_from_string( name )
+  random_color_from_string(name)
 }
 
 #' @noRd
@@ -228,7 +280,9 @@ streamline_resolve_color <- function(color, group, name, colormap = NULL) {
 streamline_as_hex <- function(color) {
   rgb_mat <- grDevices::col2rgb(color)
   toupper(grDevices::rgb(
-    red = rgb_mat[1, 1], green = rgb_mat[2, 1], blue = rgb_mat[3, 1],
+    red = rgb_mat[1, 1],
+    green = rgb_mat[2, 1],
+    blue = rgb_mat[3, 1],
     maxColorValue = 255
   ))
 }
@@ -247,7 +301,6 @@ StreamlineGeom <- R6::R6Class(
   classname = "StreamlineGeom",
   inherit = AbstractGeom,
   public = list(
-
     #' @field type Geometry type string (\code{"streamline"}).
     type = "streamline",
     #' @field clickable Logical; always \code{FALSE} for streamline geometry.
@@ -270,9 +323,14 @@ StreamlineGeom <- R6::R6Class(
     #' @param layer Camera layer.  Default \code{7} (all cameras).
     #' @param ... Additional arguments forwarded to \code{AbstractGeom}.
     initialize = function(
-      name, path, streamline_name, streamline_group = "default",
-      color = "#FF0000", group = GeomGroup$new(name = "default"),
-      layer = 7, ...
+      name,
+      path,
+      streamline_name,
+      streamline_group = "default",
+      color = "#FF0000",
+      group = GeomGroup$new(name = "default"),
+      layer = 7,
+      ...
     ) {
       abspath <- normalizePath(path, winslash = "/", mustWork = TRUE)
       super$initialize(name, position = c(0, 0, 0), layer = layer, ...)
@@ -334,7 +392,6 @@ BrainStreamline <- R6::R6Class(
   portable = TRUE,
   cloneable = FALSE,
   public = list(
-
     subject_code = "",
 
     # bundle name, on-disk spelling (e.g. "AF_left")
@@ -351,22 +408,27 @@ BrainStreamline <- R6::R6Class(
 
     group = NULL,
 
-    set_subject_code = function( subject_code ) {
-      if ( self$has_streamline ) {
+    set_subject_code = function(subject_code) {
+      if (self$has_streamline) {
         self$object$subject_code <- subject_code
         self$group$subject_code <- subject_code
 
         self$object$name <- sprintf(
           "Streamline - %s/%s (%s)",
-          self$streamline_group, self$streamline_name, subject_code
+          self$streamline_group,
+          self$streamline_name,
+          subject_code
         )
         self$group$name <- sprintf(
-          "Streamline - %s (%s)", self$streamline_group, subject_code
+          "Streamline - %s (%s)",
+          self$streamline_group,
+          subject_code
         )
         # unlike `BrainAtlas`, keep the served path in sync as well, otherwise
         # renaming the subject leaves the cache folder pointing at the old code
         self$group$.cache_name <- sprintf(
-          "%s/streamline/%s", subject_code,
+          "%s/streamline/%s",
+          subject_code,
           stringr::str_replace_all(self$streamline_group, "[^a-zA-Z0-9]", "_")
         )
       }
@@ -374,56 +436,59 @@ BrainStreamline <- R6::R6Class(
       self$subject_code <- subject_code
     },
 
-    set_color = function( color ) {
-      hex <- streamline_as_hex( color )
-      if ( self$has_streamline ) {
+    set_color = function(color) {
+      hex <- streamline_as_hex(color)
+      if (self$has_streamline) {
         self$object$color <- hex
       }
-      invisible( hex )
+      invisible(hex)
     },
 
     initialize = function(
-      subject_code, streamline_name, streamline_group = "default",
-      streamline, path = NULL
+      subject_code,
+      streamline_name,
+      streamline_group = "default",
+      streamline,
+      path = NULL
     ) {
-
       self$object <- streamline
       self$group <- streamline$group
       self$streamline_name <- streamline_name
       self$streamline_group <- streamline_group
       self$path <- path
 
-      self$set_subject_code( subject_code )
+      self$set_subject_code(subject_code)
     },
 
-    print = function( ... ) {
-
+    print = function(...) {
       cat("Subject\t\t:", self$subject_code, end = "\n")
       cat("Circuit group\t:", self$streamline_group, end = "\n")
       cat("Bundle\t\t:", self$streamline_name, end = "\n")
       cat("Color\t\t:", self$color, end = "\n")
       cat("File\t\t:", paste(format(self$path), collapse = ""), end = "\n")
-
-      if ( !self$has_streamline ) {
+      if (!self$has_streamline) {
         warning("No streamline found!")
       }
 
-      invisible( self )
+      invisible(self)
     }
-
   ),
   active = list(
     streamline_type = function() {
       sprintf("%s/%s", self$streamline_group, self$streamline_name)
     },
     color = function() {
-      if ( !self$has_streamline ) { return(NA_character_) }
+      if (!self$has_streamline) {
+        return(NA_character_)
+      }
       self$object$color
     },
     has_streamline = function() {
-      if ( !is.null(self$object) &&
-           R6::is.R6(self$object) &&
-           "streamline" %in% self$object$type ) {
+      if (
+        !is.null(self$object) &&
+          R6::is.R6(self$object) &&
+          "streamline" %in% self$object$type
+      ) {
         return(TRUE)
       }
 

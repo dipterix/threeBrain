@@ -9,7 +9,7 @@ contact_spacing <- 5
 overall_length <- 400
 diameter <- 1.12
 
-for ( n_contacts in c(4, 6, 8, 10, 12) ) {
+for (n_contacts in c(4, 6, 8, 10, 12)) {
   contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
@@ -25,7 +25,11 @@ for ( n_contacts in c(4, 6, 8, 10, 12) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
-    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    default_interpolation = sprintf(
+      "%.1fx%d",
+      contact_spacing,
+      n_contacts - 1L
+    ),
     overwrite = TRUE
   )
 }
@@ -38,7 +42,7 @@ contact_spacing <- 10
 overall_length <- 400
 diameter <- 1.12
 
-for ( n_contacts in c(4, 6, 8, 10) ) {
+for (n_contacts in c(4, 6, 8, 10)) {
   contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
@@ -54,7 +58,11 @@ for ( n_contacts in c(4, 6, 8, 10) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
-    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    default_interpolation = sprintf(
+      "%.1fx%d",
+      contact_spacing,
+      n_contacts - 1L
+    ),
     overwrite = TRUE
   )
 }
@@ -67,7 +75,7 @@ contact_spacing <- 2.2
 overall_length <- 300
 diameter <- 1.12
 
-for ( n_contacts in c(4, 6, 8) ) {
+for (n_contacts in c(4, 6, 8)) {
   contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
@@ -83,7 +91,11 @@ for ( n_contacts in c(4, 6, 8) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
-    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    default_interpolation = sprintf(
+      "%.1fx%d",
+      contact_spacing,
+      n_contacts - 1L
+    ),
     overwrite = TRUE
   )
 }
@@ -97,10 +109,14 @@ overall_length <- 400
 diameter <- 1.1
 n_contacts <- 16
 
-for ( contact_spacing in c(2, 3) ) {
+for (contact_spacing in c(2, 3)) {
   contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   proto <- seeg_prototype(
-    type = sprintf("sEEG-AdTech-SD%02dR-AP%02dX-000", n_contacts, contact_spacing),
+    type = sprintf(
+      "sEEG-AdTech-SD%02dR-AP%02dX-000",
+      n_contacts,
+      contact_spacing
+    ),
     description = c(
       sprintf("AdTech sEEG - %d contacts", n_contacts),
       sprintf("Contact length   : %.2f mm", width),
@@ -112,7 +128,11 @@ for ( contact_spacing in c(2, 3) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
-    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    default_interpolation = sprintf(
+      "%.1fx%d",
+      contact_spacing,
+      n_contacts - 1L
+    ),
     overwrite = TRUE
   )
 }
@@ -124,8 +144,10 @@ width <- 2.29
 overall_length <- 300
 diameter <- 0.86
 
-mat <- cbind(c(6, 8, 8, 10, 10, 10, 10, 10, 10, 12, 14, 16, 16),
-             c(5, 4, 5, 3,  4,  5,  6,  7,  8,   5,  5, 5, 3))
+mat <- cbind(
+  c(6, 8, 8, 10, 10, 10, 10, 10, 10, 12, 14, 16, 16),
+  c(5, 4, 5, 3, 4, 5, 6, 7, 8, 5, 5, 5, 3)
+)
 
 invisible(apply(mat, 1L, function(x) {
   n_contacts <- x[[1]]
@@ -133,7 +155,11 @@ invisible(apply(mat, 1L, function(x) {
   contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
   overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
   proto <- seeg_prototype(
-    type = sprintf("sEEG-AdTech-RD%02dR-SP%02dX-000", n_contacts, contact_spacing),
+    type = sprintf(
+      "sEEG-AdTech-RD%02dR-SP%02dX-000",
+      n_contacts,
+      contact_spacing
+    ),
     description = c(
       sprintf("AdTech sEEG - %d contacts", n_contacts),
       sprintf("Contact length   : %.2f mm", width),
@@ -145,7 +171,11 @@ invisible(apply(mat, 1L, function(x) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
-    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    default_interpolation = sprintf(
+      "%.1fx%d",
+      contact_spacing,
+      n_contacts - 1L
+    ),
     overwrite = TRUE
   )
   proto$save_as_default(force = TRUE)
@@ -163,7 +193,10 @@ n_contacts <- 16
 # SP47X
 contacts <- probe_head + width / 2 + c(0:3 * 3, 3 * 3 + 1:12 * 5)
 contact_spacing <- table(round(diff(contacts)))
-contact_spacing <- paste(sprintf("%sx%d", names(contact_spacing), contact_spacing), collapse = ",")
+contact_spacing <- paste(
+  sprintf("%sx%d", names(contact_spacing), contact_spacing),
+  collapse = ","
+)
 
 overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
 
@@ -186,11 +219,14 @@ proto <- seeg_prototype(
 
 
 # SP48X
-contacts <- probe_head + width / 2 + c(0:5 * 3, 5*3 + 1:10 * 5)
+contacts <- probe_head + width / 2 + c(0:5 * 3, 5 * 3 + 1:10 * 5)
 # 16, 67
 c(length(contacts), max(contacts) - min(contacts) + width)
 contact_spacing <- table(round(diff(contacts)))
-contact_spacing <- paste(sprintf("%sx%d", names(contact_spacing), contact_spacing), collapse = ",")
+contact_spacing <- paste(
+  sprintf("%sx%d", names(contact_spacing), contact_spacing),
+  collapse = ","
+)
 
 overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
 
@@ -214,11 +250,14 @@ invisible(proto$get_texture(1:16, plot = TRUE))
 
 
 # SP49X
-contacts <- probe_head + width / 2 + c(0:7 * 3, 7*3 + 1:8 * 5)
+contacts <- probe_head + width / 2 + c(0:7 * 3, 7 * 3 + 1:8 * 5)
 # 16, 63
 c(length(contacts), max(contacts) - min(contacts) + width)
 contact_spacing <- table(round(diff(contacts)))
-contact_spacing <- paste(sprintf("%sx%d", names(contact_spacing), contact_spacing), collapse = ",")
+contact_spacing <- paste(
+  sprintf("%sx%d", names(contact_spacing), contact_spacing),
+  collapse = ","
+)
 
 overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
 
@@ -239,5 +278,3 @@ proto <- seeg_prototype(
   overwrite = TRUE
 )
 invisible(proto$get_texture(1:16, plot = TRUE))
-
-

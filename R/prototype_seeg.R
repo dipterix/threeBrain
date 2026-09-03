@@ -57,16 +57,20 @@
 #'
 #' @export
 seeg_prototype <- function(
-    type,
-    center_position, contact_widths, diameter = 1.0,
-    channel_order = seq_along(center_position),
-    fix_contact = 1, overall_length = 200,
-    description = NULL, dry_run = FALSE,
-    default_interpolation = NULL,
-    viewer_options = NULL,
-    behnke_fried = FALSE,
-    overwrite = FALSE) {
-
+  type,
+  center_position,
+  contact_widths,
+  diameter = 1.0,
+  channel_order = seq_along(center_position),
+  fix_contact = 1,
+  overall_length = 200,
+  description = NULL,
+  dry_run = FALSE,
+  default_interpolation = NULL,
+  viewer_options = NULL,
+  behnke_fried = FALSE,
+  overwrite = FALSE
+) {
   # DIPSAUS DEBUG START
   # center_position <- 0.75 + c(3.5 * 1:16)
   # contact_widths <- 1.5
@@ -78,7 +82,7 @@ seeg_prototype <- function(
   # description <- NULL
   # type <- "sEEG-16"
 
-  if ( length(default_interpolation) != 1 || is.na(default_interpolation) ) {
+  if (length(default_interpolation) != 1 || is.na(default_interpolation)) {
     default_interpolation <- NULL
   } else {
     default_interpolation <- as.character(default_interpolation)
@@ -117,19 +121,27 @@ seeg_prototype <- function(
       cw <- contact_widths[[1]]
     }
 
-    description <- sprintf("%s-%s-CW%.0f-D%.0f", type, spacing, cw * 100, diameter[[1]] * 100)
+    description <- sprintf(
+      "%s-%s-CW%.0f-D%.0f",
+      type,
+      spacing,
+      cw * 100,
+      diameter[[1]] * 100
+    )
   }
 
   # widthSegment = 12, heightSegment = ?
   max_p <- max(center_position + widths / 2)
   max_e <- overall_length
-  if ( max_e <= max_p ) {
+  if (max_e <= max_p) {
     max_e <- max_p + 0.1
   }
   radius0 <- radius
   paths <- c(
     radius * (1 - cos(pi / 8 * seq_len(4))),
-    center_position, max_p, max_p + 0.01,
+    center_position,
+    max_p,
+    max_p + 0.01,
     max_e
   )
   radius <- c(
@@ -139,8 +151,8 @@ seeg_prototype <- function(
   pr <- cbind(paths, radius)
   n_layers <- length(paths)
 
-  x <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
-  y <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
+  x <- c(cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
+  y <- c(sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
 
   uvu <- 1 / (width_segments) * (seq_len(width_segments + 1) - 1)
   # uvu[[1]] <- 0.0001
@@ -149,15 +161,19 @@ seeg_prototype <- function(
     z <- zr[[1]]
     r <- zr[[2]]
 
-    if ( z == 0 ) {
+    if (z == 0) {
       x <- 0.0001
     }
     rbind(x * r, y * r, z, uvu, z / max_p)
   })
 
-  nverts <- length(paths) * ( width_segments + 1 )
+  nverts <- length(paths) * (width_segments + 1)
   dim(positions_n_uv) <- c(5, nverts)
-  positions_n_uv <- cbind(c(0, 0, 0, 0, 0), positions_n_uv, c(0, 0, max_e, 2, 2))
+  positions_n_uv <- cbind(
+    c(0, 0, 0, 0, 0),
+    positions_n_uv,
+    c(0, 0, max_e, 2, 2)
+  )
   nverts <- nverts + 2
 
   positions_n_uv[c(4, 5), nverts + 1 - seq_len(width_segments * 2 + 1)] <- 2
@@ -174,10 +190,17 @@ seeg_prototype <- function(
 
   height_index_base <- sapply(seq_len(width_segments + 1), function(ii) {
     jj <- ifelse(ii > width_segments, 1, ii + 1)
-    c(ii, jj, ii + width_segments + 1, jj, jj + width_segments + 1, ii + width_segments + 1)
+    c(
+      ii,
+      jj,
+      ii + width_segments + 1,
+      jj,
+      jj + width_segments + 1,
+      ii + width_segments + 1
+    )
   })
   height_index <- sapply(seq_len(n_layers - 1), function(layer) {
-    height_index_base + (layer - 1) * ( width_segments + 1 )
+    height_index_base + (layer - 1) * (width_segments + 1)
   })
   index <- c(side_cover, as.vector(height_index), nverts - side_cover - 1L)
 
@@ -198,7 +221,6 @@ seeg_prototype <- function(
 
   # if behnke fried
   if (behnke_fried) {
-
     position_micro <- cbind(
       c(0, 0, -1),
       rbind(x * radius0 / 4, y * radius0 / 4, -1),
@@ -206,7 +228,10 @@ seeg_prototype <- function(
     )
 
     position <- cbind(position, position_micro)
-    index <- c(index, c(as.vector(side_cover), as.vector(height_index_base)) + nverts)
+    index <- c(
+      index,
+      c(as.vector(side_cover), as.vector(height_index_base)) + nverts
+    )
 
     uv <- cbind(uv, array(-1, c(2, ncol(position_micro))))
   }
@@ -260,15 +285,20 @@ seeg_prototype <- function(
   proto$validate()
 
   if (!dry_run) {
-    tryCatch({
-      proto$save_as_default( force = overwrite )
-    }, warning = function(e) {
-      if (!overwrite) {
-        warning("Electrode prototype already exists. Please use `overwrite = TRUE` to overwrite.")
-      } else {
-        warning(e)
+    tryCatch(
+      {
+        proto$save_as_default(force = overwrite)
+      },
+      warning = function(e) {
+        if (!overwrite) {
+          warning(
+            "Electrode prototype already exists. Please use `overwrite = TRUE` to overwrite."
+          )
+        } else {
+          warning(e)
+        }
       }
-    })
+    )
   }
 
   proto

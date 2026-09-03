@@ -53,7 +53,7 @@ DataCubeGeom2 <- R6::R6Class(
     initialize = function(name, value, dim = dim(value),
                           half_size = c(128, 128, 128),
                           group = GeomGroup$new(name = "default"),
-                          position = c( 0, 0, 0),
+                          position = c(0, 0, 0),
                           color_format = c("RGBAFormat", "RedFormat"),
                           cache_file = NULL,
                           layer = 8, digest = TRUE, ...) {

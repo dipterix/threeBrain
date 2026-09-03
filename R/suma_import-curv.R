@@ -1,19 +1,36 @@
 #' @export
 import_suma.curv <- function(
-  subject_name, fs_path, quiet = FALSE, dtype,
-  sub_type = "sulc", hemisphere = c("l", "r"), ...) {
-
+  subject_name,
+  fs_path,
+  quiet = FALSE,
+  dtype,
+  sub_type = "sulc",
+  hemisphere = c("l", "r"),
+  ...
+) {
   fs_path <- normalizePath(fs_path)
   # sub_type <- match.arg(sub_type)
   hemisphere <- match.arg(hemisphere)
 
-  fnames <- sprintf("std.141.%sh.%s%s", hemisphere, sub_type, c(".1D", ".1D.dset", ".niml.dset"))
+  fnames <- sprintf(
+    "std.141.%sh.%s%s",
+    hemisphere,
+    sub_type,
+    c(".1D", ".1D.dset", ".niml.dset")
+  )
   src <- file.path(fs_path, "SUMA", fnames)
-  if ( ! any(file.exists(src)) ) {
+  if (!any(file.exists(src))) {
     if (!quiet) {
-      cat2(sprintf("  * surf/%sh.%s (as well as its asc/gii versions) is missing\n", hemisphere, sub_type), level = "WARNING")
+      cat2(
+        sprintf(
+          "  * surf/%sh.%s (as well as its asc/gii versions) is missing\n",
+          hemisphere,
+          sub_type
+        ),
+        level = "WARNING"
+      )
     }
-    return( FALSE )
+    return(FALSE)
   }
   which_exists <- which(file.exists(src))[[1]]
   src <- normalizePath(src[[which_exists]])
@@ -25,7 +42,7 @@ import_suma.curv <- function(
 
   cached <- validate_digest(src, target)
   if (!isFALSE(cached)) {
-    return( TRUE )
+    return(TRUE)
   }
 
   # Step 3: Create cache
@@ -48,15 +65,28 @@ import_suma.curv <- function(
   }
 
   # Check with fs vertex_count
-  surface_info <- get_digest_header(file.path(fs_path, "RAVE", "common.digest"),
-                                    sprintf("surface_std_141_%sh_pial", hemisphere), list())
+  surface_info <- get_digest_header(
+    file.path(fs_path, "RAVE", "common.digest"),
+    sprintf("surface_std_141_%sh_pial", hemisphere),
+    list()
+  )
   surface_info <- as.list(surface_info)
-  if ( !quiet && isFALSE(surface_info$n_vertices == length(curve)) ) {
-    cat2("SUMA/", fnames[[which_exists]], " contains different vertices than its pial surface.", level = "WARNING")
+  if (!quiet && isFALSE(surface_info$n_vertices == length(curve))) {
+    cat2(
+      "SUMA/",
+      fnames[[which_exists]],
+      " contains different vertices than its pial surface.",
+      level = "WARNING"
+    )
   }
 
   # save to cache
-  dset_name <- sprintf("Curvature - std.141.%sh.%s (%s)", hemisphere, sub_type, subject_name)
+  dset_name <- sprintf(
+    "Curvature - std.141.%sh.%s (%s)",
+    hemisphere,
+    sub_type,
+    subject_name
+  )
   data <- structure(
     list(
       list(
@@ -69,7 +99,8 @@ import_suma.curv <- function(
         value = curve
       )
     ),
-    names = dset_name)
+    names = dset_name
+  )
 
   unlink(target)
   json_cache(target, data)
@@ -86,7 +117,6 @@ import_suma.curv <- function(
     # Ignore previous saves
     .append = FALSE
   )
-
 
   args <- list(
     list(
@@ -110,11 +140,7 @@ import_suma.curv <- function(
   )
 
   return(TRUE)
-
-
-
 }
 
 # import_suma('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'curv', sub_type = 'sulc', hemisphere = 'l')
 # import_suma('YCQ', fs_path = '~/rave_data/others/fs/', dtype = 'curv', sub_type = 'sulc', hemisphere = 'r')
-

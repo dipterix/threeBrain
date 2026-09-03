@@ -1,12 +1,9 @@
-
 # DIPSAUS DEBUG START
 # idx <- seq_len(proto$n_channels)
 # pal <- threeBrain:::DEFAULT_COLOR_DISCRETE
 # invisible(proto$get_texture(as.character(idx), plot = TRUE))
 # legend("right", legend = sprintf("ch%d", idx), bty = "n", cex = 0.7,
 #        fill = pal)
-
-
 
 # ---- DIXI electrodes ---------------------------------------------------------
 # Email: info@diximedical.com
@@ -40,7 +37,11 @@ for (n_contacts in c(5, 8, 10, 12, 15, 18)) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
-    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    default_interpolation = sprintf(
+      "%.1fx%d",
+      contact_spacing,
+      n_contacts - 1L
+    ),
     overwrite = TRUE
   )
 }
@@ -77,9 +78,14 @@ for (n_contacts in c(15)) {
     overall_length = overall_length,
     default_interpolation = sprintf(
       "%.1fx%d,%.0fx1,%.1fx%d,%.0fx1,%.1fx%d",
-      contact_spacing, part_contacts - 1L, lsi + width,
-      contact_spacing, part_contacts - 1L, lsi + width,
-      contact_spacing, part_contacts - 1L
+      contact_spacing,
+      part_contacts - 1L,
+      lsi + width,
+      contact_spacing,
+      part_contacts - 1L,
+      lsi + width,
+      contact_spacing,
+      part_contacts - 1L
     ),
     overwrite = TRUE
   )
@@ -96,7 +102,7 @@ diameter <- 0.8
 contact_spacing <- 1.5 + 2
 # Large spacing
 lsi <- 11
-for ( n_contacts in c(15, 18) ) {
+for (n_contacts in c(15, 18)) {
   part_contacts <- n_contacts / 3
   part_positions <- 0:(part_contacts - 1) * contact_spacing
   contacts <- probe_head + width / 2 + part_positions
@@ -108,7 +114,11 @@ for ( n_contacts in c(15, 18) ) {
     description = c(
       sprintf("DIXI sEEG - %d (3x%d) contacts", n_contacts, part_contacts),
       "Contact length   : 2   mm",
-      sprintf("Central spacing  : %dx3.5 mm, then %.1f mm", part_contacts - 1, lsi + width),
+      sprintf(
+        "Central spacing  : %dx3.5 mm, then %.1f mm",
+        part_contacts - 1,
+        lsi + width
+      ),
       "Tip size         : 0   mm",
       "Diameter         : 0.8 mm"
     ),
@@ -118,9 +128,14 @@ for ( n_contacts in c(15, 18) ) {
     overall_length = overall_length,
     default_interpolation = sprintf(
       "%.1fx%d,%.0fx1,%.1fx%d,%.0fx1,%.1fx%d",
-      contact_spacing, part_contacts - 1L, lsi + width,
-      contact_spacing, part_contacts - 1L, lsi + width,
-      contact_spacing, part_contacts - 1L
+      contact_spacing,
+      part_contacts - 1L,
+      lsi + width,
+      contact_spacing,
+      part_contacts - 1L,
+      lsi + width,
+      contact_spacing,
+      part_contacts - 1L
     ),
     overwrite = TRUE
   )
@@ -189,7 +204,6 @@ proto$model_rigid <- TRUE
 proto$save_as_default(force = TRUE)
 
 
-
 # 10mm spacing
 probe_head <- 1.1
 width <- 2
@@ -218,9 +232,17 @@ proto <- seeg_prototype(
 # ---- sEEG-Zimmer-NSEEGXXXX-RF ---------------------------------------------
 # NeuroOne / Zimmer BioTech
 
-shaft_names <- c("NSEEG1605-RF", "NSEEG2708-RF", "NSEEG3410-RF", "NSEEG4112-RF",
-                 "NSEEG4814-RF", "NSEEG5516-RF", "NSEEG6216-RF", "NSEEG6916-RF",
-                 "NSEEG8016-RF")
+shaft_names <- c(
+  "NSEEG1605-RF",
+  "NSEEG2708-RF",
+  "NSEEG3410-RF",
+  "NSEEG4112-RF",
+  "NSEEG4814-RF",
+  "NSEEG5516-RF",
+  "NSEEG6216-RF",
+  "NSEEG6916-RF",
+  "NSEEG8016-RF"
+)
 probe_head <- 1 # 1mm tip
 width <- 2
 contact_spacings <- c(3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 4, 4.4, 5.2)
@@ -229,7 +251,7 @@ diameter <- 0.8
 
 n_contacts <- c(5, 8, 10, 12, 14, 16, 16, 16, 16)
 
-for ( ii in seq_along(n_contacts) ) {
+for (ii in seq_along(n_contacts)) {
   shaft_name <- shaft_names[[ii]]
   n_contact <- n_contacts[[ii]]
   contact_spacing <- contact_spacings[[ii]]
@@ -248,7 +270,11 @@ for ( ii in seq_along(n_contacts) ) {
     contact_widths = width,
     diameter = diameter,
     overall_length = overall_length,
-    default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1L),
+    default_interpolation = sprintf(
+      "%.1fx%d",
+      contact_spacing,
+      n_contacts - 1L
+    ),
     overwrite = TRUE
   )
 }

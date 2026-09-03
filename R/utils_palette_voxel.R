@@ -1,4 +1,3 @@
-
 #' @name voxel_colormap
 #' @title Color maps for volume or surface data
 #' @param gtype geometry type, choices are \code{"surface"}, \code{"volume"}
@@ -74,14 +73,20 @@ register_get_key <- function(re) {
       })
 
       k <- sapply(value, function(v) {
-        if (is.na(v)) { return(0) }
+        if (is.na(v)) {
+          return(0)
+        }
         diff <- abs(map[2, ] - v)
         ii <- which.min(diff)
-        if (diff[[ii]] > max_delta) { return(0) }
+        if (diff[[ii]] > max_delta) {
+          return(0)
+        }
         map[1, ii]
       })
-      if ( auto_rescale ) {
-        warning("Color map has [colorIDAutoRescale] set to TRUE. The actual color key/ID might vary according to the actual data range.")
+      if (auto_rescale) {
+        warning(
+          "Color map has [colorIDAutoRescale] set to TRUE. The actual color key/ID might vary according to the actual data range."
+        )
       }
       as.integer(k)
     }
@@ -89,26 +94,43 @@ register_get_key <- function(re) {
     re$colorIDAutoRescale <- FALSE
     re$get_key <- function(value, ...) {
       sapply(value, function(v) {
-        if (is.na(v)) { return(0) }
-        dipsaus::forelse(re$map, function(x) {
-          if (x$Label == v) {
-            return(x$ColorID)
-          }
-          return()
-        }, 0L)
+        if (is.na(v)) {
+          return(0)
+        }
+        dipsaus::forelse(
+          re$map,
+          function(x) {
+            if (x$Label == v) {
+              return(x$ColorID)
+            }
+            return()
+          },
+          0L
+        )
       })
     }
   }
-  class(re) <- c(sprintf("%s_colormap", gtype), sprintf("%s_colormap", dtype), "threeBrain_colormap", "colormap")
+  class(re) <- c(
+    sprintf("%s_colormap", gtype),
+    sprintf("%s_colormap", dtype),
+    "threeBrain_colormap",
+    "colormap"
+  )
   re
 }
 
 #' @rdname voxel_colormap
 #' @export
 create_colormap <- function(
-  gtype = c("surface", "volume"), dtype = c("continuous", "discrete"),
-  key, color, value, alpha = FALSE, con = NULL,
-  auto_rescale = FALSE, ...
+  gtype = c("surface", "volume"),
+  dtype = c("continuous", "discrete"),
+  key,
+  color,
+  value,
+  alpha = FALSE,
+  con = NULL,
+  auto_rescale = FALSE,
+  ...
 ) {
   gtype <- match.arg(gtype)
   dtype <- match.arg(dtype)
@@ -126,13 +148,20 @@ create_colormap <- function(
   rgb <- col2rgb(color, alpha = alpha)
   if (alpha) {
     tbl <- data.frame(
-      ColorID = key, Label = value, R = rgb[1, ],
-      G = rgb[2, ], B = rgb[3, ], A = rgb[4, ]
+      ColorID = key,
+      Label = value,
+      R = rgb[1, ],
+      G = rgb[2, ],
+      B = rgb[3, ],
+      A = rgb[4, ]
     )
   } else {
     tbl <- data.frame(
-      ColorID = key, Label = value, R = rgb[1, ],
-      G = rgb[2, ], B = rgb[3, ]
+      ColorID = key,
+      Label = value,
+      R = rgb[1, ],
+      G = rgb[2, ],
+      B = rgb[3, ]
     )
   }
   ss <- jsonlite::toJSON(tbl, dataframe = "rows")
@@ -159,13 +188,20 @@ create_colormap <- function(
 #' @rdname voxel_colormap
 #' @export
 save_colormap <- function(cmap, con) {
-  stopifnot2("colormap" %in% class(cmap), msg = "`save_colormap`: cmap must be a color map.")
+  stopifnot2(
+    "colormap" %in% class(cmap),
+    msg = "`save_colormap`: cmap must be a color map."
+  )
   dtype <- cmap$mapDataType
   cmap$get_key <- NULL
   x <- switch(
     cmap$mapGeomType,
-    "volume" = { list("__global_data__.VolumeColorLUT" = unclass(cmap)) },
-    "surface" = { list("__global_data__.SurfaceColorLUT" = unclass(cmap)) },
+    "volume" = {
+      list("__global_data__.VolumeColorLUT" = unclass(cmap))
+    },
+    "surface" = {
+      list("__global_data__.SurfaceColorLUT" = unclass(cmap))
+    },
   )
   jsonlite::write_json(x, path = con, auto_unbox = TRUE)
   return(invisible(normalizePath(con)))
@@ -178,7 +214,9 @@ freeserfer_colormap <- function(con) {
   if (missing(con)) {
     # for my use
     con <- "inst/palettes/datacube2/FreeSurferColorLUT.json"
-    if (!file.exists(con)) { con <- NULL }
+    if (!file.exists(con)) {
+      con <- NULL
+    }
   }
   file <- "https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT?action=raw"
   s <- readLines(file)[-c(1:6, 1439:1441)]
@@ -192,8 +230,15 @@ freeserfer_colormap <- function(con) {
   # tbl <- data.table::fread(paste(s, collapse = "\n"))
   names(tbl) <- c("ColorID", "Label", "R", "G", "B", "A")
   col <- rgb(tbl$R, tbl$G, tbl$B, maxColorValue = 255)
-  create_colormap(gtype = "volume", dtype = "discrete", key = tbl$ColorID,
-                  color = col, value = tbl$Label, alpha = FALSE, con = con)
+  create_colormap(
+    gtype = "volume",
+    dtype = "discrete",
+    key = tbl$ColorID,
+    color = col,
+    value = tbl$Label,
+    alpha = FALSE,
+    con = con
+  )
 }
 
 #' @rdname voxel_colormap
@@ -216,17 +261,21 @@ load_colormap <- function(con) {
 #' @export
 print.colormap <- function(x, ...) {
   cat(sprintf(
-    paste(sep = "", c(
-      "<threeBrain Colormap>",
-      "  Version: %.1f",
-      "  Geometry Type: %s",
-      "  Data Type: %s",
-      "  Transparent: %s",
-      "  # of keys: %d",
-      "  Min Colorkey: %.0f",
-      "  Max Colorkey: %.0f",
-      "  Auto-rescale ColorKey: %s\n"
-    ), collapse = "\n"),
+    paste(
+      sep = "",
+      c(
+        "<threeBrain Colormap>",
+        "  Version: %.1f",
+        "  Geometry Type: %s",
+        "  Data Type: %s",
+        "  Transparent: %s",
+        "  # of keys: %d",
+        "  Min Colorkey: %.0f",
+        "  Max Colorkey: %.0f",
+        "  Auto-rescale ColorKey: %s\n"
+      ),
+      collapse = "\n"
+    ),
     x[["mapVersion"]],
     x[["mapGeomType"]],
     x[["mapDataType"]],
@@ -261,7 +310,16 @@ read_colormap_itksnap <- function(con) {
   ################################################
   # con <- "/Users/dipterix/Downloads/Rave/ashs/altases/snap/snaplabels.txt"
   cmap_tbl <- read.table(con, comment.char = "#", header = FALSE)
-  names(cmap_tbl) <- c("ColorID", "R", "G", "B", "A", "Visibility", "MVIS", "Label")
+  names(cmap_tbl) <- c(
+    "ColorID",
+    "R",
+    "G",
+    "B",
+    "A",
+    "Visibility",
+    "MVIS",
+    "Label"
+  )
   cmap_tbl$Label <- gsub(" ", "_", cmap_tbl$Label)
   cmap_tbl$Label[cmap_tbl$ColorID == 0] <- "Unknown"
 

@@ -114,31 +114,32 @@ MultiBrain2 <- R6::R6Class(
 
       electrode_priority <- match.arg(electrode_priority)
 
-      l <- unlist( c(list(...), .list) )
+      l <- unlist(c(list(...), .list))
       self$objects <- list()
-      for ( x in l ) {
-        if ( "rave-brain" %in% class(x) ) {
-
+      for (x in l) {
+        if ("rave-brain" %in% class(x)) {
           if (electrode_priority != "asis" && is.data.frame(x$electrodes$raw_table)) {
             x$set_electrodes(x$electrodes$raw_table, priority = electrode_priority)
           }
 
-          if ( x$subject_code == template_subject ) {
+          if (x$subject_code == template_subject) {
             self$template_object <- x
           } else {
-            self$add_subject( x )
+            self$add_subject(x)
           }
         }
       }
-
-      if ( is.null(self$template_object) ) {
-        self$alter_template( template_subject = template_subject,
-                             surface_types = template_surface_types,
-                             atlas_types = template_atlas_types,
-                             annotation_types = template_annotation_types,
-                             template_dir = template_dir,
-                             use_cache = use_cache, use_141 = use_141,
-                             ... )
+      if (is.null(self$template_object)) {
+        self$alter_template(
+          template_subject = template_subject,
+          surface_types = template_surface_types,
+          atlas_types = template_atlas_types,
+          annotation_types = template_annotation_types,
+          template_dir = template_dir,
+          use_cache = use_cache,
+          use_141 = use_141,
+          ...
+        )
       }
     },
 
@@ -154,28 +155,38 @@ MultiBrain2 <- R6::R6Class(
       # test
       template_path <- file.path(template_dir, template_subject)
 
-      if ( template_subject == "N27" ) {
+      if (template_subject == "N27") {
         check_freesurfer_path(template_path, autoinstall_template = TRUE)
       }
 
       # If N27, make sure it's installed
-      stopifnot2(check_freesurfer_path(template_path),
-                 msg = paste0("Cannot find template subject - ", template_subject,
-                              "\nYou might want to download template subject via ",
-                              "the following command if the template exists:\n\n\t",
-                              sprintf('threeBrain::download_template_subject("%s")', template_subject),
-                              "\n\nTo install Collins-N27 template brain, you can use:\n\n\t",
-                              "threeBrain::download_N27(make_default=TRUE)"))
-
-      if ( !length( surface_types ) ) {
+      stopifnot2(
+        check_freesurfer_path(template_path),
+        msg = paste0(
+          "Cannot find template subject - ",
+          template_subject,
+          "\nYou might want to download template subject via ",
+          "the following command if the template exists:\n\n\t",
+          sprintf('threeBrain::download_template_subject("%s")', template_subject),
+          "\n\nTo install Collins-N27 template brain, you can use:\n\n\t",
+          "threeBrain::download_N27(make_default=TRUE)"
+        )
+      )
+      if (!length(surface_types)) {
         surface_types <- lapply(self$objects, function(x) { x$surface_types })
         surface_types <- unique(unlist(surface_types))
       }
-      surface_types <- unique(c("pial", "pial-outer-smoothed", "sphere.reg",
-                                unlist( surface_types )))
+      surface_types <- unique(c(
+        "pial",
+        "pial-outer-smoothed",
+        "sphere.reg",
+        unlist(surface_types)
+      ))
 
-      if ( !length(atlas_types) ) {
-        atlas_types <- lapply(self$objects, function(x) { x$atlas_types })
+      if (!length(atlas_types)) {
+        atlas_types <- lapply(self$objects, function(x) {
+          x$atlas_types
+        })
         atlas_types <- unique(unlist(atlas_types))
         if (!length(atlas_types)) {
           atlas_types <- "wmparc"
@@ -211,7 +222,7 @@ MultiBrain2 <- R6::R6Class(
       )
 
       # special treatments
-      if ( isTRUE(template_subject %in% "cvs_avg35_inMNI152") ) {
+      if (isTRUE(template_subject %in% "cvs_avg35_inMNI152")) {
         # cvs_avg35_inMNI152 should sit in MNI152 space. However,
         # it seems cvs_avg35_inMNI152 is not MNI152 aligned,
         # possibly using non standard file or template c (c is different than
@@ -222,8 +233,8 @@ MultiBrain2 <- R6::R6Class(
     },
 
     add_subject = function(x) {
-      if ( "rave-brain" %in% class(x) && !x$subject_code %in% self$subject_codes) {
-        self$objects[[ x$subject_code ]] <- x
+      if ("rave-brain" %in% class(x) && !x$subject_code %in% self$subject_codes) {
+        self$objects[[x$subject_code]] <- x
       }
       return(invisible())
     },
@@ -245,14 +256,14 @@ MultiBrain2 <- R6::R6Class(
       controllers[["Highlight Box"]] <- FALSE
       controllers[["Outlines"]] %?<-% "on"
 
-      if (!missing( coregistered_ct )) {
+      if (!missing(coregistered_ct)) {
         if (!inherits(coregistered_ct, "threeBrain.nii")) {
-          ct <- read_nii2( normalizePath(coregistered_ct, mustWork = TRUE) )
+          ct <- read_nii2(normalizePath(coregistered_ct, mustWork = TRUE))
         } else {
           ct <- coregistered_ct
         }
 
-        cube <- reorient_volume( ct$get_data(), self$Torig )
+        cube <- reorient_volume(ct$get_data(), self$Torig)
         add_voxel_cube(self, "CT", cube, color_format = "RedFormat")
 
         key <- seq(0, max(cube))
@@ -300,34 +311,66 @@ MultiBrain2 <- R6::R6Class(
       controllers <- as.list(controllers)
       controllers[["Subject"]] <- self$template_object$subject_code
 
-      geoms <- self$template_object$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE )
+      geoms <- self$template_object$get_geometries(
+        volumes = volumes,
+        surfaces = surfaces,
+        electrodes = TRUE
+      )
 
       atlases <- stringr::str_replace_all(atlases, "\\W", "_")
 
-      for ( sub in self$subject_codes ) {
-        s <- self$objects[[ sub ]]
-        if ( !is.null(s) ) {
-          if ( sub %in% additional_subjects ) {
-            geoms <- c(geoms, s$get_geometries(
-              volumes = volumes, surfaces = surfaces, electrodes = TRUE, atlases = atlases ))
+      for (sub in self$subject_codes) {
+        s <- self$objects[[sub]]
+        if (!is.null(s)) {
+          if (sub %in% additional_subjects) {
+            geoms <- c(
+              geoms,
+              s$get_geometries(
+                volumes = volumes,
+                surfaces = surfaces,
+                electrodes = TRUE,
+                atlases = atlases
+              )
+            )
           } else {
-            geoms <- c(geoms, s$get_geometries(
-              volumes = FALSE, surfaces = FALSE, electrodes = TRUE, atlases = FALSE,
-              streamlines = FALSE ))
+            geoms <- c(
+              geoms,
+              s$get_geometries(
+                volumes = FALSE,
+                surfaces = FALSE,
+                electrodes = TRUE,
+                atlases = FALSE,
+                streamlines = FALSE
+              )
+            )
           }
         }
       }
 
-      geoms <- unlist( geoms )
-      is_r6 <- vapply(geoms, function(x) { "AbstractGeom" %in% class(x) }, FALSE)
+      geoms <- unlist(geoms)
+      is_r6 <- vapply(
+        geoms,
+        function(x) {
+          "AbstractGeom" %in% class(x)
+        },
+        FALSE
+      )
       geoms <- geoms[is_r6]
       names(geoms) <- NULL
 
       global_data <- self$global_data
       control_presets <- unique(c(
-        "subject2", "surface_type2", "hemisphere_material", "surface_color",
-        "map_template", "electrodes", "voxel", control_presets, "animation",
-        "display_highlights" ))
+        "subject2",
+        "surface_type2",
+        "hemisphere_material",
+        "surface_color",
+        "map_template",
+        "electrodes",
+        "voxel",
+        control_presets,
+        "animation",
+        "display_highlights"
+      ))
 
       threejs_brain(
         .list = geoms, controllers = controllers, value_alias = value_alias,
@@ -358,7 +401,7 @@ MultiBrain2 <- R6::R6Class(
           main_camera <- as.list(proxy$main_camera)
           controllers <- as.list(proxy$get_controllers())
           for (nm in names(user_controllers)) {
-            controllers[[ nm ]] <- user_controllers[[ nm ]]
+            controllers[[nm]] <- user_controllers[[nm]]
           }
         })
       }, error = function(...) {})
@@ -441,7 +484,7 @@ MultiBrain2 <- R6::R6Class(
           ',
           position[[1]], position[[2]], position[[3]],
           up[[1]], up[[2]], up[[3]],
-          session$ns( outputId ),
+          session$ns(outputId),
           Sys.time()
         ),
         ...
@@ -449,8 +492,8 @@ MultiBrain2 <- R6::R6Class(
 
     },
 
-    set_electrodes = function( ... ) {
-      self$template_object$set_electrodes( ... )
+    set_electrodes = function(...) {
+      self$template_object$set_electrodes(...)
     },
 
     set_electrode_values = function(table_or_path) {
@@ -466,7 +509,7 @@ MultiBrain2 <- R6::R6Class(
 
       table$Electrode <- as.integer(table$Electrode)
       table <- table[!is.na(table$Electrode), ]
-      if ( length(table$Time) ) {
+      if (length(table$Time)) {
         table <- table[!is.na(table$Time), ]
       } else {
         table$Time <- 0
@@ -474,11 +517,11 @@ MultiBrain2 <- R6::R6Class(
 
       # Make factor or numeric
       var_names <- names(table)
-      var_names <- var_names[ !var_names %in% c("Electrode", "Time") ]
+      var_names <- var_names[!var_names %in% c("Electrode", "Time")]
 
       # Check values
-      for ( vn in var_names ) {
-        if ( !is.numeric(table[[vn]]) && !is.factor(table[[vn]]) ) {
+      for (vn in var_names) {
+        if (!is.numeric(table[[vn]]) && !is.factor(table[[vn]])) {
           table[[vn]] <- as.factor(table[[vn]])
         }
       }
@@ -496,22 +539,35 @@ MultiBrain2 <- R6::R6Class(
       self$template_object$subject_code
     },
     subject_codes = function() {
-      re <- c( self$template_object$subject_code,
-         sapply(self$objects, function(x) { x$subject_code }, USE.NAMES = FALSE, simplify = TRUE))
+      re <- c(
+        self$template_object$subject_code,
+        sapply(
+          self$objects,
+          function(x) {
+            x$subject_code
+          },
+          USE.NAMES = FALSE,
+          simplify = TRUE
+        )
+      )
       names(re) <- NULL
       re
     },
     surface_types = function() {
-      re <- unlist(lapply(self$objects, function(x) { x$surface_types }))
-      re <- unique( self$template_object$surface_types, re)
+      re <- unlist(lapply(self$objects, function(x) {
+        x$surface_types
+      }))
+      re <- unique(self$template_object$surface_types, re)
       re
     },
     global_data = function() {
       re <- list()
-      for ( s in self$subject_codes ) {
-        re[[ s ]] <- self$objects[[ s ]]$global_data[[ s ]]
+      for (s in self$subject_codes) {
+        re[[s]] <- self$objects[[s]]$global_data[[s]]
       }
-      re[[ self$template_subject ]] <- self$template_object$global_data[[ self$template_subject ]]
+      re[[self$template_subject]] <- self$template_object$global_data[[
+        self$template_subject
+      ]]
       re$.multiple_subjects <- TRUE
       re$.template_subjects <- self$template_subject
       re$.subject_codes <- self$subject_codes

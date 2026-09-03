@@ -1,15 +1,17 @@
 contains_freesurfer <- function(path) {
-  if (!file.exists(path)) { return(FALSE) }
-  if ( file.exists(file.path(path, "surf")) ) {
-    return( TRUE )
+  if (!file.exists(path)) {
+    return(FALSE)
   }
-  if ( file.exists(file.path(path, "mri")) ) {
+  if (file.exists(file.path(path, "surf"))) {
+    return(TRUE)
+  }
+  if (file.exists(file.path(path, "mri"))) {
     return(TRUE)
   }
   return(FALSE)
 }
 
-read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
+read_fs_mgh_header <- function(filepath, is_gzipped = "AUTO") {
   if (!is.character(filepath)) {
     stop("Parameter 'filepath' msut be a character string.")
   }
@@ -19,19 +21,23 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
     is_gz <- is_gzipped
   } else if (typeof(is_gzipped) == "character") {
     if (toupper(is_gzipped) == "AUTO") {
-      is_gz <- grepl( "mgz$", filepath, ignore.case = TRUE)
+      is_gz <- grepl("mgz$", filepath, ignore.case = TRUE)
     } else {
       stop("Argument 'is_gzipped' must be 'AUTO' if it is a string.\n")
     }
   } else {
-    stop(sprintf("ERROR: Argument is_gzipped must be logical (TRUE or FALSE) or 'AUTO'.\n"))
+    stop(sprintf(
+      "ERROR: Argument is_gzipped must be logical (TRUE or FALSE) or 'AUTO'.\n"
+    ))
   }
   if (is_gz) {
     fh <- gzfile(filepath, "rb")
   } else {
     fh <- file(filepath, "rb")
   }
-  on.exit({ close(fh) })
+  on.exit({
+    close(fh)
+  })
   v <- readBin(fh, integer(), n = 1, endian = "big")
   if (v != 1L) {
     stop("File not in MGH/MGZ format.")
@@ -47,7 +53,13 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
   header$internal <- list()
   unused_header_space_size_left <- 256L
   ras_flag_size <- 2L
-  header$ras_good_flag <- readBin(fh, integer(), size = ras_flag_size, n = 1, endian = "big")
+  header$ras_good_flag <- readBin(
+    fh,
+    integer(),
+    size = ras_flag_size,
+    n = 1,
+    endian = "big"
+  )
   unused_header_space_size_left <- unused_header_space_size_left - ras_flag_size
   if (header$ras_good_flag == 1L) {
     delta <- readBin(fh, numeric(), n = 3, size = 4, endian = "big")
@@ -100,14 +112,19 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
     xfov <- header$internal$xend - header$internal$xstart
     yfov <- header$internal$yend - header$internal$ystart
     zfov <- header$internal$zend - header$internal$zstart
-    header$internal$fov <- ifelse(xfov > yfov, ifelse(xfov > zfov, xfov, zfov), ifelse(yfov > zfov, yfov, zfov))
+    header$internal$fov <- ifelse(
+      xfov > yfov,
+      ifelse(xfov > zfov, xfov, zfov),
+      ifelse(yfov > zfov, yfov, zfov)
+    )
     header$vox2ras_matrix <- as.matrix(M)
     RAS_space_size <- (3 * 4 + 4 * 3 * 4)
-    unused_header_space_size_left <- unused_header_space_size_left - RAS_space_size
+    unused_header_space_size_left <- unused_header_space_size_left -
+      RAS_space_size
   } else {
     header$internal$slice_direction_name <- "unknown"
   }
-  return( header )
+  return(header)
 }
 
 #' @title Create a brain object
@@ -140,22 +157,24 @@ read_fs_mgh_header <- function( filepath, is_gzipped = "AUTO" ) {
 #' @param ... reserved for future use
 #' @export
 threeBrain <- function(
-    path, subject_code, surface_types = c("pial", "smoothwm", "inflated", "sphere.reg"),
-    atlas_types, annotation_types = "label/aparc.a2009s",
-    ...,
-    # after `...` on purpose: callers such as `merge_brain` forward unnamed
-    # arguments through `...`, and a positional slot here would swallow them
-    streamline_types = "default/",
-    template_subject = unname(getOption("threeBrain.template_subject", "N27")),
-    backward_compatible = getOption("threeBrain.compatible", FALSE)
+  path,
+  subject_code,
+  surface_types = c("pial", "smoothwm", "inflated", "sphere.reg"),
+  atlas_types,
+  annotation_types = "label/aparc.a2009s",
+  ...,
+  # after `...` on purpose: callers such as `merge_brain` forward unnamed
+  # arguments through `...`, and a positional slot here would swallow them
+  streamline_types = "default/",
+  template_subject = unname(getOption("threeBrain.template_subject", "N27")),
+  backward_compatible = getOption("threeBrain.compatible", FALSE)
 ) {
-
   # if path is a nii or mgz file, create a temporary dir and copy-paste
   path_lower <- tolower(path)
   if (
     endsWith(path_lower, ".nii") ||
-    endsWith(path_lower, ".nii.gz") ||
-    endsWith(path_lower, ".mgz")
+      endsWith(path_lower, ".nii.gz") ||
+      endsWith(path_lower, ".mgz")
   ) {
     subject_code <- gsub("[^a-zA-Z0-9_-]", "_", subject_code)
     temp_root <- file.path(tempdir(), "threeBrain-tempsubject", subject_code)
@@ -163,16 +182,19 @@ threeBrain <- function(
       unlink(temp_root, recursive = TRUE)
     }
     dir_create(file.path(temp_root, "mri"))
-    file.copy(path, file.path(
-      temp_root,
-      "mri",
-      gsub(
-        "^.*\\.(nii|nii.gz|mgz)$",
-        "rave_slices.\\1",
-        basename(path),
-        ignore.case = TRUE
+    file.copy(
+      path,
+      file.path(
+        temp_root,
+        "mri",
+        gsub(
+          "^.*\\.(nii|nii.gz|mgz)$",
+          "rave_slices.\\1",
+          basename(path),
+          ignore.case = TRUE
+        )
       )
-    ))
+    )
     path <- temp_root
   }
 
@@ -197,117 +219,180 @@ threeBrain <- function(
 
   # --------- Step 0: Locate freesurfer folder ---------------------------------
   fs_path_exists <- FALSE
-  if ( inherits(fs_path, "RAVESubject" ) ) {
+  if (inherits(fs_path, "RAVESubject")) {
     subject_code <- fs_path$subject_code
     fs_path <- fs_path$freesurfer_path
-    if (length(fs_path) == 1 && !is.na(fs_path) && is.character(fs_path) && file.exists(fs_path)) {
+    if (
+      length(fs_path) == 1 &&
+        !is.na(fs_path) &&
+        is.character(fs_path) &&
+        file.exists(fs_path)
+    ) {
       fs_path_exists <- TRUE
     }
   } else {
     # Find folders in case the path is in RAVE or freesurfer root directory
     # use file.exists instead of dir.exists as `fs_path` could be symlink
-    search_paths <- file.path(fs_path, c(
-      "", subject_code, "fs", "rave/fs", "rave-imaging/fs", sprintf("%s/rave-imaging/fs", subject_code)
-    ))
+    search_paths <- file.path(
+      fs_path,
+      c(
+        "",
+        subject_code,
+        "fs",
+        "rave/fs",
+        "rave-imaging/fs",
+        sprintf("%s/rave-imaging/fs", subject_code)
+      )
+    )
     for (fs_path in search_paths) {
-      if ( contains_freesurfer(fs_path) ) {
+      if (contains_freesurfer(fs_path)) {
         fs_path_exists <- TRUE
         break
       }
     }
   }
-  if (!fs_path_exists) { return() }
+  if (!fs_path_exists) {
+    return()
+  }
 
   # 3D slices MRI overlay + Norig + Torig
   allowed_mri_prefix <- c(
     "rave_slices",
-    "brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
-    "brainmask", "brainmask.auto", "T1"
+    "brain.finalsurfs",
+    "synthSR.norm",
+    "synthSR",
+    "brain",
+    "brainmask",
+    "brainmask.auto",
+    "T1"
   )
   allowed_fsmri_prefix <- c(
-    "brain.finalsurfs", "synthSR.norm", "synthSR", "brain",
-    "brainmask", "brainmask.auto", "T1"
+    "brain.finalsurfs",
+    "synthSR.norm",
+    "synthSR",
+    "brain",
+    "brainmask",
+    "brainmask.auto",
+    "T1"
   )
   allowed_mri_mask_prefix <- c(
-    "brainmask", "brainmask.auto"
+    "brainmask",
+    "brainmask.auto"
   )
 
-  path_mri <- file.path(fs_path, "mri", as.vector(rbind(
-    sprintf("%s.nii.gz", allowed_mri_prefix),
-    sprintf("%s.nii", allowed_mri_prefix),
-    sprintf("%s.mgz", allowed_mri_prefix)
-  )))
+  path_mri <- file.path(
+    fs_path,
+    "mri",
+    as.vector(rbind(
+      sprintf("%s.nii.gz", allowed_mri_prefix),
+      sprintf("%s.nii", allowed_mri_prefix),
+      sprintf("%s.mgz", allowed_mri_prefix)
+    ))
+  )
   path_mri <- path_mri[file.exists(path_mri)]
   if (length(path_mri)) {
     if (startsWith(basename(tolower(path_mri[[1]])), "rave_slices.nii")) {
       # User plugins `rave_slices.nii[.gz]`, but we need to check the size
       # If user plugin too large image, need to resample or throw an warning
-      tryCatch({
-        rave_slice_path <- path_mri[[1]]
-        rave_slice_header <- read_volume(rave_slice_path, header_only = TRUE)
-        rave_slice_shape <- dim(rave_slice_header$header)
-        if (length(rave_slice_shape) == 3 && prod(rave_slice_shape) > 134217728 && any(rave_slice_shape > 384)) {
-          # The volume file is likely to exceed 32 bit address or possibly greater than 2GB
-          # It's not worth-while and may take hell of time to load...
-          # Let's shrink down the size to 384x384x384 (at max)
-          # This file could still be quite large... but manageable
-          # If you installed RAVE, you will have ieegio package... let that package do the job!
-          if (system.file(package = "ieegio") != "") {
-            ieegio <- asNamespace("ieegio")
-            rave_slice_new_shape <- rave_slice_shape
-            rave_slice_new_shape[rave_slice_new_shape > 384] <- 384
-            cat(sprintf(
-              "The user-speficied `rave_slices.nii[.gz]` is too large.\nDownsampling from [%s] to [%s]\n",
-              paste(rave_slice_shape, collapse = "x"),
-              paste(rave_slice_new_shape, collapse = "x")
-            ))
-            rave_slice_reshaped <- ieegio$resample_volume(rave_slice_path, rave_slice_new_shape, na_fill = 0L)
-            cat("Backing up the `rave_slices.nii[.gz]` (appending .orig to the filename)\n")
-            file.rename(rave_slice_path, sprintf("%s.orig", rave_slice_path))
-            rave_slice_path <- file.path(fs_path, "mri", "rave_slices.nii.gz")
-            ieegio$write_volume(rave_slice_reshaped, rave_slice_path)
-            cat("Resample done.\n")
-            path_mri[[1]] <- rave_slice_path
-          } else {
-            # Ooops. Well at this moment it's all at your own risk. Hope for the best!
-            warning("The user-speficied `rave_slices.nii[.gz]` resolution is too high. Your browser will (most likely to) crash. Remove `rave_slices.nii[.gz]` or down-sample the image.")
+      tryCatch(
+        {
+          rave_slice_path <- path_mri[[1]]
+          rave_slice_header <- read_volume(rave_slice_path, header_only = TRUE)
+          rave_slice_shape <- dim(rave_slice_header$header)
+          if (
+            length(rave_slice_shape) == 3 &&
+              prod(rave_slice_shape) > 134217728 &&
+              any(rave_slice_shape > 384)
+          ) {
+            # The volume file is likely to exceed 32 bit address or possibly greater than 2GB
+            # It's not worth-while and may take hell of time to load...
+            # Let's shrink down the size to 384x384x384 (at max)
+            # This file could still be quite large... but manageable
+            # If you installed RAVE, you will have ieegio package... let that package do the job!
+            if (system.file(package = "ieegio") != "") {
+              ieegio <- asNamespace("ieegio")
+              rave_slice_new_shape <- rave_slice_shape
+              rave_slice_new_shape[rave_slice_new_shape > 384] <- 384
+              cat(sprintf(
+                "The user-speficied `rave_slices.nii[.gz]` is too large.\nDownsampling from [%s] to [%s]\n",
+                paste(rave_slice_shape, collapse = "x"),
+                paste(rave_slice_new_shape, collapse = "x")
+              ))
+              rave_slice_reshaped <- ieegio$resample_volume(
+                rave_slice_path,
+                rave_slice_new_shape,
+                na_fill = 0L
+              )
+              cat(
+                "Backing up the `rave_slices.nii[.gz]` (appending .orig to the filename)\n"
+              )
+              file.rename(rave_slice_path, sprintf("%s.orig", rave_slice_path))
+              rave_slice_path <- file.path(fs_path, "mri", "rave_slices.nii.gz")
+              ieegio$write_volume(rave_slice_reshaped, rave_slice_path)
+              cat("Resample done.\n")
+              path_mri[[1]] <- rave_slice_path
+            } else {
+              # Ooops. Well at this moment it's all at your own risk. Hope for the best!
+              warning(
+                "The user-speficied `rave_slices.nii[.gz]` resolution is too high. Your browser will (most likely to) crash. Remove `rave_slices.nii[.gz]` or down-sample the image."
+              )
+            }
           }
+        },
+        error = function(e) {
+          # No error if fail. The worst case is T1 is not visible. No big deal ;P
         }
-      }, error = function(e) {
-        # No error if fail. The worst case is T1 is not visible. No big deal ;P
-      })
+      )
     }
     path_mri <- path_mri[[1]]
   }
 
-  path_fsmri <- file.path(fs_path, "mri", as.vector(rbind(
-    sprintf("%s.nii.gz", allowed_fsmri_prefix),
-    sprintf("%s.nii", allowed_fsmri_prefix),
-    sprintf("%s.mgz", allowed_fsmri_prefix)
-  )))
+  path_fsmri <- file.path(
+    fs_path,
+    "mri",
+    as.vector(rbind(
+      sprintf("%s.nii.gz", allowed_fsmri_prefix),
+      sprintf("%s.nii", allowed_fsmri_prefix),
+      sprintf("%s.mgz", allowed_fsmri_prefix)
+    ))
+  )
   path_fsmri <- path_fsmri[file.exists(path_fsmri)]
-  if (length(path_fsmri)) { path_fsmri <- path_fsmri[[1]] }
+  if (length(path_fsmri)) {
+    path_fsmri <- path_fsmri[[1]]
+  }
 
-  path_mask <- file.path(fs_path, "mri", as.vector(rbind(
-    sprintf("%s.nii.gz", allowed_mri_mask_prefix),
-    sprintf("%s.nii", allowed_mri_mask_prefix),
-    sprintf("%s.mgz", allowed_mri_mask_prefix)
-  )))
+  path_mask <- file.path(
+    fs_path,
+    "mri",
+    as.vector(rbind(
+      sprintf("%s.nii.gz", allowed_mri_mask_prefix),
+      sprintf("%s.nii", allowed_mri_mask_prefix),
+      sprintf("%s.mgz", allowed_mri_mask_prefix)
+    ))
+  )
   path_mask <- path_mask[file.exists(path_mask)]
-  if (length(path_mask)) { path_mask <- path_mask[[1]] }
+  if (length(path_mask)) {
+    path_mask <- path_mask[[1]]
+  }
 
   # xfm
   path_xfm <- file.path(fs_path, "mri", "transforms", "talairach.xfm")
 
   # atlas
   atlases <- lapply(atlas_types, function(atype) {
-    path_atlas <- file.path(fs_path, "mri", as.vector(rbind(
-      sprintf("%s.mgz", atype),
-      sprintf("%s.nii.gz", atype),
-      sprintf("%s.nii", atype)
-    )))
+    path_atlas <- file.path(
+      fs_path,
+      "mri",
+      as.vector(rbind(
+        sprintf("%s.mgz", atype),
+        sprintf("%s.nii.gz", atype),
+        sprintf("%s.nii", atype)
+      ))
+    )
     path_atlas <- path_atlas[file.exists(path_atlas)]
-    if (!length(path_atlas)) { return(NULL) }
+    if (!length(path_atlas)) {
+      return(NULL)
+    }
     return(c(atype, path_atlas[[1]]))
   })
   atlases <- atlases[!vapply(atlases, is.null, FALSE)]
@@ -340,7 +425,7 @@ threeBrain <- function(
 
   # --------- Step 1: Find transforms (xfm, Norig, Torig) ----------------------
   # xfm
-  if ( file.exists(path_xfm) ) {
+  if (file.exists(path_xfm)) {
     # only support linear for now
     xfm_raw <- read_xfm(path_xfm)
     xfm <- xfm_raw$matrix
@@ -353,8 +438,14 @@ threeBrain <- function(
   mgz_files <- c(path_fsmri, path_atlas)
   if (!length(mgz_files)) {
     mgz_files <- list.files(
-      file.path(fs_path, "mri"), pattern = "\\.mg(z|h)$", all.files = FALSE,
-      recursive = FALSE, full.names = TRUE, ignore.case = TRUE, include.dirs = FALSE)
+      file.path(fs_path, "mri"),
+      pattern = "\\.mg(z|h)$",
+      all.files = FALSE,
+      recursive = FALSE,
+      full.names = TRUE,
+      ignore.case = TRUE,
+      include.dirs = FALSE
+    )
     if (length(mgz_files)) {
       mgz_files <- mgz_files[[1]]
     }
@@ -371,12 +462,15 @@ threeBrain <- function(
     Torig <- volume_header$Torig
   } else {
     # No volume file, use default
-    Norig <- structure(c(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 128, -128,
-                         128, 1), dim = c(4L, 4L))
-    Torig <- structure(c(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 128, -128,
-                         128, 1), dim = c(4L, 4L))
+    Norig <- structure(
+      c(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 128, -128, 128, 1),
+      dim = c(4L, 4L)
+    )
+    Torig <- structure(
+      c(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 128, -128, 128, 1),
+      dim = c(4L, 4L)
+    )
   }
-
 
   # Create brain instance
   brain <- Brain2$new(
@@ -391,7 +485,6 @@ threeBrain <- function(
 
   # --------- Step 3: Add T1 MRI slices ----------------------------------------
   if (length(path_mri)) {
-
     group <- GeomGroup$new(
       name = sprintf("Volume - T1 (%s)", subject_code)
     )
@@ -401,7 +494,7 @@ threeBrain <- function(
     instance <- BrainVolume$new(
       volume_type = "T1",
       subject_code = subject_code,
-      position = c(0, 0, 0 ),
+      position = c(0, 0, 0),
 
       # Geomrtry object stores MRI slice information
       volume = VolumeGeom$new(
@@ -414,8 +507,7 @@ threeBrain <- function(
       )
     )
 
-    brain$add_volume( volume = instance )
-
+    brain$add_volume(volume = instance)
   }
 
   # --------- Step 4: Add Surfaces ---------------------------------------------
@@ -431,14 +523,39 @@ threeBrain <- function(
       ignore.case = TRUE,
       include.dirs = FALSE
     )
-    subcortical_surfaces <- gsub("(^lh\\.|-[0-9]{0,}$)", "", subcortical_surfaces)
+    subcortical_surfaces <- gsub(
+      "(^lh\\.|-[0-9]{0,}$)",
+      "",
+      subcortical_surfaces
+    )
     surface_types <- c(surface_types, subcortical_surfaces)
   }
 
-  surface_filenames <- list.files(surf_path, pattern = "^[lr]h\\.", ignore.case = TRUE)
-  available_surfaces <- unique(gsub("^[l|r]h\\.", "", surface_filenames, ignore.case = TRUE))
-  available_surfaces <- available_surfaces[!grepl("^(sulc|thick|volume|jacob|curv|area)", available_surfaces, ignore.case = TRUE)]
-  available_surfaces <- available_surfaces[!grepl("(crv|mgh|curv|labels|label)$", available_surfaces, ignore.case = TRUE)]
+  surface_filenames <- list.files(
+    surf_path,
+    pattern = "^[lr]h\\.",
+    ignore.case = TRUE
+  )
+  available_surfaces <- unique(gsub(
+    "^[l|r]h\\.",
+    "",
+    surface_filenames,
+    ignore.case = TRUE
+  ))
+  available_surfaces <- available_surfaces[
+    !grepl(
+      "^(sulc|thick|volume|jacob|curv|area)",
+      available_surfaces,
+      ignore.case = TRUE
+    )
+  ]
+  available_surfaces <- available_surfaces[
+    !grepl(
+      "(crv|mgh|curv|labels|label)$",
+      available_surfaces,
+      ignore.case = TRUE
+    )
+  ]
   available_surfaces_lower <- tolower(available_surfaces)
 
   surface_types <- unique(c("pial", surface_types))
@@ -452,7 +569,7 @@ threeBrain <- function(
     path_left_vcolor <- file.path(surf_path, sprintf("lh.%s", vc_type))
     path_right_vcolor <- file.path(surf_path, sprintf("rh.%s", vc_type))
 
-    if ( file.exists(path_left_vcolor) && file.exists(path_right_vcolor) ) {
+    if (file.exists(path_left_vcolor) && file.exists(path_right_vcolor)) {
       path_left_vcolor <- normalizePath(path_left_vcolor, winslash = "/")
       path_right_vcolor <- normalizePath(path_right_vcolor, winslash = "/")
       left_vcolor <- list(
@@ -474,39 +591,48 @@ threeBrain <- function(
     }
   }
 
-
   for (surface_name in surface_types) {
-
-    if ( tolower(surface_name) == "pial.t1" ) {
+    if (tolower(surface_name) == "pial.t1") {
       surface_name <- "pial"
     }
 
     # surface_type might be symlink since fs 7.0 (e.g., pial)
     surface_type <- c(surface_alternative_types[[surface_name]], surface_name)
-    surface_type <- c(surface_type[tolower(surface_type) %in% available_surfaces_lower], surface_name)
+    surface_type <- c(
+      surface_type[tolower(surface_type) %in% available_surfaces_lower],
+      surface_name
+    )
 
     surface_type <- surface_type[[1]]
 
     subcortical <- FALSE
-    path_left <- normalizePath(file.path(surf_path, sprintf("lh.%s", surface_type)),
-                               winslash = "/",
-                               mustWork = FALSE)
-    path_right <- normalizePath(file.path(surf_path, sprintf("rh.%s", surface_type)),
-                                winslash = "/",
-                                mustWork = FALSE)
+    path_left <- normalizePath(
+      file.path(surf_path, sprintf("lh.%s", surface_type)),
+      winslash = "/",
+      mustWork = FALSE
+    )
+    path_right <- normalizePath(
+      file.path(surf_path, sprintf("rh.%s", surface_type)),
+      winslash = "/",
+      mustWork = FALSE
+    )
 
     if (
       surface_type == "pial" &&
-      (!file.exists(path_left) || !file.exists(path_right))
+        (!file.exists(path_left) || !file.exists(path_right))
     ) {
-      path_left_gii <- normalizePath(file.path(surf_path, sprintf("lh.%s.gii", surface_type)),
-                                     winslash = "/",
-                                     mustWork = FALSE)
-      path_right_gii <- normalizePath(file.path(surf_path, sprintf("rh.%s.gii", surface_type)),
-                                      winslash = "/",
-                                      mustWork = FALSE)
+      path_left_gii <- normalizePath(
+        file.path(surf_path, sprintf("lh.%s.gii", surface_type)),
+        winslash = "/",
+        mustWork = FALSE
+      )
+      path_right_gii <- normalizePath(
+        file.path(surf_path, sprintf("rh.%s.gii", surface_type)),
+        winslash = "/",
+        mustWork = FALSE
+      )
 
-      if ( file.exists(path_left_gii) && file.exists(path_right_gii) ) {
+      if (file.exists(path_left_gii) && file.exists(path_right_gii)) {
         pial_mesh <- freesurferformats::read.fs.surface.gii(path_left_gii)
         freesurferformats::write.fs.surface(
           filepath = path_left,
@@ -524,9 +650,11 @@ threeBrain <- function(
       }
     }
 
-    if ( !file.exists(path_left) || !file.exists(path_right) ) {
-
-      surface_type <- as_subcortical_label(surface_type, remove_hemisphere = TRUE)
+    if (!file.exists(path_left) || !file.exists(path_right)) {
+      surface_type <- as_subcortical_label(
+        surface_type,
+        remove_hemisphere = TRUE
+      )
       if (is.na(surface_type)) {
         next
       }
@@ -539,49 +667,82 @@ threeBrain <- function(
         ignore.case = TRUE,
         include.dirs = FALSE
       )
-      if (length(subcortical_files) == 0) { next }
+      if (length(subcortical_files) == 0) {
+        next
+      }
 
       fname_left <- subcortical_files[startsWith(subcortical_files, "l")]
       if (!length(fname_left)) {
-        fname_left <- system.file("sample_data", "simple_mesh", package = "threeBrain")
+        fname_left <- system.file(
+          "sample_data",
+          "simple_mesh",
+          package = "threeBrain"
+        )
       } else {
         fname_left <- file.path(subcortical_path, fname_left[[1]])
       }
-      path_left <- normalizePath( fname_left, winslash = "/", mustWork = FALSE )
+      path_left <- normalizePath(fname_left, winslash = "/", mustWork = FALSE)
 
       fname_right <- subcortical_files[startsWith(subcortical_files, "r")]
       if (!length(fname_right)) {
-        fname_right <- system.file("sample_data", "simple_mesh", package = "threeBrain")
+        fname_right <- system.file(
+          "sample_data",
+          "simple_mesh",
+          package = "threeBrain"
+        )
       } else {
         fname_right <- file.path(subcortical_path, fname_right[[1]])
       }
-      path_right <- normalizePath( fname_right, winslash = "/", mustWork = FALSE )
+      path_right <- normalizePath(fname_right, winslash = "/", mustWork = FALSE)
       subcortical <- TRUE
     }
 
-    group <- GeomGroup$new(name = sprintf("Surface - %s (%s)", surface_name, subject_code))
+    group <- GeomGroup$new(
+      name = sprintf("Surface - %s (%s)", surface_name, subject_code)
+    )
     group$set_group_data("template_subject", template_subject)
     group$set_group_data("surface_type", surface_name)
     group$set_group_data("subject_code", subject_code)
     group$set_group_data("surface_format", "fs")
 
     surf_lh <- FreeGeom$new(
-      name = sprintf("FreeSurfer Left Hemisphere - %s (%s)", surface_name, subject_code),
-      position = c(0, 0, 0), cache_file = path_left, group = group, layer = 8
+      name = sprintf(
+        "FreeSurfer Left Hemisphere - %s (%s)",
+        surface_name,
+        subject_code
+      ),
+      position = c(0, 0, 0),
+      cache_file = path_left,
+      group = group,
+      layer = 8
     )
     surf_rh <- FreeGeom$new(
-      name = sprintf("FreeSurfer Right Hemisphere - %s (%s)", surface_name, subject_code),
-      position = c(0, 0, 0), cache_file = path_right, group = group, layer = 8
+      name = sprintf(
+        "FreeSurfer Right Hemisphere - %s (%s)",
+        surface_name,
+        subject_code
+      ),
+      position = c(0, 0, 0),
+      cache_file = path_right,
+      group = group,
+      layer = 8
     )
 
-    if ( subcortical ) {
+    if (subcortical) {
       group$.cache_name <- sprintf("%s/subcortical", subject_code)
 
       # volume_to_surf is written in scanner space
       group$set_transform(scan_to_tkr_ras)
 
-      subcortical_key <- as.integer(gsub(".*-([0-9]+)[/]{0,}$", "\\1", path_left))
-      subcortical_info <- freesurfer_lut$from_key(subcortical_key, label_only = FALSE)[[1]]
+      subcortical_key <- as.integer(gsub(
+        ".*-([0-9]+)[/]{0,}$",
+        "\\1",
+        path_left
+      ))
+      subcortical_info <- freesurfer_lut$from_key(
+        subcortical_key,
+        label_only = FALSE
+      )[[1]]
       surf_lh$subcortical_info <- list(
         ColorID = subcortical_info$ColorID,
         Label = subcortical_info$Label,
@@ -593,8 +754,15 @@ threeBrain <- function(
         )
       )
 
-      subcortical_key <- as.integer(gsub(".*-([0-9]+)[/]{0,}$", "\\1", path_right))
-      subcortical_info <- freesurfer_lut$from_key(subcortical_key, label_only = FALSE)[[1]]
+      subcortical_key <- as.integer(gsub(
+        ".*-([0-9]+)[/]{0,}$",
+        "\\1",
+        path_right
+      ))
+      subcortical_info <- freesurfer_lut$from_key(
+        subcortical_key,
+        label_only = FALSE
+      )[[1]]
       surf_rh$subcortical_info <- list(
         ColorID = subcortical_info$ColorID,
         Label = subcortical_info$Label,
@@ -607,60 +775,73 @@ threeBrain <- function(
       )
     } else {
       group$.cache_name <- sprintf("%s/surf", subject_code)
-      if ( has_vcolor ) {
-        group$set_group_data( "lh_primary_vertex_color", is_cached = TRUE, value = left_vcolor )
-        group$set_group_data( "rh_primary_vertex_color", is_cached = TRUE, value = right_vcolor )
+      if (has_vcolor) {
+        group$set_group_data(
+          "lh_primary_vertex_color",
+          is_cached = TRUE,
+          value = left_vcolor
+        )
+        group$set_group_data(
+          "rh_primary_vertex_color",
+          is_cached = TRUE,
+          value = right_vcolor
+        )
       }
-
     }
 
-    surface <- BrainSurface$new(subject_code = subject_code, surface_type = surface_name, mesh_type = "fs",
-                                left_hemisphere = surf_lh, right_hemisphere = surf_rh)
+    surface <- BrainSurface$new(
+      subject_code = subject_code,
+      surface_type = surface_name,
+      mesh_type = "fs",
+      left_hemisphere = surf_lh,
+      right_hemisphere = surf_rh
+    )
 
-    brain$add_surface( surface = surface )
-
+    brain$add_surface(surface = surface)
   }
 
   # --------- Step 5: Add Atlas ------------------------------------------------
 
-  for ( ii in seq_along(atlas_types) ) {
-    atlas_type <- atlas_types[[ ii ]]
-    atlas <- brain$add_atlas( atlas_type )
-    if ( first_atlas_only && !is.null(atlas) ) {
+  for (ii in seq_along(atlas_types)) {
+    atlas_type <- atlas_types[[ii]]
+    atlas <- brain$add_atlas(atlas_type)
+    if (first_atlas_only && !is.null(atlas)) {
       break
     }
   }
-
-
 
   # --------- Step 5b: Add streamlines -----------------------------------------
 
   # `add_streamline` understands both bundle keys and group patterns, so the
   # requested types can be handed over as-is
-  if ( length(streamline_types) && dir.exists(file.path(fs_path, "streamline")) ) {
+  if (
+    length(streamline_types) && dir.exists(file.path(fs_path, "streamline"))
+  ) {
     streamline_types <- as.character(streamline_types)
     streamline_types <- streamline_types[
-      !is.na(streamline_types) & nzchar(trimws(streamline_types)) ]
-    if ( length(streamline_types) ) {
-      brain$add_streamline( streamline_types )
+      !is.na(streamline_types) & nzchar(trimws(streamline_types))
+    ]
+    if (length(streamline_types)) {
+      brain$add_streamline(streamline_types)
     }
   }
 
   # --------- Step 6: Add annotations ------------------------------------------
 
-
-  for ( ii in seq_along(annotation_types) ) {
-
+  for (ii in seq_along(annotation_types)) {
     # This might lead to downloading templates, which will trigger warnings
     # However, webr doesn't like it when warning exists
     suppressWarnings({
-      annotation_type <- annotation_types[[ ii ]]
-      brain$add_annotation( annotation_type, surface_type = "pial", template_subject = NULL )
+      annotation_type <- annotation_types[[ii]]
+      brain$add_annotation(
+        annotation_type,
+        surface_type = "pial",
+        template_subject = NULL
+      )
     })
-
   }
 
   # --------- Return -----------------------------------------------------------
-  return( brain )
+  return(brain)
   # brain$plot(debug = TRUE)
 }

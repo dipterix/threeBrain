@@ -29,7 +29,7 @@ ElectrodePrototypeOld <- R6::R6Class(
         ncpts <- nrow(control_points)
       }
 
-      if ( ncpts == 0 ) {
+      if (ncpts == 0) {
         control_points <- rbind(
           c(0, 0, 0, 0, 0.5),
           c(0, length, 0, 1, 0.5)
@@ -37,13 +37,13 @@ ElectrodePrototypeOld <- R6::R6Class(
       } else {
         control_points <- private$control_points
         control_points <- control_points[order(control_points[, 2]), , drop = FALSE]
-        if ( control_points[1, 2] > 0 ) {
+        if (control_points[1, 2] > 0) {
           tp <- control_points[1, ]
           tp[2] <- 0
           control_points <- rbind(tp, control_points)
           ncpts <- ncpts + 1
         }
-        if ( control_points[ncpts, 2] < length ) {
+        if (control_points[ncpts, 2] < length) {
           tp <- control_points[ncpts, ]
           tp[2] <- length
           control_points <- rbind(control_points, tp)
@@ -53,7 +53,7 @@ ElectrodePrototypeOld <- R6::R6Class(
       p[p < 0] <- length + p[p < 0]
       control_points[, 2] <- p
       control_points[, 4] <- p / length
-      return( control_points )
+      return(control_points)
     }
   ),
   active = list(
@@ -86,19 +86,19 @@ ElectrodePrototypeOld <- R6::R6Class(
       if (is.na(order) || order <= 0) {
         stop("add_contact: `order` must be positive integer")
       }
-      if ( start_position < 0 ) {
+      if (start_position < 0) {
         stop("add_contact: `start_position` must be non-negative")
       }
-      if ( end_position < start_position ) {
+      if (end_position < start_position) {
         stop("add_contact: `end_position` must be > end_position")
       }
-      if ( start_position == end_position ) {
+      if (start_position == end_position) {
         end_position <- end_position + 0.001
       }
-      if ( start_angle < 0 || start_angle > 2 * pi) {
+      if (start_angle < 0 || start_angle > 2 * pi) {
         stop("add_contact: `start_angle` must be >= 0 && <= 2 pi")
       }
-      if ( end_angle < 0 || end_angle > 2 * pi) {
+      if (end_angle < 0 || end_angle > 2 * pi) {
         stop("add_contact: `end_angle` must be >= 0 && <= 2 pi")
       }
 
@@ -119,8 +119,8 @@ ElectrodePrototypeOld <- R6::R6Class(
       )
     },
 
-    generate_texture = function( background, length = NA,
-                                 height = NULL, width = 256 ) {
+    generate_texture = function(background, length = NA,
+                                height = NULL, width = 256) {
       background <- grDevices::col2rgb(background, FALSE)
       if (is.na(length)) { length <- 0 }
       length <- private$adjust_length(length = length)
@@ -139,7 +139,7 @@ ElectrodePrototypeOld <- R6::R6Class(
       img[, , 4] <- 0
 
       for (order in names(private$contacts)) {
-        contact <- private$contacts[[ order ]]
+        contact <- private$contacts[[order]]
         # positions = c(start_position, end_position),
         # angles = sort(c(start_angle, end_angle))
         h1 <- floor(contact$positions[[1]] * height_factor)
@@ -282,8 +282,8 @@ new_electrode_prototype_old <- function(
   if (length(geom_control_points)) {
     lapply(seq_along(geom_control_points), function(ii) {
       proto$add_control_point(
-        geom_control_points[[ ii ]],
-        geom_control_diameters[[ ii ]]
+        geom_control_points[[ii]],
+        geom_control_diameters[[ii]]
       )
     })
   }
@@ -304,7 +304,7 @@ new_electrode_prototype_old <- function(
         start_angle = c(item$start_angle, 0)[[1]],
         end_angle = c(item$end_angle, 2 * pi)[[1]]
       )
-      if ( order < item$order ) {
+      if (order < item$order) {
         order <- item$order
       }
     }

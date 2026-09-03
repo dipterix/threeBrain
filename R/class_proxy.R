@@ -41,7 +41,10 @@ ViewerProxy <- R6::R6Class(
         session <- shiny::getDefaultReactiveDomain()
         private$session <- session
       }
-      stopifnot2(!is.null(private$session), msg = "cannot find shiny reactive session")
+      stopifnot2(
+        !is.null(private$session),
+        msg = "cannot find shiny reactive session"
+      )
     },
     get_value = function(name, default = NULL) {
       private$ensure_session()
@@ -53,36 +56,47 @@ ViewerProxy <- R6::R6Class(
     },
     set_value = function(name, value) {
       private$ensure_session()
-      message_type <- sprintf("threeBrain-RtoJS-%s", private$session$ns(private$outputId))
+      message_type <- sprintf(
+        "threeBrain-RtoJS-%s",
+        private$session$ns(private$outputId)
+      )
 
-      private$session$sendCustomMessage(message_type, list(
-        name = name,
-        value = value
-      ))
+      private$session$sendCustomMessage(
+        message_type,
+        list(
+          name = name,
+          value = value
+        )
+      )
     }
   ),
   public = list(
     #' @description Print a summary of the proxy's available fields and methods.
     #' @param ... Ignored.
     print = function(...) {
-      cat(c(
-        sprintf("<threeBrain Viewer Proxy>: `%s`", private$outputId),
-        ""
-      ), sep = "\n")
+      cat(
+        c(
+          sprintf("<threeBrain Viewer Proxy>: `%s`", private$outputId),
+          ""
+        ),
+        sep = "\n"
+      )
     },
     #' @description Create a new viewer proxy.  Normally called via
     #'   \code{\link{brain_proxy}} rather than directly.
     #' @param outputId Shiny output element ID of the three-brain widget.
     #' @param session Shiny reactive domain session.  Defaults to the current
     #'   session returned by \code{shiny::getDefaultReactiveDomain()}.
-    initialize = function(outputId, session = shiny::getDefaultReactiveDomain()) {
+    initialize = function(
+      outputId,
+      session = shiny::getDefaultReactiveDomain()
+    ) {
       private$outputId <- outputId
       if (is.null(session)) {
         warning("please run proxy in shiny reactive environment.")
       } else {
         private$session <- session
       }
-
     },
     #' @description Read an active binding without triggering Shiny reactivity.
     #' @param name Name of the active binding to read (character scalar).
@@ -110,7 +124,7 @@ ViewerProxy <- R6::R6Class(
     #' @description Display a title overlay in the viewer.
     #' @param title Character string to display as the title.  Pass an empty
     #'   string or omit to clear the title.
-    set_title = function( title ) {
+    set_title = function(title) {
       if (missing(title) || length(title) == 0) {
         title <- ""
       }
@@ -119,7 +133,7 @@ ViewerProxy <- R6::R6Class(
 
     #' @description Set the viewer camera zoom level.
     #' @param zoom Positive numeric zoom factor.
-    set_zoom_level = function( zoom ) {
+    set_zoom_level = function(zoom) {
       stopifnot2(zoom > 0, msg = "zoom level must be strictly positive")
       private$set_value("zoom_level", zoom)
     },
@@ -136,10 +150,13 @@ ViewerProxy <- R6::R6Class(
       if (missing(up)) {
         up <- c(0, 0, 1)
       }
-      private$set_value("camera", list(
-        position = position * 500,
-        up = up
-      ))
+      private$set_value(
+        "camera",
+        list(
+          position = position * 500,
+          up = up
+        )
+      )
     },
 
     #' @description Change the displayed data clip and optional value range.
@@ -148,26 +165,35 @@ ViewerProxy <- R6::R6Class(
     #' @param range Numeric vector of length 2 giving the display range, or
     #'   \code{NULL} to use the natural range of the data.
     set_display_data = function(variable = "", range = NULL) {
-      if (variable == "" && length(range) != 2) { return() }
-      private$set_value("display_data", list(
-        variable = variable,
-        range = sort(as.numeric(range))
-      ))
+      if (variable == "" && length(range) != 2) {
+        return()
+      }
+      private$set_value(
+        "display_data",
+        list(
+          variable = variable,
+          range = sort(as.numeric(range))
+        )
+      )
     },
 
     #' @description Move the viewer focus to a specific electrode contact.
     #' @param subject_code Character scalar: subject identifier.
     #' @param electrode Integer scalar: electrode contact number.
-    set_focused_electrode = function( subject_code, electrode ) {
+    set_focused_electrode = function(subject_code, electrode) {
       stopifnot2(
-        is.character(subject_code) && length(subject_code) == 1
-        && length(electrode) == 1,
+        is.character(subject_code) &&
+          length(subject_code) == 1 &&
+          length(electrode) == 1,
         msg = "subject_code must be character and electrode length must be one."
       )
-      private$set_value("focused_electrode", list(
-        subject_code = subject_code,
-        electrode = as.integer(electrode)
-      ))
+      private$set_value(
+        "focused_electrode",
+        list(
+          subject_code = subject_code,
+          electrode = as.integer(electrode)
+        )
+      )
     },
 
     #' @description Push a data frame of electrode values to the viewer.
@@ -182,8 +208,12 @@ ViewerProxy <- R6::R6Class(
     #' @param override Logical; override existing data for the same clip.
     #'   Default \code{TRUE}.
     set_electrode_data = function(
-      data, palettes = NULL, value_ranges = NULL, clear_first = FALSE,
-      update_display = TRUE, override = TRUE
+      data,
+      palettes = NULL,
+      value_ranges = NULL,
+      clear_first = FALSE,
+      update_display = TRUE,
+      override = TRUE
     ) {
       stopifnot2(
         is.data.frame(data),
@@ -196,14 +226,17 @@ ViewerProxy <- R6::R6Class(
           lapply(palettes, col2hexStr)
         )
       }
-      private$set_value("set_electrode_data", list(
-        data = data,
-        palettes = palettes,
-        valueRanges = as.list(value_ranges),
-        clearFirst = clear_first,
-        updateDisplay = update_display,
-        override = override
-      ))
+      private$set_value(
+        "set_electrode_data",
+        list(
+          data = data,
+          palettes = palettes,
+          valueRanges = as.list(value_ranges),
+          clearFirst = clear_first,
+          updateDisplay = update_display,
+          override = override
+        )
+      )
     },
 
     #' @description Apply a color palette to an existing electrode data clip.
@@ -212,10 +245,13 @@ ViewerProxy <- R6::R6Class(
     set_electrode_palette = function(colors, variable) {
       colors <- col2hexStr(colors)
       stopifnot2(length(colors) > 0, msg = "`colors` must not be empty")
-      private$set_value("set_electrode_palette", list(
-        colors = colors,
-        name = variable
-      ))
+      private$set_value(
+        "set_electrode_palette",
+        list(
+          colors = colors,
+          name = variable
+        )
+      )
     },
 
     #' @description Set the global text magnification factor for the viewer.
@@ -232,28 +268,34 @@ ViewerProxy <- R6::R6Class(
     #'   Default \code{TRUE}.
     set_localization_electrode = function(which, params, update_shiny = TRUE) {
       which <- as.integer(which)
-      private$set_value("set_localization_electrode", list(
-        which = which,
-        params = as.list(params),
-        update_shiny = isTRUE(update_shiny)
-      ))
+      private$set_value(
+        "set_localization_electrode",
+        list(
+          which = which,
+          params = as.list(params),
+          update_shiny = isTRUE(update_shiny)
+        )
+      )
     },
 
     #' @description Set the world transform matrix of a named scene object.
     #' @param name Character: name of the three-brain scene object.
     #' @param m44 Numeric vector of length 16 or a 4-by-4 matrix (row-major).
-    set_matrix_world = function( name, m44 ) {
+    set_matrix_world = function(name, m44) {
       if (length(m44) != 16) {
         stop("brain_proxy$set_matrix_world: `m44` must be a 4x4 matrix")
       }
       if (is.matrix(m44)) {
         m44 <- as.vector(t(m44))
       }
-      private$set_value("set_matrix_world", list(
-        instanceName = name,
-        matrix = m44,
-        byrow = TRUE
-      ))
+      private$set_value(
+        "set_matrix_world",
+        list(
+          instanceName = name,
+          matrix = m44,
+          byrow = TRUE
+        )
+      )
     },
 
     #' @description Add a new localization electrode contact to the viewer.
@@ -266,7 +308,9 @@ ViewerProxy <- R6::R6Class(
       params <- as.list(params)
       if (!isTRUE(params$is_prototype)) {
         if (length(c(params$Coord_x, params$Coord_y, params$Coord_z)) != 3) {
-          stop("`add_localization_electrode` must contains valid `Coord_x, Coord_y, Coord_z` (tkrRAS)")
+          stop(
+            "`add_localization_electrode` must contains valid `Coord_x, Coord_y, Coord_z` (tkrRAS)"
+          )
         }
       }
       params$update_shiny <- isTRUE(update_shiny)
@@ -277,14 +321,17 @@ ViewerProxy <- R6::R6Class(
     #' @param update_shiny Logical; push the change to Shiny inputs.
     #'   Default \code{TRUE}.
     clear_localization = function(update_shiny = TRUE) {
-      private$set_value( "clear_localization", isTRUE(update_shiny) )
+      private$set_value("clear_localization", isTRUE(update_shiny))
     },
 
     #' @description Set which hemisphere is targeted for the next electrode
     #'   localization click.
     #' @param hemisphere Character scalar: \code{"left"} or \code{"right"}.
-    set_incoming_localization_hemisphere = function( hemisphere ) {
-      private$set_value( "set_incoming_localization_hemisphere", paste(hemisphere, collapse = "") )
+    set_incoming_localization_hemisphere = function(hemisphere) {
+      private$set_value(
+        "set_incoming_localization_hemisphere",
+        paste(hemisphere, collapse = "")
+      )
     },
 
     #' @description Add an animation clip of scalar or categorical values to a
@@ -307,15 +354,33 @@ ViewerProxy <- R6::R6Class(
     #'   discrete data.
     #' @param switch_display Logical; switch the viewer display to this clip
     #'   after upload.  Default \code{FALSE}.
-    set_values = function( name, target_object, data_type,
-                           value, palette = rainbow(64), symmetric = FALSE,
-                           time = ifelse(length(value) == 1, 0, stop("time must match length with value")),
-                           value_range = NULL, time_range = NULL, value_names = NULL,
-                           switch_display = FALSE) {
+    set_values = function(
+      name,
+      target_object,
+      data_type,
+      value,
+      palette = rainbow(64),
+      symmetric = FALSE,
+      time = ifelse(
+        length(value) == 1,
+        0,
+        stop("time must match length with value")
+      ),
+      value_range = NULL,
+      time_range = NULL,
+      value_names = NULL,
+      switch_display = FALSE
+    ) {
       data_type <- data_type[[1]]
-      stopifnot2(data_type %in% c("continuous", "discrete"), msg = paste(
-        "data_type must be either", sQuote("continuous"), "or", sQuote("discrete")
-      ))
+      stopifnot2(
+        data_type %in% c("continuous", "discrete"),
+        msg = paste(
+          "data_type must be either",
+          sQuote("continuous"),
+          "or",
+          sQuote("discrete")
+        )
+      )
 
       geom <- ElectrodeGeom$new(name = "")
       if (length(time) == 1) {
@@ -343,7 +408,6 @@ ViewerProxy <- R6::R6Class(
       # n_levels = args.n_levels,
       # focusui = args.focus || false;
 
-
       if (length(value_range) < 2 && data_type == "continuous") {
         value_range <- cl$value_range
       }
@@ -351,20 +415,23 @@ ViewerProxy <- R6::R6Class(
         value_range <- c(-1, 1) * max(abs(value_range))
       }
 
-      private$set_value("add_clip", list(
-        clip_name = kf$name,
-        target = target_object,
-        data_type = data_type,
-        value = l$value,
-        time = l$time,
-        value_names = unique(c(value_names, cl$value_names)),
-        value_range = range(value_range, na.rm = TRUE),
-        time_range = range(cl$time_range, time_range),
-        n_levels = length(cl$value_names),
-        color_keys = cl$color_keys,
-        color_vals = cl$color_vals,
-        focusui = switch_display
-      ))
+      private$set_value(
+        "add_clip",
+        list(
+          clip_name = kf$name,
+          target = target_object,
+          data_type = data_type,
+          value = l$value,
+          time = l$time,
+          value_names = unique(c(value_names, cl$value_names)),
+          value_range = range(value_range, na.rm = TRUE),
+          time_range = range(cl$time_range, time_range),
+          n_levels = length(cl$value_names),
+          color_keys = cl$color_keys,
+          color_vals = cl$color_vals,
+          focusui = switch_display
+        )
+      )
     },
 
     #' @description
@@ -404,7 +471,9 @@ ViewerProxy <- R6::R6Class(
       if (!is.null(position)) {
         pos <- as.numeric(position)
         if (length(pos) != 3 || anyNA(pos)) {
-          stop("set_text_decoration: `position` must be a length-3 numeric vector")
+          stop(
+            "set_text_decoration: `position` must be a length-3 numeric vector"
+          )
         }
         params$position <- as.list(pos)
       }
@@ -430,7 +499,9 @@ ViewerProxy <- R6::R6Class(
     #' @param id Character scalar or vector of decoration IDs to remove.
     delete_text_decoration = function(id) {
       if (!is.character(id) || length(id) == 0) {
-        stop("delete_text_decoration: `id` must be a non-empty character vector")
+        stop(
+          "delete_text_decoration: `id` must be a non-empty character vector"
+        )
       }
       private$set_value("text_decoration_delete", list(id = as.list(id)))
     },
@@ -439,7 +510,9 @@ ViewerProxy <- R6::R6Class(
     #'   coordinate space.
     #' @param space Coordinate space.  One of \code{"tkrRAS"} (default),
     #'   \code{"MNI305"}, \code{"MNI152"}, \code{"scanner"}, or \code{"CRS"}.
-    get_crosshair_position = function(space = c("tkrRAS", "MNI305", "MNI152", "scanner", "CRS")) {
+    get_crosshair_position = function(
+      space = c("tkrRAS", "MNI305", "MNI152", "scanner", "CRS")
+    ) {
       pos <- c(self$plane_position, 1)
       space <- match.arg(space)
       subject <- shiny::isolate(self$current_subject)
@@ -469,7 +542,6 @@ ViewerProxy <- R6::R6Class(
       )
 
       return(pos[c(1, 2, 3)])
-
     },
 
     #' @description Move the slice cursor to a given position in a requested
@@ -478,8 +550,10 @@ ViewerProxy <- R6::R6Class(
     #' @param space Coordinate space of \code{position}.  One of
     #'   \code{"tkrRAS"} (default), \code{"MNI305"}, \code{"MNI152"},
     #'   \code{"scanner"}, or \code{"CRS"}.
-    set_crosshair_position = function(position, space = c("tkrRAS", "MNI305", "MNI152", "scanner", "CRS")) {
-
+    set_crosshair_position = function(
+      position,
+      space = c("tkrRAS", "MNI305", "MNI152", "scanner", "CRS")
+    ) {
       space <- match.arg(space)
 
       if (length(position) != 3) {
@@ -511,10 +585,13 @@ ViewerProxy <- R6::R6Class(
             pos <- Torig %*% solve(Norig) %*% solve(xfm) %*% pos
           },
           "MNI152" = {
-            pos <- Torig %*% solve(Norig) %*% solve(xfm) %*% solve(MNI305_to_MNI152) %*% pos
+            pos <- Torig %*%
+              solve(Norig) %*%
+              solve(xfm) %*%
+              solve(MNI305_to_MNI152) %*%
+              pos
           }
         )
-
       }
 
       pos <- pos[seq_len(3)]
@@ -531,7 +608,6 @@ ViewerProxy <- R6::R6Class(
       #   z = pos[[3]]
       # ))
     }
-
   ),
   active = list(
     #' @field background Current viewer background color as a hex string
@@ -551,7 +627,9 @@ ViewerProxy <- R6::R6Class(
     #'   numeric) describing the main camera state.  Reactive.
     main_camera = function() {
       camera <- private$get_value("main_camera", NULL)
-      if (!is.list(camera)) { camera <- list() }
+      if (!is.list(camera)) {
+        camera <- list()
+      }
 
       # make sure position exists, numerical, and not NA/origin
       position <- c(500, 0, 0)
@@ -608,13 +686,19 @@ ViewerProxy <- R6::R6Class(
     plane_position = function() {
       controllers <- self$get_controllers()
       sagittal_depth <- controllers[["Sagittal (L - R)"]]
-      if (length(sagittal_depth) != 1) { sagittal_depth <- 0 }
+      if (length(sagittal_depth) != 1) {
+        sagittal_depth <- 0
+      }
 
       coronal_depth <- controllers[["Coronal (P - A)"]]
-      if (length(coronal_depth) != 1) { coronal_depth <- 0 }
+      if (length(coronal_depth) != 1) {
+        coronal_depth <- 0
+      }
 
       axial_depth <- controllers[["Axial (I - S)"]]
-      if (length(axial_depth) != 1) { axial_depth <- 0 }
+      if (length(axial_depth) != 1) {
+        axial_depth <- 0
+      }
       # sagittal_depth <- private$get_value("sagittal_depth", 0)
       # coronal_depth <- private$get_value("coronal_depth", 0)
       # axial_depth <- private$get_value("axial_depth", 0)
@@ -629,11 +713,14 @@ ViewerProxy <- R6::R6Class(
       private$ensure_session()
       tbl <- private$get_value("localization_table", NULL)
       if (!is.null(tbl)) {
-        tbl <- tryCatch({
-          jsonlite::fromJSON(tbl, simplifyDataFrame = TRUE)
-        }, error = function(e) {
-          NULL
-        })
+        tbl <- tryCatch(
+          {
+            jsonlite::fromJSON(tbl, simplifyDataFrame = TRUE)
+          },
+          error = function(e) {
+            NULL
+          }
+        )
       }
       tbl
     },
@@ -687,7 +774,9 @@ ViewerProxy <- R6::R6Class(
     #'   and set-flags.  Reactive.
     acpc_alignment = function() {
       data <- private$get_value("acpc_realign", list())
-      if (!length(data) || !is.list(data)) { return(data) }
+      if (!length(data) || !is.list(data)) {
+        return(data)
+      }
       acpc <- data$acpc
       Torig <- matrix(unlist(data$transforms$Torig), byrow = FALSE, nrow = 4)
       Norig <- matrix(unlist(data$transforms$Norig), byrow = FALSE, nrow = 4)
@@ -736,7 +825,6 @@ ViewerProxy <- R6::R6Class(
         ras2acpc = ras2acpc
       )
     }
-
   )
 )
 
@@ -748,5 +836,3 @@ ViewerProxy <- R6::R6Class(
 brain_proxy <- function(outputId, session = shiny::getDefaultReactiveDomain()) {
   ViewerProxy$new(outputId, session)
 }
-
-

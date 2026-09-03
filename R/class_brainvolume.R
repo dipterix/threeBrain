@@ -1,4 +1,3 @@
-
 #' R6 Class - Brain Volume Data
 #' @description
 #' Internal class that wraps a single volumetric geometry object
@@ -14,7 +13,6 @@ BrainVolume <- R6::R6Class(
   portable = TRUE,
   cloneable = FALSE,
   public = list(
-
     subject_code = "",
 
     # which surface type pial, white, inflated ...
@@ -25,13 +23,17 @@ BrainVolume <- R6::R6Class(
 
     group = NULL,
 
-    set_subject_code = function( subject_code ) {
-      if ( self$has_volume ) {
+    set_subject_code = function(subject_code) {
+      if (self$has_volume) {
         self$object$subject_code <- subject_code
         self$group$subject_code <- subject_code
 
         self$object$name <- sprintf("%s (%s)", self$volume_type, subject_code)
-        self$group$name <- sprintf("Volume - %s (%s)", self$volume_type, subject_code)
+        self$group$name <- sprintf(
+          "Volume - %s (%s)",
+          self$volume_type,
+          subject_code
+        )
       }
 
       self$subject_code <- subject_code
@@ -39,44 +41,49 @@ BrainVolume <- R6::R6Class(
 
     set_group_position = function(...) {
       pos <- c(...)
-      stopifnot2(is.numeric(pos) && length(pos) == 3, msg = "Position must be numeric of length 3")
+      stopifnot2(
+        is.numeric(pos) && length(pos) == 3,
+        msg = "Position must be numeric of length 3"
+      )
       self$group$position <- pos
     },
 
     initialize = function(
-      subject_code, volume_type, volume, position = NULL
+      subject_code,
+      volume_type,
+      volume,
+      position = NULL
     ) {
-
       self$object <- volume
       self$group <- volume$group
-      self$set_subject_code( subject_code )
+      self$set_subject_code(subject_code)
 
       self$volume_type <- volume_type
 
       # position is set for group
-      if ( length(position) == 3 ) {
-        self$set_group_position( position )
+      if (length(position) == 3) {
+        self$set_group_position(position)
       }
     },
 
-    print = function( ... ) {
-
+    print = function(...) {
       cat("Subject\t\t:", self$subject_code, end = "\n")
       cat("Volume type\t:", self$volume_type, end = "\n")
 
-      if ( !self$has_volume ) {
+      if (!self$has_volume) {
         warning("No volume found!")
       }
 
-      invisible( self )
+      invisible(self)
     }
-
   ),
   active = list(
     has_volume = function() {
-      if ( !is.null(self$object) &&
+      if (
+        !is.null(self$object) &&
           R6::is.R6(self$object) &&
-          any(c("DataCubeGeom", "VolumeGeom") %in% class(self$object))) {
+          any(c("DataCubeGeom", "VolumeGeom") %in% class(self$object))
+      ) {
         return(TRUE)
       }
 
@@ -84,4 +91,3 @@ BrainVolume <- R6::R6Class(
     }
   )
 )
-

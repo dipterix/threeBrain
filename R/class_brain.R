@@ -33,8 +33,6 @@ Brain2 <- R6::R6Class(
     }
   ),
   public = list(
-
-
     meta = NULL,
 
     # Stores a list of BrainSurface objects
@@ -65,12 +63,18 @@ Brain2 <- R6::R6Class(
     Torig = diag(rep(1, 4)),
 
     initialize = function(subject_code, xfm, Norig, Torig, base_path = NULL) {
-      stopifnot2( length(xfm) == 16 && length(dim(xfm)) == 2 && sum(dim(xfm)) == 8,
-                  msg = "xfm must be 4x4 matrix")
-      stopifnot2( length(Norig) == 16 && length(dim(Norig)) == 2 && sum(dim(Norig)) == 8,
-                  msg = "Norig must be 4x4 matrix")
-      stopifnot2( length(Torig) == 16 && length(dim(Torig)) == 2 && sum(dim(Torig)) == 8,
-                  msg = "Torig must be 4x4 matrix")
+      stopifnot2(
+        length(xfm) == 16 && length(dim(xfm)) == 2 && sum(dim(xfm)) == 8,
+        msg = "xfm must be 4x4 matrix"
+      )
+      stopifnot2(
+        length(Norig) == 16 && length(dim(Norig)) == 2 && sum(dim(Norig)) == 8,
+        msg = "Norig must be 4x4 matrix"
+      )
+      stopifnot2(
+        length(Torig) == 16 && length(dim(Torig)) == 2 && sum(dim(Torig)) == 8,
+        msg = "Torig must be 4x4 matrix"
+      )
 
       private$.subject_code <- subject_code
       self$misc <- list()
@@ -83,17 +87,23 @@ Brain2 <- R6::R6Class(
       self$surfaces <- list()
       self$streamlines <- list()
       self$electrodes <- BrainElectrodes$new(subject_code = subject_code)
-      self$electrodes$set_brain( self )
+      self$electrodes$set_brain(self)
       self$meta <- list()
 
       # TODO: put all brain global data (transform etc...) here
       self$globals <- BlankGeom$new(
-        group = GeomGroup$new(name = sprintf("_internal_group_data_%s", subject_code)),
+        group = GeomGroup$new(
+          name = sprintf("_internal_group_data_%s", subject_code)
+        ),
         name = sprintf("_misc_%s", subject_code)
       )
 
-      if (length(base_path) == 1 && !is.na(base_path) && is.character(base_path) &&
-         file.exists(base_path)) {
+      if (
+        length(base_path) == 1 &&
+          !is.na(base_path) &&
+          is.character(base_path) &&
+          file.exists(base_path)
+      ) {
         self$base_path <- base_path
       }
     },
@@ -104,25 +114,44 @@ Brain2 <- R6::R6Class(
       template_subject = unname(getOption("threeBrain.template_subject", "N27"))
     ) {
       if (!inherits(surface, "brain-surface")) {
-
-        stopifnot2( is.character(surface), msg = "surface must be a brain-surface object or character")
+        stopifnot2(
+          is.character(surface),
+          msg = "surface must be a brain-surface object or character"
+        )
 
         fs_path <- self$base_path
-        if (!isTRUE(file.exists(fs_path))) { return() }
+        if (!isTRUE(file.exists(fs_path))) {
+          return()
+        }
         subject_code <- private$.subject_code
-
 
         left_vcolor <- NULL
         right_vcolor <- NULL
         has_vcolor <- FALSE
         if (!endsWith(surface, "outer-smoothed")) {
           for (vc_type in vertex_color_types) {
-            path_left_vcolor <- file.path(fs_path, "surf", sprintf("lh.%s", vc_type))
-            path_right_vcolor <- file.path(fs_path, "surf", sprintf("rh.%s", vc_type))
+            path_left_vcolor <- file.path(
+              fs_path,
+              "surf",
+              sprintf("lh.%s", vc_type)
+            )
+            path_right_vcolor <- file.path(
+              fs_path,
+              "surf",
+              sprintf("rh.%s", vc_type)
+            )
 
-            if ( file.exists(path_left_vcolor) && file.exists(path_right_vcolor) ) {
-              path_left_vcolor <- normalizePath(path_left_vcolor, winslash = "/")
-              path_right_vcolor <- normalizePath(path_right_vcolor, winslash = "/")
+            if (
+              file.exists(path_left_vcolor) && file.exists(path_right_vcolor)
+            ) {
+              path_left_vcolor <- normalizePath(
+                path_left_vcolor,
+                winslash = "/"
+              )
+              path_right_vcolor <- normalizePath(
+                path_right_vcolor,
+                winslash = "/"
+              )
               left_vcolor <- list(
                 path = path_left_vcolor,
                 absolute_path = path_left_vcolor,
@@ -144,77 +173,120 @@ Brain2 <- R6::R6Class(
         }
 
         surface_name <- surface
-        if ( tolower(surface_name) == "pial.t1" ) {
+        if (tolower(surface_name) == "pial.t1") {
           surface_name <- "pial"
         }
         available_surfaces_lower <- tolower(self$available_surfaces)
         # surface_type might be symlink since fs 7.0 (e.g., pial)
-        surface_type <- c(surface_alternative_types[[surface_name]], surface_name)
-        surface_type <- surface_type[tolower(surface_type) %in% available_surfaces_lower]
-        if (!length(surface_type)) { return() }
+        surface_type <- c(
+          surface_alternative_types[[surface_name]],
+          surface_name
+        )
+        surface_type <- surface_type[
+          tolower(surface_type) %in% available_surfaces_lower
+        ]
+        if (!length(surface_type)) {
+          return()
+        }
 
         surface_type <- surface_type[[1]]
 
-        path_left <- normalizePath(file.path(fs_path, "surf", sprintf("lh.%s", surface_type)), winslash = "/", mustWork = FALSE)
-        path_right <- normalizePath(file.path(fs_path, "surf", sprintf("rh.%s", surface_type)), winslash = "/", mustWork = FALSE)
+        path_left <- normalizePath(
+          file.path(fs_path, "surf", sprintf("lh.%s", surface_type)),
+          winslash = "/",
+          mustWork = FALSE
+        )
+        path_right <- normalizePath(
+          file.path(fs_path, "surf", sprintf("rh.%s", surface_type)),
+          winslash = "/",
+          mustWork = FALSE
+        )
 
-        if ( !file.exists(path_left) || !file.exists(path_right) ) { return() }
-
-        group <- GeomGroup$new(name = sprintf("Surface - %s (%s)", surface_name, subject_code))
+        if (!file.exists(path_left) || !file.exists(path_right)) {
+          return()
+        }
+        group <- GeomGroup$new(
+          name = sprintf("Surface - %s (%s)", surface_name, subject_code)
+        )
         group$.cache_name <- sprintf("%s/surf", subject_code)
         group$set_group_data("template_subject", template_subject)
         group$set_group_data("surface_type", surface_name)
         group$set_group_data("subject_code", subject_code)
         group$set_group_data("surface_format", "fs")
 
-        if ( has_vcolor ) {
-          group$set_group_data( "lh_primary_vertex_color", is_cached = TRUE, value = left_vcolor )
-          group$set_group_data( "rh_primary_vertex_color", is_cached = TRUE, value = right_vcolor )
+        if (has_vcolor) {
+          group$set_group_data(
+            "lh_primary_vertex_color",
+            is_cached = TRUE,
+            value = left_vcolor
+          )
+          group$set_group_data(
+            "rh_primary_vertex_color",
+            is_cached = TRUE,
+            value = right_vcolor
+          )
         }
 
         surf_lh <- FreeGeom$new(
-          name = sprintf("FreeSurfer Left Hemisphere - %s (%s)", surface_name, subject_code),
-          position = c(0, 0, 0), cache_file = path_left, group = group, layer = 8
+          name = sprintf(
+            "FreeSurfer Left Hemisphere - %s (%s)",
+            surface_name,
+            subject_code
+          ),
+          position = c(0, 0, 0),
+          cache_file = path_left,
+          group = group,
+          layer = 8
         )
         surf_rh <- FreeGeom$new(
-          name = sprintf("FreeSurfer Right Hemisphere - %s (%s)", surface_name, subject_code),
-          position = c(0, 0, 0), cache_file = path_right, group = group, layer = 8
+          name = sprintf(
+            "FreeSurfer Right Hemisphere - %s (%s)",
+            surface_name,
+            subject_code
+          ),
+          position = c(0, 0, 0),
+          cache_file = path_right,
+          group = group,
+          layer = 8
         )
-        surface <- BrainSurface$new(subject_code = subject_code, surface_type = surface_name, mesh_type = "fs",
-                                    left_hemisphere = surf_lh, right_hemisphere = surf_rh)
-
+        surface <- BrainSurface$new(
+          subject_code = subject_code,
+          surface_type = surface_name,
+          mesh_type = "fs",
+          left_hemisphere = surf_lh,
+          right_hemisphere = surf_rh
+        )
       }
 
-      if ( startsWith(surface$surface_type, "inflated") ) {
+      if (startsWith(surface$surface_type, "inflated")) {
         surface$left_hemisphere$position <- c(-50, 0, 0)
         surface$right_hemisphere$position <- c(50, 0, 0)
-      } else if ( startsWith(surface$surface_type, "sphere") ) {
+      } else if (startsWith(surface$surface_type, "sphere")) {
         surface$left_hemisphere$position <- c(-128, 0, 0)
         surface$right_hemisphere$position <- c(128, 0, 0)
       }
 
-      if ( !isTRUE(surface$has_hemispheres) ) {
+      if (!isTRUE(surface$has_hemispheres)) {
         warning("surface miss mesh objects")
         return()
       }
 
-      if ( surface$mesh_type == "std.141" ) {
-        surface$set_group_position( self$scanner_center )
-      } else if ( surface$mesh_type == "fs" ) {
-        surface$set_group_position( 0, 0, 0 )
+      if (surface$mesh_type == "std.141") {
+        surface$set_group_position(self$scanner_center)
+      } else if (surface$mesh_type == "fs") {
+        surface$set_group_position(0, 0, 0)
       }
 
-      surface$set_subject_code( self$subject_code )
-      self$surfaces[[ surface$surface_type ]] <- surface
-
+      surface$set_subject_code(self$subject_code)
+      self$surfaces[[surface$surface_type]] <- surface
     },
 
     remove_surface = function(surface_types) {
       if (missing(surface_types)) {
         surface_types <- self$surface_types
       }
-      for ( s in surface_types) {
-        self$surfaces[[ s ]] <- NULL
+      for (s in surface_types) {
+        self$surfaces[[s]] <- NULL
       }
     },
 
@@ -222,20 +294,21 @@ Brain2 <- R6::R6Class(
       if (missing(volume_types)) {
         volume_types <- self$volume_types
       }
-      for ( s in volume_types) {
-        self$volumes[[ s ]] <- NULL
+      for (s in volume_types) {
+        self$volumes[[s]] <- NULL
       }
     },
 
     add_volume = function(volume) {
-      stopifnot2( R6::is.R6( volume ) && "brain-volume" %in% class( volume ),
-                 msg = "volume must be a brain-volume object")
+      stopifnot2(
+        R6::is.R6(volume) && "brain-volume" %in% class(volume),
+        msg = "volume must be a brain-volume object"
+      )
 
-      stopifnot2( volume$has_volume, msg = "volume miss datacube objects")
+      stopifnot2(volume$has_volume, msg = "volume miss datacube objects")
 
-      volume$set_subject_code( self$subject_code )
-      self$volumes[[ volume$volume_type ]] <- volume
-
+      volume$set_subject_code(self$subject_code)
+      self$volumes[[volume$volume_type]] <- volume
     },
 
     remove_atlas = function(atlas_types) {
@@ -247,14 +320,15 @@ Brain2 <- R6::R6Class(
       }
     },
 
-    add_atlas = function(atlas, color_format = c("RGBAFormat", "RedFormat"),
-                         trans_space_from = c("model", "scannerRAS")) {
-
+    add_atlas = function(
+      atlas,
+      color_format = c("RGBAFormat", "RedFormat"),
+      trans_space_from = c("model", "scannerRAS")
+    ) {
       color_format <- match.arg(color_format)
       trans_space_from <- match.arg(trans_space_from)
 
       if (!inherits(atlas, "brain-atlas")) {
-
         stopifnot2(
           is.character(atlas),
           msg = "atlas must be a brain-atlas object or valid atlas name from FreeSurfer folder"
@@ -274,13 +348,17 @@ Brain2 <- R6::R6Class(
           file.path(dirname(self$base_path), "atlases", atlas_fnames)
         )
         atlas_path <- path_atlases[file.exists(path_atlases)]
-        if (!length(atlas_path)) { return() }
+        if (!length(atlas_path)) {
+          return()
+        }
 
-        atlas_path <- atlas_path[[ 1 ]]
+        atlas_path <- atlas_path[[1]]
 
         atlas_geom <- VolumeGeom2$new(
           name = sprintf("Atlas - %s (%s)", atlas, subject_code),
-          path = atlas_path, color_format = color_format, trans_mat = NULL
+          path = atlas_path,
+          color_format = color_format,
+          trans_mat = NULL
         )
         atlas_geom$trans_space_from <- trans_space_from
         atlas_instance <- BrainAtlas$new(
@@ -289,15 +367,17 @@ Brain2 <- R6::R6Class(
           position = c(0, 0, 0),
           atlas = atlas_geom
         )
-        atlas_instance$group$.cache_name <- sprintf("%s/mri", private$.subject_code)
+        atlas_instance$group$.cache_name <- sprintf(
+          "%s/mri",
+          private$.subject_code
+        )
         atlas <- atlas_instance
       }
 
       atlas$set_subject_code(self$subject_code)
-      self$atlases[[ atlas$atlas_type ]] <- atlas
+      self$atlases[[atlas$atlas_type]] <- atlas
 
       return(atlas)
-
     },
 
     remove_streamline = function(streamline_types) {
@@ -310,19 +390,20 @@ Brain2 <- R6::R6Class(
     },
 
     add_streamline = function(name, color = NA) {
-
       added <- list()
 
       if (inherits(name, "brain-streamline")) {
-        name$set_subject_code( self$subject_code )
-        self$streamlines[[ name$streamline_type ]] <- name
-        added[[ name$streamline_type ]] <- name
+        name$set_subject_code(self$subject_code)
+        self$streamlines[[name$streamline_type]] <- name
+        added[[name$streamline_type]] <- name
         return(invisible(added))
       }
 
-      if (!length(name)) { return(invisible(added)) }
+      if (!length(name)) {
+        return(invisible(added))
+      }
 
-      streamline_root <- file.path( self$base_path, "streamline" )
+      streamline_root <- file.path(self$base_path, "streamline")
       if (!length(self$base_path) || !dir.exists(streamline_root)) {
         return(invisible(added))
       }
@@ -355,7 +436,10 @@ Brain2 <- R6::R6Class(
         if (key$is_pattern) {
           seen <- character(0L)
           for (ii in seq_along(search_dirs)) {
-            for (hit in streamline_match_files(search_dirs[[ii]], key$pattern)) {
+            for (hit in streamline_match_files(
+              search_dirs[[ii]],
+              key$pattern
+            )) {
               bundle_key <- streamline_normalize_key(hit$name)
               if (bundle_key %in% seen) {
                 next
@@ -426,7 +510,12 @@ Brain2 <- R6::R6Class(
         )
 
         geom <- StreamlineGeom$new(
-          name = sprintf("Streamline - %s/%s (%s)", group_name, bundle, subject_code),
+          name = sprintf(
+            "Streamline - %s/%s (%s)",
+            group_name,
+            bundle,
+            subject_code
+          ),
           path = matched$path,
           streamline_name = bundle,
           streamline_group = group_name,
@@ -447,10 +536,13 @@ Brain2 <- R6::R6Class(
       }
 
       return(invisible(added))
-
     },
 
-    add_annotation = function(annotation, surface_type = "pial", template_subject = "fsaverage") {
+    add_annotation = function(
+      annotation,
+      surface_type = "pial",
+      template_subject = "fsaverage"
+    ) {
       if (tolower(surface_type) == "pial.t1") {
         surface_type <- "pial"
       }
@@ -465,12 +557,17 @@ Brain2 <- R6::R6Class(
 
       label_path <- file.path(self$base_path, annot_dir)
 
-      lh_path <- file.path(label_path, sprintf(c("lh.%s.annot", "lh.%s"), annot_fname))
+      lh_path <- file.path(
+        label_path,
+        sprintf(c("lh.%s.annot", "lh.%s"), annot_fname)
+      )
       # lh_path_gii <- file.path(label_path, sprintf("lh.%s.annot.gii", annotation))
       lh_path <- lh_path[file.exists(lh_path)]
 
-
-      rh_path <- file.path(label_path, sprintf(c("rh.%s.annot", "rh.%s"), annot_fname))
+      rh_path <- file.path(
+        label_path,
+        sprintf(c("rh.%s.annot", "rh.%s"), annot_fname)
+      )
       # rh_path_gii <- file.path(label_path, sprintf("rh.%s.annot.gii", annotation))
       rh_path <- rh_path[file.exists(rh_path)]
 
@@ -482,27 +579,40 @@ Brain2 <- R6::R6Class(
           return(invisible())
         }
         # annot file is missing; generate one on the fly
-        generate_cortical_parcellation(brain = self,
-                                       template_subject = template_subject,
-                                       annotation = annot_fname,
-                                       add_annotation = FALSE)
-        lh_path <- file.path(label_path, sprintf(c("lh.%s.annot", "lh.%s"), annot_fname))
+        generate_cortical_parcellation(
+          brain = self,
+          template_subject = template_subject,
+          annotation = annot_fname,
+          add_annotation = FALSE
+        )
+        lh_path <- file.path(
+          label_path,
+          sprintf(c("lh.%s.annot", "lh.%s"), annot_fname)
+        )
         lh_path <- lh_path[file.exists(lh_path)]
-        rh_path <- file.path(label_path, sprintf(c("rh.%s.annot", "rh.%s"), annot_fname))
+        rh_path <- file.path(
+          label_path,
+          sprintf(c("rh.%s.annot", "rh.%s"), annot_fname)
+        )
         rh_path <- rh_path[file.exists(rh_path)]
       }
 
       if (length(lh_path)) {
-        surface_instance$left_hemisphere$set_annotation(annotation, lh_path[[1]])
+        surface_instance$left_hemisphere$set_annotation(
+          annotation,
+          lh_path[[1]]
+        )
       }
 
       if (length(rh_path)) {
-        surface_instance$right_hemisphere$set_annotation(annotation, rh_path[[1]])
+        surface_instance$right_hemisphere$set_annotation(
+          annotation,
+          rh_path[[1]]
+        )
       }
 
       return(invisible())
     },
-
 
     # special: must be cached path
     add_vertex_color = function(name, path, lazy = TRUE) {
@@ -521,18 +631,27 @@ Brain2 <- R6::R6Class(
       )
     },
 
-    set_electrodes = function(electrodes, coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"), ...,
-                              priority = c("prototype", "sphere", "both")) {
+    set_electrodes = function(
+      electrodes,
+      coord_sys = c("tkrRAS", "scannerRAS", "MNI305", "MNI152"),
+      ...,
+      priority = c("prototype", "sphere", "both")
+    ) {
       coord_sys <- match.arg(coord_sys)
       priority <- match.arg(priority)
-      if ( missing(electrodes) ) {
+      if (missing(electrodes)) {
         electrodes <- self$electrodes$raw_table
       }
-      if ( R6::is.R6(electrodes) && "brain-electrodes" %in% class(electrodes)) {
+      if (R6::is.R6(electrodes) && "brain-electrodes" %in% class(electrodes)) {
         self$electrodes <- electrodes
-        self$electrodes$set_brain( self )
+        self$electrodes$set_brain(self)
       } else {
-        self$electrodes$set_electrodes( electrodes, coord_sys = coord_sys, priority = priority, ... )
+        self$electrodes$set_electrodes(
+          electrodes,
+          coord_sys = coord_sys,
+          priority = priority,
+          ...
+        )
       }
     },
 
@@ -540,9 +659,12 @@ Brain2 <- R6::R6Class(
       self$electrodes$set_values(table_or_path = table_or_path)
     },
 
-    calculate_template_coordinates = function(save_to = "auto", hemisphere = TRUE) {
+    calculate_template_coordinates = function(
+      save_to = "auto",
+      hemisphere = TRUE
+    ) {
       table <- self$electrodes$raw_table
-      if ( !is.data.frame(table) || !nrow(table) ) {
+      if (!is.data.frame(table) || !nrow(table)) {
         return(invisible())
       }
       # Electrode   Coord_x   Coord_y  Coord_z Label are guaranteed
@@ -556,7 +678,7 @@ Brain2 <- R6::R6Class(
         row <- table[ii, ]
         fs_position <- c(row$Coord_x, row$Coord_y, row$Coord_z)
 
-        if ( all(fs_position == 0) ) {
+        if (all(fs_position == 0)) {
           # this electrode is supposed to be hidden
           return(row)
         }
@@ -564,32 +686,43 @@ Brain2 <- R6::R6Class(
         is_surface_electrode <- row$SurfaceElectrode
         surf_t <- row$SurfaceType
 
-        if ( isTRUE(is_surface_electrode) ) {
-
-          if ( is.na(surf_t) || surf_t == "NA" ) {
+        if (isTRUE(is_surface_electrode)) {
+          if (is.na(surf_t) || surf_t == "NA") {
             surf_t <- "pial"
           }
 
           # Check if mapped to 141
-          mapped <- electrode_mapped_141(position = fs_position, is_surface = TRUE,
-                                        vertex_number = row$VertexNumber, surf_type = surf_t,
-                                        hemisphere = row$Hemisphere)
-          if ( !mapped && surf_t %in% surface_types ) {
+          mapped <- electrode_mapped_141(
+            position = fs_position,
+            is_surface = TRUE,
+            vertex_number = row$VertexNumber,
+            surf_type = surf_t,
+            hemisphere = row$Hemisphere
+          )
+          if (!mapped && surf_t %in% surface_types) {
             # load vertices
-            lh_vert <- self$surfaces[[ surf_t ]]$group$get_data(sprintf("free_vertices_Standard 141 Left Hemisphere - %s (%s)", surf_t, self$subject_code))
-            rh_vert <- self$surfaces[[ surf_t ]]$group$get_data(sprintf("free_vertices_Standard 141 Right Hemisphere - %s (%s)", surf_t, self$subject_code))
+            lh_vert <- self$surfaces[[surf_t]]$group$get_data(sprintf(
+              "free_vertices_Standard 141 Left Hemisphere - %s (%s)",
+              surf_t,
+              self$subject_code
+            ))
+            rh_vert <- self$surfaces[[surf_t]]$group$get_data(sprintf(
+              "free_vertices_Standard 141 Right Hemisphere - %s (%s)",
+              surf_t,
+              self$subject_code
+            ))
 
             # Needs to get mesh center from hemisphere group. This step is critical as we need to calculate
             # nearest node from global position
-            mesh_center <- self$surfaces[[ surf_t ]]$group$position
+            mesh_center <- self$surfaces[[surf_t]]$group$position
             lh_dist <- colSums((t(lh_vert) - (fs_position - mesh_center))^2)
             rh_dist <- colSums((t(rh_vert) - (fs_position - mesh_center))^2)
 
             lh_node <- which.min(lh_dist)
-            lh_dist <- lh_dist[ lh_node ]
+            lh_dist <- lh_dist[lh_node]
 
             rh_node <- which.min(rh_dist)
-            rh_dist <- rh_dist[ rh_node ]
+            rh_dist <- rh_dist[rh_node]
 
             if (hemisphere || !isTRUE(row$Hemisphere %in% c("left", "right"))) {
               # need to calculate hemisphere
@@ -597,13 +730,11 @@ Brain2 <- R6::R6Class(
               node <- rh_node - 1
               hemisphere <- "right"
 
-              if ( lh_dist < rh_dist ) {
+              if (lh_dist < rh_dist) {
                 # left
                 node <- lh_node - 1
                 hemisphere <- "left"
               }
-
-
             } else {
               # do not override hemisphere
               hemisphere <- row$Hemisphere
@@ -618,13 +749,12 @@ Brain2 <- R6::R6Class(
             row$Hemisphere <- hemisphere
             row$VertexNumber <- node
             tempenv$has_change <- TRUE
-
           }
         }
 
         # calculate MNI305 position
         mni_position <- c(row$MNI305_x, row$MNI305_y, row$MNI305_z)
-        if ( all(mni_position == 0) ) {
+        if (all(mni_position == 0)) {
           # need to calculate MNI position
           mni_position <- self$vox2vox_MNI305 %*% c(fs_position, 1)
           row$MNI305_x <- mni_position[1]
@@ -636,12 +766,26 @@ Brain2 <- R6::R6Class(
       })
 
       rows <- do.call(rbind, rows)
-      nms <- unique(c("Electrode", "Coord_x", "Coord_y", "Coord_z", "Label", "MNI305_x", "MNI305_y", "MNI305_z",
-                      "SurfaceElectrode", "SurfaceType", "Radius", "VertexNumber", "Hemisphere", names(rows)))
+      nms <- unique(c(
+        "Electrode",
+        "Coord_x",
+        "Coord_y",
+        "Coord_z",
+        "Label",
+        "MNI305_x",
+        "MNI305_y",
+        "MNI305_z",
+        "SurfaceElectrode",
+        "SurfaceType",
+        "Radius",
+        "VertexNumber",
+        "Hemisphere",
+        names(rows)
+      ))
       rows <- rows[, nms]
 
       raw_path <- self$electrodes$raw_table_path
-      if ( isTRUE( save_to == "auto" ) ) {
+      if (isTRUE(save_to == "auto")) {
         save_to <- raw_path
       }
 
@@ -658,102 +802,113 @@ Brain2 <- R6::R6Class(
       invisible(rows)
     },
 
-    get_geometries = function(volumes = TRUE, surfaces = TRUE, electrodes = TRUE,
-                              atlases = TRUE, streamlines = TRUE) {
-
+    get_geometries = function(
+      volumes = TRUE,
+      surfaces = TRUE,
+      electrodes = TRUE,
+      atlases = TRUE,
+      streamlines = TRUE
+    ) {
       geoms <- list(self$globals)
 
-      if ( is.logical(volumes) ) {
+      if (is.logical(volumes)) {
         if (isTRUE(volumes)) {
           volumes <- self$volume_types
         } else {
           volumes <- NULL
         }
       } else {
-        volumes <- volumes[ volumes %in% self$volume_types ]
+        volumes <- volumes[volumes %in% self$volume_types]
       }
 
       for (v in volumes) {
         geoms <- c(geoms, self$volumes[[v]]$object)
       }
 
-      if ( is.logical(atlases) ) {
+      if (is.logical(atlases)) {
         if (isTRUE(atlases)) {
           atlases <- self$atlas_types
         } else {
           atlases <- NULL
         }
       } else {
-        atlases <- atlases[ atlases %in% self$atlas_types ]
+        atlases <- atlases[atlases %in% self$atlas_types]
       }
 
       for (a in atlases) {
         geoms <- c(geoms, self$atlases[[a]]$object)
       }
 
-      if ( is.logical(streamlines) ) {
+      if (is.logical(streamlines)) {
         if (isTRUE(streamlines)) {
           streamlines <- self$streamline_types
         } else {
           streamlines <- NULL
         }
       } else {
-        streamlines <- streamlines[ streamlines %in% self$streamline_types ]
+        streamlines <- streamlines[streamlines %in% self$streamline_types]
       }
 
       for (s in streamlines) {
         geoms <- c(geoms, self$streamlines[[s]]$object)
       }
 
-      if ( is.logical(surfaces) ) {
+      if (is.logical(surfaces)) {
         if (isTRUE(surfaces)) {
           surfaces <- self$surface_types
         } else {
           surfaces <- NULL
         }
       } else {
-        surfaces <- surfaces[ surfaces %in% self$surface_types ]
+        surfaces <- surfaces[surfaces %in% self$surface_types]
       }
 
-      for ( s in surfaces ) {
-        geoms <- c(geoms,
-                   self$surfaces[[s]]$left_hemisphere,
-                   self$surfaces[[s]]$right_hemisphere)
+      for (s in surfaces) {
+        geoms <- c(
+          geoms,
+          self$surfaces[[s]]$left_hemisphere,
+          self$surfaces[[s]]$right_hemisphere
+        )
       }
 
-      if ( isTRUE(electrodes) && !is.null(self$electrodes) ) {
+      if (isTRUE(electrodes) && !is.null(self$electrodes)) {
         # self$electrodes$set_values()
-        geoms <- c(geoms, unique(unlist(self$electrodes$objects)), unique(unlist(self$electrodes$objects2)))
+        geoms <- c(
+          geoms,
+          unique(unlist(self$electrodes$objects)),
+          unique(unlist(self$electrodes$objects2))
+        )
       }
 
       geoms <- c(geoms, self$misc)
 
-      return( unlist( geoms ) )
-
+      return(unlist(geoms))
     },
 
     print = function(...) {
-
       cat("Subject -", self$subject_code, end = "\n")
 
       cat("Transforms:\n\n- FreeSurfer TalXFM [from scanner to MNI305]:\n")
-      base::print( self$xfm )
+      base::print(self$xfm)
       cat("\n- Torig [Voxel IJK/CRS to FreeSurfer space tkrRAS, vox2ras-tkr]\n")
-      base::print( self$Torig )
+      base::print(self$Torig)
       cat("\n- Norig [Voxel IJK/CRS to Scanner space, vox2ras]\n")
-      base::print( self$Norig )
+      base::print(self$Norig)
 
       cat("\n- Scanner origin in FreeSurfer tkrRAS coordinate\n")
-      base::print( self$scanner_center )
+      base::print(self$scanner_center)
       cat("\n- FreeSurfer RAS to MNI305, vox2vox-MNI305\n")
-      base::print( self$vox2vox_MNI305 )
+      base::print(self$vox2vox_MNI305)
 
-      cat(sprintf("Surface information (total count %d)\n", length( self$surfaces )))
-      lapply( self$surfaces, function( surface ) {
-        s <- sprintf( "  %s [ %s ]",  surface$surface_type, surface$mesh_type)
+      cat(sprintf(
+        "Surface information (total count %d)\n",
+        length(self$surfaces)
+      ))
+      lapply(self$surfaces, function(surface) {
+        s <- sprintf("  %s [ %s ]", surface$surface_type, surface$mesh_type)
         v <- "invalid"
         level <- "WARNING"
-        if ( surface$has_hemispheres ) {
+        if (surface$has_hemispheres) {
           v <- ""
           level <- "INFO"
         }
@@ -761,12 +916,15 @@ Brain2 <- R6::R6Class(
         invisible()
       })
 
-      cat(sprintf("Volume information (total count %d)\n", length( self$volumes )))
-      lapply( self$volumes, function( volume ) {
-        s <- sprintf( "  %s",  volume$volume_type)
+      cat(sprintf(
+        "Volume information (total count %d)\n",
+        length(self$volumes)
+      ))
+      lapply(self$volumes, function(volume) {
+        s <- sprintf("  %s", volume$volume_type)
         v <- "invalid"
         level <- "WARNING"
-        if ( volume$has_volume ) {
+        if (volume$has_volume) {
           v <- ""
           level <- "INFO"
         }
@@ -774,12 +932,19 @@ Brain2 <- R6::R6Class(
         invisible()
       })
 
-      cat(sprintf("Streamline information (total count %d)\n", length( self$streamlines )))
-      lapply( self$streamlines, function( streamline ) {
-        s <- sprintf( "  %s [ %s ]",  streamline$streamline_type, streamline$color)
+      cat(sprintf(
+        "Streamline information (total count %d)\n",
+        length(self$streamlines)
+      ))
+      lapply(self$streamlines, function(streamline) {
+        s <- sprintf(
+          "  %s [ %s ]",
+          streamline$streamline_type,
+          streamline$color
+        )
         v <- "invalid"
         level <- "WARNING"
-        if ( streamline$has_streamline ) {
+        if (streamline$has_streamline) {
           v <- ""
           level <- "INFO"
         }
@@ -816,7 +981,7 @@ Brain2 <- R6::R6Class(
       }
 
       # Localize without CT
-      if ( !length(ct_path) ) {
+      if (!length(ct_path)) {
         # No CT scan, use 3 planes to localize
         controllers[["Edit Mode"]] %?<-% "MRI slice"
         controllers[["Overlay Coronal"]] <- TRUE
@@ -835,7 +1000,7 @@ Brain2 <- R6::R6Class(
       # Localize with CT instance object
       transform_space <- match.arg(transform_space)
 
-      if ( inherits(ct_path, "threeBrain.nii") ) {
+      if (inherits(ct_path, "threeBrain.nii")) {
         # CT data has been loaded, use loaded CT
         ct <- ct_path
         ct_shape <- ct$get_shape()
@@ -852,42 +1017,77 @@ Brain2 <- R6::R6Class(
           ijk2ras = {
             trans_mat <- diag(rep(1, 4))
             trans_mat[1:3, 4] <- ct_shape / 2
-            if (length(transform_matrix) == 1 && is.character(transform_matrix)) {
-              transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+            if (
+              length(transform_matrix) == 1 && is.character(transform_matrix)
+            ) {
+              transform_matrix <- as.matrix(read.table(
+                transform_matrix,
+                header = FALSE
+              ))
             }
-            if (length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
-              stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+            if (
+              length(transform_matrix) != 16L || !is.numeric(transform_matrix)
+            ) {
+              stop(
+                "brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix."
+              )
             }
 
-            trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix %*% trans_mat
-
+            trans_mat <- self$Torig %*%
+              solve(self$Norig) %*%
+              transform_matrix %*%
+              trans_mat
           },
           ras2ras = {
             trans_mat <- diag(rep(1, 4))
             trans_mat[1:3, 4] <- ct_shape / 2
-            if (length(transform_matrix) == 1 && is.character(transform_matrix)) {
-              transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+            if (
+              length(transform_matrix) == 1 && is.character(transform_matrix)
+            ) {
+              transform_matrix <- as.matrix(read.table(
+                transform_matrix,
+                header = FALSE
+              ))
             }
-            if (length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
-              stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+            if (
+              length(transform_matrix) != 16L || !is.numeric(transform_matrix)
+            ) {
+              stop(
+                "brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix."
+              )
             }
             ct_ijk2ras <- ct$get_IJK_to_RAS()$matrix
-            trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix %*% ct_ijk2ras %*% trans_mat
-
+            trans_mat <- self$Torig %*%
+              solve(self$Norig) %*%
+              transform_matrix %*%
+              ct_ijk2ras %*%
+              trans_mat
           },
           fsl = {
             trans_mat <- diag(rep(1, 4))
             trans_mat[1:3, 4] <- ct_shape / 2
             ct_ijk2fsl <- ct$get_IJK_to_FSL()
 
-            if (length(transform_matrix) == 1 && is.character(transform_matrix)) {
-              transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+            if (
+              length(transform_matrix) == 1 && is.character(transform_matrix)
+            ) {
+              transform_matrix <- as.matrix(read.table(
+                transform_matrix,
+                header = FALSE
+              ))
             }
-            if (length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
-              stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+            if (
+              length(transform_matrix) != 16L || !is.numeric(transform_matrix)
+            ) {
+              stop(
+                "brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix."
+              )
             }
             if (!inherits(mri_path, "threeBrain.nii")) {
-              mri <- read_nii2( normalizePath(mri_path, mustWork = TRUE), head_only = TRUE )
+              mri <- read_nii2(
+                normalizePath(mri_path, mustWork = TRUE),
+                head_only = TRUE
+              )
             } else {
               mri <- mri_path
             }
@@ -898,25 +1098,43 @@ Brain2 <- R6::R6Class(
             # transform_matrix CT FSL to MRI FSL
             # solve(mri_ijk2fsl): MRI FSL to MRI IJK
             # mri_ijk2ras: MRI IJK to RAS
-            trans_mat <- self$Torig %*% solve(self$Norig) %*% mri_ijk2ras %*% solve(mri_ijk2fsl) %*% transform_matrix %*% ct_ijk2fsl %*% trans_mat
+            trans_mat <- self$Torig %*%
+              solve(self$Norig) %*%
+              mri_ijk2ras %*%
+              solve(mri_ijk2fsl) %*%
+              transform_matrix %*%
+              ct_ijk2fsl %*%
+              trans_mat
           }
         )
 
-        add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
-                       trans_mat = trans_mat, color_format = "RedFormat")
+        add_voxel_cube(
+          self,
+          "CT",
+          ct$get_data(),
+          size = ct_shape,
+          trans_mat = trans_mat,
+          color_format = "RedFormat"
+        )
       } else {
-
         # CT is not loaded, ct_path is a nifti file
         ct_path <- normalizePath(ct_path, mustWork = TRUE)
-        ct <- read_nii2( ct_path, head_only = TRUE )
+        ct <- read_nii2(ct_path, head_only = TRUE)
         ct_shape <- ct$get_shape()
 
-        if ( transform_space != "resampled" ) {
+        if (transform_space != "resampled") {
           if (length(transform_matrix) == 1 && is.character(transform_matrix)) {
-            transform_matrix <- as.matrix(read.table(transform_matrix, header = FALSE))
+            transform_matrix <- as.matrix(read.table(
+              transform_matrix,
+              header = FALSE
+            ))
           }
-          if (length(transform_matrix) != 16L || !is.numeric(transform_matrix)) {
-            stop("brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix.")
+          if (
+            length(transform_matrix) != 16L || !is.numeric(transform_matrix)
+          ) {
+            stop(
+              "brain$localize: `transform_matrix` must be a valid path (e.g. path to ct2ti.mat) or a 4x4 affine matrix."
+            )
           }
         }
 
@@ -931,7 +1149,10 @@ Brain2 <- R6::R6Class(
             # assume in CT RAS, we need to show in tkrRAS
             # transform_matrix is from CT IJK to MR RAS
             ct_ijk2ras <- ct$get_IJK_to_RAS()$matrix
-            trans_mat <- self$Torig %*% solve(self$Norig) %*% transform_matrix %*% solve(ct_ijk2ras)
+            trans_mat <- self$Torig %*%
+              solve(self$Norig) %*%
+              transform_matrix %*%
+              solve(ct_ijk2ras)
           },
           ras2ras = {
             # assume in CT RAS, we need to show in tkrRAS
@@ -943,7 +1164,10 @@ Brain2 <- R6::R6Class(
             # transform_matrix is from CT FSL to MR FSL
 
             if (!inherits(mri_path, "threeBrain.nii")) {
-              mri <- read_nii2( normalizePath(mri_path, mustWork = TRUE), head_only = TRUE )
+              mri <- read_nii2(
+                normalizePath(mri_path, mustWork = TRUE),
+                head_only = TRUE
+              )
             } else {
               mri <- mri_path
             }
@@ -956,21 +1180,34 @@ Brain2 <- R6::R6Class(
             # transform_matrix CT FSL to MRI FSL
             # solve(mri_ijk2fsl): MRI FSL to MRI IJK
             # mri_ijk2ras: MRI IJK to RAS
-            trans_mat <- self$Torig %*% solve(self$Norig) %*% mri_ijk2ras %*% solve(mri_ijk2fsl) %*% transform_matrix %*% ct_ijk2fsl %*% solve(ct_ijk2ras)
+            trans_mat <- self$Torig %*%
+              solve(self$Norig) %*%
+              mri_ijk2ras %*%
+              solve(mri_ijk2fsl) %*%
+              transform_matrix %*%
+              ct_ijk2fsl %*%
+              solve(ct_ijk2ras)
           }
         )
 
         # add_voxel_cube(self, "CT", ct$get_data(), size = ct_shape,
         #                trans_mat = trans_mat, color_format = "RedFormat")
-        add_nifti(self, "CT", path = ct_path,
-                  color_format = "RedFormat", trans_mat = trans_mat,
-                  trans_space_from = "scannerRAS")
+        add_nifti(
+          self,
+          "CT",
+          path = ct_path,
+          color_format = "RedFormat",
+          trans_mat = trans_mat,
+          trans_space_from = "scannerRAS"
+        )
       }
 
       key <- seq(0, 5000)
       cmap <- create_colormap(
-        gtype = "volume", dtype = "continuous",
-        key = key, value = key,
+        gtype = "volume",
+        dtype = "continuous",
+        key = key,
+        value = key,
 
         # using RedFormat so color map is the color intensity in gray
         color = c("black", "white"),
@@ -1017,14 +1254,23 @@ Brain2 <- R6::R6Class(
       )
     },
 
-    plot = function( # Elements
-      volumes = TRUE, surfaces = TRUE, atlases = TRUE, streamlines = TRUE,
-      start_zoom = 1, cex = 1,
+    plot = function(
+      volumes = TRUE,
+      surfaces = TRUE,
+      atlases = TRUE,
+      streamlines = TRUE,
+      start_zoom = 1,
+      cex = 1,
       background = "#FFFFFF",
 
       # Layouts
-      side_canvas = TRUE, side_width = 250, side_shift = c(0, 0), side_display = TRUE,
-      control_panel = TRUE, control_display = TRUE, default_colormap = NULL,
+      side_canvas = TRUE,
+      side_width = 250,
+      side_shift = c(0, 0),
+      side_display = TRUE,
+      control_panel = TRUE,
+      control_display = TRUE,
+      default_colormap = NULL,
 
       # Legend and color
       palettes = NULL,
@@ -1032,33 +1278,59 @@ Brain2 <- R6::R6Class(
       # For control panels = TRUE
       control_presets = NULL,
       # Animation, also needs control panels = TRUE
-      time_range = NULL, val_ranges = NULL, value_alias = NULL,
+      time_range = NULL,
+      val_ranges = NULL,
+      value_alias = NULL,
 
-      value_ranges = val_ranges, controllers = list(),
+      value_ranges = val_ranges,
+      controllers = list(),
 
-      width = NULL, height = NULL, debug = FALSE, token = NULL, browser_external = TRUE,
-      additional_geoms = NULL, ... ) {
-
-
+      width = NULL,
+      height = NULL,
+      debug = FALSE,
+      token = NULL,
+      browser_external = TRUE,
+      additional_geoms = NULL,
+      ...
+    ) {
       # collect volume information
-      geoms <- self$get_geometries( volumes = volumes, surfaces = surfaces, electrodes = TRUE,
-                                    atlases = atlases, streamlines = streamlines )
+      geoms <- self$get_geometries(
+        volumes = volumes,
+        surfaces = surfaces,
+        electrodes = TRUE,
+        atlases = atlases,
+        streamlines = streamlines
+      )
       geoms <- c(geoms, additional_geoms)
 
-      is_r6 <- vapply(geoms, function(x) { "AbstractGeom" %in% class(x) }, FALSE)
+      is_r6 <- vapply(
+        geoms,
+        function(x) {
+          "AbstractGeom" %in% class(x)
+        },
+        FALSE
+      )
       geoms <- geoms[is_r6]
       names(geoms) <- NULL
 
       global_data <- self$global_data
 
-
       control_presets <- unique(
-        c( "subject2", "surface_type2", "hemisphere_material", "surface_color",
-           "map_template", "electrodes", "voxel", control_presets, "animation",
-           "display_highlights")
+        c(
+          "subject2",
+          "surface_type2",
+          "hemisphere_material",
+          "surface_color",
+          "map_template",
+          "electrodes",
+          "voxel",
+          control_presets,
+          "animation",
+          "display_highlights"
+        )
       )
 
-      if ( !length(self$volumes) ) {
+      if (!length(self$volumes)) {
         side_display <- FALSE
       }
 
@@ -1072,18 +1344,36 @@ Brain2 <- R6::R6Class(
 
       threejs_brain(
         .list = geoms,
-        palettes = palettes, controllers = controllers, value_alias = value_alias,
-        side_canvas = side_canvas,  side_width = side_width, side_shift = side_shift,
-        control_panel = control_panel, control_presets = control_presets,
-        control_display = control_display, value_ranges = value_ranges,
-        default_colormap = default_colormap, side_display = side_display,
-        width = width, height = height, debug = debug, token = token,
-        browser_external = browser_external, global_data = global_data,
-        start_zoom = start_zoom, cex = cex, background = background, ...)
+        palettes = palettes,
+        controllers = controllers,
+        value_alias = value_alias,
+        side_canvas = side_canvas,
+        side_width = side_width,
+        side_shift = side_shift,
+        control_panel = control_panel,
+        control_presets = control_presets,
+        control_display = control_display,
+        value_ranges = value_ranges,
+        default_colormap = default_colormap,
+        side_display = side_display,
+        width = width,
+        height = height,
+        debug = debug,
+        token = token,
+        browser_external = browser_external,
+        global_data = global_data,
+        start_zoom = start_zoom,
+        cex = cex,
+        background = background,
+        ...
+      )
     },
 
     render = function(
-      outputId, ..., controllers = list(), show_modal = FALSE,
+      outputId,
+      ...,
+      controllers = list(),
+      show_modal = FALSE,
       session = shiny::getDefaultReactiveDomain()
     ) {
       if (!is.environment(session)) {
@@ -1096,15 +1386,18 @@ Brain2 <- R6::R6Class(
       main_camera <- list()
 
       # get controller and camera information
-      tryCatch({
-        shiny::isolate({
-          main_camera <- as.list(proxy$main_camera)
-          controllers <- as.list(proxy$get_controllers())
-          for (nm in names(user_controllers)) {
-            controllers[[ nm ]] <- user_controllers[[ nm ]]
-          }
-        })
-      }, error = function(...) {})
+      tryCatch(
+        {
+          shiny::isolate({
+            main_camera <- as.list(proxy$main_camera)
+            controllers <- as.list(proxy$get_controllers())
+            for (nm in names(user_controllers)) {
+              controllers[[nm]] <- user_controllers[[nm]]
+            }
+          })
+        },
+        error = function(...) {}
+      )
 
       # remember background
       background <- controllers[["Background Color"]]
@@ -1121,9 +1414,14 @@ Brain2 <- R6::R6Class(
       # remember camera position
       position <- as.numeric(unname(unlist(main_camera$position)))
       up <- as.numeric(unname(unlist(main_camera$up)))
-      if (length(position) != 3 || length(up) != 3 ||
-         all(position == 0) || all(up == 0) ||
-         any(is.na(position)) || any(is.na(up))) {
+      if (
+        length(position) != 3 ||
+          length(up) != 3 ||
+          all(position == 0) ||
+          all(up == 0) ||
+          any(is.na(position)) ||
+          any(is.na(up))
+      ) {
         position <- c(0, 0, 500)
         up <- c(0, 1, 0)
       } else {
@@ -1133,7 +1431,9 @@ Brain2 <- R6::R6Class(
 
       # remember variable names
       dnames <- names(self$electrodes$value_table)
-      dnames <- dnames[!dnames %in% c("Project", "Subject", "Electrode", "Time", "Label")]
+      dnames <- dnames[
+        !dnames %in% c("Project", "Subject", "Electrode", "Time", "Label")
+      ]
       dname <- controllers[["Display Data"]]
       if (length(dname) != 1 || !dname %in% dnames) {
         dname <- NULL
@@ -1179,14 +1479,17 @@ Brain2 <- R6::R6Class(
           // Force render one frame (update the canvas)
           canvas.needsUpdate = true;
           ',
-          position[[1]], position[[2]], position[[3]],
-          up[[1]], up[[2]], up[[3]],
-          session$ns( outputId ),
+          position[[1]],
+          position[[2]],
+          position[[3]],
+          up[[1]],
+          up[[2]],
+          up[[3]],
+          session$ns(outputId),
           Sys.time()
         ),
         ...
       )
-
     },
 
     plot_electrodes_on_slices = function(
@@ -1196,15 +1499,27 @@ Brain2 <- R6::R6Class(
       overlay_colors = DEFAULT_COLOR_DISCRETE,
       overlay_alpha = 0.3,
       elec_table = NULL,
-      zoom = 1, adjust_brightness = NA,
-      electrode_color = "green", electrode_size = 2,
-      verbose = TRUE, ...,
+      zoom = 1,
+      adjust_brightness = NA,
+      electrode_color = "green",
+      electrode_size = 2,
+      verbose = TRUE,
+      ...,
       decoration = function(i, j) {
-        graphics::points(0, 0, pch = 20, col = electrode_color,
-                         cex = electrode_size)
+        graphics::points(
+          0,
+          0,
+          pch = 20,
+          col = electrode_color,
+          cex = electrode_size
+        )
       },
       device_init = NULL,
-      save_to = NULL, one_plot = is.null(save_to), width = 12, height = 4) {
+      save_to = NULL,
+      one_plot = is.null(save_to),
+      width = 12,
+      height = 4
+    ) {
       # DIPSAUS DEBUG START
       # self <- ravecore::rave_brain("demo/DemoSubject")
       # private <- self$private
@@ -1228,7 +1543,9 @@ Brain2 <- R6::R6Class(
       }
       plot_idx <- elec_table$Electrode %in% electrodes_to_plot & !invalids
       if (!any(plot_idx)) {
-        stop("All specified electrodes to plot are invalid. Please double-check input `electrodes_to_plot`")
+        stop(
+          "All specified electrodes to plot are invalid. Please double-check input `electrodes_to_plot`"
+        )
       }
       plot_idx <- which(plot_idx)
 
@@ -1239,8 +1556,6 @@ Brain2 <- R6::R6Class(
         to = "scannerRAS"
       )
       scanner_ras[invalids, ] <- 0
-
-
 
       # load up volume and adjust brightness
 
@@ -1256,7 +1571,10 @@ Brain2 <- R6::R6Class(
       if (is.na(adjust_brightness)) {
         adjust_brightness <- TRUE
       }
-      if ( isTRUE(adjust_brightness) || isTRUE(adjust_brightness > 0 && adjust_brightness < 1) ) {
+      if (
+        isTRUE(adjust_brightness) ||
+          isTRUE(adjust_brightness > 0 && adjust_brightness < 1)
+      ) {
         if (isTRUE(adjust_brightness)) {
           adjust_brightness <- 0.95
         }
@@ -1265,9 +1583,12 @@ Brain2 <- R6::R6Class(
         volume$data[volume$data > 255] <- 255
       }
 
-      if ( length(overlays) ) {
+      if (length(overlays)) {
         if (length(overlay_colors) < length(overlays)) {
-          overlay_colors <- rep(overlay_colors, ceiling(length(overlays) / length(overlay_colors)))
+          overlay_colors <- rep(
+            overlay_colors,
+            ceiling(length(overlays) / length(overlay_colors))
+          )
         }
         overlays <- lapply(seq_along(overlays), function(ii) {
           overlay_img <- overlays[[ii]]
@@ -1288,46 +1609,73 @@ Brain2 <- R6::R6Class(
 
       if (length(save_to) == 1 && isTRUE(is.character(save_to))) {
         if (endsWith(tolower(save_to), "png")) {
-          save_to <- sprintf("%s-%%04d.png",
-                             gsub("[%0-9d]{0,}\\.png$", replacement = "",
-                                  save_to, ignore.case = TRUE))
-          grDevices::png(filename = save_to, width = width * 72,
-                         height = height * 72, bg = "black")
+          save_to <- sprintf(
+            "%s-%%04d.png",
+            gsub(
+              "[%0-9d]{0,}\\.png$",
+              replacement = "",
+              save_to,
+              ignore.case = TRUE
+            )
+          )
+          grDevices::png(
+            filename = save_to,
+            width = width * 72,
+            height = height * 72,
+            bg = "black"
+          )
         } else {
-          save_to <- sprintf("%s.pdf",
-                             gsub("\\.pdf", "", save_to, ignore.case = TRUE))
-          grDevices::pdf(save_to, width = width, height = height,
-                         useDingbats = FALSE, onefile = TRUE,
-                         title = "RAVE Slice Plots", bg = "black")
+          save_to <- sprintf(
+            "%s.pdf",
+            gsub("\\.pdf", "", save_to, ignore.case = TRUE)
+          )
+          grDevices::pdf(
+            save_to,
+            width = width,
+            height = height,
+            useDingbats = FALSE,
+            onefile = TRUE,
+            title = "RAVE Slice Plots",
+            bg = "black"
+          )
         }
-        on.exit({ grDevices::dev.off() })
-
+        on.exit({
+          grDevices::dev.off()
+        })
       }
       if (is.function(device_init)) {
         device_init()
       }
 
-
-
-      if ( one_plot ) {
+      if (one_plot) {
         plot_idx <- list(plot_idx)
       }
-      progress <- dipsaus::progress2("Plotting slices",
-                                     max = length(plot_idx) + 1,
-                                     shiny_auto_close = TRUE, quiet = !verbose)
+      progress <- dipsaus::progress2(
+        "Plotting slices",
+        max = length(plot_idx) + 1,
+        shiny_auto_close = TRUE,
+        quiet = !verbose
+      )
       for (ii in plot_idx) {
-        progress$inc(detail = sprintf("Generating graphs for electrode %s", dipsaus::deparse_svec(ii)))
+        progress$inc(
+          detail = sprintf(
+            "Generating graphs for electrode %s",
+            dipsaus::deparse_svec(ii)
+          )
+        )
         plot_slices(
           volume,
           overlays = overlays,
           overlay_alpha = overlay_alpha,
           positions = scanner_ras[ii, ],
-          main = sprintf("%s (Ch=%.0f,ScanRAS=%.1f,%.1f,%.1f)",
-                         elec_table$Label[ii],
-                         elec_table$Electrode[ii],
-                         scanner_ras[ii, 1],
-                         scanner_ras[ii, 2],
-                         scanner_ras[ii, 3]),
+          main = sprintf(
+            "%s (Ch=%.0f,ScanRAS=%.1f,%.1f,%.1f)",
+            elec_table$Label[ii],
+            elec_table$Electrode[ii],
+            scanner_ras[ii, 1],
+            scanner_ras[ii, 2],
+            scanner_ras[ii, 3]
+          ),
           pixel_width = 1,
           zoom = zoom,
           fun = decoration,
@@ -1337,12 +1685,13 @@ Brain2 <- R6::R6Class(
       progress$inc(detail = "Closing graphic device")
       # dev.off()
     }
-
   ),
   active = list(
     subject_code = function(v) {
       if (!missing(v)) {
-        stop("Cannot set subject code. This attribute cannot be changed once you initialize Brain2 object.")
+        stop(
+          "Cannot set subject code. This attribute cannot be changed once you initialize Brain2 object."
+        )
       }
       private$.subject_code
     },
@@ -1359,13 +1708,19 @@ Brain2 <- R6::R6Class(
 
       # It's the same as the following transform
       # (self$Torig %*% solve( self$Norig ) %*% c(0,0,0,1))[1:3]
-
     },
     surface_types = function() {
       names(self$surfaces)
     },
     surface_mesh_types = function() {
-      sapply(self$surface_types, function(st) { self$surfaces[[st]]$mesh_type }, simplify = FALSE, USE.NAMES = TRUE)
+      sapply(
+        self$surface_types,
+        function(st) {
+          self$surfaces[[st]]$mesh_type
+        },
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
     },
     volume_types = function() {
       names(self$volumes)
@@ -1379,22 +1734,27 @@ Brain2 <- R6::R6Class(
     streamline_groups = function() {
       unique(unname(vapply(
         self$streamlines,
-        function(x) { x$streamline_group },
+        function(x) {
+          x$streamline_group
+        },
         character(1L)
       )))
     },
     global_data = function() {
-      re <- structure(list(list(
-        Norig = self$Norig,
-        Torig = self$Torig,
-        xfm = self$xfm,
-        vox2vox_MNI305 = self$vox2vox_MNI305,
-        scanner_center = self$scanner_center,
-        atlas_types = self$atlas_types,
-        volume_types = self$volume_types,
-        streamline_types = self$streamline_types,
-        streamline_groups = self$streamline_groups
-      )), names = self$subject_code)
+      re <- structure(
+        list(list(
+          Norig = self$Norig,
+          Torig = self$Torig,
+          xfm = self$xfm,
+          vox2vox_MNI305 = self$vox2vox_MNI305,
+          scanner_center = self$scanner_center,
+          atlas_types = self$atlas_types,
+          volume_types = self$volume_types,
+          streamline_types = self$streamline_types,
+          streamline_groups = self$streamline_groups
+        )),
+        names = self$subject_code
+      )
       re$.subject_codes <- self$subject_code
       re
     },
@@ -1414,7 +1774,9 @@ Brain2 <- R6::R6Class(
         return(private$.base_path)
       }
       if (length(v) != 1 || is.na(v) || !file.exists(v)) {
-        stop("Cannot assign brain$base_path: file path must be length(1) and must exist")
+        stop(
+          "Cannot assign brain$base_path: file path must be length(1) and must exist"
+        )
       }
       private$.base_path <- normalizePath(v)
       return(private$.base_path)
@@ -1425,9 +1787,15 @@ Brain2 <- R6::R6Class(
         return(character(0L))
       }
       pattern <- "^[lr]h\\."
-      filenames <- list.files(file.path(fs_path, "surf"), pattern = pattern, ignore.case = TRUE)
+      filenames <- list.files(
+        file.path(fs_path, "surf"),
+        pattern = pattern,
+        ignore.case = TRUE
+      )
       re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
-      re <- re[!grepl("^(sulc|thick|volume|jacob|curv|area)", re, ignore.case = TRUE)]
+      re <- re[
+        !grepl("^(sulc|thick|volume|jacob|curv|area)", re, ignore.case = TRUE)
+      ]
       re <- re[!grepl("(crv|mgh|curv|labels|label)$", re, ignore.case = TRUE)]
       re
     },
@@ -1447,7 +1815,25 @@ Brain2 <- R6::R6Class(
         ignore.case = TRUE
       )
       re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
-      re <- re[!tolower(re) %in% c("nu", "brain", "brain.finalsurfs", "rave_slices", "synthstrip", "t1", "synthseg.rca", "antsdn.brain", "ctrl_pts", "brain.finalsurfs.manedit", "entowm", "rawavg", "norm", "orig")]
+      re <- re[
+        !tolower(re) %in%
+          c(
+            "nu",
+            "brain",
+            "brain.finalsurfs",
+            "rave_slices",
+            "synthstrip",
+            "t1",
+            "synthseg.rca",
+            "antsdn.brain",
+            "ctrl_pts",
+            "brain.finalsurfs.manedit",
+            "entowm",
+            "rawavg",
+            "norm",
+            "orig"
+          )
+      ]
       re <- re[!grepl("^(transform|orig)", re)]
 
       # To compatible with RAVE rave-imaging
@@ -1473,10 +1859,18 @@ Brain2 <- R6::R6Class(
         return(character(0L))
       }
       pattern <- "\\.(tck|trk|tt|vtk|vtp|tt\\.gz)$"
-      filenames <- list.files(file.path(fs_path, "streamline"), pattern = pattern, ignore.case = TRUE)
+      filenames <- list.files(
+        file.path(fs_path, "streamline"),
+        pattern = pattern,
+        ignore.case = TRUE
+      )
       re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
 
-      dirnames <- list.dirs(file.path(fs_path, "streamline"), full.names = FALSE, recursive = FALSE)
+      dirnames <- list.dirs(
+        file.path(fs_path, "streamline"),
+        full.names = FALSE,
+        recursive = FALSE
+      )
       dirnames <- dirnames[grepl("^[a-zA-Z0-9]", dirnames)]
       re <- c(sprintf("%s/*", dirnames), sprintf("default/%s", re))
 
@@ -1522,5 +1916,3 @@ Brain2 <- R6::R6Class(
     }
   )
 )
-
-

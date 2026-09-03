@@ -1,16 +1,28 @@
 #' @export
-import_suma.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype,
-                                   sub_type = c("aparc+aseg", "aparc.a2009s+aseg", "aparc.DKTatlas+aseg", "aseg"), hemisphere, ...) {
+import_suma.atlas_volume <- function(
+  subject_name,
+  fs_path,
+  quiet = FALSE,
+  dtype,
+  sub_type = c(
+    "aparc+aseg",
+    "aparc.a2009s+aseg",
+    "aparc.DKTatlas+aseg",
+    "aseg"
+  ),
+  hemisphere,
+  ...
+) {
   fs_path <- normalizePath(fs_path)
   sub_type <- match.arg(sub_type)
   fname <- sprintf("%s.nii", sub_type)
   src <- file.path(fs_path, "SUMA", fname)
   sub_type <- stringr::str_replace_all(sub_type, "[^\\w]", "_")
-  if ( ! file.exists(src) ) {
+  if (!file.exists(src)) {
     if (!quiet) {
       cat2(sprintf("  * SUMA/%s is missing\n", fname), level = "WARNING")
     }
-    return( FALSE )
+    return(FALSE)
   }
   src <- normalizePath(src)
   tname <- sprintf("%s_%s.json", subject_name, sub_type)
@@ -19,7 +31,7 @@ import_suma.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype
 
   cached <- validate_digest(src, target)
   if (!isFALSE(cached)) {
-    return( TRUE )
+    return(TRUE)
   }
 
   # Load file
@@ -28,18 +40,25 @@ import_suma.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype
   Torig <- dat$header$get_vox2ras_tkr()
   volume_shape <- as.integer(dat$get_shape())
 
-  group_volume <- GeomGroup$new(name = sprintf("Atlas - %s (%s)", sub_type, subject_name))
+  group_volume <- GeomGroup$new(
+    name = sprintf("Atlas - %s (%s)", sub_type, subject_name)
+  )
   group_volume$subject_code <- subject_name
 
   volume <- dat$get_data()
-  volume <- reorient_volume( volume, Torig )
+  volume <- reorient_volume(volume, Torig)
 
   # Create a datacube geom to force cache
   unlink(target)
   DataCubeGeom2$new(
-    name = sprintf("Atlas - %s (%s)", sub_type, subject_name), value = volume, dim = volume_shape,
-    half_size = volume_shape / 2, group = group_volume, position = c(0, 0, 0),
-    cache_file = target)
+    name = sprintf("Atlas - %s (%s)", sub_type, subject_name),
+    value = volume,
+    dim = volume_shape,
+    half_size = volume_shape / 2,
+    group = group_volume,
+    position = c(0, 0, 0),
+    cache_file = target
+  )
 
   rm(volume)
   rm(dat)
@@ -65,9 +84,8 @@ import_suma.atlas_volume <- function(subject_name, fs_path, quiet = FALSE, dtype
     THREEBRAIN_DATA_VER = THREEBRAIN_DATA_VER,
     .append = FALSE
   )
-  return( TRUE )
+  return(TRUE)
 }
-
 
 # import_suma("YCQ", fs_path = "~/rave_data/others/fs/", dtype = "atlas_volume", sub_type = "aparc+aseg")
 # import_suma("YCQ", fs_path = "~/rave_data/others/fs/", dtype = "atlas_volume", sub_type = "aparc.a2009s+aseg")

@@ -1,4 +1,10 @@
-to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions = list(), ...) {
+to_html <- function(
+  x,
+  standalone = TRUE,
+  title = "YAEL 3D Brain",
+  knitrOptions = list(),
+  ...
+) {
   # DIPSAUS DEBUG START
   # x <- threeBrain::merge_brain()$plot()
   # standalone <- TRUE
@@ -19,7 +25,9 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
   tmp_dir <- tempdir(check = TRUE)
   wdir <- tempfile(tmpdir = tmp_dir)
   dir_create(wdir)
-  on.exit({unlink(wdir, recursive = TRUE)})
+  on.exit({
+    unlink(wdir, recursive = TRUE)
+  })
 
   htmlwidgets::saveWidget(
     x,
@@ -31,7 +39,13 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
 
   content <- dipsaus::fastqueue2()
   datapath_root <- file.path(wdir, "_lib", "threebrain_data-0/")
-  data_files <- list.files(datapath_root, all.files = FALSE, full.names = FALSE, recursive = TRUE, include.dirs = FALSE)
+  data_files <- list.files(
+    datapath_root,
+    all.files = FALSE,
+    full.names = FALSE,
+    recursive = TRUE,
+    include.dirs = FALSE
+  )
 
   # Make sure the parent path exists
   if (length(data_files)) {
@@ -56,7 +70,13 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
         content$madd(
           sprintf(
             "<script type='text/plain;charset=UTF-8' data-for='#%s/%s' data-partition='%d' data-type='%s' data-size='%.0f' data-start='%.0f' data-parition-size='%.0f'>",
-            rand_id, data_file, ii, datauri_type, fsize0, fsize0 - fsize, length(raws)
+            rand_id,
+            data_file,
+            ii,
+            datauri_type,
+            fsize0,
+            fsize0 - fsize,
+            length(raws)
           ),
           jsonlite::base64_enc(input = raws),
           "</script>"
@@ -67,7 +87,7 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
       close(fin)
     })
   }
-  if ( content$size() > 0 ) {
+  if (content$size() > 0) {
     content <- htmltools::HTML(do.call("paste0", content$as_list()))
   } else {
     content <- ""
@@ -85,7 +105,11 @@ to_html <- function(x, standalone = TRUE, title = "YAEL 3D Brain", knitrOptions 
 }
 
 #' @export
-print.threebrain_to_html <- function(x, ..., viewer = getOption("viewer", utils::browseURL)) {
+print.threebrain_to_html <- function(
+  x,
+  ...,
+  viewer = getOption("viewer", utils::browseURL)
+) {
   # if(inherits(x, "suppress_viewer")) {
   #   viewer <- utils::browseURL
   # }
@@ -95,17 +119,27 @@ print.threebrain_to_html <- function(x, ..., viewer = getOption("viewer", utils:
 
 #' @export
 knit_print.threejs_brain <- function(x, ..., options = NULL) {
-  knitr::knit_print(to_html(x, standalone = TRUE, knitrOptions = options),
-                    options = options, ...)
+  knitr::knit_print(
+    to_html(x, standalone = TRUE, knitrOptions = options),
+    options = options,
+    ...
+  )
 }
 
 #' @export
-print.threejs_brain <- function(x, ..., embed = NA, viewer = getOption("viewer", utils::browseURL)) {
-
-  if ( identical(get_os(), "emscripten") ) {
+print.threejs_brain <- function(
+  x,
+  ...,
+  embed = NA,
+  viewer = getOption("viewer", utils::browseURL)
+) {
+  if (identical(get_os(), "emscripten")) {
     # this is in WASM, use save_brain
     digest_string <- dipsaus::digest(x)
-    tmp_file <- file.path(tempdir(check = TRUE), sprintf("threeBrain-wasm-%s.html", digest_string))
+    tmp_file <- file.path(
+      tempdir(check = TRUE),
+      sprintf("threeBrain-wasm-%s.html", digest_string)
+    )
     save_brain(x, tmp_file, as_zip = FALSE)
 
     tmp_file <- normalizePath(tmp_file, mustWork = "/")
@@ -116,7 +150,9 @@ print.threejs_brain <- function(x, ..., embed = NA, viewer = getOption("viewer",
       paste0(
         "chan.write({",
         "  type: 'browse',",
-        "  data: { url: '", tmp_file, "' },",
+        "  data: { url: '",
+        tmp_file,
+        "' },",
         "});"
         # "chan.write({",
         # "  type: 'pager',",
@@ -129,7 +165,6 @@ print.threejs_brain <- function(x, ..., embed = NA, viewer = getOption("viewer",
         # "});"
       )
     )
-
   } else {
     tmp_dir <- tempdir(check = TRUE)
 
@@ -137,14 +172,14 @@ print.threejs_brain <- function(x, ..., embed = NA, viewer = getOption("viewer",
       embed <- !inherits(x, "suppress_viewer")
     }
 
-    if ( embed ) {
+    if (embed) {
       print(to_html(x), viewer = viewer)
     } else {
       # wrap up files as html object
       html <- htmltools::as.tags(x, standalone = TRUE)
       # prepare widget
       www_dir <- file.path(tmp_dir, "threeBrainViewer")
-      if ( !dir.exists(www_dir) ) {
+      if (!dir.exists(www_dir)) {
         dir.create(www_dir, showWarnings = FALSE, recursive = FALSE)
       }
       index_name <- x$x$data_filename
@@ -152,7 +187,12 @@ print.threejs_brain <- function(x, ..., embed = NA, viewer = getOption("viewer",
       index_name <- gsub("json$", "html", index_name)
       index_html <- file.path(www_dir, index_name)
 
-      htmltools::save_html(html, file = index_html, background = "white", libdir = "lib")
+      htmltools::save_html(
+        html,
+        file = index_html,
+        background = "white",
+        libdir = "lib"
+      )
 
       if (!file.exists(file.path(www_dir, "favicon.ico"))) {
         file.copy(
@@ -161,20 +201,23 @@ print.threejs_brain <- function(x, ..., embed = NA, viewer = getOption("viewer",
         )
       }
 
-      app <- ensure_simple_server( www_dir )
+      app <- ensure_simple_server(www_dir)
       url <- gsub("/$", "", app$url)
       url <- sprintf("%s/%s", url, index_name)
-      utils::browseURL( url )
+      utils::browseURL(url)
     }
   }
   invisible(x)
 }
 
 .onUnload <- function(libPath) {
-  tryCatch({
-    app <- getOption("threeBrain.viewer.app", NULL)
-    if (is.list(app) && isTRUE(app$is_threeBrain_viewer_app)) {
-      app$stop_server()
-    }
-  }, error = function(...) {})
+  tryCatch(
+    {
+      app <- getOption("threeBrain.viewer.app", NULL)
+      if (is.list(app) && isTRUE(app$is_threeBrain_viewer_app)) {
+        app$stop_server()
+      }
+    },
+    error = function(...) {}
+  )
 }

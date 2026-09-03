@@ -13,7 +13,6 @@ TubeGeom <- R6::R6Class(
   classname = "TubeGeom",
   inherit = AbstractGeom,
   public = list(
-
     #' @field type Geometry type string (\code{"tube"}).
     type = "tube",
 
@@ -48,7 +47,11 @@ TubeGeom <- R6::R6Class(
 
       other_args <- list(...)
 
-      self$radial_segments <- get2("radial_segments", other_args, ifnotfound = 10)
+      self$radial_segments <- get2(
+        "radial_segments",
+        other_args,
+        ifnotfound = 10
+      )
       self$image_uri <- image_uri
 
       control_data <- as.matrix(control_data)
@@ -65,9 +68,9 @@ TubeGeom <- R6::R6Class(
 
       v <- v[o]
       dif <- v[-1] - v[-length(v)]
-      dif <- dif[ dif > 0.002 ]
+      dif <- dif[dif > 0.002]
       if (length(dif)) {
-        if ( length(v) > 100 ) {
+        if (length(v) > 100) {
           self$tubular_segments <- 500
         } else {
           self$tubular_segments <- length(v)
@@ -75,7 +78,7 @@ TubeGeom <- R6::R6Class(
       } else {
         self$tubular_segments <- min(ceiling(1 / min(dif)), 500)
       }
-      if ( self$tubular_segments < 2 ) {
+      if (self$tubular_segments < 2) {
         self$tubular_segments <- 2
       }
     },

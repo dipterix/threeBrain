@@ -36,7 +36,11 @@ NULL
 #' \code{header_only=TRUE}, then volume data will be substituted by the
 #' header.
 #' @export
-read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FALSE) {
+read_volume <- function(
+  file,
+  format = c("auto", "mgh", "nii"),
+  header_only = FALSE
+) {
   format <- match.arg(format)
   if (format == "auto") {
     if (endsWith(file, "mgz") || endsWith(file, "mgh")) {
@@ -50,10 +54,13 @@ read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FA
   header <- NULL
 
   if (format == "mgh") {
-    if ( header_only ) {
-      header <- read_fs_mgh_header( file )
+    if (header_only) {
+      header <- read_fs_mgh_header(file)
     } else {
-      volume <- freesurferformats::read.fs.mgh(filepath = file, with_header = TRUE)
+      volume <- freesurferformats::read.fs.mgh(
+        filepath = file,
+        with_header = TRUE
+      )
       data <- volume$data
       header <- volume$header
     }
@@ -66,7 +73,7 @@ read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FA
     Torig[4, 4] <- 1
   } else {
     volume <- read_nii2(file, head_only = header_only)
-    if ( !header_only ) {
+    if (!header_only) {
       data <- volume$get_data()
     }
     header <- volume$header
@@ -100,7 +107,7 @@ read_volume <- function(file, format = c("auto", "mgh", "nii"), header_only = FA
 get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
   type <- match.arg(type)
 
-  if ( inherits(x, "ants.core.ants_image.ANTsImage")) {
+  if (inherits(x, "ants.core.ants_image.ANTsImage")) {
     tmpfile <- tempfile(fileext = ".nii.gz")
     on.exit({
       unlink(tmpfile)
@@ -119,7 +126,7 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
       return(x$Torig)
     }
   }
-  if ( inherits(x, "mghheader") ) {
+  if (inherits(x, "mghheader")) {
     # Norig: IJK to scanner-RAS
     Norig <- x$vox2ras_matrix
     if (type == "scanner") {
@@ -132,7 +139,7 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
       return(Torig)
     }
   }
-  if ( inherits(x, "oro.nifti") ) {
+  if (inherits(x, "oro.nifti")) {
     sform_code <- c(x@sform_code, 0)[[1]]
     qform_code <- c(x@qform_code, 0)[[1]]
 
@@ -143,11 +150,12 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
       use_sform <- TRUE
       prefered_code <- c(1, 4, 2, 5, 3, 0)
 
-      if (which(prefered_code == sform_code) >
-         which(prefered_code == qform_code)) {
+      if (
+        which(prefered_code == sform_code) > which(prefered_code == qform_code)
+      ) {
         use_sform <- FALSE
       }
-      if ( use_sform ) {
+      if (use_sform) {
         Norig <- rbind(
           x@srow_x,
           x@srow_y,
@@ -174,17 +182,21 @@ get_ijk2ras <- function(x, type = c("scanner", "tkr")) {
 }
 
 as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
-  x <- vapply(as.character(x), function(k) {
-    if (grepl("^[0-9]+$", k)) {
-      return(as.character(freesurfer_lut$from_key(k, label_only = TRUE)))
-    } else {
-      return(k)
-    }
-  }, "")
+  x <- vapply(
+    as.character(x),
+    function(k) {
+      if (grepl("^[0-9]+$", k)) {
+        return(as.character(freesurfer_lut$from_key(k, label_only = TRUE)))
+      } else {
+        return(k)
+      }
+    },
+    ""
+  )
 
   x <- tolower(x)
 
-  if ( remove_hemisphere ) {
+  if (remove_hemisphere) {
     x <- gsub("^(ctx|wm)[_-][lr]h", "\\1", x)
     x <- gsub("^(left|right)[_-]", "", x)
   } else {
@@ -209,9 +221,18 @@ as_subcortical_label <- function(x, remove_hemisphere = FALSE) {
 #' @param remesh,smooth,smooth_delta,... passed to \code{\link[ravetools]{mesh_from_volume}}
 #' @returns A surface mesh, containing 'atlas' index, label, surface nodes and face indices.
 #' @export
-generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label = NULL, IJK2RAS = NULL, grow = 1,
-                                         remesh = TRUE, smooth = TRUE, smooth_delta = 3, ...) {
-
+generate_subcortical_surface <- function(
+  atlas,
+  index,
+  save_prefix = NULL,
+  label = NULL,
+  IJK2RAS = NULL,
+  grow = 1,
+  remesh = TRUE,
+  smooth = TRUE,
+  smooth_delta = 3,
+  ...
+) {
   if (is.character(atlas)) {
     atlas <- read_volume(atlas)
   }
@@ -234,9 +255,8 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 
   mask <- atlas$data == index
 
-
   grow <- as.integer(grow)
-  if ( grow >= 1) {
+  if (grow >= 1) {
     ravetools <- asNamespace("ravetools")
     mask <- ravetools$grow_volume(mask, grow)
   }
@@ -269,7 +289,6 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 
   invisible(mesh)
 }
-
 
 
 #' @title Generate surface file from \code{'nii'} or \code{'mgz'} volume files
@@ -321,9 +340,14 @@ generate_subcortical_surface <- function(atlas, index, save_prefix = NULL, label
 #'
 #' @export
 volume_to_surf <- function(
-    volume, save_to = NA,
-    lambda = 0.2, degree = 2, threshold_lb = 0.5, threshold_ub = NA,
-    format = "auto") {
+  volume,
+  save_to = NA,
+  lambda = 0.2,
+  degree = 2,
+  threshold_lb = 0.5,
+  threshold_ub = NA,
+  format = "auto"
+) {
   # volume = '~/rave_data/raw_dir/testtest2/rave-imaging/atlases/AHEAD Atlas (Alkemade 2020)/lh/GPe_prob.nii.gz'
 
   if (length(save_to) != 1 || is.na(save_to) || !nzchar(save_to)) {
@@ -350,7 +374,7 @@ volume_to_surf <- function(
   )
 
   # smooth
-  if ( isTRUE( lambda > 0 ) ) {
+  if (isTRUE(lambda > 0)) {
     mesh <- ravetools::vcg_smooth_implicit(
       mesh,
       lambda = lambda,
@@ -375,14 +399,10 @@ volume_to_surf <- function(
     )
   }
   mesh
-
 }
-
-
 
 # idx <- unique(as.vector(atlas$data))
 # lapply(idx, function(id) {
 #   generate_subcortical_surface(n27_path, atlas, id)
 #   return()
 # })
-

@@ -1,5 +1,3 @@
-
-
 #' R6 Class - Electrode Geometry
 #' @description
 #' Internal geometry class representing a single intracranial electrode
@@ -15,7 +13,6 @@ ElectrodeGeom <- R6::R6Class(
   classname = "ElectrodeGeom",
   inherit = AbstractGeom,
   public = list(
-
     type = "electrode",
 
     # Is subcortical electrode?
@@ -34,7 +31,6 @@ ElectrodeGeom <- R6::R6Class(
 
     # CustomGeometry
     prototype = NULL,
-
 
     # ------------ for cortical electrodes only ------------
 
@@ -70,9 +66,12 @@ ElectrodeGeom <- R6::R6Class(
 
     # ------------ G ------------
     initialize = function(
-    name, position = c(0, 0, 0),
+      name,
+      position = c(0, 0, 0),
       subtype = c("SphereGeometry", "CustomGeometry"),
-      radius = 5, prototype = NULL, ...
+      radius = 5,
+      prototype = NULL,
+      ...
     ) {
       subtype <- match.arg(subtype)
       super$initialize(name, position = position, ...)
@@ -80,13 +79,13 @@ ElectrodeGeom <- R6::R6Class(
       self$subtype <- subtype
 
       self$radius <- radius
-      if ( inherits(prototype, "ElectrodePrototype") ) {
+      if (inherits(prototype, "ElectrodePrototype")) {
         self$prototype <- prototype
         if (length(self$prototype$name) != 1) {
           self$prototype$name <- rand_string(6)
         }
         group_key <- sprintf("prototype_%s", self$prototype$name)
-        if ( !group_key %in% names(self$group$group_data) ) {
+        if (!group_key %in% names(self$group$group_data)) {
           self$group$set_group_data(
             group_key,
             self$prototype$as_list(flattern = TRUE)
@@ -99,12 +98,11 @@ ElectrodeGeom <- R6::R6Class(
       #   time_stamp = get2("time_stamp", other_args, ifnotfound = NULL),
       #   name = get2("name", other_args, ifnotfound = "default")
       # )
-
     },
 
     to_list = function() {
       fixed_color <- self$fixed_color
-      if ( !length( fixed_color ) ) {
+      if (!length(fixed_color)) {
         fixed_color <- NULL
       } else if (is.list(fixed_color) && length(fixed_color) > 1) {
         if (length(fixed_color) < 3) {
@@ -129,7 +127,11 @@ ElectrodeGeom <- R6::R6Class(
         prototype <- NULL
       }
 
-      if (length(self$device_name) == 1 && !is.na(self$device_name) && nzchar(self$device_name)) {
+      if (
+        length(self$device_name) == 1 &&
+          !is.na(self$device_name) &&
+          nzchar(self$device_name)
+      ) {
         device_name <- as.character(self$device_name)
       } else if (length(prototype) == 1 && !is.na(prototype)) {
         device_name <- as.character(prototype)
@@ -156,25 +158,36 @@ ElectrodeGeom <- R6::R6Class(
           fixed_color = fixed_color,
           surface_offset = self$surface_offset,
           additional_info = list(
-            label_prefix = if (length(self$label_prefix) == 1 && !is.na(self$label_prefix)) as.character(self$label_prefix) else "",
-            device_name  = device_name
+            label_prefix = if (
+              length(self$label_prefix) == 1 && !is.na(self$label_prefix)
+            ) {
+              as.character(self$label_prefix)
+            } else {
+              ""
+            },
+            device_name = device_name
           )
         )
       )
-      return( re )
+      return(re)
     }
-
   ),
   active = list(
     sub_cortical = function(v) {
-      cat2("sub_cortical is deprecated, use is_surface_electrode instead.", level = "WARNING")
+      cat2(
+        "sub_cortical is deprecated, use is_surface_electrode instead.",
+        level = "WARNING"
+      )
       if (!missing(v)) {
         self$is_surface_electrode <- !isTRUE(v)
       }
       return(!self$is_surface_electrode)
     },
     search_geoms = function(v) {
-      cat2("search_geoms is deprecated, use hemisphere instead.", level = "WARNING")
+      cat2(
+        "search_geoms is deprecated, use hemisphere instead.",
+        level = "WARNING"
+      )
       if (!missing(v)) {
         self$hemisphere <- v
       }
@@ -182,4 +195,3 @@ ElectrodeGeom <- R6::R6Class(
     }
   )
 )
-

@@ -10,7 +10,6 @@
 # - 12 all side-cameras, system reserved
 # - 13~31 invisible
 
-
 #' R6 Class - Generate Group of Geometries
 #' @description
 #' Container that collects geometry objects belonging to the same logical group
@@ -74,7 +73,10 @@ GeomGroup <- R6::R6Class(
       if (!length(mat)) {
         self$trans_mat <- NULL
       } else {
-        stopifnot2(length(mat) == 16 && nrow(mat) == 4, msg = "mat must be a 4x4 matrix")
+        stopifnot2(
+          length(mat) == 16 && nrow(mat) == 4,
+          msg = "mat must be a 4x4 matrix"
+        )
         self$trans_mat <- mat
       }
     },
@@ -87,20 +89,27 @@ GeomGroup <- R6::R6Class(
     #' @param cache_path Directory path for caching serialized data.
     #' @param parent Name or \code{GeomGroup} object of the parent group,
     #'   or \code{NULL}.
-    initialize = function(name, layer = 0, position = c(0, 0, 0),
-                          cache_path = tempfile(), parent = NULL) {
+    initialize = function(
+      name,
+      layer = 0,
+      position = c(0, 0, 0),
+      cache_path = tempfile(),
+      parent = NULL
+    ) {
       self$name <- name
 
-      stopifnot2(all(layer %in% 0:13), msg = "Layer(s) must be from 0 to 12, use 0 for main camera-only, 1 for all cameras, 13 is invisible.")
+      stopifnot2(
+        all(layer %in% 0:13),
+        msg = "Layer(s) must be from 0 to 12, use 0 for main camera-only, 1 for all cameras, 13 is invisible."
+      )
       self$layer <- layer
 
-      if ( !is.null(parent) ) {
+      if (!is.null(parent)) {
         if (R6::is.R6(parent)) {
           parent <- parent$name
         }
         self$parent_group <- parent
       }
-
 
       stopifnot2(length(position) == 3, msg = "position must have length of 3.")
       self$position <- position
@@ -118,7 +127,12 @@ GeomGroup <- R6::R6Class(
     #'   descriptor list.
     #' @param cache_if_not_exists Logical; write \code{value} to the file cache
     #'   when no cache file exists yet.
-    set_group_data = function(name, value, is_cached = FALSE, cache_if_not_exists = FALSE) {
+    set_group_data = function(
+      name,
+      value,
+      is_cached = FALSE,
+      cache_if_not_exists = FALSE
+    ) {
       if (is.null(self$group_data)) {
         self$group_data <- list()
       }
@@ -126,7 +140,10 @@ GeomGroup <- R6::R6Class(
       if (cache_if_not_exists && !is_cached) {
         dir_create(self$cache_path)
         # cache file path
-        path <- file.path(self$cache_path, stringr::str_replace_all(name, "[^\\w.]", "_"))
+        path <- file.path(
+          self$cache_path,
+          stringr::str_replace_all(name, "[^\\w.]", "_")
+        )
         if (!file.exists(path)) {
           value <- json_cache(path, structure(list(value), names = name))
           is_cached <- TRUE
@@ -137,8 +154,6 @@ GeomGroup <- R6::R6Class(
       if (is_cached) {
         self$cached_items <- c(self$cached_items, name)
       }
-
-
     },
     #' @description
     #' Retrieve a data object from the group by key, loading from the file
@@ -156,7 +171,9 @@ GeomGroup <- R6::R6Class(
 
       if (is.list(re) && isTRUE(re$is_cache)) {
         # this is a cache, load from cache!
-        if (!force_reload && exists(key, envir = self$cache_env, inherits = FALSE)) {
+        if (
+          !force_reload && exists(key, envir = self$cache_env, inherits = FALSE)
+        ) {
           # search for already cached repo
           return(self$cache_env[[key]])
         }
@@ -170,10 +187,16 @@ GeomGroup <- R6::R6Class(
         }
 
         # This is a very special case which shouldn't happen
-        stopifnot2(key %in% names(d), msg = paste0("Cannot find key in the cache - ", key, ". Is the cache file correupted?"))
+        stopifnot2(
+          key %in% names(d),
+          msg = paste0(
+            "Cannot find key in the cache - ",
+            key,
+            ". Is the cache file correupted?"
+          )
+        )
 
         return(self$cache_env[[key]])
-
       }
 
       return(re)
@@ -269,15 +292,30 @@ AbstractGeom <- R6::R6Class(
     #' @param layer Camera layer(s), 0-13.  Default \code{0}.
     #' @param trans_mat Optional 4-by-4 numeric transformation matrix.
     #' @param ... Reserved for subclass use.
-    initialize = function(name, position = c(0, 0, 0), group = NULL, layer = 0, trans_mat = NULL, ...) {
+    initialize = function(
+      name,
+      position = c(0, 0, 0),
+      group = NULL,
+      layer = 0,
+      trans_mat = NULL,
+      ...
+    ) {
       self$name <- name
       # self$time_stamp = time_stamp
       self$set_position(position)
       self$group <- group
-      stopifnot2(all(layer %in% 0:13), msg = "Layer(s) must be from 0 to 13, use 0 for main camera-only, 1 for all cameras, 13 is invisible.")
+      stopifnot2(
+        all(layer %in% 0:13),
+        msg = "Layer(s) must be from 0 to 13, use 0 for main camera-only, 1 for all cameras, 13 is invisible."
+      )
       self$layer <- layer
 
-      if (length(trans_mat) == 16 && is.matrix(trans_mat) && nrow(trans_mat) == 4 && is.numeric(trans_mat)) {
+      if (
+        length(trans_mat) == 16 &&
+          is.matrix(trans_mat) &&
+          nrow(trans_mat) == 4 &&
+          is.numeric(trans_mat)
+      ) {
         self$trans_mat <- trans_mat
       }
     },
@@ -286,7 +324,10 @@ AbstractGeom <- R6::R6Class(
     #'   \code{c(x, y, z)}.
     set_position = function(...) {
       pos <- c(...)
-      stopifnot2(length(pos) == 3, msg = "Position must be a length of 3 - X,Y,Z")
+      stopifnot2(
+        length(pos) == 3,
+        msg = "Position must be a length of 3 - X,Y,Z"
+      )
       self$position <- pos
     },
     # set_value = function(value = NULL, time_stamp = NULL) {
@@ -299,12 +340,24 @@ AbstractGeom <- R6::R6Class(
     #' @param name Character clip name.  Defaults to \code{"Value"}.
     #' @param target JavaScript property path to animate.
     #' @param ... Additional arguments passed to \code{KeyFrame}.
-    set_value = function(value = NULL, time_stamp = NULL, name = "Value", target = ".material.color", ...) {
-      stopifnot2(name != "[None]", msg = 'name cannot be "[None]", it\'s reserved')
+    set_value = function(
+      value = NULL,
+      time_stamp = NULL,
+      name = "Value",
+      target = ".material.color",
+      ...
+    ) {
+      stopifnot2(
+        name != "[None]",
+        msg = 'name cannot be "[None]", it\'s reserved'
+      )
 
       # Check length
       if (length(value) > 1) {
-        stopifnot2(length(value) == length(time_stamp), msg = "Please specify time stamp for each color. They should share the same length.")
+        stopifnot2(
+          length(value) == length(time_stamp),
+          msg = "Please specify time stamp for each color. They should share the same length."
+        )
       } else {
         if (length(value) == 0) {
           # Delete animation keyframe
@@ -324,12 +377,20 @@ AbstractGeom <- R6::R6Class(
         time_stamp <- time_stamp[!is_na]
       }
 
-      kf <- KeyFrame$new(name = name, value = value, time = time_stamp,
-                        dtype = ifelse( isTRUE(is.numeric(unlist(value))), "continuous", "discrete"),
-                        target = ".material.color", ...)
+      kf <- KeyFrame$new(
+        name = name,
+        value = value,
+        time = time_stamp,
+        dtype = ifelse(
+          isTRUE(is.numeric(unlist(value))),
+          "continuous",
+          "discrete"
+        ),
+        target = ".material.color",
+        ...
+      )
 
       self$keyframes[[name]] <- kf
-
     },
     #' @description Serialize the geometry to a named list for JSON export.
     to_list = function() {
@@ -341,7 +402,7 @@ AbstractGeom <- R6::R6Class(
           group_layer = self$group$layer,
           group_position = as.numeric(self$group$position)
         )
-        if (is.null( subject_code )) {
+        if (is.null(subject_code)) {
           subject_code <- self$group$subject_code
         }
       }
@@ -351,7 +412,6 @@ AbstractGeom <- R6::R6Class(
       } else {
         trans_mat <- NULL
       }
-
 
       list(
         name = self$name,
@@ -368,7 +428,14 @@ AbstractGeom <- R6::R6Class(
         use_cache = self$use_cache,
         custom_info = self$custom_info,
         subject_code = subject_code,
-        keyframes = sapply(self$keyframes, function(kf) { kf$to_list() }, USE.NAMES = TRUE, simplify = FALSE)
+        keyframes = sapply(
+          self$keyframes,
+          function(kf) {
+            kf$to_list()
+          },
+          USE.NAMES = TRUE,
+          simplify = FALSE
+        )
       )
     },
     #' @description Retrieve a data value from this geometry or its owning
@@ -379,19 +446,31 @@ AbstractGeom <- R6::R6Class(
     #'   in-memory copy exists.  Default \code{FALSE}.
     #' @param ifnotfound Value returned when \code{key} is not found.
     #'   Default \code{NULL}.
-    get_data = function(key = "value", force_reload = FALSE, ifnotfound = NULL) {
+    get_data = function(
+      key = "value",
+      force_reload = FALSE,
+      ifnotfound = NULL
+    ) {
       if (!is.null(self[[key]])) {
         return(self[[key]])
       }
-      if (!is.null(self$group) && is.list(self$group$group_data) && !is.null(self$group$group_data[[key]])) {
-        return(self$group$get_data(key, force_reload = force_reload, ifnotfound = ifnotfound))
+      if (
+        !is.null(self$group) &&
+          is.list(self$group$group_data) &&
+          !is.null(self$group$group_data[[key]])
+      ) {
+        return(self$group$get_data(
+          key,
+          force_reload = force_reload,
+          ifnotfound = ifnotfound
+        ))
       }
       return(ifnotfound)
     },
     #' @description Return the time range of a named animation clip.
     #' @param ani_name Name of the animation clip.
-    animation_time_range = function( ani_name ) {
-      kf <- self$keyframes[[ ani_name ]]
+    animation_time_range = function(ani_name) {
+      kf <- self$keyframes[[ani_name]]
       if (length(kf)) {
         return(kf$time_range)
       }
@@ -399,8 +478,8 @@ AbstractGeom <- R6::R6Class(
     },
     #' @description Return the value range of a named continuous animation clip.
     #' @param ani_name Name of the animation clip.
-    animation_value_range = function( ani_name ) {
-      kf <- self$keyframes[[ ani_name ]]
+    animation_value_range = function(ani_name) {
+      kf <- self$keyframes[[ani_name]]
       if (length(kf) && kf$is_continuous) {
         return(as.numeric(kf$value_range))
       }
@@ -409,8 +488,8 @@ AbstractGeom <- R6::R6Class(
     #' @description Return the category level names of a named discrete
     #'   animation clip.
     #' @param ani_name Name of the animation clip.
-    animation_value_names = function( ani_name ) {
-      kf <- self$keyframes[[ ani_name ]]
+    animation_value_names = function(ani_name) {
+      kf <- self$keyframes[[ani_name]]
       if (length(kf) && !kf$is_continuous) {
         return(kf$value_names)
       }

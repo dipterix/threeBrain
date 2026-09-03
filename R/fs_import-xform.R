@@ -1,18 +1,30 @@
 #' @export
-import_fs.xform <- function(subject_name, fs_path, quiet = FALSE, dtype, sub_type, hemisphere, ...) {
-
+import_fs.xform <- function(
+  subject_name,
+  fs_path,
+  quiet = FALSE,
+  dtype,
+  sub_type,
+  hemisphere,
+  ...
+) {
   fs_path <- normalizePath(fs_path)
   # sub_type <- match.arg(sub_type)
 
-
-  path_xform <- normalizePath(file.path(fs_path, "mri", "transforms", "talairach.xfm"), mustWork = FALSE)
+  path_xform <- normalizePath(
+    file.path(fs_path, "mri", "transforms", "talairach.xfm"),
+    mustWork = FALSE
+  )
   success <- FALSE
   xfm <- diag(c(1, 1, 1, 1))
-  if ( file.exists(path_xform) ) {
+  if (file.exists(path_xform)) {
     ss <- readLines(path_xform)
-    ss <- stringr::str_match(ss, "^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$")
+    ss <- stringr::str_match(
+      ss,
+      "^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[;]{0,1}[ ]{0,}$"
+    )
     ss <- ss[!is.na(ss[, 1]), -1, drop = FALSE]
-    if ( nrow(ss) >= 3 ) {
+    if (nrow(ss) >= 3) {
       ss <- ss[1:3, 1:4]
       success <- TRUE
     } else if (!quiet) {
@@ -33,27 +45,31 @@ import_fs.xform <- function(subject_name, fs_path, quiet = FALSE, dtype, sub_typ
   )
 
   return(success)
-
 }
 
 # import_fs("YCQ", fs_path = "~/rave_data/others/fs/", dtype = "xform")
 
-
 read_xfm <- function(path) {
   # path <- "/Users/dipterix/Library/Application Support/org.R-project.R/R/threeBrain/templates/cvs_avg35/mri/transforms/talairach.xfm"
-  tryCatch({
-    freesurferformats::read.fs.transform.xfm( path )
-  }, error = function(...) {
-    ss <- readLines(path)
-    ss <- stringr::str_match(ss, "^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ;]{0,}$")
-    ss <- ss[!is.na(ss[, 1]), -1, drop = FALSE]
-    ss <- ss[1:3, 1:4]
+  tryCatch(
+    {
+      freesurferformats::read.fs.transform.xfm(path)
+    },
+    error = function(...) {
+      ss <- readLines(path)
+      ss <- stringr::str_match(
+        ss,
+        "^[ ]{0,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ]{1,}([-]{0,1}[0-9.]+)[ ;]{0,}$"
+      )
+      ss <- ss[!is.na(ss[, 1]), -1, drop = FALSE]
+      ss <- ss[1:3, 1:4]
 
-    ss <- as.numeric(ss)
-    dim(ss) <- c(3, 4)
-    list(
-      type = "Linear",
-      matrix = rbind(ss, c(0, 0, 0, 1))
-    )
-  })
+      ss <- as.numeric(ss)
+      dim(ss) <- c(3, 4)
+      list(
+        type = "Linear",
+        matrix = rbind(ss, c(0, 0, 0, 1))
+      )
+    }
+  )
 }

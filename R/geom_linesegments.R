@@ -16,7 +16,6 @@ LineSegmentsGeom <- R6::R6Class(
     .dynamic = FALSE
   ),
   public = list(
-
     #' @field type Geometry type string (\code{"linesegments"}).
     type = "linesegments",
 
@@ -28,7 +27,6 @@ LineSegmentsGeom <- R6::R6Class(
     #'   segments, or a list of position/electrode descriptors for dynamic
     #'   segments.
     vertices = NULL,
-
 
     #' @description
     #' Create a new line-segment geometry.
@@ -52,7 +50,6 @@ LineSegmentsGeom <- R6::R6Class(
     #' @param append Logical; when \code{TRUE} append rather than replace.
     set_vertices = function(..., .list = list(), append = FALSE) {
       if (self$dynamic) {
-
         new_pos <- c(list(...), .list)
         new_pos <- lapply(new_pos, function(item) {
           if (length(item) == 3) {
@@ -67,7 +64,9 @@ LineSegmentsGeom <- R6::R6Class(
           subject_code <- item$subject_code
           electrode <- as.integer(item$electrode)
           if (length(subject_code) != 1) {
-            stop("Cannot set dynamical line segment positions from electrodes: each position must be either a numeric vector (length=3), or a named list with subject code and electrode number (e.g. list(subject_code=..., electrode=...))")
+            stop(
+              "Cannot set dynamical line segment positions from electrodes: each position must be either a numeric vector (length=3), or a named list with subject code and electrode number (e.g. list(subject_code=..., electrode=...))"
+            )
           }
           list(
             subject_code = subject_code,
@@ -75,24 +74,24 @@ LineSegmentsGeom <- R6::R6Class(
           )
         })
 
-        if ( append ) {
+        if (append) {
           self$vertices <- c(self$vertices, new_pos)
         } else {
           self$vertices <- new_pos
         }
-
       } else {
-
         new_pos <- unlist(c(..., .list))
         if (!is.numeric(new_pos)) {
           stop("LineSegmentsGeom: static positions must be numeric")
         }
         if (length(new_pos) %% 3 != 0) {
-          stop("LineSegmentsGeom: static position vector length must be multiple of 3")
+          stop(
+            "LineSegmentsGeom: static position vector length must be multiple of 3"
+          )
         }
         new_pos <- matrix(new_pos, nrow = 3, byrow = FALSE)
 
-        if ( append ) {
+        if (append) {
           self$vertices <- cbind(self$vertices, new_pos)
         } else {
           self$vertices <- new_pos
@@ -118,7 +117,9 @@ LineSegmentsGeom <- R6::R6Class(
     set_size = function(...) {
       new_size <- unlist(c(...))
       if (!length(new_size) || any(is.na(new_size) | new_size < 0)) {
-        stop("LineSegmentsGeom line size (widths) can either be a number or a numeric vector with positive length with only non-negative values.")
+        stop(
+          "LineSegmentsGeom line size (widths) can either be a number or a numeric vector with positive length with only non-negative values."
+        )
       }
       self$size <- new_size
     },
@@ -126,7 +127,6 @@ LineSegmentsGeom <- R6::R6Class(
     #' @description Serialize the line-segment geometry to a named list for
     #'   JSON export.
     to_list = function() {
-
       nverts <- length(self$vertices)
       if (self$dynamic) {
         verts <- self$vertices

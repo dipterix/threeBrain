@@ -77,7 +77,9 @@ cat(description)
 # ---- Start creating mesh ---------------------------------------------------
 
 up_direction <- c(
-  cos( pi / 3 ), sin( pi / 3 ), 0
+  cos(pi / 3),
+  sin(pi / 3),
+  0
 )
 
 # constants or fixed values
@@ -90,8 +92,8 @@ if (sum(up_direction^2) > 0) {
 
 # ---- Construct position ----------------------------------------------------
 # disc shape (first point points to anterior)
-x0 <- c( cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
-y0 <- c( sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
+x0 <- c(cos((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.9999)
+y0 <- c(sin((seq_len(width_segments) - 1) * 2 * pi / width_segments), 0.0001)
 
 # plot(x0, y0, pch = 20, asp = 1, xlab = "Left <---> Right", ylab = "P <---> A")
 # text(x0* 0.9, y0 * 0.9, labels = seq_along(x0) - 1, cex = 0.5)
@@ -222,12 +224,12 @@ texture_size <- c(360, ceiling(contact_tail_to_tip / z_resolution))
 
 contact_info <- lapply(seq_len(nrow(markers)), function(row_ii) {
   # row_ii <- 2
-  a00 <- markers$angle_start[[ row_ii ]]
-  a01 <- markers$angle_end[[ row_ii ]]
+  a00 <- markers$angle_start[[row_ii]]
+  a01 <- markers$angle_end[[row_ii]]
   a0 <- a00 %% 360
   a1 <- a01 %% 360
-  cz0 <- markers$distance_to_tip[[ row_ii ]]
-  cw <- markers$width[[ row_ii ]]
+  cz0 <- markers$distance_to_tip[[row_ii]]
+  cw <- markers$width[[row_ii]]
 
   if (a0 == a1) {
     u0 <- 1
@@ -238,20 +240,19 @@ contact_info <- lapply(seq_len(nrow(markers)), function(row_ii) {
     r <- max(radius, cw / 2)
   } else {
     u0 <- a0 + 1
-    if ( a0 < a1 ) {
+    if (a0 < a1) {
       w <- a1 - u0
     } else {
       w <- 360 - a0 + a1
     }
-    cx <- cos( (a00 + a01) / 360 * pi ) * radius
-    cy <- sin( (a00 + a01) / 360 * pi ) * radius
+    cx <- cos((a00 + a01) / 360 * pi) * radius
+    cy <- sin((a00 + a01) / 360 * pi) * radius
     r <- min(radius, cw / 2)
   }
 
   cz <- cz0 + cw / 2
   v0 <- floor(cz0 / z_resolution) + 1
   h <- floor(cw / z_resolution)
-
 
 
   # first 4 are channel mapping, then (3) are contact center, then radius
