@@ -66,20 +66,7 @@ ViewerProxy <- R6::R6Class(
     #' @param ... Ignored.
     print = function(...) {
       cat(c(
-        "<threeBrain Viewer Proxy>",
-        "Fields are:",
-        "  $main_camera        - main camera position, up, and zoom",
-        "  $background         - background color in hex code",
-        "  $side_display       - whether side canvas is visible",
-        "  $surface_type       - surface type (pial, white, ...)",
-        "  $display_variable   - data to visualize",
-        "  $plane_position     - sagittal, coronal, axial position (RAS)",
-        "  $text_decorations   - current text decoration list (reactive)",
-        "Methods are:",
-        "  $isolate(<field>)            - get fields but avoid shiny reactive events",
-        "  $get_text_decorations()      - get text decorations (isolated)",
-        "  $set_text_decoration(id,...) - create or update a text decoration",
-        "  $delete_text_decoration(id)  - delete text decoration(s) by ID",
+        sprintf("<threeBrain Viewer Proxy>: `%s`", private$outputId),
         ""
       ), sep = "\n")
     },

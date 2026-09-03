@@ -242,8 +242,8 @@ Brain2 <- R6::R6Class(
       if (missing(atlas_types)) {
         atlas_types <- self$atlas_types
       }
-      for ( s in atlas_types) {
-        self$atlases[[ s ]] <- NULL
+      for (s in atlas_types) {
+        self$atlases[[s]] <- NULL
       }
     },
 
@@ -255,23 +255,27 @@ Brain2 <- R6::R6Class(
 
       if (!inherits(atlas, "brain-atlas")) {
 
-        stopifnot2(is.character(atlas), msg = "atlas must be a brain-atlas object or valid atlas name from FreeSurfer folder")
-        path_atlases <- file.path( self$base_path, "mri", as.vector(rbind(
+        stopifnot2(
+          is.character(atlas),
+          msg = "atlas must be a brain-atlas object or valid atlas name from FreeSurfer folder"
+        )
+        atlas2 <- gsub("_", "+", atlas)
+        atlas_fnames <- as.vector(rbind(
           sprintf("%s.mgz", atlas),
           sprintf("%s.nii.gz", atlas),
-          sprintf("%s.nii", atlas)
-        )) )
+          sprintf("%s.nii", atlas),
+          sprintf("%s.mgz", atlas2),
+          sprintf("%s.nii.gz", atlas2),
+          sprintf("%s.nii", atlas2)
+        ))
+
+        path_atlases <- c(
+          file.path(self$base_path, "mri", atlas_fnames),
+          file.path(dirname(self$base_path), "atlases", atlas_fnames)
+        )
         atlas_path <- path_atlases[file.exists(path_atlases)]
-        if (!length(atlas_path)) {
-          atlas <- gsub("_", "+", atlas)
-          path_atlases <- file.path( self$base_path, "mri", as.vector(rbind(
-            sprintf("%s.mgz", atlas),
-            sprintf("%s.nii.gz", atlas),
-            sprintf("%s.nii", atlas)
-          )) )
-          atlas_path <- path_atlases[file.exists(path_atlases)]
-          if (!length(atlas_path)) { return() }
-        }
+        if (!length(atlas_path)) { return() }
+
         atlas_path <- atlas_path[[ 1 ]]
 
         atlas_geom <- VolumeGeom2$new(
@@ -289,7 +293,7 @@ Brain2 <- R6::R6Class(
         atlas <- atlas_instance
       }
 
-      atlas$set_subject_code( self$subject_code )
+      atlas$set_subject_code(self$subject_code)
       self$atlases[[ atlas$atlas_type ]] <- atlas
 
       return(atlas)
@@ -300,8 +304,8 @@ Brain2 <- R6::R6Class(
       if (missing(streamline_types)) {
         streamline_types <- self$streamline_types
       }
-      for ( s in streamline_types ) {
-        self$streamlines[[ s ]] <- NULL
+      for (s in streamline_types) {
+        self$streamlines[[s]] <- NULL
       }
     },
 
@@ -320,8 +324,6 @@ Brain2 <- R6::R6Class(
 
       streamline_root <- file.path( self$base_path, "streamline" )
       if (!length(self$base_path) || !dir.exists(streamline_root)) {
-        # warn once, no matter how many keys were requested
-        warning("`add_streamline`: cannot find streamline folder - ", streamline_root)
         return(invisible(added))
       }
 
@@ -331,98 +333,95 @@ Brain2 <- R6::R6Class(
       # as those under `fs/streamline/default`.
       matches <- list()
 
-      for ( key_string in name ) {
+      for (key_string in name) {
+        key <- streamline_parse_key(key_string)
 
-        key <- streamline_parse_key( key_string )
-
-        if ( streamline_normalize_key(key$group) == "default" ) {
+        if (streamline_normalize_key(key$group) == "default") {
           search_dirs <- c(
             streamline_root,
-            streamline_match_dir( streamline_root, "default" )
+            streamline_match_dir(streamline_root, "default")
           )
           # a hit directly under `fs/streamline` still belongs to `default`,
           # so never derive the group from `dirname()` here
           group_names <- rep("default", length(search_dirs))
         } else {
-          search_dirs <- streamline_match_dir( streamline_root, key$group )
+          search_dirs <- streamline_match_dir(streamline_root, key$group)
           # adopt the on-disk spelling of the folder
-          group_names <- filename( search_dirs )
+          group_names <- filename(search_dirs)
         }
 
         found <- list()
 
-        if ( key$is_pattern ) {
-
+        if (key$is_pattern) {
           seen <- character(0L)
-          for ( ii in seq_along(search_dirs) ) {
-            for ( hit in streamline_match_files( search_dirs[[ii]], key$pattern ) ) {
+          for (ii in seq_along(search_dirs)) {
+            for (hit in streamline_match_files(search_dirs[[ii]], key$pattern)) {
               bundle_key <- streamline_normalize_key(hit$name)
-              if ( bundle_key %in% seen ) { next }
+              if (bundle_key %in% seen) {
+                next
+              }
               seen <- c(seen, bundle_key)
               hit$group <- group_names[[ii]]
-              found[[ length(found) + 1L ]] <- hit
+              found[[length(found) + 1L]] <- hit
             }
           }
-
         } else {
-
-          for ( ii in seq_along(search_dirs) ) {
-            hit <- streamline_match_file( search_dirs[[ii]], key$pattern )
-            if ( length(hit) ) {
+          for (ii in seq_along(search_dirs)) {
+            hit <- streamline_match_file(search_dirs[[ii]], key$pattern)
+            if (length(hit)) {
               hit$group <- group_names[[ii]]
-              found[[ length(found) + 1L ]] <- hit
+              found[[length(found) + 1L]] <- hit
               break
             }
           }
-
         }
 
         if (!length(found)) {
-          warning(sprintf(
-            "`add_streamline`: cannot find streamline `%s` under %s",
-            key_string, streamline_root
-          ))
           next
         }
 
         matches <- c(matches, found)
       }
-
-      if (!length(matches)) { return(invisible(added)) }
+      if (!length(matches)) {
+        return(invisible(added))
+      }
 
       # ---- Colors recycle over the expanded bundle list ----------------------
-      colors <- rep_len( color, length(matches) )
+      colors <- rep_len(color, length(matches))
       colormap <- private$get_streamline_colormap()
       subject_code <- private$.subject_code
 
-      for ( ii in seq_along(matches) ) {
-
+      for (ii in seq_along(matches)) {
         matched <- matches[[ii]]
         bundle <- matched$name
         group_name <- matched$group
 
         # Re-use the circuit's GeomGroup when another bundle already created it
         geom_group <- NULL
-        for ( existing in self$streamlines ) {
-          if ( streamline_normalize_key(existing$streamline_group) ==
-               streamline_normalize_key(group_name) ) {
+        for (existing in self$streamlines) {
+          if (
+            streamline_normalize_key(existing$streamline_group) ==
+              streamline_normalize_key(group_name)
+          ) {
             geom_group <- existing$group
             group_name <- existing$streamline_group
             break
           }
         }
 
-        if ( is.null(geom_group) ) {
+        if (is.null(geom_group)) {
           geom_group <- GeomGroup$new(
             name = sprintf("Streamline - %s (%s)", group_name, subject_code)
           )
           geom_group$subject_code <- subject_code
           # streamline files are stored in scanner RAS; bring them to tkrRAS
-          geom_group$set_transform( self$Torig %*% solve(self$Norig) )
+          geom_group$set_transform(self$Torig %*% solve(self$Norig))
         }
 
         bundle_color <- streamline_resolve_color(
-          color = colors[[ii]], group = group_name, name = bundle,
+          color = colors[[ii]],
+          group = group_name,
+          name = bundle,
           colormap = colormap
         )
 
@@ -443,9 +442,8 @@ Brain2 <- R6::R6Class(
           path = matched$path
         )
 
-        self$streamlines[[ streamline$streamline_type ]] <- streamline
-        added[[ streamline$streamline_type ]] <- streamline
-
+        self$streamlines[[streamline$streamline_type]] <- streamline
+        added[[streamline$streamline_type]] <- streamline
       }
 
       return(invisible(added))
@@ -1439,9 +1437,34 @@ Brain2 <- R6::R6Class(
         return(character(0L))
       }
       pattern <- "\\.(mgz|nii|nii\\.gz)$"
-      filenames <- list.files(file.path(fs_path, "mri"), pattern = pattern, ignore.case = TRUE)
+      filenames <- list.files(
+        file.path(fs_path, "mri"),
+        recursive = TRUE,
+        all.files = FALSE,
+        full.names = FALSE,
+        include.dirs = FALSE,
+        pattern = pattern,
+        ignore.case = TRUE
+      )
       re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
       re <- re[!tolower(re) %in% c("nu", "brain", "brain.finalsurfs", "rave_slices", "synthstrip", "t1", "synthseg.rca", "antsdn.brain", "ctrl_pts", "brain.finalsurfs.manedit", "entowm", "rawavg", "norm", "orig")]
+      re <- re[!grepl("^(transform|orig)", re)]
+
+      # To compatible with RAVE rave-imaging
+      if (basename(dirname(fs_path)) == "rave-imaging") {
+        atlas_path <- file.path(dirname(fs_path), "atlases")
+        filenames <- list.files(
+          atlas_path,
+          recursive = TRUE,
+          all.files = FALSE,
+          full.names = FALSE,
+          include.dirs = FALSE,
+          pattern = pattern,
+          ignore.case = TRUE
+        )
+        filenames <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
+        re <- c(re, filenames)
+      }
       re
     },
     available_streamlines = function() {
@@ -1458,6 +1481,44 @@ Brain2 <- R6::R6Class(
       re <- c(sprintf("%s/*", dirnames), sprintf("default/%s", re))
 
       re
+    },
+    available_annotations = function() {
+      fs_path <- private$.base_path
+      if (length(fs_path) != 1 || is.na(fs_path)) {
+        return(character(0L))
+      }
+
+      pattern <- "[lr]h\\.([a-zA-Z0-9\\._-]+)\\.(curv|sulc|annot)$"
+
+      label_path <- file.path(self$base_path, "label")
+      labels <- list.files(
+        label_path,
+        pattern = pattern,
+        all.files = FALSE,
+        full.names = FALSE,
+        recursive = TRUE,
+        ignore.case = TRUE,
+        include.dirs = FALSE
+      )
+
+      labels <- unique(gsub(pattern, "\\1.\\2", labels))
+      labels <- sprintf("label/%s", sort(labels))
+
+      # Also the surf/ folder
+      surf_path <- file.path(self$base_path, "surf")
+      curvs <- list.files(
+        surf_path,
+        pattern = pattern,
+        all.files = FALSE,
+        full.names = FALSE,
+        recursive = TRUE,
+        ignore.case = TRUE,
+        include.dirs = FALSE
+      )
+      curvs <- unique(gsub(pattern, "\\1.\\2", curvs))
+      curvs <- sprintf("surf/%s", sort(curvs))
+
+      c(labels, curvs)
     }
   )
 )

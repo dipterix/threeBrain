@@ -161,7 +161,7 @@ diameter <- 0.86
 n_contacts <- 16
 
 # SP47X
-contacts <- probe_head + width / 2 + c(0:3 * 3, 3*3 + 1:12 * 5)
+contacts <- probe_head + width / 2 + c(0:3 * 3, 3 * 3 + 1:12 * 5)
 contact_spacing <- table(round(diff(contacts)))
 contact_spacing <- paste(sprintf("%sx%d", names(contact_spacing), contact_spacing), collapse = ",")
 
