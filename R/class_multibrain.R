@@ -78,7 +78,7 @@ MultiBrain2 <- R6::R6Class(
         surface_types <- "[none]"
       }
 
-      atlas_types <- self$template_object$atlas_types
+      atlas_types <- self$template_object$atlas_types$name
       if (length(atlas_types)) {
         atlas_types <- paste(atlas_types, collapse = ", ")
       } else {
@@ -107,6 +107,7 @@ MultiBrain2 <- R6::R6Class(
       template_surface_types = NULL,
       template_atlas_types = NULL,
       template_annotation_types = "label/aparc.a2009s",
+      template_streamline_types = "default/*",
       template_subject = unname(getOption("threeBrain.template_subject", "N27")),
       template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption("threeBrain.use141", TRUE)),
@@ -135,6 +136,7 @@ MultiBrain2 <- R6::R6Class(
           surface_types = template_surface_types,
           atlas_types = template_atlas_types,
           annotation_types = template_annotation_types,
+          streamline_types = template_streamline_types,
           template_dir = template_dir,
           use_cache = use_cache,
           use_141 = use_141,
@@ -147,6 +149,7 @@ MultiBrain2 <- R6::R6Class(
       surface_types = NULL,
       atlas_types = NULL,
       annotation_types = "label/aparc.a2009s",
+      streamline_types = "default/*",
       template_subject = unname(getOption("threeBrain.template_subject", "N27")),
       template_dir = default_template_directory(),
       use_cache = TRUE, use_141 = unname(getOption("threeBrain.use141", TRUE)),
@@ -185,7 +188,7 @@ MultiBrain2 <- R6::R6Class(
 
       if (!length(atlas_types)) {
         atlas_types <- lapply(self$objects, function(x) {
-          x$atlas_types
+          x$atlas_types$name
         })
         atlas_types <- unique(unlist(atlas_types))
         if (!length(atlas_types)) {
@@ -218,6 +221,7 @@ MultiBrain2 <- R6::R6Class(
         template_subject = template_subject,
         atlas_types = atlas_types,
         annotation_types = annotation_types,
+        streamline_types = streamline_types,
         ...
       )
 

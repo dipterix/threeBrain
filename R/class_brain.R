@@ -315,6 +315,9 @@ Brain2 <- R6::R6Class(
       if (missing(atlas_types)) {
         atlas_types <- self$atlas_types
       }
+      if (is.data.frame(atlas_types)) {
+        atlas_types <- atlas_types$name
+      }
       for (s in atlas_types) {
         self$atlases[[s]] <- NULL
       }
@@ -333,7 +336,16 @@ Brain2 <- R6::R6Class(
           is.character(atlas),
           msg = "atlas must be a brain-atlas object or valid atlas name from FreeSurfer folder"
         )
-        atlas2 <- gsub("_", "+", atlas)
+        available_atlases <- self$available_atlases
+        if (length(available_atlases)) {
+          atlas2 <- c(
+            available_atlases[gsub("[^a-zA-Z0-9_-]", "_", available_atlases) == atlas],
+            gsub("_", "+", atlas)
+          )
+        } else {
+          atlas2 <- gsub("_", "+", atlas)
+        }
+
         atlas_fnames <- as.vector(rbind(
           sprintf("%s.mgz", atlas),
           sprintf("%s.nii.gz", atlas),
@@ -825,14 +837,19 @@ Brain2 <- R6::R6Class(
         geoms <- c(geoms, self$volumes[[v]]$object)
       }
 
+      atlas_names <- self$atlas_types
+      if (is.data.frame(atlas_names)) {
+        atlas_names <- atlas_names$name
+      }
+
       if (is.logical(atlases)) {
         if (isTRUE(atlases)) {
-          atlases <- self$atlas_types
+          atlases <- atlas_names
         } else {
           atlases <- NULL
         }
       } else {
-        atlases <- atlases[atlases %in% self$atlas_types]
+        atlases <- atlases[atlases %in% atlas_names]
       }
 
       for (a in atlases) {
@@ -1726,7 +1743,51 @@ Brain2 <- R6::R6Class(
       names(self$volumes)
     },
     atlas_types = function() {
-      names(self$atlases)
+      atlas_types <- lapply(self$atlases, function(atlas) {
+        if (!length(atlas$atlas_type)) { return(NULL) }
+        data.frame(
+          name = atlas$atlas_type,
+          color_format = atlas$object$color_format,
+          transform_space = atlas$object$trans_space_from
+        )
+      })
+
+      atlas_types <- atlas_types[!vapply(atlas_types, is.null, FALSE)]
+
+      if (length(atlas_types)) {
+        atlas_types <- do.call("rbind", unname(atlas_types))
+      } else {
+        atlas_types <- data.frame(
+          name = character(0L),
+          color_format = character(0L),
+          transform_space = character(0L)
+        )
+      }
+      atlas_types
+    },
+    annotation_types = function() {
+      surfaces <- self$surfaces
+      surface_types <- names(surfaces)
+
+      annots <- lapply(surface_types, function(surface_type) {
+        annots <- surfaces[[surface_type]]$group$get_data("annotation_list")
+        if (!length(annots)) {
+          return(NULL)
+        }
+        data.frame(
+          name = annots,
+          surface = surface_type
+        )
+      })
+
+      annots <- annots[!vapply(annots, is.null, FALSE)]
+
+      if (length(annots)) {
+        annots <- do.call("rbind", unname(annots))
+      } else {
+        annots <- data.frame(name = character(0L), surface = character(0L))
+      }
+      annots
     },
     streamline_types = function() {
       names(self$streamlines)
@@ -1748,10 +1809,14 @@ Brain2 <- R6::R6Class(
           xfm = self$xfm,
           vox2vox_MNI305 = self$vox2vox_MNI305,
           scanner_center = self$scanner_center,
-          atlas_types = self$atlas_types,
+
           volume_types = self$volume_types,
+          surface_types = self$surface_types,
+          atlas_types = self$atlas_types$name,
+          annotation_types = self$annotation_types$name,
           streamline_types = self$streamline_types,
           streamline_groups = self$streamline_groups
+
         )),
         names = self$subject_code
       )
