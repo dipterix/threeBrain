@@ -2,10 +2,17 @@
 
 ## Changes since last CRAN release
 
-- `f17b3f9d (HEAD -> master)` \[*`dipterix`*\]: Added class for
-  streamline support into brain object
-- `d8157e9f (origin/master, origin/HEAD)` \[*`dipterix`*\]: Fixed the
-  previous fix
+- `80ea55e0 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Added annotation types to show the loaded
+  annotations; added streamline types to template function
+- `4e67cbc8` \[*`dipterix`*\]: Lint fix
+- `de47d4a3` \[*`dipterix`*\]: Added more search paths for `add_atlas`,
+  `add_annotation`, and `available_annotations`
+- `3428fd91` \[*`dipterix`*\]: Added `$available_*` to list builtin
+  available objects
+- `5d061368` \[*`dipterix`*\]: Added class for streamline support into
+  brain object
+- `d8157e9f` \[*`dipterix`*\]: Fixed the previous fix
 - `f6727032` \[*`dipterix`*\]: Fixed data options not updating when
   setting viewer data via proxy with `updateDisplay=false`
 - `cb087245` \[*`dipterix`*\]: `proxy$set_electrode_data` converts color

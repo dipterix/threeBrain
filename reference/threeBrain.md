@@ -56,13 +56,15 @@ threeBrain(
   streamline (`tractography`) bundles to load from the `'fs/streamline'`
   folder; passed straight to
   [`add_streamline`](https://dipterix.org/threeBrain/reference/add_streamline.md),
-  so each entry may name one bundle (`'motor/AF_left'`) or a whole
-  circuit group (`'motor/'` or `'motor/*'`). The default `'default/'`
-  loads the `'default'` circuit, that is every streamline file placed
-  directly under `'fs/streamline'` as well as under
-  `'fs/streamline/default'`. Use `NULL` to skip. Please note that each
-  declared bundle is downloaded and parsed by the browser when the
-  viewer starts, hence only one group is loaded by default; use
+  so each entry may name one bundle (`'motor/AF_left'`), a whole circuit
+  (`'motor/'` or `'motor/*'`, which reaches into the circuit's
+  sub-folders too), or just one of those sub-folders (`'motor/left/*'`).
+  The default `'default/'` loads the `'default'` circuit, that is every
+  streamline file placed directly under `'fs/streamline'` as well as
+  under `'fs/streamline/default'` – the other circuits' folders are left
+  alone. Use `NULL` to skip. Please note that each declared bundle is
+  downloaded and parsed by the browser when the viewer starts, hence
+  only one group is loaded by default; use
   [`add_streamline`](https://dipterix.org/threeBrain/reference/add_streamline.md)
   to add more.
 

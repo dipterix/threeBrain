@@ -29,7 +29,8 @@ Zhengjia Wang
 
 - `streamline_name`:
 
-  Bundle name, using the on-disk spelling.
+  Bundle name, using the on-disk spelling. Bundles stored in a
+  sub-folder of the circuit keep that sub-path, for example `'left/AF'`.
 
 - `streamline_group`:
 
@@ -93,7 +94,8 @@ Create a streamline geometry from a file path.
 
 - `streamline_name`:
 
-  Bundle name; used to derive the cached data key.
+  Bundle name, relative to the circuit folder; used to derive the cached
+  data key.
 
 - `streamline_group`:
 

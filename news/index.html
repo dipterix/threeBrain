@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.52</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.53</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,6 +73,10 @@
 <li>Use <code>KDTree</code> to query the streamlines that intersect the target volume</li>
 <li>Streamlines have better memory management with random shuffle</li>
 <li>In highlight mode faded streamline widths can be adjusted</li>
+<li>
+<code>add_streamline</code> resolves sub-folders of a circuit, so part of a circuit can be loaded on its own (<code>alic/stn/*</code> instead of <code>alic/*</code>); the circuit is still the top-level folder, and a bundle in a sub-folder keeps that sub-path in its name</li>
+<li>
+<strong>Breaking</strong>: streamline visibility controllers are named by the full <code>circuit/bundle</code> key, the same key <code>add_streamline</code> takes, so two circuits holding a bundle of the same name are no longer ambiguous. Update any <code>controllers = list("Show: &lt;bundle&gt;" = ...)</code> to <code>controllers = list("Show: &lt;circuit&gt;/&lt;bundle&gt;" = ...)</code>, including for the <code>default</code> circuit</li>
 </ul><p>Minor Changes:</p>
 <ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
 <li>Electrode transparency is improved when visualized as geometry</li>

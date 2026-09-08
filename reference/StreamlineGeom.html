@@ -11,7 +11,7 @@ the file is loaded and parsed directly by the 3D viewer."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.52</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.53</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,9 @@ the file is loaded and parsed directly by the 3D viewer.</p>
 
 
     <dt><code>streamline_name</code></dt>
-<dd><p>Bundle name, using the on-disk spelling.</p></dd>
+<dd><p>Bundle name, using the on-disk spelling.  Bundles
+stored in a sub-folder of the circuit keep that sub-path, for example
+<code>'left/AF'</code>.</p></dd>
 
 
     <dt><code>streamline_group</code></dt>
@@ -128,7 +130,8 @@ suffixed with <code>streamline_name</code>.</p></dd>
 <dd><p>Path to the streamline file.</p></dd>
 
       <dt><code>streamline_name</code></dt>
-<dd><p>Bundle name; used to derive the cached data key.</p></dd>
+<dd><p>Bundle name, relative to the circuit folder; used
+to derive the cached data key.</p></dd>
 
       <dt><code>streamline_group</code></dt>
 <dd><p>Circuit group name.</p></dd>

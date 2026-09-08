@@ -23,9 +23,10 @@ add_streamline(brain, name, color = NA)
 
 - name:
 
-  one or more streamline keys, of the form `'group/bundle'`. The bundle
-  is the file name without extension and the group is the sub-folder
-  under `'fs/streamline'`; both are matched case-insensitively, and the
+  one or more streamline keys, of the form `'circuit/bundle'`. The
+  circuit is the top-level sub-folder under `'fs/streamline'` and the
+  bundle is the file name without extension, prefixed by any further
+  sub-folders it sits in; both are matched case-insensitively, and the
   spelling on disk is the one kept. A key may also glob the bundle with
   `'*'` to select a whole circuit at once. See ‘Key syntax’ below
 
@@ -40,7 +41,8 @@ add_streamline(brain, name, color = NA)
 
 `add_streamline` returns the `brain` object, invisibly. The underlying
 `brain$add_streamline` returns, invisibly, a named list of the bundles
-it added, keyed by `'group/bundle'`
+it added, keyed by `'circuit/bundle'`. That same key names the bundle's
+visibility controller in the viewer, as `'Show: circuit/bundle'`
 
 ## Details
 
@@ -54,17 +56,34 @@ the viewer.
 
 ## Key syntax
 
+A key names exactly one circuit, and the circuit is always the **first**
+component: everything after it is the bundle, so `'motor/left/AF'` is
+the bundle `'left/AF'` of circuit `'motor'`, not a circuit called
+`'motor/left'`. Sub-folders are therefore a way to load part of a
+circuit, not a way to create more of them, and all of `'motor'` shares
+one folder in the viewer's control panel.
+
 - `'motor/AF_left'`:
 
   one bundle, `'AF_left'`, in circuit `'motor'`
 
 - `'motor/*'`:
 
-  every bundle under `'fs/streamline/motor'`
+  every bundle in circuit `'motor'`, including those in its sub-folders
 
 - `'motor/'`:
 
   shorthand for `'motor/*'`
+
+- `'motor/left/AF'`:
+
+  one bundle stored as `'fs/streamline/motor/left/AF.tck'`, known as
+  `'left/AF'` within circuit `'motor'`
+
+- `'motor/left/*'`:
+
+  only the `'left'` sub-folder of circuit `'motor'`, rather than the
+  whole circuit
 
 - `'motor/CST_*'`:
 
@@ -72,17 +91,20 @@ the viewer.
 
 - `'motor'`:
 
-  no group prefix, hence `'default/motor'`: the file `'motor'` in the
+  no circuit prefix, hence `'default/motor'`: the file `'motor'` in the
   `'default'` circuit
 
 - `'default/'`:
 
   the `'default'` circuit, which covers `'fs/streamline/default'` plus
-  the files sitting directly in `'fs/streamline'`
+  the files sitting directly in `'fs/streamline'` – but not the other
+  circuits' folders
 
-`'*'` is only allowed in the bundle part; a wild card in the group part,
-such as `'*/AF_left'`, raises an error so that a misspelled circuit name
-fails loudly instead of quietly matching another circuit.
+`'*'` matches `'/'` as well, which is why `'motor/*'` reaches into
+sub-folders. It is only allowed in the last component, though: a wild
+card in a folder name, such as `'*/AF_left'` or `'motor/*/AF_left'`,
+raises an error so that a misspelled circuit or sub-folder fails loudly
+instead of quietly matching another one.
 
 ## Colors
 
@@ -92,11 +114,12 @@ A bundle takes the first color available from three sources:
 
 2.  the optional table `'fs/streamline/colormap.csv'`, which uses the
     same format as the drag-and-drop color table, with a `'Filename'`
-    and a `'Color'` column. A `'Filename'` entry may be `'group/name'`,
-    `'name'`, or `'group/'` (the trailing slash marks a group-wide
-    entry, which is how a whole circuit is painted one color); more
-    specific entries win, and all comparisons ignore case and
-    surrounding white spaces;
+    and a `'Color'` column. A `'Filename'` entry may be
+    `'circuit/bundle'`, `'bundle'`, the bundle's bare file name (for a
+    bundle stored in a sub-folder), or `'circuit/'` (the trailing slash
+    marks a circuit-wide entry, which is how a whole circuit is painted
+    one color); more specific entries win, and all comparisons ignore
+    case and surrounding white spaces;
 
 3.  otherwise a color derived from the bundle name itself, stable across
     sessions.
@@ -119,14 +142,20 @@ if (FALSE) { # \dontrun{
 
 brain <- threeBrain(path = "/path/to/fs", subject_code = "subject")
 
-# circuit group is "motor", bundle name is "AF_left"
+# circuit is "motor", bundle name is "AF_left"
 add_streamline(brain, "motor/AF_left", color = "#ff8800")
 
 # the whole `motor` circuit, alternating two colors
 add_streamline(brain, "motor/*", color = c("#ff8800", "#00ccff"))
 
+# only the `left` sub-folder of the same circuit
+add_streamline(brain, "motor/left/*")
+
 # several keys at once; colors are recycled over the resulting bundles
 add_streamline(brain, c("language/", "motor/CST_*"))
+
+# bundle keys double as controller names
+brain$plot(controllers = list("Show: motor/left/AF" = FALSE))
 
 brain$streamline_types
 brain$plot()

@@ -13,7 +13,7 @@ bundles contributing to the same brain circuit can be toggled together."></head>
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.52</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.53</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,11 +66,12 @@ bundles contributing to the same brain circuit can be toggled together.</p>
 
 
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>one or more streamline keys, of the form <code>'group/bundle'</code>.
-The bundle is the file name without extension and the group is the sub-folder
-under <code>'fs/streamline'</code>; both are matched case-insensitively, and the
-spelling on disk is the one kept.  A key may also glob the bundle with
-<code>'*'</code> to select a whole circuit at once.  See ‘Key syntax’ below</p></dd>
+<dd><p>one or more streamline keys, of the form <code>'circuit/bundle'</code>.
+The circuit is the top-level sub-folder under <code>'fs/streamline'</code> and the
+bundle is the file name without extension, prefixed by any further sub-folders
+it sits in; both are matched case-insensitively, and the spelling on disk is
+the one kept.  A key may also glob the bundle with <code>'*'</code> to select a whole
+circuit at once.  See ‘Key syntax’ below</p></dd>
 
 
 <dt id="arg-color">color<a class="anchor" aria-label="anchor" href="#arg-color"></a></dt>
@@ -84,7 +85,9 @@ bundle name.  See ‘Colors’</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>add_streamline</code> returns the <code>brain</code> object, invisibly.
 The underlying <code>brain$add_streamline</code> returns, invisibly, a named list of
-the bundles it added, keyed by <code>'group/bundle'</code></p>
+the bundles it added, keyed by <code>'circuit/bundle'</code>.  That same key names
+the bundle's visibility controller in the viewer, as
+<code>'Show: circuit/bundle'</code></p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -100,33 +103,50 @@ the convention used when tract files are dropped onto the viewer.</p>
     <h2 id="key-syntax">Key syntax<a class="anchor" aria-label="anchor" href="#key-syntax"></a></h2>
 
 
-<dl><dt><code>'motor/AF_left'</code></dt>
+<p>A key names exactly one circuit, and the circuit is always the <strong>first</strong>
+component: everything after it is the bundle, so
+<code>'motor/left/AF'</code> is the bundle <code>'left/AF'</code> of circuit
+<code>'motor'</code>, not a circuit called <code>'motor/left'</code>.  Sub-folders are
+therefore a way to load part of a circuit, not a way to create more of them,
+and all of <code>'motor'</code> shares one folder in the viewer's control panel.</p><dl><dt><code>'motor/AF_left'</code></dt>
 <dd><p>one bundle, <code>'AF_left'</code>, in circuit
     <code>'motor'</code></p></dd>
 
   <dt><code>'motor/*'</code></dt>
-<dd><p>every bundle under <code>'fs/streamline/motor'</code></p></dd>
+<dd><p>every bundle in circuit <code>'motor'</code>, including
+    those in its sub-folders</p></dd>
 
   <dt><code>'motor/'</code></dt>
 <dd><p>shorthand for <code>'motor/*'</code></p></dd>
+
+  <dt><code>'motor/left/AF'</code></dt>
+<dd><p>one bundle stored as
+    <code>'fs/streamline/motor/left/AF.tck'</code>, known as <code>'left/AF'</code> within
+    circuit <code>'motor'</code></p></dd>
+
+  <dt><code>'motor/left/*'</code></dt>
+<dd><p>only the <code>'left'</code> sub-folder of circuit
+    <code>'motor'</code>, rather than the whole circuit</p></dd>
 
   <dt><code>'motor/CST_*'</code></dt>
 <dd><p>bundles in <code>'motor'</code> whose name starts with
     <code>'CST_'</code></p></dd>
 
   <dt><code>'motor'</code></dt>
-<dd><p>no group prefix, hence <code>'default/motor'</code>: the file
-    <code>'motor'</code> in the <code>'default'</code> circuit</p></dd>
+<dd><p>no circuit prefix, hence <code>'default/motor'</code>: the
+    file <code>'motor'</code> in the <code>'default'</code> circuit</p></dd>
 
   <dt><code>'default/'</code></dt>
 <dd><p>the <code>'default'</code> circuit, which covers
     <code>'fs/streamline/default'</code> plus the files sitting directly in
-    <code>'fs/streamline'</code></p></dd>
+    <code>'fs/streamline'</code> – but not the other circuits' folders</p></dd>
 
 
-</dl><p><code>'*'</code> is only allowed in the bundle part; a wild card in the group part,
-such as <code>'*/AF_left'</code>, raises an error so that a misspelled circuit name
-fails loudly instead of quietly matching another circuit.</p>
+</dl><p><code>'*'</code> matches <code>'/'</code> as well, which is why <code>'motor/*'</code> reaches
+into sub-folders.  It is only allowed in the last component, though: a wild
+card in a folder name, such as <code>'*/AF_left'</code> or <code>'motor/*/AF_left'</code>,
+raises an error so that a misspelled circuit or sub-folder fails loudly
+instead of quietly matching another one.</p>
     </div>
     <div class="section level2">
     <h2 id="colors">Colors<a class="anchor" aria-label="anchor" href="#colors"></a></h2>
@@ -136,8 +156,9 @@ fails loudly instead of quietly matching another circuit.</p>
 <li><p>the optional table <code>'fs/streamline/colormap.csv'</code>, which uses the
     same format as the drag-and-drop color table, with a <code>'Filename'</code> and
     a <code>'Color'</code> column.  A <code>'Filename'</code> entry may be
-    <code>'group/name'</code>, <code>'name'</code>, or <code>'group/'</code> (the trailing slash
-    marks a group-wide entry, which is how a whole circuit is painted one
+    <code>'circuit/bundle'</code>, <code>'bundle'</code>, the bundle's bare file name (for
+    a bundle stored in a sub-folder), or <code>'circuit/'</code> (the trailing slash
+    marks a circuit-wide entry, which is how a whole circuit is painted one
     color); more specific entries win, and all comparisons ignore case and
     surrounding white spaces;</p></li>
 <li><p>otherwise a color derived from the bundle name itself, stable across
@@ -159,14 +180,20 @@ viewer starts, so avoid declaring more bundles than needed.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">brain</span> <span class="op">&lt;-</span> <span class="fu"><a href="threeBrain.html">threeBrain</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"/path/to/fs"</span>, subject_code <span class="op">=</span> <span class="st">"subject"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># circuit group is "motor", bundle name is "AF_left"</span></span></span>
+<span class="r-in"><span><span class="co"># circuit is "motor", bundle name is "AF_left"</span></span></span>
 <span class="r-in"><span><span class="fu">add_streamline</span><span class="op">(</span><span class="va">brain</span>, <span class="st">"motor/AF_left"</span>, color <span class="op">=</span> <span class="st">"#ff8800"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the whole `motor` circuit, alternating two colors</span></span></span>
 <span class="r-in"><span><span class="fu">add_streamline</span><span class="op">(</span><span class="va">brain</span>, <span class="st">"motor/*"</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#ff8800"</span>, <span class="st">"#00ccff"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># only the `left` sub-folder of the same circuit</span></span></span>
+<span class="r-in"><span><span class="fu">add_streamline</span><span class="op">(</span><span class="va">brain</span>, <span class="st">"motor/left/*"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># several keys at once; colors are recycled over the resulting bundles</span></span></span>
 <span class="r-in"><span><span class="fu">add_streamline</span><span class="op">(</span><span class="va">brain</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"language/"</span>, <span class="st">"motor/CST_*"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># bundle keys double as controller names</span></span></span>
+<span class="r-in"><span><span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span>controllers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"Show: motor/left/AF"</span> <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">brain</span><span class="op">$</span><span class="va">streamline_types</span></span></span>
 <span class="r-in"><span><span class="va">brain</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="op">)</span></span></span>
