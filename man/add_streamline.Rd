@@ -10,11 +10,12 @@ add_streamline(brain, name, color = NA)
 \item{brain}{a \code{'threeBrain'} brain object generated from
 \code{\link{threeBrain}} or \code{\link{merge_brain}}}
 
-\item{name}{one or more streamline keys, of the form \code{'group/bundle'}.
-The bundle is the file name without extension and the group is the sub-folder
-under \code{'fs/streamline'}; both are matched case-insensitively, and the
-spelling on disk is the one kept.  A key may also glob the bundle with
-\code{'*'} to select a whole circuit at once.  See \sQuote{Key syntax} below}
+\item{name}{one or more streamline keys, of the form \code{'circuit/bundle'}.
+The circuit is the top-level sub-folder under \code{'fs/streamline'} and the
+bundle is the file name without extension, prefixed by any further sub-folders
+it sits in; both are matched case-insensitively, and the spelling on disk is
+the one kept.  A key may also glob the bundle with \code{'*'} to select a whole
+circuit at once.  See \sQuote{Key syntax} below}
 
 \item{color}{line color, recycled over the bundles that \code{name} expands
 to; when \code{NA} (default) each bundle is colored from
@@ -24,7 +25,9 @@ bundle name.  See \sQuote{Colors}}
 \value{
 \code{add_streamline} returns the \code{brain} object, invisibly.
 The underlying \code{brain$add_streamline} returns, invisibly, a named list of
-the bundles it added, keyed by \code{'group/bundle'}
+the bundles it added, keyed by \code{'circuit/bundle'}.  That same key names
+the bundle's visibility controller in the viewer, as
+\code{'Show: circuit/bundle'}
 }
 \description{
 Registers a streamline file so it renders in the 3D viewer.  The tract data is
@@ -43,22 +46,36 @@ the convention used when tract files are dropped onto the viewer.
 }
 \section{Key syntax}{
 
+A key names exactly one circuit, and the circuit is always the \strong{first}
+component: everything after it is the bundle, so
+\code{'motor/left/AF'} is the bundle \code{'left/AF'} of circuit
+\code{'motor'}, not a circuit called \code{'motor/left'}.  Sub-folders are
+therefore a way to load part of a circuit, not a way to create more of them,
+and all of \code{'motor'} shares one folder in the viewer's control panel.
 \describe{
   \item{\code{'motor/AF_left'}}{one bundle, \code{'AF_left'}, in circuit
     \code{'motor'}}
-  \item{\code{'motor/*'}}{every bundle under \code{'fs/streamline/motor'}}
+  \item{\code{'motor/*'}}{every bundle in circuit \code{'motor'}, including
+    those in its sub-folders}
   \item{\code{'motor/'}}{shorthand for \code{'motor/*'}}
+  \item{\code{'motor/left/AF'}}{one bundle stored as
+    \code{'fs/streamline/motor/left/AF.tck'}, known as \code{'left/AF'} within
+    circuit \code{'motor'}}
+  \item{\code{'motor/left/*'}}{only the \code{'left'} sub-folder of circuit
+    \code{'motor'}, rather than the whole circuit}
   \item{\code{'motor/CST_*'}}{bundles in \code{'motor'} whose name starts with
     \code{'CST_'}}
-  \item{\code{'motor'}}{no group prefix, hence \code{'default/motor'}: the file
-    \code{'motor'} in the \code{'default'} circuit}
+  \item{\code{'motor'}}{no circuit prefix, hence \code{'default/motor'}: the
+    file \code{'motor'} in the \code{'default'} circuit}
   \item{\code{'default/'}}{the \code{'default'} circuit, which covers
     \code{'fs/streamline/default'} plus the files sitting directly in
-    \code{'fs/streamline'}}
+    \code{'fs/streamline'} -- but not the other circuits' folders}
 }
-\code{'*'} is only allowed in the bundle part; a wild card in the group part,
-such as \code{'*/AF_left'}, raises an error so that a misspelled circuit name
-fails loudly instead of quietly matching another circuit.
+\code{'*'} matches \code{'/'} as well, which is why \code{'motor/*'} reaches
+into sub-folders.  It is only allowed in the last component, though: a wild
+card in a folder name, such as \code{'*/AF_left'} or \code{'motor/*/AF_left'},
+raises an error so that a misspelled circuit or sub-folder fails loudly
+instead of quietly matching another one.
 }
 
 \section{Colors}{
@@ -69,8 +86,9 @@ A bundle takes the first color available from three sources:
   \item the optional table \code{'fs/streamline/colormap.csv'}, which uses the
     same format as the drag-and-drop color table, with a \code{'Filename'} and
     a \code{'Color'} column.  A \code{'Filename'} entry may be
-    \code{'group/name'}, \code{'name'}, or \code{'group/'} (the trailing slash
-    marks a group-wide entry, which is how a whole circuit is painted one
+    \code{'circuit/bundle'}, \code{'bundle'}, the bundle's bare file name (for
+    a bundle stored in a sub-folder), or \code{'circuit/'} (the trailing slash
+    marks a circuit-wide entry, which is how a whole circuit is painted one
     color); more specific entries win, and all comparisons ignore case and
     surrounding white spaces;
   \item otherwise a color derived from the bundle name itself, stable across
@@ -94,14 +112,20 @@ viewer starts, so avoid declaring more bundles than needed.
 
 brain <- threeBrain(path = "/path/to/fs", subject_code = "subject")
 
-# circuit group is "motor", bundle name is "AF_left"
+# circuit is "motor", bundle name is "AF_left"
 add_streamline(brain, "motor/AF_left", color = "#ff8800")
 
 # the whole `motor` circuit, alternating two colors
 add_streamline(brain, "motor/*", color = c("#ff8800", "#00ccff"))
 
+# only the `left` sub-folder of the same circuit
+add_streamline(brain, "motor/left/*")
+
 # several keys at once; colors are recycled over the resulting bundles
 add_streamline(brain, c("language/", "motor/CST_*"))
+
+# bundle keys double as controller names
+brain$plot(controllers = list("Show: motor/left/AF" = FALSE))
 
 brain$streamline_types
 brain$plot()

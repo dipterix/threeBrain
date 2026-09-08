@@ -23,7 +23,9 @@ Zhengjia Wang
 
     \item{\code{color}}{Line color as an upper-case \code{'#RRGGBB'} string.}
 
-    \item{\code{streamline_name}}{Bundle name, using the on-disk spelling.}
+    \item{\code{streamline_name}}{Bundle name, using the on-disk spelling.  Bundles
+stored in a sub-folder of the circuit keep that sub-path, for example
+\code{'left/AF'}.}
 
     \item{\code{streamline_group}}{Circuit group name, using the on-disk spelling.}
   }
@@ -80,7 +82,8 @@ suffixed with \code{streamline_name}.}
     \describe{
       \item{\code{name}}{Unique character name of the geometry.}
       \item{\code{path}}{Path to the streamline file.}
-      \item{\code{streamline_name}}{Bundle name; used to derive the cached data key.}
+      \item{\code{streamline_name}}{Bundle name, relative to the circuit folder; used
+to derive the cached data key.}
       \item{\code{streamline_group}}{Circuit group name.}
       \item{\code{color}}{Line color; any \R color specification.}
       \item{\code{group}}{\code{GeomGroup} that owns this geometry.}

@@ -430,17 +430,21 @@ Brain2 <- R6::R6Class(
         key <- streamline_parse_key(key_string)
 
         if (streamline_normalize_key(key$group) == "default") {
-          search_dirs <- c(
-            streamline_root,
-            streamline_match_dir(streamline_root, "default")
-          )
+          default_dir <- streamline_match_dir(streamline_root, "default")
+          search_dirs <- c(streamline_root, default_dir)
           # a hit directly under `fs/streamline` still belongs to `default`,
           # so never derive the group from `dirname()` here
           group_names <- rep("default", length(search_dirs))
+          # the sub-folders of `fs/streamline` are the other circuits, so that
+          # level is scanned flat -- otherwise the default `default/` key would
+          # drag in every circuit. `fs/streamline/default` is a circuit folder
+          # like any other and may nest.
+          search_nested <- c(FALSE, rep(TRUE, length(default_dir)))
         } else {
           search_dirs <- streamline_match_dir(streamline_root, key$group)
           # adopt the on-disk spelling of the folder
           group_names <- filename(search_dirs)
+          search_nested <- rep(TRUE, length(search_dirs))
         }
 
         found <- list()
@@ -450,7 +454,8 @@ Brain2 <- R6::R6Class(
           for (ii in seq_along(search_dirs)) {
             for (hit in streamline_match_files(
               search_dirs[[ii]],
-              key$pattern
+              key$pattern,
+              recursive = search_nested[[ii]]
             )) {
               bundle_key <- streamline_normalize_key(hit$name)
               if (bundle_key %in% seen) {
@@ -463,6 +468,13 @@ Brain2 <- R6::R6Class(
           }
         } else {
           for (ii in seq_along(search_dirs)) {
+            # a sub-path under `fs/streamline` itself would resolve into another
+            # circuit's folder, so only the flat file names count there
+            if (
+              !search_nested[[ii]] && grepl("/", key$pattern, fixed = TRUE)
+            ) {
+              next
+            }
             hit <- streamline_match_file(search_dirs[[ii]], key$pattern)
             if (length(hit)) {
               hit$group <- group_names[[ii]]
@@ -1931,10 +1943,12 @@ Brain2 <- R6::R6Class(
       )
       re <- unique(gsub(pattern, "", filenames, ignore.case = TRUE))
 
+      # sub-folders at any depth are listed, so a nested folder can be loaded on
+      # its own (`alic/stn/*`) instead of the whole circuit (`alic/*`)
       dirnames <- list.dirs(
         file.path(fs_path, "streamline"),
         full.names = FALSE,
-        recursive = FALSE
+        recursive = TRUE
       )
       dirnames <- dirnames[grepl("^[a-zA-Z0-9]", dirnames)]
       re <- c(sprintf("%s/*", dirnames), sprintf("default/%s", re))

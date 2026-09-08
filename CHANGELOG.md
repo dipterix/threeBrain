@@ -1,6 +1,10 @@
 ## Changes since last CRAN release
-* `f17b3f9d (HEAD -> master)` [_`dipterix`_]: Added class for streamline support into brain object
-* `d8157e9f (origin/master, origin/HEAD)` [_`dipterix`_]: Fixed the previous fix
+* `80ea55e0 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added annotation types to show the loaded annotations; added streamline types to template function
+* `4e67cbc8` [_`dipterix`_]: Lint fix
+* `de47d4a3` [_`dipterix`_]: Added more search paths for `add_atlas`, `add_annotation`, and `available_annotations`
+* `3428fd91` [_`dipterix`_]: Added `$available_*` to list builtin available objects
+* `5d061368` [_`dipterix`_]: Added class for streamline support into brain object
+* `d8157e9f` [_`dipterix`_]: Fixed the previous fix
 * `f6727032` [_`dipterix`_]: Fixed data options not updating when setting viewer data via proxy with `updateDisplay=false`
 * `cb087245` [_`dipterix`_]: `proxy$set_electrode_data` converts color to `Hex` codes instead of passing the color names
 * `140d4609` [_`dipterix`_]: Added a active-only mode for outlines so the electrode outlines are shown only when there is data

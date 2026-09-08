@@ -144,10 +144,12 @@ read_fs_mgh_header <- function(filepath, is_gzipped = "AUTO") {
 #' @param streamline_types streamline (\verb{tractography}) bundles to load from
 #' the \code{'fs/streamline'} folder; passed straight to
 #' \code{\link{add_streamline}}, so each entry may name one bundle
-#' (\code{'motor/AF_left'}) or a whole circuit group (\code{'motor/'} or
-#' \code{'motor/*'}). The default \code{'default/'} loads the \code{'default'}
-#' circuit, that is every streamline file placed directly under
-#' \code{'fs/streamline'} as well as under \code{'fs/streamline/default'}.
+#' (\code{'motor/AF_left'}), a whole circuit (\code{'motor/'} or
+#' \code{'motor/*'}, which reaches into the circuit's sub-folders too), or just
+#' one of those sub-folders (\code{'motor/left/*'}). The default
+#' \code{'default/'} loads the \code{'default'} circuit, that is every streamline
+#' file placed directly under \code{'fs/streamline'} as well as under
+#' \code{'fs/streamline/default'} -- the other circuits' folders are left alone.
 #' Use \code{NULL} to skip. Please note that each declared bundle is downloaded
 #' and parsed by the browser when the viewer starts, hence only one group is
 #' loaded by default; use \code{\link{add_streamline}} to add more.

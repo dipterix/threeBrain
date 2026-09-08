@@ -44,6 +44,15 @@ Streamline Visualization:
 * Use `KDTree` to query the streamlines that intersect the target volume
 * Streamlines have better memory management with random shuffle
 * In highlight mode faded streamline widths can be adjusted
+* `add_streamline` resolves sub-folders of a circuit, so part of a circuit can be
+  loaded on its own (`alic/stn/*` instead of `alic/*`); the circuit is still the
+  top-level folder, and a bundle in a sub-folder keeps that sub-path in its name
+* **Breaking**: streamline visibility controllers are named by the full
+  `circuit/bundle` key, the same key `add_streamline` takes, so two circuits
+  holding a bundle of the same name are no longer ambiguous. Update any
+  `controllers = list("Show: <bundle>" = ...)` to
+  `controllers = list("Show: <circuit>/<bundle>" = ...)`, including for the
+  `default` circuit
 
 Minor Changes:
 
