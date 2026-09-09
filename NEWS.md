@@ -54,6 +54,26 @@ Streamline Visualization:
   `controllers = list("Show: <circuit>/<bundle>" = ...)`, including for the
   `default` circuit
 
+Surface Thresholding:
+
+* Added `Surface Threshold Data`, `Surface Threshold Range`, and
+  `Surface Threshold Method` controllers, so a surface can be colored by one
+  vertex data while being thresholded on another, the way electrodes already
+  could. Vertices failing the threshold fall back to the underlay
+  (`curv`/`sulc`) color
+* The threshold data offers the same choices as `Surface Color Data`, including
+  drag-and-dropped `[custom measurement]` and `[custom annotation]`. Continuous
+  measurements use the same seven operators as the electrode threshold;
+  annotations threshold on a `|`-separated list of label names
+* The mask gates whichever overlay is active, so it applies to
+  `sync from voxels` and `sync from electrodes` as well as `vertices`
+* FreeSurfer `annot` files now keep their per-vertex color table keys and label
+  names, which is what makes annotation thresholding possible
+* Masked-out fragments now skip the volume and electrode sampling in the
+  surface shader instead of computing a color that is thrown away. With
+  `sync from electrodes` and 200 active contacts, thresholding away 87% of the
+  surface renders about 3x faster; the un-thresholded path is unchanged
+
 Minor Changes:
 
 * Automatically download template subject when `merge_brain` is called but the subject is missing
