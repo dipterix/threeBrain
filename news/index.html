@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.53</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.54</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,6 +77,13 @@
 <code>add_streamline</code> resolves sub-folders of a circuit, so part of a circuit can be loaded on its own (<code>alic/stn/*</code> instead of <code>alic/*</code>); the circuit is still the top-level folder, and a bundle in a sub-folder keeps that sub-path in its name</li>
 <li>
 <strong>Breaking</strong>: streamline visibility controllers are named by the full <code>circuit/bundle</code> key, the same key <code>add_streamline</code> takes, so two circuits holding a bundle of the same name are no longer ambiguous. Update any <code>controllers = list("Show: &lt;bundle&gt;" = ...)</code> to <code>controllers = list("Show: &lt;circuit&gt;/&lt;bundle&gt;" = ...)</code>, including for the <code>default</code> circuit</li>
+</ul><p>Surface Thresholding:</p>
+<ul><li>Added <code>Surface Threshold Data</code>, <code>Surface Threshold Range</code>, and <code>Surface Threshold Method</code> controllers, so a surface can be colored by one vertex data while being thresholded on another, the way electrodes already could. Vertices failing the threshold fall back to the underlay (<code>curv</code>/<code>sulc</code>) color</li>
+<li>The threshold data offers the same choices as <code>Surface Color Data</code>, including drag-and-dropped <code>[custom measurement]</code> and <code>[custom annotation]</code>. Continuous measurements use the same seven operators as the electrode threshold; annotations threshold on a <code>|</code>-separated list of label names</li>
+<li>The mask gates whichever overlay is active, so it applies to <code>sync from voxels</code> and <code>sync from electrodes</code> as well as <code>vertices</code>
+</li>
+<li>FreeSurfer <code>annot</code> files now keep their per-vertex color table keys and label names, which is what makes annotation thresholding possible</li>
+<li>Masked-out fragments now skip the volume and electrode sampling in the surface shader instead of computing a color that is thrown away. With <code>sync from electrodes</code> and 200 active contacts, thresholding away 87% of the surface renders about 3x faster; the un-thresholded path is unchanged</li>
 </ul><p>Minor Changes:</p>
 <ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
 <li>Electrode transparency is improved when visualized as geometry</li>
