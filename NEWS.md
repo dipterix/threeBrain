@@ -24,6 +24,12 @@ Worker Thread Infrastructure:
 * Registered `computeVolumeGradients` as a worker-callable function for offloading heavy gradient computation
 * Better fallback method for workers who don't get new job spawned
 * Worker spawn is throttled
+* Worker results that transfer their buffers back are no longer posted a
+  second time. The repeat post tried to clone the already-detached buffers and
+  logged an unhandled `DataCloneError` (`TypeError: Type error` in Safari)
+  for every surface
+* Errors thrown inside a worker are now reported back to the viewer, so the
+  request falls back to the main thread instead of waiting forever
 
 Shader Optimizations:
 

@@ -42,3 +42,5 @@
 ^\.positai$
 ^\.claude$
 ^\.lintr$
+^\.vscode/
+^threeBrain\.code-workspace$
