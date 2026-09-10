@@ -744,6 +744,20 @@ ViewerProxy <- R6::R6Class(
       private$get_value("mouse_clicked", list())
     },
 
+    #' @field mouse_event_focus Named list describing the object last focused
+    #'   with the viewer's focus mode (hold \code{'F'} and click).  Unlike
+    #'   \code{$mouse_event_click}, focus mode reaches surfaces, volume slices,
+    #'   voxel volumes and streamlines, and does not change the viewer's
+    #'   selection.  Entries include \code{'name'}, \code{'type'},
+    #'   \code{'geom_type'}, \code{'subject'}, the focus point in
+    #'   \code{'tkrRAS'} and \code{'ScanRAS'} coordinates, and, where the
+    #'   geometry defines them, one-based \code{'vertex_index'},
+    #'   \code{'face_index'} or \code{'line_index'} plus the underlay, display
+    #'   and threshold values under the cursor.  Reactive.
+    mouse_event_focus = function() {
+      private$get_value("mouse_focused", list())
+    },
+
     #' @field controllers Full named list of the viewer's current controller
     #'   (GUI panel) state.  Reactive.
     controllers = function() {

@@ -71,6 +71,17 @@ double-click mouse event in the viewer.  Reactive.}
     \item{\code{mouse_event_click}}{Named list describing the last single-click
 mouse event in the viewer.  Reactive.}
 
+    \item{\code{mouse_event_focus}}{Named list describing the object last focused
+with the viewer's focus mode (hold \code{'F'} and click).  Unlike
+\code{$mouse_event_click}, focus mode reaches surfaces, volume slices,
+voxel volumes and streamlines, and does not change the viewer's
+selection.  Entries include \code{'name'}, \code{'type'},
+\code{'geom_type'}, \code{'subject'}, the focus point in
+\code{'tkrRAS'} and \code{'ScanRAS'} coordinates, and, where the
+geometry defines them, one-based \code{'vertex_index'},
+\code{'face_index'} or \code{'line_index'} plus the underlay, display
+and threshold values under the cursor.  Reactive.}
+
     \item{\code{controllers}}{Full named list of the viewer's current controller
 (GUI panel) state.  Reactive.}
 

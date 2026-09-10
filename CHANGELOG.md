@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `80ea55e0 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added annotation types to show the loaded annotations; added streamline types to template function
+* `13958252 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added surface threshold controllers to threshold mesh colors
+* `766ad96c` [_`dipterix`_]: Streamlines can be stored in sub-folders and controller names for streamlines also show circuit names
+* `80ea55e0` [_`dipterix`_]: Added annotation types to show the loaded annotations; added streamline types to template function
 * `4e67cbc8` [_`dipterix`_]: Lint fix
 * `de47d4a3` [_`dipterix`_]: Added more search paths for `add_atlas`, `add_annotation`, and `available_annotations`
 * `3428fd91` [_`dipterix`_]: Added `$available_*` to list builtin available objects
