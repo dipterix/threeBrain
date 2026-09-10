@@ -22,7 +22,7 @@ generate_smooth_envelope(
 
   path to `'*h.pial'` surface in the 'FreeSurfer' folder, or a
   3-dimensional mesh, see
-  [`read.fs.surface`](https://rdrr.io/pkg/freesurferformats/man/read.fs.surface.html)
+  [`read.fs.surface`](https://dfsp-spirit.github.io/freesurferformats/reference/read.fs.surface.html)
 
 - save_as:
 
@@ -41,7 +41,7 @@ generate_smooth_envelope(
 
   format of saved file when `save_as` is not `NULL`; see `format`
   argument in function
-  [`write.fs.surface`](https://rdrr.io/pkg/freesurferformats/man/write.fs.surface.html)
+  [`write.fs.surface`](https://dfsp-spirit.github.io/freesurferformats/reference/write.fs.surface.html)
 
 ## Value
 

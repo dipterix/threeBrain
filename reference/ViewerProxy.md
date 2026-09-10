@@ -109,6 +109,17 @@ Zhengjia Wang
   Named list describing the last single-click mouse event in the viewer.
   Reactive.
 
+- `mouse_event_focus`:
+
+  Named list describing the object last focused with the viewer's focus
+  mode (hold `'F'` and click). Unlike `$mouse_event_click`, focus mode
+  reaches surfaces, volume slices, voxel volumes and streamlines, and
+  does not change the viewer's selection. Entries include `'name'`,
+  `'type'`, `'geom_type'`, `'subject'`, the focus point in `'tkrRAS'`
+  and `'ScanRAS'` coordinates, and, where the geometry defines them,
+  one-based `'vertex_index'`, `'face_index'` or `'line_index'` plus the
+  underlay, display and threshold values under the cursor. Reactive.
+
 - `controllers`:
 
   Full named list of the viewer's current controller (GUI panel) state.

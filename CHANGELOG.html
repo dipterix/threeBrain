@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.54</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.55</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,13 @@
 <div class="section level2">
 <h2 id="changes-since-last-cran-release">Changes since last CRAN release<a class="anchor" aria-label="anchor" href="#changes-since-last-cran-release"></a></h2>
 <ul><li>
-<code>80ea55e0 (HEAD -&gt; master, origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Added annotation types to show the loaded annotations; added streamline types to template function</li>
+<code>b1fd7355 (HEAD -&gt; master)</code> [<em><code>dipterix</code></em>]: Upgraded <code>three.js</code> engine to <code>r185</code>; Replaced the deprecated <code>three.js</code> <code>Clock</code> with a single shared <code>Timer</code>, advanced once per frame, so all animation deltas within a frame come from one time base; Rebased the vendored fat-line material onto <code>r185</code> and gave it a private shader key so it no longer competes with the upstream one; Rewrote the main-camera trackball on top of the <code>three.js</code> <code>ArcballControls</code> class; Pointer coordinates are taken fro <code>getBoundingClientRect()</code> instead of the deprecated <code>window.pageXOffset</code>, so rotation and panning stay aligned after the surrounding page scrolls; Measuring the viewer while it has no layout (a hidden <code>shiny</code> tab, <code>display: none</code>) no longer produces a <code>NaN</code> camera and a permanently blank canvas; Resetting the main camera now discards any zoom or pan still being damped; The <code>wheel</code> listener is registered as non-passive, removing the Chrome console warning the viewer used to emit on every load</li>
+<li>
+<code>13958252 (origin/master, origin/HEAD)</code> [<em><code>dipterix</code></em>]: Added surface threshold controllers to threshold mesh colors</li>
+<li>
+<code>766ad96c</code> [<em><code>dipterix</code></em>]: Streamlines can be stored in sub-folders and controller names for streamlines also show circuit names</li>
+<li>
+<code>80ea55e0</code> [<em><code>dipterix</code></em>]: Added annotation types to show the loaded annotations; added streamline types to template function</li>
 <li>
 <code>4e67cbc8</code> [<em><code>dipterix</code></em>]: Lint fix</li>
 <li>

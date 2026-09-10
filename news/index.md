@@ -36,6 +36,12 @@ Worker Thread Infrastructure:
   offloading heavy gradient computation
 - Better fallback method for workers who don’t get new job spawned
 - Worker spawn is throttled
+- Worker results that transfer their buffers back are no longer posted a
+  second time. The repeat post tried to clone the already-detached
+  buffers and logged an unhandled `DataCloneError`
+  (`TypeError: Type error` in Safari) for every surface
+- Errors thrown inside a worker are now reported back to the viewer, so
+  the request falls back to the main thread instead of waiting forever
 
 Shader Optimizations:
 
@@ -48,10 +54,45 @@ Shader Optimizations:
 
 Engine Updates:
 
-- Upgraded `three.js` engine to `r182`
+- Upgraded `three.js` engine to `r185`
+- Replaced the deprecated `three.js` `Clock` with a single shared
+  `Timer`, advanced once per frame, so all animation deltas within a
+  frame come from one time base
+- Rebased the vendored fat-line material onto `r185` and gave it a
+  private shader key so it no longer competes with the upstream one
 - Removed `jsm` folder; optimized electrode shader to calculate inverse
   `modelViewProjection` in JavaScript rather than vertex-shader
 - Updated `jsPDF` version
+
+Main Camera Controls:
+
+- Rewrote the main-camera trackball on top of the `three.js` `Controls`
+  base class and Pointer Events, replacing the separate mouse and touch
+  handler pairs it had carried since `r80`. Drags now use pointer
+  capture, so releasing the button outside the viewer (or outside the
+  browser window) no longer leaves the camera spinning, and pen input
+  works like a mouse
+- Wheel zoom now normalizes `event.deltaMode`. Firefox reports wheel
+  deltas in lines rather than pixels, which made one wheel notch zoom
+  roughly 30x less there than in Chrome; both now zoom at the same rate
+- Wheel zoom, drag zoom, and pinch zoom are anchored on the cursor, so
+  the point under the pointer stays put as you zoom. Set
+  `canvas.trackball.cursorZoom = false` for the previous zoom-to-center
+  behavior
+- Pointer coordinates are taken from `getBoundingClientRect()` instead
+  of the deprecated `window.pageXOffset`, so rotation and panning stay
+  aligned after the surrounding page scrolls
+- Measuring the viewer while it has no layout (a hidden `shiny` tab,
+  `display: none`) no longer produces a `NaN` camera and a permanently
+  blank canvas
+- Removed the trackball’s undocumented `A`/`S`/`D` key bindings, which
+  used the deprecated `keyCode` API and collided with the viewer’s own
+  `a`, `s`, and `d` shortcuts
+- Resetting the main camera now discards any zoom or pan still being
+  damped out, so the reset lands exactly on the initial camera instead
+  of being nudged off it by the tail of the last interaction
+- The `wheel` listener is registered as non-passive, removing the Chrome
+  console warning the viewer used to emit on every load
 
 Streamline Visualization:
 
