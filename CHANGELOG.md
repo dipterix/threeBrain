@@ -2,10 +2,12 @@
 
 ## Changes since last CRAN release
 
-- `23d0b77b (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Fixed some streamline reader counting wrong number
-  of lines; updated ruler mode to align with focus mode on picking
-  (`raycasting`) object
+- `f1a161f5 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Added surface color range and map for pre-loaded
+  surface values
+- `23d0b77b` \[*`dipterix`*\]: Fixed some streamline reader counting
+  wrong number of lines; updated ruler mode to align with focus mode on
+  picking (`raycasting`) object
 - `26230be1` \[*`dipterix`*\]: Worker results that transfer their
   buffers back are no longer posted a second time.
 - `b1fd7355` \[*`dipterix`*\]: Upgraded `three.js` engine to `r185`;
