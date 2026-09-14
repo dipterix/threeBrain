@@ -2,23 +2,29 @@
 
 ## Changes since last CRAN release
 
-- `b1fd7355 (HEAD -> master)` \[*`dipterix`*\]: Upgraded `three.js`
-  engine to `r185`; Replaced the deprecated `three.js` `Clock` with a
-  single shared `Timer`, advanced once per frame, so all animation
-  deltas within a frame come from one time base; Rebased the vendored
-  fat-line material onto `r185` and gave it a private shader key so it
-  no longer competes with the upstream one; Rewrote the main-camera
-  trackball on top of the `three.js` `ArcballControls` class; Pointer
-  coordinates are taken fro `getBoundingClientRect()` instead of the
-  deprecated `window.pageXOffset`, so rotation and panning stay aligned
-  after the surrounding page scrolls; Measuring the viewer while it has
-  no layout (a hidden `shiny` tab, `display: none`) no longer produces a
-  `NaN` camera and a permanently blank canvas; Resetting the main camera
-  now discards any zoom or pan still being damped; The `wheel` listener
-  is registered as non-passive, removing the Chrome console warning the
+- `23d0b77b (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Fixed some streamline reader counting wrong number
+  of lines; updated ruler mode to align with focus mode on picking
+  (`raycasting`) object
+- `26230be1` \[*`dipterix`*\]: Worker results that transfer their
+  buffers back are no longer posted a second time.
+- `b1fd7355` \[*`dipterix`*\]: Upgraded `three.js` engine to `r185`;
+  Replaced the deprecated `three.js` `Clock` with a single shared
+  `Timer`, advanced once per frame, so all animation deltas within a
+  frame come from one time base; Rebased the vendored fat-line material
+  onto `r185` and gave it a private shader key so it no longer competes
+  with the upstream one; Rewrote the main-camera trackball on top of the
+  `three.js` `ArcballControls` class; Pointer coordinates are taken fro
+  `getBoundingClientRect()` instead of the deprecated
+  `window.pageXOffset`, so rotation and panning stay aligned after the
+  surrounding page scrolls; Measuring the viewer while it has no layout
+  (a hidden `shiny` tab, `display: none`) no longer produces a `NaN`
+  camera and a permanently blank canvas; Resetting the main camera now
+  discards any zoom or pan still being damped; The `wheel` listener is
+  registered as non-passive, removing the Chrome console warning the
   viewer used to emit on every load
-- `13958252 (origin/master, origin/HEAD)` \[*`dipterix`*\]: Added
-  surface threshold controllers to threshold mesh colors
+- `13958252` \[*`dipterix`*\]: Added surface threshold controllers to
+  threshold mesh colors
 - `766ad96c` \[*`dipterix`*\]: Streamlines can be stored in sub-folders
   and controller names for streamlines also show circuit names
 - `80ea55e0` \[*`dipterix`*\]: Added annotation types to show the loaded

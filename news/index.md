@@ -134,6 +134,28 @@ Surface Thresholding:
   of the surface renders about 3x faster; the un-thresholded path is
   unchanged
 
+Surface Colors:
+
+- Added `Surface Color Map`, `Surface Color Min`, and
+  `Surface Color Max` controllers, so continuous surface data added with
+  `add_annotation` (for example `surf/sulc` or `surf/curv`) can be
+  re-colored from the viewer, not only drag-and-dropped measurements.
+  They show when `Surface Color` is `vertices` and the
+  `Surface Color Data` is continuous, and can be set from R,
+  e.g. `controllers = list("Surface Color Map" = "viridis")`
+- The color range defaults to `±max|v|` of the selected data and resets
+  whenever `Surface Color Data` changes. Both hemispheres now share this
+  range (they used to be scaled separately), and values outside it are
+  clamped to the end colors; use the `Surface Threshold` controllers to
+  hide values instead
+- Drag-and-dropped surface measurements are colored by the same
+  controllers: their `Color Map (Continuous)` selector sets
+  `Surface Color Map`, and the surface `Clipping Min`, `Clipping Max`,
+  and `Dynamic Color` controllers are removed
+- Switching from one continuous surface data to another no longer
+  carries the previous data’s clipping range over, which could hide most
+  of the new data
+
 Minor Changes:
 
 - Automatically download template subject when `merge_brain` is called
