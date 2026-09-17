@@ -54,6 +54,16 @@ whole circuit. Streamline coordinates are assumed to be in scanner `RAS`
 space, matching the convention used when tract files are dropped onto
 the viewer.
 
+The viewer simplifies the streamlines before drawing them, keeping the
+drawn line within `'Line Simplify Factor'` millimeters of the original.
+Tract files are often sampled much finer than the screen can show, and
+every segment costs time in each of the four views, so this is what
+keeps a large set of bundles interactive. The default is 0.05, and 0
+draws every point; set it from R with
+`brain$plot(controllers = list("Line Simplify Factor" = 0))`. Streamline
+lengths and the `'Line Selector'` distances are measured on all of the
+points either way.
+
 ## Key syntax
 
 A key names exactly one circuit, and the circuit is always the **first**
@@ -153,6 +163,9 @@ add_streamline(brain, "motor/left/*")
 
 # several keys at once; colors are recycled over the resulting bundles
 add_streamline(brain, c("language/", "motor/CST_*"))
+
+# draw every point of every streamline, instead of simplifying them
+brain$plot(controllers = list("Line Simplify Factor" = 0))
 
 # bundle keys double as controller names
 brain$plot(controllers = list("Show: motor/left/AF" = FALSE))

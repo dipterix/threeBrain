@@ -245,8 +245,9 @@ threejs_brain(
 - show_modal:
 
   logical or `"auto"`, whether to show a modal instead of direct
-  rendering the viewers; designed for users who do not have `'WebGL'`
-  support; only used in shiny applications
+  rendering the viewers; designed for users whose browsers render the
+  viewer with neither `WebGPU` nor `WebGL2`; only used in shiny
+  applications
 
 - embed:
 

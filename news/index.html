@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.57</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.58</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,17 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.4.0" id="threebrain-140">threeBrain 1.4.0<a class="anchor" aria-label="anchor" href="#threebrain-140"></a></h2>
-<p>Volume Rendering Improvements:</p>
+<p>Rendering Engine:</p>
+<ul><li>The viewer now renders with <code>WebGPU</code>, the successor to <code>WebGL</code>. Browsers or pages without <code>WebGPU</code> keep working: the viewer falls back to <code>WebGL2</code> by itself, and both draw the same picture. A <code>shiny</code> app served over plain <code>http</code> from anything but the local machine is such a page, since browsers only expose <code>WebGPU</code> in secure contexts</li>
+<li>All custom shaders (surfaces, <code>MRI</code> slices, volumes, electrodes, streamlines and fat lines) were rewritten as <code>three.js</code> node materials, because <code>WebGPU</code> cannot compile the previous <code>GLSL</code> code</li>
+<li>A viewer whose <code>GPU</code> device is lost (a driver reset, or a laptop waking up) now shows a message with a reload button instead of freezing</li>
+<li>In <code>shiny</code>, a viewer that gets re-inserted (for example by <code>renderUI()</code>) reuses its cached viewer. Every re-insert used to build a second viewer while the first one kept its graphics contexts, so a few re-inserts exhausted the browser’s supply of them</li>
+<li>Screenshots and video recordings no longer drop the side-panel titles</li>
+<li>Debug mode reports frame timings with the <code>three.js</code> <code>Inspector</code> panel, replacing <code>stats-gl</code>, which always reported zero <code>GPU</code> time</li>
+</ul><p>Standalone Viewers (<code>save_brain</code>):</p>
+<ul><li>A saved viewer now carries its web worker inside the page, so opening the file from disk no longer logs worker errors in <code>Chrome</code>, <code>Safari</code> and <code>Firefox</code>. Volume gradient maps, which were silently skipped in saved viewers, are computed again, and surfaces and streamlines do their heavy set-up off the main thread as they do on a server</li>
+<li>Wherever a worker genuinely cannot start, the viewer now says so once and does the work on the main thread instead. It used to try again for every surface and every volume, and one code path waited forever for a worker that never existed</li>
+</ul><p>Volume Rendering Improvements:</p>
 <ul><li>Added precomputed gradient textures for faster normal calculation during volume rendering</li>
 <li>Implemented 3D <code>Sobel</code> filter for computing gradients on both continuous (MRI) and discrete (atlas parcellation) volume data</li>
 <li>Added <code>MatCap</code> (Material Capture) texture-based lighting for improved visual quality of volumetric surfaces</li>
@@ -80,8 +90,11 @@
 <li>Removed the trackball’s undocumented <code>A</code>/<code>S</code>/<code>D</code> key bindings, which used the deprecated <code>keyCode</code> API and collided with the viewer’s own <code>a</code>, <code>s</code>, and <code>d</code> shortcuts</li>
 <li>Resetting the main camera now discards any zoom or pan still being damped out, so the reset lands exactly on the initial camera instead of being nudged off it by the tail of the last interaction</li>
 <li>The <code>wheel</code> listener is registered as non-passive, removing the Chrome console warning the viewer used to emit on every load</li>
+<li>Rotating, panning or zooming the main view no longer redraws the side panels, whose picture does not depend on the main camera. They are still redrawn whenever anything else changes, and always while animating, while the slice cameras follow the main camera, and while recording</li>
 </ul><p>Streamline Visualization:</p>
-<ul><li>Added support for <code>tt</code> streamline format</li>
+<ul><li>Streamlines are simplified before they are drawn, with the new <code>Line Simplify Factor</code> controller: a bundle’s points are dropped while the drawn line stays within that many millimeters of the original, and 0 draws every point. Tract files are often resampled far finer than the screen can show (the <code>CIT168</code> <code>alic</code> bundles carry a point every 0.08 mm), and every segment is transformed again in each of the four views. At the default 0.05 mm, those bundles draw 14 times fewer segments, use a third of the graphics memory, and take between a fifth and a tenth of the frame time they used to. Streamline lengths and the <code>Line Selector</code> distances are still measured on all of the points</li>
+<li>Fixed a length filter that kept every streamline of a bundle asking for one segment more than the bundle has, which <code>WebGPU</code> rejects, dropping the whole frame. It was reachable with <code>Line MinLen</code> on any bundle of fewer than 200 streamlines</li>
+<li>Added support for <code>tt</code> streamline format</li>
 <li>Fixed <code>trk</code> format; supported <code>tck</code> format (drag and drop)</li>
 <li>Use <code>KDTree</code> to query the streamlines that intersect the target volume</li>
 <li>Streamlines have better memory management with random shuffle</li>

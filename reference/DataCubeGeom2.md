@@ -32,7 +32,8 @@ Zhengjia Wang
 
 - `color_format`:
 
-  WebGL texture format string; either `"RGBAFormat"` or `"RedFormat"`.
+  `three.js` texture format string; either `"RGBAFormat"` or
+  `"RedFormat"`.
 
 - `color_map`:
 
@@ -120,7 +121,7 @@ Create a new data cube geometry using a 3D texture.
 
 - `color_format`:
 
-  WebGL texture format: `"RGBAFormat"` (default) or `"RedFormat"`.
+  `three.js` texture format: `"RGBAFormat"` (default) or `"RedFormat"`.
 
 - `cache_file`:
 

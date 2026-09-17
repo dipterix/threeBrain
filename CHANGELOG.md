@@ -2,9 +2,10 @@
 
 ## Changes since last CRAN release
 
-- `f1a161f5 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Added surface color range and map for pre-loaded
-  surface values
+- `c0902d80 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Removed stray `WebGPU` imports
+- `f1a161f5` \[*`dipterix`*\]: Added surface color range and map for
+  pre-loaded surface values
 - `23d0b77b` \[*`dipterix`*\]: Fixed some streamline reader counting
   wrong number of lines; updated ruler mode to align with focus mode on
   picking (`raycasting`) object
