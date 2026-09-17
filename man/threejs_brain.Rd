@@ -134,7 +134,7 @@ only use it when you have multiple widgets in one website}
 \item{\code{'presets'}}{preset \code{'gui'} methods}
 }}
 
-\item{show_modal}{logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have \code{'WebGL'} support; only used in shiny applications}
+\item{show_modal}{logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users whose browsers render the viewer with neither \verb{WebGPU} nor \verb{WebGL2}; only used in shiny applications}
 
 \item{embed}{whether to try embedding the viewer in current run-time; default is false (will launch default web browser); set to true if running in \code{'rmarkdown'} or \code{'quarto'}, or to see the viewer in \code{'RStudio'} default panel.}
 }

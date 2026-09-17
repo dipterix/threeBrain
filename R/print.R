@@ -21,6 +21,11 @@ to_html <- function(
   rand_id <- rand_string(length = 10)
 
   x$x$settings$cache_folder <- sprintf("#%s/", rand_id)
+  # The worker is embedded as well, so the page works when opened from disk,
+  # where its origin is opaque and a worker cannot be started from a path. The
+  # key is not namespaced by `rand_id`: several widgets in one document then
+  # share one blob, and identical duplicate blocks are harmless.
+  x$x$settings$worker_script <- paste0("#", WORKER_EMBED_KEY)
   # selfcontained = FALSE to save all data information
   tmp_dir <- tempdir(check = TRUE)
   wdir <- tempfile(tmpdir = tmp_dir)
@@ -47,44 +52,32 @@ to_html <- function(
     include.dirs = FALSE
   )
 
+  to_content <- function(lines) {
+    do.call(content$madd, as.list(lines))
+  }
+
+  worker_script <- find_worker_script(wdir)
+  if (!is.null(worker_script)) {
+    embed_file_blocks(
+      key = WORKER_EMBED_KEY,
+      path = worker_script,
+      datauri_type = "text/javascript",
+      sink = to_content
+    )
+  }
+
   # Make sure the parent path exists
   if (length(data_files)) {
-    DATAURI_MAX <- floor(65529 / 73 * 54) #72 / 4 * 3
     lapply(data_files, function(data_file) {
       data_abspath <- file.path(datapath_root, data_file)
 
       data_file <- gsub("[\\\\/]+", "/", x = data_file)
       data_file <- gsub("^[/]+", "", data_file)
-      if (endsWith(data_file, "json")) {
-        datauri_type <- "application/json"
-      } else {
-        datauri_type <- "application/octet-stream"
-      }
-
-      fsize0 <- file.size(data_abspath)
-      fsize <- fsize0
-      fin <- file(data_abspath, open = "rb")
-      ii <- 0
-      while (fsize > 0) {
-        raws <- readBin(con = fin, what = "raw", n = min(fsize, DATAURI_MAX))
-        content$madd(
-          sprintf(
-            "<script type='text/plain;charset=UTF-8' data-for='#%s/%s' data-partition='%d' data-type='%s' data-size='%.0f' data-start='%.0f' data-parition-size='%.0f'>",
-            rand_id,
-            data_file,
-            ii,
-            datauri_type,
-            fsize0,
-            fsize0 - fsize,
-            length(raws)
-          ),
-          jsonlite::base64_enc(input = raws),
-          "</script>"
-        )
-        fsize <- fsize - length(raws)
-        ii <- ii + 1
-      }
-      close(fin)
+      embed_file_blocks(
+        key = sprintf("%s/%s", rand_id, data_file),
+        path = data_abspath,
+        sink = to_content
+      )
     })
   }
   if (content$size() > 0) {

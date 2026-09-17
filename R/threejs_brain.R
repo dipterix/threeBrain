@@ -34,7 +34,7 @@
 #' @param browser_external logical, use system default browser (default) or built-in one.
 #' @param global_data,global_files internally use, mainly to store orientation matrices and files.
 #' @param qrcode 'URL' to show in the 'QR' code; can be a character string or a named list of \code{'url'} and \code{'text'} (hyper-reference text)
-#' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users who do not have \code{'WebGL'} support; only used in shiny applications
+#' @param show_modal logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users whose browsers render the viewer with neither \verb{WebGPU} nor \verb{WebGL2}; only used in shiny applications
 #' @param widget_id character, internally used as unique identifiers for widgets;
 #' only use it when you have multiple widgets in one website
 #' @param enable_cache whether to enable cache, useful when rendering the viewers repeatedly in shiny applications
@@ -587,6 +587,10 @@ save_brain <- function(widget, path, title = "3D Viewer", as_zip = FALSE, ...) {
   })
 
   widget$x$settings$cache_folder <- "#"
+  # The worker is embedded in the page too (see below): a page opened from disk
+  # has an opaque origin, so a worker can only be started from a blob built out
+  # of the document itself.
+  widget$x$settings$worker_script <- paste0("#", WORKER_EMBED_KEY)
 
   # selfcontained = FALSE to save all data information
   temp_file <- file.path(wdir, "_tmp.html")
@@ -688,51 +692,39 @@ save_brain <- function(widget, path, title = "3D Viewer", as_zip = FALSE, ...) {
     include.dirs = FALSE
   )
 
+  # Everything the page must carry: the worker first, then the data files. Read
+  # while `wdir` still exists (it is removed below).
+  worker_script <- find_worker_script(wdir)
+
   # Make sure the parent path exists
   directory <- dir_create(dirname(path))
-  if (length(data_files)) {
+  if (length(data_files) || !is.null(worker_script)) {
     # convert data into base64
     conn <- file(path, "w+")
     writeLines(pre, conn)
+    to_conn <- function(lines) {
+      writeLines(lines, conn)
+    }
 
-    DATAURI_MAX <- floor(65529 / 73 * 54) #72 / 4 * 3
+    if (!is.null(worker_script)) {
+      embed_file_blocks(
+        key = WORKER_EMBED_KEY,
+        path = worker_script,
+        datauri_type = "text/javascript",
+        sink = to_conn
+      )
+    }
+
     lapply(data_files, function(data_file) {
       data_abspath <- file.path(datapath_root, data_file)
 
       data_file <- gsub("[\\\\/]+", "/", x = data_file)
       data_file <- gsub("^[/]+", "", data_file)
-      if (endsWith(data_file, "json")) {
-        datauri_type <- "application/json"
-      } else {
-        datauri_type <- "application/octet-stream"
-      }
-
-      fsize0 <- file.size(data_abspath)
-      fsize <- fsize0
-      fin <- file(data_abspath, open = "rb")
-      ii <- 0
-      while (fsize > 0) {
-        raws <- readBin(con = fin, what = "raw", n = min(fsize, DATAURI_MAX))
-        writeLines(
-          c(
-            sprintf(
-              "<script type='text/plain;charset=UTF-8' data-for='#%s' data-partition='%d' data-type='%s' data-size='%.0f' data-start='%.0f' data-parition-size='%.0f'>",
-              data_file,
-              ii,
-              datauri_type,
-              fsize0,
-              fsize0 - fsize,
-              length(raws)
-            ),
-            jsonlite::base64_enc(input = raws),
-            "</script>"
-          ),
-          conn
-        )
-        fsize <- fsize - length(raws)
-        ii <- ii + 1
-      }
-      close(fin)
+      embed_file_blocks(
+        key = data_file,
+        path = data_abspath,
+        sink = to_conn
+      )
     })
 
     writeLines(post, conn)

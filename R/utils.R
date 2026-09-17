@@ -1050,3 +1050,75 @@ default_template_directory <- function(check = FALSE) {
 
   normalizePath(re, mustWork = FALSE)
 }
+
+# Base64 of one file, as the `<script data-for='#...'>` blocks a self-contained
+# page carries and `EmbeddedData.js` reads back. Written in partitions, because
+# a single text node of a few hundred megabytes is not a good idea, and handed
+# to `sink` a chunk at a time so no caller has to hold the whole file.
+#
+# `key` is what the viewer asks for, without the leading `#`: a data file's path
+# relative to the data folder, or `threebrain-worker.js` for the worker.
+embed_file_blocks <- function(key, path, datauri_type = NULL, sink) {
+  DATAURI_MAX <- floor(65529 / 73 * 54) # 72 / 4 * 3
+
+  if (is.null(datauri_type)) {
+    datauri_type <- if (endsWith(key, "json")) {
+      "application/json"
+    } else {
+      "application/octet-stream"
+    }
+  }
+
+  fsize0 <- file.size(path)
+  fsize <- fsize0
+  fin <- file(path, open = "rb")
+  on.exit({ close(fin) }, add = TRUE)
+
+  ii <- 0
+  while (fsize > 0) {
+    raws <- readBin(con = fin, what = "raw", n = min(fsize, DATAURI_MAX))
+    sink(c(
+      sprintf(
+        "<script type='text/plain;charset=UTF-8' data-for='#%s' data-partition='%d' data-type='%s' data-size='%.0f' data-start='%.0f' data-parition-size='%.0f'>",
+        key,
+        ii,
+        datauri_type,
+        fsize0,
+        fsize0 - fsize,
+        length(raws)
+      ),
+      jsonlite::base64_enc(input = raws),
+      "</script>"
+    ))
+    fsize <- fsize - length(raws)
+    ii <- ii + 1
+  }
+  invisible()
+}
+
+# The worker bundle that `saveWidget` just copied into `wdir`. Self-contained
+# pages embed it (see `embed_file_blocks`), because a page opened from disk has
+# an opaque origin and cannot start a worker from a path.
+WORKER_EMBED_KEY <- "threebrain-worker.js"
+
+find_worker_script <- function(wdir) {
+  found <- list.files(
+    file.path(wdir, "_lib"),
+    pattern = "^threebrain-worker\\.js$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+  if (length(found)) {
+    return(found[[1]])
+  }
+  # `saveWidget` did not copy it (an unusual dependency setup); fall back to the
+  # copy that ships with the package
+  fallback <- system.file(
+    "threeBrainJS/dist/threebrain-worker.js",
+    package = "threeBrain"
+  )
+  if (length(fallback) == 1 && nzchar(fallback) && file.exists(fallback)) {
+    return(fallback)
+  }
+  NULL
+}

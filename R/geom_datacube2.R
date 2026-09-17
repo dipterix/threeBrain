@@ -20,7 +20,7 @@ DataCubeGeom2 <- R6::R6Class(
     #' @field threshold Opacity threshold: voxel values below this level are
     #'   rendered as transparent.  Default \code{0.6}.
     threshold = 0.6,
-    #' @field color_format WebGL texture format string; either
+    #' @field color_format \verb{three.js} texture format string; either
     #'   \code{"RGBAFormat"} or \code{"RedFormat"}.
     color_format = "RGBAFormat",
     #' @field color_map Named list describing the four-channel color map applied
@@ -43,8 +43,8 @@ DataCubeGeom2 <- R6::R6Class(
     #'   bounding box in world-space units.  Default \code{c(128, 128, 128)}.
     #' @param group \code{GeomGroup} used to store the voxel data.
     #' @param position Numeric vector of length 3: geometry origin.
-    #' @param color_format WebGL texture format: \code{"RGBAFormat"} (default)
-    #'   or \code{"RedFormat"}.
+    #' @param color_format \verb{three.js} texture format: \code{"RGBAFormat"}
+    #'   (default) or \code{"RedFormat"}.
     #' @param cache_file Path to a JSON cache file, \code{TRUE} for a
     #'   temporary file, or \code{NULL} to keep data in memory.
     #' @param layer Camera layer.  Default \code{8} (main camera only).

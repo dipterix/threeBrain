@@ -3,6 +3,37 @@
 threeBrain 1.4.0
 =======
 
+Rendering Engine:
+
+* The viewer now renders with `WebGPU`, the successor to `WebGL`. Browsers or
+  pages without `WebGPU` keep working: the viewer falls back to `WebGL2` by
+  itself, and both draw the same picture. A `shiny` app served over plain
+  `http` from anything but the local machine is such a page, since browsers
+  only expose `WebGPU` in secure contexts
+* All custom shaders (surfaces, `MRI` slices, volumes, electrodes, streamlines
+  and fat lines) were rewritten as `three.js` node materials, because
+  `WebGPU` cannot compile the previous `GLSL` code
+* A viewer whose `GPU` device is lost (a driver reset, or a laptop waking up)
+  now shows a message with a reload button instead of freezing
+* In `shiny`, a viewer that gets re-inserted (for example by `renderUI()`)
+  reuses its cached viewer. Every re-insert used to build a second viewer while
+  the first one kept its graphics contexts, so a few re-inserts exhausted the
+  browser's supply of them
+* Screenshots and video recordings no longer drop the side-panel titles
+* Debug mode reports frame timings with the `three.js` `Inspector` panel,
+  replacing `stats-gl`, which always reported zero `GPU` time
+
+Standalone Viewers (`save_brain`):
+
+* A saved viewer now carries its web worker inside the page, so opening the file
+  from disk no longer logs worker errors in `Chrome`, `Safari` and `Firefox`.
+  Volume gradient maps, which were silently skipped in saved viewers, are
+  computed again, and surfaces and streamlines do their heavy set-up off the
+  main thread as they do on a server
+* Wherever a worker genuinely cannot start, the viewer now says so once and does
+  the work on the main thread instead. It used to try again for every surface and
+  every volume, and one code path waited forever for a worker that never existed
+
 Volume Rendering Improvements:
 
 * Added precomputed gradient textures for faster normal calculation during volume rendering
@@ -72,9 +103,27 @@ Main Camera Controls:
   nudged off it by the tail of the last interaction
 * The `wheel` listener is registered as non-passive, removing the Chrome
   console warning the viewer used to emit on every load
+* Rotating, panning or zooming the main view no longer redraws the side panels,
+  whose picture does not depend on the main camera. They are still redrawn
+  whenever anything else changes, and always while animating, while the slice
+  cameras follow the main camera, and while recording
 
 Streamline Visualization:
 
+* Streamlines are simplified before they are drawn, with the new
+  `Line Simplify Factor` controller: a bundle's points are dropped while the
+  drawn line stays within that many millimeters of the original, and 0 draws
+  every point. Tract files are often resampled far finer than the screen can
+  show (the `CIT168` `alic` bundles carry a point every 0.08 mm), and every
+  segment is transformed again in each of the four views. At the default
+  0.05 mm, those bundles draw 14 times fewer segments, use a third of the
+  graphics memory, and take between a fifth and a tenth of the frame time they
+  used to. Streamline lengths and the `Line Selector` distances are still
+  measured on all of the points
+* Fixed a length filter that kept every streamline of a bundle asking for one
+  segment more than the bundle has, which `WebGPU` rejects, dropping the whole
+  frame. It was reachable with `Line MinLen` on any bundle of fewer than 200
+  streamlines
 * Added support for `tt` streamline format
 * Fixed `trk` format; supported `tck` format (drag and drop)
 * Use `KDTree` to query the streamlines that intersect the target volume

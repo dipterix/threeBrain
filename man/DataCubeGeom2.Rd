@@ -24,7 +24,7 @@ Zhengjia Wang
     \item{\code{threshold}}{Opacity threshold: voxel values below this level are
 rendered as transparent.  Default \code{0.6}.}
 
-    \item{\code{color_format}}{WebGL texture format string; either
+    \item{\code{color_format}}{\verb{three.js} texture format string; either
 \code{"RGBAFormat"} or \code{"RedFormat"}.}
 
     \item{\code{color_map}}{Named list describing the four-channel color map applied
@@ -94,8 +94,8 @@ or \code{"scannerRAS"}.}
 bounding box in world-space units.  Default \code{c(128, 128, 128)}.}
       \item{\code{group}}{\code{GeomGroup} used to store the voxel data.}
       \item{\code{position}}{Numeric vector of length 3: geometry origin.}
-      \item{\code{color_format}}{WebGL texture format: \code{"RGBAFormat"} (default)
-or \code{"RedFormat"}.}
+      \item{\code{color_format}}{\verb{three.js} texture format: \code{"RGBAFormat"}
+(default) or \code{"RedFormat"}.}
       \item{\code{cache_file}}{Path to a JSON cache file, \code{TRUE} for a
 temporary file, or \code{NULL} to keep data in memory.}
       \item{\code{layer}}{Camera layer.  Default \code{8} (main camera only).}
