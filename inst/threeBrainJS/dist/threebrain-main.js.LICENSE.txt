@@ -252,14 +252,6 @@ PERFORMANCE OF THIS SOFTWARE.
  * @license Use it if you like it
  */
 
-/**
- * lil-gui
- * https://lil-gui.georgealways.com
- * @version 0.18.2
- * @author George Michael Brower
- * @license MIT
- */
-
 /** ====================================================================
  * @license
  * jsPDF XMP metadata plugin

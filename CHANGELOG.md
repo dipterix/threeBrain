@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `c0902d80 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Removed stray `WebGPU` imports
+* `0a0c03fa (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Big leap: using WebGPU instead of WebGL now!
+* `c0902d80` [_`dipterix`_]: Removed stray `WebGPU` imports
 * `f1a161f5` [_`dipterix`_]: Added surface color range and map for pre-loaded surface values
 * `23d0b77b` [_`dipterix`_]: Fixed some streamline reader counting wrong number of lines; updated ruler mode to align with focus mode on picking (`raycasting`) object
 * `26230be1` [_`dipterix`_]: Worker results that transfer their buffers back are no longer posted a second time.
