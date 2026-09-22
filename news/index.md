@@ -84,6 +84,10 @@ Shader Optimizations:
   optimized code paths
 - Implemented two-sided lighting with proper view-space normal
   correction
+- Added a per-camera lighting node (`ViewLighting`) so the four views
+  (main plus three side canvases), which intentionally light with
+  different lights, no longer evict and rebuild each other’s compiled
+  shader and pipeline on every switch, several times a frame
 
 Engine Updates:
 
@@ -131,6 +135,37 @@ Main Camera Controls:
   still redrawn whenever anything else changes, and always while
   animating, while the slice cameras follow the main camera, and while
   recording
+
+Control Panel:
+
+- The control panel’s widgets now run on `Tweakpane` instead of
+  `lil-gui`. The `addController()`/`onChange()`/folder API is unchanged,
+  so existing `controllers = list(...)` calls keep working for every
+  controller not renamed below
+- Added a range controller: one control with two handles for settings
+  that are really a min/max pair. `Frustum Near`/`Frustum Far` became a
+  single `Frustum` controller, and `Line MinLen`/`Line MaxLen` became a
+  single `Line Length` controller
+- **Breaking**: `Frustum Near`/`Frustum Far` and
+  `Line MinLen`/`Line MaxLen` are replaced by the `Frustum` and
+  `Line Length` range controllers above. Update any
+  `controllers = list("Frustum Near" = ..., "Frustum Far" = ...)` to
+  `controllers = list("Frustum" = list(min = ..., max = ...))`, and
+  `controllers = list("Line MinLen" = ..., "Line MaxLen" = ...)` to
+  `controllers = list("Line Length" = list(min = ..., max = ...))`
+- The electrode animation panel gained a `Display Data (Graph)` line
+  plot: it traces the focused electrode’s value over the recording’s
+  time axis with a play-head cursor, and stays hidden unless a
+  continuous variable with more than one time point is shown on the
+  focused electrode
+- `Voxel Label` and `Line Simplify Factor` now recompute only once a
+  drag or edit finishes, rather than on every intermediate value while
+  dragging
+- Changing `Background Color` also refreshes the activity graph above
+  once the color stops changing, keeping its colors in sync with the
+  panel theme
+- `Copy Controller State` and `Paste to Set State` still save and
+  restore panel values under the new panel engine
 
 Streamline Visualization:
 
@@ -213,6 +248,9 @@ Minor Changes:
 - Automatically download template subject when `merge_brain` is called
   but the subject is missing
 - Electrode transparency is improved when visualized as geometry
+- Electrode `Additional Data` text containing an `<a href=...>` link now
+  renders as a clickable link in a message bar at the bottom of the
+  canvas instead of raw markup; links open in a new tab
 - Using physical/standard materials for electrode prototype geometries
 - Allowed electrode prototype transforms to be rigid when mapping to
   template
@@ -289,6 +327,15 @@ Bug Fixes:
 
 - Suppressed rendering flags when the trackball is inactive, fixing the
   rendering policy
+- Fixed the `datacube2` (atlas) ISO surface: an unnormalized color-key
+  byte made every non-zero label take the `>= 1` branch, so the whole
+  surface rendered as a single flat color (the last entry in the color
+  map). Colors now decode from display space correctly, with a matched
+  emissive term so the surface’s brightness lines up with the
+  ray-marched volume it stands in for, and `GLTF` export bakes in the
+  same corrected colors
+- Fixed continuous color maps (surface data and the volume ray-marching
+  ramp) coming out too dark from converting `sRGB` to linear color twice
 
 ## threeBrain 1.3.0
 

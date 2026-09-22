@@ -2,8 +2,9 @@
 
 ## Changes since last CRAN release
 
-- `c0902d80 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Removed stray `WebGPU` imports
+- `0a0c03fa (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Big leap: using WebGPU instead of WebGL now!
+- `c0902d80` \[*`dipterix`*\]: Removed stray `WebGPU` imports
 - `f1a161f5` \[*`dipterix`*\]: Added surface color range and map for
   pre-loaded surface values
 - `23d0b77b` \[*`dipterix`*\]: Fixed some streamline reader counting

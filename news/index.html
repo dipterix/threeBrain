@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.58</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.59</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,6 +74,7 @@
 <ul><li>Converted <code>colorChannels</code> and <code>dithering</code> uniforms to compile-time shader defines for better GPU performance</li>
 <li>Added <code>USE_GRADIENT_MAP</code> and <code>SINGLE_CHANNEL</code> shader variants for optimized code paths</li>
 <li>Implemented two-sided lighting with proper view-space normal correction</li>
+<li>Added a per-camera lighting node (<code>ViewLighting</code>) so the four views (main plus three side canvases), which intentionally light with different lights, no longer evict and rebuild each other’s compiled shader and pipeline on every switch, several times a frame</li>
 </ul><p>Engine Updates:</p>
 <ul><li>Upgraded <code>three.js</code> engine to <code>r185</code>
 </li>
@@ -91,6 +92,18 @@
 <li>Resetting the main camera now discards any zoom or pan still being damped out, so the reset lands exactly on the initial camera instead of being nudged off it by the tail of the last interaction</li>
 <li>The <code>wheel</code> listener is registered as non-passive, removing the Chrome console warning the viewer used to emit on every load</li>
 <li>Rotating, panning or zooming the main view no longer redraws the side panels, whose picture does not depend on the main camera. They are still redrawn whenever anything else changes, and always while animating, while the slice cameras follow the main camera, and while recording</li>
+</ul><p>Control Panel:</p>
+<ul><li>The control panel’s widgets now run on <code>Tweakpane</code> instead of <code>lil-gui</code>. The <code>addController()</code>/<code>onChange()</code>/folder API is unchanged, so existing <code>controllers = list(...)</code> calls keep working for every controller not renamed below</li>
+<li>Added a range controller: one control with two handles for settings that are really a min/max pair. <code>Frustum Near</code>/<code>Frustum Far</code> became a single <code>Frustum</code> controller, and <code>Line MinLen</code>/<code>Line MaxLen</code> became a single <code>Line Length</code> controller</li>
+<li>
+<strong>Breaking</strong>: <code>Frustum Near</code>/<code>Frustum Far</code> and <code>Line MinLen</code>/<code>Line MaxLen</code> are replaced by the <code>Frustum</code> and <code>Line Length</code> range controllers above. Update any <code>controllers = list("Frustum Near" = ..., "Frustum Far" = ...)</code> to <code>controllers = list("Frustum" = list(min = ..., max = ...))</code>, and <code>controllers = list("Line MinLen" = ..., "Line MaxLen" = ...)</code> to <code>controllers = list("Line Length" = list(min = ..., max = ...))</code>
+</li>
+<li>The electrode animation panel gained a <code>Display Data (Graph)</code> line plot: it traces the focused electrode’s value over the recording’s time axis with a play-head cursor, and stays hidden unless a continuous variable with more than one time point is shown on the focused electrode</li>
+<li>
+<code>Voxel Label</code> and <code>Line Simplify Factor</code> now recompute only once a drag or edit finishes, rather than on every intermediate value while dragging</li>
+<li>Changing <code>Background Color</code> also refreshes the activity graph above once the color stops changing, keeping its colors in sync with the panel theme</li>
+<li>
+<code>Copy Controller State</code> and <code>Paste to Set State</code> still save and restore panel values under the new panel engine</li>
 </ul><p>Streamline Visualization:</p>
 <ul><li>Streamlines are simplified before they are drawn, with the new <code>Line Simplify Factor</code> controller: a bundle’s points are dropped while the drawn line stays within that many millimeters of the original, and 0 draws every point. Tract files are often resampled far finer than the screen can show (the <code>CIT168</code> <code>alic</code> bundles carry a point every 0.08 mm), and every segment is transformed again in each of the four views. At the default 0.05 mm, those bundles draw 14 times fewer segments, use a third of the graphics memory, and take between a fifth and a tenth of the frame time they used to. Streamline lengths and the <code>Line Selector</code> distances are still measured on all of the points</li>
 <li>Fixed a length filter that kept every streamline of a bundle asking for one segment more than the bundle has, which <code>WebGPU</code> rejects, dropping the whole frame. It was reachable with <code>Line MinLen</code> on any bundle of fewer than 200 streamlines</li>
@@ -119,6 +132,7 @@
 </ul><p>Minor Changes:</p>
 <ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
 <li>Electrode transparency is improved when visualized as geometry</li>
+<li>Electrode <code>Additional Data</code> text containing an <code>&lt;a href=...&gt;</code> link now renders as a clickable link in a message bar at the bottom of the canvas instead of raw markup; links open in a new tab</li>
 <li>Using physical/standard materials for electrode prototype geometries</li>
 <li>Allowed electrode prototype transforms to be rigid when mapping to template</li>
 <li>Removed <code>raveio</code> from comments and using scanner RAS for slices</li>
@@ -170,6 +184,8 @@
 <li>Added try-catch to handle file processing errors to avoid stopping processing files</li>
 </ul><p>Bug Fixes:</p>
 <ul><li>Suppressed rendering flags when the trackball is inactive, fixing the rendering policy</li>
+<li>Fixed the <code>datacube2</code> (atlas) ISO surface: an unnormalized color-key byte made every non-zero label take the <code>&gt;= 1</code> branch, so the whole surface rendered as a single flat color (the last entry in the color map). Colors now decode from display space correctly, with a matched emissive term so the surface’s brightness lines up with the ray-marched volume it stands in for, and <code>GLTF</code> export bakes in the same corrected colors</li>
+<li>Fixed continuous color maps (surface data and the volume ray-marching ramp) coming out too dark from converting <code>sRGB</code> to linear color twice</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.0" id="threebrain-130">threeBrain 1.3.0<a class="anchor" aria-label="anchor" href="#threebrain-130"></a></h2>
