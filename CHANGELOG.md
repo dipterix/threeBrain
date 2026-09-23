@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `0a0c03fa (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Big leap: using WebGPU instead of WebGL now!
+* `29ded9fa (HEAD -> master)` [_`dipterix`_]: Surface and volume display text shows values before the data names
+* `d0da81b5 (origin/master, origin/HEAD)` [_`dipterix`_]: Changed `lil-gui` to `tweakpane` for better controller experience; fixed color space issues for `ISOsurface`
+* `0a0c03fa` [_`dipterix`_]: Big leap: using WebGPU instead of WebGL now!
 * `c0902d80` [_`dipterix`_]: Removed stray `WebGPU` imports
 * `f1a161f5` [_`dipterix`_]: Added surface color range and map for pre-loaded surface values
 * `23d0b77b` [_`dipterix`_]: Fixed some streamline reader counting wrong number of lines; updated ruler mode to align with focus mode on picking (`raycasting`) object
