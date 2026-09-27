@@ -1040,12 +1040,18 @@ Brain2 <- R6::R6Class(
           transform_space,
           resampled = {
             trans_mat <- diag(rep(1, 4))
-            trans_mat[1:3, 4] <- ct_shape / 2
+            # model -> CT voxel index: the viewer puts voxel centers at integer
+            # indices, with the model origin at voxel (dim - 1) / 2 (`model2vox`);
+            # `dim / 2` placed the whole CT half a voxel off along each axis
+            trans_mat[1:3, 4] <- (ct_shape - 1) / 2
             trans_mat <- ct$get_IJK_to_tkrRAS(self) %*% trans_mat
           },
           ijk2ras = {
             trans_mat <- diag(rep(1, 4))
-            trans_mat[1:3, 4] <- ct_shape / 2
+            # model -> CT voxel index: the viewer puts voxel centers at integer
+            # indices, with the model origin at voxel (dim - 1) / 2 (`model2vox`);
+            # `dim / 2` placed the whole CT half a voxel off along each axis
+            trans_mat[1:3, 4] <- (ct_shape - 1) / 2
             if (
               length(transform_matrix) == 1 && is.character(transform_matrix)
             ) {
@@ -1069,7 +1075,10 @@ Brain2 <- R6::R6Class(
           },
           ras2ras = {
             trans_mat <- diag(rep(1, 4))
-            trans_mat[1:3, 4] <- ct_shape / 2
+            # model -> CT voxel index: the viewer puts voxel centers at integer
+            # indices, with the model origin at voxel (dim - 1) / 2 (`model2vox`);
+            # `dim / 2` placed the whole CT half a voxel off along each axis
+            trans_mat[1:3, 4] <- (ct_shape - 1) / 2
             if (
               length(transform_matrix) == 1 && is.character(transform_matrix)
             ) {
@@ -1094,7 +1103,10 @@ Brain2 <- R6::R6Class(
           },
           fsl = {
             trans_mat <- diag(rep(1, 4))
-            trans_mat[1:3, 4] <- ct_shape / 2
+            # model -> CT voxel index: the viewer puts voxel centers at integer
+            # indices, with the model origin at voxel (dim - 1) / 2 (`model2vox`);
+            # `dim / 2` placed the whole CT half a voxel off along each axis
+            trans_mat[1:3, 4] <- (ct_shape - 1) / 2
             ct_ijk2fsl <- ct$get_IJK_to_FSL()
 
             if (

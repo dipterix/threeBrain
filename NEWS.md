@@ -139,6 +139,25 @@ Control Panel:
   the color stops changing, keeping its colors in sync with the panel theme
 * `Copy Controller State` and `Paste to Set State` still save and restore
   panel values under the new panel engine
+* Buttons in the control panel span the full row instead of being capped to
+  the width of a value field
+
+View Layouts:
+
+* Added a `View Layout` controller (under `Volume Settings`, after
+  `Show Panels`) for slice-centered layouts similar to `ITK-SNAP`:
+  `3dview` (the default, unchanged), `sliceview-flat` (the three slices in a
+  row), `sliceview-axial`, `sliceview-coronal`, `sliceview-sagittal` (one
+  slice featured large) and `sliceview-twobytwo` (a 2x2 grid). Set it from R
+  with `controllers = list("View Layout" = "sliceview-twobytwo")`
+* The featured layouts arrange themselves by the viewer's shape: at 5:2 or
+  wider the featured slice sits next to the other two, down to 4:3 it sits below
+  them, and in a viewer narrower than 4:3, which leaves no room for the 3D view,
+  the 2x2 grid is used instead
+* In `sliceview-*` layouts the slice panels are locked in place, the 3D view is
+  framed in the foreground color, and the canvas text (legend, timestamp,
+  title) scales with the 3D view so it does not crowd a small panel
+* Keyboard: `l` cycles the view layouts; `Voxel Display` moved to `Shift+L`
 
 Streamline Visualization:
 
@@ -237,6 +256,9 @@ Minor Changes:
 * Improved readability for screenshots and recordings
 * Screenshot and recording filenames now use full-year with local timestamp
 * Preserved canvas context to allow obtaining `dataURL`
+* The on-canvas readout for surfaces and volumes shows the value before the data
+  name (`0.52 (sulc)` rather than `sulc = 0.52`), so a long data name, such as a
+  dropped file's, can run off the panel without hiding the value
 
 Electrode Localization:
 
@@ -244,6 +266,26 @@ Electrode Localization:
 * Added support for multiple electrodes
 * Added per-contact active/inactive tracking for `InstancedMesh` contacts: inactive contacts suppress outlines; `hide inactives` visibility mode discards inactive contact fragments via `HIDE_INACTIVE_CONTACTS` shader define
 * Added `guessHemisphere()` to infer electrode hemisphere from `FreeSurfer` anatomical label
+* Localization accuracy: every position calculation was checked against
+  coordinates computed independently from the image headers, and these were
+  fixed (voxel centers are at integer indices, as in `NIfTI` and `FreeSurfer`):
+  * Atlas labels (`FSLabel_*`) were read from a voxel half a voxel below the
+    contact, so a contact near a region boundary could get the neighboring
+    region's label. **Labels saved by earlier versions may be wrong**; for
+    example, 6 of the 48 saved `aparc+aseg` labels of the `RAVE` demo subject
+    `yael_demo_001` change
+  * Interpolating or extrapolating contacts along a shaft (with auto-refine
+    off) returned voxel corners, about 0.9 mm from the voxel centers, and could
+    read past the edge of the volume
+  * Clicking a `CT` with non-cubic voxels placed contacts slightly off the
+    depth of the clicked voxel (up to 0.03 mm on a 0.39 x 0.39 x 1 mm `CT`)
+  * Clicking a side panel placed the cross-hair 1 pixel left of and 2 pixels
+    above the pointer (1 to 2 mm at the default zoom)
+  * A `CT` passed to `brain$localize()` or `localization_module()` as a loaded
+    image (rather than a file path) failed to show up, and once shown sat half
+    a `CT` voxel off in every direction (0.87 mm with 1 mm voxels), as did every
+    contact placed or refined on it. `RAVE`'s electrode localization module
+    passes a file path and was not affected by this one
 
 New Experimental Electrode Prototypes:
 
@@ -281,6 +323,16 @@ Bug Fixes:
   for, and `GLTF` export bakes in the same corrected colors
 * Fixed continuous color maps (surface data and the volume ray-marching
   ramp) coming out too dark from converting `sRGB` to linear color twice
+* `MRI` slices and slice overlays are drawn with each voxel exactly where its
+  coordinates say it is. They used to be shifted by up to half a voxel, which
+  showed at high zoom as the cross-hair not landing on the voxel it reads
+* Surfaces colored with `sync from voxels` read the voxel whose center is
+  nearest instead of a neighboring one
+* The side panels no longer show a strip of the viewer's background color past
+  the edge of the volume
+* Electrode colors update as soon as a controller changes them; since the
+  `three.js` `r185` upgrade they showed one frame late, so a change could appear
+  not to take effect until the next interaction
 
 threeBrain 1.3.0
 =======
