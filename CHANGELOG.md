@@ -2,11 +2,15 @@
 
 ## Changes since last CRAN release
 
-- `29ded9fa (HEAD -> master)` \[*`dipterix`*\]: Surface and volume
-  display text shows values before the data names
-- `d0da81b5 (origin/master, origin/HEAD)` \[*`dipterix`*\]: Changed
-  `lil-gui` to `tweakpane` for better controller experience; fixed color
-  space issues for `ISOsurface`
+- `23920244 (HEAD -> master)` \[*`dipterix`*\]: Fixed controller width
+  for buttons; Fixed electrode color switch issues due to `r185`
+  upgrade, that has caused one-frame lag preventing electrode colors to
+  be displayed promptly
+- `ac39d41c (origin/master, origin/HEAD)` \[*`dipterix`*\]: Surface and
+  volume display text shows values before the data names
+- `d0da81b5` \[*`dipterix`*\]: Changed `lil-gui` to `tweakpane` for
+  better controller experience; fixed color space issues for
+  `ISOsurface`
 - `0a0c03fa` \[*`dipterix`*\]: Big leap: using WebGPU instead of WebGL
   now!
 - `c0902d80` \[*`dipterix`*\]: Removed stray `WebGPU` imports
