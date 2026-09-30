@@ -229,6 +229,23 @@ Surface Colors:
 * Switching from one continuous surface data to another no longer carries the
   previous data's clipping range over, which could hide most of the new data
 
+Shiny Proxy:
+
+* `brain_proxy()` has a new field `controller_specs` and method
+  `get_controller_specs()`: the type, choices, range, folder, and visibility of
+  every controller, so an application can check values before calling
+  `set_controllers()`. The viewer re-sends them when its control panel changes
+* The viewer now reports controller values to `shiny` half a second after any
+  change, including changes whose handlers did not report (for example
+  `Background Color` or `Voxel Display`) and crosshair moves made by clicking
+  a slice, so `$controllers` and `$plane_position` no longer go stale
+* Fields `background`, `surface_type`, `display_variable`, and `side_display`
+  now follow the controllers; they used to return their defaults because the
+  viewer never sent them
+* Field `plane_position` is reactive, as documented
+* Fixed `set_display_data()`, which failed in the viewer, and
+  `set_focused_electrode()`, which the viewer ignored
+
 Minor Changes:
 
 * Automatically download template subject when `merge_brain` is called but the subject is missing

@@ -24,6 +24,8 @@ Shiny reactivity when read inside a reactive context:
   \item{\code{plane_position}}{Named numeric vector \code{c(R, A, S)}
     giving the slice cursor position in FreeSurfer surface coordinates.}
   \item{\code{controllers}}{Full controller state list.}
+  \item{\code{controller_specs}}{Controller types, choices, and ranges,
+    keyed by controller name.}
   \item{\code{current_subject}}{Named list describing the currently active
     subject, including transform matrices.}
 }
@@ -35,7 +37,8 @@ Zhengjia Wang
   \if{html}{\out{<div class="r6-active-bindings">}}
   \describe{
     \item{\code{background}}{Current viewer background color as a hex string
-(e.g. \code{"#FFFFFF"}).  Reactive.}
+(e.g. \code{"#FFFFFF"}), from controller \code{"Background Color"}.
+Reactive.}
 
     \item{\code{text_decorations}}{List of current text decoration parameter lists
 pushed from JavaScript.  Each element has fields \code{id},
@@ -47,13 +50,16 @@ numeric), \code{up} (length-3 numeric), and \code{zoom} (positive
 numeric) describing the main camera state.  Reactive.}
 
     \item{\code{side_display}}{Logical indicating whether the side canvas panel
-is currently visible.  Reactive.}
+is currently visible (controller \code{"Show Panels"}), or
+\code{NULL} when the viewer has no side panels.  Reactive.}
 
     \item{\code{surface_type}}{Current brain surface type string
-(e.g. \code{"pial"}, \code{"white"}).  Reactive.}
+(e.g. \code{"pial"}, \code{"white"}), from controller
+\code{"Surface Type"}.  Reactive.}
 
     \item{\code{display_variable}}{Name of the data clip currently displayed in
-the viewer.  \code{"[None]"} when nothing is displayed.  Reactive.}
+the viewer (controller \code{"Display Data"}).  \code{"[None]"} when
+nothing is displayed.  Reactive.}
 
     \item{\code{plane_position}}{Named numeric vector \code{c(R, A, S)} giving
 the slice cursor position in FreeSurfer surface coordinates.
@@ -85,6 +91,17 @@ and threshold values under the cursor.  Reactive.}
     \item{\code{controllers}}{Full named list of the viewer's current controller
 (GUI panel) state.  Reactive.}
 
+    \item{\code{controller_specs}}{Named list, keyed by controller name, that
+describes each controller of the viewer's control panel:
+\code{name}, \code{folder} (e.g. \code{"Surface Settings"}),
+\code{type} (\code{"boolean"}, \code{"number"}, \code{"option"},
+\code{"color"}, \code{"string"}, \code{"function"}, \code{"interval"},
+or \code{"linegraph"}), \code{choices} and \code{values} (options),
+\code{min}, \code{max}, and \code{step} (numbers), \code{hidden}, and
+\code{disabled}.  The viewer re-sends it when its control panel
+changes (e.g. after new electrode data).  Values are in field
+\code{controllers}.  Reactive.}
+
     \item{\code{current_subject}}{Named list describing the currently active
 subject.  Includes \code{subject_code}, \code{Norig}, \code{Torig},
 and \code{xfm} transform matrices.  Reactive.}
@@ -105,6 +122,7 @@ and set-flags.  Reactive.}
     \item \href{#method-ViewerProxy-initialize}{\code{ViewerProxy$new()}}
     \item \href{#method-ViewerProxy-isolate}{\code{ViewerProxy$isolate()}}
     \item \href{#method-ViewerProxy-get_controllers}{\code{ViewerProxy$get_controllers()}}
+    \item \href{#method-ViewerProxy-get_controller_specs}{\code{ViewerProxy$get_controller_specs()}}
     \item \href{#method-ViewerProxy-set_controllers}{\code{ViewerProxy$set_controllers()}}
     \item \href{#method-ViewerProxy-set_background}{\code{ViewerProxy$set_background()}}
     \item \href{#method-ViewerProxy-set_title}{\code{ViewerProxy$set_title()}}
@@ -196,6 +214,20 @@ session returned by \code{shiny::getDefaultReactiveDomain()}.}
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ViewerProxy$get_controllers()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ViewerProxy-get_controller_specs"></a>}}
+\if{latex}{\out{\hypertarget{method-ViewerProxy-get_controller_specs}{}}}
+\subsection{\code{ViewerProxy$get_controller_specs()}}{
+  Get the controller specifications (type, choices, range)
+  as an isolated (non-reactive) list; see field
+  \code{controller_specs}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ViewerProxy$get_controller_specs()}
     \if{html}{\out{</div>}}
   }
 }

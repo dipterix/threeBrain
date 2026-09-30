@@ -20,6 +20,8 @@
 #'   \item{\code{plane_position}}{Named numeric vector \code{c(R, A, S)}
 #'     giving the slice cursor position in FreeSurfer surface coordinates.}
 #'   \item{\code{controllers}}{Full controller state list.}
+#'   \item{\code{controller_specs}}{Controller types, choices, and ranges,
+#'     keyed by controller name.}
 #'   \item{\code{current_subject}}{Named list describing the currently active
 #'     subject, including transform matrices.}
 #' }
@@ -50,6 +52,14 @@ ViewerProxy <- R6::R6Class(
       private$ensure_session()
       re <- private$session$input[[paste0(private$outputId, "_", name)]]
       if (is.null(re)) {
+        re <- default
+      }
+      re
+    },
+    # One controller's value from the `controllers` input (reactive)
+    get_controller_value = function(name, default = NULL) {
+      re <- private$get_value("controllers", list())[[name]]
+      if (length(re) != 1) {
         re <- default
       }
       re
@@ -107,6 +117,13 @@ ViewerProxy <- R6::R6Class(
     #' @description Get the current controller state as an isolated (non-reactive) list.
     get_controllers = function() {
       shiny::isolate(private$get_value("controllers", list()))
+    },
+
+    #' @description Get the controller specifications (type, choices, range)
+    #'   as an isolated (non-reactive) list; see field
+    #'   \code{controller_specs}.
+    get_controller_specs = function() {
+      shiny::isolate(self$controller_specs)
     },
 
     #' @description Send a named list of controller key-value pairs to the viewer.
@@ -513,7 +530,7 @@ ViewerProxy <- R6::R6Class(
     get_crosshair_position = function(
       space = c("tkrRAS", "MNI305", "MNI152", "scanner", "CRS")
     ) {
-      pos <- c(self$plane_position, 1)
+      pos <- c(shiny::isolate(self$plane_position), 1)
       space <- match.arg(space)
       subject <- shiny::isolate(self$current_subject)
       if (is.null(subject$subject_code)) {
@@ -611,9 +628,10 @@ ViewerProxy <- R6::R6Class(
   ),
   active = list(
     #' @field background Current viewer background color as a hex string
-    #'   (e.g. \code{"#FFFFFF"}).  Reactive.
+    #'   (e.g. \code{"#FFFFFF"}), from controller \code{"Background Color"}.
+    #'   Reactive.
     background = function() {
-      private$get_value("background", "#FFFFFF")
+      private$get_controller_value("Background Color", "#FFFFFF")
     },
     #' @field text_decorations List of current text decoration parameter lists
     #'   pushed from JavaScript.  Each element has fields \code{id},
@@ -663,28 +681,31 @@ ViewerProxy <- R6::R6Class(
     },
 
     #' @field side_display Logical indicating whether the side canvas panel
-    #'   is currently visible.  Reactive.
+    #'   is currently visible (controller \code{"Show Panels"}), or
+    #'   \code{NULL} when the viewer has no side panels.  Reactive.
     side_display = function() {
-      private$get_value("side_display", NULL)
+      private$get_controller_value("Show Panels", NULL)
     },
 
     #' @field surface_type Current brain surface type string
-    #'   (e.g. \code{"pial"}, \code{"white"}).  Reactive.
+    #'   (e.g. \code{"pial"}, \code{"white"}), from controller
+    #'   \code{"Surface Type"}.  Reactive.
     surface_type = function() {
-      private$get_value("surface_type", "pial")
+      private$get_controller_value("Surface Type", "pial")
     },
 
     #' @field display_variable Name of the data clip currently displayed in
-    #'   the viewer.  \code{"[None]"} when nothing is displayed.  Reactive.
+    #'   the viewer (controller \code{"Display Data"}).  \code{"[None]"} when
+    #'   nothing is displayed.  Reactive.
     display_variable = function() {
-      private$get_value("clip_name", "[None]")
+      private$get_controller_value("Display Data", "[None]")
     },
 
     #' @field plane_position Named numeric vector \code{c(R, A, S)} giving
     #'   the slice cursor position in FreeSurfer surface coordinates.
     #'   Reactive.
     plane_position = function() {
-      controllers <- self$get_controllers()
+      controllers <- private$get_value("controllers", list())
       sagittal_depth <- controllers[["Sagittal (L - R)"]]
       if (length(sagittal_depth) != 1) {
         sagittal_depth <- 0
@@ -762,6 +783,31 @@ ViewerProxy <- R6::R6Class(
     #'   (GUI panel) state.  Reactive.
     controllers = function() {
       private$get_value("controllers", list())
+    },
+
+    #' @field controller_specs Named list, keyed by controller name, that
+    #'   describes each controller of the viewer's control panel:
+    #'   \code{name}, \code{folder} (e.g. \code{"Surface Settings"}),
+    #'   \code{type} (\code{"boolean"}, \code{"number"}, \code{"option"},
+    #'   \code{"color"}, \code{"string"}, \code{"function"}, \code{"interval"},
+    #'   or \code{"linegraph"}), \code{choices} and \code{values} (options),
+    #'   \code{min}, \code{max}, and \code{step} (numbers), \code{hidden}, and
+    #'   \code{disabled}.  The viewer re-sends it when its control panel
+    #'   changes (e.g. after new electrode data).  Values are in field
+    #'   \code{controllers}.  Reactive.
+    controller_specs = function() {
+      specs <- private$get_value("controller_specs", list())
+      if (!is.list(specs) || !length(specs) || is.null(names(specs))) {
+        return(list())
+      }
+      lapply(specs, function(spec) {
+        for (field in c("choices", "values")) {
+          if (length(spec[[field]])) {
+            spec[[field]] <- unlist(spec[[field]])
+          }
+        }
+        spec
+      })
     },
 
     #' @field current_subject Named list describing the currently active
