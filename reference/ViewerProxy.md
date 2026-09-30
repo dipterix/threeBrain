@@ -41,6 +41,10 @@ Shiny reactivity when read inside a reactive context:
 
   Full controller state list.
 
+- `controller_specs`:
+
+  Controller types, choices, and ranges, keyed by controller name.
+
 - `current_subject`:
 
   Named list describing the currently active subject, including
@@ -54,8 +58,8 @@ Zhengjia Wang
 
 - `background`:
 
-  Current viewer background color as a hex string (e.g. `"#FFFFFF"`).
-  Reactive.
+  Current viewer background color as a hex string (e.g. `"#FFFFFF"`),
+  from controller `"Background Color"`. Reactive.
 
 - `text_decorations`:
 
@@ -71,18 +75,19 @@ Zhengjia Wang
 
 - `side_display`:
 
-  Logical indicating whether the side canvas panel is currently visible.
-  Reactive.
+  Logical indicating whether the side canvas panel is currently visible
+  (controller `"Show Panels"`), or `NULL` when the viewer has no side
+  panels. Reactive.
 
 - `surface_type`:
 
-  Current brain surface type string (e.g. `"pial"`, `"white"`).
-  Reactive.
+  Current brain surface type string (e.g. `"pial"`, `"white"`), from
+  controller `"Surface Type"`. Reactive.
 
 - `display_variable`:
 
-  Name of the data clip currently displayed in the viewer. `"[None]"`
-  when nothing is displayed. Reactive.
+  Name of the data clip currently displayed in the viewer (controller
+  `"Display Data"`). `"[None]"` when nothing is displayed. Reactive.
 
 - `plane_position`:
 
@@ -125,6 +130,17 @@ Zhengjia Wang
   Full named list of the viewer's current controller (GUI panel) state.
   Reactive.
 
+- `controller_specs`:
+
+  Named list, keyed by controller name, that describes each controller
+  of the viewer's control panel: `name`, `folder` (e.g.
+  `"Surface Settings"`), `type` (`"boolean"`, `"number"`, `"option"`,
+  `"color"`, `"string"`, `"function"`, `"interval"`, or `"linegraph"`),
+  `choices` and `values` (options), `min`, `max`, and `step` (numbers),
+  `hidden`, and `disabled`. The viewer re-sends it when its control
+  panel changes (e.g. after new electrode data). Values are in field
+  `controllers`. Reactive.
+
 - `current_subject`:
 
   Named list describing the currently active subject. Includes
@@ -152,6 +168,8 @@ Zhengjia Wang
 - [`ViewerProxy$isolate()`](#method-ViewerProxy-isolate)
 
 - [`ViewerProxy$get_controllers()`](#method-ViewerProxy-get_controllers)
+
+- [`ViewerProxy$get_controller_specs()`](#method-ViewerProxy-get_controller_specs)
 
 - [`ViewerProxy$set_controllers()`](#method-ViewerProxy-set_controllers)
 
@@ -260,6 +278,17 @@ Get the current controller state as an isolated (non-reactive) list.
 #### Usage
 
     ViewerProxy$get_controllers()
+
+------------------------------------------------------------------------
+
+### `ViewerProxy$get_controller_specs()`
+
+Get the controller specifications (type, choices, range) as an isolated
+(non-reactive) list; see field `controller_specs`.
+
+#### Usage
+
+    ViewerProxy$get_controller_specs()
 
 ------------------------------------------------------------------------
 

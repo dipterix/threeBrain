@@ -33,6 +33,10 @@ Named numeric vector c(R, A, S)
   controllers
 Full controller state list.
 
+  controller_specs
+Controller types, choices, and ranges,
+    keyed by controller name.
+
   current_subject
 Named list describing the currently active
     subject, including transform matrices.
@@ -73,6 +77,10 @@ Named numeric vector c(R, A, S)
   controllers
 Full controller state list.
 
+  controller_specs
+Controller types, choices, and ranges,
+    keyed by controller name.
+
   current_subject
 Named list describing the currently active
     subject, including transform matrices.
@@ -87,7 +95,7 @@ Named list describing the currently active
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.61</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.62</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,6 +160,10 @@ Shiny reactivity when read inside a reactive context:</p><dl><dt><code>backgroun
   <dt><code>controllers</code></dt>
 <dd><p>Full controller state list.</p></dd>
 
+  <dt><code>controller_specs</code></dt>
+<dd><p>Controller types, choices, and ranges,
+    keyed by controller name.</p></dd>
+
   <dt><code>current_subject</code></dt>
 <dd><p>Named list describing the currently active
     subject, including transform matrices.</p></dd>
@@ -168,7 +180,8 @@ Shiny reactivity when read inside a reactive context:</p><dl><dt><code>backgroun
     <h2 id="active-bindings">Active bindings<a class="anchor" aria-label="anchor" href="#active-bindings"></a></h2>
     <p></p><div class="r6-active-bindings"><dl><dt><code>background</code></dt>
 <dd><p>Current viewer background color as a hex string
-(e.g. <code>"#FFFFFF"</code>).  Reactive.</p></dd>
+(e.g. <code>"#FFFFFF"</code>), from controller <code>"Background Color"</code>.
+Reactive.</p></dd>
 
 
     <dt><code>text_decorations</code></dt>
@@ -186,17 +199,20 @@ numeric) describing the main camera state.  Reactive.</p></dd>
 
     <dt><code>side_display</code></dt>
 <dd><p>Logical indicating whether the side canvas panel
-is currently visible.  Reactive.</p></dd>
+is currently visible (controller <code>"Show Panels"</code>), or
+<code>NULL</code> when the viewer has no side panels.  Reactive.</p></dd>
 
 
     <dt><code>surface_type</code></dt>
 <dd><p>Current brain surface type string
-(e.g. <code>"pial"</code>, <code>"white"</code>).  Reactive.</p></dd>
+(e.g. <code>"pial"</code>, <code>"white"</code>), from controller
+<code>"Surface Type"</code>.  Reactive.</p></dd>
 
 
     <dt><code>display_variable</code></dt>
 <dd><p>Name of the data clip currently displayed in
-the viewer.  <code>"[None]"</code> when nothing is displayed.  Reactive.</p></dd>
+the viewer (controller <code>"Display Data"</code>).  <code>"[None]"</code> when
+nothing is displayed.  Reactive.</p></dd>
 
 
     <dt><code>plane_position</code></dt>
@@ -243,6 +259,19 @@ and threshold values under the cursor.  Reactive.</p></dd>
 (GUI panel) state.  Reactive.</p></dd>
 
 
+    <dt><code>controller_specs</code></dt>
+<dd><p>Named list, keyed by controller name, that
+describes each controller of the viewer's control panel:
+<code>name</code>, <code>folder</code> (e.g. <code>"Surface Settings"</code>),
+<code>type</code> (<code>"boolean"</code>, <code>"number"</code>, <code>"option"</code>,
+<code>"color"</code>, <code>"string"</code>, <code>"function"</code>, <code>"interval"</code>,
+or <code>"linegraph"</code>), <code>choices</code> and <code>values</code> (options),
+<code>min</code>, <code>max</code>, and <code>step</code> (numbers), <code>hidden</code>, and
+<code>disabled</code>.  The viewer re-sends it when its control panel
+changes (e.g. after new electrode data).  Values are in field
+<code>controllers</code>.  Reactive.</p></dd>
+
+
     <dt><code>current_subject</code></dt>
 <dd><p>Named list describing the currently active
 subject.  Includes <code>subject_code</code>, <code>Norig</code>, <code>Torig</code>,
@@ -271,6 +300,7 @@ and set-flags.  Reactive.</p></dd>
 <li><p><a href="#method-ViewerProxy-initialize"><code>ViewerProxy$new()</code></a></p></li>
 <li><p><a href="#method-ViewerProxy-isolate"><code>ViewerProxy$isolate()</code></a></p></li>
 <li><p><a href="#method-ViewerProxy-get_controllers"><code>ViewerProxy$get_controllers()</code></a></p></li>
+<li><p><a href="#method-ViewerProxy-get_controller_specs"><code>ViewerProxy$get_controller_specs()</code></a></p></li>
 <li><p><a href="#method-ViewerProxy-set_controllers"><code>ViewerProxy$set_controllers()</code></a></p></li>
 <li><p><a href="#method-ViewerProxy-set_background"><code>ViewerProxy$set_background()</code></a></p></li>
 <li><p><a href="#method-ViewerProxy-set_title"><code>ViewerProxy$set_title()</code></a></p></li>
@@ -354,10 +384,21 @@ session returned by <code><a href="https://rdrr.io/pkg/shiny/man/domains.html" c
 
 </div>
 
+<p></p><hr><a id="method-ViewerProxy-get_controller_specs"></a><div class="section">
+<h3 id="viewerproxy-get-controller-specs-"><code>ViewerProxy$get_controller_specs()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-get-controller-specs-"></a></h3>
+<p>Get the controller specifications (type, choices, range)
+  as an isolated (non-reactive) list; see field
+  <code>controller_specs</code>.</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">get_controller_specs</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+</div>
+
 <p></p><hr><a id="method-ViewerProxy-set_controllers"></a><div class="section">
 <h3 id="viewerproxy-set-controllers-"><code>ViewerProxy$set_controllers()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-controllers-"></a></h3>
 <p>Send a named list of controller key-value pairs to the viewer.</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_controllers</span><span class="op">(</span><span class="va">ctrl</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
@@ -373,7 +414,7 @@ session returned by <code><a href="https://rdrr.io/pkg/shiny/man/domains.html" c
 <p></p><hr><a id="method-ViewerProxy-set_background"></a><div class="section">
 <h3 id="viewerproxy-set-background-"><code>ViewerProxy$set_background()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-background-"></a></h3>
 <p>Set the viewer background color.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_background</span><span class="op">(</span><span class="va">col</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
@@ -389,7 +430,7 @@ session returned by <code><a href="https://rdrr.io/pkg/shiny/man/domains.html" c
 <p></p><hr><a id="method-ViewerProxy-set_title"></a><div class="section">
 <h3 id="viewerproxy-set-title-"><code>ViewerProxy$set_title()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-title-"></a></h3>
 <p>Display a title overlay in the viewer.</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_title</span><span class="op">(</span><span class="va">title</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
@@ -406,7 +447,7 @@ string or omit to clear the title.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_zoom_level"></a><div class="section">
 <h3 id="viewerproxy-set-zoom-level-"><code>ViewerProxy$set_zoom_level()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-zoom-level-"></a></h3>
 <p>Set the viewer camera zoom level.</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_zoom_level</span><span class="op">(</span><span class="va">zoom</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
@@ -422,7 +463,7 @@ string or omit to clear the title.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_camera"></a><div class="section">
 <h3 id="viewerproxy-set-camera-"><code>ViewerProxy$set_camera()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-camera-"></a></h3>
 <p>Point the main camera toward a direction in world space.</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_camera</span><span class="op">(</span><span class="va">position</span>, <span class="va">up</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
@@ -443,7 +484,7 @@ to <code>c(0, 0, 1)</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_display_data"></a><div class="section">
 <h3 id="viewerproxy-set-display-data-"><code>ViewerProxy$set_display_data()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-display-data-"></a></h3>
 <p>Change the displayed data clip and optional value range.</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_display_data</span><span class="op">(</span>variable <span class="op">=</span> <span class="st">""</span>, range <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
@@ -464,7 +505,7 @@ clear.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_focused_electrode"></a><div class="section">
 <h3 id="viewerproxy-set-focused-electrode-"><code>ViewerProxy$set_focused_electrode()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-focused-electrode-"></a></h3>
 <p>Move the viewer focus to a specific electrode contact.</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_focused_electrode</span><span class="op">(</span><span class="va">subject_code</span>, <span class="va">electrode</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
@@ -483,7 +524,7 @@ clear.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_electrode_data"></a><div class="section">
 <h3 id="viewerproxy-set-electrode-data-"><code>ViewerProxy$set_electrode_data()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-electrode-data-"></a></h3>
 <p>Push a data frame of electrode values to the viewer.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_electrode_data</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
 <span>  palettes <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -525,7 +566,7 @@ Default <code>TRUE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_electrode_palette"></a><div class="section">
 <h3 id="viewerproxy-set-electrode-palette-"><code>ViewerProxy$set_electrode_palette()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-electrode-palette-"></a></h3>
 <p>Apply a color palette to an existing electrode data clip.</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_electrode_palette</span><span class="op">(</span><span class="va">colors</span>, <span class="va">variable</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
@@ -544,7 +585,7 @@ Default <code>TRUE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_cex"></a><div class="section">
 <h3 id="viewerproxy-set-cex-"><code>ViewerProxy$set_cex()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-cex-"></a></h3>
 <p>Set the global text magnification factor for the viewer.</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_cex</span><span class="op">(</span>cex <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
@@ -560,7 +601,7 @@ Default <code>TRUE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_localization_electrode"></a><div class="section">
 <h3 id="viewerproxy-set-localization-electrode-"><code>ViewerProxy$set_localization_electrode()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-localization-electrode-"></a></h3>
 <p>Update the parameters of a localization electrode contact.</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_localization_electrode</span><span class="op">(</span><span class="va">which</span>, <span class="va">params</span>, update_shiny <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
@@ -583,7 +624,7 @@ Default <code>TRUE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_matrix_world"></a><div class="section">
 <h3 id="viewerproxy-set-matrix-world-"><code>ViewerProxy$set_matrix_world()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-matrix-world-"></a></h3>
 <p>Set the world transform matrix of a named scene object.</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_matrix_world</span><span class="op">(</span><span class="va">name</span>, <span class="va">m44</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
@@ -602,7 +643,7 @@ Default <code>TRUE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-add_localization_electrode"></a><div class="section">
 <h3 id="viewerproxy-add-localization-electrode-"><code>ViewerProxy$add_localization_electrode()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-add-localization-electrode-"></a></h3>
 <p>Add a new localization electrode contact to the viewer.</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">add_localization_electrode</span><span class="op">(</span><span class="va">params</span>, update_shiny <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
@@ -624,7 +665,7 @@ Default <code>TRUE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-clear_localization"></a><div class="section">
 <h3 id="viewerproxy-clear-localization-"><code>ViewerProxy$clear_localization()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-clear-localization-"></a></h3>
 <p>Remove all localization electrode contacts from the viewer.</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">clear_localization</span><span class="op">(</span>update_shiny <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-16">Arguments<a class="anchor" aria-label="anchor" href="#arguments-16"></a></h4>
@@ -642,7 +683,7 @@ Default <code>TRUE</code>.</p></dd>
 <h3 id="viewerproxy-set-incoming-localization-hemisphere-"><code>ViewerProxy$set_incoming_localization_hemisphere()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-incoming-localization-hemisphere-"></a></h3>
 <p>Set which hemisphere is targeted for the next electrode
   localization click.</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_incoming_localization_hemisphere</span><span class="op">(</span><span class="va">hemisphere</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-17">Arguments<a class="anchor" aria-label="anchor" href="#arguments-17"></a></h4>
@@ -659,7 +700,7 @@ Default <code>TRUE</code>.</p></dd>
 <h3 id="viewerproxy-set-values-"><code>ViewerProxy$set_values()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-values-"></a></h3>
 <p>Add an animation clip of scalar or categorical values to a
   named geometry object in the viewer.</p><div class="section">
-<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
+<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_values</span><span class="op">(</span></span>
 <span>  <span class="va">name</span>,</span>
 <span>  <span class="va">target_object</span>,</span>
@@ -727,7 +768,7 @@ after upload.  Default <code>FALSE</code>.</p></dd>
 <p>Returns a list of named lists, each with fields <code>id</code>,
 <code>text</code>, <code>position</code>, <code>color</code>, <code>font_size</code>, and
 <code>layer</code>.  Returns an empty list when no decorations exist.</p><div class="section">
-<h4 id="usage-20">Usage<a class="anchor" aria-label="anchor" href="#usage-20"></a></h4>
+<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">get_text_decorations</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -736,7 +777,7 @@ after upload.  Default <code>FALSE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-set_text_decoration"></a><div class="section">
 <h3 id="viewerproxy-set-text-decoration-"><code>ViewerProxy$set_text_decoration()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-text-decoration-"></a></h3>
 <p>Create or update a text decoration in the viewer.</p><div class="section">
-<h4 id="usage-21">Usage<a class="anchor" aria-label="anchor" href="#usage-21"></a></h4>
+<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_text_decoration</span><span class="op">(</span></span>
 <span>  <span class="va">id</span>,</span>
 <span>  text <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -774,7 +815,7 @@ after upload.  Default <code>FALSE</code>.</p></dd>
 <p></p><hr><a id="method-ViewerProxy-delete_text_decoration"></a><div class="section">
 <h3 id="viewerproxy-delete-text-decoration-"><code>ViewerProxy$delete_text_decoration()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-delete-text-decoration-"></a></h3>
 <p>Delete one or more text decorations from the viewer.</p><div class="section">
-<h4 id="usage-22">Usage<a class="anchor" aria-label="anchor" href="#usage-22"></a></h4>
+<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">delete_text_decoration</span><span class="op">(</span><span class="va">id</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-20">Arguments<a class="anchor" aria-label="anchor" href="#arguments-20"></a></h4>
@@ -791,7 +832,7 @@ after upload.  Default <code>FALSE</code>.</p></dd>
 <h3 id="viewerproxy-get-crosshair-position-"><code>ViewerProxy$get_crosshair_position()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-get-crosshair-position-"></a></h3>
 <p>Get the current slice cursor position in a requested
   coordinate space.</p><div class="section">
-<h4 id="usage-23">Usage<a class="anchor" aria-label="anchor" href="#usage-23"></a></h4>
+<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">get_crosshair_position</span><span class="op">(</span></span>
 <span>  space <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tkrRAS"</span>, <span class="st">"MNI305"</span>, <span class="st">"MNI152"</span>, <span class="st">"scanner"</span>, <span class="st">"CRS"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
@@ -811,7 +852,7 @@ after upload.  Default <code>FALSE</code>.</p></dd>
 <h3 id="viewerproxy-set-crosshair-position-"><code>ViewerProxy$set_crosshair_position()</code><a class="anchor" aria-label="anchor" href="#viewerproxy-set-crosshair-position-"></a></h3>
 <p>Move the slice cursor to a given position in a requested
   coordinate space.</p><div class="section">
-<h4 id="usage-24">Usage<a class="anchor" aria-label="anchor" href="#usage-24"></a></h4>
+<h4 id="usage-25">Usage<a class="anchor" aria-label="anchor" href="#usage-25"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ViewerProxy</span><span class="op">$</span><span class="fu">set_crosshair_position</span><span class="op">(</span></span>
 <span>  <span class="va">position</span>,</span>
 <span>  space <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tkrRAS"</span>, <span class="st">"MNI305"</span>, <span class="st">"MNI152"</span>, <span class="st">"scanner"</span>, <span class="st">"CRS"</span><span class="op">)</span></span>

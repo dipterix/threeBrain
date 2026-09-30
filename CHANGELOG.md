@@ -2,12 +2,14 @@
 
 ## Changes since last CRAN release
 
-- `23920244 (HEAD -> master)` \[*`dipterix`*\]: Fixed controller width
-  for buttons; Fixed electrode color switch issues due to `r185`
-  upgrade, that has caused one-frame lag preventing electrode colors to
-  be displayed promptly
-- `ac39d41c (origin/master, origin/HEAD)` \[*`dipterix`*\]: Surface and
-  volume display text shows values before the data names
+- `e0942e1b (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Added view-layout options; fixed slicer’s texture
+  offset; improved atlas label accuracy
+- `23920244` \[*`dipterix`*\]: Fixed controller width for buttons; Fixed
+  electrode color switch issues due to `r185` upgrade, that has caused
+  one-frame lag preventing electrode colors to be displayed promptly
+- `ac39d41c` \[*`dipterix`*\]: Surface and volume display text shows
+  values before the data names
 - `d0da81b5` \[*`dipterix`*\]: Changed `lil-gui` to `tweakpane` for
   better controller experience; fixed color space issues for
   `ISOsurface`

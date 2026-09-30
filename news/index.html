@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.61</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.62</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,6 +137,13 @@
 <li>The color range defaults to <code>±max|v|</code> of the selected data and resets whenever <code>Surface Color Data</code> changes. Both hemispheres now share this range (they used to be scaled separately), and values outside it are clamped to the end colors; use the <code>Surface Threshold</code> controllers to hide values instead</li>
 <li>Drag-and-dropped surface measurements are colored by the same controllers: their <code>Color Map (Continuous)</code> selector sets <code>Surface Color Map</code>, and the surface <code>Clipping Min</code>, <code>Clipping Max</code>, and <code>Dynamic Color</code> controllers are removed</li>
 <li>Switching from one continuous surface data to another no longer carries the previous data’s clipping range over, which could hide most of the new data</li>
+</ul><p>Shiny Proxy:</p>
+<ul><li>
+<code><a href="../reference/brain_proxy.html">brain_proxy()</a></code> has a new field <code>controller_specs</code> and method <code>get_controller_specs()</code>: the type, choices, range, folder, and visibility of every controller, so an application can check values before calling <code>set_controllers()</code>. The viewer re-sends them when its control panel changes</li>
+<li>The viewer now reports controller values to <code>shiny</code> half a second after any change, including changes whose handlers did not report (for example <code>Background Color</code> or <code>Voxel Display</code>) and crosshair moves made by clicking a slice, so <code>$controllers</code> and <code>$plane_position</code> no longer go stale</li>
+<li>Fields <code>background</code>, <code>surface_type</code>, <code>display_variable</code>, and <code>side_display</code> now follow the controllers; they used to return their defaults because the viewer never sent them</li>
+<li>Field <code>plane_position</code> is reactive, as documented</li>
+<li>Fixed <code>set_display_data()</code>, which failed in the viewer, and <code>set_focused_electrode()</code>, which the viewer ignored</li>
 </ul><p>Minor Changes:</p>
 <ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
 <li>Electrode transparency is improved when visualized as geometry</li>
