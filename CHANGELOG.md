@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `e0942e1b (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Added view-layout options; fixed slicer's texture offset; improved atlas label accuracy
+* `af63cdab (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Improved shiny proxy with bug fixes
+* `e0942e1b` [_`dipterix`_]: Added view-layout options; fixed slicer's texture offset; improved atlas label accuracy
 * `23920244` [_`dipterix`_]: Fixed controller width for buttons; Fixed electrode color switch issues due to `r185` upgrade, that has caused one-frame lag preventing electrode colors to be displayed promptly
 * `ac39d41c` [_`dipterix`_]: Surface and volume display text shows values before the data names
 * `d0da81b5` [_`dipterix`_]: Changed `lil-gui` to `tweakpane` for better controller experience; fixed color space issues for `ISOsurface`
