@@ -245,6 +245,14 @@ Shiny Proxy:
 * Field `plane_position` is reactive, as documented
 * Fixed `set_display_data()`, which failed in the viewer, and
   `set_focused_electrode()`, which the viewer ignored
+* A page can ask the viewer for a picture of one of its canvases (the main
+  view or a side view) by dispatching a bubbling `viewerApp.captureOnce` event
+  on it with an object as `detail`: the viewer draws a frame and, right after
+  drawing it, writes the picture to `detail.dataURI` (a `PNG` data URL). The
+  viewer draws only when something changes, and `Chromium` reads a `WebGPU`
+  canvas only in the task that drew it, so a copy taken otherwise is blank
+  (or, in browsers that keep the last frame, out of date). `shidashi` sends
+  the event before it captures a canvas for an agent
 
 Minor Changes:
 

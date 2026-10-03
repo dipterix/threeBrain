@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `af63cdab (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Improved shiny proxy with bug fixes
+* `b91ca1fe (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Allowed crosshairs to snap to the nearest electrode via keyboard shortcut "backquote"
+* `af63cdab` [_`dipterix`_]: Improved shiny proxy with bug fixes
 * `e0942e1b` [_`dipterix`_]: Added view-layout options; fixed slicer's texture offset; improved atlas label accuracy
 * `23920244` [_`dipterix`_]: Fixed controller width for buttons; Fixed electrode color switch issues due to `r185` upgrade, that has caused one-frame lag preventing electrode colors to be displayed promptly
 * `ac39d41c` [_`dipterix`_]: Surface and volume display text shows values before the data names
