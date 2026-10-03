@@ -2,8 +2,10 @@
 
 ## Changes since last CRAN release
 
-- `af63cdab (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Improved shiny proxy with bug fixes
+- `b91ca1fe (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Allowed crosshairs to snap to the nearest electrode
+  via keyboard shortcut “backquote”
+- `af63cdab` \[*`dipterix`*\]: Improved shiny proxy with bug fixes
 - `e0942e1b` \[*`dipterix`*\]: Added view-layout options; fixed slicer’s
   texture offset; improved atlas label accuracy
 - `23920244` \[*`dipterix`*\]: Fixed controller width for buttons; Fixed
