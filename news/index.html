@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.64</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.65</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -144,7 +144,7 @@
 <li>Fields <code>background</code>, <code>surface_type</code>, <code>display_variable</code>, and <code>side_display</code> now follow the controllers; they used to return their defaults because the viewer never sent them</li>
 <li>Field <code>plane_position</code> is reactive, as documented</li>
 <li>Fixed <code>set_display_data()</code>, which failed in the viewer, and <code>set_focused_electrode()</code>, which the viewer ignored</li>
-<li>A page can ask the viewer for a picture of one of its canvases (the main view or a side view) by dispatching a bubbling <code>viewerApp.captureOnce</code> event on it with an object as <code>detail</code>: the viewer draws a frame and, right after drawing it, writes the picture to <code>detail.dataURI</code> (a <code>PNG</code> data URL). The viewer draws only when something changes, and <code>Chromium</code> reads a <code>WebGPU</code> canvas only in the task that drew it, so a copy taken otherwise is blank (or, in browsers that keep the last frame, out of date). <code>shidashi</code> sends the event before it captures a canvas for an agent</li>
+<li>A page can ask the viewer for pictures of its views by dispatching one <code>viewerApp.captureOnce</code> event on the viewer’s wrapper (<code>.threejs-brain-canvas</code>) with an object as <code>detail</code>: the viewer draws a frame and, right after drawing it, adds <code>{ canvas, dataURI }</code> (a <code>PNG</code> data URL) to <code>detail.views</code> for the main view and each shown side view, and sets <code>detail.dataURI</code> to the main view. The viewer draws only when something changes, and a copy of a <code>WebGPU</code> canvas taken outside the frame that drew it can be blank (<code>Chromium</code>) or out of date. <code>shidashi</code> sends the event before it captures the viewer for an agent</li>
 </ul><p>Minor Changes:</p>
 <ul><li>Automatically download template subject when <code>merge_brain</code> is called but the subject is missing</li>
 <li>Electrode transparency is improved when visualized as geometry</li>
