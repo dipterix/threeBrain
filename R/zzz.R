@@ -325,8 +325,13 @@ read_nii2 <- function(
         mat <- brain$Torig %*% solve(brain$Norig) %*% mat
       },
       `4` = {
-        # MNI-152, MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
-        mat <- brain$Torig %*% solve(brain$Norig) %*% solve(brain$xfm) %*% mat
+        # MNI-152, MNI305RAS = inv(MNI305_to_MNI152)*MNI152RAS, and
+        # MNI305RAS = TalXFM*Norig*inv(Torig)*[tkrR tkrA tkrS 1]'
+        mat <- brain$Torig %*%
+          solve(brain$Norig) %*%
+          solve(brain$xfm) %*%
+          solve(MNI305_to_MNI152) %*%
+          mat
       },
       {
         mat <- brain$Torig %*% solve(brain$Norig) %*% mat

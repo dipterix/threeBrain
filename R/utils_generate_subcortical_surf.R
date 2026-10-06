@@ -317,8 +317,35 @@ generate_subcortical_surface <- function(
 #' @param lambda \code{'Laplacian'} smooth, the higher the smoother
 #' @param degree \code{'Laplacian'} degree; default is \code{2}
 #' @param threshold_lb lower threshold of the volume (to create mask); default is \code{0.5}
-#' @param threshold_ub upper threshold of the volume; default is \code{NA} (no upper bound)
+#' @param threshold_ub upper threshold of the volume; default is \code{NA} (no
+#' upper bound). Voxels strictly between the two thresholds form the mask;
+#' voxels that are \code{NA}, \code{NaN}, or infinite are invalid and never
+#' part of it
+#' @param smooth_method \code{"implicit"} (default) smooths with
+#' \code{\link[ravetools]{vcg_smooth_implicit}} using \code{lambda} and
+#' \code{degree}; \code{"explicit"} smooths with
+#' \code{\link[ravetools]{mris_smooth}} instead, repeated neighbor averaging
+#' whose memory grows only linearly with the surface (with a \pkg{ravetools}
+#' version that does not have \code{mris_smooth}, the \code{"laplace"} type
+#' of \code{\link[ravetools]{vcg_smooth_explicit}} is used);
+#' \code{"none"} returns the surface without smoothing
+#' @param smooth_iterations number of averaging rounds when
+#' \code{smooth_method} is \code{"explicit"}; default is \code{10}
+#' @param max_vertices used only when \code{smooth_method} is
+#' \code{"implicit"}, whose memory grows quickly with the surface size:
+#' surfaces with more vertices than this are reduced to about this many with
+#' \code{ravetools::vcg_decimate()} before smoothing, which removes vertices
+#' from flat regions first and keeps the shape; default is \code{500000}.
+#' Because the smoothing works in mesh steps, the same \code{lambda} and
+#' \code{degree} smooth a reduced surface more; use a larger value or
+#' \code{Inf} to smooth at full resolution. With a \pkg{ravetools} version
+#' that does not have \code{vcg_decimate}, surfaces with more than
+#' \code{20000} vertices are not smoothed, since the implicit smoothing of
+#' those versions can crash on large surfaces
 #' @returns Triangle \code{'rgl'} mesh (vertex positions in native \code{'RAS'}). If \code{save_to} is a valid path, then the mesh will be saved to this location.
+#' When no valid voxel lies within the thresholds, a warning is issued and
+#' the mesh has a single vertex at the origin and no face; it is still saved
+#' to \code{save_to}.
 #' @examples
 #'
 #' library(threeBrain)
@@ -346,59 +373,184 @@ volume_to_surf <- function(
   degree = 2,
   threshold_lb = 0.5,
   threshold_ub = NA,
-  format = "auto"
+  format = "auto",
+  smooth_method = c("implicit", "explicit", "none"),
+  smooth_iterations = 10L,
+  max_vertices = 500000
 ) {
   # volume = '~/rave_data/raw_dir/testtest2/rave-imaging/atlases/AHEAD Atlas (Alkemade 2020)/lh/GPe_prob.nii.gz'
+
+  # The surface is built the same way as `ieegio::volume_to_surface`; keep the
+  # two in sync. Only reading the volume, the returned mesh, and writing
+  # `save_to` differ
+
+  smooth_method <- match.arg(smooth_method)
 
   if (length(save_to) != 1 || is.na(save_to) || !nzchar(save_to)) {
     save_to <- NA
   }
 
+  # Every exit goes through here: write `save_to` (when given), return the
+  # mesh. `vb` keeps the 3-row layout of earlier versions (iso-surface and
+  # implicit smoothing); `mris_smooth` and `vcg_decimate` return 4 rows with
+  # the homogeneous 1
+  finalize_mesh <- function(mesh) {
+    if (NROW(mesh$vb) > 3) {
+      mesh$vb <- mesh$vb[1:3, , drop = FALSE]
+    }
+    if (!is.na(save_to)) {
+      freesurferformats::write.fs.surface(
+        filepath = save_to,
+        vertex_coords = t(mesh$vb[1:3, , drop = FALSE]),
+        faces = t(mesh$it[1:3, , drop = FALSE]),
+        format = format
+      )
+    }
+    mesh
+  }
+
   if (is.character(volume)) {
     volume <- read_volume(volume)
   }
-  vol_dim <- dim(volume$data)
+  vox_to_ras <- volume$Norig
+  volume <- volume$data
+
+  vol_dim <- dim(volume)
   if (length(vol_dim) < 3) {
     vol_dim <- c(vol_dim, 1, 1, 1)[seq_len(3)]
+    volume <- array(volume, dim = vol_dim)
   } else if (length(vol_dim) > 3) {
     vol_dim <- vol_dim[seq_len(3)]
-    volume$data <- array(volume$data[seq_len(prod(vol_dim))], dim = vol_dim)
+    volume <- array(volume[seq_len(prod(vol_dim))], dim = vol_dim)
+  }
+
+  # `NA`, `NaN`, and infinite voxels are invalid and never inside the mask
+  # (`FALSE & NA` is `FALSE`, so the mask has no `NA`). The bounds are
+  # exclusive, as in `ravetools::vcg_isosurface`
+  if (is.na(threshold_lb)) { threshold_lb <- 0 }
+  mask <- is.finite(volume) & volume > threshold_lb
+  if (!is.na(threshold_ub)) {
+    mask <- mask & volume < threshold_ub
+  }
+
+  if (!any(mask)) {
+    # empty surface: one vertex at the origin and no face, laid out like the
+    # meshes below (3-row `vb`, integer `it`, 4-row `normals`)
+    warning(
+      "`volume_to_surf`: no valid voxel is above ", threshold_lb,
+      if (!is.na(threshold_ub)) paste0(" and below ", threshold_ub),
+      "; the surface is empty",
+      if (!is.na(save_to)) paste0(" (still saved to ", save_to, ")"),
+      call. = FALSE
+    )
+    mesh <- structure(
+      list(
+        vb = matrix(0, nrow = 3, ncol = 1),
+        it = matrix(integer(0), nrow = 3, ncol = 0),
+        normals = matrix(c(0, 0, 0, 1), nrow = 4, ncol = 1)
+      ),
+      class = c("ravetools_mesh3d", "mesh3d")
+    )
+    return(finalize_mesh(mesh))
   }
 
   # Mesh
   mesh <- ravetools::vcg_isosurface(
-    volume = volume$data,
-    threshold_lb = threshold_lb,
-    threshold_ub = threshold_ub,
-    vox_to_ras = volume$Norig
+    volume = mask,
+    threshold_lb = 0.5,
+    vox_to_ras = vox_to_ras
   )
 
-  # smooth
-  if (isTRUE(lambda > 0)) {
-    mesh <- ravetools::vcg_smooth_implicit(
-      mesh,
-      lambda = lambda,
-      use_mass_matrix = TRUE,
-      fix_border = TRUE,
-      use_cot_weight = FALSE,
-      degree = degree
-    )
+  if (length(mesh$vb) < 9 && length(mesh$it) < 3) {
+    return(finalize_mesh(mesh))
   }
+
+  # For compatibility, since some functions are not available in the old versions
+  ravetools <- asNamespace("ravetools")
+  mris_smooth <- ravetools$mris_smooth
+  vcg_decimate <- ravetools$vcg_decimate
+
+  if (smooth_method == "explicit" && !is.function(mris_smooth)) {
+    warning("Explicit smooth is requested but package `ravetools` version is too low to have `mris_smooth`; using `vcg_smooth_explicit` instead.")
+  }
+
+  smooth <- function(mesh) {
+    if (smooth_method == "none" || !length(mesh$it) || !length(mesh$vb)) {
+      return(mesh)
+    }
+    if (smooth_method == "explicit") {
+      if (is.function(mris_smooth)) {
+        mesh <- mris_smooth(mesh, niterations = as.integer(smooth_iterations))
+      } else {
+        mesh <- ravetools::vcg_smooth_explicit(
+          mesh,
+          type = "laplace",
+          iteration = as.integer(smooth_iterations)
+        )
+      }
+    } else if (isTRUE(lambda > 0)) {
+      mesh <- ravetools::vcg_smooth_implicit(
+        mesh,
+        lambda = lambda,
+        use_mass_matrix = TRUE,
+        fix_border = TRUE,
+        use_cot_weight = FALSE,
+        degree = degree
+      )
+    }
+    mesh
+  }
+
+  # An iso-surface carries one vertex per voxel boundary, millions for a
+  # whole-brain mask at sub-millimeter resolution, finer than the voxels
+  # resolve. Implicit smoothing solves a linear system whose memory grows
+  # with the surface (several GB for millions of vertices), so above
+  # `max_vertices` the surface is decimated (flat regions first) before it is
+  # smoothed. The 'Laplacian' works in mesh steps, so the same `lambda` and
+  # `degree` smooth a decimated mesh more in millimeters; users who want
+  # full-resolution smoothing raise `max_vertices`. Explicit smoothing (and
+  # no smoothing) needs memory linear in the surface and is never decimated.
+  # `ravetools` without `vcg_decimate` (0.3.2 and earlier) has an implicit
+  # smoother that crashes R with a segmentation fault on large surfaces, so
+  # there only surfaces up to `legacy_smooth_limit` vertices are smoothed
+  n_vertices <- ncol(mesh$vb)
+  max_vertices <- as.numeric(max_vertices)[[1]]
+  legacy_smooth_limit <- 20000
+
+  if (smooth_method == "implicit" && length(mesh$it)) {
+    if (is.function(vcg_decimate)) {
+      if (isTRUE(n_vertices > max_vertices)) {
+        # Decimate is required before smoothing
+        mesh <- vcg_decimate(mesh, ratio = max_vertices / n_vertices)
+      }
+      mesh <- smooth(mesh)
+    } else if (n_vertices <= legacy_smooth_limit) {
+      mesh <- smooth(mesh)
+    } else if (isTRUE(lambda > 0)) {
+      warning(sprintf(
+        paste0(
+          "The surface has %d vertices, more than %d that the installed ",
+          "`ravetools` can smooth safely without `vcg_decimate`; no ",
+          "smoothing is applied. Please update `ravetools`."
+        ),
+        n_vertices, legacy_smooth_limit
+      ))
+    }
+  } else {
+    mesh <- smooth(mesh)
+  }
+
+  if (length(mesh$vb) < 9 && length(mesh$it) < 3) {
+    return(finalize_mesh(mesh))
+  }
+
   mesh <- ravetools::vcg_update_normals(mesh)
 
   # ravetools::rgl_view({
   #   ravetools::rgl_call("shade3d", mesh, col = 'red')
   # })
 
-  if (!is.na(save_to)) {
-    freesurferformats::write.fs.surface(
-      filepath = save_to,
-      vertex_coords = t(mesh$vb[1:3, , drop = FALSE]),
-      faces = t(mesh$it[1:3, , drop = FALSE]),
-      format = format
-    )
-  }
-  mesh
+  finalize_mesh(mesh)
 }
 
 # idx <- unique(as.vector(atlas$data))

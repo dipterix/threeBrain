@@ -270,6 +270,20 @@ Minor Changes:
 * Added global ruler next to compass
 * Added `read_colormap` to support reading from `RAVE` (`JSON`) or `ITK-SNAP` format
 * Mask is now applied to slice overlays
+* `volume_to_surf` with the default implicit smoothing reduces surfaces with
+  more than `max_vertices` vertices (500,000 by default) with
+  `ravetools::vcg_decimate` before smoothing; a whole-brain atlas at
+  sub-millimeter resolution gives millions of vertices and used to crash `R`
+  while smoothing. The same `lambda` and `degree` smooth a decimated mesh
+  more, so raise `max_vertices` to smooth at full resolution. With a
+  `ravetools` version that has no `vcg_decimate` (0.3.2 and earlier, whose
+  implicit smoother crashes on large surfaces), surfaces with more than
+  20,000 vertices are returned without smoothing, with a warning
+* `volume_to_surf` gains `smooth_method = "explicit"` to smooth with
+  `ravetools::mris_smooth` (`smooth_iterations` rounds of neighbor averaging)
+  instead of the implicit solver, falling back to the `"laplace"` type of
+  `ravetools::vcg_smooth_explicit` when `mris_smooth` is not available, and
+  `smooth_method = "none"` to skip smoothing; neither is decimated
 * Use `MeshBasicMaterial` when rendering sphere electrodes for better performance
 * Updated `BlueRed` color palette to match with the `ravebuiltins` color
 * Removed obsolete `freesurfer_brain` and embrace the new universal interface `threeBrain`
@@ -359,6 +373,20 @@ Bug Fixes:
 * Electrode colors update as soon as a controller changes them; since the
   `three.js` `r185` upgrade they showed one frame late, so a change could appear
   not to take effect until the next interaction
+* Electrode tables with `MNI152` but no `MNI305` columns now get `MNI305`
+  converted from `MNI152`; unless `coord_sys` was `MNI152`, the values used to
+  be copied unchanged. Rows whose `MNI152` coordinates are all zero keep their
+  `MNI305` coordinates missing
+* `localization_module()` and `localize()` given a `CT` already read into `R`
+  now convert volumes whose `NIfTI` transform is coded as `MNI152` from
+  `MNI152` to `MNI305` before placing them; they used to be treated as `MNI305`
+* `volume_to_surf` warns and returns a mesh with a single vertex and no face
+  when no voxel lies within the thresholds, and still saves it to `save_to`;
+  it used to stop with `a dimension is zero`, which aborted loops over atlas
+  labels
+* `volume_to_surf` treats `NA`, `NaN`, and infinite voxels as invalid and
+  leaves them out of the surface; infinite voxels above `threshold_lb` used
+  to be part of the surface when `threshold_ub` was `NA`
 
 threeBrain 1.3.0
 =======

@@ -11,7 +11,10 @@ volume_to_surf(
   degree = 2,
   threshold_lb = 0.5,
   threshold_ub = NA,
-  format = "auto"
+  format = "auto",
+  smooth_method = c("implicit", "explicit", "none"),
+  smooth_iterations = 10L,
+  max_vertices = 5e+05
 )
 }
 \arguments{
@@ -25,7 +28,10 @@ volume_to_surf(
 
 \item{threshold_lb}{lower threshold of the volume (to create mask); default is \code{0.5}}
 
-\item{threshold_ub}{upper threshold of the volume; default is \code{NA} (no upper bound)}
+\item{threshold_ub}{upper threshold of the volume; default is \code{NA} (no
+upper bound). Voxels strictly between the two thresholds form the mask;
+voxels that are \code{NA}, \code{NaN}, or infinite are invalid and never
+part of it}
 
 \item{format}{The format of the file if \code{save_to} is a valid path,
 choices include
@@ -44,9 +50,36 @@ choices include
 }
 \code{'gii'}, otherwise \code{'FreeSurfer'} format. Please do not use
 \code{'gii.gz'} suffix.}
+
+\item{smooth_method}{\code{"implicit"} (default) smooths with
+\code{\link[ravetools]{vcg_smooth_implicit}} using \code{lambda} and
+\code{degree}; \code{"explicit"} smooths with
+\code{\link[ravetools]{mris_smooth}} instead, repeated neighbor averaging
+whose memory grows only linearly with the surface (with a \pkg{ravetools}
+version that does not have \code{mris_smooth}, the \code{"laplace"} type
+of \code{\link[ravetools]{vcg_smooth_explicit}} is used);
+\code{"none"} returns the surface without smoothing}
+
+\item{smooth_iterations}{number of averaging rounds when
+\code{smooth_method} is \code{"explicit"}; default is \code{10}}
+
+\item{max_vertices}{used only when \code{smooth_method} is
+\code{"implicit"}, whose memory grows quickly with the surface size:
+surfaces with more vertices than this are reduced to about this many with
+\code{ravetools::vcg_decimate()} before smoothing, which removes vertices
+from flat regions first and keeps the shape; default is \code{500000}.
+Because the smoothing works in mesh steps, the same \code{lambda} and
+\code{degree} smooth a reduced surface more; use a larger value or
+\code{Inf} to smooth at full resolution. With a \pkg{ravetools} version
+that does not have \code{vcg_decimate}, surfaces with more than
+\code{20000} vertices are not smoothed, since the implicit smoothing of
+those versions can crash on large surfaces}
 }
 \value{
 Triangle \code{'rgl'} mesh (vertex positions in native \code{'RAS'}). If \code{save_to} is a valid path, then the mesh will be saved to this location.
+When no valid voxel lies within the thresholds, a warning is issued and
+the mesh has a single vertex at the origin and no face; it is still saved
+to \code{save_to}.
 }
 \description{
 Generate surface file from \code{'nii'} or \code{'mgz'} volume files

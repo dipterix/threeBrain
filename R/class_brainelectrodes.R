@@ -140,14 +140,24 @@ normalize_electrode_table <- function(
       all(c("MNI152_x", "MNI152_y", "MNI152_z") %in% table_colnames)
   ) {
     if (coord_sys == "MNI152") {
-      ras <- self$apply_transform_points(
-        table[, xyz_names],
-        from = coord_sys,
-        to = "MNI305"
-      )
+      xyz_names2 <- xyz_names
     } else {
-      ras <- as.matrix(table[, c("MNI152_x", "MNI152_y", "MNI152_z")])
+      xyz_names2 <- c("MNI152_x", "MNI152_y", "MNI152_z")
     }
+    mni152 <- do.call(
+      cbind,
+      lapply(xyz_names2, function(name) {
+        x <- table[[name]]
+        if (is.factor(x)) {
+          x <- as.character(x)
+        }
+        as.numeric(x)
+      })
+    )
+    # MNI152 -> MNI305 does not depend on the subject. All-zero rows are
+    # missing coordinates: keep their MNI305 missing (set to zero below)
+    ras <- cbind(mni152, 1) %*% t(solve(MNI305_to_MNI152))
+    ras[rowSums(abs(mni152), na.rm = TRUE) == 0, ] <- NA
     table$MNI305_x <- as.numeric(ras[, 1])
     table$MNI305_y <- as.numeric(ras[, 2])
     table$MNI305_z <- as.numeric(ras[, 3])
