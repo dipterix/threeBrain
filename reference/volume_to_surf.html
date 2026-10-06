@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.65</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.66</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,10 @@
 <span>  degree <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  threshold_lb <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  threshold_ub <span class="op">=</span> <span class="cn">NA</span>,</span>
-<span>  format <span class="op">=</span> <span class="st">"auto"</span></span>
+<span>  format <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  smooth_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"implicit"</span>, <span class="st">"explicit"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  smooth_iterations <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  max_vertices <span class="op">=</span> <span class="fl">5e+05</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,7 +83,10 @@
 
 
 <dt id="arg-threshold-ub">threshold_ub<a class="anchor" aria-label="anchor" href="#arg-threshold-ub"></a></dt>
-<dd><p>upper threshold of the volume; default is <code>NA</code> (no upper bound)</p></dd>
+<dd><p>upper threshold of the volume; default is <code>NA</code> (no
+upper bound). Voxels strictly between the two thresholds form the mask;
+voxels that are <code>NA</code>, <code>NaN</code>, or infinite are invalid and never
+part of it</p></dd>
 
 
 <dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
@@ -120,10 +126,43 @@ choices include</p><dl><dt><code>'auto'</code></dt>
 </dl><p><code>'gii'</code>, otherwise <code>'FreeSurfer'</code> format. Please do not use
 <code>'gii.gz'</code> suffix.</p></dd>
 
+
+<dt id="arg-smooth-method">smooth_method<a class="anchor" aria-label="anchor" href="#arg-smooth-method"></a></dt>
+<dd><p><code>"implicit"</code> (default) smooths with
+<code><a href="https://dipterix.org/ravetools/reference/vcg_smooth.html" class="external-link">vcg_smooth_implicit</a></code> using <code>lambda</code> and
+<code>degree</code>; <code>"explicit"</code> smooths with
+<code><a href="https://dipterix.org/ravetools/reference/mris_smooth.html" class="external-link">mris_smooth</a></code> instead, repeated neighbor averaging
+whose memory grows only linearly with the surface (with a <span class="pkg">ravetools</span>
+version that does not have <code>mris_smooth</code>, the <code>"laplace"</code> type
+of <code><a href="https://dipterix.org/ravetools/reference/vcg_smooth.html" class="external-link">vcg_smooth_explicit</a></code> is used);
+<code>"none"</code> returns the surface without smoothing</p></dd>
+
+
+<dt id="arg-smooth-iterations">smooth_iterations<a class="anchor" aria-label="anchor" href="#arg-smooth-iterations"></a></dt>
+<dd><p>number of averaging rounds when
+<code>smooth_method</code> is <code>"explicit"</code>; default is <code>10</code></p></dd>
+
+
+<dt id="arg-max-vertices">max_vertices<a class="anchor" aria-label="anchor" href="#arg-max-vertices"></a></dt>
+<dd><p>used only when <code>smooth_method</code> is
+<code>"implicit"</code>, whose memory grows quickly with the surface size:
+surfaces with more vertices than this are reduced to about this many with
+<code>ravetools::vcg_decimate()</code> before smoothing, which removes vertices
+from flat regions first and keeps the shape; default is <code>500000</code>.
+Because the smoothing works in mesh steps, the same <code>lambda</code> and
+<code>degree</code> smooth a reduced surface more; use a larger value or
+<code>Inf</code> to smooth at full resolution. With a <span class="pkg">ravetools</span> version
+that does not have <code>vcg_decimate</code>, surfaces with more than
+<code>20000</code> vertices are not smoothed, since the implicit smoothing of
+those versions can crash on large surfaces</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Triangle <code>'rgl'</code> mesh (vertex positions in native <code>'RAS'</code>). If <code>save_to</code> is a valid path, then the mesh will be saved to this location.</p>
+    <p>Triangle <code>'rgl'</code> mesh (vertex positions in native <code>'RAS'</code>). If <code>save_to</code> is a valid path, then the mesh will be saved to this location.
+When no valid voxel lies within the thresholds, a warning is issued and
+the mesh has a single vertex at the origin and no face; it is still saved
+to <code>save_to</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

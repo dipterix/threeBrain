@@ -12,7 +12,10 @@ volume_to_surf(
   degree = 2,
   threshold_lb = 0.5,
   threshold_ub = NA,
-  format = "auto"
+  format = "auto",
+  smooth_method = c("implicit", "explicit", "none"),
+  smooth_iterations = 10L,
+  max_vertices = 5e+05
 )
 ```
 
@@ -41,7 +44,9 @@ volume_to_surf(
 
 - threshold_ub:
 
-  upper threshold of the volume; default is `NA` (no upper bound)
+  upper threshold of the volume; default is `NA` (no upper bound).
+  Voxels strictly between the two thresholds form the mask; voxels that
+  are `NA`, `NaN`, or infinite are invalid and never part of it
 
 - format:
 
@@ -91,10 +96,43 @@ volume_to_surf(
   `'gii'`, otherwise `'FreeSurfer'` format. Please do not use `'gii.gz'`
   suffix.
 
+- smooth_method:
+
+  `"implicit"` (default) smooths with
+  [`vcg_smooth_implicit`](https://dipterix.org/ravetools/reference/vcg_smooth.html)
+  using `lambda` and `degree`; `"explicit"` smooths with
+  [`mris_smooth`](https://dipterix.org/ravetools/reference/mris_smooth.html)
+  instead, repeated neighbor averaging whose memory grows only linearly
+  with the surface (with a ravetools version that does not have
+  `mris_smooth`, the `"laplace"` type of
+  [`vcg_smooth_explicit`](https://dipterix.org/ravetools/reference/vcg_smooth.html)
+  is used); `"none"` returns the surface without smoothing
+
+- smooth_iterations:
+
+  number of averaging rounds when `smooth_method` is `"explicit"`;
+  default is `10`
+
+- max_vertices:
+
+  used only when `smooth_method` is `"implicit"`, whose memory grows
+  quickly with the surface size: surfaces with more vertices than this
+  are reduced to about this many with `ravetools::vcg_decimate()` before
+  smoothing, which removes vertices from flat regions first and keeps
+  the shape; default is `500000`. Because the smoothing works in mesh
+  steps, the same `lambda` and `degree` smooth a reduced surface more;
+  use a larger value or `Inf` to smooth at full resolution. With a
+  ravetools version that does not have `vcg_decimate`, surfaces with
+  more than `20000` vertices are not smoothed, since the implicit
+  smoothing of those versions can crash on large surfaces
+
 ## Value
 
 Triangle `'rgl'` mesh (vertex positions in native `'RAS'`). If `save_to`
-is a valid path, then the mesh will be saved to this location.
+is a valid path, then the mesh will be saved to this location. When no
+valid voxel lies within the thresholds, a warning is issued and the mesh
+has a single vertex at the origin and no face; it is still saved to
+`save_to`.
 
 ## See also
 
