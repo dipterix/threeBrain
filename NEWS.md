@@ -47,6 +47,17 @@ Volume Rendering Improvements:
 * Added slice threshold, a user controller to strip the skulls
 * Volume slice masks work even when orientation and dimensions are different
 * Improved lazy rendering so the canvas does not forces the `GPU` to render unless there is a need to
+* `NIfTI` volumes too large for the viewer now load instead of crashing it.
+  A volume with more than `2^27` voxels per frame, or more than 2048 voxels
+  along an axis, is read decimated: the longest axis is halved until the
+  volume fits, and only those voxels are read (nearest voxel, no averaging).
+  When the non-zero voxels then fill a small enough box (at most `2^24`
+  voxels), that box is read again at a finer resolution. Voxels keep their
+  exact positions, a console warning says how the volume was read, and the
+  limits are adjustable (`MAX_VOLUME_VOXELS`, `MAX_VOLUME_CORE_VOXELS` and
+  `MAX_VOLUME_AXIS` in the viewer constants). Compressed files are inflated
+  piece by piece, so a `1024^3` volume, or a `.nii.gz` larger than the
+  browser's memory for a single array, loads without being held whole
 
 Worker Thread Infrastructure:
 
@@ -355,6 +366,11 @@ Drag and Drop Improvements:
 Bug Fixes:
 
 * Suppressed rendering flags when the trackball is inactive, fixing the rendering policy
+* Unsigned 32-bit `NIfTI` volumes load; they used to fail with a missing type
+  error
+* `NIfTI-2` headers are read correctly. Dimensions and data offsets with a
+  byte of 128 or more were misread (an axis of 384 voxels read as 128), so
+  such volumes failed to load or showed shifted voxels
 * Fixed the `datacube2` (atlas) ISO surface: an unnormalized color-key byte
   made every non-zero label take the `>= 1` branch, so the whole surface
   rendered as a single flat color (the last entry in the color map). Colors
