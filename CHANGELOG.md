@@ -2,9 +2,15 @@
 
 ## Changes since last CRAN release
 
-- `b91ca1fe (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Allowed crosshairs to snap to the nearest electrode
-  via keyboard shortcut “backquote”
+- `e7c7e8c3 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Enhance generate_subcortical_surface function with
+  additional parameters for smoothing and thresholding
+- `de783067` \[*`dipterix`*\]: Enhance capture request handling to
+  include canvas data in views for screenshot functionality
+- `893f670b` \[*`dipterix`*\]: Implement capture request handling in
+  ViewerCanvas for image export
+- `b91ca1fe` \[*`dipterix`*\]: Allowed crosshairs to snap to the nearest
+  electrode via keyboard shortcut “backquote”
 - `af63cdab` \[*`dipterix`*\]: Improved shiny proxy with bug fixes
 - `e0942e1b` \[*`dipterix`*\]: Added view-layout options; fixed slicer’s
   texture offset; improved atlas label accuracy
