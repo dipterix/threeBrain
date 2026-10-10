@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.67</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.68</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,7 @@
 <li>Implemented two-sided lighting with proper view-space normal correction</li>
 <li>Added a per-camera lighting node (<code>ViewLighting</code>) so the four views (main plus three side canvases), which intentionally light with different lights, no longer evict and rebuild each other’s compiled shader and pipeline on every switch, several times a frame</li>
 </ul><p>Engine Updates:</p>
-<ul><li>Upgraded <code>three.js</code> engine to <code>r185</code>
+<ul><li>Upgraded <code>three.js</code> engine to <code>r186</code>
 </li>
 <li>Replaced the deprecated <code>three.js</code> <code>Clock</code> with a single shared <code>Timer</code>, advanced once per frame, so all animation deltas within a frame come from one time base</li>
 <li>Rebased the vendored fat-line material onto <code>r185</code> and gave it a private shader key so it no longer competes with the upstream one</li>
@@ -224,6 +224,7 @@
 <li>Surfaces colored with <code>sync from voxels</code> read the voxel whose center is nearest instead of a neighboring one</li>
 <li>The side panels no longer show a strip of the viewer’s background color past the edge of the volume</li>
 <li>Electrode colors update as soon as a controller changes them; since the <code>three.js</code> <code>r185</code> upgrade they showed one frame late, so a change could appear not to take effect until the next interaction</li>
+<li>Electrode colors follow data sent right after the viewer loads, such as <code>brain_proxy$set_electrode_data()</code> from a <code>shiny</code> module. Electrodes whose value did not change between two such updates could keep the color of the viewer’s first frame (seen as stale cluster colors in <code>RAVE</code>’s clustering modules), and the side panels could keep an electrode’s previous color after any data change</li>
 <li>Electrode tables with <code>MNI152</code> but no <code>MNI305</code> columns now get <code>MNI305</code> converted from <code>MNI152</code>; unless <code>coord_sys</code> was <code>MNI152</code>, the values used to be copied unchanged. Rows whose <code>MNI152</code> coordinates are all zero keep their <code>MNI305</code> coordinates missing</li>
 <li>
 <code><a href="../reference/localization_module.html">localization_module()</a></code> and <code>localize()</code> given a <code>CT</code> already read into <code>R</code> now convert volumes whose <code>NIfTI</code> transform is coded as <code>MNI152</code> from <code>MNI152</code> to <code>MNI305</code> before placing them; they used to be treated as <code>MNI305</code>

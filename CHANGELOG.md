@@ -2,9 +2,10 @@
 
 ## Changes since last CRAN release
 
-- `e7c7e8c3 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Enhance generate_subcortical_surface function with
-  additional parameters for smoothing and thresholding
+- `de794cbc (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Allow oversized NIfTI files
+- `e7c7e8c3` \[*`dipterix`*\]: Enhance generate_subcortical_surface
+  function with additional parameters for smoothing and thresholding
 - `de783067` \[*`dipterix`*\]: Enhance capture request handling to
   include canvas data in views for screenshot functionality
 - `893f670b` \[*`dipterix`*\]: Implement capture request handling in

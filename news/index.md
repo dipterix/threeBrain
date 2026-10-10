@@ -103,7 +103,7 @@ Shader Optimizations:
 
 Engine Updates:
 
-- Upgraded `three.js` engine to `r185`
+- Upgraded `three.js` engine to `r186`
 - Replaced the deprecated `three.js` `Clock` with a single shared
   `Timer`, advanced once per frame, so all animation deltas within a
   frame come from one time base
@@ -460,6 +460,12 @@ Bug Fixes:
 - Electrode colors update as soon as a controller changes them; since
   the `three.js` `r185` upgrade they showed one frame late, so a change
   could appear not to take effect until the next interaction
+- Electrode colors follow data sent right after the viewer loads, such
+  as `brain_proxy$set_electrode_data()` from a `shiny` module.
+  Electrodes whose value did not change between two such updates could
+  keep the color of the viewer’s first frame (seen as stale cluster
+  colors in `RAVE`’s clustering modules), and the side panels could keep
+  an electrode’s previous color after any data change
 - Electrode tables with `MNI152` but no `MNI305` columns now get
   `MNI305` converted from `MNI152`; unless `coord_sys` was `MNI152`, the
   values used to be copied unchanged. Rows whose `MNI152` coordinates
