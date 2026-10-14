@@ -21,6 +21,10 @@ cd inst/three-brain-js
 
 npm run build
 
+cd ../../inst/three-brain-hub
+
+npm run build
+
 cd ../../
 
 cp -r inst/three-brain-js/dist inst/threeBrainJS

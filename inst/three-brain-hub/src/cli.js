@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { createHub } from './hub.js';
 import { connectController } from './client.js';
+import { startMcpServer } from './mcp.js';
 import { DEFAULT_PORT, formatPasskey, generateKey, isValidKey } from './passkey.js';
 import { VERSION } from './version.js';
 
@@ -16,6 +17,7 @@ Usage:
   threebrain-hub serve [--port ${DEFAULT_PORT}] [--key KEY | --generate-key]
                        [--idle-minutes 30] [--detach]
   threebrain-hub stop  [--port ${DEFAULT_PORT}] [--key KEY]
+  threebrain-hub mcp   [--port ${DEFAULT_PORT}] [--key KEY]
   threebrain-hub --help | --version
 
 serve   Start the hub. It prints a passkey: "${DEFAULT_PORT}", or "${DEFAULT_PORT}.KEY"
@@ -25,6 +27,9 @@ serve   Start the hub. It prints a passkey: "${DEFAULT_PORT}", or "${DEFAULT_POR
         --detach runs the hub in the background and returns once it listens.
         The hub exits after --idle-minutes with nothing connected (0: never).
 stop    Stop the hub on --port.
+mcp     MCP server (stdio) for AI agents, e.g.
+          claude mcp add threebrain -- node threebrain-hub.mjs mcp
+        It starts a hub on --port when none is running.
 `;
 
 const OPTIONS = {
@@ -134,6 +139,10 @@ async function main() {
   switch (command) {
     case 'serve': return serve(values);
     case 'stop': return stop(values);
+    case 'mcp': {
+      const { port, key } = readOptions({ ...values, 'generate-key': false });
+      return startMcpServer({ port, key });
+    }
     default: fail(`unknown command "${command}"\n\n${HELP}`);
   }
 }

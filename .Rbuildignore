@@ -50,3 +50,4 @@
 ^inst/three-brain-hub/scripts
 ^inst/three-brain-hub/package(-lock)?\.json$
 ^inst/three-brain-hub/\.gitignore$
+^examples$
