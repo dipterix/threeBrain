@@ -212,6 +212,59 @@ test('set_key changes the passkey for new clients and keeps connected ones', asy
   assert.equal((await controller.next(isType('result'))).value.keyed, true);
 });
 
+test('viewers report whether they are visible; list shows it and since when', async (t) => {
+  const hub = await startHub(t);
+  const { client: viewer, welcome: v } = await joined(t, hub.port,
+    viewerHello({ viewer: { title: 'N27', subjects: [ 'N27' ], visible: true } }));
+  const { client: controller } = await joined(t, hub.port, controllerHello());
+  controller.send({ type: 'list', id: 'l1' });
+  let [ entry ] = (await controller.next(isType('result'))).value;
+  assert.equal(entry.visible, true);
+  const before = entry.visibility_since;
+  assert.equal(typeof before, 'number');
+
+  await sleep(20);
+  viewer.send({ type: 'event', name: 'visibility', value: { visible: false } });
+  await sleep(100);
+  controller.send({ type: 'list', id: 'l2' });
+  [ entry ] = (await controller.next(isType('result'))).value;
+  assert.equal(entry.id, v.id);
+  assert.equal(entry.visible, false);
+  assert.ok(entry.visibility_since > before);
+});
+
+test('a viewer that does not report visibility is listed as unknown', async (t) => {
+  const hub = await startHub(t);
+  await joined(t, hub.port, viewerHello());
+  const { client: controller } = await joined(t, hub.port, controllerHello());
+  controller.send({ type: 'list', id: 'l' });
+  const [ entry ] = (await controller.next(isType('result'))).value;
+  assert.equal(entry.visible, null);
+});
+
+test('the disconnect op closes one viewer with 4001 and controllers hear it leave', async (t) => {
+  const hub = await startHub(t);
+  const { client: viewer, welcome: v } = await joined(t, hub.port, viewerHello());
+  const { client: other } = await joined(t, hub.port, viewerHello());
+  const { client: controller } = await joined(t, hub.port, controllerHello());
+  controller.send({ type: 'hub', op: 'disconnect', id: 'd', target: v.id });
+  assert.equal((await controller.next(isType('result'))).ok, true);
+  assert.equal((await viewer.closed()).code, 4001);
+  assert.equal((await controller.next(isType('viewer_left'))).viewer.id, v.id);
+  controller.send({ type: 'list', id: 'l' });
+  assert.equal((await controller.next(isType('result'))).value.length, 1);
+  other.close();
+});
+
+test('disconnecting a viewer that is not connected fails with unknown_viewer', async (t) => {
+  const hub = await startHub(t);
+  const { client: controller } = await joined(t, hub.port, controllerHello());
+  controller.send({ type: 'hub', op: 'disconnect', id: 'd', target: 'v42' });
+  const result = await controller.next(isType('result'));
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, 'unknown_viewer');
+});
+
 test('an idle hub announces it once nobody has been connected for the idle time', async (t) => {
   const hub = await startHub(t, { idleMinutes: 0.003 }); // 180 ms
   let idle = 0;

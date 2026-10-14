@@ -6,6 +6,7 @@ import { parseArgs } from 'node:util';
 import { createHub } from './hub.js';
 import { connectController } from './client.js';
 import { startMcpServer } from './mcp.js';
+import { findHubs, hubDirectory, removeRecord, writeRecord } from './registry.js';
 import { DEFAULT_PORT, formatPasskey, generateKey, isValidKey } from './passkey.js';
 import { VERSION } from './version.js';
 
@@ -15,9 +16,10 @@ a WebSocket on this computer (127.0.0.1 only).
 
 Usage:
   threebrain-hub serve [--port ${DEFAULT_PORT}] [--key KEY | --generate-key]
-                       [--idle-minutes 30] [--detach]
+                       [--idle-minutes 30] [--detach] [--by NAME]
   threebrain-hub stop  [--port ${DEFAULT_PORT}] [--key KEY]
-  threebrain-hub mcp   [--port ${DEFAULT_PORT}] [--key KEY]
+  threebrain-hub list  [--json] [--port ${DEFAULT_PORT}]
+  threebrain-hub mcp   [--port ${DEFAULT_PORT}]
   threebrain-hub --help | --version
 
 serve   Start the hub. It prints a passkey: "${DEFAULT_PORT}", or "${DEFAULT_PORT}.KEY"
@@ -26,10 +28,13 @@ serve   Start the hub. It prints a passkey: "${DEFAULT_PORT}", or "${DEFAULT_POR
         can connect; use --key or --generate-key when that matters.
         --detach runs the hub in the background and returns once it listens.
         The hub exits after --idle-minutes with nothing connected (0: never).
+        Running hubs are recorded in ${hubDirectory()}
+        (THREEBRAIN_HUB_DIR sets another folder); --by says who started it.
 stop    Stop the hub on --port.
+list    The hubs running on this computer, with their passkeys.
 mcp     MCP server (stdio) for AI agents, e.g.
           claude mcp add threebrain -- node threebrain-hub.mjs mcp
-        It starts a hub on --port when none is running.
+        Agents join a running hub, or start one on --port.
 `;
 
 const OPTIONS = {
@@ -38,6 +43,8 @@ const OPTIONS = {
   'generate-key': { type: 'boolean' },
   'idle-minutes': { type: 'string' },
   detach: { type: 'boolean' },
+  by: { type: 'string' },
+  json: { type: 'boolean' },
   help: { type: 'boolean', short: 'h' },
   version: { type: 'boolean', short: 'v' },
 };
@@ -76,6 +83,7 @@ async function serve(values) {
     if (await isListening(port)) { fail(`127.0.0.1:${port} is already in use (a hub already running?)`); }
     const args = [process.argv[1], 'serve', '--port', String(port), '--idle-minutes', String(idleMinutes)];
     if (key) { args.push('--key', key); }
+    if (values.by) { args.push('--by', values.by); }
     spawn(process.execPath, args, { detached: true, stdio: 'ignore', windowsHide: true }).unref();
     for (let waited = 0; waited < 5000; waited += 100) {
       if (await isListening(port)) {
@@ -96,6 +104,11 @@ async function serve(values) {
     }
     fail(error.message);
   }
+  // announce the hub so that R and agents can find it, until it stops
+  const record = { port, by: values.by ?? '', version: VERSION };
+  writeRecord({ ...record, key });
+  hub.on('key', (next) => writeRecord({ ...record, key: next }));
+  process.on('exit', () => removeRecord(port));
   process.stdout.write(`threeBrain hub listening on 127.0.0.1:${port} (passkey: ${passkey})\n`);
 
   const quit = () => hub.stop().then(() => process.exit(0));
@@ -108,8 +121,31 @@ async function serve(values) {
   process.on('SIGTERM', quit);
 }
 
+async function list(values) {
+  const { port } = readOptions({ ...values, 'generate-key': false });
+  const hubs = await findHubs({ ports: [port] });
+  if (values.json) {
+    process.stdout.write(`${JSON.stringify(hubs, null, 2)}\n`);
+    return;
+  }
+  if (hubs.length === 0) {
+    process.stdout.write('No hub is running.\n');
+    return;
+  }
+  for (const hub of hubs) {
+    const who = hub.by ? `, started by ${hub.by}` : '';
+    const passkey = hub.passkey ?? `${hub.port}.<key unknown>`;
+    process.stdout.write(`127.0.0.1:${hub.port}  passkey ${passkey}  ${hub.viewers} viewer(s)${who}\n`);
+  }
+}
+
 async function stop(values) {
-  const { port, key } = readOptions({ ...values, 'generate-key': false });
+  const { port } = readOptions({ ...values, 'generate-key': false });
+  let { key } = readOptions({ ...values, 'generate-key': false });
+  // a keyed hub's key is in its record
+  if (key === null) {
+    key = (await findHubs({ ports: [port] })).find((hub) => hub.port === port)?.key ?? null;
+  }
   let client;
   try {
     client = await connectController({ port, key, name: 'threebrain-hub stop', spawn: false });
@@ -139,6 +175,7 @@ async function main() {
   switch (command) {
     case 'serve': return serve(values);
     case 'stop': return stop(values);
+    case 'list': return list(values);
     case 'mcp': {
       const { port, key } = readOptions({ ...values, 'generate-key': false });
       return startMcpServer({ port, key });

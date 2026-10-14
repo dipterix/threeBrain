@@ -49,6 +49,12 @@
 #' \item{\code{'gui'}}{controls data panel}
 #' \item{\code{'presets'}}{preset \code{'gui'} methods}
 #' }
+#' @param remote_passkey the \verb{passkey} shown in the viewer's
+#' \code{"Passkey"} field (control panel), \code{"17285"} or
+#' \code{"17285.key"}; default is the one \code{\link{viewer_hub_start}}
+#' stored in \code{options(threeBrain.remote_passkey)}. The viewer only joins
+#' the hub once the user clicks \code{"Connect"}; \code{\link{save_brain}}
+#' keeps the port but not the key. See \code{\link{viewer_hub}}.
 #'
 #' @examples
 #' if( interactive() ) {
@@ -145,7 +151,8 @@ threejs_brain <- function(
   # customized js code
   custom_javascript = NULL,
   show_modal = "auto",
-  embed = FALSE
+  embed = FALSE,
+  remote_passkey = getOption("threeBrain.remote_passkey", NULL)
 ) {
   if (isTRUE(show_modal == "auto")) {
     if (is.null(shiny::getDefaultReactiveDomain())) {
@@ -444,7 +451,8 @@ threejs_brain <- function(
     side_display = side_display,
     control_display = control_display,
     qrcode = qrcode,
-    custom_javascript = custom_javascript
+    custom_javascript = custom_javascript,
+    remote_passkey = check_passkey(remote_passkey)
   )
 
   # Generate external file
@@ -591,6 +599,8 @@ save_brain <- function(widget, path, title = "3D Viewer", as_zip = FALSE, ...) {
   # has an opaque origin, so a worker can only be started from a blob built out
   # of the document itself.
   widget$x$settings$worker_script <- paste0("#", WORKER_EMBED_KEY)
+  # a saved file may be shared: keep the hub's port, not its key
+  widget$x$settings$remote_passkey <- passkey_port(widget$x$settings$remote_passkey)
 
   # selfcontained = FALSE to save all data information
   temp_file <- file.path(wdir, "_tmp.html")

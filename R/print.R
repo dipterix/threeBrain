@@ -3,6 +3,7 @@ to_html <- function(
   standalone = TRUE,
   title = "YAEL 3D Brain",
   knitrOptions = list(),
+  remote_passkey = "17285",
   ...
 ) {
   # DIPSAUS DEBUG START
@@ -26,6 +27,7 @@ to_html <- function(
   # key is not namespaced by `rand_id`: several widgets in one document then
   # share one blob, and identical duplicate blocks are harmless.
   x$x$settings$worker_script <- paste0("#", WORKER_EMBED_KEY)
+  x$x$settings$remote_passkey <- passkey_port(remote_passkey)
   # selfcontained = FALSE to save all data information
   tmp_dir <- tempdir(check = TRUE)
   wdir <- tempfile(tmpdir = tmp_dir)

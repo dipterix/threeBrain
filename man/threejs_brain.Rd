@@ -47,7 +47,8 @@ threejs_brain(
   qrcode = NULL,
   custom_javascript = NULL,
   show_modal = "auto",
-  embed = FALSE
+  embed = FALSE,
+  remote_passkey = getOption("threeBrain.remote_passkey", NULL)
 )
 }
 \arguments{
@@ -137,6 +138,13 @@ only use it when you have multiple widgets in one website}
 \item{show_modal}{logical or \code{"auto"}, whether to show a modal instead of direct rendering the viewers; designed for users whose browsers render the viewer with neither \verb{WebGPU} nor \verb{WebGL2}; only used in shiny applications}
 
 \item{embed}{whether to try embedding the viewer in current run-time; default is false (will launch default web browser); set to true if running in \code{'rmarkdown'} or \code{'quarto'}, or to see the viewer in \code{'RStudio'} default panel.}
+
+\item{remote_passkey}{the \verb{passkey} shown in the viewer's
+\code{"Passkey"} field (control panel), \code{"17285"} or
+\code{"17285.key"}; default is the one \code{\link{viewer_hub_start}}
+stored in \code{options(threeBrain.remote_passkey)}. The viewer only joins
+the hub once the user clicks \code{"Connect"}; \code{\link{save_brain}}
+keeps the port but not the key. See \code{\link{viewer_hub}}.}
 }
 \description{
 Create a Threejs Brain and View it in Browsers

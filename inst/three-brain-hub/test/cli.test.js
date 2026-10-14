@@ -26,11 +26,17 @@ function serveInForeground(t, args) {
   return { child, firstLine, exited };
 }
 
-test('--help lists the commands', async () => {
-  const { stdout } = await run(process.execPath, [ENTRY, '--help']);
+test('--help lists the commands and the folder where hubs are recorded', async () => {
+  const folder = '/tmp/threebrain-help-check/hubs';
+  const { stdout } = await run(process.execPath, [ENTRY, '--help'],
+    { env: { ...process.env, THREEBRAIN_HUB_DIR: folder } });
   assert.match(stdout, /serve/);
   assert.match(stdout, /stop/);
+  assert.match(stdout, /list/);
   assert.match(stdout, /17285/);
+  // the real folder, readable without R
+  assert.ok(stdout.includes(folder), stdout);
+  assert.doesNotMatch(stdout, /R_user_dir/);
 });
 
 test('serve prints its passkey, and stop shuts it down', async (t) => {

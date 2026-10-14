@@ -91,6 +91,9 @@ export function createHub({
         version: info.version ?? null,
         origin: request.headers.origin ?? null,
         connected_at: Date.now(),
+        // whether the page is shown; null when the viewer does not say
+        visible: typeof info.visible === 'boolean' ? info.visible : null,
+        visibility_since: Date.now(),
       };
       client = { id, role: 'viewer', ws, meta };
       viewers.set(id, client);
@@ -150,6 +153,10 @@ export function createHub({
     } else if (message.type === 'event' && typeof message.name === 'string') {
       const event = { type: 'event', source: viewer.id, name: message.name,
                       value: message.value ?? null, time: Date.now() };
+      if (event.name === 'visibility' && typeof event.value?.visible === 'boolean') {
+        viewer.meta.visible = event.value.visible;
+        viewer.meta.visibility_since = event.time;
+      }
       const kept = events.get(viewer.id);
       kept.push(event);
       if (kept.length > EVENTS_KEPT) { kept.splice(0, kept.length - EVENTS_KEPT); }
@@ -200,6 +207,7 @@ export function createHub({
           break;
         }
         hub.key = next;
+        hub.emit('key', next);
         reply(controller, message.id, true, { passkey: formatPasskey({ port: hub.port, key: hub.key }) });
         break;
       }
@@ -211,6 +219,19 @@ export function createHub({
           .filter((event) => event.time > since && (names === '*' || names.includes(event.name)))
           .sort((a, b) => a.time - b.time);
         reply(controller, message.id, true, found);
+        break;
+      }
+      case 'disconnect': {
+        const viewer = viewers.get(message.target);
+        if (!viewer) {
+          reply(controller, message.id, false, undefined, {
+            code: 'unknown_viewer', message: `No viewer "${message.target}" is connected`,
+          });
+          break;
+        }
+        // 4001: the viewer stays disconnected instead of reconnecting
+        viewer.ws.close(4001, 'Disconnected by the hub');
+        reply(controller, message.id, true, { viewer: viewer.id });
         break;
       }
       case 'shutdown':
@@ -276,6 +297,15 @@ export function createHub({
   // ---- lifecycle ---------------------------------------------------------------
   hub.start = () => new Promise((resolve, reject) => {
     server = http.createServer((request, response) => {
+      if (request.url === '/status') {
+        // what discovery needs to recognize and describe the hub; never the key
+        response.writeHead(200, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({
+          name: 'threeBrain hub', version: VERSION, port: hub.port, keyed: hub.key !== null,
+          viewers: viewers.size, controllers: controllers.size,
+        }));
+        return;
+      }
       response.writeHead(200, { 'content-type': 'text/plain' });
       response.end(`threeBrain hub ${VERSION}\n`);
     });

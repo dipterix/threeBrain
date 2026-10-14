@@ -1,9 +1,15 @@
 ---
-name: threebrain-viewer
-description: Use when the user wants you to look at or control a threeBrain (RAVE) 3D brain viewer open in their browser - rotate or zoom the brain, show or hide surfaces, color electrode contacts by values, select a contact, move the slices, add labels, see what the user clicked, or take a screenshot - through the threebrain MCP tools (hub_status, get_passkey, list_viewers, run_command, get_state, capture_screenshot, get_events).
+name: rave-3d-viewer
+description: Use when the user wants you to look at or control a threeBrain (RAVE) 3D brain viewer opened statically in their browser - rotate or zoom the brain, show or hide surfaces, color electrode contacts by values, select a contact, move the slices, add labels, see what the user clicked, or take a screenshot - through the threebrain MCP tools (hub_status, connect_hub, start_hub, stop_hub, get_passkey, list_viewers, disconnect_viewer, run_command, get_state, capture_screenshot, get_events). Do NOT use if the viewer is hosted in shidashi apps.
 ---
 
 # Driving threeBrain 3D viewers
+
+**Use this skill for a viewer opened on its own**: the page from `brain$plot()`
+in a browser or in the RStudio / Positron viewer, or a file saved with
+`save_brain()`. A viewer inside a RAVE dashboard (a `shidashi` app) is driven
+through the app: use the RAVE skill from `rave-ieeg/rave-pipelines` and the
+`shidashi` tools there instead.
 
 The viewer is a page in the user's browser. It joins a *hub* on the user's
 computer once the user clicks **Connect** in its control panel; the `threebrain`
@@ -12,14 +18,27 @@ touch the page directly.
 
 ## 1. Connect
 
-1. Call `hub_status`. It starts the hub if needed and says how many viewers are
-   connected.
-2. If none are connected, call `get_passkey`, then tell the user in one short
-   message: in the viewer's control panel (the **Default** folder at the top),
-   enter the passkey in **Passkey** and click **Connect**. Wait for them to say it is
-   done, then call `list_viewers`.
-3. `list_viewers` gives the ids (`v1`, `v2`, ...). With one viewer, tools use it
-   by default; with several, pass `viewer`.
+1. Call `hub_status`. It lists the hubs running on this computer and joins the
+   only one. **Joining an existing hub is the recommended path:** someone may
+   have started it already (the user from R, or an earlier session of yours),
+   and their viewer may already be connected.
+2. Several hubs are running: ask the user which one their viewer uses (its
+   port is the number in the viewer's **Passkey** field), then call
+   `connect_hub` with that `port`. If a hub needs a key that nobody recorded,
+   ask the user for its passkey (`17285.KEY`) and call `connect_hub` with
+   `passkey`.
+3. No hub is running: call `start_hub`. It returns the passkey. This is the
+   usual case for someone who only received a viewer file: they have no R and
+   no terminal, so you start the hub for them.
+4. No viewer is connected (`hub_status` and `list_viewers` say so): tell the user
+   in one short message to enter the passkey in **Passkey** in the viewer's
+   control panel (the **Default** folder at the top) and click **Connect**. Wait
+   for them to say it is done, then call `list_viewers`. `get_passkey` repeats
+   the passkey.
+5. `list_viewers` gives the ids (`v1`, `v2`, ...) and whether each viewer is
+   visible or hidden (and for how long). With one viewer, tools use it by
+   default; with several, pass `viewer`, and ask the user which one they mean
+   when it is unclear: the visible one is usually the one they look at.
 
 Ids change when a page reloads or reconnects. After a `viewer_left` or
 `unknown_viewer` error, call `list_viewers` again.
@@ -82,26 +101,32 @@ When the request is visual, check the result with `capture_screenshot`.
 - Only rotate the key (`get_passkey` with `rotate: true`) when the user asks.
   Connected viewers stay connected, but everything that connects later needs
   the new passkey.
+- `stop_hub` disconnects every viewer and program on the hub, and the user's R
+  scripts may be using it: ask first unless the user asked for it. Viewers with
+  Auto-connect join again once a hub with the same passkey runs.
+- `disconnect_viewer` removes one viewer; it stays disconnected until the user
+  clicks **Connect** in it. Ask first.
+- Never expect a viewer to connect by itself: a newly opened page always waits
+  for the user to click **Connect**.
 
 ## Troubleshooting
 
 | Symptom | What to do |
 |---|---|
-| `list_viewers` is empty | The user has not clicked Connect, or used another passkey. Repeat step 1.2. |
-| The viewer's **Remote Connection Status** says "No hub on 127.0.0.1:..." | The hub is not running on that port. Call `hub_status` (it starts the hub), then ask the user to click Connect again. |
+| `list_viewers` is empty | The user has not clicked Connect, or their viewer uses another hub. Compare the port in the viewer's **Passkey** field with `hub_status`, then repeat step 1.4. |
+| The viewer's **Remote Connection Status** says "No hub on 127.0.0.1:..." | No hub runs on that port. Call `hub_status`; if no hub runs at all, call `start_hub` and give the user the new passkey. |
 | The viewer's **Remote Connection Status** says "Wrong key" | Give the user the passkey from `get_passkey`. |
-| `hub_status` says the hub needs a key | Someone started it with a key: ask the user for its passkey (`17285.KEY`) and pass it to `hub_status`. |
+| A tool says the hub needs a key | Ask the user for its passkey (`17285.KEY`, printed when the hub started) and call `connect_hub` with it. |
+| A tool says several hubs are running | Step 1.2. |
 | `capture_screenshot` fails with `hidden` | The viewer's tab is in the background. Ask the user to bring it to the front. |
 | The browser asks whether the site may access devices or apps on this computer | Happens for pages served from a public server. The user must allow it. Safari cannot connect from `https` pages at all. |
 | `viewer_left` or `unknown_viewer` | The page reloaded or closed. Call `list_viewers`. |
+| A viewer the user closed is still listed (usually hidden) | Its app only hid the page and keeps it running (an IDE's viewer pane, for example). Confirm with the user, then `disconnect_viewer`. |
+| The user wants the hub gone | `stop_hub` (see the rules). |
 
 ## If the tools are missing
 
-The user registers the MCP server once (Node.js 18 or newer):
-
-```sh
-claude mcp add threebrain -- node /path/to/threebrain-hub.mjs mcp
-```
-
-In R, `system.file("three-brain-hub", "dist", "threebrain-hub.mjs", package = "threeBrain")`
-gives the path.
+The tools come with this skill's plugin and need only Node.js, not R. When they
+fail to start, Node.js is usually missing or too old: ask the user to install
+Node.js 18 or newer from https://nodejs.org (the LTS installer), then restart
+the app. Don't ask them to use a terminal.

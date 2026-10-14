@@ -1,7 +1,8 @@
 ## Changes since last CRAN release
-* `2a4435e4 (HEAD -> master)` [_`dipterix`_]: Added `MCP` server to the hub, and examples for `WebSocket`
+* `c5a906e1 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Add .superpowers to .gitignore and .Rbuildignore
+* `2a4435e4` [_`dipterix`_]: Added `MCP` server to the hub, and examples for `WebSocket`
 * `e0fd33f2` [_`dipterix`_]: Added `WebSocket` driver
-* `2b6d8526 (origin/master, origin/HEAD)` [_`dipterix`_]: Bump version to 1.3.0.68 in DESCRIPTION file
+* `2b6d8526` [_`dipterix`_]: Bump version to 1.3.0.68 in DESCRIPTION file
 * `9825f3d6` [_`dipterix`_]: Electrode colors follow data sent right after the viewer loads (upgraded three to `r186`)
 * `de794cbc` [_`dipterix`_]: Allow oversized NIfTI files
 * `e7c7e8c3` [_`dipterix`_]: Enhance generate_subcortical_surface function with additional parameters for smoothing and thresholding

@@ -15,36 +15,53 @@ another viewer page   ──┘
 
 ## 1. Start the hub
 
-The hub needs [Node.js](https://nodejs.org/) 18 or newer.
+The hub needs [Node.js](https://nodejs.org/) 18 or newer, and nothing else. Any
+of these starts it:
 
-```sh
-node inst/three-brain-hub/dist/threebrain-hub.mjs serve
-# threeBrain hub listening on 127.0.0.1:17285 (passkey: 17285)
-```
+- **An AI agent** with the `threeBrain` plugin calls its `start_hub` tool; see
+  [`../mcp/README.md`](../mcp/README.md). This is the way for people without R.
+- **R** with `threeBrain`:
 
-In this repository, build the bundle first with
-`cd inst/three-brain-hub && npm install && npm run build`. The installed R
-package carries the same bundle:
+  ```r
+  viewer_hub_start()      # or reuses the running hub; returns the passkey, e.g. "17285"
+  viewer_hub_list()       # the hubs running on this computer
+  viewer_hub_stop()
+  ```
 
-```r
-hub_script <- system.file("three-brain-hub", "dist", "threebrain-hub.mjs", package = "threeBrain")
-system2("node", c(shQuote(hub_script), "serve", "--detach"))
-```
+  Viewers made afterwards show the passkey in their **Passkey** field.
+  `viewer_hub_start(generate_key = TRUE)` makes the hub require a key (the
+  passkey becomes `17285.KEY`). When R cannot find Node.js, set
+  `options(threeBrain.node = "/path/to/node")`.
+- **A terminal**, with the single file `threebrain-hub.mjs`: it is in the agent
+  plugin's folder, `viewer_hub_path()` gives it in R, and in this repository
+  `cd inst/three-brain-hub && npm install && npm run build` builds it.
 
-| Option | What it does |
-|---|---|
-| `--port 17285` | the port (17285 by default) |
-| `--key KEY` / `--generate-key` | require a key; the passkey becomes `17285.KEY` |
-| `--idle-minutes 30` | stop after 30 minutes with nothing connected (`0`: never) |
-| `--detach` | run in the background and return once the hub listens |
+  ```sh
+  node threebrain-hub.mjs serve
+  # threeBrain hub listening on 127.0.0.1:17285 (passkey: 17285)
+  ```
 
-`node threebrain-hub.mjs stop` stops it. The hub listens on `127.0.0.1` only,
-so other computers cannot reach it. Without a key, any program or web page on
-this computer can connect; use `--key` or `--generate-key` when that matters.
+  | Option | What it does |
+  |---|---|
+  | `--port 17285` | the port (17285 by default) |
+  | `--key KEY` / `--generate-key` | require a key; the passkey becomes `17285.KEY` |
+  | `--idle-minutes 30` | stop after 30 minutes with nothing connected (`0`: never) |
+  | `--detach` | run in the background and return once the hub listens |
+
+  `node threebrain-hub.mjs list` shows the running hubs and their passkeys,
+  `node threebrain-hub.mjs stop` stops one, and `--help` shows where hubs are
+  recorded.
+
+Each running hub is recorded on the computer, so R, agents and other programs
+find and join a hub whichever way it was started. The hub listens on
+`127.0.0.1` only, so other computers cannot reach it. Without a key, any program
+or web page on this computer can connect; use a key when that matters.
 
 ## 2. Connect a viewer
 
-Any viewer works. The examples below expect this demo (the `N27` template,
+Any viewer works, including a saved `.html` file opened from disk: the viewer,
+its data and the remote control are all inside the page. The examples below
+expect this demo (the `N27` template,
 `threeBrain::download_N27()`, with eight contacts):
 
 ```r
@@ -63,11 +80,18 @@ brain$plot()
 
 In the viewer's control panel (the **Default** folder at the top), check
 that **Passkey** shows the hub's passkey (`17285`, or `17285.KEY` with a key)
-and click **Connect**. **Remote Connection Status** says whether it worked. A
-viewer never connects by itself. After the first
-connection, an **Auto-connect** box appears (checked): the viewer then
-reconnects when the hub restarts, and connects on its own the next time a page
-from the same site opens.
+and click **Connect**. **Remote Connection Status** says whether it worked.
+
+A viewer never connects by itself: not when it opens, and not when a page of
+the same site connected before, because a new page may show other data. After
+the first connection, an **Auto-connect** box appears (checked). It only brings
+this viewer back after its hub went away: when a hub with the same passkey
+runs again, the viewer joins it by itself.
+
+Closing a tab disconnects its viewer. Some apps only hide a page when you
+"close" it (an IDE's viewer pane, for example) and keep it running; such a
+viewer stays connected and is listed as hidden. Click **Disconnect** in it, or
+have a program remove it (`disconnect` below).
 
 ## 3. Send commands
 
@@ -117,9 +141,13 @@ request gets one `result` with the same `id`.
 | `list` | the connected viewers |
 | `command` (`target`, `name`, `value`) | the viewer's result |
 | `subscribe` (`targets`, `names`: lists or `"*"`) | then `event` messages for those viewers and names |
-| `hub` with `op`: `status`, `events`, `set_key` (`key` or `generate: true`), `shutdown` | hub status, the last 50 events per viewer, the new passkey |
+| `hub` with `op`: `status`, `events`, `set_key` (`key` or `generate: true`), `disconnect` (`target`), `shutdown` | hub status, the last 50 events per viewer, the new passkey; `disconnect` removes one viewer, which then stays disconnected |
 
 The hub also sends `viewer_joined` and `viewer_left` notices to controllers.
+Each viewer in `list` carries `visible` (whether its page is shown; `null`
+when unknown) and `visibility_since`; viewers report changes as a `visibility`
+event. Close codes: `4400` (bad hello), `4401` (wrong or missing key), `4001`
+(removed by `disconnect`).
 
 **Commands.** The names and values are the ones R's `brain_proxy()` sends in
 Shiny. The `describe` command lists them with short descriptions.

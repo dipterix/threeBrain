@@ -114,9 +114,10 @@ export class HubClient extends EventEmitter {
   }
 }
 
-export function spawnHub({ cliPath, port, key = null, idleMinutes = null }) {
+export function spawnHub({ cliPath, port, key = null, idleMinutes = null, by = null }) {
   const args = [cliPath, 'serve', '--port', String(port)];
   if (key) { args.push('--key', key); }
+  if (by) { args.push('--by', by); }
   if (idleMinutes !== null) { args.push('--idle-minutes', String(idleMinutes)); }
   const child = spawn(process.execPath, args, { detached: true, stdio: 'ignore', windowsHide: true });
   child.unref();
