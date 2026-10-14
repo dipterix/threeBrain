@@ -174,6 +174,12 @@
 - [`video_content()`](https://dipterix.org/threeBrain/reference/video_content.md)
   : Add video content to the viewer
 
+- [`viewer_hub_path()`](https://dipterix.org/threeBrain/reference/viewer_hub.md)
+  [`viewer_hub_start()`](https://dipterix.org/threeBrain/reference/viewer_hub.md)
+  [`viewer_hub_list()`](https://dipterix.org/threeBrain/reference/viewer_hub.md)
+  [`viewer_hub_stop()`](https://dipterix.org/threeBrain/reference/viewer_hub.md)
+  : Let other programs drive the 3D viewers
+
 - [`volume_to_surf()`](https://dipterix.org/threeBrain/reference/volume_to_surf.md)
   :
 

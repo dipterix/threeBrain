@@ -87,7 +87,8 @@
 <span>  qrcode <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  custom_javascript <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  show_modal <span class="op">=</span> <span class="st">"auto"</span>,</span>
-<span>  embed <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  embed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  remote_passkey <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"threeBrain.remote_passkey"</span>, <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -269,6 +270,15 @@ only use it when you have multiple widgets in one website</p></dd>
 
 <dt id="arg-embed">embed<a class="anchor" aria-label="anchor" href="#arg-embed"></a></dt>
 <dd><p>whether to try embedding the viewer in current run-time; default is false (will launch default web browser); set to true if running in <code>'rmarkdown'</code> or <code>'quarto'</code>, or to see the viewer in <code>'RStudio'</code> default panel.</p></dd>
+
+
+<dt id="arg-remote-passkey">remote_passkey<a class="anchor" aria-label="anchor" href="#arg-remote-passkey"></a></dt>
+<dd><p>the <code>passkey</code> shown in the viewer's
+<code>"Passkey"</code> field (control panel), <code>"17285"</code> or
+<code>"17285.key"</code>; default is the one <code><a href="viewer_hub.html">viewer_hub_start</a></code>
+stored in <code>options(threeBrain.remote_passkey)</code>. The viewer only joins
+the hub once the user clicks <code>"Connect"</code>; <code><a href="save_brain.html">save_brain</a></code>
+keeps the port but not the key. See <code><a href="viewer_hub.html">viewer_hub</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

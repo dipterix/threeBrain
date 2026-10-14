@@ -35,6 +35,33 @@ Standalone Viewers (`save_brain`):
   every surface and every volume, and one code path waited forever for a
   worker that never existed
 
+Remote Control:
+
+- Other programs can now drive a viewer: `R` scripts, `Python`, and AI
+  agents through the hub’s `MCP` mode.
+  [`viewer_hub_start()`](https://dipterix.org/threeBrain/reference/viewer_hub.md)
+  starts a small hub on this computer, or reuses the one already
+  running, and later viewers show its passkey in the control panel’s
+  “Passkey” field; “Connect” joins the hub. A viewer never connects on
+  its own, not even a page that connected before. Once connected,
+  “Auto-connect” (on by default) brings it back when its hub restarts
+  with the same passkey
+- Through the hub, programs send the commands
+  [`brain_proxy()`](https://dipterix.org/threeBrain/reference/brain_proxy.md)
+  sends in `shiny`, read the viewer’s state, receive clicks and other
+  events, and take screenshots that look like what the user sees. Agents
+  find a running hub and join it, or start one and give the user its
+  passkey; they can also stop a hub and remove a viewer. Viewers tell
+  the hub whether they are shown, so a viewer that its app keeps running
+  hidden (for example after its pane was closed) is listed as hidden
+- The hub (`Node.js` 18 or newer) listens on `127.0.0.1` only. Without a
+  key, any program or web page on this computer can connect;
+  `viewer_hub_start(generate_key = TRUE)` adds one.
+  [`save_brain()`](https://dipterix.org/threeBrain/reference/save_brain.md)
+  keeps the hub’s port in a saved viewer, not its key
+- The repository’s `examples/` folder has `R` and `Python` clients and a
+  skill for AI agents
+
 Volume Rendering Improvements:
 
 - Added precomputed gradient textures for faster normal calculation
@@ -306,6 +333,8 @@ Shiny Proxy:
   taken outside the frame that drew it can be blank (`Chromium`) or out
   of date. `shidashi` sends the event before it captures the viewer for
   an agent
+- `set_zoom_level()` and `set_matrix_world()` now redraw the viewer at
+  once; the change used to show only after the next mouse move
 
 Minor Changes:
 

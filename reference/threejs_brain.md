@@ -48,7 +48,8 @@ threejs_brain(
   qrcode = NULL,
   custom_javascript = NULL,
   show_modal = "auto",
-  embed = FALSE
+  embed = FALSE,
+  remote_passkey = getOption("threeBrain.remote_passkey", NULL)
 )
 ```
 
@@ -255,6 +256,17 @@ threejs_brain(
   false (will launch default web browser); set to true if running in
   `'rmarkdown'` or `'quarto'`, or to see the viewer in `'RStudio'`
   default panel.
+
+- remote_passkey:
+
+  the `passkey` shown in the viewer's `"Passkey"` field (control panel),
+  `"17285"` or `"17285.key"`; default is the one
+  [`viewer_hub_start`](https://dipterix.org/threeBrain/reference/viewer_hub.md)
+  stored in `options(threeBrain.remote_passkey)`. The viewer only joins
+  the hub once the user clicks `"Connect"`;
+  [`save_brain`](https://dipterix.org/threeBrain/reference/save_brain.md)
+  keeps the port but not the key. See
+  [`viewer_hub`](https://dipterix.org/threeBrain/reference/viewer_hub.md).
 
 ## Author
 
