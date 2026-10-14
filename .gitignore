@@ -13,6 +13,7 @@ docs
 _rs_job.R
 ui.R
 .positai
+.superpowers
 threeBrain.code-workspace
 .vscode
 **/__pycache__/**.pyc

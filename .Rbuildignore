@@ -42,6 +42,7 @@
 ^\.positai$
 ^\.claude$
 ^\.lintr$
+^\.superpowers$
 ^\.vscode/
 ^threeBrain\.code-workspace$
 ^inst/three-brain-hub/node_modules
