@@ -2,8 +2,14 @@
 
 ## Changes since last CRAN release
 
-- `de794cbc (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Allow oversized NIfTI files
+- `2a4435e4 (HEAD -> master)` \[*`dipterix`*\]: Added `MCP` server to
+  the hub, and examples for `WebSocket`
+- `e0fd33f2` \[*`dipterix`*\]: Added `WebSocket` driver
+- `2b6d8526 (origin/master, origin/HEAD)` \[*`dipterix`*\]: Bump version
+  to 1.3.0.68 in DESCRIPTION file
+- `9825f3d6` \[*`dipterix`*\]: Electrode colors follow data sent right
+  after the viewer loads (upgraded three to `r186`)
+- `de794cbc` \[*`dipterix`*\]: Allow oversized NIfTI files
 - `e7c7e8c3` \[*`dipterix`*\]: Enhance generate_subcortical_surface
   function with additional parameters for smoothing and thresholding
 - `de783067` \[*`dipterix`*\]: Enhance capture request handling to

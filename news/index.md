@@ -327,13 +327,14 @@ Minor Changes:
 - Mask is now applied to slice overlays
 - `volume_to_surf` with the default implicit smoothing reduces surfaces
   with more than `max_vertices` vertices (500,000 by default) with
-  `ravetools::vcg_decimate` before smoothing; a whole-brain atlas at
-  sub-millimeter resolution gives millions of vertices and used to crash
-  `R` while smoothing. The same `lambda` and `degree` smooth a decimated
-  mesh more, so raise `max_vertices` to smooth at full resolution. With
-  a `ravetools` version that has no `vcg_decimate` (0.3.2 and earlier,
-  whose implicit smoother crashes on large surfaces), surfaces with more
-  than 20,000 vertices are returned without smoothing, with a warning
+  [`ravetools::vcg_decimate`](https://dipterix.org/ravetools/reference/vcg_decimate.html)
+  before smoothing; a whole-brain atlas at sub-millimeter resolution
+  gives millions of vertices and used to crash `R` while smoothing. The
+  same `lambda` and `degree` smooth a decimated mesh more, so raise
+  `max_vertices` to smooth at full resolution. With a `ravetools`
+  version that has no `vcg_decimate` (0.3.2 and earlier, whose implicit
+  smoother crashes on large surfaces), surfaces with more than 20,000
+  vertices are returned without smoothing, with a warning
 - `volume_to_surf` gains `smooth_method = "explicit"` to smooth with
   [`ravetools::mris_smooth`](https://dipterix.org/ravetools/reference/mris_smooth.html)
   (`smooth_iterations` rounds of neighbor averaging) instead of the

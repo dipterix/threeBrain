@@ -147,7 +147,7 @@ of <code><a href="https://dipterix.org/ravetools/reference/vcg_smooth.html" clas
 <dd><p>used only when <code>smooth_method</code> is
 <code>"implicit"</code>, whose memory grows quickly with the surface size:
 surfaces with more vertices than this are reduced to about this many with
-<code>ravetools::vcg_decimate()</code> before smoothing, which removes vertices
+<code><a href="https://dipterix.org/ravetools/reference/vcg_decimate.html" class="external-link">ravetools::vcg_decimate()</a></code> before smoothing, which removes vertices
 from flat regions first and keeps the shape; default is <code>500000</code>.
 Because the smoothing works in mesh steps, the same <code>lambda</code> and
 <code>degree</code> smooth a reduced surface more; use a larger value or

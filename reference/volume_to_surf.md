@@ -117,11 +117,12 @@ volume_to_surf(
 
   used only when `smooth_method` is `"implicit"`, whose memory grows
   quickly with the surface size: surfaces with more vertices than this
-  are reduced to about this many with `ravetools::vcg_decimate()` before
-  smoothing, which removes vertices from flat regions first and keeps
-  the shape; default is `500000`. Because the smoothing works in mesh
-  steps, the same `lambda` and `degree` smooth a reduced surface more;
-  use a larger value or `Inf` to smooth at full resolution. With a
+  are reduced to about this many with
+  [`ravetools::vcg_decimate()`](https://dipterix.org/ravetools/reference/vcg_decimate.html)
+  before smoothing, which removes vertices from flat regions first and
+  keeps the shape; default is `500000`. Because the smoothing works in
+  mesh steps, the same `lambda` and `degree` smooth a reduced surface
+  more; use a larger value or `Inf` to smooth at full resolution. With a
   ravetools version that does not have `vcg_decimate`, surfaces with
   more than `20000` vertices are not smoothed, since the implicit
   smoothing of those versions can crash on large surfaces
