@@ -1,0 +1,24 @@
+{
+  "name": "@rave-ieeg/three-brain-hub",
+  "version": "0.1.0",
+  "description": "Local WebSocket hub (and MCP server) that lets other programs drive threeBrain 3D viewers",
+  "type": "module",
+  "bin": {
+    "threebrain-hub": "src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js serve",
+    "test": "node --test test/*.test.js",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MPL-2.0",
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

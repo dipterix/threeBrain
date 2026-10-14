@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `de794cbc (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Allow oversized NIfTI files
+* `2b6d8526 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Bump version to 1.3.0.68 in DESCRIPTION file
+* `9825f3d6` [_`dipterix`_]: Electrode colors follow data sent right after the viewer loads (upgraded three to `r186`)
+* `de794cbc` [_`dipterix`_]: Allow oversized NIfTI files
 * `e7c7e8c3` [_`dipterix`_]: Enhance generate_subcortical_surface function with additional parameters for smoothing and thresholding
 * `de783067` [_`dipterix`_]: Enhance capture request handling to include canvas data in views for screenshot functionality
 * `893f670b` [_`dipterix`_]: Implement capture request handling in ViewerCanvas for image export
