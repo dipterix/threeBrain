@@ -387,6 +387,10 @@ Drag and Drop Improvements:
 * Fixed drag and drop multiple files issue
 * Fixed drag and drop color key length issue
 * Added try-catch to handle file processing errors to avoid stopping processing files
+* Dropping an electrode value table that has a `Time` column for a variable that
+  is already loaded (for example the values again after the coordinates, or edited
+  values after a `_colormap.csv` file) now updates the electrodes. It used to fail
+  silently and keep the previous values
 
 Bug Fixes:
 

@@ -1,5 +1,6 @@
 ## Changes since last CRAN release
-* `fd435ed1 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Add skill.md to notify-rave-agents workflow paths
+* `4b11a911 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Enhance WebSocketDriver to manage connection lifecycle with page visibility events
+* `fd435ed1` [_`dipterix`_]: Add skill.md to notify-rave-agents workflow paths
 * `e41ac9e2` [_`dipterix`_]: Add remote passkey option to threejs_brain and implement viewer hub functions
 * `c5a906e1` [_`dipterix`_]: Add .superpowers to .gitignore and .Rbuildignore
 * `2a4435e4` [_`dipterix`_]: Added `MCP` server to the hub, and examples for `WebSocket`
