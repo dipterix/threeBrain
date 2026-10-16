@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.69</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.70</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -219,6 +219,7 @@
 <li>Fixed drag and drop multiple files issue</li>
 <li>Fixed drag and drop color key length issue</li>
 <li>Added try-catch to handle file processing errors to avoid stopping processing files</li>
+<li>Dropping an electrode value table that has a <code>Time</code> column for a variable that is already loaded (for example the values again after the coordinates, or edited values after a <code>_colormap.csv</code> file) now updates the electrodes. It used to fail silently and keep the previous values</li>
 </ul><p>Bug Fixes:</p>
 <ul><li>Suppressed rendering flags when the trackball is inactive, fixing the rendering policy</li>
 <li>Unsigned 32-bit <code>NIfTI</code> volumes load; they used to fail with a missing type error</li>
