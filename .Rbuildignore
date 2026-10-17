@@ -53,3 +53,4 @@
 ^inst/three-brain-hub/\.gitignore$
 ^examples$
 ^inst/three-brain-hub/TODO\.md$
+^ai\.txt$

@@ -1,0 +1,16 @@
+# ai.txt: AI usage preferences for this repository
+#
+# The copyright holders reserve all rights to the contents of this
+# repository (source code, documentation, images, and sample data)
+# against use for training, fine-tuning, or evaluating machine-learning
+# or generative AI models, and against ingestion into AI indexing,
+# retrieval, or code-assistant services. This is an express reservation
+# of rights under Article 4(3) of Directive (EU) 2019/790 (text and
+# data mining).
+#
+# Machine-readable form (robots.txt syntax; the Content-Usage line uses
+# the IETF aipref draft vocabulary):
+
+User-Agent: *
+Disallow: /
+Content-Usage: train-ai=n, ai-use=n
