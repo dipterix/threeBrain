@@ -10,8 +10,10 @@ import { VERSION } from './version.js';
 export const PROTOCOL = 1;
 const HELLO_TIMEOUT_MS = 5000;
 const EVENTS_KEPT = 50;
-// screenshots travel as PNG data URLs
-const MAX_PAYLOAD = 64 * 1024 * 1024;
+// screenshots travel as PNG data URLs, dropped files (`drop_file`) in base64
+export const MAX_PAYLOAD = 256 * 1024 * 1024;
+// how long a command may ask the hub to wait for its viewer (`timeout_ms`)
+const COMMAND_TIMEOUT_MS = { min: 100, max: 10 * 60 * 1000 };
 
 export function createHub({
   port = DEFAULT_PORT,
@@ -181,12 +183,16 @@ export function createHub({
       return;
     }
     const hubId = `h${++counters.h}`;
+    // a command that takes long (a large dropped file) says how long to wait
+    const waitMs = Number.isFinite(message.timeout_ms)
+      ? Math.min(Math.max(message.timeout_ms, COMMAND_TIMEOUT_MS.min), COMMAND_TIMEOUT_MS.max)
+      : requestTimeoutMs;
     const timer = setTimeout(() => {
       pending.delete(hubId);
       reply(controller, message.id, false, undefined, {
-        code: 'timeout', message: `Viewer ${viewer.id} did not answer within ${requestTimeoutMs} ms`,
+        code: 'timeout', message: `Viewer ${viewer.id} did not answer within ${waitMs} ms`,
       });
-    }, requestTimeoutMs);
+    }, waitMs);
     pending.set(hubId, { controllerId: controller.id, clientId: message.id, viewerId: viewer.id, timer });
     send(viewer.ws, { type: 'command', id: hubId, name: message.name, value: message.value ?? null });
   };

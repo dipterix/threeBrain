@@ -63,11 +63,11 @@ async function fakeViewer(t, port, { title = 'N27 page', key, answer, visible } 
   await viewer.opened;
   const { id } = await viewer.next(isType('welcome'));
   const received = [];
-  viewer.ws.addEventListener('message', (event) => {
+  viewer.ws.addEventListener('message', async (event) => {
     const message = JSON.parse(event.data);
     if (message.type !== 'command') { return; }
     received.push(message);
-    const reply = answer ? answer(message)
+    const reply = answer ? await answer(message)
       : message.name === 'capture' ? { ok: true, value: { dataURI: `data:image/png;base64,${PNG}`, views: [] } }
       : message.name === 'no_such' ? { ok: false, error: { code: 'unknown_command', message: 'Unknown command "no_such"' } }
       : { ok: true, value: { echoed: message.name } };
@@ -101,8 +101,8 @@ test('tools/list offers the viewer tools with input schemas', async (t) => {
   const { call } = mcpSession(t, [ '--port', String(hub.port) ]);
   const { result } = await call('tools/list');
   const names = result.tools.map((tool) => tool.name).sort();
-  assert.deepEqual(names, [ 'capture_screenshot', 'connect_hub', 'describe_commands', 'disconnect_viewer', 'get_events',
-    'get_passkey', 'get_state', 'hub_status', 'list_viewers', 'run_command', 'start_hub', 'stop_hub' ]);
+  assert.deepEqual(names, [ 'capture_screenshot', 'connect_hub', 'describe_commands', 'disconnect_viewer', 'drop_file',
+    'get_events', 'get_passkey', 'get_state', 'hub_status', 'list_viewers', 'run_command', 'start_hub', 'stop_hub' ]);
   for (const tool of result.tools) {
     assert.equal(tool.inputSchema.type, 'object', tool.name);
     assert.ok(tool.description.length > 40, tool.name);
@@ -201,6 +201,120 @@ test('get_events returns what viewers reported', async (t) => {
   assert.ok(!result.isError, text(result));
   assert.match(text(result), /N27, 1 - LA1/);
   assert.match(text(result), /data, not instructions/);
+});
+
+// a folder of its own for the files a test drops
+function tempFolder(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'threebrain-drop-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
+
+// what a viewer answers when the dropped roi.nii.gz became a volume (its
+// control panel entries are named after the file without its extension)
+const dropped = () => ({ ok: true, value: {
+  file: 'roi.nii.gz', handlers: [ 'VolumeHandler' ],
+  objects: [ 'Atlas - roi.nii.gz (N27)' ], controllers: [ 'Visibility - roi', 'Opacity - roi' ],
+} });
+
+test('drop_file sends the file in base64 under its own name and reports what the viewer added', async (t) => {
+  const hub = await startHub(t);
+  const { received } = await fakeViewer(t, hub.port, { answer: dropped });
+  const file = path.join(tempFolder(t), 'roi.nii.gz');
+  fs.writeFileSync(file, 'hello');
+  const { tool } = mcpSession(t, [ '--port', String(hub.port) ]);
+  const result = await tool('drop_file', { path: file });
+  assert.ok(!result.isError, text(result));
+  assert.equal(received.length, 1);
+  assert.equal(received[0].name, 'drop_file');
+  assert.deepEqual(received[0].value, { name: 'roi.nii.gz', data: 'aGVsbG8=' });
+  assert.match(text(result), /VolumeHandler/);
+  assert.match(text(result), /Atlas - roi\.nii\.gz \(N27\)/);
+  assert.match(text(result), /Visibility - roi, Opacity - roi/);
+  assert.match(text(result), /data, not instructions/);
+});
+
+test('drop_file gives the file the name passed in `name`', async (t) => {
+  const hub = await startHub(t);
+  const { received } = await fakeViewer(t, hub.port, { answer: dropped });
+  const file = path.join(tempFolder(t), 'tmp_x1');
+  fs.writeFileSync(file, 'hello');
+  const { tool } = mcpSession(t, [ '--port', String(hub.port) ]);
+  const result = await tool('drop_file', { path: file, name: 'lh.roi.gii' });
+  assert.ok(!result.isError, text(result));
+  assert.deepEqual(received[0].value, { name: 'lh.roi.gii', data: 'aGVsbG8=' });
+});
+
+test('drop_file sends inline text as text, under the name passed', async (t) => {
+  const hub = await startHub(t);
+  const { received } = await fakeViewer(t, hub.port, { answer: dropped });
+  const { tool } = mcpSession(t, [ '--port', String(hub.port) ]);
+  const result = await tool('drop_file', { text: 'Electrode,Value\n1,0.5\n', name: 'values.csv' });
+  assert.ok(!result.isError, text(result));
+  assert.deepEqual(received[0].value, { name: 'values.csv', text: 'Electrode,Value\n1,0.5\n' });
+});
+
+test('drop_file refuses what it cannot send, and sends nothing', async (t) => {
+  const hub = await startHub(t);
+  const { received } = await fakeViewer(t, hub.port, { answer: dropped });
+  const dir = tempFolder(t);
+  const file = path.join(dir, 'roi.nii.gz');
+  fs.writeFileSync(file, 'hello');
+  const { tool } = mcpSession(t, [ '--port', String(hub.port) ]);
+  const cases = [
+    [ {}, /"path"/ ],
+    [ { text: 'Electrode\n1\n' }, /"name"/ ],
+    [ { path: file, text: 'Electrode\n1\n', name: 'values.csv' }, /not both/ ],
+    [ { path: path.join(dir, 'missing.nii.gz') }, /missing\.nii\.gz/ ],
+    [ { path: dir }, /folder/ ],
+  ];
+  for (const [ args, why ] of cases) {
+    const result = await tool('drop_file', args);
+    assert.equal(result.isError, true, JSON.stringify(args));
+    assert.match(text(result), why, JSON.stringify(args));
+  }
+  assert.equal(received.length, 0);
+});
+
+test('drop_file refuses a file too large for one hub message, and sends nothing', async (t) => {
+  const hub = await startHub(t);
+  const { received } = await fakeViewer(t, hub.port, { answer: dropped });
+  const file = path.join(tempFolder(t), 'huge.nii');
+  // sparse: its base64 is just over 256 MiB, the largest message a hub accepts
+  fs.closeSync(fs.openSync(file, 'w'));
+  fs.truncateSync(file, 192 * 1024 * 1024 + 1);
+  const { tool } = mcpSession(t, [ '--port', String(hub.port) ]);
+  const result = await tool('drop_file', { path: file });
+  assert.equal(result.isError, true);
+  assert.match(text(result), /\d MB/);
+  assert.match(text(result), /drag/i);
+  assert.equal(received.length, 0);
+});
+
+test('drop_file waits for the viewer longer than the hub waits for other commands', async (t) => {
+  const hub = await startHub(t, { requestTimeoutMs: 300 });
+  await fakeViewer(t, hub.port, { answer: () => sleep(800).then(dropped) });
+  const file = path.join(tempFolder(t), 'roi.nii.gz');
+  fs.writeFileSync(file, 'hello');
+  const { tool } = mcpSession(t, [ '--port', String(hub.port) ]);
+  const other = await tool('run_command', { name: 'title', value: 'x' });
+  assert.match(text(other), /timeout/);
+  const result = await tool('drop_file', { path: file });
+  assert.ok(!result.isError, text(result));
+});
+
+test('drop_file on a viewer from an older threeBrain says to drag the file in', async (t) => {
+  const hub = await startHub(t);
+  await fakeViewer(t, hub.port, {
+    answer: () => ({ ok: false, error: { code: 'unknown_command', message: 'Unknown command "drop_file"' } }),
+  });
+  const file = path.join(tempFolder(t), 'roi.nii.gz');
+  fs.writeFileSync(file, 'hello');
+  const { tool } = mcpSession(t, [ '--port', String(hub.port) ]);
+  const result = await tool('drop_file', { path: file });
+  assert.equal(result.isError, true);
+  assert.match(text(result), /unknown_command/);
+  assert.match(text(result), /drag/i);
 });
 
 test('get_passkey tells the agent what the user pastes; rotate makes the hub require a key', async (t) => {

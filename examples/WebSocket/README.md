@@ -117,9 +117,9 @@ port or a key. AI agents use the hub's MCP mode instead; see
 
 ## Protocol
 
-Every message is one JSON object in a WebSocket text frame. A controller first
-introduces itself, then sends requests with an `id` of its choosing; each
-request gets one `result` with the same `id`.
+Every message is one JSON object in a WebSocket text frame, of at most 256 MB.
+A controller first introduces itself, then sends requests with an `id` of its
+choosing; each request gets one `result` with the same `id`.
 
 ```jsonc
 {"type": "hello", "protocol": 1, "role": "controller", "name": "my script"}   // "key": "KEY" when the hub has one
@@ -139,7 +139,7 @@ request gets one `result` with the same `id`.
 | Request | Answer |
 |---|---|
 | `list` | the connected viewers |
-| `command` (`target`, `name`, `value`) | the viewer's result |
+| `command` (`target`, `name`, `value`; optional `timeout_ms`) | the viewer's result; the hub waits 30 s for it, or `timeout_ms` (100 ms to 10 min) |
 | `subscribe` (`targets`, `names`: lists or `"*"`) | then `event` messages for those viewers and names |
 | `hub` with `op`: `status`, `events`, `set_key` (`key` or `generate: true`), `disconnect` (`target`), `shutdown` | hub status, the last 50 events per viewer, the new passkey; `disconnect` removes one viewer, which then stays disconnected |
 
@@ -166,6 +166,7 @@ Shiny. The `describe` command lists them with short descriptions.
 | `set_plane` | `{"x": 0, "y": 0, "z": 0}`, the slice crosshair (`tkrRAS`, mm) |
 | `font_magnification` | a number |
 | `text_decoration_set` / `text_decoration_delete` | `{"id": "label1", "text": "...", "position": [x, y, z]}` / `{"id": "label1"}` |
+| `drop_file` | `{"name": "roi.nii.gz", "data": "<the file in base64>"}`, or `{"name": "values.csv", "text": "..."}` for a text file: adds the file as if it were dropped on the viewer, and answers what it added, `{"file", "handlers", "objects", "controllers"}`. A large file takes a while: send it with `"timeout_ms": 120000` |
 | `describe` | the list of commands |
 | `get_state` | control panel values, slice crosshair, camera, current subject |
 | `get_input` | `{"name": "controllers"}`; also `controller_specs`, `main_camera`, `current_subject`, `mouse_clicked`, ... |
@@ -173,7 +174,9 @@ Shiny. The `describe` command lists them with short descriptions.
 
 Commands that edit electrode localization (`clear_localization`,
 `add_localization_electrode`, `set_localization_electrode`) or object transforms
-(`set_matrix_world`) change the user's work.
+(`set_matrix_world`) change the user's work. So does `drop_file` with an
+electrode coordinate table (it replaces the subject's contacts) or a viewer
+state JSON (it replaces the control panel settings).
 
 **Events** carry the names of the Shiny inputs: `mouse_clicked`,
 `mouse_dblclicked`, `controllers`, `controller_specs`, `main_camera`,

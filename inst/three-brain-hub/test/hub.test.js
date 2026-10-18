@@ -119,6 +119,39 @@ test('a viewer that never answers yields a timeout error', async (t) => {
   assert.equal(result.error.code, 'timeout');
 });
 
+test('timeout_ms on a command lets a slow viewer answer after the hub\'s request timeout', async (t) => {
+  const hub = await startHub(t, { requestTimeoutMs: 150 });
+  const { client: viewer, welcome: v } = await joined(t, hub.port, viewerHello());
+  const { client: controller } = await joined(t, hub.port, controllerHello());
+  controller.send({ type: 'command', id: 'slow', target: v.id, name: 'drop_file', value: {}, timeout_ms: 3000 });
+  const command = await viewer.next(isType('command'));
+  await sleep(500);
+  viewer.send({ type: 'result', id: command.id, ok: true, value: 'loaded' });
+  const result = await controller.next(isType('result'));
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.value, 'loaded');
+});
+
+test('timeout_ms on a command also shortens the wait', async (t) => {
+  // the hub's own request timeout is 30 s
+  const hub = await startHub(t);
+  const { welcome: v } = await joined(t, hub.port, viewerHello());
+  const { client: controller } = await joined(t, hub.port, controllerHello());
+  controller.send({ type: 'command', id: 't', target: v.id, name: 'title', value: '', timeout_ms: 200 });
+  const result = await controller.next(isType('result'));
+  assert.equal(result.error.code, 'timeout');
+});
+
+test('a command larger than 64 MiB reaches the viewer (a dropped file of about 190 MB fits)', async (t) => {
+  const hub = await startHub(t);
+  const { client: viewer, welcome: v } = await joined(t, hub.port, viewerHello());
+  const { client: controller } = await joined(t, hub.port, controllerHello());
+  const data = 'A'.repeat(70 * 1024 * 1024);
+  controller.send({ type: 'command', id: 'big', target: v.id, name: 'drop_file', value: { name: 'big.nii', data } });
+  const command = await viewer.next(isType('command'), 20000);
+  assert.equal(command.value.data.length, data.length);
+});
+
 test('list answers with the connected viewers, including their page origin', async (t) => {
   const hub = await startHub(t);
   const viewer = openClient(hub.port, viewerHello(), {
