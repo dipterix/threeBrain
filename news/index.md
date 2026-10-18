@@ -54,6 +54,13 @@ Remote Control:
   passkey; they can also stop a hub and remove a viewer. Viewers tell
   the hub whether they are shown, so a viewer that its app keeps running
   hidden (for example after its pane was closed) is listed as hidden
+- Programs and AI agents can add files to a viewer as if the user had
+  dropped them on its drag-and-drop zone: volumes, surfaces,
+  streamlines, electrode tables, color maps and viewer states. Agents
+  use the `MCP` tool `drop_file` with a file on this computer (up to
+  about 200 MB) or the text of a table; other programs send the command
+  `drop_file`. The answer names the objects and control panel entries
+  that the file added
 - The hub (`Node.js` 18 or newer) listens on `127.0.0.1` only. Without a
   key, any program or web page on this computer can connect;
   `viewer_hub_start(generate_key = TRUE)` adds one.

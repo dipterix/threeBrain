@@ -2,12 +2,17 @@
 
 ## Changes since last CRAN release
 
-- `e47b6b18 (HEAD -> master, origin/master, origin/HEAD)`
-  \[*`dipterix`*\]: Dropping an electrode value table that has a `Time`
-  column for a variable that is already loaded (for example the values
-  again after the coordinates, or edited values after a `_colormap.csv`
-  file) now updates the electrodes. It used to fail silently and keep
-  the previous values; Fixed a flickering issue
+- `7cf3fc78 (HEAD -> master, origin/master, origin/HEAD)`
+  \[*`dipterix`*\]: Add VolumePass class for ray-marched volume
+  rendering with depth support: removes MSAA for `datacube2`, which is
+  sampled per sub-pixel on safari 27
+- `ba524c71` \[*`dipterix`*\]: Enhance electrode activity graph and line
+  graph view to support multi-contact readings
+- `e47b6b18` \[*`dipterix`*\]: Dropping an electrode value table that
+  has a `Time` column for a variable that is already loaded (for example
+  the values again after the coordinates, or edited values after a
+  `_colormap.csv` file) now updates the electrodes. It used to fail
+  silently and keep the previous values; Fixed a flickering issue
 - `4b11a911` \[*`dipterix`*\]: Enhance WebSocketDriver to manage
   connection lifecycle with page visibility events
 - `fd435ed1` \[*`dipterix`*\]: Add skill.md to notify-rave-agents
