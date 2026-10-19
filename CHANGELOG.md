@@ -1,5 +1,7 @@
 ## Changes since last CRAN release
-* `7cf3fc78 (HEAD -> master, origin/master, origin/HEAD)` [_`dipterix`_]: Add VolumePass class for ray-marched volume rendering with depth support: removes MSAA for `datacube2`, which is sampled per sub-pixel on safari 27
+* `ab19e81a (HEAD -> master)` [_`dipterix`_]: Add radius controls for electrode animation with variable mapping and parsing
+* `5456312b (origin/master, origin/HEAD)` [_`dipterix`_]: Enhance drop_file functionality to support larger files and add detailed descriptions for file types and usage in MCP server documentation
+* `7cf3fc78` [_`dipterix`_]: Add VolumePass class for ray-marched volume rendering with depth support: removes MSAA for `datacube2`, which is sampled per sub-pixel on safari 27
 * `ba524c71` [_`dipterix`_]: Enhance electrode activity graph and line graph view to support multi-contact readings
 * `e47b6b18` [_`dipterix`_]: Dropping an electrode value table that has a `Time` column for a variable that is already loaded (for example the values again after the coordinates, or edited values after a `_colormap.csv` file) now updates the electrodes. It used to fail silently and keep the previous values; Fixed a flickering issue
 * `4b11a911` [_`dipterix`_]: Enhance WebSocketDriver to manage connection lifecycle with page visibility events
