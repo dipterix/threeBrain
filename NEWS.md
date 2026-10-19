@@ -229,6 +229,11 @@ Streamline Visualization:
   streamlines
 * Added support for `tt` streamline format
 * Fixed `trk` format; supported `tck` format (drag and drop)
+* A dropped streamline file (`trk`, `tck`, `tt`) no longer also shows up under
+  `Configure ROI Surfaces`. Its `Visibility` controller there did nothing, stayed
+  after `Clear Uploaded Streamlines`, and had the same name as the working one
+  under `Configure Streamlines`, so the remote `controllers` command could not
+  hide the tract
 * Use `KDTree` to query the streamlines that intersect the target volume
 * Streamlines have better memory management with random shuffle
 * In highlight mode faded streamline widths can be adjusted
