@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.74</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.75</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,6 +126,7 @@
 <li>Fixed a length filter that kept every streamline of a bundle asking for one segment more than the bundle has, which <code>WebGPU</code> rejects, dropping the whole frame. It was reachable with <code>Line MinLen</code> on any bundle of fewer than 200 streamlines</li>
 <li>Added support for <code>tt</code> streamline format</li>
 <li>Fixed <code>trk</code> format; supported <code>tck</code> format (drag and drop)</li>
+<li>A dropped streamline file (<code>trk</code>, <code>tck</code>, <code>tt</code>) no longer also shows up under <code>Configure ROI Surfaces</code>. Its <code>Visibility</code> controller there did nothing, stayed after <code>Clear Uploaded Streamlines</code>, and had the same name as the working one under <code>Configure Streamlines</code>, so the remote <code>controllers</code> command could not hide the tract</li>
 <li>Use <code>KDTree</code> to query the streamlines that intersect the target volume</li>
 <li>Streamlines have better memory management with random shuffle</li>
 <li>In highlight mode faded streamline widths can be adjusted</li>
