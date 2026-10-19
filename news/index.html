@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">threeBrain</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.73</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.74</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,6 +107,7 @@
 <strong>Breaking</strong>: <code>Frustum Near</code>/<code>Frustum Far</code> and <code>Line MinLen</code>/<code>Line MaxLen</code> are replaced by the <code>Frustum</code> and <code>Line Length</code> range controllers above. Update any <code>controllers = list("Frustum Near" = ..., "Frustum Far" = ...)</code> to <code>controllers = list("Frustum" = list(min = ..., max = ...))</code>, and <code>controllers = list("Line MinLen" = ..., "Line MaxLen" = ...)</code> to <code>controllers = list("Line Length" = list(min = ..., max = ...))</code>
 </li>
 <li>The electrode animation panel gained a <code>Display Data (Graph)</code> line plot: it traces the focused electrode’s value over the recording’s time axis with a play-head cursor, and stays hidden unless a continuous variable with more than one time point is shown on the focused electrode</li>
+<li>Electrode contacts can be sized by data. <code>Radius Value</code> picks a continuous variable, <code>Radius Range</code> sets the values mapped onto two radii (the variable’s range by default), and <code>Radius Ratio</code> sets those radii in millimeters, for example <code>0.1,2</code>, or as multiples of each contact’s own radius with a leading <code>x</code>, for example <code>x0.5,2</code>. The middle of the range draws the middle radius (<code>1</code> for <code>0,2</code>), and on each side of it the radius changes on a log scale: its log is linear in the value. No contact is drawn smaller than 0.1 mm, or 0.01 mm if its own radius is under 0.5 mm, or 0.0001 mm under 0.05 mm. Blank keeps the original radius. Sizes follow the animation time; contacts without a value keep their radius. Sphere electrodes and the contacts of prototype electrodes are resized, prototype shafts are not</li>
 <li>
 <code>Voxel Label</code> and <code>Line Simplify Factor</code> now recompute only once a drag or edit finishes, rather than on every intermediate value while dragging</li>
 <li>Changing <code>Background Color</code> also refreshes the activity graph above once the color stops changing, keeping its colors in sync with the panel theme</li>

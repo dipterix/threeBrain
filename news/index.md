@@ -204,6 +204,18 @@ Control Panel:
   time axis with a play-head cursor, and stays hidden unless a
   continuous variable with more than one time point is shown on the
   focused electrode
+- Electrode contacts can be sized by data. `Radius Value` picks a
+  continuous variable, `Radius Range` sets the values mapped onto two
+  radii (the variable’s range by default), and `Radius Ratio` sets those
+  radii in millimeters, for example `0.1,2`, or as multiples of each
+  contact’s own radius with a leading `x`, for example `x0.5,2`. The
+  middle of the range draws the middle radius (`1` for `0,2`), and on
+  each side of it the radius changes on a log scale: its log is linear
+  in the value. No contact is drawn smaller than 0.1 mm, or 0.01 mm if
+  its own radius is under 0.5 mm, or 0.0001 mm under 0.05 mm. Blank
+  keeps the original radius. Sizes follow the animation time; contacts
+  without a value keep their radius. Sphere electrodes and the contacts
+  of prototype electrodes are resized, prototype shafts are not
 - `Voxel Label` and `Line Simplify Factor` now recompute only once a
   drag or edit finishes, rather than on every intermediate value while
   dragging
