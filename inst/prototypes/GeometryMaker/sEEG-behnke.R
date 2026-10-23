@@ -141,3 +141,35 @@ for (n_contacts in c(9)) {
   )
 }
 
+
+# ---- BF08R-SP05X-000 ------------------------------------------------
+# 8-contact macro portion (Behnke-Fried)   uniform 5mm spacing
+# Macro part of macro-micro BF electrode (micro bundle WB09R-SP00X-014).
+# Tip offset (contact 1 begins 1mm from lumen tip) inferred from BF family.
+
+probe_head <- 1
+width <- 1.57
+contact_spacing <- 5
+diameter <- 1.28
+n_contacts <- 8
+
+contacts <- probe_head + width / 2 + 0:(n_contacts - 1) * contact_spacing
+overall_length <- ceiling(max(contacts) + width / 2 + 0.05)
+proto <- seeg_prototype(
+  type = "sEEG-AdTech-BF08R-SP05X-000",
+  description = c(
+    sprintf("AdTech Behnke Fried sEEG - %d contacts", n_contacts),
+    "Contact length   : 1.57 mm",
+    "Central spacing  : 5    mm",
+    "Tip size         : 1    mm",
+    "Diameter         : 1.28 mm"
+  ),
+  center_position = contacts,
+  contact_widths = width,
+  diameter = diameter,
+  overall_length = overall_length,
+  default_interpolation = sprintf("%.1fx%d", contact_spacing, n_contacts - 1),
+  behnke_fried = TRUE,
+  overwrite = TRUE
+)
+
