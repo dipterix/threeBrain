@@ -4,7 +4,15 @@
 \alias{save_brain}
 \title{Save threeBrain widgets to local file system}
 \usage{
-save_brain(widget, path, title = "3D Viewer", as_zip = FALSE, ...)
+save_brain(
+  widget,
+  path,
+  title = "3D Viewer",
+  as_zip = FALSE,
+  controllers = NULL,
+  main_camera = NULL,
+  ...
+)
 }
 \arguments{
 \item{widget}{generated from function 'threejs_brain'}
@@ -14,6 +22,19 @@ save_brain(widget, path, title = "3D Viewer", as_zip = FALSE, ...)
 \item{title}{widget title.}
 
 \item{as_zip}{whether to create zip file "compressed.zip".}
+
+\item{controllers}{\code{NULL} (default) to save the control panel as the
+widget was built, or a named list of control panel values that replace
+those, so the saved viewer opens with them; for example
+\code{proxy$get_controllers()} in a 'shiny' application (see
+\code{\link{brain_proxy}}), or \code{list("View Layout" = "sliceview-flat")}}
+
+\item{main_camera}{\code{NULL} (default) to keep the camera the widget was
+built with, or a list with \code{position} and \code{up} (numeric vectors
+of length 3) and \code{zoom} (a positive number), so the saved viewer
+opens with that view; for example \code{proxy$main_camera} in a 'shiny'
+application, or
+\code{list(position = c(0, 0, 500), up = c(0, 1, 0), zoom = 1.5)}}
 
 \item{...}{ignored, used for backward compatibility}
 }

@@ -569,9 +569,23 @@ renderBrain <- function(expr, env = parent.frame(), quoted = FALSE) {
 #' @param path path to save the brain widget
 #' @param title widget title.
 #' @param as_zip whether to create zip file "compressed.zip".
+#' @param controllers \code{NULL} (default) to save the control panel as the
+#'   widget was built, or a named list of control panel values that replace
+#'   those, so the saved viewer opens with them; for example
+#'   \code{proxy$get_controllers()} in a 'shiny' application (see
+#'   \code{\link{brain_proxy}}), or \code{list("View Layout" = "sliceview-flat")}
+#' @param main_camera \code{NULL} (default) to keep the camera the widget was
+#'   built with, or a list with \code{position} and \code{up} (numeric vectors
+#'   of length 3) and \code{zoom} (a positive number), so the saved viewer
+#'   opens with that view; for example \code{proxy$main_camera} in a 'shiny'
+#'   application, or
+#'   \code{list(position = c(0, 0, 500), up = c(0, 1, 0), zoom = 1.5)}
 #' @param ... ignored, used for backward compatibility
 #' @export
-save_brain <- function(widget, path, title = "3D Viewer", as_zip = FALSE, ...) {
+save_brain <- function(
+  widget, path, title = "3D Viewer", as_zip = FALSE,
+  controllers = NULL, main_camera = NULL, ...
+) {
   # Backward compatible:
   # old: directory is specified, path = directory/filename
   # new: path is specified directory
@@ -587,6 +601,49 @@ save_brain <- function(widget, path, title = "3D Viewer", as_zip = FALSE, ...) {
 
   widget$width <- args$width
   widget$height <- args$height
+
+  # control panel values and camera the saved viewer opens with; `NULL` keeps
+  # what the widget was built with
+  controllers <- as.list(controllers)
+  keys <- names(controllers)
+  if (length(keys)) {
+    keep <- !is.na(keys) & nzchar(keys) & !vapply(controllers, is.null, FALSE)
+    merged <- as.list(widget$x$settings$default_controllers)
+    merged[keys[keep]] <- controllers[keep]
+    widget$x$settings$default_controllers <- merged
+  }
+
+  main_camera <- as.list(main_camera)
+  zoom <- as.numeric(unlist(main_camera$zoom))
+  if (length(zoom) == 1 && !is.na(zoom) && zoom > 0) {
+    widget$x$settings$start_zoom <- zoom
+  }
+  position <- as.numeric(unname(unlist(main_camera$position)))
+  up <- as.numeric(unname(unlist(main_camera$up)))
+  if (
+    length(position) == 3 && length(up) == 3 &&
+      !anyNA(c(position, up)) && any(position != 0) && any(up != 0)
+  ) {
+    position <- position / sqrt(sum(position^2)) * 500
+    up <- up / sqrt(sum(up^2))
+    # `camera_pos` does not reach a saved page, so the camera is set once the
+    # viewer is ready, as `Brain$render()` does
+    camera_javascript <- sprintf(
+      paste(
+        "canvas.mainCamera.position.set( %f , %f , %f );",
+        "canvas.mainCamera.up.set( %f , %f , %f );",
+        "canvas.mainCamera.updateProjectionMatrix();",
+        "canvas.needsUpdate = true;",
+        sep = "\n"
+      ),
+      position[[1]], position[[2]], position[[3]],
+      up[[1]], up[[2]], up[[3]]
+    )
+    widget$x$settings$custom_javascript <- paste(
+      c(widget$x$settings$custom_javascript, camera_javascript),
+      collapse = "\n;\n"
+    )
+  }
 
   # set up working directory
   wdir <- dir_create(tempfile())

@@ -3,6 +3,19 @@
 threeBrain 1.4.0
 =======
 
+Control Panel:
+
+* Control panel values given from R (`controllers = list(...)`) are no longer
+  overwritten while the viewer applies them. `Subject` reset `Voxel Cmap` to
+  `unset` and `Component Index` to 0, `Opacity (all volumes)` reset
+  `Voxel Opacity`, and `Show all (...)` showed a bundle again that its own
+  `Show: ...` value hid, when listed after it
+* The control panel names of `threeBrain` 1.3.0 apply again:
+  `"Text Visibility" = TRUE` shows the channel numbers (`Electrode Text`),
+  and `Frustum Near`/`Frustum Far` set the `Frustum` range
+* The last dropped streamline file is no longer kept in memory after its
+  streamlines are cleared (a debugging leftover held on to it)
+
 Rendering Engine:
 
 * The viewer now renders with `WebGPU`, the successor to `WebGL`. Browsers or
@@ -33,6 +46,12 @@ Standalone Viewers (`save_brain`):
 * Wherever a worker genuinely cannot start, the viewer now says so once and does
   the work on the main thread instead. It used to try again for every surface and
   every volume, and one code path waited forever for a worker that never existed
+* `save_brain()` gains `controllers` and `main_camera`, so a saved viewer can
+  open with the control panel values and the camera a running viewer shows.
+  In `shiny`, pass `proxy$get_controllers()` and `proxy$main_camera` from
+  `brain_proxy()`; in a script, give the values, for example
+  `controllers = list("View Layout" = "sliceview-flat")`. Without them the
+  viewer is saved as before
 
 Remote Control:
 
